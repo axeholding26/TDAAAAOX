@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>NEXUS</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#0A0E17; --panel:#121826; --panel2:#0F1420; --ink:#E8ECF5; --cyan:#00E5FF; --magenta:#FF2FB0; --graphite:#6B7280; --hair:rgba(232,236,245,0.1); --success:#2FE58C; --error:#FF4D6D; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Rajdhani',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:0.01em; }
+.view{ display:none; } .view.active{ display:block; }
+.eyebrow{ font-family:'Rajdhani',sans-serif; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; color:var(--cyan); font-weight:600; }
+
+/* animated hex background */
+.hex-bg{ position:absolute; inset:0; opacity:0.15; pointer-events:none; }
+
+header{ position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; padding:18px 4vw; background:rgba(10,14,23,0.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--hair); }
+.logo{ font-family:'Rajdhani',sans-serif; font-size:23px; font-weight:700; letter-spacing:0.04em; background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+nav{ display:flex; gap:28px; }
+nav a{ font-size:13px; font-weight:600; color:var(--graphite); text-transform:uppercase; letter-spacing:0.02em; }
+nav a:hover, nav a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:18px; align-items:center; }
+.cart-btn{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); color:#0A0E17; padding:10px 18px; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:13px; text-transform:uppercase; }
+.cart-count{ margin-left:4px; }
+@media(max-width:880px){ nav{display:none;} }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 32px; background:var(--cyan); color:#0A0E17; font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:0.02em; transition:background .2s ease, box-shadow .2s ease; }
+.btn-primary:hover{ background:var(--magenta); color:#fff; box-shadow:0 0 24px rgba(255,47,176,0.4); }
+.btn-primary:disabled{ opacity:0.3; cursor:not-allowed; }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 28px; border:1.5px solid var(--ink); font-family:'Rajdhani',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; }
+.btn-ghost:hover{ border-color:var(--cyan); color:var(--cyan); }
+.btn-full{ width:100%; }
+
+/* ===== HOME ===== */
+.hero{ position:relative; min-height:88vh; display:flex; align-items:center; padding:4vw; overflow:hidden; }
+.hero-glow{ position:absolute; top:-10%; left:10%; width:50%; height:70%; background:radial-gradient(circle, rgba(0,229,255,0.16) 0%, transparent 70%); filter:blur(40px); }
+.hero-glow2{ position:absolute; bottom:-10%; right:5%; width:45%; height:60%; background:radial-gradient(circle, rgba(255,47,176,0.14) 0%, transparent 70%); filter:blur(40px); }
+.hero-inner{ position:relative; z-index:1; display:grid; grid-template-columns:1.1fr 0.9fr; gap:5vw; align-items:center; width:100%; }
+.hero-copy h1{ font-size:clamp(42px,6vw,80px); line-height:0.92; }
+.hero-copy p{ margin-top:20px; max-width:38ch; color:var(--graphite); font-size:15px; line-height:1.7; }
+.live-counter{ display:flex; align-items:center; gap:10px; margin-top:26px; font-family:'Rajdhani',sans-serif; }
+.live-counter .dot{ width:9px; height:9px; border-radius:50%; background:var(--success); animation:pulse 1.5s infinite; }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.3; } }
+.live-counter b{ color:var(--cyan); font-size:18px; }
+.hero-cta-row{ margin-top:30px; display:flex; gap:14px; }
+.hero-stage{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; position:relative; }
+.hero-stage .frame{ width:78%; aspect-ratio:1/1; border-radius:24px; background:var(--panel2); border:1px solid var(--hair); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.hero-stage .frame .glow-ring{ position:absolute; inset:-30%; border-radius:50%; opacity:0.5; filter:blur(30px); }
+
+.spec-strip{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.spec-cell{ padding:32px 22px; text-align:center; border-right:1px solid var(--hair); }
+.spec-cell:last-child{ border-right:none; }
+.spec-cell b{ font-family:'Rajdhani',sans-serif; font-size:24px; color:var(--cyan); display:block; }
+.spec-cell span{ font-size:11px; color:var(--graphite); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-top:6px; }
+@media(max-width:880px){ .spec-strip{ grid-template-columns:repeat(2,1fr); } .hero-inner{ grid-template-columns:1fr; } }
+
+.section{ padding:90px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:36px; }
+.section-head h2{ font-size:30px; }
+.grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:var(--hair); }
+@media(max-width:960px){ .grid4{ grid-template-columns:repeat(2,1fr); } }
+
+.pcard{ background:var(--bg); display:block; overflow:hidden; }
+.pcard .media{ position:relative; aspect-ratio:1/1; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.pcard .tag{ position:absolute; top:12px; left:12px; z-index:2; background:var(--magenta); color:#fff; font-family:'Rajdhani',sans-serif; font-size:10.5px; font-weight:700; padding:5px 10px; text-transform:uppercase; }
+.pcard .wl{ position:absolute; top:12px; right:12px; z-index:2; width:30px; height:30px; border-radius:50%; background:rgba(18,24,38,0.85); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.pcard .wl.active{ color:var(--magenta); }
+.pcard .info{ padding:16px 16px 18px; }
+.pcard .name{ font-family:'Rajdhani',sans-serif; font-weight:700; font-size:15px; text-transform:uppercase; }
+.pcard .price{ font-size:12.5px; color:var(--graphite); margin-top:4px; }
+.pcard .price .now{ color:var(--cyan); font-weight:600; }
+
+/* ===== BOUTIQUE ===== */
+.breadcrumb{ padding:24px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.plp-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 30px; display:flex; justify-content:space-between; align-items:flex-end; }
+.plp-head h1{ font-size:32px; }
+.plp-head span{ font-size:12.5px; color:var(--graphite); }
+.pill-filters{ max-width:1320px; margin:0 auto; padding:0 4vw 36px; display:flex; gap:10px; flex-wrap:wrap; }
+.pill{ border:1px solid var(--hair); padding:9px 18px; font-family:'Rajdhani',sans-serif; font-size:12.5px; text-transform:uppercase; font-weight:600; }
+.pill.active{ background:var(--cyan); color:#0A0E17; border-color:var(--cyan); }
+.plp-grid{ max-width:1320px; margin:0 auto 100px; padding:0 4vw; display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:var(--hair); }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:960px){ .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== PDP with RGB customizer ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:1.1fr 1fr; gap:5vw; align-items:center; }
+.pdp-stage{ position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+.pdp-stage .frame{ width:80%; aspect-ratio:1/1; border-radius:24px; background:var(--panel2); border:1px solid var(--hair); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.pdp-stage .glow-ring{ position:absolute; inset:-30%; border-radius:50%; filter:blur(36px); opacity:0.55; transition:background 0.4s ease; }
+.pdp-info .eyebrow{ display:block; margin-bottom:16px; }
+.pdp-info h1{ font-size:clamp(28px,3vw,38px); max-width:14ch; }
+.pdp-price{ font-family:'Rajdhani',sans-serif; font-size:24px; margin-top:14px; color:var(--cyan); }
+.pdp-desc{ margin-top:20px; max-width:40ch; color:var(--graphite); font-size:14px; line-height:1.7; }
+
+.rgb-block{ margin-top:28px; }
+.rgb-block .opt-label{ font-family:'Rajdhani',sans-serif; font-size:14px; margin-bottom:14px; font-weight:600; text-transform:uppercase; display:flex; justify-content:space-between; }
+.rgb-swatches{ display:flex; gap:12px; }
+.rgb-swatches span{ width:34px; height:34px; border-radius:50%; border:2px solid transparent; cursor:pointer; transition:transform .15s ease; box-shadow:0 0 0 1px var(--hair); }
+.rgb-swatches span:hover{ transform:scale(1.15); }
+.rgb-swatches span.active{ border-color:#fff; box-shadow:0 0 16px currentColor; }
+
+.opt-block{ margin-top:26px; } .opt-block .opt-label{ font-family:'Rajdhani',sans-serif; font-size:14px; margin-bottom:12px; font-weight:600; text-transform:uppercase; }
+.size-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.size-select button{ border:1px solid var(--hair); padding:11px 18px; font-size:13px; background:transparent; color:var(--ink); font-family:'Rajdhani',sans-serif; font-weight:600; }
+.size-select button.active{ border-color:var(--cyan); background:var(--cyan); color:#0A0E17; }
+.qty-cart-row{ margin-top:28px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--hair); }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:34px; text-align:center; border:none; font-size:14px; background:transparent; color:var(--ink); }
+.qty-cart-row .btn-primary{ flex:1; }
+.trust-list{ margin-top:22px; display:flex; flex-direction:column; gap:9px; }
+.trust-list div{ font-size:12.5px; color:#c8cdda; }
+.accordion{ margin-top:30px; border-top:1px solid var(--hair); }
+.acc-item{ border-bottom:1px solid var(--hair); }
+.acc-head{ width:100%; display:flex; justify-content:space-between; padding:16px 2px; font-size:14px; font-weight:600; font-family:'Rajdhani',sans-serif; text-transform:uppercase; }
+.acc-body{ padding:0 2px 18px; font-size:13.5px; color:var(--graphite); line-height:1.7; display:none; }
+.acc-item.open .acc-body{ display:block; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:26px; margin-bottom:26px; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } }
+
+/* ===== CART / CHECKOUT ===== */
+.narrow{ max-width:760px; margin:0 auto; padding:56px 4vw 120px; }
+.narrow h1{ font-size:28px; margin-bottom:36px; }
+.cart-item{ display:grid; grid-template-columns:100px 1fr auto; gap:20px; padding:22px 0; border-bottom:1px solid var(--hair); align-items:center; }
+.cart-item .thumb{ aspect-ratio:1/1; border-radius:16px; background:var(--panel2); position:relative; overflow:hidden; }
+.cart-item .thumb .dotglow{ position:absolute; inset:20%; border-radius:50%; filter:blur(14px); opacity:0.6; }
+.cart-item .meta b{ font-family:'Rajdhani',sans-serif; font-size:15px; display:block; margin-bottom:6px; text-transform:uppercase; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ margin-bottom:8px; } .cart-item .qty-box button{ width:28px; height:32px; font-size:13px; } .cart-item .qty-box input{ width:26px; font-size:12px; }
+.cart-item .price{ font-family:'Rajdhani',sans-serif; font-size:14px; color:var(--cyan); }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.sum-block{ margin-top:16px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:12px 0; }
+.sum-row.total{ font-family:'Rajdhani',sans-serif; font-size:18px; border-top:1px solid var(--ink); padding-top:16px; margin-top:6px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:16px 0; }
+.promo-row input{ flex:1; border:1px solid var(--hair); padding:12px 14px; font-size:13px; background:var(--panel); color:var(--ink); }
+.promo-row button{ border:1px solid var(--cyan); color:var(--cyan); padding:0 18px; font-size:12px; font-family:'Rajdhani',sans-serif; font-weight:600; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:11.5px; font-family:'Rajdhani',sans-serif; text-transform:uppercase; letter-spacing:0.03em; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1px solid var(--hair); background:var(--panel); padding:13px 14px; font-size:14px; color:var(--ink); }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--cyan); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.section-title{ font-family:'Rajdhani',sans-serif; font-size:13px; letter-spacing:0.03em; text-transform:uppercase; color:var(--cyan); margin:36px 0 18px; }
+.section-title:first-of-type{ margin-top:0; }
+.delivery-opts, .pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.delivery-opt, .pay-opt{ border:1px solid var(--hair); padding:15px 16px; display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer; gap:14px; }
+.delivery-opt.active, .pay-opt.active{ border-color:var(--cyan); background:rgba(0,229,255,0.06); }
+.delivery-opt b, .pay-opt b{ font-size:13.5px; display:block; font-family:'Rajdhani',sans-serif; text-transform:uppercase; } .delivery-opt span{ font-size:12px; color:var(--graphite); }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--ink); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--cyan); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.trust-mini{ margin-top:18px; font-size:12px; color:var(--graphite); line-height:1.8; }
+.confirm-wrap{ max-width:580px; margin:0 auto; padding:100px 4vw 130px; text-align:center; }
+.confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--success); color:#0A0E17; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 24px; }
+.confirm-wrap h1{ font-size:26px; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14px; line-height:1.7; }
+.order-no{ font-family:'Rajdhani',sans-serif; font-size:16px; margin-top:18px; color:var(--cyan); }
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--hair); }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:36px; }
+.foot-grid h4{ font-family:'Rajdhani',sans-serif; font-size:11px; letter-spacing:0.03em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--cyan); }
+.foot-brand p{ margin-top:14px; max-width:28ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:22px; border-top:1px solid var(--hair); font-size:11.5px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--hair); color:var(--ink); padding:14px 26px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute; width:0; height:0;"><defs>
+  <pattern id="hexpat" width="56" height="100" patternUnits="userSpaceOnUse">
+    <path d="M28,0 L56,16 L56,48 L28,64 L0,48 L0,16 Z" fill="none" stroke="#00E5FF" stroke-width="0.6"/>
+    <path d="M28,50 L56,66 L56,98 L28,114 L0,98 L0,66 Z" fill="none" stroke="#FF2FB0" stroke-width="0.6"/>
+  </pattern>
+</defs></svg>
+
+<header>
+  <div class="logo">NEXUS</div>
+  <nav><a onclick="go('home')" id="nav-home" class="active">Accueil</a><a onclick="go('boutique')" id="nav-boutique">Gamme</a><a onclick="go('boutique')">Setups</a></nav>
+  <div class="nav-right"><a>Recherche</a><a class="cart-btn" onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="view active" id="view-home">
+  <section class="hero">
+    <svg class="hex-bg"><rect width="100%" height="100%" fill="url(#hexpat)"/></svg>
+    <div class="hero-glow"></div><div class="hero-glow2"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow">PÉRIPHÉRIQUES GAMING — RGB PERSONNALISABLE</span>
+        <h1 style="margin-top:16px;">Ton setup,<br>ta signature.</h1>
+        <p>Latence minimale, éclairage RGB personnalisable zone par zone, conçu pour les sessions qui durent.</p>
+        <div class="live-counter"><div class="dot"></div><span>Joueurs actifs sur NEXUS : <b id="liveCount">2 847</b></span></div>
+        <div class="hero-cta-row">
+          <a class="btn-primary" onclick="go('boutique')">Voir la gamme</a>
+          <a class="btn-ghost" onclick="go('boutique')">Setups complets</a>
+        </div>
+      </div>
+      <div class="hero-stage"><div class="frame"><div class="glow-ring" id="heroGlow" style="background:radial-gradient(circle, var(--cyan), transparent 70%);"></div></div></div>
+    </div>
+  </section>
+
+  <div class="spec-strip">
+    <div class="spec-cell"><b>0.3MS</b><span>LATENCE INPUT</span></div>
+    <div class="spec-cell"><b>16.8M</b><span>COULEURS RGB</span></div>
+    <div class="spec-cell"><b>24H</b><span>LIVRAISON EXPRESS</span></div>
+    <div class="spec-cell"><b>2 ANS</b><span>GARANTIE</span></div>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>La gamme</h2><span class="eyebrow">PERSONNALISATION RGB DISPONIBLE</span></div>
+    <div class="grid4" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- ============ BOUTIQUE ============ -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Gamme</div>
+  <div class="plp-head"><h1>Toute la gamme</h1><span id="plpCount">8 produits</span></div>
+  <div class="pill-filters">
+    <div class="pill active" data-cat="all" onclick="pickCat(this,'all')">Tout</div>
+    <div class="pill" data-cat="clavier" onclick="pickCat(this,'clavier')">Claviers</div>
+    <div class="pill" data-cat="souris" onclick="pickCat(this,'souris')">Souris</div>
+    <div class="pill" data-cat="audio" onclick="pickCat(this,'audio')">Audio</div>
+  </div>
+  <div class="plp-grid" id="plpGrid"></div>
+  <div class="plp-empty" id="plpEmpty">Aucun produit dans cette catégorie.</div>
+</div>
+
+<!-- ============ PRODUIT ============ -->
+<div class="view" id="view-produit">
+  <section class="pdp">
+    <div class="pdp-stage"><div class="frame"><div class="glow-ring" id="pdpGlow"></div></div></div>
+    <div class="pdp-info">
+      <span class="eyebrow" id="pdpEyebrow">NEXUS</span>
+      <h1 id="pdpName" style="margin-top:14px;">—</h1>
+      <div class="pdp-price" id="pdpPriceRow"></div>
+      <p class="pdp-desc" id="pdpDesc"></p>
+
+      <div class="rgb-block">
+        <div class="opt-label">Éclairage RGB <span id="rgbLabel" style="color:var(--cyan);">Cyan</span></div>
+        <div class="rgb-swatches" id="rgbSwatches"></div>
+      </div>
+
+      <div class="opt-block" id="pdpSizeBlock"><div class="opt-label">Édition</div><div class="size-select" id="pdpSizeSelect"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+      <div class="trust-list">
+        <div>✓ Configuration RGB sauvegardée sur l'appareil</div>
+        <div>✓ Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>✓ Garantie 2 ans</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-item open"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Description</span><span>−</span></button><div class="acc-body" id="pdpFullDesc"></div></div>
+        <div class="acc-item"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Compatibilité</span><span>+</span></button><div class="acc-body">Logiciel de configuration compatible Windows et macOS, profils sauvegardables en mémoire embarquée.</div></div>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Complète ton setup</h2><div class="grid4" id="relatedGrid"></div></section>
+</div>
+
+<!-- ============ PANIER ============ -->
+<div class="view" id="view-panier">
+  <div class="narrow">
+    <h1 id="cartTitle">Panier</h1>
+    <div id="cartItems"></div>
+    <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:20px;">Voir la gamme</a></div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+      <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo"><button onclick="applyPromo()">Appliquer</button></div>
+      <div class="promo-msg" id="promoMsg"></div>
+      <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+      <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:22px;" id="checkoutBtn">Passer la commande</a>
+      <div class="trust-mini">Garantie 2 ans — Livraison express 24h — Paiement Orange Money, MTN MoMo, Visa</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMMANDE ============ -->
+<div class="view" id="view-commande">
+  <div class="narrow">
+    <h1>Commande</h1>
+    <div class="section-title">Livraison</div>
+    <div class="field-row">
+      <div class="field" id="f-prenom"><label>Prénom</label><input type="text"><div class="err-msg">Requis</div></div>
+      <div class="field" id="f-nom"><label>Nom</label><input type="text"><div class="err-msg">Requis</div></div>
+    </div>
+    <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-adresse"><label>Adresse</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-ville"><label>Ville</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="section-title">Paiement</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire</b></div></div>
+    </div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row"><span>Livraison</span><span>Offerte</span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:24px;" onclick="submitOrder()">Confirmer et payer</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div class="view" id="view-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Commande confirmée</h1>
+    <p>Un message de confirmation a été envoyé sur WhatsApp.</p>
+    <div class="order-no" id="orderNumber">Commande N°—</div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:36px; display:inline-flex;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:18px;">NEXUS</div><p>Périphériques gaming conçus et testés à Douala.</p></div>
+    <div><h4>Gamme</h4><ul><li><a onclick="go('boutique')">Claviers</a></li><li><a onclick="go('boutique')">Souris</a></li></ul></div>
+    <div><h4>Marque</h4><ul><li><a>Nos joueurs pro</a></li><li><a>Presse</a></li></ul></div>
+    <div><h4>Service</h4><ul><li><a>Livraison</a></li><li><a>Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 NEXUS</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* live active players counter — ticks with small random deltas */
+let liveCount = 2847;
+function tickLiveCount(){
+  liveCount += Math.floor(Math.random()*7) - 2;
+  if(liveCount < 2700) liveCount = 2700;
+  document.getElementById('liveCount').textContent = liveCount.toLocaleString('fr-FR');
+}
+setInterval(tickLiveCount, 3200);
+
+const RGB_COLORS = [
+  {name:'Cyan', hex:'#00E5FF'}, {name:'Magenta', hex:'#FF2FB0'}, {name:'Vert', hex:'#2FE58C'},
+  {name:'Violet', hex:'#8B5CF6'}, {name:'Orange', hex:'#FF8A3D'}
+];
+let currentRgb = RGB_COLORS[0];
+
+const PRODUCTS = {
+  clavierK1:{ name:'Clavier NEXUS K1', price:68000, was:null, cat:'clavier',
+    desc:"Switches mécaniques optiques, châssis aluminium, éclairage RGB par touche personnalisable.",
+    editions:['Standard','TKL'] },
+  sourisM2:{ name:'Souris NEXUS M2', price:42000, was:null, cat:'souris',
+    desc:"Capteur optique 26000 DPI, latence 0.3ms, poids 62g, éclairage RGB logo.",
+    editions:['Filaire','Sans fil'] },
+  casqueH3:{ name:'Casque NEXUS H3', price:56000, was:62000, cat:'audio',
+    desc:"Son surround 7.1, micro amovible réduction de bruit, éclairage RGB sur les oreillettes.",
+    editions:['Standard','Pro'] },
+  tapisT1:{ name:'Tapis NEXUS T1 RGB', price:24500, was:null, cat:'accessoires',
+    desc:"Surface tissée précision, bordure RGB périphérique, base antidérapante.",
+    editions:['Medium','XL'] },
+  clavierK2:{ name:'Clavier NEXUS K2 Compact', price:58000, was:null, cat:'clavier',
+    desc:"Format 65%, switches hot-swap, éclairage RGB per-key, boîtier aluminium.",
+    editions:['Standard'] },
+  sourisM3:{ name:'Souris NEXUS M3 Pro', price:52000, was:null, cat:'souris',
+    desc:"Capteur 32000 DPI, boutons programmables x8, éclairage RGB double zone.",
+    editions:['Droitier','Ambidextre'] },
+  casqueH4:{ name:'Casque NEXUS H4 Sans Fil', price:74000, was:null, cat:'audio',
+    desc:"Connexion 2.4GHz basse latence, 20h autonomie, éclairage RGB synchronisable.",
+    editions:['Standard'] },
+  webcamW1:{ name:'Webcam NEXUS W1', price:38000, was:null, cat:'accessoires',
+    desc:"Capture 1440p60, anneau lumineux RGB intégré, micro double.",
+    editions:['Standard'] }
+};
+const PROMO_CODES = { 'NEXUS10':0.10, 'RGB15':0.15 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'clavierK1';
+let pdpSelectedSize = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '', activeCat = 'all';
+
+function fmt(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const priceHTML = p.was ? `<span style="text-decoration:line-through;color:var(--graphite);margin-right:8px;">${fmt(p.was)}</span><span class="now">${fmt(p.price)}</span>` : `<span class="now">${fmt(p.price)}</span>`;
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  const c = RGB_COLORS[Object.keys(PRODUCTS).indexOf(id) % RGB_COLORS.length];
+  return `<a onclick="viewProduct('${id}')" class="pcard" data-id="${id}" data-cat="${p.cat}" data-price="${p.price}">
+    <div class="media" style="background:radial-gradient(circle at 40% 30%, ${c.hex}22, #0F1420 70%);"><span class="wl ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span></div>
+    <div class="info"><div class="name">${p.name}</div><div class="price">${priceHTML}</div></div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,4).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+function pickCat(el, cat){ activeCat = cat; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); applyFilters(); }
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('#plpGrid .pcard'));
+  let visible=0;
+  cards.forEach(card=>{ const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat; card.style.display=ok?'':'none'; if(ok) visible++; });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('plpCount').textContent = visible + ' produit' + (visible>1?'s':'');
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wl[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedSize=p.editions[0]; pdpQty=1; currentRgb=RGB_COLORS[0]; renderProduct(); go('produit'); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpEyebrow').textContent = 'NEXUS — ' + p.cat.toUpperCase();
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpFullDesc').textContent = p.desc;
+  document.getElementById('pdpPriceRow').innerHTML = p.was ? `${fmt(p.price)} <span style="text-decoration:line-through;color:var(--graphite);font-size:16px;">${fmt(p.was)}</span>` : fmt(p.price);
+
+  document.getElementById('rgbSwatches').innerHTML = RGB_COLORS.map(c=>`<span style="background:${c.hex}; color:${c.hex};" class="${c.hex===currentRgb.hex?'active':''}" onclick="pickRgb(this,'${c.name}','${c.hex}')"></span>`).join('');
+  updateGlow();
+
+  const sizeWrap = document.getElementById('pdpSizeSelect');
+  sizeWrap.innerHTML = p.editions.map(s=>`<button class="${s===pdpSelectedSize?'active':''}" onclick="pickPdpSize(this,'${s}')">${s}</button>`).join('');
+
+  document.getElementById('pdpQty').value = pdpQty;
+  updateAddButton();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,4);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function updateGlow(){
+  document.getElementById('rgbLabel').textContent = currentRgb.name;
+  document.getElementById('rgbLabel').style.color = currentRgb.hex;
+  const glow = document.getElementById('pdpGlow');
+  if(glow) glow.style.background = `radial-gradient(circle, ${currentRgb.hex}, transparent 70%)`;
+}
+function pickRgb(el, name, hex){ currentRgb = {name, hex}; document.querySelectorAll('#rgbSwatches span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); updateGlow(); }
+function pickPdpSize(el,s){ pdpSelectedSize=s; document.querySelectorAll('#pdpSizeSelect button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updateAddButton(); }
+function updateAddButton(){ const p=PRODUCTS[currentProductId]; document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmt(p.price*pdpQty)}`; }
+
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const existing = cart.find(it=>it.id===currentProductId && it.size===pdpSelectedSize && it.rgb===currentRgb.name);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, size:pdpSelectedSize, rgb:currentRgb.name, rgbHex:currentRgb.hex, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier — RGB ${currentRgb.name}`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+PRODUCTS[it.id].price*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap = document.getElementById('cartItems'); const empty = document.getElementById('cartEmpty');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb"><div class="dotglow" style="background:${it.rgbHex};"></div></div>
+      <div class="meta"><b>${p.name}</b><span>${it.size} · RGB ${it.rgb}</span><a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmt(p.price*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmt(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toUpperCase(); const msg = document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount); const total = subtotal-disc;
+  document.getElementById('osSubtotal').textContent = fmt(subtotal);
+  document.getElementById('osTotal').textContent = fmt(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmt(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'NXS-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent = 'Commande N°' + orderNo;
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('clavierK1'); go('home');
+cart.push({id:'clavierK1', size:'Standard', rgb:'Cyan', rgbHex:'#00E5FF', qty:1});
+cart.push({id:'sourisM2', size:'Sans fil', rgb:'Magenta', rgbHex:'#FF2FB0', qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

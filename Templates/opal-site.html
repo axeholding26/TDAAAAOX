@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>OPAL</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#000000; --panel:#1C1C1E; --panel2:#151517; --ink:#F5F5F7; --accent:#0A84FF; --graphite:#8E8E93; --hair:rgba(245,245,247,0.1); --success:#30D158; --error:#FF453A; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input, select{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Manrope',sans-serif; font-weight:700; letter-spacing:-0.02em; }
+.view{ display:none; } .view.active{ display:block; }
+.eyebrow{ font-size:12px; letter-spacing:0.08em; text-transform:uppercase; color:var(--graphite); font-weight:600; }
+
+header{ position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; padding:18px 4vw; background:rgba(0,0,0,0.75); backdrop-filter:blur(14px); border-bottom:1px solid var(--hair); }
+.logo{ font-family:'Manrope',sans-serif; font-size:19px; font-weight:800; letter-spacing:0.02em; }
+nav{ display:flex; gap:30px; }
+nav a{ font-size:13px; color:var(--graphite); }
+nav a:hover, nav a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:20px; align-items:center; font-size:13px; }
+.cart-count{ background:var(--accent); color:#fff; font-size:10px; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; margin-left:6px; }
+@media(max-width:880px){ nav{display:none;} }
+
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 30px; background:var(--accent); color:#fff; font-weight:600; font-size:14px; border-radius:100px; transition:transform .2s ease, background .2s ease; }
+.btn-primary:hover{ transform:translateY(-1px); background:#3396ff; }
+.btn-primary:disabled{ opacity:0.3; cursor:not-allowed; transform:none; }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:14px 26px; border:1px solid var(--hair); color:var(--ink); font-size:13.5px; border-radius:100px; }
+.btn-ghost:hover{ border-color:var(--ink); }
+.btn-full{ width:100%; }
+
+/* ===== HOME ===== */
+.product-hero{ position:relative; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; padding:8vw 4vw 4vw; }
+.hero-glow{ position:absolute; top:10%; left:50%; transform:translateX(-50%); width:70%; height:60%; background:radial-gradient(circle, rgba(10,132,255,0.22) 0%, transparent 70%); filter:blur(40px); pointer-events:none; }
+.product-hero .eyebrow{ position:relative; z-index:1; }
+.product-hero h1{ position:relative; z-index:1; font-size:clamp(40px,6vw,84px); line-height:1.02; margin-top:18px; max-width:16ch; }
+.product-hero p{ position:relative; z-index:1; margin-top:20px; color:var(--graphite); font-size:16px; max-width:44ch; }
+.hero-stage{ position:relative; z-index:1; width:min(520px,80vw); aspect-ratio:1/1; margin-top:50px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.hero-cta-row{ position:relative; z-index:1; display:flex; gap:14px; margin-top:44px; }
+
+.spec-strip{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.spec-cell{ padding:36px 24px; text-align:center; border-right:1px solid var(--hair); }
+.spec-cell:last-child{ border-right:none; }
+.spec-cell b{ font-family:'Manrope',sans-serif; font-size:26px; display:block; }
+.spec-cell span{ font-size:12px; color:var(--graphite); margin-top:6px; display:block; }
+@media(max-width:880px){ .spec-strip{ grid-template-columns:repeat(2,1fr); } }
+
+.feature-block{ display:grid; grid-template-columns:1fr 1fr; align-items:center; padding:100px 4vw; gap:6vw; border-bottom:1px solid var(--hair); }
+.feature-block.rev{ direction:rtl; } .feature-block.rev > *{ direction:ltr; }
+.feature-block .eyebrow{ margin-bottom:16px; }
+.feature-block h2{ font-size:clamp(28px,3vw,42px); max-width:12ch; }
+.feature-block p{ margin-top:20px; color:var(--graphite); font-size:15px; line-height:1.75; max-width:38ch; }
+.feature-visual{ aspect-ratio:1/1; border-radius:28px; background:var(--panel2); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+@media(max-width:880px){ .feature-block, .feature-block.rev{ grid-template-columns:1fr; direction:ltr; } }
+
+.section{ padding:100px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:40px; }
+.section-head h2{ font-size:30px; }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--hair); }
+@media(max-width:960px){ .grid3{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== product card ===== */
+.pcard{ background:var(--bg); display:block; padding:36px 28px; text-align:center; }
+.pcard .media{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; position:relative; margin-bottom:20px; }
+.pcard .ring{ width:70%; aspect-ratio:1/1; border-radius:50%; }
+.pcard .wl{ position:absolute; top:0; right:0; width:32px; height:32px; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.pcard .wl.active{ color:var(--accent); }
+.pcard .name{ font-family:'Manrope',sans-serif; font-weight:700; font-size:16px; }
+.pcard .desc{ font-size:12.5px; color:var(--graphite); margin-top:6px; }
+.pcard .price{ font-size:14px; margin-top:10px; font-weight:600; }
+.pcard .price .was{ text-decoration:line-through; color:var(--graphite); font-weight:400; margin-right:8px; }
+
+/* ===== BOUTIQUE ===== */
+.breadcrumb{ padding:24px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.plp-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 30px; display:flex; justify-content:space-between; align-items:flex-end; }
+.plp-head h1{ font-size:32px; }
+.plp-head span{ font-size:13px; color:var(--graphite); }
+.pill-filters{ max-width:1320px; margin:0 auto; padding:0 4vw 40px; display:flex; gap:10px; flex-wrap:wrap; }
+.pill{ border:1px solid var(--hair); padding:9px 18px; font-size:12.5px; border-radius:30px; }
+.pill.active{ background:var(--ink); color:#000; border-color:var(--ink); }
+.plp-grid{ max-width:1320px; margin:0 auto 100px; padding:0 4vw; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--hair); }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:960px){ .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== PDP ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:1.2fr 1fr; gap:6vw; align-items:center; }
+.pdp-stage{ position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+.pdp-stage .glow{ position:absolute; inset:-10%; background:radial-gradient(circle, rgba(10,132,255,0.18) 0%, transparent 70%); filter:blur(30px); }
+.pdp-stage .ring{ position:relative; width:64%; aspect-ratio:1/1; border-radius:50%; z-index:1; }
+.callout{ position:absolute; background:rgba(28,28,30,0.9); border:1px solid var(--hair); border-radius:10px; padding:10px 14px; font-size:11.5px; backdrop-filter:blur(6px); z-index:2; }
+.callout b{ display:block; font-size:13px; font-family:'Manrope',sans-serif; }
+.c1{ top:8%; left:0%; } .c2{ bottom:14%; right:2%; } .c3{ top:44%; right:-4%; }
+.pdp-dots{ display:flex; gap:8px; justify-content:center; margin-top:20px; }
+.pdp-dots button{ width:8px; height:8px; border-radius:50%; background:var(--hair); }
+.pdp-dots button.active{ background:var(--ink); width:20px; border-radius:4px; }
+.pdp-info h1{ font-size:clamp(28px,3vw,40px); max-width:14ch; }
+.pdp-price{ font-family:'Manrope',sans-serif; font-size:24px; margin-top:16px; }
+.pdp-price .was{ text-decoration:line-through; color:var(--graphite); font-size:16px; margin-left:10px; }
+.pdp-desc{ margin-top:20px; max-width:40ch; color:var(--graphite); font-size:14.5px; line-height:1.75; }
+.opt-block{ margin-top:28px; } .opt-block .opt-label{ font-size:13px; margin-bottom:12px; font-weight:600; }
+.color-select{ display:flex; gap:10px; }
+.color-select span{ width:28px; height:28px; border-radius:50%; border:2px solid transparent; box-shadow:0 0 0 1px var(--hair); cursor:pointer; }
+.color-select span.active{ border-color:var(--ink); }
+.size-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.size-select button{ border:1px solid var(--hair); padding:11px 18px; font-size:13px; background:transparent; color:var(--ink); border-radius:8px; }
+.size-select button.active{ border-color:var(--accent); background:var(--accent); color:#fff; }
+.size-select button.oos{ color:var(--graphite); text-decoration:line-through; opacity:.4; cursor:not-allowed; }
+.qty-cart-row{ margin-top:30px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--hair); border-radius:8px; }
+.qty-box button{ width:38px; height:48px; font-size:16px; }
+.qty-box input{ width:34px; text-align:center; border:none; font-size:14px; background:transparent; color:var(--ink); }
+.qty-cart-row .btn-primary{ flex:1; }
+.trust-list{ margin-top:24px; display:flex; flex-direction:column; gap:9px; }
+.trust-list div{ font-size:12.5px; color:#c8c8ca; }
+.accordion{ margin-top:32px; border-top:1px solid var(--hair); }
+.acc-item{ border-bottom:1px solid var(--hair); }
+.acc-head{ width:100%; display:flex; justify-content:space-between; padding:16px 2px; font-size:14px; color:var(--ink); font-weight:600; }
+.acc-body{ padding:0 2px 18px; font-size:13.5px; color:var(--graphite); line-height:1.7; display:none; }
+.acc-item.open .acc-body{ display:block; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:26px; margin-bottom:26px; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } }
+
+/* ===== CART / CHECKOUT ===== */
+.narrow{ max-width:760px; margin:0 auto; padding:60px 4vw 120px; }
+.narrow h1{ font-size:28px; margin-bottom:40px; }
+.cart-item{ display:grid; grid-template-columns:100px 1fr auto; gap:20px; padding:24px 0; border-bottom:1px solid var(--hair); align-items:center; }
+.cart-item .thumb{ aspect-ratio:1/1; border-radius:16px; background:var(--panel2); display:flex; align-items:center; justify-content:center; }
+.cart-item .thumb .ring{ width:60%; aspect-ratio:1/1; border-radius:50%; }
+.cart-item .meta b{ font-family:'Manrope',sans-serif; font-size:15px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ margin-bottom:8px; }
+.cart-item .qty-box button{ width:30px; height:34px; font-size:13px; }
+.cart-item .qty-box input{ width:26px; font-size:12.5px; }
+.cart-item .price{ font-family:'Manrope',sans-serif; font-size:15px; }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.sum-block{ margin-top:20px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:12px 0; color:#c8c8ca; }
+.sum-row.total{ font-family:'Manrope',sans-serif; font-size:19px; color:var(--ink); border-top:1px solid var(--hair); padding-top:18px; margin-top:6px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:16px 0; }
+.promo-row input{ flex:1; border:1px solid var(--hair); padding:12px 14px; font-size:13px; background:var(--panel2); color:var(--ink); border-radius:8px; }
+.promo-row button{ border:1px solid var(--ink); padding:0 18px; font-size:12.5px; border-radius:8px; color:var(--ink); }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.field{ margin-bottom:20px; }
+.field label{ display:block; font-size:12px; letter-spacing:0.03em; text-transform:uppercase; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1px solid var(--hair); background:var(--panel2); padding:13px 14px; font-size:14px; color:var(--ink); border-radius:8px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--accent); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.section-title{ font-size:13px; letter-spacing:0.04em; text-transform:uppercase; color:var(--graphite); margin:36px 0 18px; }
+.section-title:first-of-type{ margin-top:0; }
+.delivery-opts, .pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.delivery-opt, .pay-opt{ border:1px solid var(--hair); padding:16px 18px; display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer; border-radius:10px; gap:14px; }
+.delivery-opt.active, .pay-opt.active{ border-color:var(--accent); background:rgba(10,132,255,0.08); }
+.delivery-opt b, .pay-opt b{ font-size:14px; display:block; } .delivery-opt span{ font-size:12px; color:var(--graphite); }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--ink); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--accent); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.trust-mini{ margin-top:20px; font-size:12px; color:var(--graphite); line-height:1.9; }
+
+.confirm-wrap{ max-width:580px; margin:0 auto; padding:110px 4vw 140px; text-align:center; }
+.confirm-icon{ width:60px; height:60px; border-radius:50%; background:var(--success); color:#000; display:flex; align-items:center; justify-content:center; font-size:26px; margin:0 auto 26px; }
+.confirm-wrap h1{ font-size:28px; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14.5px; line-height:1.7; }
+.order-no{ font-family:'Manrope',sans-serif; font-size:17px; margin-top:20px; color:var(--accent); }
+
+footer{ padding:70px 4vw 30px; border-top:1px solid var(--hair); }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:40px; }
+.foot-grid h4{ font-size:11.5px; letter-spacing:0.05em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--accent); }
+.foot-brand p{ margin-top:14px; max-width:28ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:24px; border-top:1px solid var(--hair); font-size:11.5px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--hair); color:var(--ink); padding:14px 26px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; border-radius:10px; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">OPAL</div>
+  <nav><a onclick="go('home')" id="nav-home" class="active">Accueil</a><a onclick="go('boutique')" id="nav-boutique">Gamme</a><a onclick="go('boutique')">Accessoires</a></nav>
+  <div class="nav-right"><a>Rechercher</a><a onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="view active" id="view-home">
+  <section class="product-hero">
+    <div class="hero-glow"></div>
+    <span class="eyebrow">OPAL ONE — DISPONIBLE MAINTENANT</span>
+    <h1>Le son, sans distraction.</h1>
+    <p>Réduction de bruit adaptative, 30h d'autonomie, châssis en aluminium recyclé. Conçu pour disparaître dans ton quotidien.</p>
+    <div class="hero-stage" id="heroStage"></div>
+    <div class="hero-cta-row">
+      <a class="btn-primary" onclick="go('boutique')">Découvrir la gamme</a>
+      <a class="btn-ghost" onclick="viewProduct('one')">Voir Opal One</a>
+    </div>
+  </section>
+
+  <div class="spec-strip">
+    <div class="spec-cell"><b>30H</b><span>AUTONOMIE TOTALE</span></div>
+    <div class="spec-cell"><b>-32DB</b><span>RÉDUCTION DE BRUIT</span></div>
+    <div class="spec-cell"><b>3MIN</b><span>= 3H D'ÉCOUTE</span></div>
+    <div class="spec-cell"><b>IPX4</b><span>RÉSISTANCE EAU</span></div>
+  </div>
+
+  <div class="feature-block">
+    <div><span class="eyebrow">Réduction de bruit</span><h2>Le silence, calibré pour toi</h2><p>Trois microphones par écouteur analysent ton environnement 200 fois par seconde et ajustent l'annulation en conséquence — sans jamais toucher à la clarté de la voix.</p></div>
+    <div class="feature-visual"><div class="ring t2" style="width:60%; aspect-ratio:1/1; border-radius:50%;"></div></div>
+  </div>
+  <div class="feature-block rev">
+    <div><span class="eyebrow">Autonomie</span><h2>Une semaine sans y penser</h2><p>30 heures d'écoute cumulées avec le boîtier de charge, recharge sans fil compatible, 3 minutes de charge pour 3 heures d'écoute.</p></div>
+    <div class="feature-visual"><div class="ring t3" style="width:60%; aspect-ratio:1/1; border-radius:50%;"></div></div>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>La gamme Opal</h2><span class="eyebrow">6 PRODUITS</span></div>
+    <div class="grid3" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- ============ BOUTIQUE ============ -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Gamme</div>
+  <div class="plp-head"><h1>Toute la gamme</h1><span id="plpCount">6 produits</span></div>
+  <div class="pill-filters">
+    <div class="pill active" data-cat="all" onclick="pickCat(this,'all')">Tout</div>
+    <div class="pill" data-cat="audio" onclick="pickCat(this,'audio')">Audio</div>
+    <div class="pill" data-cat="charge" onclick="pickCat(this,'charge')">Charge</div>
+    <div class="pill" data-cat="accessoires" onclick="pickCat(this,'accessoires')">Accessoires</div>
+  </div>
+  <div class="plp-grid" id="plpGrid"></div>
+  <div class="plp-empty" id="plpEmpty">Aucun produit dans cette catégorie.</div>
+</div>
+
+<!-- ============ PRODUIT ============ -->
+<div class="view" id="view-produit">
+  <section class="pdp">
+    <div class="pdp-gallery">
+      <div class="pdp-stage" id="pdpStage"><div class="glow"></div></div>
+      <div class="pdp-dots" id="pdpDots"></div>
+    </div>
+    <div class="pdp-info">
+      <span class="eyebrow" id="pdpEyebrow">OPAL — GAMME AUDIO</span>
+      <h1 id="pdpName" style="margin-top:14px;">—</h1>
+      <div class="pdp-price" id="pdpPriceRow"></div>
+      <p class="pdp-desc" id="pdpDesc"></p>
+      <div class="opt-block" id="pdpColorBlock"><div class="opt-label">Coloris</div><div class="color-select" id="pdpColorSelect"></div></div>
+      <div class="opt-block" id="pdpSizeBlock"><div class="opt-label">Capacité</div><div class="size-select" id="pdpSizeSelect"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+      <div class="trust-list">
+        <div>✓ Livraison estimée : 2–4 jours ouvrés</div>
+        <div>✓ Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>✓ Garantie 2 ans incluse</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-item open"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Description</span><span>−</span></button><div class="acc-body" id="pdpFullDesc"></div></div>
+        <div class="acc-item"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Caractéristiques</span><span>+</span></button><div class="acc-body">Bluetooth 5.3, puce audio propriétaire, châssis aluminium recyclé à 96%.</div></div>
+        <div class="acc-item"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Garantie & retours</span><span>+</span></button><div class="acc-body">Garantie constructeur 2 ans. Retours gratuits sous 30 jours.</div></div>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Complète ton setup</h2><div class="grid3" id="relatedGrid"></div></section>
+</div>
+
+<!-- ============ PANIER ============ -->
+<div class="view" id="view-panier">
+  <div class="narrow">
+    <h1 id="cartTitle">Panier</h1>
+    <div id="cartItems"></div>
+    <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:20px;">Voir la gamme</a></div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+      <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo"><button onclick="applyPromo()">Appliquer</button></div>
+      <div class="promo-msg" id="promoMsg"></div>
+      <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+      <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:22px;" id="checkoutBtn">Passer la commande</a>
+      <div class="trust-mini">Paiement Orange Money, MTN MoMo, Visa — Livraison 2–4 jours ouvrés — Garantie 2 ans</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMMANDE ============ -->
+<div class="view" id="view-commande">
+  <div class="narrow">
+    <h1>Commande</h1>
+    <div class="section-title">Livraison</div>
+    <div class="field-row">
+      <div class="field" id="f-prenom"><label>Prénom</label><input type="text"><div class="err-msg">Requis</div></div>
+      <div class="field" id="f-nom"><label>Nom</label><input type="text"><div class="err-msg">Requis</div></div>
+    </div>
+    <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-adresse"><label>Adresse</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-ville"><label>Ville</label><input type="text"><div class="err-msg">Requis</div></div>
+
+    <div class="section-title">Mode de livraison</div>
+    <div class="delivery-opts">
+      <div class="delivery-opt active" data-price="2500" onclick="pickDelivery(this)"><div><b>Standard</b><span>3–4 jours ouvrés</span></div><span>2 500 XAF</span></div>
+      <div class="delivery-opt" data-price="7000" onclick="pickDelivery(this)"><div><b>Express</b><span>24h — Douala/Yaoundé</span></div><span>7 000 XAF</span></div>
+    </div>
+
+    <div class="section-title">Paiement</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire</b></div></div>
+    </div>
+
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row"><span>Livraison</span><span id="osDelivery">2 500 XAF</span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:24px;" onclick="submitOrder()">Confirmer et payer</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div class="view" id="view-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Commande confirmée</h1>
+    <p>Un message de confirmation a été envoyé sur WhatsApp.</p>
+    <div class="order-no" id="orderNumber">Commande N°—</div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:40px; display:inline-flex;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:18px;">OPAL</div><p>Audio premium conçu pour durer, réparable, pensé à Douala.</p></div>
+    <div><h4>Gamme</h4><ul><li><a onclick="go('boutique')">Audio</a></li><li><a onclick="go('boutique')">Charge</a></li></ul></div>
+    <div><h4>Marque</h4><ul><li><a>Notre histoire</a></li><li><a>Durabilité</a></li></ul></div>
+    <div><h4>Service</h4><ul><li><a>Garantie</a></li><li><a>Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 OPAL</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function ringBg(t){
+  const map = {
+    t1:'radial-gradient(circle at 35% 30%, #3a3a3c, #101012 70%)',
+    t2:'radial-gradient(circle at 35% 30%, #1a4a8a, #0a1830 70%)',
+    t3:'radial-gradient(circle at 35% 30%, #8a6a2a, #2a1e0a 70%)',
+    t4:'radial-gradient(circle at 35% 30%, #6a2a3a, #200e14 70%)'
+  };
+  return map[t] || map.t1;
+}
+const PRODUCTS = {
+  one:    { name:'Opal One', price:98000, was:null, cat:'audio', tone:'t2',
+    desc:"Écouteurs sans fil avec réduction de bruit adaptative, 30h d'autonomie totale, châssis aluminium recyclé.",
+    sizes:[], oos:[], colors:['#1a1a1c','#8E8E93','#0A84FF'] },
+  onePro: { name:'Opal One Pro', price:142000, was:null, cat:'audio', tone:'t2',
+    desc:"Version Pro avec audio spatial, capteurs de proximité, boîtier à charge sans fil renforcée.",
+    sizes:[], oos:[], colors:['#1a1a1c','#8E8E93'] },
+  speaker:{ name:'Opal Sphere', price:76000, was:null, cat:'audio', tone:'t3',
+    desc:"Enceinte portable 360°, étanche IPX7, 20h d'autonomie, basses profondes sans distorsion.",
+    sizes:['Petit','Grand'], oos:[], colors:['#1a1a1c','#8a6a2a'] },
+  charger:{ name:'Opal Charge Puck', price:24000, was:null, cat:'charge', tone:'t1',
+    desc:"Chargeur magnétique sans fil 15W, compatible tous appareils Qi.",
+    sizes:[], oos:[], colors:['#1a1a1c','#8E8E93'] },
+  battery:{ name:'Opal Power Bank', price:34000, was:38000, cat:'charge', tone:'t1',
+    desc:"Batterie externe 10 000mAh, charge rapide 20W, format poche.",
+    sizes:['10 000mAh','20 000mAh'], oos:[], colors:['#1a1a1c'] },
+  case:   { name:'Opal Étui Cuir', price:18000, was:null, cat:'accessoires', tone:'t4',
+    desc:"Étui en cuir végétal pour boîtier de charge, fermeture aimantée.",
+    sizes:[], oos:[], colors:['#6a2a3a','#1a1a1c'] }
+};
+const PROMO_CODES = { 'OPAL10':0.10, 'AUDIO15':0.15 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'one';
+let pdpSelectedSize = null, pdpSelectedColor = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '', deliveryFee = 2500, activeCat = 'all';
+
+function fmt(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const priceHTML = p.was ? `<span class="was">${fmt(p.was)}</span>${fmt(p.price)}` : fmt(p.price);
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  return `<a onclick="viewProduct('${id}')" class="pcard" data-id="${id}" data-cat="${p.cat}" data-price="${p.price}">
+    <div class="media"><span class="wl ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span><div class="ring" style="background:${ringBg(p.tone)};"></div></div>
+    <div class="name">${p.name}</div><div class="desc">${p.cat==='audio'?'Audio sans fil':p.cat==='charge'?'Charge rapide':'Accessoire'}</div><div class="price">${priceHTML}</div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,3).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+function pickCat(el, cat){ activeCat = cat; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); applyFilters(); }
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('#plpGrid .pcard'));
+  let visible=0;
+  cards.forEach(card=>{ const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat; card.style.display=ok?'':'none'; if(ok) visible++; });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('plpCount').textContent = visible + ' produit' + (visible>1?'s':'');
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wl[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedColor=p.colors[0]; pdpSelectedSize=p.sizes[0]||null; pdpQty=1; renderProduct(); go('produit'); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpFullDesc').textContent = p.desc;
+  document.getElementById('pdpPriceRow').innerHTML = p.was ? `${fmt(p.price)} <span class="was">${fmt(p.was)}</span>` : fmt(p.price);
+
+  const stage = document.getElementById('pdpStage');
+  stage.innerHTML = `<div class="glow"></div><div class="ring" style="background:${ringBg(p.tone)};"></div>
+    <div class="callout c1"><b>Bluetooth 5.3</b>Connexion stable</div>
+    <div class="callout c2"><b>IPX4</b>Résistant à l'eau</div>
+    <div class="callout c3"><b>2 ans</b>Garantie incluse</div>`;
+  document.getElementById('pdpDots').innerHTML = [0,1,2].map(i=>`<button class="${i===0?'active':''}" onclick="dotClick(this)"></button>`).join('');
+
+  const colorWrap = document.getElementById('pdpColorSelect');
+  document.getElementById('pdpColorBlock').style.display = p.colors.length ? 'block' : 'none';
+  colorWrap.innerHTML = p.colors.map(c=>`<span style="background:${c};" class="${c===pdpSelectedColor?'active':''}" onclick="pickPdpColor(this,'${c}')"></span>`).join('');
+
+  const sizeWrap = document.getElementById('pdpSizeSelect');
+  document.getElementById('pdpSizeBlock').style.display = p.sizes.length ? 'block' : 'none';
+  sizeWrap.innerHTML = p.sizes.map(s=>`<button class="${s===pdpSelectedSize?'active':''}" onclick="pickPdpSize(this,'${s}')">${s}</button>`).join('');
+
+  document.getElementById('pdpQty').value = pdpQty;
+  updateAddButton();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function dotClick(el){ document.querySelectorAll('.pdp-dots button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function pickPdpColor(el,c){ pdpSelectedColor=c; document.querySelectorAll('#pdpColorSelect span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
+function pickPdpSize(el,s){ pdpSelectedSize=s; document.querySelectorAll('#pdpSizeSelect button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updateAddButton(); }
+function updateAddButton(){ const p=PRODUCTS[currentProductId]; document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmt(p.price*pdpQty)}`; }
+
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const existing = cart.find(it=>it.id===currentProductId && it.size===pdpSelectedSize && it.color===pdpSelectedColor);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, size:pdpSelectedSize, color:pdpSelectedColor, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+PRODUCTS[it.id].price*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap = document.getElementById('cartItems'); const empty = document.getElementById('cartEmpty');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb"><div class="ring" style="background:${ringBg(p.tone)};"></div></div>
+      <div class="meta"><b>${p.name}</b>${it.size?`<span>${it.size}</span>`:''}<a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmt(p.price*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmt(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toUpperCase(); const msg = document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickDelivery(el){ document.querySelectorAll('.delivery-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); deliveryFee=Number(el.getAttribute('data-price')); renderCheckoutSummary(); }
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount); const total = subtotal-disc+deliveryFee;
+  document.getElementById('osSubtotal').textContent = fmt(subtotal);
+  document.getElementById('osDelivery').textContent = fmt(deliveryFee);
+  document.getElementById('osTotal').textContent = fmt(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmt(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'OPL-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent = 'Commande N°' + orderNo;
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+document.getElementById('heroStage').style.background = ringBg('t2');
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('one'); go('home');
+cart.push({id:'one', size:null, color:'#1a1a1c', qty:1});
+cart.push({id:'charger', size:null, color:'#1a1a1c', qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "name": "AURA Elite Console",
+  "description": "Console de contrôle IA ultra haut de gamme pour e-commerce : gestion des retours, analyse des stocks et agent vocal conversationnel premium.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

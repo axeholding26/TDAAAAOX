@@ -1,0 +1,490 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ── Design System Axso — Ultra Minimal ─────────────────────────────────── */
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+
+  /* Surfaces */
+  --bg:      #F5F5F5;
+  --surface: #FFFFFF;
+
+  /* Borders */
+  --border:       #E8E8E8;
+  --border-light: #F3F3F3;
+
+  /* Text hierarchy */
+  --text-1: #111111;
+  --text-2: #666666;
+  --text-3: #AAAAAA;
+
+  /* Brand accent — un seul */
+  --accent:      #F5A623;
+  --accent-dark: #D4911A;
+  --accent-bg:   rgba(245,166,35,0.08);
+
+  /* Semantic */
+  --success:    #16A34A;
+  --success-bg: #ECFDF5;
+  --warning:    #D97706;
+  --warning-bg: #FFFBEB;
+  --error:      #DC2626;
+  --error-bg:   #FEF2F2;
+
+  /* Legacy — gardés pour la landing */
+  --axso-amber: #F5A623;
+  --axso-amber-dark: #D4911A;
+  --axso-amber-light: #FFD280;
+  --axso-navy: #111111;
+  --axso-or: #F5A623;
+
+  /* Police principale : Poppins */
+  --font-sans:     var(--font-poppins-loaded), 'Poppins', 'Century Gothic', system-ui, sans-serif;
+  --font-poppins:  var(--font-poppins-loaded), 'Poppins', 'Century Gothic', system-ui, sans-serif;
+  --font-playfair: 'Playfair Display', Georgia, serif;
+
+  /* Tailles de base augmentées */
+  --text-xs:   0.8rem;    /* 12.8px */
+  --text-sm:   0.9375rem; /* 15px   */
+  --text-base: 1.0625rem; /* 17px   */
+  --text-lg:   1.1875rem; /* 19px   */
+  --text-xl:   1.375rem;  /* 22px   */
+  --text-2xl:  1.625rem;  /* 26px   */
+  --text-3xl:  2rem;      /* 32px   */
+  --text-4xl:  2.5rem;    /* 40px   */
+  --text-5xl:  3.25rem;   /* 52px   */
+  --text-6xl:  4rem;      /* 64px   */
+  --text-7xl:  5rem;      /* 80px   */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-poppins-loaded), 'Poppins', 'Century Gothic', system-ui, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+/* Reset & base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: var(--font-poppins);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Dashboard utility classes ───────────────────────────────────────────── */
+.ax-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.ax-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
+}
+.ax-card-flat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.ax-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ax-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
+  padding: 7px 14px;
+  transition: all 0.15s;
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-poppins);
+}
+
+.ax-btn-primary {
+  background: var(--text-1);
+  color: #fff;
+}
+.ax-btn-primary:hover { background: #333; }
+
+.ax-btn-secondary {
+  background: var(--surface);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+}
+.ax-btn-secondary:hover { background: var(--bg); }
+
+.ax-badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid #BBF7D0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid #FDE68A;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-error {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid #FECACA;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.ax-badge-neutral {
+  background: var(--bg);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+/* Force Poppins partout — !important nécessaire pour écraser les styles
+   inline qui codent encore 'Century Gothic' en dur dans certains composants */
+*, h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea, select, label, li, div {
+  font-family: var(--font-sans) !important;
+}
+
+/* Landing page — plein écran */
+section { width: 100%; }
+
+/* Classes utilitaires Axso */
+.font-playfair {
+  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif !important;
+}
+
+.gradient-or {
+  background: linear-gradient(135deg, #F5A623 0%, #FFD280 50%, #F5A623 100%);
+}
+
+.text-gradient-or {
+  background: linear-gradient(135deg, #F5A623, #FFD280);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(245, 166, 35, 0.12);
+}
+
+/* Navy Axso */
+.text-axso-navy { color: var(--axso-navy); }
+.bg-axso-navy { background-color: var(--axso-navy); }
+
+/* Animation lettre par lettre */
+@keyframes revealLetter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-letter {
+  display: inline-block;
+  animation: revealLetter 0.6s ease forwards;
+}
+
+/* Compteur live */
+@keyframes countUp {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Pattern kente animé */
+@keyframes kente {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+/* ═══════════════════════════════════════
+   LANDING PAGE — full-width + grandes tailles
+   ═══════════════════════════════════════ */
+
+/* Toutes les sections de la landing sont plein écran */
+main > section, main > div > section {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Scrollbar premium */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: var(--axso-or); border-radius: 3px; }
+
+/* ═══════════════════════════════════════
+   3D & SCROLL ANIMATIONS — Axso Landing
+   ═══════════════════════════════════════ */
+
+@keyframes flip3dIn {
+  from { opacity: 0; transform: perspective(800px) rotateX(35deg) translateY(40px); }
+  to   { opacity: 1; transform: perspective(800px) rotateX(0deg)  translateY(0); }
+}
+
+/* Mascotte Axia — clin d'œil/sourire idle, utilisé partout où l'icône Axia apparaît */
+.ax-axia-mascot img {
+  animation: axiaWink 4.5s ease-in-out infinite;
+  transform-origin: 50% 85%;
+}
+@keyframes axiaWink {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  4%       { transform: scale(1.08) rotate(-4deg); }
+  8%       { transform: scale(0.94, 1.04) rotate(2deg); }
+  12%      { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes slideRevealLeft {
+  from { opacity: 0; transform: translateX(-50px) perspective(600px) rotateY(10deg); }
+  to   { opacity: 1; transform: translateX(0)     perspective(600px) rotateY(0deg); }
+}
+
+@keyframes slideRevealRight {
+  from { opacity: 0; transform: translateX(50px) perspective(600px) rotateY(-10deg); }
+  to   { opacity: 1; transform: translateX(0)    perspective(600px) rotateY(0deg); }
+}
+
+@keyframes scaleReveal3d {
+  from { opacity: 0; transform: perspective(600px) scale(0.85) translateY(25px) rotateX(8deg); }
+  to   { opacity: 1; transform: perspective(600px) scale(1)    translateY(0)    rotateX(0deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 20px 0px rgba(245,166,35,0.25); }
+  50%       { box-shadow: 0 0 50px 8px rgba(245,166,35,0.5), 0 0 100px 20px rgba(245,166,35,0.12); }
+}
+
+@keyframes aurora {
+  0%   { transform: translate(0,   0)   scale(1);    opacity: 0.5; }
+  33%  { transform: translate(40px,-25px) scale(1.15); opacity: 0.7; }
+  66%  { transform: translate(-25px, 15px) scale(0.92); opacity: 0.4; }
+  100% { transform: translate(0,   0)   scale(1);    opacity: 0.5; }
+}
+
+@keyframes floatParticle {
+  0%, 100% { transform: translateY(0)    translateX(0)    rotate(0deg);   opacity: 0.35; }
+  33%       { transform: translateY(-18px) translateX(10px)  rotate(120deg);  opacity: 0.7;  }
+  66%       { transform: translateY(10px)  translateX(-8px)  rotate(240deg);  opacity: 0.5;  }
+}
+
+@keyframes flipDigit {
+  0%   { transform: perspective(400px) rotateX(0deg);   }
+  45%  { transform: perspective(400px) rotateX(-90deg); }
+  55%  { transform: perspective(400px) rotateX(-90deg); }
+  100% { transform: perspective(400px) rotateX(0deg);   }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(245,166,35,0.3); box-shadow: 0 0 0 0 rgba(245,166,35,0); }
+  50%       { border-color: rgba(245,166,35,0.7); box-shadow: 0 0 20px 4px rgba(245,166,35,0.2); }
+}
+
+@keyframes gradientShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Utility classes */
+.animate-shimmer {
+  background: linear-gradient(110deg, #F5A623 0%, #FFD280 40%, #F5A623 60%, #E09015 100%);
+  background-size: 200% auto;
+  animation: shimmer 2.5s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+
+.animate-aurora {
+  animation: aurora 8s ease-in-out infinite;
+}
+
+.animate-border-glow {
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+.reveal-3d {
+  opacity: 0;
+}
+.reveal-3d.visible {
+  animation: flip3dIn 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.reveal-left {
+  opacity: 0;
+}
+.reveal-left.visible {
+  animation: slideRevealLeft 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.reveal-right {
+  opacity: 0;
+}
+.reveal-right.visible {
+  animation: slideRevealRight 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.reveal-scale {
+  opacity: 0;
+}
+.reveal-scale.visible {
+  animation: scaleReveal3d 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* ── Animations boutique — pilotées par ThemeAnimations (builder) ────────
+   Contrairement aux .reveal-* ci-dessus (landing, "animation" en JS toggle
+   une classe .visible), celles-ci transitionnent directement via une classe
+   .ax-reveal-visible ajoutée par ScrollReveal — la durée/délai viennent du
+   config du thème (vitesse, stagger) donc passés en style inline plutôt
+   qu'en durée fixée ici. ────────────────────────────────────────────── */
+/* Deux familles de courbes : "decel" pour tout ce qui glisse/s'estompe
+   (naturel, sans rebond — fade, slide, blur), "spring" pour ce qui doit
+   se sentir tactile/vivant (zoom, flip, hover, press — léger dépassement
+   avant de se stabiliser, comme un ressort qu'on relâche). */
+:root {
+  --ax-ease-decel: cubic-bezier(0.16, 1, 0.3, 1);
+  --ax-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ax-reveal-fade,
+.ax-reveal-up,
+.ax-reveal-left,
+.ax-reveal-blur {
+  opacity: 0;
+  transition-property: opacity, transform, filter;
+  transition-timing-function: var(--ax-ease-decel);
+  will-change: opacity, transform;
+}
+.ax-reveal-zoom,
+.ax-reveal-flip {
+  opacity: 0;
+  transition-property: opacity, transform, filter;
+  transition-timing-function: var(--ax-ease-spring);
+  will-change: opacity, transform;
+}
+.ax-reveal-up   { transform: translateY(28px); }
+.ax-reveal-left { transform: translateX(-40px); }
+.ax-reveal-zoom { transform: scale(0.9); }
+.ax-reveal-flip { transform: perspective(700px) rotateX(18deg) translateY(24px); }
+.ax-reveal-blur { filter: blur(10px); }
+
+.ax-reveal-visible {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+/* ── Micro-interactions dashboard — cascadent partout via les classes
+   partagées (ax-card, ax-btn) plutôt que d'être ajoutées page par page ── */
+.ax-card {
+  transform: translateY(0) scale(1);
+  transition: box-shadow 0.2s var(--ax-ease-decel), transform 0.4s var(--ax-ease-spring);
+}
+.ax-card:hover {
+  transform: translateY(-3px) scale(1.003);
+}
+.ax-btn {
+  transform: scale(1);
+  transition: all 0.15s, transform 0.35s var(--ax-ease-spring);
+}
+.ax-btn:hover {
+  transform: scale(1.015);
+}
+.ax-btn:active {
+  transform: scale(0.96);
+  transition-duration: 0.08s;
+}
+
+@keyframes axFadeInUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ax-page-enter {
+  animation: axFadeInUp 0.45s var(--ax-ease-decel) both;
+}
+
+/* ── Boutons boutique (storefront) — effet "glow" piloté par le builder ──
+   --ax-accent-glow est posée en inline style sur chaque bouton concerné
+   (couleur d'accent du thème + alpha), pas de valeur fixe ici. */
+.axs-btn-glow:hover {
+  box-shadow: 0 0 22px 4px var(--ax-accent-glow, rgba(245,166,35,0.4));
+}
+
+/* ── Constructeur libre — survol/sélection d'un bloc du canevas ── */
+.ax-libre-hoverable {
+  cursor: pointer;
+  outline: 1px dashed transparent;
+  outline-offset: -1px;
+  transition: outline-color 0.15s ease;
+}
+.ax-libre-hoverable:hover {
+  outline-color: rgba(245, 166, 35, 0.5);
+}
+.ax-libre-selected {
+  outline: 2px solid #F5A623 !important;
+  outline-offset: -2px;
+}
+
+.ax-skeleton {
+  background: linear-gradient(110deg, var(--bg) 8%, #ECECEC 18%, var(--bg) 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ax-reveal-fade, .ax-reveal-up, .ax-reveal-left, .ax-reveal-zoom, .ax-reveal-flip, .ax-reveal-blur,
+  .ax-page-enter, .ax-card, .ax-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+}

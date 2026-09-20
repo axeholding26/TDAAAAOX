@@ -1,0 +1,8 @@
+{
+  "buildCommand": "rm -rf .next/cache && prisma generate && prisma db push --accept-data-loss && next build",
+  "functions": {
+    "app/api/ai/axia/**": { "maxDuration": 120 },
+    "app/api/ai/**": { "maxDuration": 60 },
+    "app/api/themes/importer/**": { "maxDuration": 60 }
+  }
+}

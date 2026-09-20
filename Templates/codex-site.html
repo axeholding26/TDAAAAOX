@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CODEX — Site complet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#0B0B12; --panel:#15151F; --ink:#F2F1F6; --gold:#D4AF6A; --violet:#8B7CF7; --graphite:#8B899C; --line:rgba(242,241,246,0.1); --success:#4FB88A; --error:#E0655B; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'EB Garamond',serif; font-weight:500; }
+.mono{ font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:0.03em; }
+.page{ display:none; } .page.active{ display:block; }
+.promo-bar{ background:var(--panel); color:var(--gold); text-align:center; padding:9px 0; font-size:12px; letter-spacing:0.04em; border-bottom:1px solid var(--line); }
+header{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:22px 4vw; background:rgba(11,11,18,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+.logo{ font-family:'EB Garamond',serif; font-size:24px; font-style:italic; }
+nav ul{ display:flex; gap:30px; list-style:none; font-size:13.5px; color:var(--graphite); }
+nav ul li a:hover, nav ul li a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:18px; align-items:center; font-size:13px; color:var(--graphite); }
+.cart-btn{ background:var(--gold); color:var(--bg); padding:9px 16px; font-weight:700; font-size:12.5px; }
+.cart-count{ background:var(--violet); color:#fff; font-size:10px; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; margin-left:6px; }
+@media(max-width:900px){ nav ul{display:none;} }
+.breadcrumb{ padding:20px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; width:fit-content; padding:15px 28px; font-weight:700; font-size:13px; background:var(--gold); color:var(--bg); transition:transform .2s ease; }
+.btn-primary:hover{ transform:translateY(-1px); }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; width:fit-content; border:1px solid var(--line); padding:14px 26px; font-weight:600; font-size:13px; color:var(--ink); }
+.btn-ghost:hover{ border-color:var(--gold); color:var(--gold); }
+.btn-full{ width:100%; }
+.product-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; position:relative; display:block; }
+.product-card .media{ position:relative; aspect-ratio:16/10.5; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.product-card .fmt-badge{ position:absolute; top:14px; right:14px; z-index:2; background:rgba(11,11,18,0.85); border:1px solid var(--line); color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:5px 9px; border-radius:5px; }
+.product-card .wishlist{ position:absolute; top:14px; left:14px; z-index:2; width:30px; height:30px; border-radius:50%; background:rgba(11,11,18,0.7); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.product-card .wishlist.active{ color:var(--violet); }
+.product-card .info{ padding:16px 18px 18px; }
+.product-card .creator{ font-size:11px; color:var(--graphite); margin-bottom:6px; }
+.product-card .name{ font-weight:600; font-size:14.5px; margin-bottom:8px; }
+.product-card .meta{ display:flex; justify-content:space-between; align-items:center; }
+.product-card .price{ font-family:'EB Garamond',serif; font-style:italic; font-size:16px; color:var(--gold); }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:14px 26px; font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--line); margin-top:70px; }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:44px; border-bottom:1px solid var(--line); }
+.foot-grid h4{ font-size:11.5px; letter-spacing:0.05em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--gold); }
+.foot-brand p{ margin-top:14px; max-width:30ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:22px; font-size:12px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:12.5px; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1px solid var(--line); background:var(--panel); padding:13px 14px; font-size:14px; color:var(--ink); border-radius:6px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--gold); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.hero{ position:relative; padding:8vw 4vw 5vw; overflow:hidden; }
+.hero-glow{ position:absolute; top:-15%; right:0; width:50%; height:80%; background:radial-gradient(circle, rgba(139,124,247,0.14) 0%, transparent 70%); filter:blur(30px); pointer-events:none; }
+.hero-inner{ position:relative; z-index:1; display:grid; grid-template-columns:0.9fr 1.1fr; gap:5vw; align-items:center; }
+.hero-copy h1{ font-size:clamp(38px,4.6vw,60px); line-height:1.1; max-width:11ch; font-style:italic; }
+.hero-copy p{ margin-top:24px; max-width:38ch; color:var(--graphite); font-size:15.5px; line-height:1.75; }
+.deck{ position:relative; height:400px; }
+.deck-card{ position:absolute; width:78%; aspect-ratio:16/10.5; left:11%; border-radius:14px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,0.5); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; }
+.deck-card.d1{ top:0; transform:rotate(-6deg) translateX(-30px); z-index:1; opacity:0.55; }
+.deck-card.d2{ top:20px; transform:rotate(3deg) translateX(20px); z-index:2; opacity:0.75; }
+.deck-card.d0{ top:40px; z-index:3; }
+@media(max-width:900px){ .hero-inner{ grid-template-columns:1fr; } .deck{ height:280px; } }
+.marquee{ background:var(--panel); padding:13px 0; overflow:hidden; white-space:nowrap; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.marquee-track{ display:inline-flex; gap:52px; animation:scrollx 25s linear infinite; font-size:12.5px; letter-spacing:0.04em; color:var(--gold); text-transform:uppercase; }
+@keyframes scrollx{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.section{ padding:90px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:36px; }
+.section-head h2{ font-size:30px; font-style:italic; }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+@media(max-width:960px){ .grid3{ grid-template-columns:repeat(2,1fr); } }
+.page-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 10px; display:flex; justify-content:space-between; align-items:flex-end; }
+.page-head h1{ font-size:32px; font-style:italic; }
+.listing{ max-width:1320px; margin:0 auto; padding:30px 4vw 90px; display:grid; grid-template-columns:230px 1fr; gap:44px; }
+.filters h4{ font-size:12px; letter-spacing:0.04em; margin:24px 0 14px; text-transform:uppercase; color:var(--graphite); }
+.filters h4:first-child{ margin-top:0; }
+.filter-opt{ display:flex; align-items:center; gap:10px; font-size:13.5px; margin-bottom:10px; cursor:pointer; }
+.clear-filters{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:16px; display:inline-block; }
+.toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+.toolbar span{ font-size:13px; color:var(--graphite); }
+.sort-select{ border:1px solid var(--line); padding:9px 14px; font-size:13px; background:var(--panel); color:var(--ink); border-radius:6px; }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:900px){ .listing{ grid-template-columns:1fr; } }
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:90px 1fr 1fr; gap:26px; }
+.pdp-rail{ display:flex; flex-direction:column; gap:10px; }
+.pdp-rail .thumb{ aspect-ratio:16/10.5; overflow:hidden; border:1px solid var(--line); opacity:.5; transition:opacity .25s, border-color .25s; cursor:pointer; border-radius:6px; }
+.pdp-rail .thumb.active{ opacity:1; border-color:var(--gold); }
+.pdp-main{ position:relative; aspect-ratio:16/10.5; overflow:hidden; border-radius:10px; border:1px solid var(--line); }
+.pdp-main .g-slide{ position:absolute; inset:0; opacity:0; transition:opacity .35s ease; display:flex; align-items:center; justify-content:center; }
+.pdp-main .g-slide.active{ opacity:1; }
+.creator-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.avatar{ width:30px; height:30px; border-radius:50%; background:linear-gradient(160deg,var(--violet),var(--gold)); }
+.creator-row span{ font-size:12.5px; color:var(--graphite); }
+.pdp-info h1{ font-size:28px; font-style:italic; }
+.price-row{ margin-top:14px; font-family:'EB Garamond',serif; font-style:italic; font-size:22px; color:var(--gold); }
+.opt-block{ margin-top:26px; }
+.opt-block label{ display:block; font-size:13px; font-weight:600; margin-bottom:10px; }
+.license-row{ display:flex; gap:10px; }
+.license-opt{ flex:1; border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; }
+.license-opt.active{ border-color:var(--gold); background:rgba(212,175,106,0.06); }
+.license-opt b{ display:block; font-size:13px; margin-bottom:4px; }
+.license-opt span{ font-size:11px; color:var(--graphite); }
+.qty-cart-row{ margin-top:28px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--line); border-radius:6px; }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:36px; text-align:center; border:none; font-size:14px; background:transparent; color:var(--ink); }
+.qty-cart-row .btn-primary{ flex:1; }
+.includes{ margin-top:26px; display:flex; flex-direction:column; gap:9px; }
+.includes div{ display:flex; gap:9px; align-items:flex-start; font-size:13px; color:#d5d3dc; }
+.includes .ck{ color:var(--gold); flex-shrink:0; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:24px; margin-bottom:26px; font-style:italic; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } .pdp-rail{ flex-direction:row; overflow-x:auto; } .pdp-rail .thumb{ min-width:100px; } }
+.cart-wrap{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; }
+.cart-wrap h1{ font-size:30px; margin-bottom:32px; font-style:italic; }
+.cart-layout{ display:grid; grid-template-columns:1fr 380px; gap:56px; align-items:start; }
+.cart-item{ display:grid; grid-template-columns:110px 1fr auto; gap:18px; padding:22px 0; border-bottom:1px solid var(--line); align-items:center; }
+.cart-item .thumb{ aspect-ratio:16/10.5; overflow:hidden; border-radius:6px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; }
+.cart-item .meta b{ font-family:'EB Garamond',serif; font-size:16px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ display:flex; align-items:center; border:1px solid var(--line); margin-bottom:8px; border-radius:6px; }
+.cart-item .qty-box button{ width:28px; height:32px; font-size:13px; }
+.cart-item .qty-box input{ width:26px; text-align:center; border:none; font-size:12px; background:transparent; color:var(--ink); }
+.cart-item .price{ font-family:'EB Garamond',serif; font-style:italic; color:var(--gold); font-size:15px; }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.summary{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:28px 24px; position:sticky; top:100px; }
+.summary h3{ font-size:18px; margin-bottom:20px; font-style:italic; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; margin-bottom:13px; color:#d5d3dc; }
+.sum-row.total{ font-family:'EB Garamond',serif; font-style:italic; font-size:19px; color:var(--gold); border-top:1px solid var(--line); padding-top:16px; margin-top:16px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:14px 0; }
+.promo-row input{ flex:1; border:1px solid var(--line); padding:11px 12px; font-size:13px; background:var(--bg); color:var(--ink); border-radius:6px; }
+.promo-row button{ border:1px solid var(--gold); color:var(--gold); padding:0 16px; font-size:12px; border-radius:6px; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.trust-mini{ margin-top:18px; font-size:12px; color:var(--graphite); line-height:1.8; }
+.checkout-wrap{ max-width:1200px; margin:0 auto; padding:44px 4vw 100px; display:grid; grid-template-columns:1fr 400px; gap:60px; }
+.checkout-wrap h2{ font-size:19px; margin:36px 0 18px; font-style:italic; }
+.checkout-wrap h2:first-child{ margin-top:0; }
+.steps-row{ max-width:1200px; margin:0 auto; padding:20px 4vw 0; display:flex; gap:8px; font-size:12px; color:var(--graphite); }
+.steps-row span.active{ color:var(--gold); font-weight:600; }
+.info-box{ border:1px solid var(--line); border-radius:8px; padding:16px 18px; font-size:13px; color:#d5d3dc; line-height:1.7; margin-bottom:26px; background:var(--panel); }
+.pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.pay-opt{ border:1px solid var(--line); padding:15px 16px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; border-radius:8px; }
+.pay-opt.active{ border-color:var(--gold); background:rgba(212,175,106,0.06); }
+.pay-opt b{ font-size:13.5px; display:block; }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--gold); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--gold); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.order-summary{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:28px 24px; position:sticky; top:20px; }
+.os-item{ display:flex; gap:12px; margin-bottom:14px; align-items:center; }
+.os-item .thumb{ width:60px; aspect-ratio:16/10.5; border-radius:5px; border:1px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.os-item .meta{ flex:1; font-size:12px; }
+.os-item .meta b{ display:block; font-family:'EB Garamond',serif; font-size:13px; }
+@media(max-width:900px){ .checkout-wrap{ grid-template-columns:1fr; } }
+.confirm-wrap{ max-width:640px; margin:0 auto; padding:90px 4vw 120px; text-align:center; }
+.confirm-icon{ width:64px; height:64px; border-radius:50%; background:var(--success); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 24px; }
+.confirm-wrap h1{ font-size:28px; font-style:italic; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14.5px; line-height:1.7; }
+.order-no{ font-family:'JetBrains Mono',monospace; font-size:14px; margin-top:18px; color:var(--gold); }
+.download-list{ margin-top:36px; text-align:left; }
+.download-item{ display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 18px; margin-bottom:10px; }
+.download-item b{ font-size:13.5px; display:block; } .download-item span{ font-size:11.5px; color:var(--graphite); }
+.download-item a{ background:var(--gold); color:var(--bg); padding:9px 16px; font-size:12px; font-weight:700; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute; width:0; height:0;"><defs>
+  <symbol id="screen-schema" viewBox="0 0 400 260">
+    <rect x="10" y="10" width="380" height="240" rx="10" stroke="currentColor" stroke-width="1.2" fill="none"/>
+    <circle cx="28" cy="26" r="3" fill="currentColor" opacity="0.5"/><circle cx="40" cy="26" r="3" fill="currentColor" opacity="0.5"/><circle cx="52" cy="26" r="3" fill="currentColor" opacity="0.5"/>
+    <line x1="10" y1="40" x2="390" y2="40" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+    <rect x="28" y="60" width="140" height="10" rx="2" fill="currentColor" opacity="0.7"/>
+    <rect x="28" y="80" width="220" height="6" rx="2" fill="currentColor" opacity="0.35"/>
+    <rect x="28" y="94" width="180" height="6" rx="2" fill="currentColor" opacity="0.35"/>
+    <rect x="28" y="120" width="105" height="80" rx="6" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.5"/>
+    <rect x="147" y="120" width="105" height="80" rx="6" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.5"/>
+    <rect x="266" y="120" width="105" height="80" rx="6" stroke="currentColor" stroke-width="0.8" fill="none" opacity="0.5"/>
+  </symbol>
+</defs></svg>
+
+<div class="promo-bar">TÉLÉCHARGEMENT INSTANTANÉ APRÈS PAIEMENT — MISES À JOUR À VIE INCLUSES</div>
+<header>
+  <div class="logo">Codex</div>
+  <nav><ul><li><a onclick="go('home')" id="nav-home" class="active">Accueil</a></li><li><a onclick="go('boutique')" id="nav-boutique">Templates</a></li><li><a onclick="go('boutique')">Cours</a></li><li><a onclick="go('boutique')">Plugins</a></li></ul></nav>
+  <div class="nav-right"><a>Connexion</a><a class="cart-btn" onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="mono" style="color:var(--gold);">PRODUITS DIGITAUX, SÉLECTION RIGOUREUSE</span>
+        <h1 style="margin-top:20px;">Le savoir-faire, livré en fichier.</h1>
+        <p>Templates, cours et outils créés par des professionnels vérifiés. Téléchargement instantané, licence commerciale incluse.</p>
+        <a class="btn-primary" onclick="go('boutique')" style="margin-top:28px;">Explorer la collection</a>
+      </div>
+      <div class="deck">
+        <div class="deck-card d1" style="background:linear-gradient(120% 100% at 30% 15%, #3a2c50, #17131f);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#screen-schema"/></svg></div>
+        <div class="deck-card d2" style="background:linear-gradient(120% 100% at 70% 15%, #2a2440, #0B0B12);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#screen-schema"/></svg></div>
+        <div class="deck-card d0" style="background:linear-gradient(120% 100% at 50% 15%, #22304a, #0B0B12);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#screen-schema"/></svg></div>
+      </div>
+    </div>
+  </section>
+  <div class="marquee"><div class="marquee-track">
+    <span>TÉLÉCHARGEMENT INSTANTANÉ</span><span>—</span><span>LICENCE COMMERCIALE INCLUSE</span><span>—</span><span>MISES À JOUR À VIE</span><span>—</span>
+    <span>TÉLÉCHARGEMENT INSTANTANÉ</span><span>—</span><span>LICENCE COMMERCIALE INCLUSE</span><span>—</span><span>MISES À JOUR À VIE</span><span>—</span>
+  </div></div>
+  <section class="section">
+    <div class="section-head"><h2>Sélection de la semaine</h2><span class="mono" style="color:var(--graphite);">2 400+ CRÉATEURS VÉRIFIÉS</span></div>
+    <div class="grid3" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- BOUTIQUE -->
+<div class="page" id="page-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Boutique</div>
+  <div class="page-head"><h1>Tous les produits</h1><span class="mono" id="plpCount" style="color:var(--graphite);">9 produits</span></div>
+  <div class="listing">
+    <aside class="filters">
+      <h4>Catégorie</h4>
+      <label class="filter-opt"><input type="checkbox" class="cat-filter" value="templates">Templates UI</label>
+      <label class="filter-opt"><input type="checkbox" class="cat-filter" value="cours">Cours vidéo</label>
+      <label class="filter-opt"><input type="checkbox" class="cat-filter" value="plugins">Plugins & presets</label>
+      <h4>Format</h4>
+      <label class="filter-opt"><input type="checkbox" class="fmt-filter" value="FIGMA">Figma</label>
+      <label class="filter-opt"><input type="checkbox" class="fmt-filter" value="MP4">Vidéo</label>
+      <label class="filter-opt"><input type="checkbox" class="fmt-filter" value="ZIP">ZIP</label>
+      <a class="clear-filters" onclick="clearFilters()">Réinitialiser les filtres</a>
+    </aside>
+    <div>
+      <div class="toolbar"><span id="toolbarCount">Affichage 9 sur 9</span>
+        <select class="sort-select" id="sortSelect" onchange="applySort()"><option value="default">Trier : Populaires</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option></select>
+      </div>
+      <div class="grid3" id="plpGrid"></div>
+      <div class="plp-empty" id="plpEmpty">Aucun produit ne correspond à ces filtres. <a onclick="clearFilters()" style="text-decoration:underline;">Réinitialiser</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUIT -->
+<div class="page" id="page-produit">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / <a onclick="go('boutique')">Boutique</a> / <span id="crumbName">Produit</span></div>
+  <section class="pdp">
+    <div class="pdp-rail" id="pdpRail"></div>
+    <div class="pdp-main" id="pdpMain"></div>
+    <div class="pdp-info">
+      <div class="creator-row"><div class="avatar"></div><span id="pdpCreator">Par créateur · 340 ventes</span></div>
+      <h1 id="pdpName">—</h1>
+      <div class="price-row" id="pdpPriceRow"></div>
+      <p style="margin-top:18px; max-width:42ch; color:var(--graphite); font-size:14px; line-height:1.75;" id="pdpDesc"></p>
+      <div class="includes" id="pdpIncludes"></div>
+      <div class="opt-block"><label>Licence</label><div class="license-row" id="licenseRow"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Les créateurs recommandent aussi</h2><div class="grid3" id="relatedGrid"></div></section>
+</div>
+
+<!-- PANIER -->
+<div class="page" id="page-panier">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Panier</div>
+  <div class="cart-wrap">
+    <h1 id="cartTitle">Ton panier</h1>
+    <div class="cart-layout">
+      <div>
+        <div id="cartItems"></div>
+        <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:18px;">Explorer le catalogue</a></div>
+        <a class="btn-ghost" onclick="go('boutique')" style="margin-top:26px;" id="continueShoppingLink">← Continuer mes achats</a>
+      </div>
+      <div class="summary">
+        <h3>Récapitulatif</h3>
+        <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+        <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+        <div class="promo-row"><input type="text" id="promoInput" placeholder="Code (ex : CODEX15)"><button onclick="applyPromo()">Appliquer</button></div>
+        <div class="promo-msg" id="promoMsg"></div>
+        <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+        <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:18px;" id="checkoutBtn">Passer au paiement</a>
+        <div class="trust-mini">✓ Accès instantané après paiement<br>✓ Licence commerciale incluse<br>✓ Support créateur inclus 30 jours</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMMANDE -->
+<div class="page" id="page-commande">
+  <div class="steps-row"><span>Panier</span> → <span class="active">Paiement</span> → <span>Confirmation</span></div>
+  <div class="checkout-wrap">
+    <div>
+      <h2>1. Où envoyer tes accès</h2>
+      <div class="info-box">Tes fichiers et licences seront envoyés instantanément à cette adresse email après paiement confirmé.</div>
+      <div class="field-row">
+        <div class="field" id="f-prenom"><label>Prénom</label><input type="text" placeholder="Yannick"><div class="err-msg">Ce champ est requis</div></div>
+        <div class="field" id="f-nom"><label>Nom</label><input type="text" placeholder="Yenkey"><div class="err-msg">Ce champ est requis</div></div>
+      </div>
+      <div class="field" id="f-email"><label>Adresse email</label><input type="text" placeholder="toi@exemple.com"><div class="err-msg">Ce champ est requis</div></div>
+      <h2>2. Paiement</h2>
+      <div class="pay-opts">
+        <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro Orange Money"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro MTN MoMo"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire (Visa / Mastercard)</b></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>PayPal</b></div></div>
+      </div>
+      <button class="btn-primary btn-full" style="margin-top:32px;" onclick="submitOrder()">Payer et débloquer — <span id="checkoutTotal">0 XAF</span></button>
+    </div>
+    <div class="order-summary">
+      <h3>Ta commande</h3>
+      <div id="orderSummaryItems"></div>
+      <div class="sum-row" style="padding-top:14px; border-top:1px solid var(--line);"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
+<div class="page" id="page-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Paiement confirmé</h1>
+    <p>Tes fichiers sont prêts. Un récapitulatif avec les liens de téléchargement a aussi été envoyé par email.</p>
+    <div class="order-no" id="orderNumber">COMMANDE #—</div>
+    <div class="download-list" id="downloadList"></div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:36px;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:20px;">Codex</div><p>La place de marché des créateurs francophones. Vérifiée, curée, sans contenu générique.</p></div>
+    <div><h4>EXPLORER</h4><ul><li><a onclick="go('boutique')">Templates</a></li><li><a onclick="go('boutique')">Cours</a></li><li><a onclick="go('boutique')">Plugins</a></li></ul></div>
+    <div><h4>VENDRE</h4><ul><li><a>Devenir créateur</a></li><li><a>Tarifs & commissions</a></li></ul></div>
+    <div><h4>SUPPORT</h4><ul><li><a>Licences</a></li><li><a>Remboursements</a></li><li><a>Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 CODEX</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PRODUCTS = {
+  aurora: { name:'SaaS UI Kit — Aurora', price:42000, cat:'templates', fmt:'FIGMA', creator:'Léa Marchetti', sales:340,
+    desc:"120 composants Figma, 24 écrans complets, variables de couleur et dark mode inclus. Compatible Auto Layout.",
+    includes:['Fichier Figma source (.fig)','Bibliothèque de composants liée','Mises à jour gratuites à vie'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'1 projet non-commercial',mult:1},{id:'pro',name:'Licence Pro',desc:'1 projet commercial',mult:1.5},{id:'equipe',name:'Licence Équipe',desc:'Projets illimités',mult:3}] },
+  motion:  { name:'Masterclass Motion Design', price:68000, cat:'cours', fmt:'MP4', creator:'Studio Nomade', sales:210,
+    desc:"12h de cours vidéo, fichiers d'exercice inclus, accès à vie aux mises à jour du programme.",
+    includes:['12h de vidéo en 1080p','Fichiers projet After Effects','Accès communauté privée'],
+    licenses:[{id:'perso',name:'Accès Perso',desc:'Usage individuel',mult:1},{id:'equipe',name:'Accès Équipe',desc:"Jusqu'à 5 personnes",mult:2.5}] },
+  notionos:{ name:'Notion OS — Business Suite', price:18500, cat:'templates', fmt:'ZIP', creator:'Yannick K.', sales:580,
+    desc:"Système complet de gestion pour entrepreneurs : CRM, finances, projets, tout dans un seul espace Notion.",
+    includes:['Template Notion dupliquable','Guide de configuration PDF','Mises à jour gratuites à vie'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'Usage individuel',mult:1},{id:'pro',name:'Licence Pro',desc:'Usage commercial',mult:1.8}] },
+  presetpk:{ name:'Pack Presets Lightroom Vol.3', price:14000, cat:'plugins', fmt:'ZIP', creator:'Mika Studio', sales:920,
+    desc:"40 presets professionnels pour portrait et lifestyle, compatibles Lightroom mobile et desktop.",
+    includes:['40 fichiers .xmp / .dng',"Guide d'installation vidéo",'Compatible mobile + desktop'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'Usage individuel',mult:1},{id:'pro',name:'Licence Pro',desc:'Usage commercial',mult:2}] },
+  vscodeui:{ name:'Thème VS Code — Nightfall', price:0, cat:'plugins', fmt:'ZIP', creator:'DevCraft', sales:1450, free:true,
+    desc:"Thème sombre optimisé pour de longues sessions de code, contraste ajusté pour réduire la fatigue oculaire.",
+    includes:['Fichier thème VS Code','Palette de couleurs complète','Mises à jour gratuites'],
+    licenses:[{id:'perso',name:'Gratuit',desc:'Usage libre',mult:1}] },
+  webflow: { name:'Webflow Kit — Nova SaaS', price:56000, cat:'templates', fmt:'FIGMA', creator:'Léa Marchetti', sales:190,
+    desc:"Landing page complète prête à cloner sur Webflow, CMS intégré, animations incluses.",
+    includes:['Projet Webflow clonable','Fichier Figma source','Guide de personnalisation'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'1 site',mult:1},{id:'pro',name:'Licence Pro',desc:'Sites illimités',mult:2.2}] },
+  copywriting:{ name:'Cours Copywriting Vendeur', price:32000, cat:'cours', fmt:'MP4', creator:'Studio Nomade', sales:410,
+    desc:"8h de formation pour écrire des pages de vente qui convertissent, exemples réels inclus.",
+    includes:['8h de vidéo','20 templates de mails','Accès communauté privée'],
+    licenses:[{id:'perso',name:'Accès Perso',desc:'Usage individuel',mult:1}] },
+  iconpack:{ name:'Icon Pack — Minimal 500', price:9500, cat:'plugins', fmt:'ZIP', creator:'Mika Studio', sales:680,
+    desc:"500 icônes vectorielles minimalistes, formats SVG et Figma, grille 24px cohérente.",
+    includes:['500 fichiers SVG','Bibliothèque Figma','Licence commerciale incluse'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'Usage individuel',mult:1},{id:'pro',name:'Licence Pro',desc:'Usage commercial',mult:1.6}] },
+  ecommerce:{ name:'E-commerce UI Kit — Market', price:38000, cat:'templates', fmt:'FIGMA', creator:'DevCraft', sales:275,
+    desc:"Kit complet pour boutique en ligne : listing, fiche produit, panier, checkout, 60 écrans.",
+    includes:['60 écrans Figma','Composants liés','Mises à jour gratuites à vie'],
+    licenses:[{id:'perso',name:'Licence Perso',desc:'1 projet',mult:1},{id:'pro',name:'Licence Pro',desc:'Projets illimités',mult:2}] }
+};
+const PROMO_CODES = { 'CODEX15':0.15, 'CREATEUR10':0.10 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'aurora';
+let pdpSelectedLicense = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '';
+
+function fmtP(n){ return n===0 ? 'Gratuit' : n.toLocaleString('fr-FR') + ' XAF'; }
+function tone(id,i){
+  const tones = ['linear-gradient(120% 100% at 30% 15%, #3a2c50, #17131f)','linear-gradient(120% 100% at 70% 15%, #2a2440, #0B0B12)','linear-gradient(120% 100% at 50% 15%, #22304a, #0B0B12)','linear-gradient(120% 100% at 40% 15%, #241830, #0B0B12)'];
+  return tones[i % tones.length];
+}
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  return `<a onclick="viewProduct('${id}')" class="product-card" data-id="${id}" data-cat="${p.cat}" data-fmt="${p.fmt}" data-price="${p.price}">
+    <div class="media" style="background:${tone(id,0)};"><span class="fmt-badge">${p.fmt}</span><span class="wishlist ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span>
+    <svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#screen-schema"/></svg></div>
+    <div class="info"><div class="creator">Par ${p.creator}</div><div class="name">${p.name}</div><div class="meta"><span class="price">${fmtP(p.price)}</span><span class="mono" style="color:var(--graphite);">${p.sales} ventes</span></div></div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,3).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+
+document.querySelectorAll('.cat-filter, .fmt-filter').forEach(cb=>cb.addEventListener('change', applyFilters));
+function clearFilters(){ document.querySelectorAll('.cat-filter, .fmt-filter').forEach(cb=>cb.checked=false); document.getElementById('sortSelect').value='default'; applyFilters(); }
+function applyFilters(){
+  const cats = Array.from(document.querySelectorAll('.cat-filter:checked')).map(c=>c.value);
+  const fmts = Array.from(document.querySelectorAll('.fmt-filter:checked')).map(c=>c.value);
+  const cards = Array.from(document.querySelectorAll('#plpGrid .product-card'));
+  let visible=0;
+  cards.forEach(card=>{
+    let ok=true;
+    if(cats.length && !cats.includes(card.getAttribute('data-cat'))) ok=false;
+    if(fmts.length && !fmts.includes(card.getAttribute('data-fmt'))) ok=false;
+    card.style.display = ok?'':'none'; if(ok) visible++;
+  });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('toolbarCount').textContent = 'Affichage '+visible+' sur '+Object.keys(PRODUCTS).length;
+  applySort();
+}
+function applySort(){
+  const mode = document.getElementById('sortSelect').value;
+  const grid = document.getElementById('plpGrid'); const cards = Array.from(grid.children);
+  if(mode==='asc') cards.sort((a,b)=>a.getAttribute('data-price')-b.getAttribute('data-price'));
+  else if(mode==='desc') cards.sort((a,b)=>b.getAttribute('data-price')-a.getAttribute('data-price'));
+  cards.forEach(c=>grid.appendChild(c));
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wishlist[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedLicense=p.licenses[0].id; pdpQty=1; renderProduct(); go('produit'); }
+function currentPrice(){ const p=PRODUCTS[currentProductId]; const lic=p.licenses.find(l=>l.id===pdpSelectedLicense); return Math.round(p.price*lic.mult); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('crumbName').textContent = p.name;
+  document.getElementById('pdpCreator').textContent = `Par ${p.creator} · ${p.sales} ventes`;
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpIncludes').innerHTML = p.includes.map(i=>`<div><span class="ck">✓</span>${i}</div>`).join('');
+  const rail = document.getElementById('pdpRail'), main = document.getElementById('pdpMain');
+  const slides = [0,1,2];
+  rail.innerHTML = slides.map((i)=>`<div class="thumb ${i===0?'active':''}" style="background:${tone(currentProductId,i)};" onclick="swapImg(this,${i})"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#screen-schema"/></svg></div>`).join('');
+  main.innerHTML = slides.map((i)=>`<div class="g-slide ${i===0?'active':''}" data-slide="${i}" style="background:${tone(currentProductId,i)};"><span class="fmt-badge" style="position:absolute;top:16px;right:16px;">${p.fmt}</span><svg viewBox="0 0 400 260" style="width:70%;color:#fff;"><use href="#screen-schema"/></svg></div>`).join('');
+  document.getElementById('licenseRow').innerHTML = p.licenses.map(l=>`<div class="license-opt ${l.id===pdpSelectedLicense?'active':''}" onclick="pickLicense('${l.id}', this)"><b>${l.name}</b><span>${l.desc}</span></div>`).join('');
+  document.getElementById('pdpQty').value = pdpQty;
+  updatePdpPriceUI();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function swapImg(el,idx){ document.querySelectorAll('.pdp-rail .thumb').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  document.querySelectorAll('.g-slide').forEach(s=>s.classList.toggle('active', s.getAttribute('data-slide')===String(idx))); }
+function pickLicense(id, el){ pdpSelectedLicense=id; document.querySelectorAll('.license-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active'); updatePdpPriceUI(); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updatePdpPriceUI(); }
+function updatePdpPriceUI(){
+  const price = currentPrice();
+  document.getElementById('pdpPriceRow').textContent = fmtP(price);
+  document.getElementById('pdpAddBtn').textContent = price===0 ? 'Récupérer gratuitement' : `Ajouter au panier — ${fmtP(price*pdpQty)}`;
+}
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const lic = p.licenses.find(l=>l.id===pdpSelectedLicense);
+  const unitPrice = Math.round(p.price*lic.mult);
+  const existing = cart.find(it=>it.id===currentProductId && it.licenseId===pdpSelectedLicense);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, licenseId:pdpSelectedLicense, licenseName:lic.name, unitPrice, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+it.unitPrice*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Ton panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap=document.getElementById('cartItems'); const empty=document.getElementById('cartEmpty'); const cont=document.getElementById('continueShoppingLink');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; cont.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; cont.style.display='inline-flex'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb" style="background:${tone(it.id,0)};"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#screen-schema"/></svg></div>
+      <div class="meta"><b>${p.name}</b><span>${it.licenseName}</span><a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmtP(it.unitPrice*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal=cartSubtotal(); const disc=Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent=fmtP(subtotal);
+  document.getElementById('sumTotal').textContent=fmtP(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmtP(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code=document.getElementById('promoInput').value.trim().toUpperCase(); const msg=document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal=cartSubtotal(); const disc=Math.round(subtotal*promoDiscount); const total=subtotal-disc;
+  document.getElementById('orderSummaryItems').innerHTML = cart.map(it=>{ const p=PRODUCTS[it.id];
+    return `<div class="os-item"><div class="thumb" style="background:${tone(it.id,0)};"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#screen-schema"/></svg></div><div class="meta"><b>${p.name}</b><span>${it.licenseName} · Qté ${it.qty}</span></div><div class="price" style="font-size:12px;">${fmtP(it.unitPrice*it.qty)}</div></div>`;
+  }).join('');
+  document.getElementById('osSubtotal').textContent=fmtP(subtotal);
+  document.getElementById('osTotal').textContent=fmtP(total);
+  document.getElementById('checkoutTotal').textContent=fmtP(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmtP(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-email']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'CDX-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent='COMMANDE #'+orderNo;
+  document.getElementById('downloadList').innerHTML = cart.map(it=>{ const p=PRODUCTS[it.id];
+    return `<div class="download-item"><div><b>${p.name}</b><span>${it.licenseName} · Format ${p.fmt}</span></div><a>Télécharger</a></div>`;
+  }).join('');
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('aurora'); go('home');
+cart.push({id:'aurora', licenseId:'pro', licenseName:'Licence Pro', unitPrice:63000, qty:1});
+cart.push({id:'iconpack', licenseId:'perso', licenseName:'Licence Perso', unitPrice:9500, qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

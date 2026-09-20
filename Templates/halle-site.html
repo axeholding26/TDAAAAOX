@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>HALLE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#EDEBE6; --panel:#DED9D0; --ink:#242220; --wood:#8B5E34; --graphite:#7A756D; --hair:rgba(36,34,32,0.14); --success:#4C7A5A; --error:#A2402E; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Work Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Work Sans',sans-serif; font-weight:700; letter-spacing:-0.01em; }
+.mono{ font-family:'Space Mono',monospace; }
+.view{ display:none; } .view.active{ display:block; }
+.eyebrow{ font-family:'Space Mono',monospace; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; color:var(--graphite); }
+
+header{ position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; padding:20px 4vw; background:rgba(237,235,230,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--hair); }
+.logo{ font-family:'Space Mono',monospace; font-size:19px; font-weight:700; letter-spacing:0.02em; }
+nav{ display:flex; gap:30px; }
+nav a{ font-size:13.5px; color:var(--graphite); font-weight:500; }
+nav a:hover, nav a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:20px; align-items:center; font-size:13px; }
+.cart-btn{ background:var(--ink); color:var(--bg); padding:9px 16px; font-family:'Space Mono',monospace; font-size:12px; }
+.cart-count{ color:var(--wood); margin-left:4px; }
+@media(max-width:880px){ nav{display:none;} }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 30px; background:var(--ink); color:var(--bg); font-weight:600; font-size:14px; transition:background .25s ease; }
+.btn-primary:hover{ background:var(--wood); }
+.btn-primary:disabled{ opacity:0.35; cursor:not-allowed; }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 28px; border:1.5px solid var(--ink); font-size:13.5px; font-weight:600; }
+.btn-ghost:hover{ background:var(--ink); color:var(--bg); }
+.btn-full{ width:100%; }
+
+/* ===== HOME: shoppable room hero ===== */
+.room-hero{ padding:5vw 4vw 3vw; }
+.room-hero-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:30px; }
+.room-hero-head h1{ font-size:clamp(30px,3.6vw,46px); max-width:14ch; }
+.room-hero-head p{ margin-top:16px; max-width:36ch; color:var(--graphite); font-size:14.5px; line-height:1.65; }
+.room-stage{ position:relative; aspect-ratio:16/9; background:var(--panel); overflow:hidden; }
+.room-zone{ position:absolute; }
+.rz-1{ left:6%; bottom:0; width:20%; height:48%; }
+.rz-2{ left:30%; bottom:0; width:26%; height:62%; }
+.rz-3{ right:16%; bottom:0; width:16%; height:36%; }
+.rz-4{ right:4%; top:8%; width:10%; height:24%; }
+.hotspot{ position:absolute; width:26px; height:26px; border-radius:50%; background:rgba(237,235,230,0.95); border:1.5px solid var(--ink); display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:12px; cursor:pointer; transition:transform .2s ease; }
+.hotspot:hover, .hotspot.active{ transform:scale(1.15); background:var(--ink); color:var(--bg); }
+.hs-1{ left:16%; bottom:32%; } .hs-2{ left:43%; bottom:44%; } .hs-3{ right:22%; bottom:26%; } .hs-4{ right:8%; top:20%; }
+.hotspot-card{ position:absolute; width:220px; background:var(--bg); border:1px solid var(--hair); box-shadow:0 20px 50px rgba(0,0,0,0.15); padding:16px; z-index:10; display:none; }
+.hotspot-card.show{ display:block; }
+.hotspot-card .hc-media{ aspect-ratio:4/3; margin-bottom:12px; }
+.hotspot-card b{ font-size:14px; display:block; } .hotspot-card .price{ font-size:12.5px; color:var(--wood); margin-top:4px; display:block; }
+.hotspot-card a.view-link{ margin-top:10px; font-size:12px; text-decoration:underline; display:inline-block; }
+.room-caption{ display:flex; justify-content:space-between; margin-top:16px; }
+.room-caption .eyebrow{ }
+
+.blueprint-strip{ border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); padding:70px 4vw; margin-top:6vw; }
+.bp-head{ text-align:center; margin-bottom:50px; }
+.bp-head h2{ font-size:28px; }
+.bp-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:var(--hair); max-width:1200px; margin:0 auto; }
+.bp-cell{ background:var(--bg); padding:26px 22px; text-align:center; }
+.bp-cell .eyebrow{ margin-bottom:10px; display:block; }
+.bp-cell b{ font-size:18px; font-weight:700; }
+@media(max-width:880px){ .bp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+.section{ padding:80px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:36px; }
+.section-head h2{ font-size:28px; }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+@media(max-width:960px){ .grid3{ grid-template-columns:repeat(2,1fr); } }
+
+/* product card - blueprint style */
+.pcard{ display:block; background:var(--bg); }
+.pcard .media{ position:relative; aspect-ratio:4/3.2; overflow:hidden; background:var(--panel); }
+.pcard .media .ph{ width:100%; height:100%; }
+.pcard .dims{ position:absolute; bottom:10px; left:10px; right:10px; display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:10px; color:rgba(36,34,32,0.5); }
+.pcard .wl{ position:absolute; top:12px; right:12px; width:28px; height:28px; border-radius:50%; background:rgba(237,235,230,0.85); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.pcard .wl.active{ color:var(--wood); }
+.pcard .info{ padding:16px 2px 6px; display:flex; justify-content:space-between; align-items:baseline; }
+.pcard .name{ font-size:15px; font-weight:600; }
+.pcard .price{ font-family:'Space Mono',monospace; font-size:12.5px; color:var(--graphite); }
+.pcard .price.now{ color:var(--wood); }
+
+/* ===== BOUTIQUE ===== */
+.breadcrumb{ padding:24px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.plp-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 30px; display:flex; justify-content:space-between; align-items:flex-end; }
+.plp-head h1{ font-size:32px; }
+.plp-head span{ font-size:12.5px; color:var(--graphite); }
+.pill-filters{ max-width:1320px; margin:0 auto; padding:0 4vw 36px; display:flex; gap:10px; flex-wrap:wrap; }
+.pill{ border:1px solid var(--hair); padding:9px 18px; font-size:12.5px; }
+.pill.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.plp-grid{ max-width:1320px; margin:0 auto 100px; padding:0 4vw; display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:960px){ .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== PDP ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:1.2fr 1fr; gap:5vw; }
+.pdp-main{ position:relative; aspect-ratio:4/3.4; overflow:hidden; background:var(--panel); }
+.pdp-main .g-slide{ position:absolute; inset:0; opacity:0; transition:opacity .35s ease; }
+.pdp-main .g-slide.active{ opacity:1; }
+.pdp-main .dim-line{ position:absolute; font-family:'Space Mono',monospace; font-size:10px; color:rgba(36,34,32,0.55); }
+.pdp-thumbs{ display:flex; gap:10px; margin-top:12px; }
+.pdp-thumbs .thumb{ width:64px; aspect-ratio:4/3; background:var(--panel); opacity:.5; border:1px solid transparent; cursor:pointer; }
+.pdp-thumbs .thumb.active{ opacity:1; border-color:var(--ink); }
+.pdp-info .eyebrow{ display:block; margin-bottom:14px; }
+.pdp-info h1{ font-size:28px; max-width:16ch; }
+.pdp-price{ font-family:'Space Mono',monospace; font-size:20px; margin-top:14px; color:var(--wood); }
+.pdp-desc{ margin-top:20px; max-width:40ch; color:var(--graphite); font-size:14px; line-height:1.75; }
+.dim-table{ margin-top:24px; border-top:1px solid var(--hair); }
+.dim-row{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--hair); font-size:12.5px; }
+.dim-row span:first-child{ color:var(--graphite); font-family:'Space Mono',monospace; }
+.opt-block{ margin-top:26px; } .opt-block .opt-label{ font-size:13px; font-weight:600; margin-bottom:12px; }
+.color-select{ display:flex; gap:10px; }
+.color-select span{ width:26px; height:26px; border-radius:50%; border:2px solid transparent; box-shadow:0 0 0 1px var(--hair); cursor:pointer; }
+.color-select span.active{ border-color:var(--ink); }
+.qty-cart-row{ margin-top:30px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1.5px solid var(--hair); }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:34px; text-align:center; border:none; font-size:14px; background:transparent; }
+.qty-cart-row .btn-primary{ flex:1; }
+.trust-list{ margin-top:24px; display:flex; flex-direction:column; gap:9px; }
+.trust-list div{ font-size:12.5px; color:#3a3833; }
+@media(max-width:900px){ .pdp{ grid-template-columns:1fr; } }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:26px; margin-bottom:26px; }
+
+/* ===== CART / CHECKOUT ===== */
+.narrow{ max-width:760px; margin:0 auto; padding:56px 4vw 120px; }
+.narrow h1{ font-size:28px; margin-bottom:36px; }
+.cart-item{ display:grid; grid-template-columns:110px 1fr auto; gap:20px; padding:22px 0; border-bottom:1px solid var(--hair); align-items:center; }
+.cart-item .thumb{ aspect-ratio:4/3; background:var(--panel); }
+.cart-item .meta b{ font-size:15px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ margin-bottom:8px; } .cart-item .qty-box button{ width:28px; height:32px; font-size:13px; } .cart-item .qty-box input{ width:26px; font-size:12px; }
+.cart-item .price{ font-family:'Space Mono',monospace; font-size:14px; color:var(--wood); }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.sum-block{ margin-top:16px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:12px 0; }
+.sum-row.total{ font-family:'Space Mono',monospace; font-size:18px; border-top:1px solid var(--ink); padding-top:16px; margin-top:6px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:16px 0; }
+.promo-row input{ flex:1; border:1px solid var(--hair); padding:12px 14px; font-size:13px; background:#fff; }
+.promo-row button{ border:1px solid var(--ink); padding:0 18px; font-size:12px; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:12px; font-family:'Space Mono',monospace; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1.5px solid var(--hair); background:#fff; padding:13px 14px; font-size:14px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--ink); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.section-title{ font-family:'Space Mono',monospace; font-size:12px; letter-spacing:0.03em; text-transform:uppercase; color:var(--graphite); margin:36px 0 18px; }
+.section-title:first-of-type{ margin-top:0; }
+.delivery-opts, .pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.delivery-opt, .pay-opt{ border:1.5px solid var(--hair); padding:15px 16px; display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer; gap:14px; }
+.delivery-opt.active, .pay-opt.active{ border-color:var(--ink); background:var(--panel); }
+.delivery-opt b, .pay-opt b{ font-size:13.5px; display:block; } .delivery-opt span{ font-size:12px; color:var(--graphite); }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--ink); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--wood); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.trust-mini{ margin-top:18px; font-size:12px; color:var(--graphite); line-height:1.8; }
+.confirm-wrap{ max-width:580px; margin:0 auto; padding:100px 4vw 130px; text-align:center; }
+.confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--success); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 24px; }
+.confirm-wrap h1{ font-size:26px; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14px; line-height:1.7; }
+.order-no{ font-family:'Space Mono',monospace; font-size:15px; margin-top:18px; color:var(--wood); }
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--hair); }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:36px; }
+.foot-grid h4{ font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.03em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--wood); }
+.foot-brand p{ margin-top:14px; max-width:28ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:22px; border-top:1px solid var(--hair); font-size:11.5px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--bg); padding:14px 26px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">HALLE</div>
+  <nav><a onclick="go('home')" id="nav-home" class="active">Accueil</a><a onclick="go('boutique')" id="nav-boutique">Catalogue</a><a onclick="go('boutique')">Matières</a></nav>
+  <div class="nav-right"><a>Rechercher</a><a class="cart-btn" onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="view active" id="view-home">
+  <section class="room-hero">
+    <div class="room-hero-head">
+      <div><span class="eyebrow">SALON TÉMOIN — RÉF. 04</span><h1 style="margin-top:14px;">Achète directement depuis la pièce</h1><p>Clique sur les points pour découvrir chaque meuble de cette scène — sans quitter la photo.</p></div>
+    </div>
+    <div class="room-stage">
+      <div class="room-zone rz-1 t1"></div>
+      <div class="room-zone rz-2 t2"></div>
+      <div class="room-zone rz-3 t3"></div>
+      <div class="room-zone rz-4 t4"></div>
+      <div class="hotspot hs-1" onclick="toggleHotspot(this,'chaise')">+</div>
+      <div class="hotspot hs-2" onclick="toggleHotspot(this,'canape')">+</div>
+      <div class="hotspot hs-3" onclick="toggleHotspot(this,'table')">+</div>
+      <div class="hotspot hs-4" onclick="toggleHotspot(this,'lampe')">+</div>
+      <div class="hotspot-card" id="hotspotCard"></div>
+    </div>
+    <div class="room-caption"><span class="eyebrow" id="roomHint">4 pièces visibles dans ce salon</span><a class="btn-ghost" onclick="go('boutique')" style="padding:10px 20px; font-size:12.5px;">Voir tout le catalogue</a></div>
+  </section>
+
+  <section class="blueprint-strip">
+    <div class="bp-head"><h2>Fabriqué pour durer</h2></div>
+    <div class="bp-grid">
+      <div class="bp-cell"><span class="eyebrow">MATÉRIAUX</span><b>BOIS MASSIF CERTIFIÉ</b></div>
+      <div class="bp-cell"><span class="eyebrow">GARANTIE</span><b>10 ANS PIÈCES</b></div>
+      <div class="bp-cell"><span class="eyebrow">LIVRAISON</span><b>MONTAGE INCLUS</b></div>
+      <div class="bp-cell"><span class="eyebrow">ATELIER</span><b>FABRIQUÉ À DOUALA</b></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Le catalogue</h2><span class="eyebrow">9 PIÈCES</span></div>
+    <div class="grid3" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- ============ BOUTIQUE ============ -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Catalogue</div>
+  <div class="plp-head"><h1>Tout le catalogue</h1><span id="plpCount">9 pièces</span></div>
+  <div class="pill-filters">
+    <div class="pill active" data-cat="all" onclick="pickCat(this,'all')">Tout</div>
+    <div class="pill" data-cat="assises" onclick="pickCat(this,'assises')">Assises</div>
+    <div class="pill" data-cat="tables" onclick="pickCat(this,'tables')">Tables</div>
+    <div class="pill" data-cat="luminaires" onclick="pickCat(this,'luminaires')">Luminaires</div>
+  </div>
+  <div class="plp-grid" id="plpGrid"></div>
+  <div class="plp-empty" id="plpEmpty">Aucune pièce dans cette catégorie.</div>
+</div>
+
+<!-- ============ PRODUIT ============ -->
+<div class="view" id="view-produit">
+  <section class="pdp">
+    <div>
+      <div class="pdp-main" id="pdpMain"></div>
+      <div class="pdp-thumbs" id="pdpThumbs"></div>
+    </div>
+    <div class="pdp-info">
+      <span class="eyebrow" id="pdpEyebrow">RÉF. —</span>
+      <h1 id="pdpName" style="margin-top:14px;">—</h1>
+      <div class="pdp-price" id="pdpPriceRow"></div>
+      <p class="pdp-desc" id="pdpDesc"></p>
+      <div class="dim-table" id="dimTable"></div>
+      <div class="opt-block" id="pdpColorBlock"><div class="opt-label">Finition</div><div class="color-select" id="pdpColorSelect"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+      <div class="trust-list">
+        <div>— Livraison et montage inclus</div>
+        <div>— Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>— Garantie 10 ans sur les pièces</div>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Complète la pièce</h2><div class="grid3" id="relatedGrid"></div></section>
+</div>
+
+<!-- ============ PANIER ============ -->
+<div class="view" id="view-panier">
+  <div class="narrow">
+    <h1 id="cartTitle">Panier</h1>
+    <div id="cartItems"></div>
+    <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:20px;">Voir le catalogue</a></div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+      <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo"><button onclick="applyPromo()">Appliquer</button></div>
+      <div class="promo-msg" id="promoMsg"></div>
+      <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+      <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:22px;" id="checkoutBtn">Passer la commande</a>
+      <div class="trust-mini">Livraison et montage inclus — Garantie 10 ans — Paiement Orange Money, MTN MoMo, Visa</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMMANDE ============ -->
+<div class="view" id="view-commande">
+  <div class="narrow">
+    <h1>Commande</h1>
+    <div class="section-title">Livraison</div>
+    <div class="field-row">
+      <div class="field" id="f-prenom"><label>Prénom</label><input type="text"><div class="err-msg">Requis</div></div>
+      <div class="field" id="f-nom"><label>Nom</label><input type="text"><div class="err-msg">Requis</div></div>
+    </div>
+    <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-adresse"><label>Adresse</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-ville"><label>Ville</label><input type="text"><div class="err-msg">Requis</div></div>
+
+    <div class="section-title">Créneau de montage</div>
+    <div class="delivery-opts">
+      <div class="delivery-opt active" data-price="0" onclick="pickDelivery(this)"><div><b>Semaine standard</b><span>Sous 2 à 3 semaines</span></div><span>Inclus</span></div>
+      <div class="delivery-opt" data-price="15000" onclick="pickDelivery(this)"><div><b>Livraison prioritaire</b><span>Sous 5 jours ouvrés</span></div><span>15 000 XAF</span></div>
+    </div>
+
+    <div class="section-title">Paiement</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire</b></div></div>
+    </div>
+
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row"><span>Montage & livraison</span><span id="osDelivery">Inclus</span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:24px;" onclick="submitOrder()">Confirmer et payer</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div class="view" id="view-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Commande confirmée</h1>
+    <p>Un message de confirmation a été envoyé sur WhatsApp. Notre équipe te contactera pour convenir du créneau de montage.</p>
+    <div class="order-no" id="orderNumber">Commande N°—</div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:36px; display:inline-flex;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:18px;">HALLE</div><p>Mobilier fabriqué à la commande, conçu à Douala.</p></div>
+    <div><h4>Catalogue</h4><ul><li><a onclick="go('boutique')">Assises</a></li><li><a onclick="go('boutique')">Tables</a></li></ul></div>
+    <div><h4>Maison</h4><ul><li><a>Notre atelier</a></li><li><a>Matières</a></li></ul></div>
+    <div><h4>Service</h4><ul><li><a>Livraison</a></li><li><a>Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 HALLE</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function toneBg(t){
+  const map = { t1:'linear-gradient(160deg,#cfc6b5,#8f8370)', t2:'linear-gradient(160deg,#9a6f47,#4a2f19)',
+    t3:'linear-gradient(160deg,#d8d3c6,#948c78)', t4:'linear-gradient(160deg,#2b2723,#0c0a09)' };
+  return map[t] || map.t1;
+}
+const PRODUCTS = {
+  chaise: { name:'Chaise Confluence', price:86000, was:null, cat:'assises', tone:'t1', ref:'CH-04',
+    desc:"Chêne massif huilé à la main, assemblage tenon-mortaise, assise cannée. Fabriquée à la commande.",
+    dims:{ 'Largeur':'46 cm', 'Profondeur':'52 cm', 'Hauteur':'82 cm' }, colors:['#8B5E34','#242220','#B8AD9A'] },
+  canape: { name:'Canapé Talus', price:420000, was:null, cat:'assises', tone:'t2', ref:'CN-02',
+    desc:"Structure bois massif, assise mousse haute résilience, housse déhoussable lavable.",
+    dims:{ 'Largeur':'210 cm', 'Profondeur':'88 cm', 'Hauteur':'78 cm' }, colors:['#8B5E34','#7A756D','#242220'] },
+  table:  { name:'Table Basse Grès', price:145000, was:null, cat:'tables', tone:'t3', ref:'TB-07',
+    desc:"Plateau pierre reconstituée, piétement bois massif, finition mate.",
+    dims:{ 'Largeur':'110 cm', 'Profondeur':'60 cm', 'Hauteur':'38 cm' }, colors:['#948C78','#242220'] },
+  lampe:  { name:'Lampadaire Argile', price:68000, was:null, cat:'luminaires', tone:'t4', ref:'LP-11',
+    desc:"Structure métal noirci, abat-jour lin naturel, interrupteur pied.",
+    dims:{ 'Diamètre':'38 cm', 'Hauteur':'158 cm' }, colors:['#242220','#8B5E34'] },
+  chaise2:{ name:'Chaise Méridien', price:92000, was:98000, cat:'assises', tone:'t3', ref:'CH-05',
+    desc:"Assise rembourrée tissu bouclette, piétement bois massif galbé.",
+    dims:{ 'Largeur':'48 cm', 'Profondeur':'54 cm', 'Hauteur':'80 cm' }, colors:['#948C78','#8B5E34'] },
+  table2: { name:'Table à Manger Atelier', price:290000, was:null, cat:'tables', tone:'t1', ref:'TB-12',
+    desc:"Plateau chêne massif 4cm d'épaisseur, piétement acier noirci.",
+    dims:{ 'Longueur':'180 cm', 'Largeur':'90 cm', 'Hauteur':'74 cm' }, colors:['#8B5E34','#242220'] },
+  lampe2: { name:'Suspension Halo', price:54000, was:null, cat:'luminaires', tone:'t2', ref:'LP-06',
+    desc:"Suspension rotin tressé main, douille E27, câble textile ajustable.",
+    dims:{ 'Diamètre':'42 cm' }, colors:['#8B5E34'] },
+  bureau: { name:'Bureau Filigrane', price:210000, was:null, cat:'tables', tone:'t4', ref:'TB-09',
+    desc:"Plateau bois massif, tiroir intégré, câblage traversant dissimulé.",
+    dims:{ 'Largeur':'130 cm', 'Profondeur':'62 cm', 'Hauteur':'74 cm' }, colors:['#242220','#8B5E34'] },
+  fauteuil:{ name:'Fauteuil Dune', price:168000, was:null, cat:'assises', tone:'t1', ref:'CH-08',
+    desc:"Fauteuil bas structure bois cintré, coussins amovibles déhoussables.",
+    dims:{ 'Largeur':'78 cm', 'Profondeur':'80 cm', 'Hauteur':'72 cm' }, colors:['#948C78','#242220'] }
+};
+const PROMO_CODES = { 'HALLE10':0.10, 'ATELIER15':0.15 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'chaise';
+let pdpSelectedColor = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '', deliveryFee = 0, activeCat = 'all';
+let openHotspotId = null;
+
+function fmt(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const priceHTML = p.was ? `<span style="text-decoration:line-through;color:var(--graphite);margin-right:8px;">${fmt(p.was)}</span><span class="price now">${fmt(p.price)}</span>` : `<span class="price now">${fmt(p.price)}</span>`;
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  const dimKeys = Object.keys(p.dims);
+  return `<a onclick="viewProduct('${id}')" class="pcard" data-id="${id}" data-cat="${p.cat}" data-price="${p.price}">
+    <div class="media" style="background:${toneBg(p.tone)};"><span class="wl ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span>
+    <div class="dims"><span>${p.dims[dimKeys[0]]}</span><span>${p.ref}</span></div></div>
+    <div class="info"><span class="name">${p.name}</span>${priceHTML}</div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,3).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+function pickCat(el, cat){ activeCat = cat; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); applyFilters(); }
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('#plpGrid .pcard'));
+  let visible=0;
+  cards.forEach(card=>{ const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat; card.style.display=ok?'':'none'; if(ok) visible++; });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('plpCount').textContent = visible + ' pièce' + (visible>1?'s':'');
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wl[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+
+/* room hotspot logic */
+function toggleHotspot(el, id){
+  document.querySelectorAll('.hotspot').forEach(h=>h.classList.remove('active'));
+  const card = document.getElementById('hotspotCard');
+  if(openHotspotId === id){ card.classList.remove('show'); openHotspotId = null; return; }
+  el.classList.add('active');
+  openHotspotId = id;
+  const p = PRODUCTS[id];
+  card.innerHTML = `<div class="hc-media" style="background:${toneBg(p.tone)};"></div><b>${p.name}</b><span class="price">${fmt(p.price)}</span><a class="view-link" onclick="event.stopPropagation(); viewProduct('${id}')">Voir la fiche produit →</a>`;
+  card.classList.add('show');
+  const rect = el.getBoundingClientRect(); const stageRect = el.parentElement.getBoundingClientRect();
+  let left = el.offsetLeft + 34; let top = el.offsetTop - 10;
+  if(left + 220 > stageRect.width) left = el.offsetLeft - 234;
+  card.style.left = left + 'px'; card.style.top = Math.max(0, top) + 'px';
+}
+
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedColor=p.colors[0]; pdpQty=1; renderProduct(); go('produit'); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpEyebrow').textContent = 'RÉF. ' + p.ref;
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpPriceRow').innerHTML = p.was ? `${fmt(p.price)} <span style="text-decoration:line-through;color:var(--graphite);font-size:15px;">${fmt(p.was)}</span>` : fmt(p.price);
+
+  const main = document.getElementById('pdpMain'); const thumbs = document.getElementById('pdpThumbs');
+  const tones = ['t1','t2','t3','t4'];
+  main.innerHTML = tones.map((t,i)=>`<div class="g-slide ${i===0?'active':''}" data-slide="${i}" style="background:${toneBg(t)};"></div>`).join('') + `<span class="dim-line" style="bottom:14px; left:14px;">REF ${p.ref}</span>`;
+  thumbs.innerHTML = tones.map((t,i)=>`<div class="thumb ${i===0?'active':''}" style="background:${toneBg(t)};" onclick="swapImg(this,${i})"></div>`).join('');
+
+  document.getElementById('dimTable').innerHTML = Object.entries(p.dims).map(([k,v])=>`<div class="dim-row"><span>${k}</span><span>${v}</span></div>`).join('');
+  document.getElementById('pdpColorSelect').innerHTML = p.colors.map(c=>`<span style="background:${c};" class="${c===pdpSelectedColor?'active':''}" onclick="pickPdpColor(this,'${c}')"></span>`).join('');
+
+  document.getElementById('pdpQty').value = pdpQty;
+  updateAddButton();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function swapImg(el,idx){ document.querySelectorAll('.pdp-thumbs .thumb').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  document.querySelectorAll('.g-slide').forEach(s=>s.classList.toggle('active', s.getAttribute('data-slide')===String(idx))); }
+function pickPdpColor(el,c){ pdpSelectedColor=c; document.querySelectorAll('#pdpColorSelect span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updateAddButton(); }
+function updateAddButton(){ const p=PRODUCTS[currentProductId]; document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmt(p.price*pdpQty)}`; }
+
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const existing = cart.find(it=>it.id===currentProductId && it.color===pdpSelectedColor);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, color:pdpSelectedColor, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+PRODUCTS[it.id].price*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap = document.getElementById('cartItems'); const empty = document.getElementById('cartEmpty');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb" style="background:${toneBg(p.tone)};"></div>
+      <div class="meta"><b>${p.name}</b><span>Réf. ${p.ref}</span><a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmt(p.price*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmt(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toUpperCase(); const msg = document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickDelivery(el){ document.querySelectorAll('.delivery-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); deliveryFee=Number(el.getAttribute('data-price')); renderCheckoutSummary(); }
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount); const total = subtotal-disc+deliveryFee;
+  document.getElementById('osSubtotal').textContent = fmt(subtotal);
+  document.getElementById('osDelivery').textContent = deliveryFee>0 ? fmt(deliveryFee) : 'Inclus';
+  document.getElementById('osTotal').textContent = fmt(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmt(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'HAL-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent = 'Commande N°' + orderNo;
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('chaise'); go('home');
+cart.push({id:'chaise', color:'#8B5E34', qty:2});
+cart.push({id:'lampe', color:'#242220', qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

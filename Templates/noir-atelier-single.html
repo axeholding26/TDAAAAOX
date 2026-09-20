@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>NOIR ATELIER — Site complet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Archivo+Narrow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ========= NOIR ATELIER — Design System ========= */
+:root{
+  --ink:#15131A; --paper:#F3F0E9; --panel:#EAE5D8; --stone:#948E82;
+  --burgundy:#5C1420; --gold:#A9824F; --line: rgba(21,19,26,0.14);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--paper); color:var(--ink); font-family:'Archivo Narrow', sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input, select{font-family:inherit;}
+button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Fraunces', serif; font-weight:400; }
+.label{ font-family:'Archivo Narrow', sans-serif; font-size:12.5px; letter-spacing:0.07em; color:var(--stone); }
+.wrap{ max-width:1320px; margin:0 auto; padding:0 4vw; }
+
+/* page router */
+.page{ display:none; }
+.page.active{ display:block; }
+
+/* header */
+.promo-bar{ background:var(--ink); color:var(--paper); text-align:center; padding:9px 0; font-size:12px; letter-spacing:0.04em; }
+header{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:20px 4vw; background:rgba(243,240,233,0.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--line); }
+.logo{ font-size:22px; letter-spacing:0.02em; font-weight:500; }
+nav ul{ display:flex; gap:34px; list-style:none; font-size:13.5px; letter-spacing:0.03em; }
+nav ul li a{ position:relative; padding-bottom:4px; }
+nav ul li a::after{ content:''; position:absolute; left:0; bottom:0; width:0; height:1px; background:var(--ink); transition:width .35s ease; }
+nav ul li a:hover::after, nav ul li a.active::after{ width:100%; }
+.nav-right{ display:flex; gap:22px; align-items:center; font-size:13px; }
+.nav-right a:hover{ color:var(--burgundy); }
+.cart-count{ background:var(--burgundy); color:var(--paper); font-size:10px; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; margin-left:4px; position:relative; top:-6px; }
+@media(max-width:900px){ nav ul{display:none;} }
+
+.breadcrumb{ padding:20px 4vw 0; font-size:12.5px; color:var(--stone); max-width:1320px; margin:0 auto; }
+.breadcrumb a:hover{ color:var(--ink); }
+
+/* buttons */
+.btn-primary{ display:inline-flex; align-items:center; gap:12px; width:fit-content; font-size:13.5px; letter-spacing:0.04em; padding:15px 30px; background:var(--ink); color:var(--paper); transition:background .3s ease; }
+.btn-primary:hover{ background:var(--burgundy); }
+.btn-ghost{ display:inline-flex; align-items:center; gap:10px; width:fit-content; font-size:13px; letter-spacing:0.04em; padding:14px 28px; border:1px solid var(--ink); background:transparent; color:var(--ink); transition:background .3s ease, color .3s ease; }
+.btn-ghost:hover{ background:var(--ink); color:var(--paper); }
+.btn-full{ width:100%; justify-content:center; }
+
+/* product card */
+.grain-layer{ position:absolute; inset:0; width:100%; height:100%; opacity:0.5; mix-blend-mode:overlay; pointer-events:none; }
+.product-card{ background:var(--paper); position:relative; display:block; }
+.product-card .media{ position:relative; aspect-ratio:3/4; overflow:hidden; background:var(--panel); }
+.product-card .media .ph{ width:100%; height:100%; transition:transform .7s cubic-bezier(.2,.8,.2,1); }
+.product-card:hover .media .ph{ transform:scale(1.035); }
+.product-card .wishlist{ position:absolute; top:14px; right:14px; z-index:2; width:32px; height:32px; border-radius:50%; background:rgba(243,240,233,0.85); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.product-card .tag{ position:absolute; top:14px; left:14px; z-index:2; background:var(--burgundy); color:var(--paper); font-size:10.5px; letter-spacing:0.04em; padding:5px 10px; }
+.product-card .info{ display:flex; justify-content:space-between; align-items:baseline; padding:16px 2px 8px; }
+.product-card .info .name{ font-family:'Fraunces', serif; font-size:16px; }
+.product-card .info .price{ font-size:13px; color:var(--stone); }
+.product-card .price.was{ text-decoration:line-through; margin-right:6px; }
+.product-card .price.now{ color:var(--burgundy); }
+.swatch-row{ display:flex; gap:6px; padding:0 2px; }
+.swatch-row span{ width:14px; height:14px; border-radius:50%; border:1px solid var(--line); }
+
+/* footer */
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--line); margin-top:70px; }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1fr; gap:36px; padding-bottom:44px; border-bottom:1px solid var(--line); }
+.foot-grid h4{ font-size:12px; letter-spacing:0.04em; color:var(--stone); margin-bottom:16px; font-weight:500; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a{ font-size:13.5px; }
+.foot-grid ul li a:hover{ color:var(--burgundy); }
+.foot-brand p{ margin-top:16px; max-width:30ch; font-size:13px; color:var(--stone); line-height:1.6; }
+.pay-icons{ display:flex; gap:8px; margin-top:16px; }
+.pay-icons span{ font-size:10px; border:1px solid var(--line); padding:4px 8px; color:var(--stone); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; padding-top:22px; font-size:12px; color:var(--stone); letter-spacing:0.02em; }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+
+/* forms */
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:12.5px; letter-spacing:0.03em; color:var(--stone); margin-bottom:8px; }
+.field input, .field select{ width:100%; border:1px solid var(--line); background:#fff; padding:13px 14px; font-size:14px; color:var(--ink); }
+.field input:focus, .field select:focus{ outline:none; border-color:var(--ink); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+/* placeholder art gradients */
+.g1{ background: linear-gradient(160deg,#2b2530,#5c1420 130%); }
+.g2{ background: linear-gradient(200deg,#8a7a63,#15131a 140%); }
+.g3{ background: linear-gradient(180deg,#3a3742,#948e82 160%); }
+.g4{ background: linear-gradient(210deg,#5c1420,#a9824f 150%); }
+.g5{ background: linear-gradient(150deg,#15131a,#3a3742 160%); }
+
+/* ===== HOME ===== */
+.hero{ display:grid; grid-template-columns: 1.15fr 0.85fr; min-height: 82vh; border-bottom:1px solid var(--line); }
+.hero-copy{ display:flex; flex-direction:column; justify-content:center; padding: 6vw 5vw; border-right:1px solid var(--line); }
+.hero-copy .label{ margin-bottom:26px; }
+.hero-copy h1{ font-size: clamp(38px, 5vw, 72px); line-height:1.03; letter-spacing:-0.01em; max-width:11ch; }
+.hero-copy p{ margin-top:26px; max-width:38ch; font-size:15px; line-height:1.6; color:#3a3742; }
+.hero-visual{ position:relative; overflow:hidden; }
+.hero-visual::before{ content:''; position:absolute; inset:0; z-index:1; background: linear-gradient(115deg, transparent 38%, rgba(169,130,79,0.28) 54%, transparent 72%), radial-gradient(60% 50% at 50% 100%, rgba(0,0,0,0.55), transparent 70%); }
+.hero-tag{ position:absolute; left:32px; bottom:32px; z-index:2; font-size:12px; color:var(--paper); display:flex; flex-direction:column; gap:4px; }
+.hero-tag b{ font-family:'Fraunces', serif; font-size:16px; font-weight:400; }
+.marquee{ border-bottom:1px solid var(--line); padding:14px 0; overflow:hidden; white-space:nowrap; }
+.marquee-track{ display:inline-flex; gap:60px; animation: scrollx 26s linear infinite; font-size:13px; letter-spacing:0.08em; color:var(--stone); }
+@keyframes scrollx{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.section{ padding: 90px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:42px; border-bottom:1px solid var(--line); padding-bottom:24px; }
+.section-head h2{ font-size:34px; }
+.section-head .label{ text-align:right; max-width:26ch; }
+.grid6{ display:grid; grid-template-columns: repeat(6, 1fr); gap: 24px 22px; }
+.c2{ grid-column: span 2; }
+@media(max-width:980px){ .grid6{ grid-template-columns: repeat(2,1fr); } .c2{ grid-column: span 1; } }
+.story{ display:grid; grid-template-columns: 0.9fr 1.1fr; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.story-visual{ background: radial-gradient(140% 100% at 20% 100%, #7a2635 0%, #3c1319 38%, #15131a 70%); min-height:480px; position:relative; overflow:hidden; }
+.story-visual .label{ position:absolute; top:28px; left:28px; color:var(--paper); opacity:.7; z-index:2;}
+.story-copy{ padding: 6vw 5vw; display:flex; flex-direction:column; justify-content:center; border-left:1px solid var(--line); }
+.story-copy .label{ margin-bottom:20px; }
+.story-copy h3{ font-size: clamp(26px,3vw,38px); line-height:1.15; max-width:16ch; }
+.story-copy p{ margin-top:22px; max-width:44ch; font-size:14.5px; line-height:1.7; color:#3a3742; }
+.story-link{ margin-top:28px; font-size:13px; letter-spacing:0.04em; border-bottom:1px solid var(--ink); width:fit-content; padding-bottom:3px; }
+@media(max-width:860px){ .story{ grid-template-columns:1fr; } .story-copy{ border-left:none; border-top:1px solid var(--line);} }
+.testi-band{ background:var(--panel); padding:80px 4vw; margin-top:70px; }
+.testi-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:repeat(3,1fr); gap:36px; }
+.testi-card b{ display:block; font-family:'Fraunces',serif; font-size:15px; margin-top:14px; }
+.testi-card span{ font-size:12px; color:var(--stone); }
+.testi-card .stars{ color:var(--gold); font-size:14px; letter-spacing:2px; }
+.testi-card p{ margin-top:14px; font-size:14px; line-height:1.7; color:#3a3742; }
+@media(max-width:880px){ .testi-grid{ grid-template-columns:1fr; } }
+.news{ padding:90px 4vw; text-align:center; max-width:1320px; margin:0 auto; }
+.news h2{ font-size:30px; max-width:16ch; margin:0 auto; }
+.news p{ margin-top:16px; color:var(--stone); font-size:14px; max-width:40ch; margin-left:auto; margin-right:auto; }
+.news-form{ display:flex; max-width:440px; margin:28px auto 0; border:1px solid var(--ink); }
+.news-form input{ flex:1; border:none; padding:14px 16px; font-size:14px; background:transparent; }
+.news-form input:focus{ outline:none; }
+.news-form button{ background:var(--ink); color:var(--paper); padding:0 24px; font-size:13px; letter-spacing:0.04em; }
+
+/* ===== BOUTIQUE ===== */
+.page-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 10px; display:flex; justify-content:space-between; align-items:flex-end; }
+.page-head h1{ font-size:36px; }
+.page-head span{ font-size:13px; color:var(--stone); }
+.listing{ max-width:1320px; margin:0 auto; padding:30px 4vw 90px; display:grid; grid-template-columns:230px 1fr; gap:44px; }
+.filters h4{ font-size:12.5px; letter-spacing:0.04em; color:var(--ink); margin:26px 0 14px; text-transform:uppercase; }
+.filters h4:first-child{ margin-top:0; }
+.filter-opt{ display:flex; align-items:center; gap:10px; font-size:13.5px; margin-bottom:10px; color:#3a3742; cursor:pointer; }
+.filter-opt input{ accent-color:var(--ink); }
+.color-opts{ display:flex; gap:8px; flex-wrap:wrap; }
+.color-opts span{ width:22px; height:22px; border-radius:50%; border:1px solid var(--line); cursor:pointer; }
+.price-range{ font-size:13px; color:var(--stone); margin-top:8px; }
+.clear-filters{ font-size:12px; text-decoration:underline; color:var(--stone); margin-top:20px; display:inline-block; }
+.toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; border-bottom:1px solid var(--line); padding-bottom:18px; }
+.toolbar span{ font-size:13px; color:var(--stone); }
+.sort-select{ border:1px solid var(--line); padding:9px 14px; font-size:13px; background:#fff; }
+.plp-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:30px 24px; }
+@media(max-width:900px){ .listing{ grid-template-columns:1fr; } .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+.pagination{ display:flex; justify-content:center; gap:10px; margin-top:60px; }
+.pagination a{ width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:1px solid var(--line); font-size:13px; }
+.pagination a.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
+/* ===== PRODUIT ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:80px 1fr 1fr; gap:30px; }
+.pdp-rail{ display:flex; flex-direction:column; gap:10px; }
+.pdp-rail .thumb{ aspect-ratio:3/4; overflow:hidden; border:1px solid transparent; opacity:.5; transition:opacity .25s, border-color .25s; cursor:pointer; position:relative; }
+.pdp-rail .thumb.active{ opacity:1; border-color:var(--ink); }
+.pdp-main{ position:relative; aspect-ratio:3/4; overflow:hidden; }
+.pdp-main .g-slide{ position:absolute; inset:0; opacity:0; transition:opacity .4s ease; }
+.pdp-main .g-slide.active{ opacity:1; }
+.pdp-info{ padding:0 0.5vw; }
+.pdp-info .label{ margin-bottom:10px; }
+.pdp-info h1{ font-size:30px; max-width:16ch; }
+.price-row{ margin-top:14px; display:flex; align-items:baseline; gap:12px; }
+.price-row .now{ font-family:'Fraunces',serif; font-size:22px; }
+.rating-row{ margin-top:10px; display:flex; align-items:center; gap:10px; }
+.rating-row .stars{ color:var(--gold); font-size:14px; letter-spacing:2px; }
+.rating-row span{ font-size:12.5px; color:var(--stone); }
+.opt-block{ margin-top:30px; }
+.opt-block .opt-label{ display:flex; justify-content:space-between; font-size:13px; margin-bottom:12px; }
+.opt-label a{ text-decoration:underline; color:var(--stone); }
+.color-select{ display:flex; gap:10px; }
+.color-select span{ width:28px; height:28px; border-radius:50%; border:2px solid transparent; cursor:pointer; }
+.color-select span.active{ border-color:var(--ink); }
+.size-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.size-select button{ border:1px solid var(--line); padding:11px 18px; font-size:13px; background:#fff; }
+.size-select button.active, .size-select button:hover{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
+.size-select button.oos{ color:var(--stone); text-decoration:line-through; opacity:.5; cursor:not-allowed; }
+.qty-cart-row{ margin-top:30px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--line); }
+.qty-box button{ width:40px; height:52px; font-size:16px; }
+.qty-box input{ width:40px; text-align:center; border:none; font-size:14px; }
+.qty-cart-row .btn-primary{ flex:1; justify-content:center; }
+.trust-list{ margin-top:26px; display:flex; flex-direction:column; gap:10px; }
+.trust-list div{ font-size:12.5px; color:#3a3742; }
+.accordion{ margin-top:40px; border-top:1px solid var(--line); }
+.acc-item{ border-bottom:1px solid var(--line); }
+.acc-head{ width:100%; display:flex; justify-content:space-between; align-items:center; padding:18px 2px; font-size:14px; }
+.acc-body{ padding:0 2px 20px; font-size:13.5px; color:#3a3742; line-height:1.75; display:none; }
+.acc-item.open .acc-body{ display:block; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:28px; margin-bottom:30px; }
+.related-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } .pdp-rail{ flex-direction:row; overflow-x:auto; } .pdp-rail .thumb{ min-width:70px; } .related-grid{ grid-template-columns:repeat(2,1fr); } }
+.reviews-section{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.reviews-head{ display:flex; gap:50px; align-items:center; margin-bottom:40px; }
+.rev-score{ text-align:center; } .rev-score b{ font-family:'Fraunces',serif; font-size:44px; display:block; }
+.review-item{ border-top:1px solid var(--line); padding:22px 0; }
+.review-item .rtop{ display:flex; justify-content:space-between; margin-bottom:8px; }
+.review-item .rtop b{ font-size:13.5px; } .review-item .stars{ font-size:12px; color:var(--gold); }
+.review-item p{ font-size:13.5px; color:#3a3742; line-height:1.7; }
+
+/* ===== PANIER ===== */
+.cart-wrap{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; }
+.cart-wrap h1{ font-size:32px; margin-bottom:36px; }
+.cart-layout{ display:grid; grid-template-columns:1fr 380px; gap:60px; align-items:start; }
+.cart-item{ display:grid; grid-template-columns:110px 1fr auto; gap:20px; padding:24px 0; border-bottom:1px solid var(--line); align-items:center; }
+.cart-item .thumb{ aspect-ratio:3/4; overflow:hidden; position:relative; }
+.cart-item .meta b{ font-family:'Fraunces',serif; font-size:17px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12.5px; color:var(--stone); display:block; margin-bottom:4px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--stone); margin-top:8px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ display:flex; align-items:center; border:1px solid var(--line); margin-bottom:10px; }
+.cart-item .qty-box button{ width:32px; height:36px; font-size:14px; }
+.cart-item .qty-box input{ width:32px; text-align:center; border:none; font-size:13px; }
+.cart-item .price{ font-family:'Fraunces',serif; font-size:16px; }
+.summary{ background:var(--panel); padding:32px 28px; position:sticky; top:100px; }
+.summary h3{ font-size:20px; margin-bottom:22px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; margin-bottom:14px; color:#3a3742; }
+.sum-row.total{ font-family:'Fraunces',serif; font-size:19px; color:var(--ink); border-top:1px solid var(--line); padding-top:16px; margin-top:16px; }
+.promo-row{ display:flex; gap:8px; margin:20px 0; }
+.promo-row input{ flex:1; border:1px solid var(--line); padding:11px 12px; font-size:13px; background:#fff; }
+.promo-row button{ border:1px solid var(--ink); padding:0 16px; font-size:12.5px; }
+.trust-mini{ margin-top:20px; font-size:12px; color:var(--stone); line-height:1.8; }
+
+/* ===== COMMANDE ===== */
+.checkout-wrap{ max-width:1200px; margin:0 auto; padding:50px 4vw 100px; display:grid; grid-template-columns:1fr 400px; gap:70px; }
+.checkout-wrap h2{ font-size:20px; margin:40px 0 20px; }
+.checkout-wrap h2:first-child{ margin-top:0; }
+.steps-row{ max-width:1200px; margin:0 auto; padding:20px 4vw 0; display:flex; gap:8px; font-size:12px; color:var(--stone); }
+.steps-row span.active{ color:var(--ink); font-weight:600; }
+.delivery-opts{ display:flex; flex-direction:column; gap:12px; }
+.delivery-opt{ border:1px solid var(--line); padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.delivery-opt.active{ border-color:var(--ink); background:var(--panel); }
+.delivery-opt b{ font-size:13.5px; display:block; } .delivery-opt span{ font-size:12px; color:var(--stone); }
+.delivery-opt .price{ font-family:'Fraunces',serif; font-size:14px; }
+.pay-opts{ display:flex; flex-direction:column; gap:12px; }
+.pay-opt{ border:1px solid var(--line); padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; }
+.pay-opt.active{ border-color:var(--ink); background:var(--panel); }
+.pay-opt .radio{ width:16px; height:16px; border-radius:50%; border:1.5px solid var(--ink); position:relative; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--ink); border-radius:50%; }
+.pay-opt b{ font-size:13.5px; }
+.momo-fields{ margin-top:10px; display:none; }
+.pay-opt.active .momo-fields{ display:block; }
+.order-summary{ background:var(--panel); padding:32px 28px; position:sticky; top:20px; }
+.order-summary h3{ font-size:19px; margin-bottom:22px; }
+.os-item{ display:flex; gap:14px; margin-bottom:16px; align-items:center; }
+.os-item .thumb{ width:54px; aspect-ratio:3/4; overflow:hidden; position:relative; flex-shrink:0; }
+.os-item .meta{ flex:1; font-size:12.5px; }
+.os-item .meta b{ display:block; font-family:'Fraunces',serif; font-size:13.5px; }
+.os-item .price{ font-size:13px; }
+@media(max-width:900px){ .checkout-wrap{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="film-grain" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="11" stitchTiles="stitch" result="noise"/>
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="promo-bar">LIVRAISON OFFERTE DÈS 250 000 XAF — RETOURS SOUS 30 JOURS</div>
+<header>
+  <div class="logo">NOIR ATELIER</div>
+  <nav><ul>
+    <li><a onclick="go('home')" id="nav-home" class="active">Accueil</a></li>
+    <li><a onclick="go('boutique')" id="nav-boutique">Femme</a></li>
+    <li><a onclick="go('boutique')">Homme</a></li>
+    <li><a onclick="go('boutique')">Accessoires</a></li>
+  </ul></nav>
+  <div class="nav-right">
+    <a>Recherche</a><a>Compte</a>
+    <a onclick="go('panier')">Panier<span class="cart-count">2</span></a>
+  </div>
+</header>
+
+<!-- ============ PAGE: ACCUEIL ============ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-copy">
+      <div class="label">COLLECTION AUTOMNE — PIÈCE 001</div>
+      <h1>La matière avant l'ornement</h1>
+      <p>Une sélection resserrée de pièces façonnées à la main, pensées pour durer plus d'une saison. Douze silhouettes, aucune répétition.</p>
+      <a class="btn-primary" onclick="go('boutique')" style="margin-top:30px;">Découvrir la collection</a>
+    </div>
+    <div class="hero-visual g1">
+      <div class="hero-tag"><span>Manteau Structuré</span><b>Laine vierge — Ép. 001</b></div>
+      <svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg>
+    </div>
+  </section>
+
+  <div class="marquee"><div class="marquee-track">
+    <span>LIVRAISON OFFERTE DÈS 250 000 XAF</span><span>—</span><span>RETOURS SOUS 30 JOURS</span><span>—</span><span>FABRICATION EN PETITE SÉRIE</span><span>—</span>
+    <span>LIVRAISON OFFERTE DÈS 250 000 XAF</span><span>—</span><span>RETOURS SOUS 30 JOURS</span><span>—</span><span>FABRICATION EN PETITE SÉRIE</span><span>—</span>
+  </div></div>
+
+  <section class="section">
+    <div class="section-head"><h2>Pièces de la semaine</h2><div class="label">Chaque silhouette est produite en moins de 40 exemplaires.</div></div>
+    <div class="grid6">
+      <a onclick="go('produit')" class="product-card c2"><div class="media g1"><span class="tag">Nouveau</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Manteau Structuré</span><span class="price now">185 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card c2"><div class="media g2"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Robe Portefeuille</span><span class="price now">96 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card c2"><div class="media g4"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Sac Demi-Lune</span><span class="price now">142 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card c2"><div class="media g3"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Pantalon Fluide</span><span class="price now">78 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card c2"><div class="media g5"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Boucles Sculptées</span><span class="price now">54 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card c2"><div class="media g4"><span class="tag">-20%</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Écharpe Cachemire</span><span><span class="price was">48 000</span><span class="price now">38 000 XAF</span></span></div></a>
+    </div>
+  </section>
+
+  <section class="story">
+    <div class="story-visual"><div class="label">L'ATELIER</div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+    <div class="story-copy">
+      <div class="label">SAVOIR-FAIRE</div>
+      <h3>Chaque pièce porte la main de celui qui l'a faite</h3>
+      <p>Nos ateliers travaillent en série limitée avec des artisans installés depuis plus de vingt ans dans leur métier. Rien n'est produit avant d'être vendu — nous coupons ce que la demande justifie, pas ce que le calendrier impose.</p>
+      <a class="story-link">Lire notre histoire</a>
+    </div>
+  </section>
+
+  <section class="testi-band">
+    <div class="testi-grid">
+      <div class="testi-card"><span class="stars">★★★★★</span><p>"La matière du manteau structuré n'a rien à voir avec ce qu'on trouve ailleurs à ce prix. Coupe impeccable."</p><b>Aïcha K.</b><span>Cliente vérifiée — Douala</span></div>
+      <div class="testi-card"><span class="stars">★★★★★</span><p>"Livraison rapide, emballage soigné, et la robe portefeuille tombe exactement comme sur les photos."</p><b>Farida M.</b><span>Cliente vérifiée — Yaoundé</span></div>
+      <div class="testi-card"><span class="stars">★★★★★</span><p>"Le service client a été irréprochable pour un échange de taille. Je recommande sans hésiter."</p><b>Brice T.</b><span>Client vérifié — Douala</span></div>
+    </div>
+  </section>
+
+  <section class="news">
+    <h2>Sois informée avant les autres</h2>
+    <p>Accès prioritaire aux nouvelles collections et aux éditions limitées, une fois par semaine, jamais plus.</p>
+    <form class="news-form" onsubmit="return false;"><input type="email" placeholder="Ton adresse email"><button type="submit">S'inscrire</button></form>
+  </section>
+</div>
+
+<!-- ============ PAGE: BOUTIQUE ============ -->
+<div class="page" id="page-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / <a onclick="go('boutique')">Boutique</a> / Femme</div>
+  <div class="page-head"><h1>Vêtements Femme</h1><span>48 pièces</span></div>
+  <div class="listing">
+    <aside class="filters">
+      <h4>Catégorie</h4>
+      <label class="filter-opt"><input type="checkbox" checked>Manteaux & Vestes</label>
+      <label class="filter-opt"><input type="checkbox">Robes</label>
+      <label class="filter-opt"><input type="checkbox">Pantalons</label>
+      <label class="filter-opt"><input type="checkbox">Accessoires</label>
+      <h4>Taille</h4>
+      <label class="filter-opt"><input type="checkbox">XS</label>
+      <label class="filter-opt"><input type="checkbox" checked>S</label>
+      <label class="filter-opt"><input type="checkbox">M</label>
+      <label class="filter-opt"><input type="checkbox">L</label>
+      <h4>Couleur</h4>
+      <div class="color-opts">
+        <span style="background:#15131A;"></span><span style="background:#5C1420;"></span>
+        <span style="background:#A9824F;"></span><span style="background:#948E82;"></span>
+        <span style="background:#F3F0E9; border-color:#ccc;"></span>
+      </div>
+      <h4>Prix</h4><div class="price-range">30 000 XAF — 200 000 XAF</div>
+      <a class="clear-filters">Réinitialiser les filtres</a>
+    </aside>
+    <div>
+      <div class="toolbar"><span>Affichage 1–9 sur 48</span>
+        <select class="sort-select"><option>Trier : Nouveautés</option><option>Prix croissant</option><option>Prix décroissant</option><option>Popularité</option></select>
+      </div>
+      <div class="plp-grid">
+        <a onclick="go('produit')" class="product-card"><div class="media g1"><span class="tag">Nouveau</span><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Manteau Structuré</span><span class="price now">185 000 XAF</span></div><div class="swatch-row"><span style="background:#15131A;"></span><span style="background:#5C1420;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g2"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Robe Portefeuille</span><span class="price now">96 000 XAF</span></div><div class="swatch-row"><span style="background:#A9824F;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g4"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Sac Demi-Lune</span><span class="price now">142 000 XAF</span></div><div class="swatch-row"><span style="background:#5C1420;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g3"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Pantalon Fluide</span><span class="price now">78 000 XAF</span></div><div class="swatch-row"><span style="background:#948E82;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g5"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Boucles Sculptées</span><span class="price now">54 000 XAF</span></div><div class="swatch-row"><span style="background:#A9824F;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g4"><span class="tag">-20%</span><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Écharpe Cachemire</span><span><span class="price was">48 000</span><span class="price now">38 000 XAF</span></span></div><div class="swatch-row"><span style="background:#948E82;"></span><span style="background:#15131A;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g1"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Blazer Cintré</span><span class="price now">128 000 XAF</span></div><div class="swatch-row"><span style="background:#15131A;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g2"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Jupe Plissée</span><span class="price now">62 000 XAF</span></div><div class="swatch-row"><span style="background:#A9824F;"></span></div></a>
+        <a onclick="go('produit')" class="product-card"><div class="media g3"><span class="wishlist">♡</span><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Chemisier Soie</span><span class="price now">72 000 XAF</span></div><div class="swatch-row"><span style="background:#948E82;"></span></div></a>
+      </div>
+      <div class="pagination"><a href="#" class="active">1</a><a href="#">2</a><a href="#">3</a><a href="#">4</a><a href="#">→</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE: PRODUIT ============ -->
+<div class="page" id="page-produit">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / <a onclick="go('boutique')">Femme</a> / Manteau Structuré</div>
+  <section class="pdp">
+    <div class="pdp-rail">
+      <div class="thumb g1 active" onclick="swapImg(this,0)"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="thumb g4" onclick="swapImg(this,1)"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="thumb g2" onclick="swapImg(this,2)"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="thumb g5" onclick="swapImg(this,3)"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+    </div>
+    <div class="pdp-main">
+      <div class="g-slide g1 active" data-slide="0"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="g-slide g4" data-slide="1"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="g-slide g2" data-slide="2"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+      <div class="g-slide g5" data-slide="3"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+    </div>
+    <div class="pdp-info">
+      <div class="label">NOUVEAU — ÉDITION AUTOMNE</div>
+      <h1>Manteau Structuré</h1>
+      <div class="rating-row"><span class="stars">★★★★★</span><span>4.9 (86 avis)</span></div>
+      <div class="price-row"><span class="now">185 000 XAF</span></div>
+      <div class="opt-block"><div class="opt-label"><span>Couleur — Noir</span></div>
+        <div class="color-select"><span class="active" style="background:#15131A;" onclick="pickColor(this)"></span><span style="background:#5C1420;" onclick="pickColor(this)"></span><span style="background:#948E82;" onclick="pickColor(this)"></span></div>
+      </div>
+      <div class="opt-block"><div class="opt-label"><span>Taille</span><a>Guide des tailles</a></div>
+        <div class="size-select"><button onclick="pickSize(this)">XS</button><button class="active" onclick="pickSize(this)">S</button><button onclick="pickSize(this)">M</button><button onclick="pickSize(this)">L</button><button class="oos">XL</button></div>
+      </div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button>−</button><input type="text" value="1"><button>+</button></div>
+        <a class="btn-primary" onclick="go('panier')">Ajouter au panier — 185 000 XAF</a>
+      </div>
+      <div class="trust-list">
+        <div>✓ Livraison estimée : 3–5 jours ouvrés</div>
+        <div>✓ Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>✓ Retours gratuits sous 30 jours</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-item open"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Description</span><span>−</span></button><div class="acc-body">Manteau en laine vierge structurée, doublure satin, fermeture 3 boutons corne véritable. Coupe cintrée, épaules structurées, longueur mi-cuisse.</div></div>
+        <div class="acc-item"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Matières & entretien</span><span>+</span></button><div class="acc-body">80% laine vierge, 20% polyamide. Nettoyage à sec uniquement.</div></div>
+        <div class="acc-item"><button class="acc-head" onclick="this.parentElement.classList.toggle('open')"><span>Livraison & retours</span><span>+</span></button><div class="acc-body">Livraison offerte dès 250 000 XAF d'achat. Retours gratuits sous 30 jours.</div></div>
+      </div>
+    </div>
+  </section>
+  <section class="reviews-section">
+    <div class="reviews-head"><div class="rev-score"><b>4.9</b><span class="stars" style="color:var(--gold)">★★★★★</span><span style="font-size:12px; color:var(--stone);">86 avis</span></div></div>
+    <div class="review-item"><div class="rtop"><b>Aïcha K.</b><span class="stars">★★★★★</span></div><p>Coupe parfaite, la laine est vraiment dense et chaude.</p></div>
+    <div class="review-item"><div class="rtop"><b>Solange P.</b><span class="stars">★★★★★</span></div><p>Le genre de pièce qu'on garde des années.</p></div>
+  </section>
+  <section class="related">
+    <h2>Complète la silhouette</h2>
+    <div class="related-grid">
+      <a onclick="go('produit')" class="product-card"><div class="media g2"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Robe Portefeuille</span><span class="price now">96 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card"><div class="media g4"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Sac Demi-Lune</span><span class="price now">142 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card"><div class="media g5"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Boucles Sculptées</span><span class="price now">54 000 XAF</span></div></a>
+      <a onclick="go('produit')" class="product-card"><div class="media g3"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="info"><span class="name">Pantalon Fluide</span><span class="price now">78 000 XAF</span></div></a>
+    </div>
+  </section>
+</div>
+
+<!-- ============ PAGE: PANIER ============ -->
+<div class="page" id="page-panier">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Panier</div>
+  <div class="cart-wrap">
+    <h1>Ton panier (2)</h1>
+    <div class="cart-layout">
+      <div>
+        <div class="cart-item">
+          <div class="thumb g1"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+          <div class="meta"><b>Manteau Structuré</b><span>Couleur : Noir</span><span>Taille : S</span><a class="remove">Retirer</a></div>
+          <div class="right"><div class="qty-box"><button>−</button><input type="text" value="1"><button>+</button></div><div class="price">185 000 XAF</div></div>
+        </div>
+        <div class="cart-item">
+          <div class="thumb g4"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div>
+          <div class="meta"><b>Sac Demi-Lune</b><span>Couleur : Bordeaux</span><a class="remove">Retirer</a></div>
+          <div class="right"><div class="qty-box"><button>−</button><input type="text" value="1"><button>+</button></div><div class="price">142 000 XAF</div></div>
+        </div>
+        <a class="btn-ghost" onclick="go('boutique')" style="margin-top:30px;">← Continuer mes achats</a>
+      </div>
+      <div class="summary">
+        <h3>Récapitulatif</h3>
+        <div class="sum-row"><span>Sous-total</span><span>327 000 XAF</span></div>
+        <div class="sum-row"><span>Livraison</span><span>Offerte</span></div>
+        <div class="promo-row"><input type="text" placeholder="Code promo"><button>Appliquer</button></div>
+        <div class="sum-row total"><span>Total</span><span>327 000 XAF</span></div>
+        <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:20px;">Passer la commande</a>
+        <div class="trust-mini">✓ Paiement Orange Money, MTN MoMo, Visa<br>✓ Livraison estimée : 3–5 jours ouvrés<br>✓ Retours gratuits sous 30 jours</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PAGE: COMMANDE ============ -->
+<div class="page" id="page-commande">
+  <div class="steps-row"><span>Panier</span> → <span class="active">Commande</span> → <span>Confirmation</span></div>
+  <div class="checkout-wrap">
+    <div>
+      <h2>1. Coordonnées de livraison</h2>
+      <div class="field-row"><div class="field"><label>Prénom</label><input type="text" placeholder="Aïcha"></div><div class="field"><label>Nom</label><input type="text" placeholder="Kamdem"></div></div>
+      <div class="field"><label>Téléphone (WhatsApp)</label><input type="text" placeholder="+237 6XX XX XX XX"></div>
+      <div class="field"><label>Adresse</label><input type="text" placeholder="Rue, quartier"></div>
+      <div class="field-row"><div class="field"><label>Ville</label><input type="text" placeholder="Douala"></div><div class="field"><label>Point de repère (optionnel)</label><input type="text" placeholder="Près de..."></div></div>
+
+      <h2>2. Mode de livraison</h2>
+      <div class="delivery-opts">
+        <div class="delivery-opt active" onclick="pickDelivery(this)"><div><b>Livraison standard</b><span>3–5 jours ouvrés</span></div><span class="price">Offerte</span></div>
+        <div class="delivery-opt" onclick="pickDelivery(this)"><div><b>Livraison express</b><span>24–48h — Douala/Yaoundé uniquement</span></div><span class="price">5 000 XAF</span></div>
+        <div class="delivery-opt" onclick="pickDelivery(this)"><div><b>Retrait en boutique</b><span>Akwa, Douala — disponible sous 24h</span></div><span class="price">Gratuit</span></div>
+      </div>
+
+      <h2>3. Paiement</h2>
+      <div class="pay-opts">
+        <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:10px;"><input type="text" placeholder="Numéro Orange Money"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:10px;"><input type="text" placeholder="Numéro MTN MoMo"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire (Visa / Mastercard)</b></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Paiement à la livraison</b></div></div>
+      </div>
+      <a class="btn-primary btn-full" style="margin-top:36px;">Confirmer et payer — 327 000 XAF</a>
+    </div>
+    <div class="order-summary">
+      <h3>Ta commande</h3>
+      <div class="os-item"><div class="thumb g1"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="meta"><b>Manteau Structuré</b><span>Noir · S · Qté 1</span></div><div class="price">185 000 XAF</div></div>
+      <div class="os-item"><div class="thumb g4"><div class="ph"></div><svg class="grain-layer"><rect width="100%" height="100%" filter="url(#film-grain)"/></svg></div><div class="meta"><b>Sac Demi-Lune</b><span>Bordeaux · Qté 1</span></div><div class="price">142 000 XAF</div></div>
+      <div class="sum-row" style="padding-top:16px; border-top:1px solid var(--line);"><span>Sous-total</span><span>327 000 XAF</span></div>
+      <div class="sum-row"><span>Livraison</span><span>Offerte</span></div>
+      <div class="sum-row total"><span>Total</span><span>327 000 XAF</span></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:19px;">NOIR ATELIER</div><p>Pièces façonnées en petite série. Basé à Douala, distribué à l'international.</p><div class="pay-icons"><span>ORANGE MONEY</span><span>MTN</span><span>VISA</span></div></div>
+    <div><h4>BOUTIQUE</h4><ul><li><a onclick="go('boutique')">Femme</a></li><li><a onclick="go('boutique')">Homme</a></li><li><a onclick="go('boutique')">Accessoires</a></li></ul></div>
+    <div><h4>MAISON</h4><ul><li><a>Notre histoire</a></li><li><a>L'atelier</a></li><li><a>Presse</a></li></ul></div>
+    <div><h4>SERVICE</h4><ul><li><a>Livraison</a></li><li><a>Retours</a></li><li><a>Contact</a></li></ul></div>
+    <div><h4>COMPTE</h4><ul><li><a onclick="go('panier')">Mon panier</a></li><li><a onclick="go('commande')">Commander</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 NOIR ATELIER</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<script>
+  function go(page){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('nav-home').classList.toggle('active', page==='home');
+    document.getElementById('nav-boutique').classList.toggle('active', page==='boutique' || page==='produit');
+    window.scrollTo({top:0, behavior:'instant'});
+  }
+  function swapImg(el, idx){
+    document.querySelectorAll('.pdp-rail .thumb').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.g-slide').forEach(s=>{ s.classList.toggle('active', s.getAttribute('data-slide')===String(idx)); });
+  }
+  function pickSize(btn){ document.querySelectorAll('.size-select button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+  function pickColor(el){ document.querySelectorAll('.color-select span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
+  function pickDelivery(el){ document.querySelectorAll('.delivery-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+  function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+</script>
+</body>
+</html>

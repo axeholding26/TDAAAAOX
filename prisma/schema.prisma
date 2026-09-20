@@ -1,0 +1,1812 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================
+// TENANT (Boutique)
+// =====================
+model Tenant {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  customDomain        String?  @unique
+  nomBoutique         String
+  description         String?
+  categorie           String
+  pays                String
+  devise              String   @default("XAF")
+  whatsapp            String
+  whatsappNumero      String?  // Numéro WhatsApp marchand pour commandes physiques ex: "+22507XXXXXXXX"
+  email               String   @unique
+  telephone           String?
+  adresse             String?
+  logoUrl             String?
+  bannerUrl           String?
+  themeId             String   @default("terre-et-or")
+  themeConfig         Json     @default("{}")
+  commissionRate      Float    @default(0.06)
+  statut              String   @default("active")
+  planType            String   @default("gratuit")
+  planExpiresAt       DateTime?
+  planPendingRef      String?
+  metaTitle           String?
+  metaDescription     String?
+  socialLinks         Json     @default("{}")
+  parametresPaiement  Json     @default("{}")
+  parametresLivraison Json     @default("{}")
+  tauxTVA             Float    @default(0)
+  juridiction         String   @default("CM") // code pays ISO pour TVA
+  kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
+  kycDocUrl           String?
+  certifie            Boolean  @default(false)
+  snapActif             Boolean  @default(false)
+  parametresAffiliation Json?    @default("{}")
+  parametresCommande    Json     @default("{}") // formulaire "Commander maintenant" : champs actifs/personnalisés
+  metaPixelId           String? // Meta Pixel ID du marchand, injecté sur la vitrine
+  tiktokPixelId         String? // TikTok Pixel ID, injecté sur la vitrine
+  snapPixelId           String? // Snapchat Pixel ID, injecté sur la vitrine
+  gtmId                 String? // Google Tag Manager container ID (GTM-XXXXXXX), injecté sur la vitrine
+  trackingScripts       String?  @db.Text // Scripts de suivi personnalisés du marchand, injectés tels quels sur sa propre vitrine
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  produits               Produit[]
+  collections            Collection[]
+  commandes              Commande[]
+  clients                Client[]
+  commissions            Commission[]
+  codesPromo             CodePromo[]
+  avis                   Avis[]
+  membres                MembreEquipe[]
+  proprietaires          ProprietaireBoutique[]
+  analytics              Analytics[]
+  livreurs               Livreur[]
+  themes                 Theme[]
+  wallet                 Wallet?
+  postsSociaux           PostSocial[]
+  affiliationLiens       AffiliationLien[]
+  entrepots              Entrepot[]
+  affiliationsEntrantes  AffiliationEntrante[]
+  paiementsCommissions   PaiementCommission[]
+  commandesFournisseur   CommandeFournisseur[]
+  programmeAffiliation   ProgrammeAffiliation?
+  affilies               Affilie[]
+  commissionsAffilie     CommissionAffilie[]
+  notificationsMarchand  NotificationMarchand[]
+  stockMouvements        StockMouvement[]
+  lotsTracabilite        LotTracabilite[]
+  chargesExploitation    ChargeExploitation[]
+}
+
+// =====================
+// PRODUIT
+// =====================
+model Produit {
+  id              String   @id @default(cuid())
+  tenantId        String
+  nom             String
+  slug            String
+  description     String?
+  descriptionIA   String?
+  prix            Float
+  prixCompare     Float?
+  cout            Float?
+  stock           Int      @default(0)
+  sku             String?
+  codeBarres      String?  // EAN/UPC — utilisé par le scanner de la Caisse POS
+  images          String[]
+  videos          String[] // URLs vidéos produit (Vercel Blob)
+  categorie       String?
+  tags            String[]
+  poids           Float?
+  actif           Boolean  @default(true)
+  featured        Boolean  @default(false)
+  metaTitle       String?
+  metaDesc        String?
+  ogImage         String?   // Image Open Graph dédiée (sinon images[0])
+  masquerVentes   Boolean   @default(false)  // Masquer le compteur de ventes sur la boutique
+  visibleListage  Boolean   @default(true)   // false = masqué du catalogue, URL directe OK
+  texteBoutonAchat String?  // Texte personnalisé du bouton d'achat (défaut "Acheter")
+  faq             Json?     // [{ question: String, reponse: String }]
+  champsCommande  Json?     // [{ label: String, type: texte|email|telephone|choix, requis: Boolean, options?: String[] }]
+  ventes          Int      @default(0)
+  vues            Int      @default(0)
+  // Type de produit
+  type            String   @default("physique") // physique | digital | dropshipping
+  // Produit digital
+  fichierUrl      String?  // URL du fichier téléchargeable (Vercel Blob)
+  fichierNom      String?  // Nom du fichier affiché
+  fichierTaille   Int?     // Taille en octets
+  instructionsTelechargement String?
+  // Chariow (paiement digital via API Chariow)
+  chariowProduitId  String?  // ID du produit correspondant sur chariow.com (ex: prd_abc123)
+  // Affiliation
+  affiliationActive   Boolean @default(true)
+  tauxCommissionAff   Float?  // ex: 0.20 = 20% pour l'affilieur (sur le prix HT commission Axso)
+  // Dropshipping
+  prixFournisseur Float?   // Prix d'achat fournisseur
+  urlFournisseur  String?  // URL source produit fournisseur
+  nomFournisseur  String?  // Nom du fournisseur
+  fournisseurId   String?  // FK vers Fournisseur
+  // Stock
+  stockMin        Int?     // seuil de réapprovisionnement (alerte AXIA)
+  stockReserve    Int      @default(0) // stock réservé par paniers actifs
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  fournisseur     Fournisseur?     @relation(fields: [fournisseurId], references: [id])
+  variantes       Variante[]
+  collections     Collection[]     @relation("ProduitCollection")
+  lignesCommande  LigneCommande[]
+  avis            Avis[]
+  wishlist        Wishlist[]
+  telechargements Telechargement[]
+  accesFormations AccesFormation[]
+  affiliationLiens AffiliationLien[]
+  stocksEntrepot  StockEntrepot[]
+  stockMouvements StockMouvement[]
+  lotsTracabilite LotTracabilite[]
+  // Produits digitaux avancés
+  variantesPrix   VariantePrix[]
+  produitFichier  ProduitFichier?
+  formation       Formation?
+  licenceProduit  LicenceProduit?
+  bundleProduit   BundleProduit?
+  inclusEnBundle  ElementBundle[]  @relation("InclusDansBundle")
+
+  @@unique([tenantId, slug])
+  @@unique([tenantId, codeBarres])
+}
+
+// =====================
+// TÉLÉCHARGEMENT (produits digitaux)
+// =====================
+model Telechargement {
+  id         String   @id @default(cuid())
+  produitId  String
+  commandeId String
+  token      String   @unique
+  expireAt   DateTime
+  telecharge Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  produit  Produit  @relation(fields: [produitId], references: [id])
+}
+
+// =====================
+// VARIANTE PRODUIT
+// =====================
+model Variante {
+  id        String  @id @default(cuid())
+  produitId String
+  nom       String
+  valeur    String
+  prix      Float?
+  stock     Int     @default(0)
+  sku       String?
+  codeBarres String?
+  image     String?
+  actif     Boolean @default(true)
+  dimension String? // ex: "XL / Rouge / Coton"
+
+  produit Produit         @relation(fields: [produitId], references: [id])
+  stocks  StockEntrepot[]
+}
+
+// =====================
+// COLLECTION
+// =====================
+model Collection {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nom         String
+  slug        String
+  description String?
+  imageUrl    String?
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  produits Produit[] @relation("ProduitCollection")
+}
+
+// =====================
+// CLIENT
+// =====================
+model Client {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  email          String
+  telephone      String?
+  adresse        String?
+  ville          String?
+  pays           String?
+  totalCommandes Int      @default(0)
+  totalDepense   Float    @default(0)
+  createdAt      DateTime @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  commandes Commande[]
+  avis      Avis[]
+  wishlist  Wishlist[]
+
+  @@unique([tenantId, email])
+}
+
+// =====================
+// COMMANDE
+// =====================
+model Commande {
+  id               String   @id @default(cuid())
+  numero           String   @unique
+  tenantId         String
+  clientId         String?
+  livreurId        String?
+  clientNom        String
+  clientEmail      String
+  clientTelephone  String
+  adresseLivraison String
+  ville            String
+  pays             String
+  montantSousTotal Float
+  montantLivraison Float    @default(0)
+  montantReduction Float    @default(0)
+  montantTotal     Float
+  devise           String   @default("XAF")
+  statut           String   @default("en_attente")
+  paiementStatut   String   @default("pending")
+  methodePaiement  String
+  flutterwaveRef   String?
+  stripePaymentIntentId String?
+  stripeChargeId   String?
+  paiementProvider   String?
+  paiementReference  String?
+  codeAffiliation  String?  // code du lien d'affiliation utilisé
+  affilieurId      String?  // tenantId de l'affilieur
+  codePromoId      String?
+  noteClient       String?
+  numeroSuivi      String?
+  transporteur     String?
+  livraisonStatut  String   @default("non_expediee")
+  // Localisation client
+  latitudeClient   Float?
+  longitudeClient  Float?
+  adresseExacte    String?
+  mapsLienClient   String?
+  // Tracking livraison
+  trackingToken    String?  @unique
+  livreurToken     String?  @unique
+  livreurPosition  Json?
+  livreurNom       String?
+  livreurTelephone String?
+  // Échec de livraison / replanification
+  echecRaison      String?
+  echecCount       Int      @default(0)
+  // Réconciliation cash COD
+  codRemis         Boolean  @default(false)
+  codRemisAt       DateTime?
+  codRemisParId    String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant     Tenant          @relation(fields: [tenantId], references: [id])
+  client     Client?         @relation(fields: [clientId], references: [id])
+  livreur    Livreur?        @relation(fields: [livreurId], references: [id])
+  lignes     LigneCommande[]
+  commission Commission?
+  escrow     Escrow?
+  codePromo  CodePromo?      @relation(fields: [codePromoId], references: [id])
+  affiliationCommission AffiliationCommission?
+  retours              RetourRMA[]
+  facture              Facture?
+  commandesFournisseur CommandeFournisseur[]
+}
+
+// =====================
+// LIGNE DE COMMANDE
+// =====================
+model LigneCommande {
+  id         String  @id @default(cuid())
+  commandeId String
+  produitId  String
+  nom        String
+  prix       Float
+  quantite   Int
+  imageUrl   String?
+  variante   String?
+  lotId      String? // lot de traçabilité consommé pour cette ligne (FIFO), si le produit en utilise
+
+  commande Commande        @relation(fields: [commandeId], references: [id])
+  produit  Produit         @relation(fields: [produitId], references: [id])
+  lot      LotTracabilite? @relation(fields: [lotId], references: [id])
+}
+
+// =====================
+// LIVREUR
+// =====================
+model Livreur {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  tenantId     String?
+  nom          String
+  telephone    String
+  vehicule     String   @default("moto")
+  zone         String?
+  disponible   Boolean  @default(true)
+  actif        Boolean  @default(true)
+  latitude     Float?
+  longitude    Float?
+  positionAt   DateTime?
+  createdAt    DateTime @default(now())
+
+  user          User           @relation(fields: [userId], references: [id])
+  tenant        Tenant?        @relation(fields: [tenantId], references: [id])
+  commandes     Commande[]
+  notifications Notification[]
+}
+
+// =====================
+// NOTIFICATION LIVREUR
+// =====================
+model Notification {
+  id         String   @id @default(cuid())
+  livreurId  String
+  type       String
+  titre      String
+  message    String
+  commandeId String?
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  livreur Livreur @relation(fields: [livreurId], references: [id])
+}
+
+// =====================
+// NOTIFICATION MARCHAND (dashboard)
+// =====================
+model NotificationMarchand {
+  id         String   @id @default(cuid())
+  tenantId   String
+  type       String // nouvelle_commande | commande_whatsapp | escalade_humain | stock_bas | avis | ...
+  titre      String
+  message    String
+  lien       String? // deep-link dashboard, ex: /dashboard/commandes/xxx
+  commandeId String?
+  lu         Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, lu])
+  @@index([tenantId, createdAt])
+}
+
+// =====================
+// COMMISSION
+// =====================
+model Commission {
+  id                String    @id @default(cuid())
+  commandeId        String    @unique
+  tenantId          String
+  montantCommande   Float
+  montantCommission Float
+  montantMarchand   Float
+  taux              Float
+  devise            String
+  statut            String    @default("pending")
+  capturedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// =====================
+// ESCROW (Séquestre)
+// =====================
+model Escrow {
+  id           String    @id @default(cuid())
+  commandeId   String    @unique
+  tenantId     String
+  montant      Float
+  statut       String    @default("held")
+  raisonLitige String?
+  heldAt       DateTime  @default(now())
+  releaseAt    DateTime
+  releasedAt   DateTime?
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+}
+
+// =====================
+// CODE PROMO
+// =====================
+model CodePromo {
+  id              String    @id @default(cuid())
+  tenantId        String
+  code            String
+  type            String
+  valeur          Float
+  minCommande     Float?
+  maxUtilisations Int?
+  utilisations    Int       @default(0)
+  dateExpiration  DateTime?
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  commandes Commande[]
+
+  @@unique([tenantId, code])
+}
+
+// =====================
+// AVIS CLIENT
+// =====================
+model Avis {
+  id          String   @id @default(cuid())
+  tenantId    String
+  produitId   String
+  clientId    String
+  note        Int
+  titre       String?
+  commentaire String?
+  verifie     Boolean  @default(false)
+  approuve    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  produit Produit @relation(fields: [produitId], references: [id])
+  client  Client  @relation(fields: [clientId], references: [id])
+}
+
+// =====================
+// WISHLIST
+// =====================
+model Wishlist {
+  id        String   @id @default(cuid())
+  clientId  String
+  produitId String
+  createdAt DateTime @default(now())
+
+  client  Client  @relation(fields: [clientId], references: [id])
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@unique([clientId, produitId])
+}
+
+// =====================
+// MEMBRE ÉQUIPE
+// =====================
+model MembreEquipe {
+  id              String    @id @default(cuid())
+  tenantId        String
+  userId          String?   @unique // lié une fois l'invitation acceptée
+  email           String
+  nom             String
+  role            String    @default("gerant") // gerant | caissier | comptable | lecture | personnalise
+  permissions     Json?     // grille custom {module: "aucun"|"lecture"|"ecriture"} — utilisée si role="personnalise"
+  statut          String    @default("invite") // invite | actif | suspendu
+  inviteToken     String?   @unique
+  inviteExpiresAt DateTime?
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User?  @relation(fields: [userId], references: [id])
+}
+
+// =====================
+// ANALYTICS
+// =====================
+model Analytics {
+  id       String   @id @default(cuid())
+  tenantId String
+  date     DateTime @default(now())
+  type     String
+  valeur   Float    @default(1)
+  metadata Json     @default("{}")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+}
+
+// =====================
+// RÉSEAU SOCIAL AXSO
+// =====================
+model PostSocial {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   @default("post") // post | story | video | produit | milestone | sondage
+  contenu     String?
+  mediaUrls   String[] @default([])
+  produitId   String?
+  produitNom  String?
+  produitPrix Float?
+  produitImg  String?
+  scoreValeur Float?                     // pour les milestones (CA, commandes, etc.)
+  scoreLabel  String?                    // ex: "100 commandes" "500k FCFA"
+  sondageOptions String[] @default([])
+  sondageVotes  Int[]    @default([])
+  vues         Int      @default(0)
+  expireAt     DateTime?                 // stories : 24h
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  reactions   ReactionSociale[]
+  commentaires CommentaireSocial[]
+}
+
+model ReactionSociale {
+  id        String   @id @default(cuid())
+  postId    String
+  tenantId  String
+  emoji     String   @default("❤️")
+  createdAt DateTime @default(now())
+
+  post PostSocial @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@unique([postId, tenantId])
+}
+
+model CommentaireSocial {
+  id        String   @id @default(cuid())
+  postId    String
+  tenantId  String
+  auteur    String   // nomBoutique
+  contenu   String
+  createdAt DateTime @default(now())
+
+  post PostSocial @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// =====================
+// COMPTE UTILISATEUR (NextAuth)
+// =====================
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  tenantId      String?
+  role          String    @default("owner")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  livreur  Livreur?
+  boutiques ProprietaireBoutique[]
+  membreEquipe MembreEquipe?
+}
+
+// Boutiques possédées par un compte utilisateur — permet le multi-boutique
+// (Palier 2). User.tenantId reste la "boutique active" de la session (lue
+// partout ailleurs dans le code) ; cette table liste TOUTES les boutiques
+// auxquelles l'utilisateur a accès, indépendamment de laquelle est active.
+model ProprietaireBoutique {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  role      String   @default("owner")
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Code de double authentification par email (login en 2 étapes).
+model CodeVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expireAt  DateTime
+  utilise   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+}
+
+// =====================
+// THÈME PERSONNALISÉ
+// =====================
+model Theme {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  nom         String
+  slug        String
+  description String?
+  badge       String?
+  config      Json
+  effetId     String?
+  apercu      String?
+  actif       Boolean  @default(true)
+  premium     Boolean  @default(false)
+  ordre       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, slug])
+}
+
+// =====================
+// POST PLANIFIÉ (Social Scheduler)
+// =====================
+model PostPlanifie {
+  id          String   @id @default(cuid())
+  tenantId    String
+  plateforme  String   // instagram | facebook | tiktok | whatsapp | twitter
+  contenu     String   // texte du post
+  hashtags    String[] // liste de hashtags
+  imageUrl    String?
+  videoUrl    String?
+  planifieLe  DateTime // quand publier
+  publieLe    DateTime?
+  statut      String   @default("planifie") // planifie | publie | echec | annule
+  externalId  String?  // ID du post sur la plateforme externe
+  erreur      String?
+  noteInterne String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, statut, planifieLe])
+}
+
+// =====================
+// CONNECTEUR MCP
+// =====================
+model ConnecteurConfig {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // meta | whatsapp | gmail | google_ads | tiktok | sms
+  statut      String   @default("inactif") // actif | inactif | erreur
+  pageId      String?  // Facebook Page ID
+  igUserId    String?  // Instagram Business User ID
+  accessToken String?  // Token OAuth spécifique au tenant
+  config      Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}
+
+// =====================
+// VIDÉO GÉNÉRÉE IA
+// =====================
+model VideoGeneree {
+  id          String   @id @default(cuid())
+  tenantId    String
+  prompt      String
+  style       String   @default("product") // product | ugc | ad | demo
+  videoUrl    String?
+  thumbnailUrl String?
+  duree       Int?     // secondes
+  statut      String   @default("en_cours") // en_cours | pret | erreur
+  requestId   String?  // nom de l'opération Gemini Veo pour polling
+  erreur      String?
+  createdAt   DateTime @default(now())
+}
+
+// =====================
+// VOIX OFF GÉNÉRÉE IA
+// =====================
+model VoixOff {
+  id          String   @id @default(cuid())
+  tenantId    String
+  texte       String
+  voixId      String   @default("rachel")
+  langue      String   @default("fr")
+  audioUrl    String?
+  duree       Int?
+  statut      String   @default("en_cours")
+  createdAt   DateTime @default(now())
+}
+
+// =====================
+// CAMPAGNE PUBLICITAIRE
+// =====================
+model Campagne {
+  id           String   @id @default(cuid())
+  tenantId     String
+  plateforme   String   // meta | google | tiktok
+  nom          String
+  objectif     String   @default("conversions") // trafic | conversions | notoriete | leads
+  budget       Float    // budget total
+  budgetJour   Float?   // budget journalier
+  devise       String   @default("XOF")
+  statut       String   @default("brouillon") // brouillon | active | pause | terminee
+  dateDebut    DateTime?
+  dateFin      DateTime?
+  // Métriques (synchronisées depuis l'API)
+  depense      Float    @default(0)
+  impressions  Int      @default(0)
+  clics        Int      @default(0)
+  conversions  Int      @default(0)
+  cpc          Float    @default(0) // coût par clic
+  cpa          Float    @default(0) // coût par acquisition
+  roas         Float    @default(0) // retour sur dépense pub
+  // IDs externes
+  externalId   String?  // ID côté Meta/Google
+  adSetId      String?
+  // Ciblage
+  ciblePays    String[] @default([])
+  cibleAge     String   @default("18-45")
+  cibleInterets String[] @default([])
+  // Créatif
+  titreAd      String?
+  descriptionAd String?
+  imageAdUrl   String?
+  videoAdUrl   String?
+  urlDestination String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  publicites   Publicite[]
+}
+
+// =====================
+// PUBLICITÉ (Ad créatif)
+// =====================
+model Publicite {
+  id          String   @id @default(cuid())
+  campagneId  String
+  tenantId    String
+  titre       String
+  description String?
+  imageUrl    String?
+  videoUrl    String?
+  urlClic     String?
+  statut      String   @default("active")
+  impressions Int      @default(0)
+  clics       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  campagne Campagne @relation(fields: [campagneId], references: [id], onDelete: Cascade)
+}
+
+// =====================
+// VEILLE CONCURRENTIELLE
+// =====================
+model VeilleConcurrentielle {
+  id              String   @id @default(cuid())
+  tenantId        String
+  nomConcurrent   String
+  urlConcurrent   String?
+  categorie       String?
+  produitNom      String?
+  prixDetecte     Float?
+  descriptionNote String?
+  alerteActive    Boolean  @default(true)
+  detectedAt      DateTime @default(now())
+  createdAt       DateTime @default(now())
+}
+
+// =====================
+// CAMPAGNE SMS
+// =====================
+model CampagneSMS {
+  id         String   @id @default(cuid())
+  tenantId   String
+  nom        String
+  message    String   @db.Text
+  segment    String   @default("tous") // tous | vip | inactifs
+  nbEnvoyes  Int      @default(0)
+  nbLivres   Int      @default(0)
+  statut     String   @default("brouillon") // brouillon | envoye
+  createdAt  DateTime @default(now())
+}
+
+// =====================
+// WALLET AXSO
+// =====================
+model Wallet {
+  id              String   @id @default(cuid())
+  tenantId        String   @unique
+  solde           Float    @default(0)
+  totalRecu       Float    @default(0)
+  totalRetire     Float    @default(0)
+  totalCommission Float    @default(0)
+  devise          String   @default("XAF")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  transactions WalletTransaction[]
+  retraits     Retrait[]
+}
+
+// =====================
+// TRANSACTION WALLET
+// =====================
+model WalletTransaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  type        String   // CREDIT | COMMISSION | RETRAIT | REMBOURSEMENT
+  montant     Float
+  devise      String   @default("XAF")
+  description String
+  reference   String?
+  commandeId  String?
+  statut      String   @default("completed")
+  createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+// =====================
+// RETRAIT (Withdrawal)
+// =====================
+model Retrait {
+  id           String   @id @default(cuid())
+  walletId     String
+  tenantId     String
+  montant      Float
+  devise       String   @default("XAF")
+  methode      String   // mobile_money | virement_bancaire
+  destinataire String
+  operateur    String?  // MTN | Orange | Wave | M-Pesa | ...
+  statut       String   @default("en_attente") // en_attente | traitement | complete | echoue
+  reference    String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+}
+
+// =====================
+// PIXEL TRACKING EVENT
+// =====================
+model PixelEvent {
+  id         String   @id @default(cuid())
+  tenantId   String
+  type       String   // PageView | AddToCart | Purchase | Lead | ViewContent
+  valeur     Float?   // valeur de l'événement (ex: montant achat)
+  devise     String?
+  produitId  String?
+  commandeId String?
+  source     String?  // meta | google | direct | organic
+  campagneId String?
+  sessionId  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+// =====================
+// AFFILIATION
+// =====================
+model AffiliationLien {
+  id          String   @id @default(cuid())
+  tenantId    String   // boutique qui propose le produit
+  affilieurId String   // tenantId de l'affilieur (celui qui partage le lien)
+  affilieId   String?  // ID d'un affilié B2C individuel (si applicable)
+  produitId   String?  // null = lien boutique entière
+  code          String   @unique // ex: "JEAN-AB12"
+  clics         Int      @default(0)
+  conversions   Int      @default(0)
+  montantGenere Float    @default(0)
+  actif         Boolean  @default(true)
+  cookieJours   Int      @default(30) // durée d'attribution en jours
+  derniereConversion DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  produit  Produit?  @relation(fields: [produitId], references: [id])
+  commissions AffiliationCommission[]
+
+  @@index([affilieurId])
+  @@index([tenantId])
+}
+
+model AffiliationCommission {
+  id              String   @id @default(cuid())
+  lienId          String
+  commandeId      String   @unique
+  tenantId        String   // boutique qui a vendu
+  affilieurId     String   // celui qui reçoit la commission
+  montantCommande Float
+  taux            Float    // ex: 0.20
+  montantGagne    Float    // montant net reçu par l'affilieur
+  devise          String
+  statut          String   @default("pending") // pending | capturee | payee | annulee
+  payeeAt         DateTime?
+  createdAt       DateTime @default(now())
+
+  lien     AffiliationLien @relation(fields: [lienId], references: [id])
+  commande Commande        @relation(fields: [commandeId], references: [id])
+
+  @@index([affilieurId])
+  @@index([tenantId])
+}
+
+// =====================
+// AGENT MEMORY
+// =====================
+model AgentMemory {
+  id        String   @id @default(cuid())
+  tenantId  String
+  agentId   String
+  cle       String
+  valeur    String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, agentId, cle])
+  @@index([tenantId, agentId])
+}
+
+// =====================
+// AGENT TASK (bus inter-agents)
+// =====================
+model AgentTask {
+  id        String   @id @default(cuid())
+  tenantId  String
+  fromAgent String
+  toAgent   String
+  type      String
+  payload   Json
+  statut    String   @default("pending") // pending | en_cours | complete | echec
+  resultat  Json?
+  priorite  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, toAgent, statut])
+}
+
+// =====================
+// AGENT DECISION (log autonome)
+// =====================
+model AgentDecision {
+  id           String   @id @default(cuid())
+  tenantId     String
+  agentId      String
+  type         String
+  description  String
+  donnees      Json     @default("{}")
+  impactEstime Float?
+  impactReel   Float?
+  statut       String   @default("effectuee")
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId, agentId])
+  @@index([tenantId, createdAt])
+}
+
+// =====================
+// AXIA CONVERSATION (historique des discussions, façon ChatGPT)
+// =====================
+model AxiaConversation {
+  id        String   @id @default(cuid())
+  tenantId  String
+  titre     String   @default("Nouvelle conversation")
+  messages  Json     @default("[]") // [{ role, content, images?, videos?, audios?, actions? }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, updatedAt])
+}
+
+// =====================
+// AGENT GOAL (objectifs boutique — chiffre d'affaires, commandes, clients…)
+// =====================
+model AgentGoal {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String   // ca | commandes | clients | panier_moyen
+  titre     String
+  cible     Float
+  actuel    Float    @default(0) // dernier calcul mis en cache — la valeur réelle est recalculée en direct à chaque lecture
+  devise    String   @default("XAF")
+  deadline  DateTime
+  statut    String   @default("actif") // actif | atteint | echoue | pause
+  createdAt DateTime @default(now()) // aussi le point de départ de la période suivie par l'objectif
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, statut])
+}
+
+// =====================
+// MESSAGE RECU (WhatsApp / Instagram DM entrants)
+// =====================
+model MessageRecu {
+  id          String   @id @default(cuid())
+  tenantId    String
+  source      String   // "whatsapp" | "instagram_dm" | "facebook_messenger"
+  de          String   // numéro de téléphone ou FB user id
+  nom         String?  // nom du contact
+  corps       String   @db.Text
+  lu          Boolean  @default(false)
+  repondu     Boolean  @default(false)
+  direction   String   @default("entrant") // "entrant" | "sortant"
+  waMessageId String?  // ID unique WhatsApp (évite doublons)
+  commandeId  String?  // commande liée si détectée automatiquement
+  payload     Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, source])
+  @@index([tenantId, de])
+  @@index([tenantId, lu])
+}
+
+// =====================
+// CAMPAGNE EMAIL (historique envois)
+// =====================
+model CampagneEmail {
+  id        String   @id @default(cuid())
+  tenantId  String
+  sujet     String
+  corps     String   @db.Text
+  segment   String   @default("tous")
+  nbEnvoyes Int      @default(0)
+  statut    String   @default("envoye") // brouillon | envoye | echec
+  source    String   @default("resend")  // resend | gmail
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// =====================
+// RÈGLE DE PORT (Moteur livraison)
+// =====================
+model ReglePort {
+  id           String   @id @default(cuid())
+  tenantId     String
+  nom          String
+  zone         String   // ex: "Cameroun", "UEMOA", "International"
+  poidsMin     Float    @default(0)   // kg
+  poidsMax     Float?                 // null = illimité
+  montantMin   Float?                 // montant commande min pour activer
+  montantMax   Float?
+  frais        Float                  // frais fixes
+  fraisKg      Float    @default(0)  // par kg supplémentaire (hors périmètre actuel, inerte)
+  delai        String   @default("3-5 jours")
+  transporteur String?  // Campost | DHL | MTN Delivery | Sendbox | nom d'agence de voyage | ...
+  modeLivraison String  @default("livreur_local") // livreur_local | agence_voyage | transporteur_intl
+  gratuit      Boolean  @default(false)
+  actif        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// FOURNISSEUR DROPSHIPPING
+// =====================
+model Fournisseur {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  pays           String   @default("Chine")
+  type           String   @default("aliexpress") // aliexpress | cj | jumia | local | autre
+  url            String?
+  email          String?
+  telephone      String?
+  delaiLivraison Int      @default(15)  // jours
+  fiabilite      Float    @default(4.0) // 1–5
+  margeAuto      Float    @default(0.30) // marge par défaut 30%
+  actif          Boolean  @default(true)
+  catalogueCount Int      @default(0)
+  livraisonsTotal Int     @default(0)
+  livraisonsOk   Int      @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  produits             Produit[]
+  commandesFournisseur CommandeFournisseur[]
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// RETOUR / RMA
+// =====================
+model RetourRMA {
+  id          String   @id @default(cuid())
+  tenantId    String
+  commandeId  String
+  clientNom   String
+  clientEmail String
+  raison      String   // defaut | erreur_commande | change_avis | endommage | non_recu
+  description String?
+  type        String   @default("remboursement") // remboursement | echange | avoir
+  statut      String   @default("ouvert")        // ouvert | en_cours | accepte | rejete | clos
+  montant     Float?
+  notes       String?
+  preuveUrls  String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([tenantId, statut])
+  @@index([commandeId])
+}
+
+// =====================
+// FACTURE
+// =====================
+model Facture {
+  id            String   @id @default(cuid())
+  tenantId      String
+  commandeId    String   @unique
+  numero        String   @unique // FAC-2025-001
+  clientNom     String
+  clientEmail   String
+  clientAdresse String?
+  lignes        Json     // [{nom, quantite, prixHT, tauxTVA, prixTTC}]
+  montantHT     Float
+  tauxTVA       Float    @default(0)
+  montantTVA    Float    @default(0)
+  montantTTC    Float
+  devise        String   @default("XAF")
+  statut        String   @default("emise") // emise | payee | annulee
+  pdfUrl        String?
+  emiseAt       DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([tenantId])
+}
+
+// =====================
+// RÉSERVATION STOCK (panier actif)
+// =====================
+model StockReservation {
+  id         String   @id @default(cuid())
+  tenantId   String
+  produitId  String
+  varianteId String?
+  sessionId  String
+  quantite   Int
+  expireAt   DateTime  // TTL 30 min
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, produitId])
+  @@index([sessionId])
+  @@index([expireAt])
+}
+
+// =====================
+// POPUP / BANDEAU COMPORTEMENTAL
+// =====================
+model PopupCampagne {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nom         String
+  type        String   @default("popup") // popup | bandeau | slide_in
+  declencheur String   @default("delai") // delai | exit_intent | scroll | premiere_visite
+  delaiSec    Int      @default(5)
+  titre       String
+  message     String
+  ctaTexte    String?
+  ctaUrl      String?
+  imageUrl    String?
+  codePromo   String?
+  actif       Boolean  @default(true)
+  affichages  Int      @default(0)
+  clics       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, actif])
+}
+
+// =====================
+// COMPTE ACHETEUR (storefront)
+// =====================
+model CompteAcheteur {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  nom          String
+  telephone    String?
+  adresse      String?
+  ville        String?
+  pays         String?
+  passwordHash String?
+  token        String?
+  tokenExpire  DateTime?
+  clientId     String?  // lien cross-canal vers Client (dashboard)
+  totalCommandes Int    @default(0)
+  totalDepense   Float  @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, email])
+  @@index([token])
+}
+
+// =====================
+// AUTOMATION / SÉQUENCES
+// =====================
+model AutomationWorkflow {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nom            String
+  type           String   // panier_abandonne | bienvenue | apres_achat | anniversaire | inactif
+  actif          Boolean  @default(true)
+  delaiHeures    Int      @default(1)
+  canal          String   @default("email") // email | sms | whatsapp
+  sujet          String?
+  message        String
+  declenchements Int      @default(0)
+  conversions    Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId, type, actif])
+}
+
+// =====================
+// BADGE / TROPHÉE MARCHAND
+// =====================
+model BadgeMarchand {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // premiere_vente | 10_commandes | 100_commandes | 1m_xaf | top_vendeur
+  titre       String
+  description String?
+  emoji       String   @default("🏆")
+  obtenueAt   DateTime @default(now())
+
+  @@unique([tenantId, type])
+  @@index([tenantId])
+}
+
+// =====================
+// ENTREPÔT (multi-warehouse)
+// =====================
+model Entrepot {
+  id        String   @id @default(cuid())
+  tenantId  String
+  nom       String
+  adresse   String?
+  ville     String?
+  pays      String   @default("Cameroun")
+  principal Boolean  @default(false)
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  tenant Tenant          @relation(fields: [tenantId], references: [id])
+  stocks StockEntrepot[]
+
+  @@index([tenantId])
+}
+
+// =====================
+// STOCK PAR ENTREPÔT
+// =====================
+model StockEntrepot {
+  id         String @id @default(cuid())
+  entrepotId String
+  produitId  String
+  varianteId String?
+  quantite   Int    @default(0)
+  stockMin   Int    @default(0)
+
+  entrepot Entrepot  @relation(fields: [entrepotId], references: [id])
+  produit  Produit   @relation(fields: [produitId], references: [id])
+  variante Variante? @relation(fields: [varianteId], references: [id])
+
+  @@unique([entrepotId, produitId, varianteId])
+}
+
+// =====================
+// COMMANDE FOURNISSEUR (dropshipping auto-routing)
+// =====================
+model CommandeFournisseur {
+  id             String   @id @default(cuid())
+  tenantId       String
+  commandeId     String
+  fournisseurId  String
+  statut         String   @default("en_attente") // en_attente | envoye | confirme | expedie | livre | annule
+  reference      String?
+  montantFournisseur Float?
+  delaiEstime    Int?
+  trackingNo     String?
+  notes          String?
+  envoiAuto      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  commande    Commande    @relation(fields: [commandeId], references: [id])
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id])
+
+  @@index([tenantId, statut])
+}
+
+// =====================
+// AFFILIATION ENTRANTE (l'utilisateur est affilié d'un autre marchand)
+// =====================
+model AffiliationEntrante {
+  id          String   @id @default(cuid())
+  tenantId    String
+  nom         String
+  marchand    String
+  url         String
+  categorie   String?
+  commission  Float    @default(0.10)
+  devise      String   @default("XAF")
+  clics       Int      @default(0)
+  conversions Int      @default(0)
+  revenus     Float    @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
+// =====================
+// PAIEMENT DE COMMISSIONS (aux affiliés)
+// =====================
+model PaiementCommission {
+  id          String   @id @default(cuid())
+  tenantId    String
+  affilieurId String
+  montant     Float
+  methode     String   @default("mobile_money")
+  telephone   String?
+  reference   String?
+  statut      String   @default("en_attente") // en_attente | traite | echec
+  notes       String?
+  commissionIds String[] @default([]) // CommissionAffilie.id inclus dans ce paiement
+  createdAt   DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, statut])
+}
+
+// =====================
+// PROGRAMME D'AFFILIATION B2C (merchant → influenceurs/clients ambassadeurs)
+// =====================
+model ProgrammeAffiliation {
+  id               String   @id @default(cuid())
+  tenantId         String   @unique
+  nom              String
+  description      String?
+  typeCommission   String   @default("pourcentage") // pourcentage | fixe
+  valeurCommission Float    @default(10)
+  dureeCookie      Int      @default(30)
+  seuilPaiement    Float    @default(5000)
+  tousLesProduits  Boolean  @default(true)
+  produitIds       String[] @default([])
+  tiersActifs      Boolean  @default(false)
+  tier1Nom         String   @default("Bronze")
+  tier1Max         Int      @default(10)
+  tier1Commission  Float    @default(5)
+  tier2Nom         String   @default("Argent")
+  tier2Max         Int      @default(50)
+  tier2Commission  Float    @default(8)
+  tier3Nom         String   @default("Or")
+  tier3Commission  Float    @default(12)
+  multiNiveauActif Boolean  @default(false)
+  tauxSousAffilies Float    @default(2)
+  autoApprobation  Boolean  @default(true)
+  actif            Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tenant  Tenant    @relation(fields: [tenantId], references: [id])
+  affilies Affilie[]
+}
+
+// =====================
+// AFFILIÉ B2C (influenceur, client ambassadeur, apporteur d'affaires)
+// =====================
+model Affilie {
+  id                String   @id @default(cuid())
+  tenantId          String
+  nom               String
+  email             String
+  telephone         String?
+  programmeId       String?
+  codeParrainage    String   @unique
+  portalToken       String   @unique @default(cuid()) // accès portail self-service sans compte/login
+  notes             String?
+  statut            String   @default("en_attente") // en_attente | actif | suspendu
+  clics             Int      @default(0)
+  conversions       Int      @default(0)
+  commissionTotal   Float    @default(0)
+  commissionPending Float    @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant     Tenant                @relation(fields: [tenantId], references: [id])
+  programme  ProgrammeAffiliation? @relation(fields: [programmeId], references: [id])
+  commissions CommissionAffilie[]
+  clicsLog    AffilieClic[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+// Historique des clics sur le lien de parrainage — le compteur Affilie.clics
+// reste la source rapide (total lifetime), ce log sert uniquement aux
+// graphiques jour par jour du portail affilié.
+model AffilieClic {
+  id        String   @id @default(cuid())
+  affilieId String
+  createdAt DateTime @default(now())
+
+  affilie Affilie @relation(fields: [affilieId], references: [id])
+
+  @@index([affilieId, createdAt])
+}
+
+// =====================
+// COMMISSION AFFILIÉ B2C
+// =====================
+model CommissionAffilie {
+  id                String   @id @default(cuid())
+  tenantId          String
+  affilieId         String
+  commandeId        String?
+  montantCommission Float
+  valeurCommande    Float    @default(0)
+  statut            String   @default("pending") // pending | approuvee | payee | rejetee
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id])
+  affilie Affilie @relation(fields: [affilieId], references: [id])
+
+  @@index([tenantId])
+  @@index([affilieId])
+}
+
+// ============================================================
+// PRODUITS DIGITAUX AVANCÉS — Phase 0
+// ============================================================
+
+// =====================
+// VARIANTE DE PRIX (transversal — tous types digitaux)
+// =====================
+model VariantePrix {
+  id              String    @id @default(cuid())
+  produitId       String
+  tenantId        String
+  nom             String                    // "Standard" | "Pro" | "Lifetime"
+  slug            String                    // slug unique pour lien checkout
+  prix            Float
+  prixPromo       Float?
+  periodeValidite String?                   // "30j" | "1an" | "illimite"
+  renouvAuto      Boolean   @default(false) // abonnement reconductible
+  autorisePromo   Boolean   @default(true)
+  actif           Boolean   @default(true)
+  dateDebut       DateTime?
+  dateFin         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  produit Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
+
+  @@unique([produitId, slug])
+  @@index([tenantId])
+}
+
+// =====================
+// PRODUIT FICHIER (type = "fichier")
+// =====================
+model ProduitFichier {
+  id               String    @id @default(cuid())
+  produitId        String    @unique
+  limitAchats      Int?                      // null = illimité
+  motDePasse       String?                   // hashé bcrypt
+  filigrane        Boolean   @default(false) // injecter nom/email acheteur dans PDF livré
+  instructionsAchat String?  @db.Text
+  createdAt        DateTime  @default(now())
+
+  produit  Produit            @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  fichiers FichierNumerique[]
+}
+
+// Fichiers individuels d'un produit digital (multi-fichiers avec ordre)
+model FichierNumerique {
+  id               String   @id @default(cuid())
+  produitFichierId String
+  nom              String
+  url              String                   // Vercel Blob — jamais exposée directement côté client
+  taille           Int?                     // octets
+  mimeType         String?
+  ordre            Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  produitFichier ProduitFichier @relation(fields: [produitFichierId], references: [id], onDelete: Cascade)
+}
+
+// =====================
+// FORMATION (type = "formation")
+// =====================
+model Formation {
+  id        String   @id @default(cuid())
+  produitId String   @unique
+  niveau    String?  // "debutant" | "intermediaire" | "avance"
+  langue    String   @default("fr")
+  dureeMin  Int?     // durée totale estimée en minutes
+  certif    Boolean  @default(false) // certificat de complétion généré
+  createdAt DateTime @default(now())
+
+  produit   Produit    @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  chapitres Chapitre[]
+}
+
+model Chapitre {
+  id          String   @id @default(cuid())
+  formationId String
+  titre       String
+  ordre       Int      @default(0)
+  actif       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  formation Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
+  lecons    Lecon[]
+}
+
+model Lecon {
+  id         String   @id @default(cuid())
+  chapitreId String
+  titre      String
+  type       String   @default("texte") // "texte" | "video" | "audio"
+  contenu    String?  @db.Text          // HTML pour type texte
+  videoType  String?                    // "upload" | "youtube" | "vimeo" | "iframe"
+  videoUrl   String?
+  audioUrl   String?
+  duree      Int?                       // secondes
+  ordre      Int      @default(0)
+  gratuite   Boolean  @default(false)  // aperçu libre sans achat
+  actif      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  chapitre     Chapitre           @relation(fields: [chapitreId], references: [id], onDelete: Cascade)
+  progressions ProgressionLecon[]
+}
+
+model ProgressionLecon {
+  id          String    @id @default(cuid())
+  leconId     String
+  commandeId  String                    // commande qui a donné l'accès
+  clientEmail String
+  complete    Boolean   @default(false)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  lecon Lecon @relation(fields: [leconId], references: [id], onDelete: Cascade)
+
+  @@unique([leconId, clientEmail])
+  @@index([commandeId])
+}
+
+// Accès self-service à une formation achetée — même principe que
+// Telechargement (token opaque non devinable dans l'URL), donne accès à
+// l'ensemble des chapitres/leçons d'une formation, sans expiration (achat
+// à vie, contrairement aux liens de téléchargement de fichiers).
+model AccesFormation {
+  id          String   @id @default(cuid())
+  produitId   String
+  commandeId  String
+  token       String   @unique
+  clientEmail String
+  createdAt   DateTime @default(now())
+
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@index([produitId])
+}
+
+// =====================
+// LICENCE (type = "licence")
+// =====================
+model LicenceProduit {
+  id             String   @id @default(cuid())
+  produitId      String   @unique
+  modeDistrib    String   @default("auto")  // "auto" | "stock"
+  formatAuto     String   @default("uuid")  // "uuid" | "alpha"
+  prefixe        String?                    // ex: "AXSO-"
+  longueur       Int      @default(16)      // pour mode "alpha" (8–32)
+  maxActivations Int      @default(1)
+  dureeJours     Int?                       // null = illimité
+  createdAt      DateTime @default(now())
+
+  produit Produit      @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  cles    CleLicence[]
+}
+
+model CleLicence {
+  id               String    @id @default(cuid())
+  licenceProduitId String
+  cle              String    @unique
+  statut           String    @default("disponible") // disponible | vendue | expiree | revoquee
+  commandeId       String?                          // commande qui a attribué la clé
+  acheteurEmail    String?
+  expireAt         DateTime?
+  createdAt        DateTime  @default(now())
+
+  licenceProduit LicenceProduit      @relation(fields: [licenceProduitId], references: [id], onDelete: Cascade)
+  activations    ActivationLicence[]
+
+  @@index([licenceProduitId, statut])
+}
+
+model ActivationLicence {
+  id          String   @id @default(cuid())
+  cleId       String
+  appareil    String?                    // identifiant appareil ou user-agent
+  ipAdresse   String?
+  activatedAt DateTime @default(now())
+
+  cle CleLicence @relation(fields: [cleId], references: [id], onDelete: Cascade)
+
+  @@index([cleId])
+}
+
+// =====================
+// BUNDLE (type = "bundle")
+// =====================
+model BundleProduit {
+  id        String   @id @default(cuid())
+  produitId String   @unique
+  createdAt DateTime @default(now())
+
+  produit  Produit         @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  elements ElementBundle[]
+}
+
+model ElementBundle {
+  id              String @id @default(cuid())
+  bundleId        String
+  produitInclusId String
+  ordre           Int    @default(0)
+
+  bundle        BundleProduit @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  produitInclus Produit       @relation("InclusDansBundle", fields: [produitInclusId], references: [id])
+
+  @@unique([bundleId, produitInclusId])
+}
+
+// =====================
+// POS — STOCK, TRAÇABILITÉ, COMPTABILITÉ BOUTIQUE PHYSIQUE
+// Inspiré de la logique d'un logiciel de gestion de boucherie (lots de
+// traçabilité, mouvements de stock horodatés, charges d'exploitation) —
+// généralisé ici à tout produit physique, pas seulement l'alimentaire.
+// =====================
+
+// Journal de tout changement de stock — entrée (réassort), sortie (vente),
+// ajustement manuel (inventaire), perte (casse/péremption). Source de vérité
+// pour la traçabilité, distincte de Produit.stock qui n'est qu'un solde.
+model StockMouvement {
+  id         String   @id @default(cuid())
+  tenantId   String
+  produitId  String
+  type       String   // entree | sortie | ajustement | perte | vente
+  quantite   Float    // toujours positive — le sens est porté par `type`
+  stockAvant Float
+  stockApres Float
+  motif      String?
+  lotId      String?
+  commandeId String?  // commande POS à l'origine, si type = "vente"
+  creePar    String?  // userId de l'auteur du mouvement manuel
+  createdAt  DateTime @default(now())
+
+  tenant  Tenant          @relation(fields: [tenantId], references: [id])
+  produit Produit         @relation(fields: [produitId], references: [id])
+  lot     LotTracabilite? @relation(fields: [lotId], references: [id])
+
+  @@index([tenantId, produitId, createdAt])
+  @@index([tenantId, createdAt])
+}
+
+// Lot de réception — traçabilité amont (fournisseur → rayon) et péremption.
+// Consommé en FIFO par les ventes (LigneCommande.lotId) pour pouvoir remonter
+// de toute vente au lot d'origine en cas de rappel.
+model LotTracabilite {
+  id               String    @id @default(cuid())
+  tenantId         String
+  produitId        String
+  codeLot          String
+  quantiteInitiale Float
+  quantiteRestante Float
+  fournisseurNom   String?
+  fournisseurRef   String?
+  dateReception    DateTime  @default(now())
+  dateExpiration   DateTime?
+  certification    String?   // certificat sanitaire / halal / bio / origine — libre
+  statut           String    @default("actif") // actif | epuise | perime | rappele
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant     Tenant           @relation(fields: [tenantId], references: [id])
+  produit    Produit          @relation(fields: [produitId], references: [id])
+  mouvements StockMouvement[]
+  ventes     LigneCommande[]
+
+  @@unique([tenantId, codeLot])
+  @@index([tenantId, produitId])
+  @@index([tenantId, statut])
+}
+
+// Charge d'exploitation de la boutique physique (loyer, salaires, énergie...)
+// — base des "fonds généraux" du rapport de comptabilité POS, en miroir des
+// ventes pour calculer un vrai résultat net (pas juste un chiffre d'affaires).
+model ChargeExploitation {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  categorie          String    // loyer | electricite | eau | internet | fournitures | equipement | salaires | transport | autre
+  description        String
+  montant            Float
+  devise             String    @default("XAF")
+  frequence          String    @default("ponctuelle") // ponctuelle | hebdomadaire | mensuelle | annuelle
+  dateEnregistrement DateTime  @default(now())
+  dateEcheance       DateTime?
+  statut             String    @default("payee") // en_attente | payee | en_retard
+  fournisseur        String?
+  reference          String?
+  notes              String?
+  creePar            String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, dateEnregistrement])
+  @@index([tenantId, statut])
+}

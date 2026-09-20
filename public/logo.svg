@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 54" fill="none">
+  <!-- Rocket + growth chart icon -->
+  <g transform="translate(2, 4)">
+    <!-- Growth trajectory line -->
+    <polyline points="2,40 13,32 23,35 34,22 44,16"
+      stroke="#1B4FD8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="2"  cy="40" r="2.8" fill="#1B4FD8"/>
+    <circle cx="13" cy="32" r="2.8" fill="#1B4FD8"/>
+    <circle cx="23" cy="35" r="2.8" fill="#1B4FD8"/>
+    <circle cx="34" cy="22" r="2.8" fill="#1B4FD8"/>
+    <circle cx="44" cy="16" r="2.8" fill="#1B4FD8"/>
+    <!-- Rocket (tilted 45°, top-right direction) -->
+    <g transform="translate(24, -2) rotate(45, 18, 20)">
+      <!-- Body -->
+      <path d="M18 2 C12 2 7 11 6 21 L6 33 L30 33 L30 21 C29 11 24 2 18 2Z" fill="#1B4FD8"/>
+      <!-- Dark nose -->
+      <path d="M18 2 C13 2 9 9 8 17 L28 17 C27 9 23 2 18 2Z" fill="#1440BE"/>
+      <!-- Window -->
+      <circle cx="18" cy="21" r="5.5" fill="#7B9EFF" opacity="0.8"/>
+      <circle cx="18" cy="21" r="3.5" fill="#1440BE"/>
+      <circle cx="15.5" cy="19" r="1.3" fill="white" opacity="0.65"/>
+      <!-- Fins -->
+      <path d="M6 17 L0 31 L3 36 L6 33Z" fill="#1440BE"/>
+      <path d="M30 17 L36 31 L33 36 L30 33Z" fill="#1440BE"/>
+      <!-- Nozzle -->
+      <rect x="11" y="32" width="14" height="7" rx="2.5" fill="#0A1628"/>
+    </g>
+  </g>
+
+  <!-- axso wordmark: single text element, tspan per letter for color -->
+  <text
+    x="66" y="39"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, Helvetica, sans-serif"
+    font-size="34"
+    font-weight="800"
+    letter-spacing="-0.5">
+    <tspan fill="#0A1628">a</tspan><tspan fill="#1B4FD8">x</tspan><tspan fill="#0A1628">so</tspan>
+  </text>
+</svg>

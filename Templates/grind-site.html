@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>GRIND</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#111111; --panel:#1C1C1C; --panel2:#161616; --ink:#F5F5F0; --orange:#FF5C00; --graphite:#7A7A76; --hair:rgba(245,245,240,0.1); --success:#33C46B; --error:#FF4D4D; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Titan One',sans-serif; font-weight:400; }
+.view{ display:none; } .view.active{ display:block; }
+.eyebrow{ font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:var(--orange); font-weight:700; }
+
+header{ position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; padding:18px 4vw; background:rgba(17,17,17,0.88); backdrop-filter:blur(12px); border-bottom:1px solid var(--hair); }
+.logo{ font-family:'Titan One',sans-serif; font-size:22px; color:var(--orange); }
+nav{ display:flex; gap:28px; }
+nav a{ font-size:13px; font-weight:600; color:var(--graphite); text-transform:uppercase; letter-spacing:0.02em; }
+nav a:hover, nav a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:18px; align-items:center; }
+.cart-btn{ background:var(--orange); color:#111; padding:10px 18px; font-weight:700; font-size:13px; border-radius:4px; }
+.cart-count{ margin-left:4px; }
+@media(max-width:880px){ nav{display:none;} }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 32px; background:var(--orange); color:#111; font-weight:700; font-size:15px; border-radius:4px; transition:background .2s ease, transform .15s ease; }
+.btn-primary:hover{ background:#ff7a2e; transform:translateY(-1px); }
+.btn-primary:disabled{ opacity:0.3; cursor:not-allowed; transform:none; }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 28px; border:2px solid var(--ink); font-weight:700; font-size:14px; border-radius:4px; }
+.btn-ghost:hover{ border-color:var(--orange); color:var(--orange); }
+.btn-full{ width:100%; }
+
+/* ===== HOME ===== */
+.hero{ position:relative; min-height:86vh; display:flex; align-items:center; padding:4vw; overflow:hidden; }
+.hero-inner{ position:relative; z-index:1; display:grid; grid-template-columns:1.05fr 0.95fr; gap:5vw; align-items:center; width:100%; }
+.hero-copy h1{ font-size:clamp(40px,6vw,76px); line-height:0.98; }
+.hero-copy h1 .orange{ color:var(--orange); }
+.hero-copy p{ margin-top:20px; max-width:38ch; color:var(--graphite); font-size:15px; line-height:1.7; }
+.hero-cta-row{ margin-top:28px; display:flex; gap:14px; }
+.hero-stage{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+.hero-stage .deck{ width:80%; height:16%; border-radius:60px; background:linear-gradient(100deg,var(--orange),#c94400); box-shadow:0 30px 60px rgba(0,0,0,0.5); transform:rotate(-8deg); }
+@media(max-width:880px){ .hero-inner{ grid-template-columns:1fr; } }
+
+.spec-strip{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.spec-cell{ padding:30px 22px; text-align:center; border-right:1px solid var(--hair); }
+.spec-cell:last-child{ border-right:none; }
+.spec-cell b{ font-family:'Titan One',sans-serif; font-size:22px; color:var(--orange); display:block; }
+.spec-cell span{ font-size:11px; color:var(--graphite); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-top:6px; }
+@media(max-width:880px){ .spec-strip{ grid-template-columns:repeat(2,1fr); } }
+
+.section{ padding:80px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:34px; }
+.section-head h2{ font-size:28px; }
+.grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:var(--hair); }
+@media(max-width:960px){ .grid4{ grid-template-columns:repeat(2,1fr); } }
+
+.pcard{ background:var(--bg); display:block; overflow:hidden; }
+.pcard .media{ position:relative; aspect-ratio:1/1; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.pcard .tag{ position:absolute; top:12px; left:12px; z-index:2; background:var(--orange); color:#111; font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:3px; text-transform:uppercase; }
+.pcard .wl{ position:absolute; top:12px; right:12px; z-index:2; width:30px; height:30px; border-radius:50%; background:rgba(28,28,28,0.85); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.pcard .wl.active{ color:var(--orange); }
+.pcard .info{ padding:16px 16px 18px; }
+.pcard .name{ font-size:15px; font-weight:700; }
+.pcard .price{ font-size:12.5px; color:var(--graphite); margin-top:4px; }
+.pcard .price .now{ color:var(--orange); font-weight:600; }
+
+/* ===== BOUTIQUE ===== */
+.breadcrumb{ padding:24px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.plp-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 30px; display:flex; justify-content:space-between; align-items:flex-end; }
+.plp-head h1{ font-size:32px; }
+.plp-head span{ font-size:12.5px; color:var(--graphite); }
+.pill-filters{ max-width:1320px; margin:0 auto; padding:0 4vw 36px; display:flex; gap:10px; flex-wrap:wrap; }
+.pill{ border:1px solid var(--hair); padding:9px 18px; font-size:12.5px; font-weight:600; border-radius:4px; text-transform:uppercase; }
+.pill.active{ background:var(--orange); color:#111; border-color:var(--orange); }
+.plp-grid{ max-width:1320px; margin:0 auto 100px; padding:0 4vw; display:grid; grid-template-columns:repeat(4,1fr); gap:2px; background:var(--hair); }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:960px){ .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== PDP with drag-to-rotate viewer ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:1.1fr 1fr; gap:5vw; align-items:center; }
+.spin-stage{ position:relative; aspect-ratio:1/1; background:var(--panel2); border-radius:16px; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:grab; user-select:none; touch-action:pan-y; }
+.spin-stage.dragging{ cursor:grabbing; }
+.spin-stage .frame{ width:60%; aspect-ratio:1/1; border-radius:20px; transition:background 0.05s linear; pointer-events:none; }
+.spin-hint{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%); font-size:11.5px; color:var(--graphite); background:rgba(17,17,17,0.7); padding:6px 14px; border-radius:20px; display:flex; align-items:center; gap:8px; pointer-events:none; }
+.spin-hint svg{ width:14px; height:14px; }
+.spin-progress{ position:absolute; top:16px; left:50%; transform:translateX(-50%); display:flex; gap:4px; }
+.spin-progress span{ width:5px; height:5px; border-radius:50%; background:var(--hair); }
+.spin-progress span.active{ background:var(--orange); }
+
+.pdp-info .eyebrow{ display:block; margin-bottom:14px; }
+.pdp-info h1{ font-size:clamp(28px,3vw,38px); max-width:14ch; }
+.pdp-price{ font-family:'Titan One',sans-serif; font-size:24px; margin-top:12px; color:var(--orange); }
+.pdp-desc{ margin-top:18px; max-width:40ch; color:var(--graphite); font-size:14px; line-height:1.7; }
+.opt-block{ margin-top:24px; } .opt-block .opt-label{ font-size:13px; margin-bottom:12px; font-weight:700; text-transform:uppercase; }
+.color-select{ display:flex; gap:10px; }
+.color-select span{ width:28px; height:28px; border-radius:50%; border:2px solid transparent; box-shadow:0 0 0 1px var(--hair); cursor:pointer; }
+.color-select span.active{ border-color:var(--ink); }
+.size-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.size-select button{ border:1px solid var(--hair); padding:11px 18px; font-size:13px; background:transparent; color:var(--ink); border-radius:4px; }
+.size-select button.active{ border-color:var(--orange); background:var(--orange); color:#111; }
+.qty-cart-row{ margin-top:26px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--hair); border-radius:4px; }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:34px; text-align:center; border:none; font-size:14px; background:transparent; color:var(--ink); }
+.qty-cart-row .btn-primary{ flex:1; }
+.trust-list{ margin-top:20px; display:flex; flex-direction:column; gap:8px; }
+.trust-list div{ font-size:12.5px; color:#c8c8c4; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:26px; margin-bottom:26px; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } }
+
+/* ===== CART / CHECKOUT ===== */
+.narrow{ max-width:760px; margin:0 auto; padding:56px 4vw 120px; }
+.narrow h1{ font-size:28px; margin-bottom:36px; }
+.cart-item{ display:grid; grid-template-columns:90px 1fr auto; gap:20px; padding:22px 0; border-bottom:1px solid var(--hair); align-items:center; }
+.cart-item .thumb{ aspect-ratio:1/1; background:var(--panel2); border-radius:10px; }
+.cart-item .meta b{ font-size:14.5px; display:block; margin-bottom:6px; font-weight:700; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ margin-bottom:8px; } .cart-item .qty-box button{ width:28px; height:32px; font-size:13px; } .cart-item .qty-box input{ width:26px; font-size:12px; }
+.cart-item .price{ font-family:'Titan One',sans-serif; font-size:14px; color:var(--orange); }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.sum-block{ margin-top:16px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; padding:12px 0; }
+.sum-row.total{ font-family:'Titan One',sans-serif; font-size:18px; border-top:1px solid var(--ink); padding-top:16px; margin-top:6px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:16px 0; }
+.promo-row input{ flex:1; border:1px solid var(--hair); padding:12px 14px; font-size:13px; background:var(--panel); color:var(--ink); border-radius:4px; }
+.promo-row button{ border:1px solid var(--orange); color:var(--orange); padding:0 18px; font-size:12px; font-weight:700; border-radius:4px; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--graphite); margin-bottom:8px; font-weight:600; }
+.field input{ width:100%; border:1px solid var(--hair); background:var(--panel); padding:13px 14px; font-size:14px; color:var(--ink); border-radius:4px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--orange); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.section-title{ font-size:13px; letter-spacing:0.03em; text-transform:uppercase; color:var(--orange); margin:36px 0 18px; font-weight:700; }
+.section-title:first-of-type{ margin-top:0; }
+.delivery-opts, .pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.delivery-opt, .pay-opt{ border:1px solid var(--hair); padding:15px 16px; display:flex; justify-content:space-between; align-items:flex-start; cursor:pointer; gap:14px; border-radius:4px; }
+.delivery-opt.active, .pay-opt.active{ border-color:var(--orange); background:rgba(255,92,0,0.06); }
+.delivery-opt b, .pay-opt b{ font-size:13.5px; display:block; } .delivery-opt span{ font-size:12px; color:var(--graphite); }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--ink); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--orange); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.trust-mini{ margin-top:18px; font-size:12px; color:var(--graphite); line-height:1.8; }
+.confirm-wrap{ max-width:580px; margin:0 auto; padding:100px 4vw 130px; text-align:center; }
+.confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--success); color:#111; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 24px; }
+.confirm-wrap h1{ font-size:26px; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14px; line-height:1.7; }
+.order-no{ font-family:'Titan One',sans-serif; font-size:15px; margin-top:18px; color:var(--orange); }
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--hair); }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:36px; }
+.foot-grid h4{ font-size:11.5px; letter-spacing:0.05em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--orange); }
+.foot-brand p{ margin-top:14px; max-width:28ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:22px; border-top:1px solid var(--hair); font-size:11.5px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--hair); color:var(--ink); padding:14px 26px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; border-radius:6px; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">GRIND</div>
+  <nav><a onclick="go('home')" id="nav-home" class="active">Accueil</a><a onclick="go('boutique')" id="nav-boutique">Gamme</a><a onclick="go('boutique')">Setups</a></nav>
+  <div class="nav-right"><a>Recherche</a><a class="cart-btn" onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="view active" id="view-home">
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow">SHAPES TESTÉES EN SKATEPARK</span>
+        <h1 style="margin-top:12px;">Roule.<br>Tombe.<br><span class="orange">Recommence.</span></h1>
+        <p>Planches, trucks et roues sélectionnés par des skateurs locaux. Fais pivoter chaque produit à la souris avant d'acheter.</p>
+        <div class="hero-cta-row">
+          <a class="btn-primary" onclick="go('boutique')">Voir la gamme</a>
+          <a class="btn-ghost" onclick="go('boutique')">Setups complets</a>
+        </div>
+      </div>
+      <div class="hero-stage"><div class="deck"></div></div>
+    </div>
+  </section>
+
+  <div class="spec-strip">
+    <div class="spec-cell"><b>7 PLIS</b><span>ÉRABLE CANADIEN</span></div>
+    <div class="spec-cell"><b>200+</b><span>SPOTS TESTÉS</span></div>
+    <div class="spec-cell"><b>24H</b><span>LIVRAISON EXPRESS</span></div>
+    <div class="spec-cell"><b>1 AN</b><span>GARANTIE SHAPE</span></div>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>La gamme</h2><span class="eyebrow">FAIS PIVOTER LE PRODUIT À LA SOURIS</span></div>
+    <div class="grid4" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- ============ BOUTIQUE ============ -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Gamme</div>
+  <div class="plp-head"><h1>Toute la gamme</h1><span id="plpCount">8 produits</span></div>
+  <div class="pill-filters">
+    <div class="pill active" data-cat="all" onclick="pickCat(this,'all')">Tout</div>
+    <div class="pill" data-cat="decks" onclick="pickCat(this,'decks')">Decks</div>
+    <div class="pill" data-cat="trucks" onclick="pickCat(this,'trucks')">Trucks</div>
+    <div class="pill" data-cat="roues" onclick="pickCat(this,'roues')">Roues</div>
+  </div>
+  <div class="plp-grid" id="plpGrid"></div>
+  <div class="plp-empty" id="plpEmpty">Aucun produit dans cette catégorie.</div>
+</div>
+
+<!-- ============ PRODUIT ============ -->
+<div class="view" id="view-produit">
+  <section class="pdp">
+    <div>
+      <div class="spin-stage" id="spinStage">
+        <div class="frame" id="spinFrame"></div>
+        <div class="spin-progress" id="spinProgress"></div>
+        <div class="spin-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>Glisse pour faire pivoter</div>
+      </div>
+    </div>
+    <div class="pdp-info">
+      <span class="eyebrow" id="pdpEyebrow">GRIND</span>
+      <h1 id="pdpName" style="margin-top:12px;">—</h1>
+      <div class="pdp-price" id="pdpPriceRow"></div>
+      <p class="pdp-desc" id="pdpDesc"></p>
+      <div class="opt-block" id="pdpColorBlock"><div class="opt-label">Coloris</div><div class="color-select" id="pdpColorSelect"></div></div>
+      <div class="opt-block" id="pdpSizeBlock"><div class="opt-label">Taille</div><div class="size-select" id="pdpSizeSelect"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+      <div class="trust-list">
+        <div>✓ Testé en skatepark avant mise en vente</div>
+        <div>✓ Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>✓ Garantie shape 1 an</div>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Complète ton setup</h2><div class="grid4" id="relatedGrid"></div></section>
+</div>
+
+<!-- ============ PANIER ============ -->
+<div class="view" id="view-panier">
+  <div class="narrow">
+    <h1 id="cartTitle">Panier</h1>
+    <div id="cartItems"></div>
+    <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:20px;">Voir la gamme</a></div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+      <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo"><button onclick="applyPromo()">Appliquer</button></div>
+      <div class="promo-msg" id="promoMsg"></div>
+      <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+      <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:22px;" id="checkoutBtn">Passer la commande</a>
+      <div class="trust-mini">Garantie shape 1 an — Livraison express 24h — Paiement Orange Money, MTN MoMo, Visa</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMMANDE ============ -->
+<div class="view" id="view-commande">
+  <div class="narrow">
+    <h1>Commande</h1>
+    <div class="section-title">Livraison</div>
+    <div class="field-row">
+      <div class="field" id="f-prenom"><label>Prénom</label><input type="text"><div class="err-msg">Requis</div></div>
+      <div class="field" id="f-nom"><label>Nom</label><input type="text"><div class="err-msg">Requis</div></div>
+    </div>
+    <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-adresse"><label>Adresse</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-ville"><label>Ville</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="section-title">Paiement</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire</b></div></div>
+    </div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row"><span>Livraison</span><span>Offerte</span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:24px;" onclick="submitOrder()">Confirmer et payer</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div class="view" id="view-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Commande confirmée</h1>
+    <p>Un message de confirmation a été envoyé sur WhatsApp.</p>
+    <div class="order-no" id="orderNumber">Commande N°—</div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:36px; display:inline-flex;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:18px;">GRIND</div><p>Skateboards façonnés et testés à Douala.</p></div>
+    <div><h4>Gamme</h4><ul><li><a onclick="go('boutique')">Decks</a></li><li><a onclick="go('boutique')">Trucks</a></li></ul></div>
+    <div><h4>Marque</h4><ul><li><a>Nos riders</a></li><li><a>Presse</a></li></ul></div>
+    <div><h4>Service</h4><ul><li><a>Livraison</a></li><li><a>Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 GRIND</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===== drag-to-rotate 360 viewer: 8 angle frames, cycles by drag distance ===== */
+const ANGLE_COUNT = 8;
+let spinAngle = 0;
+let spinDragging = false, spinStartX = 0, spinStartAngle = 0;
+function angleGradient(idx, baseColor){
+  const shades = [0,1,2,3,2,1,0,-1];
+  const s = shades[idx % shades.length];
+  const light = 50 + s*8;
+  return `linear-gradient(${100+idx*8}deg, ${baseColor}, hsl(from ${baseColor} h s ${light}%))`;
+}
+function fallbackGradient(idx, baseColor){
+  const angles = [100,120,140,160,140,120,100,80];
+  return `linear-gradient(${angles[idx%angles.length]}deg, ${baseColor}, #2a2a2a)`;
+}
+function renderSpinFrame(){
+  const p = PRODUCTS[currentProductId];
+  const idx = ((spinAngle % ANGLE_COUNT) + ANGLE_COUNT) % ANGLE_COUNT;
+  document.getElementById('spinFrame').style.background = fallbackGradient(idx, p.color);
+  document.querySelectorAll('#spinProgress span').forEach((el,i)=>el.classList.toggle('active', i===idx));
+}
+function buildSpinProgress(){
+  document.getElementById('spinProgress').innerHTML = Array.from({length:ANGLE_COUNT}).map(()=>'<span></span>').join('');
+}
+function initSpinHandlers(){
+  const stage = document.getElementById('spinStage');
+  stage.addEventListener('mousedown', e=>{ spinDragging=true; spinStartX=e.clientX; spinStartAngle=spinAngle; stage.classList.add('dragging'); });
+  window.addEventListener('mousemove', e=>{
+    if(!spinDragging) return;
+    const delta = e.clientX - spinStartX;
+    spinAngle = spinStartAngle + Math.round(delta/18);
+    renderSpinFrame();
+  });
+  window.addEventListener('mouseup', ()=>{ spinDragging=false; stage.classList.remove('dragging'); });
+  stage.addEventListener('touchstart', e=>{ spinDragging=true; spinStartX=e.touches[0].clientX; spinStartAngle=spinAngle; }, {passive:true});
+  stage.addEventListener('touchmove', e=>{
+    if(!spinDragging) return;
+    const delta = e.touches[0].clientX - spinStartX;
+    spinAngle = spinStartAngle + Math.round(delta/18);
+    renderSpinFrame();
+  }, {passive:true});
+  stage.addEventListener('touchend', ()=>{ spinDragging=false; });
+}
+
+const PRODUCTS = {
+  deckClassic:{ name:'Deck Classic 8.0', price:42000, was:null, cat:'decks', color:'#FF5C00',
+    desc:"7 plis érable canadien, concave medium, pressé et façonné localement, garantie shape 1 an.",
+    sizes:['7.75"','8.0"','8.25"'], colors:['#FF5C00','#2a2a2a','#c9c9c9'] },
+  deckPro:{ name:'Deck Pro Signature', price:52000, was:null, cat:'decks', color:'#c94400',
+    desc:"Concave marqué, pop renforcé, graphisme exclusif édition riders locaux.",
+    sizes:['8.0"','8.25"','8.5"'], colors:['#c94400','#2a2a2a'] },
+  trucksStd:{ name:'Trucks Standard 5.0', price:28000, was:31000, cat:'trucks', color:'#7a7a76',
+    desc:"Axe acier trempé, base aluminium fondu, bushings moyens inclus.",
+    sizes:['5.0"','5.25"','5.5"'], colors:['#7a7a76','#FF5C00'] },
+  trucksLow:{ name:'Trucks Low Profile', price:30500, was:null, cat:'trucks', color:'#2a2a2a',
+    desc:"Profil bas pour stabilité en rampe, bushings durs, kingpin renforcé.",
+    sizes:['5.0"','5.25"'], colors:['#2a2a2a'] },
+  rouesStreet:{ name:'Roues Street 52mm', price:16500, was:null, cat:'roues', color:'#c9c9c9',
+    desc:"Uréthane 99A, formule rebond élevé, idéales pour le street technique.",
+    sizes:['50mm','52mm','54mm'], colors:['#c9c9c9','#FF5C00'] },
+  rouesCruise:{ name:'Roues Cruiser 60mm', price:19500, was:null, cat:'roues', color:'#FF5C00',
+    desc:"Uréthane souple 78A, grand diamètre, confort sur revêtements irréguliers.",
+    sizes:['58mm','60mm'], colors:['#FF5C00','#2a2a2a'] },
+  bearings:{ name:'Roulements ABEC-9', price:9500, was:null, cat:'roues', color:'#c9c9c9',
+    desc:"Roulements précision ABEC-9, cage nylon, entretoises incluses.",
+    sizes:[], colors:['#c9c9c9'] },
+  griptape:{ name:'Griptape Perforé', price:5500, was:null, cat:'decks', color:'#2a2a2a',
+    desc:"Grain moyen haute adhérence, découpe facile, perforations évacuation air.",
+    sizes:[], colors:['#2a2a2a'] }
+};
+const PROMO_CODES = { 'GRIND10':0.10, 'SKATE15':0.15 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'deckClassic';
+let pdpSelectedSize = null, pdpSelectedColor = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '', activeCat = 'all';
+
+function fmt(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const priceHTML = p.was ? `<span style="text-decoration:line-through;color:var(--graphite);margin-right:8px;">${fmt(p.was)}</span><span class="now">${fmt(p.price)}</span>` : `<span class="now">${fmt(p.price)}</span>`;
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  return `<a onclick="viewProduct('${id}')" class="pcard" data-id="${id}" data-cat="${p.cat}" data-price="${p.price}">
+    <div class="media" style="background:${fallbackGradient(2,p.color)};"><span class="wl ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span></div>
+    <div class="info"><div class="name">${p.name}</div><div class="price">${priceHTML}</div></div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,4).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+function pickCat(el, cat){ activeCat = cat; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); applyFilters(); }
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('#plpGrid .pcard'));
+  let visible=0;
+  cards.forEach(card=>{ const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat; card.style.display=ok?'':'none'; if(ok) visible++; });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('plpCount').textContent = visible + ' produit' + (visible>1?'s':'');
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wl[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedColor=p.colors[0]; pdpSelectedSize=p.sizes[0]||null; pdpQty=1; spinAngle=0; renderProduct(); go('produit'); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpEyebrow').textContent = 'GRIND — ' + p.cat.toUpperCase();
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpPriceRow').innerHTML = p.was ? `${fmt(p.price)} <span style="text-decoration:line-through;color:var(--graphite);font-size:16px;">${fmt(p.was)}</span>` : fmt(p.price);
+
+  buildSpinProgress(); renderSpinFrame();
+
+  const colorWrap = document.getElementById('pdpColorSelect');
+  document.getElementById('pdpColorBlock').style.display = p.colors.length ? 'block' : 'none';
+  colorWrap.innerHTML = p.colors.map(c=>`<span style="background:${c};" class="${c===pdpSelectedColor?'active':''}" onclick="pickPdpColor(this,'${c}')"></span>`).join('');
+  const sizeWrap = document.getElementById('pdpSizeSelect');
+  document.getElementById('pdpSizeBlock').style.display = p.sizes.length ? 'block' : 'none';
+  sizeWrap.innerHTML = p.sizes.map(s=>`<button class="${s===pdpSelectedSize?'active':''}" onclick="pickPdpSize(this,'${s}')">${s}</button>`).join('');
+
+  document.getElementById('pdpQty').value = pdpQty;
+  updateAddButton();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,4);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function pickPdpColor(el,c){ pdpSelectedColor=c; document.querySelectorAll('#pdpColorSelect span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); }
+function pickPdpSize(el,s){ pdpSelectedSize=s; document.querySelectorAll('#pdpSizeSelect button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updateAddButton(); }
+function updateAddButton(){ const p=PRODUCTS[currentProductId]; document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmt(p.price*pdpQty)}`; }
+
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const existing = cart.find(it=>it.id===currentProductId && it.size===pdpSelectedSize && it.color===pdpSelectedColor);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, size:pdpSelectedSize, color:pdpSelectedColor, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+PRODUCTS[it.id].price*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap = document.getElementById('cartItems'); const empty = document.getElementById('cartEmpty');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb" style="background:${fallbackGradient(2,p.color)};"></div>
+      <div class="meta"><b>${p.name}</b>${it.size?`<span>Taille ${it.size}</span>`:''}<a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmt(p.price*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmt(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toUpperCase(); const msg = document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount); const total = subtotal-disc;
+  document.getElementById('osSubtotal').textContent = fmt(subtotal);
+  document.getElementById('osTotal').textContent = fmt(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmt(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'GRN-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent = 'Commande N°' + orderNo;
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+initSpinHandlers();
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('deckClassic'); go('home');
+cart.push({id:'deckClassic', size:'8.0"', color:'#FF5C00', qty:1});
+cart.push({id:'trucksStd', size:'5.25"', color:'#7a7a76', qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CADRAN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#F5F1E8; --panel:#EAE2D0; --ink:#1C1A16; --brass:#A8823D; --graphite:#7D7568; --hair:rgba(28,26,22,0.13); --success:#3E7A52; --error:#A2402E; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'Cormorant',serif; font-weight:600; }
+.view{ display:none; } .view.active{ display:block; }
+.eyebrow{ font-size:11.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--brass); font-weight:600; }
+
+header{ position:sticky; top:0; z-index:60; display:flex; align-items:center; justify-content:space-between; padding:24px 4vw; background:rgba(245,241,232,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--hair); }
+.logo{ font-family:'Cormorant',serif; font-size:24px; font-weight:600; letter-spacing:0.04em; }
+nav{ display:flex; gap:32px; }
+nav a{ font-size:12.5px; letter-spacing:0.04em; text-transform:uppercase; color:var(--graphite); }
+nav a:hover, nav a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:20px; align-items:center; font-size:12.5px; letter-spacing:0.02em; text-transform:uppercase; color:var(--graphite); }
+.cart-count{ margin-left:4px; }
+@media(max-width:880px){ nav{display:none;} }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:16px 32px; background:var(--ink); color:var(--bg); font-size:12.5px; letter-spacing:0.04em; text-transform:uppercase; transition:background .3s ease; }
+.btn-primary:hover{ background:var(--brass); }
+.btn-primary:disabled{ opacity:0.35; cursor:not-allowed; }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:15px 30px; border:1px solid var(--ink); font-size:12px; letter-spacing:0.04em; text-transform:uppercase; }
+.btn-ghost:hover{ background:var(--ink); color:var(--bg); }
+.btn-full{ width:100%; }
+
+/* ===== HOME with live clock hero ===== */
+.hero{ display:grid; grid-template-columns:1fr 1fr; align-items:center; min-height:88vh; padding:0 4vw; gap:5vw; }
+.hero-copy h1{ font-size:clamp(36px,4.4vw,58px); line-height:1.12; max-width:12ch; }
+.hero-copy p{ margin-top:22px; max-width:38ch; color:var(--graphite); font-size:14.5px; line-height:1.8; }
+.clock-wrap{ display:flex; align-items:center; justify-content:center; }
+.clock-face{ width:min(360px,80vw); }
+
+.spec-strip{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--hair); border-bottom:1px solid var(--hair); }
+.spec-cell{ padding:34px 22px; text-align:center; border-right:1px solid var(--hair); }
+.spec-cell:last-child{ border-right:none; }
+.spec-cell b{ font-family:'Cormorant',serif; font-size:24px; display:block; color:var(--brass); }
+.spec-cell span{ font-size:11px; color:var(--graphite); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-top:6px; }
+@media(max-width:880px){ .spec-strip{ grid-template-columns:repeat(2,1fr); } .hero{ grid-template-columns:1fr; } }
+
+.section{ padding:90px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:38px; }
+.section-head h2{ font-size:30px; }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:28px; }
+@media(max-width:960px){ .grid3{ grid-template-columns:repeat(2,1fr); } }
+
+.pcard{ display:block; }
+.pcard .media{ position:relative; aspect-ratio:1/1; border-radius:50%; overflow:hidden; margin-bottom:18px; background:var(--panel); display:flex; align-items:center; justify-content:center; }
+.pcard .wl{ position:absolute; top:16px; right:16px; z-index:2; width:30px; height:30px; border-radius:50%; background:rgba(245,241,232,0.85); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.pcard .wl.active{ color:var(--brass); }
+.pcard .name{ font-family:'Cormorant',serif; font-size:18px; text-align:center; }
+.pcard .price{ font-size:12.5px; color:var(--graphite); text-align:center; margin-top:4px; }
+.pcard .price .now{ color:var(--brass); }
+
+/* ===== BOUTIQUE ===== */
+.breadcrumb{ padding:24px 4vw 0; font-size:12px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.plp-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 30px; display:flex; justify-content:space-between; align-items:flex-end; }
+.plp-head h1{ font-size:32px; }
+.plp-head span{ font-size:12.5px; color:var(--graphite); }
+.pill-filters{ max-width:1320px; margin:0 auto; padding:0 4vw 36px; display:flex; gap:10px; flex-wrap:wrap; }
+.pill{ border:1px solid var(--hair); padding:9px 18px; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; border-radius:30px; }
+.pill.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.plp-grid{ max-width:1320px; margin:0 auto 100px; padding:0 4vw; display:grid; grid-template-columns:repeat(3,1fr); gap:34px; }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:960px){ .plp-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ===== PDP ===== */
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:1fr 1fr; gap:6vw; align-items:center; }
+.pdp-stage{ position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; }
+.pdp-watch{ width:82%; }
+.pdp-info .eyebrow{ display:block; margin-bottom:16px; }
+.pdp-info h1{ font-size:clamp(28px,3vw,38px); max-width:14ch; }
+.pdp-price{ font-family:'Cormorant',serif; font-size:24px; margin-top:16px; color:var(--brass); }
+.pdp-desc{ margin-top:20px; max-width:40ch; color:var(--graphite); font-size:14px; line-height:1.8; }
+.spec-table{ margin-top:24px; border-top:1px solid var(--hair); }
+.spec-row{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--hair); font-size:12.5px; }
+.spec-row span:first-child{ color:var(--graphite); }
+.opt-block{ margin-top:26px; } .opt-block .opt-label{ font-size:12px; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:12px; }
+.strap-select{ display:flex; gap:10px; }
+.strap-select span{ width:34px; height:34px; border-radius:8px; border:2px solid transparent; box-shadow:0 0 0 1px var(--hair); cursor:pointer; }
+.strap-select span.active{ border-color:var(--ink); }
+.size-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.size-select button{ border:1px solid var(--hair); padding:10px 18px; font-size:12.5px; }
+.size-select button.active{ border-color:var(--ink); background:var(--ink); color:var(--bg); }
+.qty-cart-row{ margin-top:30px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--hair); }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:36px; text-align:center; border:none; font-size:14px; background:transparent; }
+.qty-cart-row .btn-primary{ flex:1; }
+.trust-list{ margin-top:24px; display:flex; flex-direction:column; gap:9px; }
+.trust-list div{ font-size:12px; color:#3a352a; }
+@media(max-width:900px){ .pdp{ grid-template-columns:1fr; } }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:28px; margin-bottom:38px; }
+
+/* ===== CART / CHECKOUT ===== */
+.narrow{ max-width:720px; margin:0 auto; padding:60px 4vw 120px; }
+.narrow h1{ font-size:30px; margin-bottom:44px; }
+.cart-item{ display:grid; grid-template-columns:90px 1fr auto; gap:20px; padding:24px 0; border-bottom:1px solid var(--hair); align-items:center; }
+.cart-item .thumb{ aspect-ratio:1/1; border-radius:50%; background:var(--panel); display:flex; align-items:center; justify-content:center; }
+.cart-item .thumb svg{ width:78%; }
+.cart-item .meta b{ font-family:'Cormorant',serif; font-size:16px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:11.5px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ margin-bottom:8px; } .cart-item .qty-box button{ width:28px; height:32px; font-size:12.5px; } .cart-item .qty-box input{ width:26px; font-size:12px; }
+.cart-item .price{ font-family:'Cormorant',serif; font-size:16px; color:var(--brass); }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.sum-block{ margin-top:20px; }
+.sum-row{ display:flex; justify-content:space-between; font-size:13.5px; padding:12px 0; }
+.sum-row.total{ font-family:'Cormorant',serif; font-size:19px; border-top:1px solid var(--ink); padding-top:18px; margin-top:6px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:16px 0; }
+.promo-row input{ flex:1; border:1px solid var(--hair); padding:12px 14px; font-size:13px; background:#fff; }
+.promo-row button{ border:1px solid var(--ink); padding:0 18px; font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.field{ margin-bottom:20px; }
+.field label{ display:block; font-size:11.5px; letter-spacing:0.04em; text-transform:uppercase; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1px solid var(--hair); background:#fff; padding:13px 14px; font-size:14px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--ink); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.section-title{ font-size:12px; letter-spacing:0.05em; text-transform:uppercase; color:var(--graphite); margin:40px 0 20px; }
+.section-title:first-of-type{ margin-top:0; }
+.pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.pay-opt{ border:1px solid var(--hair); padding:16px 18px; display:flex; align-items:flex-start; gap:14px; cursor:pointer; }
+.pay-opt.active{ border-color:var(--ink); background:var(--panel); }
+.pay-opt b{ font-size:13.5px; display:block; }
+.pay-opt .radio{ width:14px; height:14px; border-radius:50%; border:1.5px solid var(--ink); position:relative; margin-top:3px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--brass); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.trust-mini{ margin-top:22px; font-size:11.5px; color:var(--graphite); line-height:1.9; }
+.confirm-icon{ width:56px; height:56px; border-radius:50%; background:var(--success); color:#fff; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 26px; }
+.order-no{ font-family:'Cormorant',serif; font-size:18px; margin-top:20px; color:var(--brass); }
+footer{ padding:70px 4vw 30px; border-top:1px solid var(--hair); text-align:center; }
+.foot-links{ display:flex; justify-content:center; gap:34px; list-style:none; font-size:12px; letter-spacing:0.04em; text-transform:uppercase; color:var(--graphite); margin-bottom:36px; }
+.foot-links a:hover{ color:var(--brass); }
+.foot-bottom{ font-size:11px; color:var(--graphite); border-top:1px solid var(--hair); padding-top:22px; letter-spacing:0.03em; }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--bg); padding:14px 26px; font-size:13px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Cadran</div>
+  <nav><a onclick="go('home')" id="nav-home" class="active">Maison</a><a onclick="go('boutique')" id="nav-boutique">Collection</a><a onclick="go('boutique')">Bracelets</a></nav>
+  <div class="nav-right"><a>Rechercher</a><a onclick="go('panier')">Panier<span class="cart-count" id="cartCount">(0)</span></a></div>
+</header>
+
+<!-- ============ HOME ============ -->
+<div class="view active" id="view-home">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Mouvement automatique — Collection Solstice</span>
+      <h1 style="margin-top:16px;">Le temps, mesuré avec exactitude</h1>
+      <p>Mouvement automatique suisse, boîtier acier brossé, verre saphir. Chaque montre est réglée et contrôlée avant expédition.</p>
+      <a class="btn-primary" onclick="go('boutique')" style="margin-top:30px;">Voir la collection</a>
+    </div>
+    <div class="clock-wrap">
+      <svg class="clock-face" viewBox="0 0 300 300" id="liveClock">
+        <circle cx="150" cy="150" r="140" fill="none" stroke="var(--ink)" stroke-width="1.5"/>
+        <circle cx="150" cy="150" r="130" fill="none" stroke="var(--hair)" stroke-width="1"/>
+        <g id="clockTicks"></g>
+        <line id="hourHand" x1="150" y1="150" x2="150" y2="95" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>
+        <line id="minHand" x1="150" y1="150" x2="150" y2="65" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
+        <line id="secHand" x1="150" y1="150" x2="150" y2="55" stroke="var(--brass)" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="150" cy="150" r="5" fill="var(--brass)"/>
+        <text x="150" y="200" text-anchor="middle" font-family="Cormorant, serif" font-size="13" fill="var(--graphite)">CADRAN — DOUALA</text>
+      </svg>
+    </div>
+  </section>
+
+  <div class="spec-strip">
+    <div class="spec-cell"><b>SUISSE</b><span>MOUVEMENT AUTOMATIQUE</span></div>
+    <div class="spec-cell"><b>100M</b><span>ÉTANCHÉITÉ</span></div>
+    <div class="spec-cell"><b>SAPHIR</b><span>VERRE ANTI-RAYURE</span></div>
+    <div class="spec-cell"><b>5 ANS</b><span>GARANTIE MOUVEMENT</span></div>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>La collection</h2><span class="eyebrow">6 MODÈLES</span></div>
+    <div class="grid3" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- ============ BOUTIQUE ============ -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Maison</a> / Collection</div>
+  <div class="plp-head"><h1>Toute la collection</h1><span id="plpCount">6 modèles</span></div>
+  <div class="pill-filters">
+    <div class="pill active" data-cat="all" onclick="pickCat(this,'all')">Tout</div>
+    <div class="pill" data-cat="classique" onclick="pickCat(this,'classique')">Classique</div>
+    <div class="pill" data-cat="sport" onclick="pickCat(this,'sport')">Sport</div>
+    <div class="pill" data-cat="minimal" onclick="pickCat(this,'minimal')">Minimal</div>
+  </div>
+  <div class="plp-grid" id="plpGrid"></div>
+  <div class="plp-empty" id="plpEmpty">Aucun modèle dans cette catégorie.</div>
+</div>
+
+<!-- ============ PRODUIT ============ -->
+<div class="view" id="view-produit">
+  <section class="pdp">
+    <div class="pdp-stage" id="pdpStage"></div>
+    <div class="pdp-info">
+      <span class="eyebrow" id="pdpEyebrow">CADRAN — RÉF.</span>
+      <h1 id="pdpName" style="margin-top:14px;">—</h1>
+      <div class="pdp-price" id="pdpPriceRow"></div>
+      <p class="pdp-desc" id="pdpDesc"></p>
+      <div class="spec-table">
+        <div class="spec-row"><span>Boîtier</span><span id="specCase">Acier brossé 40mm</span></div>
+        <div class="spec-row"><span>Mouvement</span><span id="specMovement">Automatique suisse</span></div>
+        <div class="spec-row"><span>Étanchéité</span><span>100m</span></div>
+      </div>
+      <div class="opt-block"><div class="opt-label">Bracelet</div><div class="strap-select" id="strapSelect"></div></div>
+      <div class="opt-block" id="pdpSizeBlock"><div class="opt-label">Diamètre</div><div class="size-select" id="pdpSizeSelect"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+      <div class="trust-list">
+        <div>— Réglée et contrôlée avant expédition</div>
+        <div>— Paiement Orange Money, MTN MoMo, Visa</div>
+        <div>— Garantie mouvement 5 ans</div>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Autres modèles</h2><div class="grid3" id="relatedGrid"></div></section>
+</div>
+
+<!-- ============ PANIER ============ -->
+<div class="view" id="view-panier">
+  <div class="narrow">
+    <h1 id="cartTitle">Panier</h1>
+    <div id="cartItems"></div>
+    <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:20px;">Voir la collection</a></div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+      <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo"><button onclick="applyPromo()">Appliquer</button></div>
+      <div class="promo-msg" id="promoMsg"></div>
+      <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+      <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:22px;" id="checkoutBtn">Passer la commande</a>
+      <div class="trust-mini">Garantie mouvement 5 ans — Réglée avant expédition — Paiement Orange Money, MTN MoMo, Visa</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMMANDE ============ -->
+<div class="view" id="view-commande">
+  <div class="narrow">
+    <h1>Commande</h1>
+    <div class="section-title">Livraison</div>
+    <div class="field-row">
+      <div class="field" id="f-prenom"><label>Prénom</label><input type="text"><div class="err-msg">Requis</div></div>
+      <div class="field" id="f-nom"><label>Nom</label><input type="text"><div class="err-msg">Requis</div></div>
+    </div>
+    <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-adresse"><label>Adresse</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="field" id="f-ville"><label>Ville</label><input type="text"><div class="err-msg">Requis</div></div>
+    <div class="section-title">Paiement</div>
+    <div class="pay-opts">
+      <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px;"><input type="text" placeholder="Numéro"></div></div></div></div>
+      <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire</b></div></div>
+    </div>
+    <div class="sum-block">
+      <div class="sum-row"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row"><span>Livraison assurée</span><span>Offerte</span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+    <button class="btn-primary btn-full" style="margin-top:24px;" onclick="submitOrder()">Confirmer et payer</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRMATION ============ -->
+<div class="view" id="view-confirmation">
+  <div class="narrow">
+    <div class="confirm-icon">✓</div>
+    <h1>Merci, ta commande est confirmée</h1>
+    <p style="color:var(--graphite); font-size:14px; margin-top:14px;">Un message de confirmation a été envoyé sur WhatsApp. Ta montre sera réglée avant expédition.</p>
+    <div class="order-no" id="orderNumber">Commande N°—</div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:40px; display:inline-flex;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <ul class="foot-links"><li><a>Notre atelier</a></li><li><a>Garantie</a></li><li><a>Entretien</a></li><li><a>Contact</a></li></ul>
+  <div class="foot-bottom">© 2026 CADRAN — Confidentialité — Conditions générales</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* live analog clock — real time, ticking every second */
+const ticksGroup = document.getElementById('clockTicks');
+for(let i=0;i<12;i++){
+  const angle = i*30*Math.PI/180;
+  const x1 = 150 + 122*Math.sin(angle), y1 = 150 - 122*Math.cos(angle);
+  const x2 = 150 + 135*Math.sin(angle), y2 = 150 - 135*Math.cos(angle);
+  const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+  tick.setAttribute('x1',x1); tick.setAttribute('y1',y1); tick.setAttribute('x2',x2); tick.setAttribute('y2',y2);
+  tick.setAttribute('stroke','var(--ink)'); tick.setAttribute('stroke-width', i%3===0 ? 2.5 : 1.2);
+  ticksGroup.appendChild(tick);
+}
+function tickClock(){
+  const now = new Date();
+  const h = now.getHours()%12, m = now.getMinutes(), s = now.getSeconds();
+  const hDeg = (h + m/60) * 30;
+  const mDeg = (m + s/60) * 6;
+  const sDeg = s * 6;
+  document.getElementById('hourHand').setAttribute('transform', `rotate(${hDeg} 150 150)`);
+  document.getElementById('minHand').setAttribute('transform', `rotate(${mDeg} 150 150)`);
+  document.getElementById('secHand').setAttribute('transform', `rotate(${sDeg} 150 150)`);
+}
+tickClock(); setInterval(tickClock, 1000);
+
+function watchSVG(caseColor, strapColor, size){
+  size = size || '80%';
+  return `<svg viewBox="0 0 300 300" style="width:${size};">
+    <circle cx="150" cy="150" r="98" fill="${strapColor}" opacity="0.25"/>
+    <rect x="120" y="10" width="60" height="80" rx="10" fill="${strapColor}"/>
+    <rect x="120" y="210" width="60" height="80" rx="10" fill="${strapColor}"/>
+    <circle cx="150" cy="150" r="90" fill="${caseColor}" stroke="rgba(0,0,0,0.15)" stroke-width="2"/>
+    <circle cx="150" cy="150" r="74" fill="#F5F1E8"/>
+    <g stroke="#1C1A16" stroke-width="1.5">
+      <line x1="150" y1="88" x2="150" y2="98"/><line x1="150" y1="202" x2="150" y2="212"/>
+      <line x1="88" y1="150" x2="98" y2="150"/><line x1="202" y1="150" x2="212" y2="150"/>
+    </g>
+    <line x1="150" y1="150" x2="150" y2="112" stroke="#1C1A16" stroke-width="4" stroke-linecap="round"/>
+    <line x1="150" y1="150" x2="178" y2="150" stroke="#1C1A16" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="150" cy="150" r="4" fill="#A8823D"/>
+  </svg>`;
+}
+
+const PRODUCTS = {
+  solstice:{ name:'Solstice Automatique', price:285000, was:null, cat:'classique', caseColor:'#B0B0B0',
+    desc:"Boîtier acier brossé 40mm, mouvement automatique suisse, verre saphir bombé, réserve de marche 42h.",
+    caseSpec:'Acier brossé 40mm', movement:'Automatique suisse', sizes:['38mm','40mm','42mm'], straps:['#8B5E34','#1C1A16','#A8823D'] },
+  meridien:{ name:'Méridien Sport', price:245000, was:null, cat:'sport', caseColor:'#3a3a3d',
+    desc:"Boîtier titane 42mm, lunette tournante unidirectionnelle, étanchéité 200m, bracelet caoutchouc.",
+    caseSpec:'Titane 42mm', movement:'Quartz haute précision', sizes:['40mm','42mm','44mm'], straps:['#1C1A16','#3a5a7a','#7d7568'] },
+  minima:{ name:'Minima', price:168000, was:185000, cat:'minimal', caseColor:'#c9c9c9',
+    desc:"Boîtier acier poli 36mm, cadran épuré sans chiffres, bracelet cuir végétal.",
+    caseSpec:'Acier poli 36mm', movement:'Quartz suisse', sizes:['34mm','36mm'], straps:['#8B5E34','#1C1A16'] },
+  aviateur:{ name:'Aviateur 1954', price:312000, was:null, cat:'classique', caseColor:'#8a7050',
+    desc:"Boîtier bronze 42mm, patine évolutive, cadran cannelé façon montre de bord, bracelet cuir vieilli.",
+    caseSpec:'Bronze 42mm', movement:'Automatique suisse', sizes:['40mm','42mm'], straps:['#6b4a2e','#1C1A16'] },
+  onde:{ name:'Onde', price:198000, was:null, cat:'minimal', caseColor:'#d4c9a8',
+    desc:"Boîtier or rose 34mm, cadran nacre, bracelet milanais souple.",
+    caseSpec:'Or rose 34mm', movement:'Quartz suisse', sizes:['32mm','34mm'], straps:['#c9963e','#1C1A16'] },
+  altitude:{ name:'Altitude GMT', price:298000, was:null, cat:'sport', caseColor:'#4a4a4d',
+    desc:"Boîtier acier 42mm, complication GMT, lunette bicolore, bracelet acier à maillons.",
+    caseSpec:'Acier 42mm', movement:'Automatique GMT', sizes:['40mm','42mm','44mm'], straps:['#7d7568','#1C1A16','#3a5a7a'] }
+};
+const PROMO_CODES = { 'CADRAN10':0.10, 'SOLSTICE15':0.15 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'solstice';
+let pdpSelectedSize = null, pdpSelectedStrap = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '', activeCat = 'all';
+
+function fmt(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const priceHTML = p.was ? `<span style="text-decoration:line-through;color:var(--graphite);margin-right:8px;">${fmt(p.was)}</span><span class="now">${fmt(p.price)}</span>` : fmt(p.price);
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  return `<a onclick="viewProduct('${id}')" class="pcard" data-id="${id}" data-cat="${p.cat}" data-price="${p.price}">
+    <div class="media"><span class="wl ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span>${watchSVG(p.caseColor, p.straps[0], '70%')}</div>
+    <div class="name">${p.name}</div><div class="price">${priceHTML}</div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,3).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+function pickCat(el, cat){ activeCat = cat; document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); applyFilters(); }
+function applyFilters(){
+  const cards = Array.from(document.querySelectorAll('#plpGrid .pcard'));
+  let visible=0;
+  cards.forEach(card=>{ const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat; card.style.display=ok?'':'none'; if(ok) visible++; });
+  document.getElementById('plpEmpty').style.display = visible===0?'block':'none';
+  document.getElementById('plpCount').textContent = visible + ' modèle' + (visible>1?'s':'');
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wl[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedStrap=p.straps[0]; pdpSelectedSize=p.sizes[Math.floor(p.sizes.length/2)]; pdpQty=1; renderProduct(); go('produit'); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpEyebrow').textContent = 'CADRAN — ' + p.name.toUpperCase();
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpPriceRow').innerHTML = p.was ? `${fmt(p.price)} <span style="text-decoration:line-through;color:var(--graphite);font-size:15px;">${fmt(p.was)}</span>` : fmt(p.price);
+  document.getElementById('specCase').textContent = p.caseSpec;
+  document.getElementById('specMovement').textContent = p.movement;
+
+  updateWatchPreview();
+
+  document.getElementById('strapSelect').innerHTML = p.straps.map(c=>`<span style="background:${c};" class="${c===pdpSelectedStrap?'active':''}" onclick="pickStrap(this,'${c}')"></span>`).join('');
+  const sizeWrap = document.getElementById('pdpSizeSelect');
+  sizeWrap.innerHTML = p.sizes.map(s=>`<button class="${s===pdpSelectedSize?'active':''}" onclick="pickPdpSize(this,'${s}')">${s}</button>`).join('');
+
+  document.getElementById('pdpQty').value = pdpQty;
+  updateAddButton();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).sort(()=>0.5-Math.random()).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function updateWatchPreview(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('pdpStage').innerHTML = watchSVG(p.caseColor, pdpSelectedStrap, '82%');
+}
+function pickStrap(el,c){ pdpSelectedStrap=c; document.querySelectorAll('#strapSelect span').forEach(s=>s.classList.remove('active')); el.classList.add('active'); updateWatchPreview(); }
+function pickPdpSize(el,s){ pdpSelectedSize=s; document.querySelectorAll('#pdpSizeSelect button').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updateAddButton(); }
+function updateAddButton(){ const p=PRODUCTS[currentProductId]; document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmt(p.price*pdpQty)}`; }
+
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const existing = cart.find(it=>it.id===currentProductId && it.size===pdpSelectedSize && it.strap===pdpSelectedStrap);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, size:pdpSelectedSize, strap:pdpSelectedStrap, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajoutée au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = '(' + cart.reduce((n,it)=>n+it.qty,0) + ')'; }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+PRODUCTS[it.id].price*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap = document.getElementById('cartItems'); const empty = document.getElementById('cartEmpty');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb">${watchSVG(p.caseColor, it.strap, '78%')}</div>
+      <div class="meta"><b>${p.name}</b><span>${it.size} — Bracelet</span><a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmt(p.price*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent = fmt(subtotal);
+  document.getElementById('sumTotal').textContent = fmt(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmt(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code = document.getElementById('promoInput').value.trim().toUpperCase(); const msg = document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal = cartSubtotal(); const disc = Math.round(subtotal*promoDiscount); const total = subtotal-disc;
+  document.getElementById('osSubtotal').textContent = fmt(subtotal);
+  document.getElementById('osTotal').textContent = fmt(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmt(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'CDR-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent = 'Commande N°' + orderNo;
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0, behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('solstice'); go('home');
+cart.push({id:'solstice', size:'40mm', strap:'#8B5E34', qty:1});
+cart.push({id:'minima', size:'36mm', strap:'#1C1A16', qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>
