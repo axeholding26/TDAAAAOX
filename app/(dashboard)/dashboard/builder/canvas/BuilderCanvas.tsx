@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { Sparkles } from "lucide-react";
 import type { ThemeConfig, BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
-import { insertNode, moveNode, removeNode, duplicateNode, updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, findNode } from "@/lib/block-tree";
+import { insertNode, moveNode, removeNode, duplicateNode, updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, findNode, genBlockId } from "@/lib/block-tree";
 import { BlockLibraryPanel } from "./BlockLibraryPanel";
 import { BlockStylePanel } from "./BlockStylePanel";
 import { CanvasNode } from "./CanvasNode";
@@ -20,13 +20,30 @@ interface Props {
   slug: string;
   device: Device;
   onSyncWithServer: () => Promise<void>;
+  // "boutique" (physique, catalogue) = habillage Shopify — bibliothèque de
+  // blocs complète, ordre neutre. "landing" (digital, vente_unique) =
+  // habillage Chariow/Lovable — bibliothèque réordonnée pour prioriser la
+  // conversion (compte à rebours, vidéo, témoignages, FAQ, CTA avant les
+  // blocs catalogue) et panneau AXIA ouvert par défaut (chat-first, comme
+  // Lovable) plutôt qu'une bulle repliée. Même moteur, même données —
+  // seul l'habillage change, voir BlockLibraryPanel.
+  variante?: "boutique" | "landing";
+  // Quand fourni, remplace la bibliothèque de blocs (colonne de gauche) par
+  // ce contenu — les panneaux de réglages globaux (couleurs, typo...) de
+  // builder/page.tsx, pour que l'aperçu live reste visible pendant qu'on les
+  // édite (comme Shopify : le thème change, la page reste visible), sans
+  // dupliquer le canevas dans une iframe séparée.
+  leftPanelOverride?: React.ReactNode;
+  // Contenu additionnel affiché au-dessus du bouton générique "Ajouter une
+  // section de départ" quand le canevas est vide — utilisé par la boutique
+  // digitale (modeBoutique "digital") pour proposer 4 gabarits de départ
+  // (voir digitalStarterTemplates.ts) plutôt qu'une section vierge. Absent
+  // pour boutique/landing physiques, comportement inchangé.
+  emptyStateExtra?: React.ReactNode;
 }
 
 // Largeurs miroir de l'aperçu iframe du constructeur classique — même
-// convention visuelle pour les deux modes. container-type:inline-size fait
-// de cette boîte le point de référence des @container émis par
-// blockResponsiveCss (vague 3) : la rétrécir ici suffit à activer en direct
-// les surcharges tablette/mobile, sans iframe ni détection d'appareil.
+// convention visuelle pour les deux modes.
 const DEVICE_WIDTH: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
 
 const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12 sm:py-16", lg: "py-16 sm:py-20", xl: "py-20 sm:py-28" };
@@ -35,7 +52,7 @@ const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12
 // dans le tableau de bord (pas d'iframe, voir décision d'architecture du
 // plan). Bibliothèque à gauche, canevas au centre, panneau de style à
 // droite ; toute mutation passe par lib/block-tree.ts.
-export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: Props) {
+export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, variante = "boutique", leftPanelOverride, emptyStateExtra }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggedLabel, setDraggedLabel] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -48,6 +65,51 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: P
   const ctx = useMemo(() => ({ slug, colors: config.colors, container, sectionPy, editable: true as const }), [slug, config.colors, container, sectionPy]);
 
   const setTree = (updater: (t: BlockNode[]) => BlockNode[]) => set((p) => ({ ...p, builderTree: updater(p.builderTree ?? []) }));
+
+  // Pont AXSO Design → Constructeur libre : enveloppe le design cloné
+  // existant (config.builderHtml/builderCss, voir lib/axso-design-library.ts)
+  // dans un unique bloc "embed-html", une fois, pour que la boutique quitte
+  // le rendu figé (ImportedLiteralHomePage) au profit de l'arbre de blocs —
+  // app/(storefront)/[slug]/page.tsx préfère déjà builderTree sur builderHtml
+  // dès que le premier est non vide, aucun autre changement de rendu requis.
+  // Le contenu importé n'est pas décomposé en sous-blocs éditables (limitation
+  // assumée) : le marchand peut le déplacer/supprimer et ajouter de VRAIS
+  // nouveaux blocs autour, mais pas éditer son contenu champ par champ.
+  //
+  // Déclenché automatiquement (voir l'effet ci-dessous), jamais par un
+  // bouton — le marchand doit tomber directement sur son design, pas sur un
+  // canevas vide. Idempotent PAR CONSTRUCTION, jamais via un ref/état de
+  // composant (démonté/remonté au moindre changement d'onglet ou Fast
+  // Refresh en dev, ce qui rouvrait la porte à un second import et donc à
+  // un bloc dupliqué) : la vérification "déjà importé ?" se fait DANS le
+  // setter fonctionnel, sur l'état le plus frais possible au moment où
+  // React l'applique réellement, jamais sur une fermeture (closure) périmée.
+  const importerDesignExistant = () => {
+    set((p) => {
+      if ((p.builderTree?.length ?? 0) > 0) return p; // déjà importé — no-op
+      if (!p.builderHtml) return p;
+      const embed: BlockNode = { id: genBlockId("embed-html"), type: "embed-html", config: { html: p.builderHtml, css: p.builderCss } };
+      const colonne: BlockNode = { id: genBlockId("col"), type: "column", children: [embed] };
+      const ligne: BlockNode = { id: genBlockId("row"), type: "row", children: [colonne] };
+      const sectionRacine: BlockNode = { id: genBlockId("section"), type: "section", children: [ligne] };
+      return { ...p, builderTree: [sectionRacine] };
+    });
+  };
+
+  useEffect(() => {
+    if (tree.length === 0 && config.builderHtml) importerDesignExistant();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tree.length, config.builderHtml]);
+
+  // Sélectionne le bloc importé dès qu'il apparaît (une fois), pour que le
+  // panneau de style s'ouvre directement dessus — hors du setter ci-dessus
+  // (jamais d'effet de bord dans un updater React, potentiellement rejoué).
+  useEffect(() => {
+    if (selectedNodeId) return;
+    const embed = tree.find((n) => n.children?.[0]?.children?.[0]?.type === "embed-html");
+    if (embed) setSelectedNodeId(embed.children![0].children![0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tree.length]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current as any;
@@ -80,24 +142,69 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: P
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <BlockLibraryPanel onInsertTemplate={(templateNode) => { setTree((t) => insertNode(t, null, t.length, templateNode)); setSelectedNodeId(templateNode.id); }} />
+      {leftPanelOverride ?? (
+        <BlockLibraryPanel
+          variante={variante}
+          onInsertTemplate={(templateNode) => { setTree((t) => insertNode(t, null, t.length, templateNode)); setSelectedNodeId(templateNode.id); }}
+          tree={tree}
+          selectedNodeId={selectedNodeId}
+          onSelect={setSelectedNodeId}
+          onDuplicateNode={(id) => setTree((t) => duplicateNode(t, id))}
+          onDeleteNode={(id) => { setTree((t) => removeNode(t, id)); setSelectedNodeId((cur) => (cur === id ? null : cur)); }}
+          onToggleActif={(id) => setTree((t) => toggleNodeActif(t, id))}
+        />
+      )}
 
       <div className="flex-1 bg-[#EEF0F6] overflow-y-auto scrollbar-thin p-6" onClick={() => setSelectedNodeId(null)}>
         <div
-          className="mx-auto bg-white rounded-xl shadow-sm min-h-[70vh] overflow-hidden transition-all duration-300"
-          style={{ backgroundColor: config.colors.fond, color: config.colors.texte, width: DEVICE_WIDTH[device], maxWidth: "100%", containerType: "inline-size" }}
+          // PAS de containerType:"inline-size" ici (contrairement à une
+          // version antérieure) : cette boîte a un frère (leftPanelOverride /
+          // BlockLibraryPanel, voir page.tsx) qui se monte/démonte à chaque
+          // changement d'onglet du panneau de gauche (Sections ↔ Couleurs ↔
+          // Typo ↔ ...). Un conteneur de container-query dont un FRÈRE se
+          // monte/démonte dans le même DndContext casse durablement le
+          // hit-testing de TOUTE la page dans Chromium — reproductible à
+          // 100%, y compris avec une largeur strictement stable des deux
+          // côtés (testé : ni la largeur, ni la transition n'étaient en
+          // cause, seule la présence de container-type l'était) : plus un
+          // seul clic ne fonctionnait nulle part (canevas, barre latérale,
+          // rien) jusqu'au rechargement complet de la page — exactement le
+          // "ça disparaît à chaque clic, impossible de rouvrir" remonté.
+          // Conséquence acceptée : les surcharges tablette/mobile par bloc
+          // (vague 3, ResponsiveStyleTag/@container) ne se prévisualisent
+          // plus en direct ICI en changeant l'appareil simulé — mais restent
+          // enregistrées et s'appliquent normalement sur la vraie vitrine
+          // (app/(storefront)/[slug]/page.tsx a son propre conteneur stable,
+          // sans frère qui se démonte, donc non affecté par ce bug).
+          className="mx-auto bg-white rounded-xl shadow-sm min-h-[70vh] overflow-hidden transition-colors duration-300"
+          style={{ backgroundColor: config.colors.fond, color: config.colors.texte, width: DEVICE_WIDTH[device], maxWidth: "100%" }}
           onClick={(e) => e.stopPropagation()}
         >
           {tree.length === 0 ? (
-            <div className="p-10 flex flex-col items-center gap-4">
-              <DropIndicator parentId={null} index={0} empty />
-              <button
-                onClick={() => { const s = createStarterSection(); setTree((t) => [...t, s]); setSelectedNodeId(s.id); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#F5A623", color: "#050508" }}
-              >
-                <Sparkles size={12} /> Ajouter une section de départ
-              </button>
-            </div>
+            config.builderHtml ? (
+              // Import automatique en cours (voir l'effet ci-dessus) — ne
+              // dure qu'un instant, jamais de bouton à cliquer : le marchand
+              // doit tomber directement sur le design qu'il a choisi.
+              <div className="p-10 flex flex-col items-center gap-3 text-gray-400">
+                <div className="w-5 h-5 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm">Chargement de ton design…</p>
+              </div>
+            ) : emptyStateExtra ? (
+              <div className="p-10">{emptyStateExtra}</div>
+            ) : (
+              <div className="p-10 flex flex-col items-center gap-4">
+                <DropIndicator parentId={null} index={0} empty />
+                <button
+                  onClick={() => { const s = createStarterSection(); setTree((t) => [...t, s]); setSelectedNodeId(s.id); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold" style={{ backgroundColor: "#F5A623", color: "#050508" }}
+                >
+                  <Sparkles size={12} /> {variante === "landing" ? "Commencer ma page de vente" : "Ajouter une section de départ"}
+                </button>
+                {variante === "landing" && (
+                  <p className="text-[12px] text-gray-400 text-center max-w-xs -mt-1">Ou décris ta page à AXIA (bulle en bas à droite) — elle construit la structure à ta place.</p>
+                )}
+              </div>
+            )
           ) : (
             <>
               <DropIndicator parentId={null} index={0} />
@@ -123,7 +230,7 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: P
         </div>
       </div>
 
-      {selectedNode && (
+      {selectedNode && !leftPanelOverride && (
         <BlockStylePanel
           node={selectedNode}
           device={device}
@@ -136,11 +243,11 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer }: P
         />
       )}
 
-      <AxiaBuilderPanel onSyncWithServer={onSyncWithServer} />
+      <AxiaBuilderPanel onSyncWithServer={onSyncWithServer} defaultOpen={variante === "landing"} variante={variante} />
 
       <DragOverlay>
         {draggedLabel && (
-          <div className="px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
+          <div className="px-3 py-1.5 rounded-lg text-sm font-semibold shadow-lg" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
             {draggedLabel}
           </div>
         )}

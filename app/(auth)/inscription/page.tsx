@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,9 +9,11 @@ import { z } from "zod";
 import {
   ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
   Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight,
-  X, Bell, Info, AlertCircle, Wand2, Star,
+  X, Bell, Info, AlertCircle, Wand2, Star, Package, Download,
+  type LucideIcon,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
+import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
@@ -119,8 +120,33 @@ const PAYS_LIST = [
   { code:"US", nom:"États-Unis",    flag:"🇺🇸", devise:"USD" },
   { code:"AE", nom:"Émirats",       flag:"🇦🇪", devise:"AED" },
   { code:"GB", nom:"Royaume-Uni",   flag:"🇬🇧", devise:"GBP" },
-  { code:"AU", nom:"Autre",         flag:"🌍",  devise:"XAF" },
+  { code:"AUTRE_AFRIQUE", nom:"Autre pays d'Afrique", flag:"🌍", devise:"" },
 ];
+
+// Liste complète des 54 pays membres de l'Union africaine — affichée quand le
+// marchand clique "Autre pays d'Afrique" dans PaysSelector (les pays déjà
+// présents dans PAYS_LIST ci-dessus, comme le Sénégal ou le Maroc, y figurent
+// aussi pour une recherche complète en un seul endroit).
+const PAYS_AFRIQUE = [
+  { code:"DZ", nom:"Algérie" }, { code:"AO", nom:"Angola" }, { code:"BJ", nom:"Bénin" },
+  { code:"BW", nom:"Botswana" }, { code:"BF", nom:"Burkina Faso" }, { code:"BI", nom:"Burundi" },
+  { code:"CV", nom:"Cabo Verde" }, { code:"CM", nom:"Cameroun" }, { code:"CF", nom:"Centrafrique" },
+  { code:"KM", nom:"Comores" }, { code:"CG", nom:"Congo-Brazzaville" }, { code:"CD", nom:"Congo (RDC)" },
+  { code:"CI", nom:"Côte d'Ivoire" }, { code:"DJ", nom:"Djibouti" }, { code:"EG", nom:"Égypte" },
+  { code:"ER", nom:"Érythrée" }, { code:"SZ", nom:"Eswatini" }, { code:"ET", nom:"Éthiopie" },
+  { code:"GA", nom:"Gabon" }, { code:"GM", nom:"Gambie" }, { code:"GH", nom:"Ghana" },
+  { code:"GN", nom:"Guinée" }, { code:"GW", nom:"Guinée-Bissau" }, { code:"GQ", nom:"Guinée équatoriale" },
+  { code:"KE", nom:"Kenya" }, { code:"LS", nom:"Lesotho" }, { code:"LR", nom:"Libéria" },
+  { code:"LY", nom:"Libye" }, { code:"MG", nom:"Madagascar" }, { code:"MW", nom:"Malawi" },
+  { code:"ML", nom:"Mali" }, { code:"MA", nom:"Maroc" }, { code:"MR", nom:"Mauritanie" },
+  { code:"MU", nom:"Maurice" }, { code:"MZ", nom:"Mozambique" }, { code:"NA", nom:"Namibie" },
+  { code:"NE", nom:"Niger" }, { code:"NG", nom:"Nigeria" }, { code:"UG", nom:"Ouganda" },
+  { code:"RW", nom:"Rwanda" }, { code:"ST", nom:"São Tomé-et-Príncipe" }, { code:"SN", nom:"Sénégal" },
+  { code:"SC", nom:"Seychelles" }, { code:"SL", nom:"Sierra Leone" }, { code:"SO", nom:"Somalie" },
+  { code:"SD", nom:"Soudan" }, { code:"SS", nom:"Soudan du Sud" }, { code:"TZ", nom:"Tanzanie" },
+  { code:"TD", nom:"Tchad" }, { code:"TG", nom:"Togo" }, { code:"TN", nom:"Tunisie" },
+  { code:"ZM", nom:"Zambie" }, { code:"ZW", nom:"Zimbabwe" }, { code:"ZA", nom:"Afrique du Sud" },
+].sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
 
 // ─── Logique 4 propositions Axia ──────────────────────────────────────────────
 // Détecte la catégorie depuis la description libre de l'utilisateur
@@ -199,7 +225,23 @@ const schemaCompte = z.object({
 });
 type CompteData = z.infer<typeof schemaCompte>;
 
-type Phase = "welcome"|"q-vente"|"q-pays"|"analyse"|"plan"|"q-compte"|"creation"|"succes";
+type Phase = "welcome"|"q-type"|"q-vente"|"q-nom"|"q-pays"|"analyse"|"plan"|"q-compte"|"creation"|"succes";
+// Uniquement deux types possibles — un marchand vend soit du physique, soit
+// du digital, jamais "les deux" en tant que catégorie de boutique (un
+// marchand avec un catalogue mixte choisit simplement "physique", le champ
+// type par produit dans AXIA reste physique/digital/dropshipping au cas par cas).
+type TypeBoutique = "physique"|"digital";
+
+// Exemples de "que vends-tu" alignés sur le type choisi à l'étape précédente —
+// proposer "Mode & vêtements" à quelqu'un qui vend du digital n'a aucun sens.
+const VENTE_EXEMPLES: Record<TypeBoutique, string[]> = {
+  physique: ["Mode & vêtements africains","Cosmétiques naturels","Bijoux artisanaux","Électronique & gadgets","Alimentation & épices","Chaussures & maroquinerie"],
+  digital:  ["Formations en ligne","Ebooks & guides pratiques","Templates & designs Canva/Notion","Musique & beats","Coaching & consulting","Logiciels & abonnements SaaS"],
+};
+const VENTE_PLACEHOLDER: Record<TypeBoutique, string> = {
+  physique: "Ex: je vends des vêtements mode femme inspirés de la culture africaine, basée à Dakar…",
+  digital:  "Ex: je vends des formations en ligne sur le trading et des ebooks business…",
+};
 
 const STEPS_CREATION = [
   "Provisionnement de ta boutique…",
@@ -332,20 +374,67 @@ function AxiaThinking() {
   );
 }
 
+// ─── Sélecteur type de boutique (physique / digital) ──────────────────────────
+// Détermine la structure de la boutique générée : "digital" retire la
+// section Collections (page de vente centrée sur le produit, sans catalogue
+// à parcourir) — voir modeBoutique dans lib/generate-store-config.ts.
+const TYPE_BOUTIQUE_OPTIONS: { v:TypeBoutique; Icon:LucideIcon; titre:string; desc:string }[] = [
+  { v:"physique", Icon:Package,  titre:"Produits physiques", desc:"Vêtements, bijoux, alimentation… expédiés à tes clients" },
+  { v:"digital",  Icon:Download, titre:"Produits digitaux",  desc:"Ebooks, formations, templates… livrés instantanément" },
+];
+
+function TypeBoutiqueSelector({ onSelect }: { onSelect:(type:TypeBoutique)=>void }) {
+  const [sel,setSel] = useState<TypeBoutique|"">("");
+  return (
+    <div className="msg-in" style={{ paddingLeft:47, display:"grid", gap:9, maxWidth:420 }}>
+      {TYPE_BOUTIQUE_OPTIONS.map(o=>(
+        <button key={o.v}
+          onClick={()=>{ setSel(o.v); onSelect(o.v); }}
+          style={{
+            display:"flex", alignItems:"center", gap:12, padding:"13px 15px", borderRadius:14,
+            background:sel===o.v?`${YELLOW}12`:SURFACE,
+            border:`1.5px solid ${sel===o.v?YELLOW:BORDER}`,
+            cursor:"pointer", transition:"all .15s", textAlign:"left",
+            boxShadow:sel===o.v?`0 0 0 2px ${YELLOW}22`:"none",
+          }}>
+          <div style={{
+            width:38, height:38, borderRadius:11, flexShrink:0,
+            background:`${YELLOW}14`, display:"flex", alignItems:"center", justifyContent:"center",
+          }}>
+            <o.Icon size={17} color={YELLOW_D}/>
+          </div>
+          <div>
+            <div style={{ fontFamily:"'Sora',sans-serif", fontSize:13.5, fontWeight:700, color:NAVY }}>{o.titre}</div>
+            <div style={{ fontSize:11.5, color:MUTED, marginTop:1, fontFamily:"'Inter',sans-serif" }}>{o.desc}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ─── Sélecteur de pays ────────────────────────────────────────────────────────
 function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:string)=>void }) {
   const [sel,setSel] = useState("");
+  const [afriqueOuvert,setAfriqueOuvert] = useState(false);
+
+  function choisir(code:string, nom:string) {
+    if (code === "AUTRE_AFRIQUE") { setAfriqueOuvert(true); return; }
+    setSel(code);
+    onSelect(code, nom, PAYS_DEVISES[code] || "XOF");
+  }
+
   return (
-    <div className="msg-in" style={{ paddingLeft:47 }}>
+    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, maxWidth:460 }}>
         {PAYS_LIST.map(p=>(
           <button key={p.code}
-            onClick={()=>{ setSel(p.code); onSelect(p.code,p.nom,p.devise); }}
+            onClick={()=>choisir(p.code, p.nom)}
             style={{
               display:"flex", flexDirection:"column", alignItems:"center",
               gap:4, padding:"9px 4px", borderRadius:12,
-              background:sel===p.code?`${YELLOW}12`:SURFACE,
-              border:`1.5px solid ${sel===p.code?YELLOW:BORDER}`,
+              background:(sel===p.code||(afriqueOuvert&&p.code==="AUTRE_AFRIQUE"))?`${YELLOW}12`:SURFACE,
+              border:`1.5px solid ${(sel===p.code||(afriqueOuvert&&p.code==="AUTRE_AFRIQUE"))?YELLOW:BORDER}`,
               cursor:"pointer", transition:"all .15s",
               boxShadow:sel===p.code?`0 0 0 2px ${YELLOW}22`:"none",
             }}>
@@ -356,6 +445,33 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
           </button>
         ))}
       </div>
+
+      {afriqueOuvert && (
+        <div className="msg-in" style={{
+          display:"flex", flexDirection:"column", gap:6, maxWidth:320,
+          background:SURFACE, border:`1.5px solid ${BORDER}`, borderRadius:14, padding:12,
+        }}>
+          <label style={{ fontSize:11, fontWeight:600, color:MID, fontFamily:"'Inter',sans-serif" }}>
+            Choisis ton pays parmi les 54 pays d'Afrique
+          </label>
+          <select
+            defaultValue=""
+            onChange={ev=>{
+              const p = PAYS_AFRIQUE.find(x=>x.code===ev.target.value);
+              if (p) choisir(p.code, p.nom);
+            }}
+            style={{
+              padding:"10px 12px", borderRadius:10, border:`1.5px solid ${BORDER}`,
+              fontSize:13, fontFamily:"'Inter',sans-serif", color:NAVY, background:"#fff",
+              outline:"none", cursor:"pointer",
+            }}>
+            <option value="" disabled>Sélectionne un pays…</option>
+            {PAYS_AFRIQUE.map(p=>(
+              <option key={p.code} value={p.code}>{p.nom}</option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   );
 }
@@ -477,14 +593,16 @@ function PropositionsDesign({
 }
 
 // ─── Plan card ────────────────────────────────────────────────────────────────
-function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange }: {
+function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange, onNomChange }: {
   plan: PlanBoutique & { messageIA?:string };
   vente: string;
   themeIds: string[];
   onConfirm: ()=>void;
   onThemeChange: (id:string)=>void;
+  onNomChange: (nom:string)=>void;
 }) {
   const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === plan.themeId) || MANIFESTE_LIBRAIRIE[0];
+  const nomValide = plan.nomBoutique.trim().length >= 2;
   return (
     <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:14 }}>
       {/* Récap boutique */}
@@ -508,9 +626,17 @@ function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange }: {
             <Store size={20} color={YELLOW}/>
           </div>
           <div style={{ flex:1, minWidth:0 }}>
-            <div style={{ fontFamily:"'Sora',sans-serif", fontSize:18, fontWeight:800, color:NAVY, lineHeight:1.1 }}>
-              {plan.nomBoutique}
-            </div>
+            <input
+              value={plan.nomBoutique}
+              onChange={ev=>onNomChange(ev.target.value)}
+              placeholder="Nom de ta boutique"
+              maxLength={60}
+              style={{
+                fontFamily:"'Sora',sans-serif", fontSize:18, fontWeight:800, color:NAVY, lineHeight:1.1,
+                width:"100%", background:"transparent", border:"none", borderBottom:`1.5px dashed ${nomValide?"transparent":YELLOW}`,
+                padding:0, outline:"none",
+              }}
+            />
             <div style={{ fontSize:11, color:MUTED, marginTop:3, fontFamily:"'Inter',sans-serif" }}>
               {plan.categorie} · {plan.pays} · {plan.devise}
             </div>
@@ -565,8 +691,14 @@ function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange }: {
         vente={vente}
       />
 
-      <button onClick={onConfirm} className="btn-primary"
-        style={{ padding:"15px 24px", borderRadius:14, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+      {!nomValide && (
+        <div style={{ fontSize:11.5, color:YELLOW_D, fontFamily:"'Inter',sans-serif", marginTop:-6 }}>
+          Donne un nom à ta boutique (2 caractères minimum) pour continuer — modifie-le juste au-dessus si besoin.
+        </div>
+      )}
+
+      <button onClick={onConfirm} disabled={!nomValide} className="btn-primary"
+        style={{ padding:"15px 24px", borderRadius:14, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10, opacity:nomValide?1:.5, cursor:nomValide?"pointer":"not-allowed" }}>
         <Sparkles size={16}/> Ce design me convient — Créer ma boutique <ArrowRight size={16}/>
       </button>
     </div>
@@ -622,13 +754,15 @@ function CompteForm({ onSubmit, loading, erreur }: {
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function InscriptionPage() {
-  const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>(null);
   const { toasts, push: toast, close: closeToast } = useToast();
 
   const [phase,setPhase]           = useState<Phase>("welcome");
+  const [typeBoutique,setTypeBoutique] = useState<TypeBoutique|"">("");
   const [vente,setVente]           = useState("");
   const [venteInput,setVenteInput] = useState("");
+  const [nomChoisi,setNomChoisi]   = useState("");
+  const [nomInput,setNomInput]     = useState("");
   const [paysCode,setPaysCode]     = useState("");
   const [paysNom,setPaysNom]       = useState("");
   const [devise,setDevise]         = useState("XAF");
@@ -643,12 +777,26 @@ export default function InscriptionPage() {
     setTimeout(()=>bottomRef.current?.scrollIntoView({behavior:"smooth"}),100);
   },[phase,steps.length]);
 
+  const submitType = useCallback((type:TypeBoutique)=>{
+    setTypeBoutique(type);
+    const label = type==="physique" ? "produits physiques" : "produits digitaux";
+    toast("info",`C'est noté — ${label}. Parle-moi de ton projet 👇`);
+    setPhase("q-vente");
+  },[toast]);
+
   const submitVente = useCallback(()=>{
     if(!venteInput.trim()) return;
     setVente(venteInput.trim());
-    toast("info","Axia analyse ton projet… ✨");
-    setPhase("q-pays");
+    toast("info","Bien noté ! Une dernière chose avant l'analyse 👇");
+    setPhase("q-nom");
   },[venteInput,toast]);
+
+  const submitNom = useCallback(()=>{
+    if(!nomInput.trim()) return;
+    setNomChoisi(nomInput.trim());
+    toast("info",`"${nomInput.trim()}" — j'adore ! Axia analyse ton projet… ✨`);
+    setPhase("q-pays");
+  },[nomInput,toast]);
 
   const submitPays = useCallback((code:string,nom:string,dev:string)=>{
     setPaysCode(code); setPaysNom(nom); setDevise(dev);
@@ -659,7 +807,8 @@ export default function InscriptionPage() {
   // Appel API analyse
   useEffect(()=>{
     if(phase!=="analyse") return;
-    const description = `${vente}. Pays: ${paysNom} (${paysCode}).`;
+    const typeLabel = typeBoutique==="physique" ? "physiques uniquement" : typeBoutique==="digital" ? "digitaux uniquement (ebooks, formations, templates…)" : "";
+    const description = `${vente}. Nom de boutique choisi par le marchand: "${nomChoisi}". Pays: ${paysNom} (${paysCode}).${typeLabel ? ` Type de produits: ${typeLabel}.` : ""}`;
     fetch("/api/ai/onboarding",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -668,14 +817,15 @@ export default function InscriptionPage() {
     .then(r=>r.json())
     .then(data=>{
       if(data.plan){
-        const p = data.plan as PlanBoutique & { messageIA?:string };
-        setPlan(p);
+        // Le nom vient du marchand (Q1.5), jamais de l'invention de l'IA —
+        // on l'impose ici même si le JSON retourné en propose un autre.
+        const p = { ...(data.plan as PlanBoutique & { messageIA?:string }), nomBoutique: nomChoisi };
         setMessageIA(data.messageIA || p.messageIA || "Voici ce que j'ai préparé pour toi !");
         // Choisir 4 themes adaptés à la catégorie de boutique
         const ids = choisir4Themes(vente, p.themeId);
         setThemeIds(ids);
         // S'assurer que le themeId du plan est dans notre sélection
-        if(!ids.includes(p.themeId)) { setPlan({...p, themeId:ids[0]}); }
+        setPlan(ids.includes(p.themeId) ? p : { ...p, themeId: ids[0] });
         toast("success","4 designs personnalisés prêts — choisis ton site !");
         setPhase("plan");
       } else {
@@ -685,7 +835,7 @@ export default function InscriptionPage() {
       }
     })
     .catch(()=>{ setErreur("Erreur réseau."); toast("error","Erreur réseau."); setPhase("q-vente"); });
-  },[phase,vente,paysCode,paysNom,toast]);
+  },[phase,vente,nomChoisi,paysCode,paysNom,typeBoutique,toast]);
 
   const confirmPlan = useCallback(()=>{
     toast("info","Design sélectionné ! Crée ton compte pour lancer. 🚀");
@@ -704,23 +854,28 @@ export default function InscriptionPage() {
       const res = await fetch("/api/ai/onboarding",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({phase:"executer",plan,compte:compteData}),
+        body:JSON.stringify({phase:"executer",plan,compte:compteData,typeBoutique:typeBoutique||undefined}),
       });
       const data = await res.json();
       clearInterval(iv);
       if(!res.ok) throw new Error(data.message);
       setSteps(STEPS_CREATION);
-      toast("success","🎉 Ta boutique est en ligne !");
+      toast("success","🎉 Ta boutique est prête — personnalise-la avant de la publier !");
       setPhase("succes");
       const lr = await signIn("credentials",{email:compteData.email,password:compteData.password,redirect:false});
-      setTimeout(()=>router.push(lr?.ok?"/dashboard":"/connexion?inscription=success"),2000);
+      // Rechargement complet (pas router.push) : on quitte de toute façon l'app
+      // marketing pour le dashboard authentifié, et un router.push() différé par
+      // setTimeout juste après un signIn() est un enchaînement fragile connu pour
+      // déclencher "Router action dispatched before initialization" côté client —
+      // window.location contourne entièrement le router App Router pour cette transition.
+      setTimeout(()=>{ window.location.href = lr?.ok?"/dashboard/builder?bienvenue=1":"/connexion?inscription=success"; },2000);
     }catch(err:any){
       clearInterval(iv);
       setErreur(err.message||"Erreur.");
       toast("error",err.message||"Erreur lors de la création.");
       setPhase("q-compte");
     }finally{ setLoading(false); }
-  },[plan,router,toast]);
+  },[plan,typeBoutique,toast]);
 
   return (
     <div style={{
@@ -870,7 +1025,7 @@ export default function InscriptionPage() {
 
               {/* CTA */}
               <button
-                onClick={()=>{ setPhase("q-vente"); toast("info","Bienvenue ! Axia est là pour toi. 👋"); }}
+                onClick={()=>{ setPhase("q-type"); toast("info","Bienvenue ! Axia est là pour toi. 👋"); }}
                 className="btn-primary"
                 style={{ padding:"17px 52px", borderRadius:18, fontSize:15, display:"inline-flex", alignItems:"center", gap:12, boxShadow:`0 12px 40px rgba(245,166,35,.32)` }}>
                 <Sparkles size={18}/>
@@ -902,21 +1057,30 @@ export default function InscriptionPage() {
         {/* ── CONVERSATION ── */}
         {phase!=="welcome" && (
           <>
-            {/* Q1 — Que vends-tu */}
+            {/* Q0 — Type de boutique (physique/digital) — détermine la
+                structure générée : "digital" seul retire le catalogue au
+                profit d'une page de vente centrée sur le produit. */}
             <AxiaMsg delay={0}>
               Bonjour ! 👋{" "}
-              <strong style={{color:YELLOW_D}}>Dis-moi ce que tu vends.</strong>{" "}
-              Plus tu es précis, plus ton site sera parfait.
+              <strong style={{color:YELLOW_D}}>Tu vas vendre quel type de produits ?</strong>
             </AxiaMsg>
+            {phase==="q-type" && <TypeBoutiqueSelector onSelect={submitType}/>}
+            {typeBoutique&&phase!=="q-type" && (
+              <UserMsg>{TYPE_BOUTIQUE_OPTIONS.find(o=>o.v===typeBoutique)?.titre}</UserMsg>
+            )}
+
+            {/* Q1 — Que vends-tu */}
+            {typeBoutique && (
+              <AxiaMsg delay={80}>
+                <strong style={{color:YELLOW_D}}>Dis-moi ce que tu vends.</strong>{" "}
+                Plus tu es précis, plus ton site sera parfait.
+              </AxiaMsg>
+            )}
 
             {phase==="q-vente" && (
               <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
-                  {[
-                    "Mode & vêtements africains","Cosmétiques naturels",
-                    "Bijoux artisanaux","Formations en ligne",
-                    "Électronique & gadgets","Alimentation & épices",
-                  ].map(ex=>(
+                  {VENTE_EXEMPLES[typeBoutique || "physique"].map(ex=>(
                     <button key={ex} onClick={()=>setVenteInput(ex)}
                       style={{
                         padding:"6px 13px", borderRadius:999, fontSize:12, fontWeight:500,
@@ -932,7 +1096,7 @@ export default function InscriptionPage() {
                     value={venteInput}
                     onChange={e=>setVenteInput(e.target.value)}
                     onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); submitVente(); } }}
-                    placeholder="Ex: je vends des vêtements mode femme inspirés de la culture africaine, basée à Dakar…"
+                    placeholder={VENTE_PLACEHOLDER[typeBoutique || "physique"]}
                     rows={3}
                     style={{
                       flex:1, background:SURFACE, border:`1.5px solid ${BORDER}`,
@@ -954,8 +1118,41 @@ export default function InscriptionPage() {
 
             {vente&&phase!=="q-vente" && <UserMsg>{vente}</UserMsg>}
 
+            {/* Q1.5 — Nom de la boutique */}
+            {vente && (
+              <AxiaMsg delay={80}>
+                <strong style={{color:YELLOW_D}}>Quel nom veux-tu donner à ta boutique ?</strong>
+              </AxiaMsg>
+            )}
+            {phase==="q-nom" && (
+              <div className="msg-in" style={{ paddingLeft:47, display:"flex", gap:10 }}>
+                <input
+                  value={nomInput}
+                  onChange={e=>setNomInput(e.target.value)}
+                  onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); submitNom(); } }}
+                  placeholder="Ex: Adama Store, Kente & Co, Axia Formations…"
+                  maxLength={60}
+                  autoFocus
+                  style={{
+                    flex:1, background:SURFACE, border:`1.5px solid ${BORDER}`,
+                    borderRadius:14, padding:"12px 16px",
+                    color:NAVY, fontSize:14, outline:"none",
+                    fontFamily:"'Sora',sans-serif", fontWeight:600,
+                    transition:"border-color .18s",
+                  }}
+                  onFocus={e=>e.currentTarget.style.borderColor=YELLOW}
+                  onBlur={e=>e.currentTarget.style.borderColor=BORDER}
+                />
+                <button onClick={submitNom} disabled={!nomInput.trim()} className="btn-primary"
+                  style={{ width:46, height:46, borderRadius:12, padding:0, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, opacity:nomInput.trim()?1:.35 }}>
+                  <Send size={16} color="#fff"/>
+                </button>
+              </div>
+            )}
+            {nomChoisi&&phase!=="q-nom" && <UserMsg>{nomChoisi}</UserMsg>}
+
             {/* Q2 — Pays */}
-            {vente&&(phase==="q-pays"||paysCode) && (
+            {nomChoisi&&(phase==="q-pays"||paysCode) && (
               <AxiaMsg delay={80}>
                 Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
               </AxiaMsg>
@@ -986,6 +1183,7 @@ export default function InscriptionPage() {
                     themeIds={themeIds}
                     onConfirm={confirmPlan}
                     onThemeChange={id=>setPlan(p=>p?{...p,themeId:id}:p)}
+                    onNomChange={nom=>setPlan(p=>p?{...p,nomBoutique:nom}:p)}
                   />
                 )}
               </>
@@ -1049,10 +1247,10 @@ export default function InscriptionPage() {
                 </div>
                 <div>
                   <h2 style={{ fontFamily:"'Sora',sans-serif", fontSize:28, fontWeight:800, color:NAVY, margin:0 }}>
-                    Ta boutique est en ligne ! 🎉
+                    Ta boutique est prête ! 🎉
                   </h2>
                   <p style={{ color:MID, fontSize:14, marginTop:8 }}>
-                    {plan?.nomBoutique&&<strong style={{color:YELLOW_D}}>{plan.nomBoutique}</strong>} est prête. Redirection…
+                    {plan?.nomBoutique&&<strong style={{color:YELLOW_D}}>{plan.nomBoutique}</strong>} — direction le Constructeur pour la personnaliser et la publier. Redirection…
                   </p>
                 </div>
                 <Loader2 size={22} color={YELLOW} className="animate-spin"/>

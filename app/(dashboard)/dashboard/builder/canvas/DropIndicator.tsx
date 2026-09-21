@@ -8,9 +8,13 @@ import { useDroppable } from "@dnd-kit/core";
 // moveNode). Pas de useSortable : plus simple à raisonner correctement dans
 // le temps disponible, au prix d'une réanimation moins fluide qu'un vrai
 // SortableContext — accepté pour la vague 1.
-export function DropIndicator({ parentId, index, empty }: { parentId: string | null; index: number; empty?: boolean }) {
+export function DropIndicator({ parentId, index, empty, idPrefix = "gap" }: { parentId: string | null; index: number; empty?: boolean; idPrefix?: string }) {
+  // idPrefix distingue les zones de dépôt du canevas de celles, identiques
+  // en (parentId, index), du plan de page (PageOutlinePanel) — les deux
+  // vivent dans le même DndContext en même temps, donc leurs ids dnd-kit
+  // doivent rester uniques même si elles ciblent la même position d'arbre.
   const { isOver, setNodeRef } = useDroppable({
-    id: `gap:${parentId ?? "root"}:${index}`,
+    id: `${idPrefix}:${parentId ?? "root"}:${index}`,
     data: { parentId, index },
   });
 
@@ -18,7 +22,7 @@ export function DropIndicator({ parentId, index, empty }: { parentId: string | n
     return (
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-center rounded-lg border-2 border-dashed text-[11px] font-medium transition-all ${
+        className={`flex items-center justify-center rounded-lg border-2 border-dashed text-[13px] font-medium transition-all ${
           isOver ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623] py-6" : "border-gray-200 text-gray-400 py-4"
         }`}
       >

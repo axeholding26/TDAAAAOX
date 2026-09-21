@@ -6,7 +6,7 @@ import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { runAxia, runAxiaStream } from "@/lib/axia/engine";
 import { AXIA_TOOLS, executeAxiaTool } from "@/lib/axia/tools";
 import { planActif } from "@/lib/abonnement";
-import { filtrerOutilsParPalier } from "@/lib/plans";
+import { filtrerOutilsParPalier, NOMS_PALIERS } from "@/lib/plans";
 import { z } from "zod";
 
 const schema = z.object({
@@ -61,6 +61,14 @@ Client en colère, commande perdue, litige → tu restes calme et factuelle. Tu 
 
 Afrique francophone (Sénégal, Côte d'Ivoire, Cameroun, etc.) + diaspora. Paiement mobile (Wave, Orange Money, MTN MoMo). WhatsApp = canal de vente #1. Les prix sont en XAF ou selon la devise de la boutique.
 
+─── PUBLICATION DE LA BOUTIQUE ───────────────────────────────────────────────
+
+Une boutique tout juste créée est en "brouillon" : invisible publiquement tant qu'elle n'est pas publiée. lire_boutique te dit son statut. Dès que les critères sont réunis (nom, WhatsApp, pays, description, au moins un produit actif), propose spontanément de publier avec publier_boutique — n'attends pas qu'on te le demande. Si des infos manquent, dis précisément lesquelles plutôt qu'une réponse vague.
+
+─── LIMITES DU PLAN ─────────────────────────────────────────────────────────
+
+Certaines actions (créer/modifier un produit, changer le design, campagnes marketing, configurer la livraison, générer des visuels IA...) sont réservées aux plans payants (Pro et Illimité). Si le marchand est en plan gratuit et te demande une action que tu ne vois pas dans tes outils disponibles, ne fais jamais comme si tu ne savais pas de quoi il parle : dis clairement que cette action nécessite un passage au plan Pro, sans détailler techniquement pourquoi. Ne mentionne jamais cette limite si le marchand ne demande pas une action concernée.
+
 ─── AGENTS SPÉCIALISÉS — DÉLÉGATION ─────────────────────────────────────────
 
 Tu as accès à 11 agents experts, un par domaine. Utilise deleguer_vers_agent dès qu'une tâche nécessite une expertise profonde ou plusieurs actions coordonnées dans un domaine précis. Tu restes l'interlocutrice unique du marchand — les agents travaillent en coulisses et te rapportent leurs résultats que tu présentes naturellement.
@@ -89,11 +97,12 @@ Tu peux enchaîner plusieurs agents pour des tâches complexes : audit produits 
 - Terminer par une formule creuse
 - Laisser une réponse vide — si tu n'as rien trouvé, dis-le clairement et propose une alternative`;
 
-function buildSystemPrompt(ctx: { boutique?: string; pays?: string; devise?: string; categorie?: string }) {
+function buildSystemPrompt(ctx: { boutique?: string; pays?: string; devise?: string; categorie?: string; planNom?: string }) {
   const lines = [BASE_SYSTEM_PROMPT, ""];
   if (ctx.boutique) lines.push(`─── BOUTIQUE ACTIVE : "${ctx.boutique}" ───`);
   if (ctx.pays || ctx.devise) lines.push(`Marché : ${ctx.pays ?? "international"} | Devise : ${ctx.devise ?? "XOF"}`);
   if (ctx.categorie) lines.push(`Catégorie principale : ${ctx.categorie}`);
+  if (ctx.planNom) lines.push(`Plan actuel du marchand : ${ctx.planNom}`);
   return lines.join("\n");
 }
 
@@ -129,6 +138,7 @@ export async function POST(request: Request) {
       pays: tenant?.pays ?? undefined,
       devise: tenant?.devise ?? undefined,
       categorie: tenant?.categorie ?? undefined,
+      planNom: NOMS_PALIERS[plan],
     });
 
     const enrichedMessages: any[] = imageUrl

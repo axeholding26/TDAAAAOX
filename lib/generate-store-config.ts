@@ -640,8 +640,19 @@ export function generateStoreConfig(opts: {
   nomBoutique: string;
   pays?: string;
   devise?: string;
+  // "vente_unique" : boutique 100% digitale — une page de vente centrée sur
+  // le produit (hero, avantages, témoignages, FAQ, CTA), sans "Collections"
+  // qui n'a pas de sens pour un catalogue d'un seul ebook/formation/template.
+  // Le Constructeur (panneau Sections) reflète directement sectionOrder, donc
+  // retirer "collections" ici suffit à la masquer partout — vitrine et builder.
+  // "digital" : catalogue multi-produits digitaux (DigitalCatalogPage, un
+  // rendu entièrement séparé, voir lib/theme-config.ts) — traité comme
+  // "catalogue" par cette fonction (sections/sectionOrder générés ici ne
+  // sont jamais lus par ce chemin de rendu, mais restent un socle de repli
+  // inoffensif si le marchand bascule un jour vers le catalogue classique).
+  modeBoutique?: "catalogue" | "vente_unique" | "digital";
 }): { themeConfig: Record<string, any> } {
-  const { categorie, nomBoutique, pays } = opts;
+  const { categorie, nomBoutique, pays, modeBoutique = "catalogue" } = opts;
   const type   = detectCategory(categorie);
   const langue = detectLangue(pays);
   const { sections, sectionOrder, customSections } = buildHomeSections(type, nomBoutique, langue);
@@ -649,9 +660,17 @@ export function generateStoreConfig(opts: {
   const productLayout = selectProductLayout(type);
   const { aboutPage, contactPage } = buildAboutContactPages(type, nomBoutique, langue);
 
+  const sectionOrderFinal = modeBoutique === "vente_unique"
+    ? sectionOrder.filter(id => id !== "collections")
+    : sectionOrder;
+  const sectionsFinal = modeBoutique === "vente_unique" && sections.collections
+    ? { ...sections, collections: { ...sections.collections, actif: false } }
+    : sections;
+
   const themeConfig: Record<string, any> = {
-    sections,
-    sectionOrder,
+    modeBoutique,
+    sections: sectionsFinal,
+    sectionOrder: sectionOrderFinal,
     customSections,
     productPage: {
       layout: productLayout,

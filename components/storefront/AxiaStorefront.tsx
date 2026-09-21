@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { X, Send, Sparkles, Minus } from "lucide-react";
+import { X, Send, Minus } from "lucide-react";
+import { IconAxia } from "@/components/dashboard/AppIcons";
 
 interface Message {
   role: "user" | "assistant";
@@ -95,7 +96,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
         style={{ background: accentColor }}
         aria-label="Ouvrir AXIA"
       >
-        <Sparkles size={22} className="text-white" />
+        <IconAxia size={48} />
       </button>
     );
   }
@@ -108,7 +109,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 text-white shrink-0" style={{ background: accentColor }}>
         <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-white/80" />
+          <IconAxia size={20} />
           <div>
             <p className="text-[13px] font-semibold leading-tight">AXIA</p>
             <p className="text-[10px] text-white/70 leading-tight">{nomBoutique}</p>

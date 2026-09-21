@@ -29,6 +29,12 @@ export const AXIA_AGENTS: AxiaAgentDefinition[] = [
 
 Avant de créer un produit sans image, génère toujours un visuel via generer_image — un produit sans photo ne se vend pas. Vérifie les prix et stocks avant de les modifier. Signale les incohérences de catalogue (doublons, prix aberrants, descriptions vides) sans qu'on te le demande.
 
+Avant d'appeler ajouter_produit, si le marchand n'a pas précisé le type de produit, demande-le d'abord : physique, digital (ebook, template, licence, formation…) ou dropshipping. Puis récolte les infos propres à ce type avant de créer la fiche :
+- Physique : stock disponible, poids (pour les frais de livraison).
+- Digital : le fichier à livrer après achat (URL, nom) et les instructions d'utilisation/activation. Si le marchand n'a pas encore le fichier sous la main, crée quand même la fiche et dis-lui clairement qu'il reste à l'ajouter.
+- Dropshipping : prix d'achat fournisseur, nom et lien du fournisseur (ou oriente-le vers l'agent sourcing s'il veut suivre ce fournisseur dans la durée).
+Ne pose que les questions manquantes — si le marchand a déjà tout donné en une phrase, crée directement sans reposer les questions.
+
 ${REGISTRE_COMMUN}`,
     tools: ["ajouter_produit", "lister_produits", "enrichir_produit", "mettre_a_jour_prix", "rechercher_produits", "generer_image", "produits_performance"],
   },
@@ -78,7 +84,7 @@ ${REGISTRE_COMMUN}`,
 Priorise systématiquement les commandes en attente depuis le plus longtemps. Si un retard est détecté, propose immédiatement une action (notifier le client, relancer le fournisseur).
 
 ${REGISTRE_COMMUN}`,
-    tools: ["dashboard_livraison", "assigner_livreur", "calculer_frais_livraison", "lister_regles_livraison", "verifier_retards_fournisseurs"],
+    tools: ["dashboard_livraison", "assigner_livreur", "calculer_frais_livraison", "lister_regles_livraison", "configurer_livraison", "ajouter_regle_livraison", "verifier_retards_fournisseurs"],
   },
   {
     id: "boutique",
@@ -89,8 +95,12 @@ ${REGISTRE_COMMUN}`,
 
 Toute modification de thème ou de description doit rester cohérente avec la catégorie et le pays de la boutique. Explique brièvement pourquoi un changement améliore la conversion.
 
+Le numéro WhatsApp est la pièce la plus critique : sans lui, les commandes en paiement à la livraison n'ont aucun canal pour arriver au marchand. Si lire_boutique montre qu'il manque, demande-le en priorité avant toute autre configuration.
+
+Une boutique fraîchement créée est en "brouillon" : invisible publiquement tant qu'elle n'est pas publiée. Dès que lire_boutique montre que les critères sont réunis (nom, WhatsApp, pays, description, au moins un produit actif), propose explicitement de publier avec publier_boutique — n'attends pas qu'on te le demande. Si publier_boutique refuse, donne la liste exacte de ce qui manque, jamais une réponse vague.
+
 ${REGISTRE_COMMUN}`,
-    tools: ["lire_boutique", "modifier_boutique", "calculer_tva"],
+    tools: ["lire_boutique", "modifier_boutique", "configurer_livraison", "publier_boutique", "calculer_tva"],
   },
   {
     id: "revenus",

@@ -25,7 +25,6 @@ const OWASP_HEADERS = [
 
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
-  eslint:     { ignoreDuringBuilds: true },
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
 
   async headers() {

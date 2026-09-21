@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Download, Plus, PackagePlus } from "lucide-react";
+import { Package, Download, Plus, PackagePlus, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SubNavItem {
   href: string;
   label: string;
-  Icon: React.ElementType;
+  Icon: LucideIcon;
   exact?: boolean;
   excludePrefix?: string;
 }

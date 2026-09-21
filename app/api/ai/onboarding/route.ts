@@ -7,6 +7,8 @@ import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
 import { provisionerThemeInitial } from "@/lib/axso-design-library";
+import { DIGITAL_STARTER_TEMPLATES } from "@/app/(dashboard)/dashboard/builder/digital/digitalStarterTemplates";
+import { notifierMarchand } from "@/lib/notifications-marchand";
 
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
@@ -15,6 +17,10 @@ const schemaAnalyser = z.object({
 
 const schemaExecuter = z.object({
   phase: z.literal("executer"),
+  // Choisi au tout début du parcours, avant même la description libre —
+  // détermine la structure de la boutique (catalogue complet vs page de
+  // vente unique). Absent = "catalogue" (comportement historique inchangé).
+  typeBoutique: z.enum(["physique", "digital"]).optional(),
   plan: z.object({
     nomBoutique: z.string(),
     slug: z.string(),
@@ -69,7 +75,25 @@ export async function POST(request: Request) {
     }
 
     if (body.phase === "executer") {
-      const { plan, compte } = schemaExecuter.parse(body);
+      const { plan, compte, typeBoutique } = schemaExecuter.parse(body);
+      const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
+      // Gabarit du catalogue digital (voir digital/digitalStarterTemplates.ts
+      // pour les 4 choix — de vrais arbres de blocs, édités ensuite avec les
+      // mêmes outils que le constructeur physique) — heuristique
+      // déterministe sur la catégorie déclarée à l'inscription, pas d'appel
+      // IA supplémentaire : "premium" pour les offres à forte valeur perçue
+      // (formation, conseil), "vibrant" pour le créatif/marketing, "compact"
+      // pour un catalogue nombreux (templates, presets), "epure" (identique
+      // à la référence Chariow) en défaut sûr.
+      const digitalTemplateId = (() => {
+        if (modeBoutique !== "digital") return undefined;
+        const c = plan.categorie.toLowerCase();
+        if (/formation|coaching|consult|masterclass|cours|luxe|bijou/.test(c)) return "premium" as const;
+        if (/design|creatif|marketing|social|art|musique/.test(c)) return "vibrant" as const;
+        if (/template|preset|pack|asset|plugin|modele/.test(c)) return "compact" as const;
+        return "epure" as const;
+      })();
+      const digitalTemplate = digitalTemplateId ? DIGITAL_STARTER_TEMPLATES.find((t) => t.id === digitalTemplateId) : undefined;
 
       // Vérifier que l'email n'existe pas déjà
       const emailExiste = await prisma.user.findUnique({ where: { email: compte.email } });
@@ -104,12 +128,23 @@ export async function POST(request: Request) {
         nomBoutique: plan.nomBoutique,
         pays: plan.pays,
         devise: plan.devise,
+        modeBoutique,
       });
 
-      // Fusionner : structure générée + sections custom de l'IA
+      // Fusionner : structure générée + sections custom de l'IA. Boutique
+      // digitale : le gabarit choisi FOURNIT directement builderTree +
+      // couleurs + rayon — même mécanisme que le Constructeur libre édité à
+      // la main (DigitalStarterPicker), donc immédiatement éditable bloc par
+      // bloc dès la première ouverture du Constructeur, sans étape "choisir
+      // un gabarit" à refaire.
       const themeConfig: Record<string, any> = {
         ...generatedConfig,
         ...(customSections.length > 0 && { customSections }),
+        ...(digitalTemplate && {
+          builderTree: digitalTemplate.build(),
+          colors: { ...generatedConfig.colors, ...digitalTemplate.colors },
+          radius: digitalTemplate.radius,
+        }),
       };
 
       // Transaction : créer tenant + user + produits
@@ -126,7 +161,10 @@ export async function POST(request: Request) {
             description: plan.description || "",
             parametresLivraison,
             commissionRate: 0.06,
-            statut: "active",
+            // "brouillon" : la boutique n'est visible sur /{slug} qu'une fois
+            // publiée explicitement (critères vérifiés par lib/boutique-completion.ts) —
+            // le marchand personnalise d'abord dans le Constructeur.
+            statut: "brouillon",
             planType: "gratuit",
             themeConfig,
           },
@@ -170,23 +208,38 @@ export async function POST(request: Request) {
         return { tenant, produitsCreees };
       });
 
+      // Boutique créée en "brouillon" — notifie le marchand qu'il lui reste
+      // à compléter/vérifier ses infos avant de publier (voir lib/boutique-completion.ts).
+      await notifierMarchand({
+        tenantId: tenant.id,
+        type: "boutique_a_completer",
+        titre: "Ta boutique n'est pas encore publiée",
+        message: "Vérifie tes infos (WhatsApp, description, produits) dans le Constructeur puis publie ta boutique pour qu'elle soit visible.",
+        lien: "/dashboard/builder",
+      });
+
       // Provisionne le design de la bibliothèque AXSO Design choisi par
       // plan.themeId (un fichier, ex. "aube-site" — voir lib/ai-agent.ts)
       // maintenant que les vrais produits existent en base : la grille
       // accueil/boutique les affiche directement. Non bloquant — en cas
       // d'échec, la boutique reste sur le socle par défaut ("terre-et-or").
-      try {
-        const theme = await provisionerThemeInitial({
-          tenantId: tenant.id,
-          categorie: plan.categorie,
-          slug: tenant.slug,
-          nomBoutique: tenant.nomBoutique,
-          devise: tenant.devise,
-          fichier: plan.themeId,
-        });
-        await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
-      } catch (err) {
-        console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
+      // Sauté pour une boutique digitale : DigitalCatalogPage (rendu séparé,
+      // voir plus haut) ne lit jamais builderHtml/builderTree — cloner un
+      // design de catalogue physique ici ne servirait à rien.
+      if (modeBoutique !== "digital") {
+        try {
+          const theme = await provisionerThemeInitial({
+            tenantId: tenant.id,
+            categorie: plan.categorie,
+            slug: tenant.slug,
+            nomBoutique: tenant.nomBoutique,
+            devise: tenant.devise,
+            fichier: plan.themeId,
+          });
+          await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
+        } catch (err) {
+          console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
+        }
       }
 
       // Avis clients IA de démonstration — pour qu'une boutique fraîchement

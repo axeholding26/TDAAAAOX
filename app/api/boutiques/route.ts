@@ -9,6 +9,7 @@ import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
+import { notifierMarchand } from "@/lib/notifications-marchand";
 
 const schemaCreation = z.object({
   nomBoutique: z.string().min(2),
@@ -114,7 +115,9 @@ export async function POST(req: Request) {
         whatsapp: data.whatsapp,
         themeConfig: themeConfig as any,
         commissionRate: 0.06,
-        statut: "active",
+        // "brouillon" : visible sur /{slug} seulement une fois publiée —
+        // voir lib/boutique-completion.ts.
+        statut: "brouillon",
         planType: "palier0",
       },
     });
@@ -122,6 +125,14 @@ export async function POST(req: Request) {
       data: { userId, tenantId: t.id, role: "owner" },
     });
     return t;
+  });
+
+  await notifierMarchand({
+    tenantId: tenant.id,
+    type: "boutique_a_completer",
+    titre: "Ta boutique n'est pas encore publiée",
+    message: "Ajoute au moins un produit et vérifie tes infos dans le Constructeur puis publie ta boutique pour qu'elle soit visible.",
+    lien: "/dashboard/builder",
   });
 
   // Provisionne un design de la bibliothèque AXSO Design d'après la

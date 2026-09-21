@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
+import { appliquerNouveauTheme } from "@/lib/theme-config";
+import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 
 // Provisionne un thème de la bibliothèque AXSO Design (Templates/*.html)
 // pour la boutique du marchand connecté, à partir d'un design précis
@@ -38,7 +40,19 @@ export async function POST(req: NextRequest) {
       fichier: fichier || undefined,
     });
 
-    await prisma.tenant.update({ where: { id: tenantId }, data: { themeId: theme.id } });
+    // Fusionne l'ancienne config (customCss/sectionOrder/productPage... du
+    // marchand, jamais liés à l'identité visuelle) avec le nouveau design —
+    // SANS reprendre l'ancien builderTree (voir appliquerNouveauTheme) :
+    // sans ça, un builderTree laissé par un thème précédent (notamment un
+    // bloc "embed-html" enveloppant l'ANCIEN design) restait en base et
+    // s'affichait à la place du nouveau design tout juste choisi, puisque
+    // la vitrine (app/(storefront)/[slug]/page.tsx) préfère builderTree sur
+    // builderHtml. Auparavant cette route ne touchait jamais themeConfig.
+    const ancienConfig = await resolveThemeConfigAsync(tenant.themeId, tenantId, (tenant.themeConfig as any) || {});
+    const nouveauBase = await resolveThemeConfigAsync(theme.id, tenantId, {});
+    const themeConfig = appliquerNouveauTheme(ancienConfig, nouveauBase);
+
+    await prisma.tenant.update({ where: { id: tenantId }, data: { themeId: theme.id, themeConfig: themeConfig as any } });
     revalidatePath(`/${tenant.slug}`, "layout");
 
     return NextResponse.json({ theme }, { status: 201 });

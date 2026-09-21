@@ -5,7 +5,7 @@ import { InlineEditable } from "./InlineEditable";
 
 const TAILLE_MAP: Record<string, string> = { sm: "px-4 py-2 text-xs", md: "px-6 py-3 text-sm", lg: "px-8 py-4 text-base" };
 
-export function ButtonBlock({ config, colors, editable, onEditText }: BlockRenderProps) {
+export function ButtonBlock({ config, colors, container, editable, onEditText }: BlockRenderProps) {
   const style = (config.style as string) || "primary";
   const taille = TAILLE_MAP[(config.taille as string) || "md"];
   const align = (config.align as string) || "left";
@@ -27,7 +27,7 @@ export function ButtonBlock({ config, colors, editable, onEditText }: BlockRende
   );
 
   return (
-    <div className={`py-2 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
+    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
       {editable ? contenu : <a href={lien}>{contenu}</a>}
     </div>
   );

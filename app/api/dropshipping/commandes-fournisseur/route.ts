@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   const session = await auth();
-  if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = session.user.tenantId;
+  if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = (session?.user as any)?.tenantId;
   const { searchParams } = new URL(req.url);
   const statut = searchParams.get("statut");
 
@@ -34,8 +34,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = session.user.tenantId;
+  if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = (session?.user as any)?.tenantId;
   const body = await req.json();
 
   // Verify commande belongs to tenant
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const session = await auth();
-  if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const body = await req.json();
 
   const cf = await (prisma as any).commandeFournisseur.update({

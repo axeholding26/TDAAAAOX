@@ -14,7 +14,7 @@ export function genBlockId(prefix: string = "bloc"): string {
 const TYPES_WIDGETS: BlockNodeType[] = [
   "features", "stats", "countdown", "brands", "video", "gallery",
   "social-proof", "spacer", "richtext", "cta-band", "tabs", "columns",
-  "heading", "text", "image", "button", "products",
+  "heading", "text", "image", "button", "products", "embed-html",
 ];
 
 const REGLES_IMBRICATION: Record<string, BlockNodeType[]> = {

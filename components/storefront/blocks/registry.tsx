@@ -16,6 +16,7 @@ import { HeadingBlock } from "./widgets/HeadingBlock";
 import { TextBlock } from "./widgets/TextBlock";
 import { ImageBlock } from "./widgets/ImageBlock";
 import { ButtonBlock } from "./widgets/ButtonBlock";
+import { EmbedHtmlBlock } from "./widgets/EmbedHtmlBlock";
 // "products" (ProductsBlock) est DÉLIBÉRÉMENT absent de ce registre : ce
 // widget interroge Prisma directement (voir widgets/ProductsBlock.tsx) et ce
 // fichier est importé aussi bien côté SSR (BlockTreeRenderer,
@@ -49,4 +50,7 @@ export const BLOCK_REGISTRY: Record<string, ComponentType<BlockRenderProps>> = {
   text: TextBlock,
   image: ImageBlock,
   button: ButtonBlock,
+  // Pont AXSO Design (vague migration) — voir la note sur BlockNodeType dans
+  // lib/theme-config.ts. Jamais dans BLOCK_LIBRARY_ITEMS/BLOCK_CATALOG.
+  "embed-html": EmbedHtmlBlock,
 };

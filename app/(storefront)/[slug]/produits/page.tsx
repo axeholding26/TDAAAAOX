@@ -28,6 +28,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
   if (!tenant || tenant.statut !== "active") notFound();
 
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+
   const { colors: c, radius } = cfg;
 
   const layoutCfg = cfg.layout ?? {};

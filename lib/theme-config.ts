@@ -254,7 +254,15 @@ export type BlockNodeType =
   | "section" | "row" | "column" // conteneurs structurels
   | "features" | "stats" | "countdown" | "brands" | "video" | "gallery"
   | "social-proof" | "spacer" | "richtext" | "cta-band" | "tabs" | "columns" // réutilisés de CustomSection (voir components/storefront/blocks/registry.tsx)
-  | "heading" | "text" | "image" | "button" | "products"; // atomes (vague 2)
+  | "heading" | "text" | "image" | "button" | "products" // atomes (vague 2)
+  // Pont AXSO Design → Constructeur libre : enveloppe le HTML/CSS cloné
+  // d'une boutique AXSO Design (voir lib/axso-design-library.ts) tel quel
+  // dans un seul bloc, créé UNE FOIS par la conversion (BuilderCanvas —
+  // "Importer mon design actuel"), jamais par le marchand ni par AXIA :
+  // volontairement absent de BLOCK_CATALOG/BLOCK_LIBRARY_ITEMS, donc jamais
+  // proposé à l'ajout ni éditable champ par champ — seulement déplaçable/
+  // supprimable comme n'importe quel bloc.
+  | "embed-html";
 
 export interface BlockStyleOverrides {
   spacing?: { pt?: string; pb?: string; pl?: string; pr?: string; mt?: string; mb?: string };
@@ -302,6 +310,14 @@ export interface ThemeConfig {
   animations?: ThemeAnimations;
   customSections?: CustomSection[];
   sectionOrder?: string[];
+  // "vente_unique" (page de vente à un seul produit) et "digital" (catalogue
+  // multi-produits digitaux) sont deux variantes du même besoin "boutique
+  // 100% digitale" — voir lib/generate-store-config.ts. "digital" utilise le
+  // MÊME Constructeur de blocs que "catalogue" (juste amorcé par un gabarit
+  // de départ, voir builder/digital/digitalStarterTemplates.ts), aucun champ
+  // de config séparé nécessaire. Absent ou "catalogue" = comportement
+  // historique (catalogue physique multi-produits).
+  modeBoutique?: "catalogue" | "vente_unique" | "digital";
   // Sous-sections personnalisées ajoutées dans n'importe quelle section (built-in ou custom),
   // indexées par id de section. Permet d'ajouter photos/témoignages/promo/texte dans toute section.
   sectionSousBlocs?: Record<string, SousBloc[]>;
@@ -466,6 +482,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     animations: { ...base.animations, ...(overrides.animations || {}), sectionAnimations: { ...(base.animations?.sectionAnimations || {}), ...(overrides.animations?.sectionAnimations || {}) } },
     customSections: overrides.customSections ?? base.customSections,
     sectionOrder: overrides.sectionOrder ?? base.sectionOrder,
+    modeBoutique: overrides.modeBoutique ?? base.modeBoutique,
     sectionSousBlocs: overrides.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
     customCss: overrides.customCss ?? base.customCss,
     sections: {
@@ -550,12 +567,22 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     // thème — ne doit jamais être perdu en changeant de thème.
     customSections: ancienConfig.customSections,
     sectionOrder: ancienConfig.sectionOrder,
+    modeBoutique: ancienConfig.modeBoutique,
     sectionSousBlocs: ancienConfig.sectionSousBlocs,
     customCss: ancienConfig.customCss,
     productPage: ancienConfig.productPage,
     aboutPage: ancienConfig.aboutPage,
     contactPage: ancienConfig.contactPage,
-    builderTree: ancienConfig.builderTree,
+    // builderTree n'est PAS repris de l'ancien thème (contrairement aux champs
+    // ci-dessus) : contrairement à customCss/productPage, un arbre de blocs
+    // est souvent construit pour un design précis — notamment un bloc
+    // "embed-html" qui enveloppe LITTÉRALEMENT le HTML de l'ancien thème
+    // (voir BuilderCanvas::importerDesignExistant). Le recopier ferait
+    // qu'un changement de thème depuis la page Thèmes n'avait plus aucun
+    // effet visible : la vitrine (app/(storefront)/[slug]/page.tsx) affiche
+    // builderTree en priorité sur builderHtml, donc l'ancien design restait
+    // affiché malgré le nouveau themeId enregistré. `...nouveauThemeBase`
+    // fournit déjà le bon défaut (vide, sauf si CE thème a son propre arbre).
   };
 }
 

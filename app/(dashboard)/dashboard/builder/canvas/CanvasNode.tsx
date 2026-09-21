@@ -10,12 +10,13 @@ import type { TreeRenderCtx } from "@/components/storefront/blocks/context";
 import { DropIndicator } from "./DropIndicator";
 import { ColumnResizeHandle } from "./ColumnResizeHandle";
 
-const LABELS: Record<string, string> = {
+export const LABELS: Record<string, string> = {
   section: "Section", row: "Ligne", column: "Colonne",
   features: "Avantages", stats: "Statistiques", countdown: "Compte à rebours", brands: "Logos",
   video: "Vidéo", gallery: "Galerie", "social-proof": "Preuve sociale", "cta-band": "Bande CTA",
   richtext: "Texte riche", spacer: "Espacement", tabs: "Onglets", columns: "Colonnes",
   heading: "Titre", text: "Texte", image: "Image", button: "Bouton", products: "Produits",
+  "embed-html": "Design importé",
 };
 
 // Rendu directement dans le canevas côté client — le widget « Produits »
@@ -39,7 +40,7 @@ function ProductsCanvasPreview({ config }: { config: Record<string, any> }) {
           </div>
         ))}
       </div>
-      <p className="text-[10px] text-gray-400 mt-2">Aperçu — les vrais produits s'affichent sur la boutique en ligne.</p>
+      <p className="text-[12px] text-gray-400 mt-2">Aperçu — les vrais produits s'affichent sur la boutique en ligne.</p>
     </div>
   );
 }
@@ -82,7 +83,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <span {...attributes} {...listeners} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
+      <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
         <GripVertical size={12} />
       </span>
       <button onClick={() => onToggleActif(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
@@ -98,7 +99,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
   );
 
   const label = (
-    <span className={`absolute -top-2.5 left-1.5 z-20 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded transition-opacity ${
+    <span className={`absolute -top-2.5 left-1.5 z-20 text-[11px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded transition-opacity ${
       selectionne ? "bg-[#F5A623] text-black opacity-100" : "bg-gray-700 text-white opacity-0 group-hover/node:opacity-100"
     }`}>
       {LABELS[node.type] || node.type}

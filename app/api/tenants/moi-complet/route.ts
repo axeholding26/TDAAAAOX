@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { evaluerPublication } from "@/lib/boutique-completion";
 
 export async function GET() {
   const session = await auth();
@@ -16,13 +17,22 @@ export async function GET() {
   // builder puisse afficher l'état réel du thème, y compris les thèmes
   // AXSO Design dont la config vit dans Theme.config et non dans tenant.themeConfig).
   let activeThemeConfig: Record<string, any> | null = null;
+  let themeSlug: string | null = null;
   if (tenant.themeId) {
     const theme = await prisma.theme.findUnique({
       where: { id: tenant.themeId },
-      select: { config: true },
+      select: { config: true, slug: true },
     });
     activeThemeConfig = (theme?.config as Record<string, any>) ?? null;
+    // Utilisé par le panneau "Modèles" du Constructeur pour repérer quel
+    // design AXSO Design est actif (convention de slug posée par
+    // provisionerThemeDepuisLibrairie — voir lib/axso-design-library.ts).
+    themeSlug = theme?.slug ?? null;
   }
 
-  return NextResponse.json({ ...tenant, activeThemeConfig });
+  // Le Constructeur en a besoin pour désactiver "Publier" tant que la
+  // boutique n'a pas le minimum requis — voir lib/boutique-completion.ts.
+  const completion = await evaluerPublication(tenantId);
+
+  return NextResponse.json({ ...tenant, activeThemeConfig, themeSlug, completion });
 }

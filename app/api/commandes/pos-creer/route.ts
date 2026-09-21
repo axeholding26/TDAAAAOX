@@ -6,8 +6,8 @@ import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = session.user.tenantId;
+  if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = (session?.user as any)?.tenantId;
 
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à vendre en boutique.", code: "quota_atteint" }, { status: 403 });
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
             tenantId, produitId: item.produitId, type: "vente",
             quantite: item.quantite, stockAvant, stockApres,
             motif: `Vente caisse #${commande.numero}`, lotId: lot?.id ?? null,
-            commandeId: commande.id, creePar: session.user.id,
+            commandeId: commande.id, creePar: (session?.user as any)?.id,
           },
         }),
         ...(lot

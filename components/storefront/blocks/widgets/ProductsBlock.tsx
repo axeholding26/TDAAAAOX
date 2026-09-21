@@ -15,7 +15,7 @@ const COLONNES_MAP: Record<number, string> = {
 // BlockTreeRenderer, `tenantId` fourni par app/(storefront)/[slug]/page.tsx).
 // Le canevas du constructeur (client, sans Prisma) affiche un aperçu
 // statique à la place — voir BuilderCanvas/CanvasNode.
-export async function ProductsBlock({ config, colors, slug, tenantId }: BlockRenderProps) {
+export async function ProductsBlock({ config, colors, slug, container, tenantId }: BlockRenderProps) {
   if (!tenantId) return null;
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true, devise: true } });
@@ -37,7 +37,7 @@ export async function ProductsBlock({ config, colors, slug, tenantId }: BlockRen
   if (produits.length === 0) return null;
 
   return (
-    <div className="py-2">
+    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8`}>
       {config.titre && <h2 className="text-2xl sm:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{config.titre}</h2>}
       <div className={`grid ${colonnes} gap-4 sm:gap-6`}>
         {produits.map((p) => {

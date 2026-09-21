@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   CheckCircle2, Loader2, LogOut, ChevronDown, ChevronUp,
   Code2, Info, Target, Music2, Ghost, Blocks, Eye, EyeOff, Zap,
+  type LucideIcon,
 } from "lucide-react";
 
 interface TenantTracking {
@@ -33,7 +34,7 @@ interface Platform {
   couleurDark: string;
   bg: string;
   border: string;
-  Icone: React.ElementType;
+  Icone: LucideIcon;
   placeholder: string;
   guide: string[];
   events: string[];

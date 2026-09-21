@@ -198,12 +198,16 @@ function RatingBreakdown({ avis, accent, moyenne }: { avis: Avis[]; accent: stri
 }
 
 // ─── Image Gallery ────────────────────────────────────────────────────────────
-function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky = true }: {
+function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky = true, style = "vertical-thumbs" }: {
   images: string[]; nom: string; accent: string; radius: string; zoomEnabled?: boolean; sticky?: boolean;
+  style?: "vertical-thumbs" | "horizontal-thumbs" | "dots";
 }) {
   const [selected, setSelected] = useState(0);
   const [zoomData, setZoomData] = useState<{ x: number; y: number; panelLeft: number; panelTop: number } | null>(null);
   const current = images[selected] ?? null;
+  const showVerticalThumbs = style === "vertical-thumbs" && images.length > 1;
+  const showHorizontalThumbs = style === "horizontal-thumbs" && images.length > 1;
+  const showDots = style === "dots" && images.length > 1;
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
     if (!zoomEnabled) return;
@@ -217,7 +221,7 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
   return (
     <>
       <div className={`flex gap-3 ${sticky ? "lg:sticky lg:top-6" : ""}`}>
-        {images.length > 1 && (
+        {showVerticalThumbs && (
           <div className="hidden sm:flex flex-col gap-2 w-[70px] flex-shrink-0">
             {images.slice(0, 8).map((img, i) => (
               <button key={i} onMouseEnter={() => setSelected(i)} onClick={() => setSelected(i)}
@@ -242,13 +246,35 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
               </div>
             )}
           </div>
-          {images.length > 1 && (
+          {/* Miniatures verticales : repli mobile en rangée horizontale sous l'image */}
+          {style === "vertical-thumbs" && images.length > 1 && (
             <div className="sm:hidden flex gap-2 mt-2 overflow-x-auto pb-1">
               {images.map((img, i) => (
                 <button key={i} onClick={() => setSelected(i)} className="flex-shrink-0 w-12 overflow-hidden"
                   style={{ aspectRatio: "1", borderRadius: radius, border: `2px solid ${i === selected ? accent : "transparent"}` }}>
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
+              ))}
+            </div>
+          )}
+          {/* Miniatures horizontales : rangée sous l'image, mobile et desktop */}
+          {showHorizontalThumbs && (
+            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+              {images.map((img, i) => (
+                <button key={i} onClick={() => setSelected(i)} className="flex-shrink-0 w-14 sm:w-[70px] overflow-hidden transition-all duration-150"
+                  style={{ aspectRatio: "1", borderRadius: radius, border: `2px solid ${i === selected ? accent : "rgba(0,0,0,0.1)"}`, opacity: i === selected ? 1 : 0.55, boxShadow: i === selected ? `0 0 0 2px ${accent}30` : "none" }}>
+                  <img src={img} alt={`${nom} ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Points de pagination : présentation épurée, sans miniatures */}
+          {showDots && (
+            <div className="flex items-center justify-center gap-1.5 mt-3">
+              {images.map((_, i) => (
+                <button key={i} onClick={() => setSelected(i)} aria-label={`Image ${i + 1}`}
+                  className="rounded-full transition-all duration-200"
+                  style={{ width: i === selected ? 18 : 6, height: 6, background: i === selected ? accent : `${accent}30` }} />
               ))}
             </div>
           )}
@@ -915,6 +941,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
   const getSec = (type: string) => sections.find(s => s.type === type);
   const isOn   = (type: string) => getSec(type)?.actif !== false;
 
+  // Mise en page globale de la fiche produit — 4 arrangements possibles
+  const layoutMode: "amazon" | "classic" | "minimal" | "fullwidth" = (pp?.layout as any) || "amazon";
+
   // Derived config
   const galCfg     = getSec("gallery")?.config ?? {};
   const infoCfg    = getSec("info")?.config ?? {};
@@ -923,6 +952,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
   const zoomEnabled    = galCfg.zoom !== false;
   const stickyGallery  = galCfg.sticky !== false;
+  const galleryStyle: "vertical-thumbs" | "horizontal-thumbs" | "dots" = galCfg.style || "vertical-thumbs";
   const showBreadcrumbs = isOn("info") && infoCfg.breadcrumbs !== false;
   const showBadges      = isOn("info") && infoCfg.badges !== false;
   const showStock       = isOn("info") && infoCfg.stock !== false;
@@ -984,11 +1014,185 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
   const waNum = (whatsappNumero || whatsapp || "").replace(/\D/g, "");
   const waMsg = encodeURIComponent(`Bonjour, je suis intéressé par : ${produit.nom}`);
 
+  // ─── Rendus réutilisés entre les 4 mises en page ("amazon" / "classic" /
+  // "minimal" / "fullwidth") — évite de dupliquer la galerie, l'en-tête produit
+  // et les sections de la colonne droite dans chaque branche de layout.
+  const renderGallery = (opts?: { forceStyle?: "vertical-thumbs" | "horizontal-thumbs" | "dots"; forceZoom?: boolean; forceSticky?: boolean }) => (
+    isOn("gallery") && (
+      <ImageGallery images={produit.images} nom={produit.nom} accent={accent} radius={radius}
+        zoomEnabled={opts?.forceZoom ?? zoomEnabled} sticky={opts?.forceSticky ?? stickyGallery}
+        style={opts?.forceStyle ?? galleryStyle} />
+    )
+  );
+
+  const renderInfoHeader = () => (
+    <>
+      {isOn("info") && (
+        <>
+          {produit.collections.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {produit.collections.map(col => (
+                <Link key={col.slug} href={`/${slug}/collections/${col.slug}`}>
+                  <span className="text-xs px-3 py-1 rounded-full border transition-all hover:opacity-100"
+                    style={{ borderColor: `${accent}40`, color: accent, opacity: 0.8 }}>{col.nom}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+          {produit.marque && (
+            <p className="text-xs font-semibold" style={{ color: accent }}>
+              Marque : <span style={{ opacity: 0.6, fontWeight: 400 }}>{produit.marque}</span>
+            </p>
+          )}
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold leading-snug">{produit.nom}</h1>
+            <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
+          </div>
+          {produit.avis.length > 0 && (
+            <button onClick={() => setTab("avis")} className="flex items-center gap-2 group">
+              <Stars note={produit.noteMoyenne} size={15} accent={accent} />
+              <span className="text-sm font-semibold" style={{ color: accent }}>{produit.noteMoyenne.toFixed(1)}</span>
+              <span className="text-sm opacity-50 group-hover:opacity-80 underline transition-opacity">{produit.avis.length} avis</span>
+            </button>
+          )}
+          <div className="h-px" style={{ background: `${accent}12` }} />
+          {showBadges && produit.remise > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ background: "#EF4444", color: "#fff" }}>
+                -{produit.remise}% · Offre limitée
+              </span>
+            </div>
+          )}
+          {variantePrix && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
+              style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>
+              <span>✦ Offre sélectionnée :</span>
+              <span className="font-bold">{variantePrix.nom}</span>
+            </div>
+          )}
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <span className="text-4xl font-black" style={{ color: accent }}>{formatMontant(prixEffectif, devise)}</span>
+            {(variantePrix?.prixPromo || (produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche)) && (
+              <span className="text-lg opacity-35 line-through">
+                {formatMontant(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
+              </span>
+            )}
+          </div>
+          {showStock && (
+            <div className="flex items-center gap-2 text-sm">
+              {enRupture ? (
+                <><div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" /><span className="text-red-500 font-semibold">Rupture de stock</span></>
+              ) : stockEffectif <= 10 ? (
+                <><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" /><span className="font-medium flex items-center gap-1"><AlertTriangle size={13} className="text-amber-400" />Plus que <strong>{stockEffectif}</strong> en stock</span></>
+              ) : (
+                <><div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" /><span className="text-emerald-600 font-semibold">En stock · Expédition sous 24-48h</span></>
+              )}
+            </div>
+          )}
+          {produit.description && (
+            <p className="text-sm leading-relaxed" style={{ opacity: 0.6, paddingLeft: "12px", borderLeft: `3px solid ${accent}30` }}>
+              {produit.description.length > 220 ? produit.description.slice(0, 220) + "…" : produit.description}
+            </p>
+          )}
+          <div className="h-px" style={{ background: `${accent}12` }} />
+        </>
+      )}
+    </>
+  );
+
+  const renderRightSections = () => (
+    <>
+      {rightSections.map(sec => (
+        <React.Fragment key={sec.id}>
+          {sec.type === "variants" && produit.variantes.length > 0 && (
+            <VariantSelector variantes={produit.variantes} accent={accent} radius={radius}
+              selected={selectedVariante} onSelect={setSelectedVariante} />
+          )}
+          {sec.type === "quantity" && (
+            <>
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium opacity-55">Quantité</span>
+                <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
+                  <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={14} /></button>
+                  <span className="w-10 text-center text-sm font-bold tabular-nums">{quantite}</span>
+                  <button onClick={() => setQuantite(q => Math.min(enRupture ? 1 : stockEffectif, q + 1))} disabled={enRupture} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={14} /></button>
+                </div>
+              </div>
+              <div className="space-y-2.5">
+                <button onClick={doAddToCart} disabled={enRupture}
+                  className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
+                  style={{
+                    ...btnAchatSizing,
+                    background: enRupture ? "#E0E0E0" : (btnRempli ? `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)` : "transparent"),
+                    color: enRupture ? "#999" : (btnRempli ? "#fff" : accent),
+                    border: !btnRempli ? `2px solid ${accent}` : "none",
+                    textDecoration: btnStyle === "ghost" ? "underline" : "none",
+                    boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${accent}40`,
+                    ["--ax-accent-glow" as any]: `${accent}80`,
+                  }}>
+                  {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
+                  {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
+                </button>
+                <button onClick={buyNow} disabled={enRupture}
+                  className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
+                  style={{ borderColor: accent, color: accent, background: `${accent}08`, borderRadius: btnRadiusPx }}>
+                  <ShoppingBag size={16} /> Acheter maintenant
+                </button>
+                {waNum && (
+                  <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-sm border-2 transition-all hover:opacity-80"
+                    style={{ borderColor: "rgba(37,211,102,0.35)", color: "#25D366", background: "rgba(37,211,102,0.05)" }}>
+                    <MessageCircle size={16} /> Contacter via WhatsApp
+                  </a>
+                )}
+              </div>
+            </>
+          )}
+          {sec.type === "trust" && (
+            <>
+              {showBadges && (
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {[
+                    { icon: <Lock size={15} style={{ color: accent }} />, label: "Paiement sécurisé" },
+                    { icon: <Truck size={15} style={{ color: accent }} />, label: "Livraison rapide" },
+                    { icon: <RotateCcw size={15} style={{ color: accent }} />, label: "Retour 14 jours" },
+                  ].map(b => (
+                    <div key={b.label} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl text-center" style={{ background: surface }}>
+                      {b.icon}
+                      <p className="text-[10px] font-semibold leading-tight" style={{ opacity: 0.55 }}>{b.label}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="rounded-xl p-4" style={{ background: surface }}>
+                <p className="text-xs opacity-50 mb-0.5">Vendu par</p>
+                <p className="text-sm font-semibold">
+                  {nomBoutique}
+                  {certifie && <span className="ml-1.5 text-[10px] text-emerald-500 font-bold">✓ Certifié Axso</span>}
+                </p>
+              </div>
+              {tenant.peutDevenirAffilie && (
+                <AffiliateLinkButton tenantId={tenant.id} produitId={produit.id} accent={accent} surface={surface} />
+              )}
+            </>
+          )}
+        </React.Fragment>
+      ))}
+    </>
+  );
+
   return (
     <div style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
 
+      {/* Pleine largeur : image en fond plein écran, infos en overlay */}
+      {layoutMode === "fullwidth" && isOn("gallery") && produit.images[0] && (
+        <div className="relative w-full" style={{ height: "60vh", minHeight: 380, background: `url(${produit.images[0]}) center/cover` }}>
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.6) 100%)" }} />
+        </div>
+      )}
+
       {/* Breadcrumb */}
-      {showBreadcrumbs && (
+      {showBreadcrumbs && layoutMode !== "fullwidth" && (
         <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-3`}>
           <div className="flex items-center gap-1 text-xs flex-wrap" style={{ opacity: 0.45 }}>
             <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">Accueil</Link>
@@ -1002,167 +1206,49 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
       )}
 
       <main className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pb-20`}>
-        <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 lg:gap-16 items-start">
 
-          {/* Gallery */}
-          {isOn("gallery") && (
-            <ImageGallery images={produit.images} nom={produit.nom} accent={accent}
-              radius={radius} zoomEnabled={zoomEnabled} sticky={stickyGallery} />
-          )}
-
-          {/* Right column */}
-          <div className="space-y-5 py-1">
-            {/* Info header */}
-            {isOn("info") && (
-              <>
-                {produit.collections.length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {produit.collections.map(col => (
-                      <Link key={col.slug} href={`/${slug}/collections/${col.slug}`}>
-                        <span className="text-xs px-3 py-1 rounded-full border transition-all hover:opacity-100"
-                          style={{ borderColor: `${accent}40`, color: accent, opacity: 0.8 }}>{col.nom}</span>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {produit.marque && (
-                  <p className="text-xs font-semibold" style={{ color: accent }}>
-                    Marque : <span style={{ opacity: 0.6, fontWeight: 400 }}>{produit.marque}</span>
-                  </p>
-                )}
-                <div className="flex items-start justify-between gap-3">
-                  <h1 className="text-2xl sm:text-3xl font-bold leading-snug">{produit.nom}</h1>
-                  <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
-                </div>
-                {produit.avis.length > 0 && (
-                  <button onClick={() => setTab("avis")} className="flex items-center gap-2 group">
-                    <Stars note={produit.noteMoyenne} size={15} accent={accent} />
-                    <span className="text-sm font-semibold" style={{ color: accent }}>{produit.noteMoyenne.toFixed(1)}</span>
-                    <span className="text-sm opacity-50 group-hover:opacity-80 underline transition-opacity">{produit.avis.length} avis</span>
-                  </button>
-                )}
-                <div className="h-px" style={{ background: `${accent}12` }} />
-                {showBadges && produit.remise > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ background: "#EF4444", color: "#fff" }}>
-                      -{produit.remise}% · Offre limitée
-                    </span>
-                  </div>
-                )}
-                {variantePrix && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
-                    style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>
-                    <span>✦ Offre sélectionnée :</span>
-                    <span className="font-bold">{variantePrix.nom}</span>
-                  </div>
-                )}
-                <div className="flex items-baseline gap-3 flex-wrap">
-                  <span className="text-4xl font-black" style={{ color: accent }}>{formatMontant(prixEffectif, devise)}</span>
-                  {(variantePrix?.prixPromo || (produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche)) && (
-                    <span className="text-lg opacity-35 line-through">
-                      {formatMontant(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
-                    </span>
-                  )}
-                </div>
-                {showStock && (
-                  <div className="flex items-center gap-2 text-sm">
-                    {enRupture ? (
-                      <><div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" /><span className="text-red-500 font-semibold">Rupture de stock</span></>
-                    ) : stockEffectif <= 10 ? (
-                      <><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" /><span className="font-medium flex items-center gap-1"><AlertTriangle size={13} className="text-amber-400" />Plus que <strong>{stockEffectif}</strong> en stock</span></>
-                    ) : (
-                      <><div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" /><span className="text-emerald-600 font-semibold">En stock · Expédition sous 24-48h</span></>
-                    )}
-                  </div>
-                )}
-                {produit.description && (
-                  <p className="text-sm leading-relaxed" style={{ opacity: 0.6, paddingLeft: "12px", borderLeft: `3px solid ${accent}30` }}>
-                    {produit.description.length > 220 ? produit.description.slice(0, 220) + "…" : produit.description}
-                  </p>
-                )}
-                <div className="h-px" style={{ background: `${accent}12` }} />
-              </>
-            )}
-
-            {/* Right-column sections in order */}
-            {rightSections.map(sec => (
-              <React.Fragment key={sec.id}>
-                {sec.type === "variants" && produit.variantes.length > 0 && (
-                  <VariantSelector variantes={produit.variantes} accent={accent} radius={radius}
-                    selected={selectedVariante} onSelect={setSelectedVariante} />
-                )}
-                {sec.type === "quantity" && (
-                  <>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium opacity-55">Quantité</span>
-                      <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
-                        <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={14} /></button>
-                        <span className="w-10 text-center text-sm font-bold tabular-nums">{quantite}</span>
-                        <button onClick={() => setQuantite(q => Math.min(enRupture ? 1 : stockEffectif, q + 1))} disabled={enRupture} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={14} /></button>
-                      </div>
-                    </div>
-                    <div className="space-y-2.5">
-                      <button onClick={doAddToCart} disabled={enRupture}
-                        className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
-                        style={{
-                          ...btnAchatSizing,
-                          background: enRupture ? "#E0E0E0" : (btnRempli ? `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)` : "transparent"),
-                          color: enRupture ? "#999" : (btnRempli ? "#fff" : accent),
-                          border: !btnRempli ? `2px solid ${accent}` : "none",
-                          textDecoration: btnStyle === "ghost" ? "underline" : "none",
-                          boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${accent}40`,
-                          ["--ax-accent-glow" as any]: `${accent}80`,
-                        }}>
-                        {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
-                        {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
-                      </button>
-                      <button onClick={buyNow} disabled={enRupture}
-                        className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
-                        style={{ borderColor: accent, color: accent, background: `${accent}08`, borderRadius: btnRadiusPx }}>
-                        <ShoppingBag size={16} /> Acheter maintenant
-                      </button>
-                      {waNum && (
-                        <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-sm border-2 transition-all hover:opacity-80"
-                          style={{ borderColor: "rgba(37,211,102,0.35)", color: "#25D366", background: "rgba(37,211,102,0.05)" }}>
-                          <MessageCircle size={16} /> Contacter via WhatsApp
-                        </a>
-                      )}
-                    </div>
-                  </>
-                )}
-                {sec.type === "trust" && (
-                  <>
-                    {showBadges && (
-                      <div className="grid grid-cols-3 gap-2 pt-1">
-                        {[
-                          { icon: <Lock size={15} style={{ color: accent }} />, label: "Paiement sécurisé" },
-                          { icon: <Truck size={15} style={{ color: accent }} />, label: "Livraison rapide" },
-                          { icon: <RotateCcw size={15} style={{ color: accent }} />, label: "Retour 14 jours" },
-                        ].map(b => (
-                          <div key={b.label} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl text-center" style={{ background: surface }}>
-                            {b.icon}
-                            <p className="text-[10px] font-semibold leading-tight" style={{ opacity: 0.55 }}>{b.label}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <div className="rounded-xl p-4" style={{ background: surface }}>
-                      <p className="text-xs opacity-50 mb-0.5">Vendu par</p>
-                      <p className="text-sm font-semibold">
-                        {nomBoutique}
-                        {certifie && <span className="ml-1.5 text-[10px] text-emerald-500 font-bold">✓ Certifié Axso</span>}
-                      </p>
-                    </div>
-                    {tenant.peutDevenirAffilie && (
-                      <AffiliateLinkButton tenantId={tenant.id} produitId={produit.id} accent={accent} surface={surface} />
-                    )}
-                  </>
-                )}
-              </React.Fragment>
-            ))}
+        {/* Amazon : galerie gauche + colonne infos droite, sticky */}
+        {layoutMode === "amazon" && (
+          <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 lg:gap-16 items-start">
+            {renderGallery()}
+            <div className="space-y-5 py-1">
+              {renderInfoHeader()}
+              {renderRightSections()}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Classique : image pleine largeur en haut, infos empilées en dessous */}
+        {layoutMode === "classic" && (
+          <div className="space-y-8">
+            <div className="max-w-2xl mx-auto">{renderGallery({ forceSticky: false })}</div>
+            <div className="max-w-2xl mx-auto space-y-5">
+              {renderInfoHeader()}
+              {renderRightSections()}
+            </div>
+          </div>
+        )}
+
+        {/* Minimal : pas de sidebar galerie, présentation épurée et centrée */}
+        {layoutMode === "minimal" && (
+          <div className="max-w-xl mx-auto space-y-6">
+            {isOn("gallery") && (
+              <div className="max-w-sm mx-auto">{renderGallery({ forceStyle: "dots", forceZoom: false, forceSticky: false })}</div>
+            )}
+            <div className="space-y-5">
+              {renderInfoHeader()}
+              {renderRightSections()}
+            </div>
+          </div>
+        )}
+
+        {/* Pleine largeur : carte d'infos qui chevauche le bas de l'image en overlay */}
+        {layoutMode === "fullwidth" && (
+          <div className={`max-w-2xl mx-auto space-y-5 rounded-3xl p-6 sm:p-8 ${isOn("gallery") && produit.images[0] ? "-mt-24 relative z-10 shadow-xl" : "mt-8"}`} style={{ background: surface }}>
+            {renderInfoHeader()}
+            {renderRightSections()}
+          </div>
+        )}
 
         {/* Below sections in order */}
         {belowSections.map(sec => (

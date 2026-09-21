@@ -10,7 +10,8 @@ import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib
 import { slugify } from "@/lib/utils";
 import { filtrerOutilsParPalier, type Palier } from "@/lib/plans";
 import { planActif } from "@/lib/abonnement";
-import { THEMES_LIBRE_ELIGIBLES } from "@/lib/theme-config";
+import { appliquerNouveauTheme } from "@/lib/theme-config";
+import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { agentConstructeurLibre } from "@/lib/gemini";
 import { validerActions, applyAgentActions } from "@/lib/agent-actions";
@@ -69,17 +70,28 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   {
     name: "ajouter_produit",
     tier: "palier1",
-    description: "Ajoute un nouveau produit à la boutique (passe imageUrl si tu as généré une image avant)",
+    description: "Ajoute un nouveau produit à la boutique (passe imageUrl si tu as généré une image avant). Demande toujours le type (physique, digital ou dropshipping) avant de créer le produit si le marchand ne l'a pas précisé : les infos à recueillir diffèrent selon le type (stock/poids pour physique, fichier à livrer pour digital, fournisseur pour dropshipping).",
     parameters: {
       type: "object" as const,
       properties: {
         nom: { type: "string" },
         description: { type: "string" },
         prix: { type: "number" },
-        stock: { type: "number" },
         categorie: { type: "string" },
         imageUrl: { type: "string", description: "URL de l'image générée par generer_image" },
         tags: { type: "array", items: { type: "string" } },
+        type: { type: "string", enum: ["physique", "digital", "dropshipping"], description: "Type de produit — défaut physique" },
+        // Produit physique
+        stock: { type: "number", description: "Quantité en stock (produit physique)" },
+        poids: { type: "number", description: "Poids en kg, utilisé pour calculer les frais de livraison (produit physique)" },
+        // Produit digital
+        fichierUrl: { type: "string", description: "URL du fichier téléchargeable livré après achat (produit digital)" },
+        fichierNom: { type: "string", description: "Nom du fichier affiché au client (produit digital)" },
+        instructionsTelechargement: { type: "string", description: "Instructions affichées au client après achat (produit digital) : comment utiliser/activer le fichier" },
+        // Dropshipping
+        prixFournisseur: { type: "number", description: "Prix d'achat auprès du fournisseur (dropshipping)" },
+        urlFournisseur: { type: "string", description: "URL de la fiche produit chez le fournisseur (dropshipping)" },
+        nomFournisseur: { type: "string", description: "Nom du fournisseur (dropshipping)" },
       },
       required: ["nom", "prix", "categorie"],
     },
@@ -134,9 +146,14 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
+    name: "publier_boutique",
+    description: "Publie la boutique (passe de brouillon à active, visible publiquement sur son URL). Vérifie d'abord que les critères minimum sont remplis (nom, WhatsApp, pays, description, au moins 1 produit actif) — si un élément manque, retourne la liste précise à compléter au lieu de publier. Propose cette action dès que la conversation d'onboarding touche à sa fin.",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
     name: "modifier_boutique",
     tier: "palier1",
-    description: "Modifie le design visuel, la description ou les paramètres de la boutique. Pour le design, donne une catégorie/ambiance (ex: 'bijoux', 'mode', 'tech') : un nouveau design de la bibliothèque AXSO Design est provisionné avec les vrais produits déjà branchés.",
+    description: "Modifie le design visuel, la description, les coordonnées de contact ou les paramètres de la boutique. Pour le design, donne une catégorie/ambiance (ex: 'bijoux', 'mode', 'tech') : un nouveau design de la bibliothèque AXSO Design est provisionné avec les vrais produits déjà branchés. Le numéro WhatsApp est essentiel : c'est le canal par lequel arrivent les commandes en paiement à la livraison — demande-le si la boutique n'en a pas encore.",
     parameters: {
       type: "object" as const,
       properties: {
@@ -144,8 +161,47 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
         description: { type: "string" },
         metaTitle: { type: "string" },
         metaDescription: { type: "string" },
+        whatsapp: { type: "string", description: "Numéro WhatsApp au format international (ex: +237690000000) — reçoit les commandes physiques en paiement à la livraison" },
+        telephone: { type: "string", description: "Numéro de téléphone de contact affiché aux clients" },
+        email: { type: "string", description: "Email de contact affiché aux clients" },
+        adresse: { type: "string", description: "Adresse physique de la boutique, si applicable" },
       },
       required: [],
+    },
+  },
+  {
+    name: "configurer_livraison",
+    tier: "palier1",
+    description: "Configure les règles générales de livraison de la boutique : livraison gratuite ou non, frais fixes, montant minimum pour débloquer la livraison gratuite, et zones desservies. C'est la config que verront tous les clients au checkout. Pour des tarifs différents par zone/poids, utilise plutôt ajouter_regle_livraison.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        gratuite: { type: "boolean", description: "Livraison gratuite pour toutes les commandes" },
+        frais: { type: "number", description: "Frais de livraison fixes (ignoré si gratuite=true)" },
+        minimumGratuit: { type: "number", description: "Montant de commande à partir duquel la livraison devient gratuite (0 = désactivé)" },
+        zones: { type: "array", items: { type: "string" }, description: "Zones/villes/pays desservis (remplace la liste existante)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "ajouter_regle_livraison",
+    tier: "palier1",
+    description: "Ajoute une règle tarifaire de livraison précise pour une zone donnée (ex: 'Douala 1000 FCFA sous 24h', 'International gratuit au-dessus de 2kg'). Utilise ceci quand le marchand veut des tarifs différents selon la zone, le poids ou le montant de la commande — pour une règle simple valable partout, utilise configurer_livraison.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        nom: { type: "string", description: "Nom de la règle (ex: 'Douala express')" },
+        zone: { type: "string", description: "Zone couverte (ex: 'Douala', 'Cameroun', 'International')" },
+        frais: { type: "number", description: "Frais fixes (ignoré si gratuit=true)" },
+        gratuit: { type: "boolean", description: "Livraison gratuite pour cette règle" },
+        poidsMin: { type: "number", description: "Poids minimum en kg pour que la règle s'applique (défaut 0)" },
+        poidsMax: { type: "number", description: "Poids maximum en kg (omets pour illimité)" },
+        montantMin: { type: "number", description: "Montant de commande minimum pour que la règle s'applique" },
+        delai: { type: "string", description: "Délai annoncé (ex: '24-48h', '3-5 jours')" },
+        transporteur: { type: "string", description: "Nom du transporteur ou livreur (ex: 'Campost', 'livreur local')" },
+      },
+      required: ["nom", "zone"],
     },
   },
   {
@@ -777,14 +833,34 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
       case "ajouter_produit": {
         const prodSlug = slugify(args.nom) || `produit-${Date.now()}`;
         const images = args.imageUrl ? [args.imageUrl] : [];
-        await prisma.produit.create({
-          data: {
-            tenantId, nom: args.nom, slug: prodSlug, description: args.description || "",
-            prix: args.prix, stock: args.stock ?? 10, categorie: args.categorie,
-            images, tags: args.tags || [], actif: true,
-          },
-        });
-        return { succes: true, resultat: `✅ Produit "${args.nom}" créé à ${args.prix}${images.length ? " avec image IA" : ""}` };
+        const type = args.type === "digital" || args.type === "dropshipping" ? args.type : "physique";
+
+        const data: any = {
+          tenantId, nom: args.nom, slug: prodSlug, description: args.description || "",
+          prix: args.prix, categorie: args.categorie, type,
+          images, tags: args.tags || [], actif: true,
+        };
+
+        if (type === "digital") {
+          // Un produit digital n'a pas de stock physique à gérer.
+          data.stock = 0;
+          if (args.fichierUrl) data.fichierUrl = args.fichierUrl;
+          if (args.fichierNom) data.fichierNom = args.fichierNom;
+          if (args.instructionsTelechargement) data.instructionsTelechargement = args.instructionsTelechargement;
+        } else {
+          data.stock = args.stock ?? 10;
+          if (args.poids != null) data.poids = args.poids;
+          if (type === "dropshipping") {
+            if (args.prixFournisseur != null) data.prixFournisseur = args.prixFournisseur;
+            if (args.urlFournisseur) data.urlFournisseur = args.urlFournisseur;
+            if (args.nomFournisseur) data.nomFournisseur = args.nomFournisseur;
+          }
+        }
+
+        await prisma.produit.create({ data });
+
+        const details = [images.length ? "image IA" : null, type === "digital" && !args.fichierUrl ? "fichier à ajouter" : null].filter(Boolean).join(", ");
+        return { succes: true, resultat: `✅ Produit ${type} "${args.nom}" créé à ${args.prix}${details ? ` (${details})` : ""}` };
       }
 
       case "lister_produits": {
@@ -822,15 +898,34 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
 
       case "lire_boutique": {
         const [tenant, produits, nbCommandes, nbClients] = await Promise.all([
-          prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, categorie: true, pays: true, devise: true, description: true, themeId: true, slug: true } }),
-          prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { ventes: "desc" }, take: 5, select: { nom: true, prix: true, ventes: true, images: true } }),
+          prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, categorie: true, pays: true, devise: true, description: true, themeId: true, slug: true, whatsapp: true, telephone: true, email: true, adresse: true, parametresLivraison: true, statut: true } }),
+          prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { ventes: "desc" }, take: 5, select: { nom: true, prix: true, ventes: true, images: true, type: true } }),
           prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "livree"] } } }),
           prisma.client.count({ where: { tenantId } }),
         ]);
         const devise = tenant?.devise ?? "XAF";
-        const prodLines = produits.map(p => `- ${p.nom} (${p.prix} ${devise}, ${p.ventes} ventes, image: ${p.images?.length ? "oui" : "non"})`).join("\n");
-        const ctx = `Boutique: ${tenant?.nomBoutique} | Pays: ${tenant?.pays ?? "?"} | Devise: ${devise} | Catégorie: ${tenant?.categorie ?? "?"}\nProduits actifs (${produits.length}):\n${prodLines || "aucun"}\nCommandes confirmées: ${nbCommandes} | Clients inscrits: ${nbClients}`;
+        const prodLines = produits.map(p => `- ${p.nom} (${p.type}, ${p.prix} ${devise}, ${p.ventes} ventes, image: ${p.images?.length ? "oui" : "non"})`).join("\n");
+        const livraison = (tenant?.parametresLivraison as any) || {};
+        const livraisonResume = livraison.gratuite
+          ? "gratuite pour tous"
+          : livraison.frais != null ? `${livraison.frais} ${devise}${livraison.minimum > 0 ? `, offerte dès ${livraison.minimum}` : ""}` : "non configurée";
+        const statutLabel = tenant?.statut === "brouillon" ? "brouillon (pas encore publiée)" : tenant?.statut === "pause" ? "en pause" : "publiée";
+        const ctx = `Boutique: ${tenant?.nomBoutique} | Statut: ${statutLabel} | Pays: ${tenant?.pays ?? "?"} | Devise: ${devise} | Catégorie: ${tenant?.categorie ?? "?"}\nContact — WhatsApp: ${tenant?.whatsapp || "non renseigné"} | Téléphone: ${tenant?.telephone || "non renseigné"} | Email: ${tenant?.email || "non renseigné"} | Adresse: ${tenant?.adresse || "non renseignée"}\nLivraison : ${livraisonResume}${livraison.zones?.length ? ` — zones : ${livraison.zones.join(", ")}` : ""}\nProduits actifs (${produits.length}):\n${prodLines || "aucun"}\nCommandes confirmées: ${nbCommandes} | Clients inscrits: ${nbClients}`;
         return { succes: true, resultat: ctx };
+      }
+
+      case "publier_boutique": {
+        const { evaluerPublication } = await import("@/lib/boutique-completion");
+        const evaluation = await evaluerPublication(tenantId);
+        if (!evaluation.prete) {
+          const manquants = evaluation.criteres.filter(c => !c.ok).map(c => c.label);
+          return { succes: false, resultat: `Impossible de publier — il manque : ${manquants.join(", ")}.` };
+        }
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { statut: true, slug: true } });
+        if (tenant?.statut === "active") return { succes: true, resultat: "La boutique est déjà publiée." };
+        if (tenant?.statut !== "brouillon") return { succes: false, resultat: "La boutique est en pause ou suspendue — utilise les réglages de la boutique pour la réactiver." };
+        await prisma.tenant.update({ where: { id: tenantId }, data: { statut: "active" } });
+        return { succes: true, resultat: `✅ Boutique publiée — elle est maintenant visible sur /${tenant.slug}` };
       }
 
       case "modifier_boutique": {
@@ -838,6 +933,10 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         if (args.description) data.description = args.description;
         if (args.metaTitle) data.metaTitle = args.metaTitle;
         if (args.metaDescription) data.metaDescription = args.metaDescription;
+        if (args.whatsapp) data.whatsapp = args.whatsapp;
+        if (args.telephone) data.telephone = args.telephone;
+        if (args.email) data.email = args.email;
+        if (args.adresse) data.adresse = args.adresse;
 
         let resultatDesign = "";
         if (args.categorieDesign) {
@@ -853,6 +952,13 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
             commissionRate: tenant.commissionRate ?? 0.06,
             fichier: entree.fichier,
           });
+          // Fusionne (sans reprendre l'ancien builderTree, qui appartient au
+          // design précédent) plutôt que de laisser themeConfig tel quel —
+          // sinon un builderTree périmé restait affiché à la place du
+          // nouveau design (voir même correctif sur POST /api/themes/provisionner).
+          const ancienConfig = await resolveThemeConfigAsync(tenant.themeId, tenantId, (tenant.themeConfig as any) || {});
+          const nouveauBase = await resolveThemeConfigAsync(theme.id, tenantId, {});
+          data.themeConfig = appliquerNouveauTheme(ancienConfig, nouveauBase) as any;
           data.themeId = theme.id;
           resultatDesign = `design "${entree.nom}" activé`;
         }
@@ -863,12 +969,52 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         return { succes: true, resultat: `✅ Boutique mise à jour : ${[resultatDesign, ...autres].filter(Boolean).join(", ")}` };
       }
 
+      case "configurer_livraison": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { parametresLivraison: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const actuel = (tenant.parametresLivraison as any) || {};
+        const parametresLivraison = {
+          ...actuel,
+          gratuite: args.gratuite ?? actuel.gratuite ?? false,
+          frais: args.frais ?? actuel.frais ?? 0,
+          minimum: args.minimumGratuit ?? actuel.minimum ?? 0,
+          zones: args.zones ?? actuel.zones ?? [],
+        };
+        await prisma.tenant.update({ where: { id: tenantId }, data: { parametresLivraison } });
+        const resume = parametresLivraison.gratuite
+          ? "livraison gratuite pour tous"
+          : `${parametresLivraison.frais} de frais${parametresLivraison.minimum > 0 ? `, offerte dès ${parametresLivraison.minimum}` : ""}`;
+        return { succes: true, resultat: `✅ Livraison configurée : ${resume}${parametresLivraison.zones.length ? ` — zones : ${parametresLivraison.zones.join(", ")}` : ""}` };
+      }
+
+      case "ajouter_regle_livraison": {
+        const regle = await (prisma as any).reglePort.create({
+          data: {
+            tenantId, nom: args.nom, zone: args.zone,
+            frais: args.gratuit ? 0 : (args.frais ?? 0),
+            gratuit: !!args.gratuit,
+            poidsMin: args.poidsMin ?? 0,
+            poidsMax: args.poidsMax ?? null,
+            montantMin: args.montantMin ?? null,
+            delai: args.delai || "3-5 jours",
+            transporteur: args.transporteur || null,
+            actif: true,
+          },
+        });
+        return { succes: true, resultat: `✅ Règle "${regle.nom}" créée pour la zone "${regle.zone}" : ${regle.gratuit ? "gratuit" : `${regle.frais}`} — ${regle.delai}` };
+      }
+
       case "personnaliser_page_boutique": {
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, categorie: true, themeId: true, themeConfig: true } });
         if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
-        if (!(THEMES_LIBRE_ELIGIBLES as readonly string[]).includes(tenant.themeId)) {
-          return { succes: false, resultat: "Le Constructeur libre n'est disponible que sur un thème classique (Terre & Or, Noir Obsidien, Violet Cosmos, Océan Atlantique, Kente Royal, Bwiti Forest). Change de thème d'abord, ou demande-moi de le faire." };
-        }
+        // Anciennement gaté par THEMES_LIBRE_ELIGIBLES ("terre-et-or" seul) —
+        // périmé depuis que le Constructeur (BuilderCanvas) est devenu le
+        // SEUL éditeur de page d'accueil, quel que soit le thème (voir la
+        // note d'architecture dans BuilderCanvas.tsx : "plus de bascule
+        // classique/libre"). Le gate bloquait AXIA sur toute boutique utilisant
+        // un thème de la bibliothèque AXSO Design — la quasi-totalité des
+        // boutiques réelles — alors que le marchand pouvait éditer exactement
+        // le même builderTree à la main sans restriction.
         const config = (tenant.themeConfig as any) || {};
         const arbreActuel = config.builderTree ?? [];
         const { actions, resume } = await agentConstructeurLibre({

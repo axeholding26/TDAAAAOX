@@ -20,20 +20,32 @@ const temoignages = [
   },
 ];
 
-const PARTICLES = Array.from({ length: 12 }, (_, i) => ({
-  size: 2 + Math.random() * 3,
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  delay: i * 0.4,
-  duration: 4 + Math.random() * 4,
-}));
+type Particle = { size: number; x: number; y: number; delay: number; duration: number };
+
+function generateParticles(): Particle[] {
+  return Array.from({ length: 12 }, (_, i) => ({
+    size: 2 + Math.random() * 3,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+    delay: i * 0.4,
+    duration: 4 + Math.random() * 4,
+  }));
+}
 
 export function TemoignagesSection() {
   const [actif, setActif] = useState(0);
   const [prev, setPrev] = useState<number | null>(null);
   const [dir, setDir] = useState<"left" | "right">("right");
   const [visible, setVisible] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
   const sectionRef = useRef<HTMLElement>(null);
+
+  // Généré côté client uniquement (après le montage) pour éviter un mismatch
+  // d'hydratation : Math.random() donnerait des valeurs différentes entre le
+  // rendu serveur et le rendu client s'il était calculé au niveau du module.
+  useEffect(() => {
+    setParticles(generateParticles());
+  }, []);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -67,7 +79,7 @@ export function TemoignagesSection() {
     <section ref={sectionRef} className="py-24 bg-white relative overflow-hidden" id="temoignages">
       {/* Floating star particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {PARTICLES.map((p, i) => (
+        {particles.map((p, i) => (
           <div
             key={i}
             className="absolute text-[#F5A623]"

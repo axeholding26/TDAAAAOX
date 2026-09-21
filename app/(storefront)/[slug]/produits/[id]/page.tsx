@@ -83,16 +83,24 @@ export default async function ProduitPage({ params }: Props) {
     ? produit.avis.reduce((s, a) => s + a.note, 0) / produit.avis.length
     : 0;
 
-  const produitsSimilairesRaw = await prisma.produit.findMany({
-    where: {
-      tenantId: tenant.id,
-      actif: true,
-      id: { not: produit.id },
-      OR: produit.categorie ? [{ categorie: produit.categorie }] : undefined,
-    },
-    take: 4,
-    orderBy: { ventes: "desc" },
-  });
+  // Le nombre de produits similaires est réglable dans le builder (section
+  // "similar" de la fiche produit) — il faut le lire avant la requête Prisma,
+  // sinon `take` reste figé à 4 quel que soit le réglage du marchand.
+  const similarSection = cfg.productPage?.sections?.find(s => s.type === "similar");
+  const similarCount = similarSection?.actif !== false ? Number(similarSection?.config?.count) || 4 : 0;
+
+  const produitsSimilairesRaw = similarCount > 0
+    ? await prisma.produit.findMany({
+        where: {
+          tenantId: tenant.id,
+          actif: true,
+          id: { not: produit.id },
+          OR: produit.categorie ? [{ categorie: produit.categorie }] : undefined,
+        },
+        take: similarCount,
+        orderBy: { ventes: "desc" },
+      })
+    : [];
 
   const produitsSimilaires = produitsSimilairesRaw.map(p => ({
     id: p.id,

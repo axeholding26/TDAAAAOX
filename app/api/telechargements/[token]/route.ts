@@ -101,7 +101,7 @@ export async function GET(req: NextRequest, { params }: Ctx) {
         }
 
         const modifiedBytes = await pdfDoc.save();
-        return new NextResponse(modifiedBytes, {
+        return new NextResponse(Buffer.from(modifiedBytes), {
           headers: {
             "Content-Type":        "application/pdf",
             "Content-Disposition": `attachment; filename="${encodeURIComponent(fileName)}"`,

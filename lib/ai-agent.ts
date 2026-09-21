@@ -43,12 +43,16 @@ export interface PlanBoutique {
 // Carte devise par code pays ISO2 — couverture mondiale
 export const PAYS_DEVISES: Record<string, string> = {
   // Afrique de l'Ouest CFA
-  SN: "XOF", CI: "XOF", TG: "XOF", BJ: "XOF", ML: "XOF", BF: "XOF", GN: "GNF", NE: "XOF",
+  SN: "XOF", CI: "XOF", TG: "XOF", BJ: "XOF", ML: "XOF", BF: "XOF", GN: "GNF", NE: "XOF", GW: "XOF",
   // Afrique Centrale CFA
-  CM: "XAF", GA: "XAF", CG: "XAF", TD: "XAF", CF: "XAF", CD: "CDF",
+  CM: "XAF", GA: "XAF", CG: "XAF", TD: "XAF", CF: "XAF", CD: "CDF", GQ: "XAF",
   // Afrique subsaharienne
   GH: "GHS", NG: "NGN", KE: "KES", ZA: "ZAR", ET: "ETB", TZ: "TZS",
   UG: "UGX", RW: "RWF", MZ: "MZN", AO: "AOA", ZM: "ZMW", ZW: "USD",
+  SL: "SLE", LR: "LRD", GM: "GMD", CV: "CVE", MR: "MRU", KM: "KMF",
+  DJ: "DJF", ER: "ERN", SO: "SOS", SS: "SSP", SD: "SDG", BI: "BIF",
+  MW: "MWK", NA: "NAD", BW: "BWP", LS: "LSL", SZ: "SZL", MU: "MUR",
+  SC: "SCR", ST: "STN",
   // Afrique du Nord
   MA: "MAD", DZ: "DZD", TN: "TND", EG: "EGP", LY: "LYD",
   // Europe

@@ -10,13 +10,13 @@ const TAILLE_MAP: Record<string, string> = {
   h4: "text-xl sm:text-2xl font-semibold",
 };
 
-export function HeadingBlock({ config, colors, editable, onEditText }: BlockRenderProps) {
+export function HeadingBlock({ config, colors, container, editable, onEditText }: BlockRenderProps) {
   const niveau = (config.niveau as string) || "h2";
   const align = (config.align as string) || "left";
   const texte = config.texte || "Titre";
 
   return (
-    <div className={`py-2 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
+    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
       <InlineEditable
         as={niveau as any}
         value={texte}

@@ -8,6 +8,7 @@ import { genererAvisDemo } from "@/lib/gemini";
 import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
+import { notifierMarchand } from "@/lib/notifications-marchand";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -71,7 +72,9 @@ export async function POST(request: Request) {
           email: data.email,
           themeConfig: themeConfig as any,
           commissionRate: 0.06,
-          statut: "active",
+          // "brouillon" : visible sur /{slug} seulement une fois publiée —
+          // voir lib/boutique-completion.ts et le garde-fou dans PATCH ci-dessous.
+          statut: "brouillon",
           planType: "gratuit",
         },
       });
@@ -87,6 +90,16 @@ export async function POST(request: Request) {
       });
 
       return { tenant, user };
+    });
+
+    // Boutique créée en "brouillon" — notifie le marchand qu'il lui reste à
+    // compléter ses infos avant de publier (voir lib/boutique-completion.ts).
+    await notifierMarchand({
+      tenantId: tenant.id,
+      type: "boutique_a_completer",
+      titre: "Ta boutique n'est pas encore publiée",
+      message: "Ajoute au moins un produit et vérifie tes infos dans le Constructeur puis publie ta boutique pour qu'elle soit visible.",
+      lien: "/dashboard/builder",
     });
 
     // Provisionne un design de la bibliothèque AXSO Design d'après la
@@ -208,9 +221,24 @@ export async function PATCH(request: Request) {
     });
 
     // Le marchand ne peut basculer sa boutique qu'entre "active" et "pause" —
-    // jamais écraser un statut administratif (ex: suspendu par Axso).
+    // jamais écraser un statut administratif (ex: suspendu par Axso). Une
+    // boutique "brouillon" (pas encore publiée) ne peut passer à "active"
+    // que si elle remplit les critères minimum — voir lib/boutique-completion.ts.
     if ((body.statut === "active" || body.statut === "pause") && actuel) {
-      if (actuel.statut === "active" || actuel.statut === "pause") {
+      if (actuel.statut === "brouillon" && body.statut === "active") {
+        const { evaluerPublication } = await import("@/lib/boutique-completion");
+        const evaluation = await evaluerPublication(tenantId);
+        if (!evaluation.prete) {
+          return NextResponse.json(
+            {
+              error: "Boutique incomplète — impossible de publier",
+              manquants: evaluation.criteres.filter(c => !c.ok).map(c => c.label),
+            },
+            { status: 400 }
+          );
+        }
+        champs.statut = "active";
+      } else if (actuel.statut === "active" || actuel.statut === "pause") {
         champs.statut = body.statut;
       }
     }
