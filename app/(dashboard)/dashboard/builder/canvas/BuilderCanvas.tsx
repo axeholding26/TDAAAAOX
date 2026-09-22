@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { Sparkles } from "lucide-react";
 import type { ThemeConfig, BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
-import { insertNode, moveNode, removeNode, duplicateNode, updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, findNode, genBlockId } from "@/lib/block-tree";
+import { insertNode, moveNode, moveNodeRelative, removeNode, duplicateNode, updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, findNode, getSiblingPosition, genBlockId } from "@/lib/block-tree";
 import { BlockLibraryPanel } from "./BlockLibraryPanel";
 import { BlockStylePanel } from "./BlockStylePanel";
 import { CanvasNode } from "./CanvasNode";
@@ -34,12 +34,6 @@ interface Props {
   // édite (comme Shopify : le thème change, la page reste visible), sans
   // dupliquer le canevas dans une iframe séparée.
   leftPanelOverride?: React.ReactNode;
-  // Contenu additionnel affiché au-dessus du bouton générique "Ajouter une
-  // section de départ" quand le canevas est vide — utilisé par la boutique
-  // digitale (modeBoutique "digital") pour proposer 4 gabarits de départ
-  // (voir digitalStarterTemplates.ts) plutôt qu'une section vierge. Absent
-  // pour boutique/landing physiques, comportement inchangé.
-  emptyStateExtra?: React.ReactNode;
 }
 
 // Largeurs miroir de l'aperçu iframe du constructeur classique — même
@@ -52,7 +46,7 @@ const SECTION_PY_MAP: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12
 // dans le tableau de bord (pas d'iframe, voir décision d'architecture du
 // plan). Bibliothèque à gauche, canevas au centre, panneau de style à
 // droite ; toute mutation passe par lib/block-tree.ts.
-export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, variante = "boutique", leftPanelOverride, emptyStateExtra }: Props) {
+export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, variante = "boutique", leftPanelOverride }: Props) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [draggedLabel, setDraggedLabel] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -139,6 +133,7 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, var
   };
 
   const selectedNode = selectedNodeId ? findNode(tree, selectedNodeId) : null;
+  const selectedPosition = selectedNodeId ? getSiblingPosition(tree, selectedNodeId) : null;
 
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -189,8 +184,6 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, var
                 <div className="w-5 h-5 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm">Chargement de ton design…</p>
               </div>
-            ) : emptyStateExtra ? (
-              <div className="p-10">{emptyStateExtra}</div>
             ) : (
               <div className="p-10 flex flex-col items-center gap-4">
                 <DropIndicator parentId={null} index={0} empty />
@@ -234,6 +227,10 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, var
         <BlockStylePanel
           node={selectedNode}
           device={device}
+          canMoveUp={!!selectedPosition && selectedPosition.index > 0}
+          canMoveDown={!!selectedPosition && selectedPosition.index < selectedPosition.total - 1}
+          onMoveUp={() => setTree((t) => moveNodeRelative(t, selectedNode.id, "up"))}
+          onMoveDown={() => setTree((t) => moveNodeRelative(t, selectedNode.id, "down"))}
           onChangeStyle={(patch) => setTree((t) => updateNodeStyle(t, selectedNode.id, patch))}
           onChangeResponsiveStyle={(breakpoint, patch) => setTree((t) => updateNodeResponsiveStyle(t, selectedNode.id, breakpoint, patch))}
           onChangeConfig={(patch) => setTree((t) => updateNodeConfig(t, selectedNode.id, patch))}

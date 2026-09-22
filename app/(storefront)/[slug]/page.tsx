@@ -17,6 +17,7 @@ import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRe
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
+import { DigitalCatalogPage } from "@/components/storefront/digital/DigitalCatalogPage";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -54,6 +55,23 @@ export default async function StorefrontPage({ params }: Props) {
   if (!tenant || tenant.statut !== "active") notFound();
 
   const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+
+  // Boutique 100% digitale — rendu entièrement séparé (Constructeur dédié,
+  // voir lib/theme-config.ts::ThemeDigitalConfig), jamais le socle catalogue
+  // physique ci-dessous ni le Constructeur libre (builderTree).
+  if (cfg.modeBoutique === "digital") {
+    return (
+      <DigitalCatalogPage
+        tenant={{
+          id: tenant.id, slug: tenant.slug, nomBoutique: tenant.nomBoutique,
+          logoUrl: tenant.logoUrl, description: tenant.description,
+          pays: tenant.pays, devise: tenant.devise, commissionRate: tenant.commissionRate,
+        }}
+        cfg={cfg}
+      />
+    );
+  }
+
   const { colors: c, sections: sec, radius, fonts } = cfg;
 
   const vedettesOrderBy =

@@ -51,27 +51,27 @@ function OutlineRow({ node, parentId, depth, selectedNodeId, onSelect, onDuplica
     <div ref={setNodeRef} className={isDragging ? "opacity-30" : ""}>
       <div
         onClick={() => onSelect(node.id)}
-        style={{ paddingLeft: 8 + depth * 14 }}
-        className={`group/row flex items-center gap-1.5 pr-1.5 py-1.5 rounded-lg cursor-pointer transition-all ${
+        style={{ paddingLeft: 10 + depth * 16 }}
+        className={`group/row flex items-center gap-2 pr-2 py-2 rounded-lg cursor-pointer transition-all ${
           selectionne ? "bg-[#F5A623]/15 text-[#050508]" : "hover:bg-gray-50 text-gray-700"
         } ${desactive ? "opacity-40" : ""}`}
       >
-        <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-4 h-4 flex-shrink-0 flex items-center justify-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing" title="Réordonner">
-          <GripVertical size={11} />
+        <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-5 h-5 flex-shrink-0 flex items-center justify-center text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing" title="Réordonner">
+          <GripVertical size={13} />
         </span>
-        <Icon size={13} className={`flex-shrink-0 ${structurel ? "text-gray-400" : selectionne ? "text-[#F5A623]" : "text-gray-500"}`} />
-        <span className={`flex-1 min-w-0 truncate ${structurel ? "text-[12px] text-gray-400" : "text-[13px] font-medium"}`}>
+        <Icon size={15} className={`flex-shrink-0 ${structurel ? "text-gray-400" : selectionne ? "text-[#F5A623]" : "text-gray-500"}`} />
+        <span className={`flex-1 min-w-0 truncate ${structurel ? "text-[13px] text-gray-400" : "text-[14px] font-medium"}`}>
           {LABELS[node.type] || node.type}
         </span>
-        <div className="hidden group-hover/row:flex items-center gap-0.5 flex-shrink-0">
-          <button onClick={(e) => { e.stopPropagation(); onToggleActif(node.id); }} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
-            {desactive ? <EyeOff size={11} /> : <Eye size={11} />}
+        <div className="hidden group-hover/row:flex items-center gap-1 flex-shrink-0">
+          <button onClick={(e) => { e.stopPropagation(); onToggleActif(node.id); }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
+            {desactive ? <EyeOff size={13} /> : <Eye size={13} />}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onDuplicate(node.id); }} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
-            <Copy size={11} />
+          <button onClick={(e) => { e.stopPropagation(); onDuplicate(node.id); }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
+            <Copy size={13} />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
-            <Trash2 size={11} />
+          <button onClick={(e) => { e.stopPropagation(); onDelete(node.id); }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
+            <Trash2 size={13} />
           </button>
         </div>
       </div>
@@ -107,9 +107,9 @@ interface Props {
 // gauche ; « + Ajouter une section » bascule vers l'onglet Blocs.
 export function PageOutlinePanel({ tree, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif, onAddSection }: Props) {
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-thin p-2 flex flex-col">
+    <div className="flex-1 overflow-y-auto scrollbar-thin p-2.5 flex flex-col">
       {tree.length === 0 ? (
-        <p className="text-[12px] text-gray-400 text-center py-6 px-2">Ta page est vide pour l'instant — ajoute une section pour commencer.</p>
+        <p className="text-[13px] text-gray-400 text-center py-6 px-2">Ta page est vide pour l'instant — ajoute une section pour commencer.</p>
       ) : (
         <div className="flex-1">
           <DropIndicator parentId={null} index={0} idPrefix="outline-gap" />
@@ -123,9 +123,9 @@ export function PageOutlinePanel({ tree, selectedNodeId, onSelect, onDuplicate, 
       )}
       <button
         onClick={onAddSection}
-        className="mt-2 flex-shrink-0 flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-dashed border-gray-300 text-[13px] font-semibold text-gray-500 hover:border-[#F5A623] hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all"
+        className="mt-2 flex-shrink-0 flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-gray-300 text-[14px] font-semibold text-gray-500 hover:border-[#F5A623] hover:text-[#F5A623] hover:bg-[#F5A623]/5 transition-all"
       >
-        <LayoutGrid size={13} /> Ajouter une section
+        <LayoutGrid size={15} /> Ajouter une section
       </button>
     </div>
   );

@@ -20,7 +20,7 @@ import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, type CustomSect
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { BuilderCanvas } from "./canvas/BuilderCanvas";
-import { DigitalStarterPicker } from "./digital/DigitalStarterPicker";
+import { DigitalBuilder } from "./digital/DigitalBuilder";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit" | "apropos" | "contact" | "themes";
@@ -368,6 +368,19 @@ export default function BuilderPage() {
     </div>
   );
 
+  // Boutique 100% digitale — Constructeur entièrement séparé (façon
+  // Chariow), plus le Constructeur libre par blocs. Toute la plomberie de
+  // chargement/sauvegarde/undo ci-dessus reste partagée (même API, même
+  // debounce d'auto-save) ; seule l'interface change.
+  if (config.modeBoutique === "digital") {
+    return (
+      <DigitalBuilder
+        tenant={tenant} config={config} set={set} setColors={setColors} setFonts={setFonts}
+        handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
+      />
+    );
+  }
+
   const sectionOrder = config.sectionOrder || DEFAULT_SECTION_ORDER;
 
   // Un seul constructeur (arbre de blocs, dnd-kit) — plus de bascule
@@ -397,8 +410,8 @@ export default function BuilderPage() {
         </div>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
-          {config.modeBoutique === "digital" ? <ShoppingBag size={13} /> : varianteConstructeur === "landing" ? <Wand2 size={13} /> : <Layers size={13} />}
-          {config.modeBoutique === "digital" ? "Boutique digitale" : varianteConstructeur === "landing" ? "Constructeur Landing" : "Constructeur Boutique"}
+          {varianteConstructeur === "landing" ? <Wand2 size={13} /> : <Layers size={13} />}
+          {varianteConstructeur === "landing" ? "Constructeur Landing" : "Constructeur Boutique"}
           <BoutonRevoirTutoriel moduleKey="builder" dark />
         </div>
 
@@ -522,16 +535,10 @@ export default function BuilderPage() {
             globaux (couleurs, typo...) : remplacent juste la bibliothèque de
             blocs à gauche via leftPanelOverride, l'aperçu au centre reste
             visible et réagit en direct, comme les réglages de thème Shopify.
-            Boutique digitale (modeBoutique "digital") : MÊME canevas de
-            blocs que la boutique physique (varianteConstructeur === "boutique"
-            pour ce mode) — chaque texte, couleur, bouton, position s'édite
-            avec les mêmes outils, aucun système séparé. Seule différence :
-            quand le canevas est vide, emptyStateExtra propose 4 gabarits de
-            départ (voir digital/digitalStarterTemplates.ts) au lieu d'une
-            section vierge. */}
+            N'est jamais atteint pour une boutique digitale (retour anticipé
+            vers <DigitalBuilder> plus haut). */}
         <BuilderCanvas
           config={config} set={set} slug={tenant.slug} device={device} onSyncWithServer={syncWithServer} variante={varianteConstructeur}
-          emptyStateExtra={config.modeBoutique === "digital" ? <DigitalStarterPicker set={set} /> : undefined}
           leftPanelOverride={panel === "sections" ? undefined : (
             <div className="w-[340px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
               <div className="px-4 py-2.5 border-b border-gray-200 flex-shrink-0 flex items-center gap-2">

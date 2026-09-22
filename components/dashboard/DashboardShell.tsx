@@ -70,45 +70,58 @@ export function DashboardShell({
         steps={BIENVENUE_STEPS}
       />
 
-      {/* ─── Desktop : sidebar latérale ─────────────────────────── */}
-      <div className="hidden md:flex h-screen bg-[#F5F5F5] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
+      {/* ─── Layout responsive UNIQUE ────────────────────────────────
+          Auparavant : deux arborescences JSX sœurs complètes ("hidden
+          md:flex" pour desktop, "md:hidden" pour mobile), chacune
+          contenant sa propre copie de `children`. Tailwind ne fait que
+          MASQUER visuellement (display:none) celle qui ne correspond pas
+          au viewport — les DEUX restent montées en React en permanence,
+          donc CHAQUE page du dashboard tournait en double : deux fetch
+          initiaux, et pour le Constructeur (page la plus sensible, avec
+          son auto-save débouncé) deux minuteries de sauvegarde
+          indépendantes qui se chevauchaient et pouvaient s'écraser l'une
+          l'autre — confirmé en observant deux `GET /api/tenants/moi-complet`
+          et deux `PATCH /api/tenants` par chargement/édition dans les logs
+          serveur. Ici, `children` n'est monté qu'UNE SEULE fois ; seuls les
+          éléments de chrome sans état (Sidebar/Header vs MobileHeader/
+          MobileBottomNav) sont togglés par CSS pur. */}
+      {/* h-dvh (mobile) plutôt que min-h-screen/100vh : sur mobile, 100vh est
+          calculé sur la hauteur de viewport barre d'adresse masquée — plus
+          grand que ce qui est réellement visible au chargement. */}
+      <div className="flex flex-col md:flex-row h-dvh md:h-screen bg-[#F5F5F5] text-gray-900 overflow-hidden" style={{ fontFamily: "'Poppins', 'Century Gothic', system-ui, sans-serif" }}>
         {/* Écran d'accueil AXIA = plein écran réel, la sidebar AXSO ne doit
             pas rester visible à côté — le retour au dashboard classique se
             fait via le bouton dédié dans la barre supérieure d'AXIA. */}
-        {!estAccueilAxia && <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} permissions={permissions} />}
+        {!estAccueilAxia && (
+          <div className="hidden md:block">
+            <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} permissions={permissions} />
+          </div>
+        )}
         <div className="flex flex-col flex-1 overflow-hidden">
-          <main className={fullBleed ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto"}>
-            {fullBleed ? children : (
-              <>
-                <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique}/>
-                <div key={pathname} className="ax-page-enter px-6 pb-8 max-w-7xl mx-auto w-full">
-                  {quotaAtteint && <QuotaBanner />}
-                  {children}
-                </div>
-              </>
-            )}
-          </main>
-        </div>
-      </div>
-
-      {/* ─── Mobile : bottom nav îlot ────────────────────────────── */}
-      {/* h-dvh (pas min-h-screen/100vh) : sur mobile, 100vh est calculé sur la
-          hauteur de viewport barre d'adresse masquée — plus grand que ce qui
-          est réellement visible au chargement. Avec min-h-screen, le wrapper
-          dépassait la zone visible et la page entière devenait scrollable,
-          au lieu que seul le <main> interne le soit — AXIA semblait "ne
-          prendre qu'une partie de l'écran" alors qu'il débordait en bas. */}
-      <div className="md:hidden flex flex-col h-dvh overflow-hidden bg-[#F5F5F5] text-gray-900">
-        {!estAccueilAxia && <MobileHeader boutiqueNom={boutique?.nomBoutique} />}
-        <main className={estAccueilAxia ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto pb-32"}>
-          {estAccueilAxia ? children : (
-            <div key={pathname} className="ax-page-enter px-3 pt-3 max-w-lg mx-auto space-y-4 pb-32">
-              {quotaAtteint && <QuotaBanner />}
-              {children}
+          {!estAccueilAxia && (
+            <div className="md:hidden flex-shrink-0">
+              <MobileHeader boutiqueNom={boutique?.nomBoutique} />
             </div>
           )}
-        </main>
-        {!estAccueilAxia && <MobileBottomNav />}
+          {!fullBleed && !estAccueilAxia && (
+            <div className="hidden md:block flex-shrink-0">
+              <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique}/>
+            </div>
+          )}
+          <main className={fullBleed || estAccueilAxia ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto pb-32 md:pb-0"}>
+            {fullBleed || estAccueilAxia ? children : (
+              <div key={pathname} className="ax-page-enter px-3 pt-3 md:px-6 md:pt-0 md:pb-8 max-w-lg md:max-w-7xl mx-auto w-full space-y-4 md:space-y-0">
+                {quotaAtteint && <QuotaBanner />}
+                {children}
+              </div>
+            )}
+          </main>
+          {!estAccueilAxia && (
+            <div className="md:hidden flex-shrink-0">
+              <MobileBottomNav />
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

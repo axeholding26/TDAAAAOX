@@ -22,8 +22,8 @@ export function DropIndicator({ parentId, index, empty, idPrefix = "gap" }: { pa
     return (
       <div
         ref={setNodeRef}
-        className={`flex items-center justify-center rounded-lg border-2 border-dashed text-[13px] font-medium transition-all ${
-          isOver ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623] py-6" : "border-gray-200 text-gray-400 py-4"
+        className={`flex items-center justify-center rounded-lg border-2 border-dashed text-[14px] font-medium transition-all ${
+          isOver ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623] py-7" : "border-gray-200 text-gray-400 py-5"
         }`}
       >
         Dépose un bloc ici

@@ -7,7 +7,8 @@ import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
 import { provisionerThemeInitial } from "@/lib/axso-design-library";
-import { DIGITAL_STARTER_TEMPLATES } from "@/app/(dashboard)/dashboard/builder/digital/digitalStarterTemplates";
+import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
+import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 
 const schemaAnalyser = z.object({
@@ -77,23 +78,23 @@ export async function POST(request: Request) {
     if (body.phase === "executer") {
       const { plan, compte, typeBoutique } = schemaExecuter.parse(body);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
-      // Gabarit du catalogue digital (voir digital/digitalStarterTemplates.ts
-      // pour les 4 choix — de vrais arbres de blocs, édités ensuite avec les
-      // mêmes outils que le constructeur physique) — heuristique
-      // déterministe sur la catégorie déclarée à l'inscription, pas d'appel
-      // IA supplémentaire : "premium" pour les offres à forte valeur perçue
-      // (formation, conseil), "vibrant" pour le créatif/marketing, "compact"
-      // pour un catalogue nombreux (templates, presets), "epure" (identique
-      // à la référence Chariow) en défaut sûr.
+      // Gabarit du Constructeur digital (voir lib/digital-templates.ts pour
+      // les 4 choix — plus un arbre de blocs : un layout React dédié,
+      // éditable ensuite via "Couleur de votre marque"/"Style des coins"
+      // dans le Constructeur digital) — heuristique déterministe sur la
+      // catégorie déclarée à l'inscription, pas d'appel IA supplémentaire :
+      // "onyx" pour les offres à forte valeur perçue (formation, conseil),
+      // "mint" pour le créatif/marketing, "aurore" pour un catalogue nombreux
+      // (templates, presets), "charriow" (référence) en défaut sûr.
       const digitalTemplateId = (() => {
         if (modeBoutique !== "digital") return undefined;
         const c = plan.categorie.toLowerCase();
-        if (/formation|coaching|consult|masterclass|cours|luxe|bijou/.test(c)) return "premium" as const;
-        if (/design|creatif|marketing|social|art|musique/.test(c)) return "vibrant" as const;
-        if (/template|preset|pack|asset|plugin|modele/.test(c)) return "compact" as const;
-        return "epure" as const;
+        if (/formation|coaching|consult|masterclass|cours|luxe|bijou/.test(c)) return "onyx" as const;
+        if (/design|creatif|marketing|social|art|musique/.test(c)) return "mint" as const;
+        if (/template|preset|pack|asset|plugin|modele/.test(c)) return "aurore" as const;
+        return "charriow" as const;
       })();
-      const digitalTemplate = digitalTemplateId ? DIGITAL_STARTER_TEMPLATES.find((t) => t.id === digitalTemplateId) : undefined;
+      const digitalTemplate = digitalTemplateId ? DIGITAL_TEMPLATES.find((t) => t.id === digitalTemplateId) : undefined;
 
       // Vérifier que l'email n'existe pas déjà
       const emailExiste = await prisma.user.findUnique({ where: { email: compte.email } });
@@ -132,16 +133,15 @@ export async function POST(request: Request) {
       });
 
       // Fusionner : structure générée + sections custom de l'IA. Boutique
-      // digitale : le gabarit choisi FOURNIT directement builderTree +
-      // couleurs + rayon — même mécanisme que le Constructeur libre édité à
-      // la main (DigitalStarterPicker), donc immédiatement éditable bloc par
-      // bloc dès la première ouverture du Constructeur, sans étape "choisir
-      // un gabarit" à refaire.
+      // digitale : le gabarit choisi FOURNIT directement digitalConfig
+      // (templateId) + couleurs + rayon — le marchand retrouve son
+      // Constructeur digital déjà réglé dès la première ouverture, sans
+      // étape "choisir un gabarit" à refaire.
       const themeConfig: Record<string, any> = {
         ...generatedConfig,
         ...(customSections.length > 0 && { customSections }),
         ...(digitalTemplate && {
-          builderTree: digitalTemplate.build(),
+          digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, templateId: digitalTemplate.id },
           colors: { ...generatedConfig.colors, ...digitalTemplate.colors },
           radius: digitalTemplate.radius,
         }),

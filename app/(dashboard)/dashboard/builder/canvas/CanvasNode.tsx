@@ -78,28 +78,28 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
 
   const toolbar = (
     <div
-      className={`absolute -top-3 right-1.5 z-20 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white shadow-sm px-0.5 py-0.5 transition-opacity ${
+      className={`absolute -top-3.5 right-1.5 z-20 flex items-center gap-0.5 rounded-md border border-gray-200 bg-white shadow-sm px-1 py-1 transition-opacity ${
         selectionne ? "opacity-100" : "opacity-0 group-hover/node:opacity-100"
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
-        <GripVertical size={12} />
+      <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
+        <GripVertical size={14} />
       </span>
-      <button onClick={() => onToggleActif(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
-        {desactive ? <EyeOff size={12} /> : <Eye size={12} />}
+      <button onClick={() => onToggleActif(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
+        {desactive ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
-      <button onClick={() => onDuplicate(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
-        <Copy size={12} />
+      <button onClick={() => onDuplicate(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
+        <Copy size={14} />
       </button>
-      <button onClick={() => onDelete(node.id)} className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
-        <Trash2 size={12} />
+      <button onClick={() => onDelete(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
+        <Trash2 size={14} />
       </button>
     </div>
   );
 
   const label = (
-    <span className={`absolute -top-2.5 left-1.5 z-20 text-[11px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded transition-opacity ${
+    <span className={`absolute -top-3 left-1.5 z-20 text-[12px] font-bold uppercase tracking-wide px-2 py-1 rounded transition-opacity ${
       selectionne ? "bg-[#F5A623] text-black opacity-100" : "bg-gray-700 text-white opacity-0 group-hover/node:opacity-100"
     }`}>
       {LABELS[node.type] || node.type}

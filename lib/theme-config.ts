@@ -39,6 +39,26 @@ export interface ThemeBoutons {
   bordureWidth?: string;
 }
 
+// ─── Boutique digitale — constructeur dédié (façon Chariow) ──────────────────
+// Config propre au rendu DigitalCatalogPage (components/storefront/digital/),
+// piloté par le Constructeur digital dédié (builder/digital/DigitalBuilder.tsx)
+// — totalement séparé du Constructeur libre par blocs utilisé par les
+// boutiques physique/catalogue. `templateId` choisit la mise en page parmi
+// les 4 gabarits de lib/digital-templates.ts (le premier reproduit la
+// référence Chariow à l'identique, les 3 autres réutilisent la même
+// structure/hiérarchie avec une identité visuelle propre) ; le reste (couleur
+// de marque, police, rayon) reste piloté par colors/fonts/radius ci-dessous,
+// exactement comme pour une boutique physique.
+export interface ThemeDigitalConfig {
+  templateId: "charriow" | "aurore" | "onyx" | "mint";
+  disposition: "un" | "deux"; // produits par ligne sur mobile
+  tri: "alphabetique" | "populaires" | "recents" | "prix-desc" | "prix-asc";
+  afficherVedettes: boolean;
+  afficherBoutonAchatCarte: boolean;
+  afficherRecommandes: boolean;
+  afficherAffiliation: boolean;
+}
+
 // ─── Navigation ──────────────────────────────────────────────────────────────
 export interface ThemeNavigationCfg {
   type?: "classic" | "centered" | "floating" | "minimal" | "mega" | "transparent-scroll";
@@ -312,12 +332,15 @@ export interface ThemeConfig {
   sectionOrder?: string[];
   // "vente_unique" (page de vente à un seul produit) et "digital" (catalogue
   // multi-produits digitaux) sont deux variantes du même besoin "boutique
-  // 100% digitale" — voir lib/generate-store-config.ts. "digital" utilise le
-  // MÊME Constructeur de blocs que "catalogue" (juste amorcé par un gabarit
-  // de départ, voir builder/digital/digitalStarterTemplates.ts), aucun champ
-  // de config séparé nécessaire. Absent ou "catalogue" = comportement
-  // historique (catalogue physique multi-produits).
+  // 100% digitale" — voir lib/generate-store-config.ts. "vente_unique"
+  // utilise le Constructeur de blocs (variante "landing"). "digital" a son
+  // propre Constructeur dédié (builder/digital/DigitalBuilder.tsx) et son
+  // propre rendu (components/storefront/digital/DigitalCatalogPage.tsx),
+  // piloté par `digitalConfig` ci-dessous — jamais par builderTree. Absent
+  // ou "catalogue" = comportement historique (catalogue physique multi-produits).
   modeBoutique?: "catalogue" | "vente_unique" | "digital";
+  // Uniquement pour modeBoutique === "digital" — voir ThemeDigitalConfig.
+  digitalConfig?: ThemeDigitalConfig;
   // Sous-sections personnalisées ajoutées dans n'importe quelle section (built-in ou custom),
   // indexées par id de section. Permet d'ajouter photos/témoignages/promo/texte dans toute section.
   sectionSousBlocs?: Record<string, SousBloc[]>;
@@ -435,6 +458,16 @@ const DEFAULT_LAYOUT: ThemeLayout = {
   ombre: "md",
 };
 
+export const DEFAULT_DIGITAL_CONFIG: ThemeDigitalConfig = {
+  templateId: "charriow",
+  disposition: "deux",
+  tri: "recents",
+  afficherVedettes: true,
+  afficherBoutonAchatCarte: true,
+  afficherRecommandes: true,
+  afficherAffiliation: true,
+};
+
 // Un seul socle structurel interne — jamais exposé au marchand comme un
 // thème parmi d'autres (voir THEMES_LIBRE_ELIGIBLES ci-dessus). Nécessaire
 // pour que resolveThemeConfig/resolveThemeConfigAsync gardent toujours une
@@ -483,6 +516,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     customSections: overrides.customSections ?? base.customSections,
     sectionOrder: overrides.sectionOrder ?? base.sectionOrder,
     modeBoutique: overrides.modeBoutique ?? base.modeBoutique,
+    digitalConfig: (overrides.digitalConfig || base.digitalConfig) ? { ...DEFAULT_DIGITAL_CONFIG, ...base.digitalConfig, ...(overrides.digitalConfig || {}) } : undefined,
     sectionSousBlocs: overrides.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
     customCss: overrides.customCss ?? base.customCss,
     sections: {
@@ -568,6 +602,7 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     customSections: ancienConfig.customSections,
     sectionOrder: ancienConfig.sectionOrder,
     modeBoutique: ancienConfig.modeBoutique,
+    digitalConfig: ancienConfig.digitalConfig,
     sectionSousBlocs: ancienConfig.sectionSousBlocs,
     customCss: ancienConfig.customCss,
     productPage: ancienConfig.productPage,

@@ -1,0 +1,308 @@
+"use client";
+
+// Constructeur digital — interface entièrement séparée du Constructeur libre
+// par blocs (canvas/BuilderCanvas.tsx) utilisé par les boutiques physiques.
+// Reproduit la structure du constructeur d'apparence Chariow (voir d1.png,
+// d2.png, d3.png fournis en référence) : un panneau de réglages à gauche
+// (cartes avec icône + titre + description, choix par cartes/interrupteurs)
+// et un aperçu live à droite. L'aperçu n'est PAS une iframe : c'est le MÊME
+// composant React que la vraie vitrine (DigitalStoreShell), monté ici avec
+// les valeurs de `config` en direct — un changement de réglage re-rend
+// l'aperçu dans la même passe React, sans sérialisation ni rechargement.
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
+import {
+  ArrowLeft, Monitor, Smartphone, ExternalLink, Save, RefreshCw, Check,
+  LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight,
+  ShoppingBag, Rows, Columns,
+} from "lucide-react";
+import type { ThemeConfig, ThemeDigitalConfig } from "@/lib/theme-config";
+import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
+import { FONTS } from "@/lib/theme-fonts";
+import { DIGITAL_TEMPLATES, getDigitalTemplate } from "@/lib/digital-templates";
+import { prixClient } from "@/lib/pricing";
+import { DigitalStoreShell, type DigitalProductVM } from "@/components/storefront/digital/DigitalStoreShell";
+
+type Device = "desktop" | "mobile";
+const DEVICE_WIDTH: Record<Device, string> = { desktop: "100%", mobile: "390px" };
+
+const ACCENT_PRESETS = ["#F5A623", "#111111", "#0d9488", "#3b82f6", "#e91e8c", "#c2622d"];
+
+interface Props {
+  tenant: any;
+  config: ThemeConfig;
+  set: (updater: (p: ThemeConfig) => ThemeConfig) => void;
+  setColors: (patch: Record<string, string>) => void;
+  setFonts: (patch: Record<string, string>) => void;
+  handleSave: () => Promise<void>;
+  saving: boolean;
+  saved: boolean;
+  hasChanges: boolean | null;
+}
+
+export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handleSave, saving, saved, hasChanges }: Props) {
+  const [device, setDevice] = useState<Device>("desktop");
+  const [produits, setProduits] = useState<DigitalProductVM[] | null>(null);
+
+  useEffect(() => {
+    fetch("/api/produits?limit=24&actif=true")
+      .then((r) => r.json())
+      .then((data) => {
+        const liste = (data.produits || []).map((p: any): DigitalProductVM => ({
+          id: p.id, nom: p.nom, images: p.images || [],
+          prixAffiche: prixClient(p.prix, tenant.commissionRate ?? 0.06),
+          categorie: p.categorie, tags: p.tags || [], featured: p.featured, ventes: p.ventes,
+        }));
+        setProduits(liste);
+      })
+      .catch(() => setProduits([]));
+  }, [tenant.commissionRate]);
+
+  const dc: ThemeDigitalConfig = { ...DEFAULT_DIGITAL_CONFIG, ...(config.digitalConfig || {}) };
+  const setDc = (patch: Partial<ThemeDigitalConfig>) => set((p) => ({ ...p, digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, ...p.digitalConfig, ...patch } }));
+
+  const choisirTemplate = (id: ThemeDigitalConfig["templateId"]) => {
+    const skin = getDigitalTemplate(id);
+    set((p) => ({ ...p, colors: { ...p.colors, ...skin.colors }, radius: skin.radius, digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, ...p.digitalConfig, templateId: id } }));
+  };
+
+  const reinitialiser = () => {
+    const skin = getDigitalTemplate(dc.templateId);
+    set((p) => ({ ...p, colors: { ...p.colors, ...skin.colors }, radius: skin.radius, digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, templateId: dc.templateId } }));
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <PCOnlyGate label="Le Constructeur de boutique digitale" />
+      {/* HEADER */}
+      <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/dashboard" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-800 transition-colors text-sm">
+            <ArrowLeft size={13} /> Dashboard
+          </Link>
+          <div className="h-4 w-px bg-gray-100" />
+          <span className="text-sm text-gray-800 font-medium truncate max-w-32">{tenant.nomBoutique}</span>
+          {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon</span>}
+          {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">Modifié</span>}
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
+          <ShoppingBag size={13} /> Boutique digitale
+        </div>
+        <div className="flex items-center gap-2">
+          {tenant.statut !== "brouillon" && (
+            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 transition-all">
+              <ExternalLink size={13} /> Visiter ma boutique
+            </a>
+          )}
+        </div>
+      </header>
+
+      {/* Barre secondaire — Prévisualisation / Réinitialiser / Enregistrer,
+          au-dessus de l'aperçu, comme la référence Chariow. */}
+      <div className="h-14 flex items-center justify-end gap-2 px-4 bg-white border-b border-gray-200 flex-shrink-0">
+        <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
+          <ExternalLink size={13} /> Prévisualisation
+        </a>
+        <button onClick={reinitialiser} className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
+          <RefreshCw size={13} /> Réinitialiser
+        </button>
+        <button onClick={handleSave} disabled={saving}
+          className={`h-9 flex items-center gap-1.5 px-5 rounded-full text-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+            saved ? "bg-emerald-100 text-emerald-700" : "bg-[#F5A623] text-[#050508] hover:bg-[#e8990f] hover:shadow-md"
+          }`}>
+          {saving ? <RefreshCw size={14} className="animate-spin flex-shrink-0" /> : saved ? <Check size={14} className="flex-shrink-0" /> : <Save size={14} className="flex-shrink-0" />}
+          <span>{saving ? "Sauvegarde…" : saved ? "Sauvegardé" : "Enregistrer"}</span>
+        </button>
+      </div>
+
+      {/* MAIN */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Panneau de réglages */}
+        <div className="w-[420px] flex-shrink-0 bg-[#FAFAFB] border-r border-gray-200 overflow-y-auto scrollbar-thin p-4 space-y-4">
+          <Carte icon={<LayoutTemplate size={16} />} titre="Modèle de boutique" desc="Choisis la mise en page de ta boutique digitale.">
+            <div className="grid grid-cols-2 gap-2.5">
+              {DIGITAL_TEMPLATES.map((t) => (
+                <button key={t.id} onClick={() => choisirTemplate(t.id)}
+                  className={`rounded-xl overflow-hidden text-left transition-all border-2 ${dc.templateId === t.id ? "border-[#111111]" : "border-transparent hover:border-gray-200"}`}>
+                  <div className="h-14 flex items-center gap-1.5 px-3" style={{ backgroundColor: t.colors.fond }}>
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: t.colors.accent }} />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-1.5 w-3/4 rounded-full" style={{ backgroundColor: t.colors.texte, opacity: 0.85 }} />
+                      <div className="h-1.5 w-1/2 rounded-full" style={{ backgroundColor: t.colors.texte, opacity: 0.3 }} />
+                    </div>
+                    {dc.templateId === t.id && (
+                      <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F5A623" }}>
+                        <Check size={10} className="text-[#050508]" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="px-2.5 py-2 bg-white">
+                    <p className="text-[13px] font-semibold text-gray-800">{t.label}</p>
+                    <p className="text-[11px] text-gray-400">{t.desc}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Carte>
+
+          <Carte icon={<Palette size={16} />} titre="Couleur de votre marque" desc="La couleur principale de votre boutique.">
+            <div className="flex items-center gap-2 flex-wrap">
+              {ACCENT_PRESETS.map((c) => (
+                <button key={c} onClick={() => setColors({ accent: c })} className="w-8 h-8 rounded-full flex-shrink-0 border-2 transition-all" style={{ backgroundColor: c, borderColor: config.colors.accent === c ? "#111111" : "transparent" }} />
+              ))}
+              <label className="w-8 h-8 rounded-full flex-shrink-0 border border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden relative">
+                <input type="color" value={config.colors.accent} onChange={(e) => setColors({ accent: e.target.value })} className="absolute inset-0 opacity-0 cursor-pointer" />
+                <Palette size={13} className="text-gray-400" />
+              </label>
+            </div>
+          </Carte>
+
+          <Carte icon={<Type size={16} />} titre="Police d'écriture" desc="Titres et contenu de votre boutique.">
+            <div className="space-y-3">
+              <FSel label="Police des titres" value={config.fonts.titre} onChange={(v) => setFonts({ titre: v })} />
+              <FSel label="Police du contenu" value={config.fonts.corps} onChange={(v) => setFonts({ corps: v })} />
+            </div>
+          </Carte>
+
+          <Carte icon={<Square size={16} />} titre="Style des coins" desc="Arrondis ou nets — cartes produits et boutons.">
+            <div className="grid grid-cols-2 gap-2.5">
+              {[{ v: "16px", l: "Arrondi" }, { v: "0px", l: "Carré" }].map((r) => (
+                <button key={r.v} onClick={() => set((p) => ({ ...p, radius: r.v }))}
+                  className={`flex flex-col items-center gap-2 py-4 border-2 transition-all rounded-xl ${config.radius === r.v ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
+                  <div className="w-8 h-8 border-2 border-gray-700" style={{ borderRadius: r.v }} />
+                  <span className="text-[12px] text-gray-600 font-medium">{r.l}</span>
+                </button>
+              ))}
+            </div>
+          </Carte>
+
+          <Carte icon={<LayoutGrid size={16} />} titre="Organisation de la page" desc="Ce qui s'affiche sur votre boutique.">
+            <div className="space-y-1">
+              <FCheck label="Afficher les produits en vedette" desc="Met en avant vos produits phares" checked={dc.afficherVedettes} onChange={(v) => setDc({ afficherVedettes: v })} />
+              <FCheck label="Bouton d'achat sur la carte produit" desc="Achat immédiat depuis la liste" checked={dc.afficherBoutonAchatCarte} onChange={(v) => setDc({ afficherBoutonAchatCarte: v })} />
+              <FCheck label="Afficher les produits recommandés" desc="Suggestions en bas de page" checked={dc.afficherRecommandes} onChange={(v) => setDc({ afficherRecommandes: v })} />
+              <FCheck label="Afficher l'affiliation" desc="Lien Affiliation dans le menu" checked={dc.afficherAffiliation} onChange={(v) => setDc({ afficherAffiliation: v })} />
+            </div>
+          </Carte>
+
+          <Carte icon={<Columns size={16} />} titre="Disposition des produits" desc="Nombre de produits par ligne sur mobile.">
+            <div className="grid grid-cols-2 gap-2.5">
+              <button onClick={() => setDc({ disposition: "un" })} className={`flex flex-col items-center gap-2 py-4 border-2 rounded-xl transition-all ${dc.disposition === "un" ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <Rows size={20} className="text-gray-600" />
+                <span className="text-[12px] text-gray-600 font-medium">Un par ligne</span>
+              </button>
+              <button onClick={() => setDc({ disposition: "deux" })} className={`flex flex-col items-center gap-2 py-4 border-2 rounded-xl transition-all ${dc.disposition === "deux" ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
+                <Columns size={20} className="text-gray-600" />
+                <span className="text-[12px] text-gray-600 font-medium">Deux par ligne</span>
+              </button>
+            </div>
+          </Carte>
+
+          <Carte icon={<ArrowUpDown size={16} />} titre="Ordre d'affichage" desc="Comment vos clients voient vos produits.">
+            <div className="space-y-1.5">
+              {([
+                ["alphabetique", "Ordre alphabétique", "Ordre A → Z"],
+                ["populaires", "Les plus vendus en premier", "Rassure les acheteurs"],
+                ["recents", "Les plus récents en premier", "Stimule l'intérêt"],
+                ["prix-desc", "Les plus chers en premier", "Valorise le haut de gamme"],
+                ["prix-asc", "Moins cher en premier", "Priorise l'accessible"],
+              ] as [ThemeDigitalConfig["tri"], string, string][]).map(([v, l, d]) => (
+                <button key={v} onClick={() => setDc({ tri: v })} className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left transition-all ${dc.tri === v ? "bg-gray-100" : "hover:bg-gray-50"}`}>
+                  <span>
+                    <span className="block text-[13px] font-medium text-gray-800">{l}</span>
+                    <span className="block text-[11px] text-gray-400">{d}</span>
+                  </span>
+                  <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${dc.tri === v ? "border-[#F5A623]" : "border-gray-300"}`}>
+                    {dc.tri === v && <span className="w-2 h-2 rounded-full bg-[#F5A623]" />}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Carte>
+        </div>
+
+        {/* Aperçu live */}
+        <div className="flex-1 flex flex-col items-center overflow-y-auto scrollbar-thin bg-[#EEF0F3] p-6 gap-4">
+          <div className="w-full flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 max-w-4xl" style={{ width: DEVICE_WIDTH[device] === "100%" ? "100%" : undefined, maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+            <span className="w-2 h-2 rounded-full bg-red-300" /><span className="w-2 h-2 rounded-full bg-yellow-300" /><span className="w-2 h-2 rounded-full bg-green-300" />
+            <span className="text-[12px] text-gray-400 truncate ml-2">axso.shop/{tenant.slug}</span>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden transition-all" style={{ width: DEVICE_WIDTH[device], maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+            {produits === null ? (
+              <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
+                <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
+              </div>
+            ) : (
+              <DigitalStoreShell
+                slug={tenant.slug}
+                nomBoutique={tenant.nomBoutique}
+                logoUrl={tenant.logoUrl}
+                description={tenant.description}
+                pays={tenant.pays}
+                devise={tenant.devise}
+                colors={config.colors}
+                radius={config.radius}
+                templateId={dc.templateId}
+                digitalConfig={dc}
+                products={produits}
+                preview
+              />
+            )}
+          </div>
+          <div className="flex gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5">
+            <button onClick={() => setDevice("desktop")} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === "desktop" ? "bg-[#F5A623]/20 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
+              <Monitor size={15} />
+            </button>
+            <button onClick={() => setDevice("mobile")} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === "mobile" ? "bg-[#F5A623]/20 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
+              <Smartphone size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Carte({ icon, titre, desc, children }: { icon: React.ReactNode; titre: string; desc: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-4">
+      <div className="flex items-start gap-2.5 mb-3.5">
+        <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-600">{icon}</span>
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold text-gray-800">{titre}</p>
+          <p className="text-[12px] text-gray-400 leading-snug">{desc}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function FSel({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const cats = [...new Set(FONTS.map((f) => f.cat))];
+  return (
+    <div>
+      <label className="block text-[12px] text-gray-500 mb-1">{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
+        {cats.map((cat) => (
+          <optgroup key={cat} label={cat}>
+            {FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{f.label}</option>)}
+          </optgroup>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function FCheck({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button onClick={() => onChange(!checked)} className="w-full flex items-center justify-between gap-3 py-2 text-left">
+      <span>
+        <span className="block text-[13px] font-medium text-gray-800">{label}</span>
+        <span className="block text-[11px] text-gray-400">{desc}</span>
+      </span>
+      {checked ? <ToggleRight size={22} className="flex-shrink-0" style={{ color: "#F5A623" }} /> : <ToggleLeft size={22} className="text-gray-300 flex-shrink-0" />}
+    </button>
+  );
+}
