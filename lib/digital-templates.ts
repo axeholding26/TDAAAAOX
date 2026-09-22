@@ -16,6 +16,11 @@ export interface DigitalTemplateSkin {
   desc: string;
   colors: { fond: string; accent: string; texte: string; texteMuted: string; surface: string; bordure: string };
   radius: string;
+  // Capture d'écran réelle (pas une maquette synthétique) — utilisée à la
+  // fois par le sélecteur "Modèle de boutique" du Constructeur digital et
+  // par l'étape de choix de design à l'inscription (voir inscription/page.tsx
+  // ::PropositionsTemplatesDigitaux). Fichiers dans public/digital-templates/.
+  previewImage: string;
 }
 
 export const DIGITAL_TEMPLATES: DigitalTemplateSkin[] = [
@@ -25,6 +30,7 @@ export const DIGITAL_TEMPLATES: DigitalTemplateSkin[] = [
     desc: "Noir sur blanc, minimal — la référence",
     colors: { fond: "#ffffff", accent: "#111111", texte: "#111111", texteMuted: "#6b7280", surface: "#f7f7f8", bordure: "#e5e7eb" },
     radius: "0px",
+    previewImage: "/digital-templates/charriow.png",
   },
   {
     id: "aurore",
@@ -32,6 +38,7 @@ export const DIGITAL_TEMPLATES: DigitalTemplateSkin[] = [
     desc: "Chaleureux, ambré, cartes arrondies",
     colors: { fond: "#fffaf3", accent: "#c2622d", texte: "#2c1503", texteMuted: "#8a6248", surface: "#ffffff", bordure: "#f0e0d0" },
     radius: "16px",
+    previewImage: "/digital-templates/aurore.png",
   },
   {
     id: "onyx",
@@ -39,6 +46,7 @@ export const DIGITAL_TEMPLATES: DigitalTemplateSkin[] = [
     desc: "Sombre et feutré, accent or",
     colors: { fond: "#0b0b0c", accent: "#d4af37", texte: "#f5f5f0", texteMuted: "#a9a9a4", surface: "#151517", bordure: "#26262a" },
     radius: "4px",
+    previewImage: "/digital-templates/onyx.png",
   },
   {
     id: "mint",
@@ -46,6 +54,7 @@ export const DIGITAL_TEMPLATES: DigitalTemplateSkin[] = [
     desc: "Frais et coloré, pastilles arrondies",
     colors: { fond: "#ffffff", accent: "#0d9488", texte: "#0f172a", texteMuted: "#64748b", surface: "#f0fdfa", bordure: "#d1fae5" },
     radius: "20px",
+    previewImage: "/digital-templates/mint.png",
   },
 ];
 

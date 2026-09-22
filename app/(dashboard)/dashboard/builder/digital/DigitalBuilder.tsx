@@ -32,6 +32,7 @@ const ACCENT_PRESETS = ["#F5A623", "#111111", "#0d9488", "#3b82f6", "#e91e8c", "
 interface Props {
   tenant: any;
   config: ThemeConfig;
+  originalConfig: ThemeConfig | null;
   set: (updater: (p: ThemeConfig) => ThemeConfig) => void;
   setColors: (patch: Record<string, string>) => void;
   setFonts: (patch: Record<string, string>) => void;
@@ -41,7 +42,7 @@ interface Props {
   hasChanges: boolean | null;
 }
 
-export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handleSave, saving, saved, hasChanges }: Props) {
+export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges }: Props) {
   const [device, setDevice] = useState<Device>("desktop");
   const [produits, setProduits] = useState<DigitalProductVM[] | null>(null);
 
@@ -67,13 +68,21 @@ export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handl
     set((p) => ({ ...p, colors: { ...p.colors, ...skin.colors }, radius: skin.radius, digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, ...p.digitalConfig, templateId: id } }));
   };
 
+  // Annule les modifications non sauvegardées — revient à la dernière
+  // config réellement enregistrée en base (pas aux réglages d'usine du
+  // gabarit, qui effaceraient aussi tout ce qui avait déjà été sauvegardé
+  // avant cette session d'édition).
   const reinitialiser = () => {
-    const skin = getDigitalTemplate(dc.templateId);
-    set((p) => ({ ...p, colors: { ...p.colors, ...skin.colors }, radius: skin.radius, digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, templateId: dc.templateId } }));
+    if (!originalConfig) return;
+    set(() => originalConfig);
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    // fixed inset-0 (comme le Constructeur physique) — sans ça, la Sidebar
+    // du dashboard (montée en permanence par DashboardShell, seulement
+    // masquée par CSS sur mobile) restait visible à côté de l'aperçu sur
+    // desktop : rien ne la recouvrait.
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <PCOnlyGate label="Le Constructeur de boutique digitale" />
       {/* HEADER */}
       <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
@@ -101,14 +110,23 @@ export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handl
       {/* Barre secondaire — Prévisualisation / Réinitialiser / Enregistrer,
           au-dessus de l'aperçu, comme la référence Chariow. */}
       <div className="h-14 flex items-center justify-end gap-2 px-4 bg-white border-b border-gray-200 flex-shrink-0">
-        <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
+        {/* ?preview=1 : la boutique reste en brouillon tant qu'elle n'est pas
+            publiée (app/(storefront)/[slug]/page.tsx bloque tout visiteur
+            normal) — sans ce paramètre, ce lien tombait sur une 404 pour
+            toute boutique pas encore publiée, c'est-à-dire la quasi-totalité
+            des boutiques en cours de construction. */}
+        <a href={`/${tenant.slug}?preview=1`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
           <ExternalLink size={13} /> Prévisualisation
         </a>
-        <button onClick={reinitialiser} className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
+        <button onClick={reinitialiser} disabled={!hasChanges} title="Annule les modifications non sauvegardées"
+          className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent">
           <RefreshCw size={13} /> Réinitialiser
         </button>
-        <button onClick={handleSave} disabled={saving}
-          className={`h-9 flex items-center gap-1.5 px-5 rounded-full text-sm font-bold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+        {/* Inactif tant qu'aucun réglage n'a changé depuis le dernier
+            enregistrement — hasChanges vient de page.tsx (comparaison
+            JSON config/originalConfig), pas d'état local dupliqué ici. */}
+        <button onClick={handleSave} disabled={saving || !hasChanges}
+          className={`h-9 flex items-center gap-1.5 px-5 rounded-full text-sm font-bold shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none ${
             saved ? "bg-emerald-100 text-emerald-700" : "bg-[#F5A623] text-[#050508] hover:bg-[#e8990f] hover:shadow-md"
           }`}>
           {saving ? <RefreshCw size={14} className="animate-spin flex-shrink-0" /> : saved ? <Check size={14} className="flex-shrink-0" /> : <Save size={14} className="flex-shrink-0" />}
@@ -117,23 +135,19 @@ export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handl
       </div>
 
       {/* MAIN */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* Panneau de réglages */}
-        <div className="w-[420px] flex-shrink-0 bg-[#FAFAFB] border-r border-gray-200 overflow-y-auto scrollbar-thin p-4 space-y-4">
+        <div className="w-[420px] flex-shrink-0 min-h-0 bg-[#FAFAFB] border-r border-gray-200 overflow-y-auto scrollbar-thin p-4 space-y-4">
           <Carte icon={<LayoutTemplate size={16} />} titre="Modèle de boutique" desc="Choisis la mise en page de ta boutique digitale.">
             <div className="grid grid-cols-2 gap-2.5">
               {DIGITAL_TEMPLATES.map((t) => (
                 <button key={t.id} onClick={() => choisirTemplate(t.id)}
                   className={`rounded-xl overflow-hidden text-left transition-all border-2 ${dc.templateId === t.id ? "border-[#111111]" : "border-transparent hover:border-gray-200"}`}>
-                  <div className="h-14 flex items-center gap-1.5 px-3" style={{ backgroundColor: t.colors.fond }}>
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: t.colors.accent }} />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-1.5 w-3/4 rounded-full" style={{ backgroundColor: t.colors.texte, opacity: 0.85 }} />
-                      <div className="h-1.5 w-1/2 rounded-full" style={{ backgroundColor: t.colors.texte, opacity: 0.3 }} />
-                    </div>
+                  <div className="relative h-24 overflow-hidden" style={{ backgroundColor: t.colors.fond }}>
+                    <img src={t.previewImage} alt={t.label} className="w-full h-full object-cover object-top" />
                     {dc.templateId === t.id && (
-                      <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F5A623" }}>
-                        <Check size={10} className="text-[#050508]" />
+                      <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 shadow" style={{ backgroundColor: "#F5A623" }}>
+                        <Check size={12} className="text-[#050508]" />
                       </span>
                     )}
                   </div>
@@ -222,35 +236,54 @@ export function DigitalBuilder({ tenant, config, set, setColors, setFonts, handl
           </Carte>
         </div>
 
-        {/* Aperçu live */}
-        <div className="flex-1 flex flex-col items-center overflow-y-auto scrollbar-thin bg-[#EEF0F3] p-6 gap-4">
-          <div className="w-full flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2 max-w-4xl" style={{ width: DEVICE_WIDTH[device] === "100%" ? "100%" : undefined, maxWidth: device === "mobile" ? "420px" : "1024px" }}>
-            <span className="w-2 h-2 rounded-full bg-red-300" /><span className="w-2 h-2 rounded-full bg-yellow-300" /><span className="w-2 h-2 rounded-full bg-green-300" />
-            <span className="text-[12px] text-gray-400 truncate ml-2">axso.shop/{tenant.slug}</span>
+        {/* Aperçu live — min-h-0 est ce qui permet à CE conteneur (flex-1
+            dans la rangée MAIN) de scroller son propre contenu au lieu de
+            grandir jusqu'à repousser toute la mise en page hors de l'écran
+            fixe (un flex-item a min-height:auto par défaut, donc ne se
+            contracte jamais en dessous de la hauteur de son contenu tant
+            qu'on ne force pas min-height:0 — sans ça, une boutique avec
+            beaucoup de produits "déformait" tout le Constructeur au lieu de
+            simplement défiler dans sa zone). */}
+        <div className="flex-1 min-h-0 relative bg-[#EEF0F3]">
+          <div className="h-full overflow-y-auto scrollbar-thin flex flex-col items-center p-6 gap-4">
+            <div className="w-full flex-shrink-0 flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2" style={{ maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+              <span className="w-2 h-2 rounded-full bg-red-300" /><span className="w-2 h-2 rounded-full bg-yellow-300" /><span className="w-2 h-2 rounded-full bg-green-300" />
+              <span className="text-[12px] text-gray-400 truncate ml-2">axso.shop/{tenant.slug}</span>
+            </div>
+            {/* h-full sur l'aperçu (pas de hauteur figée type 70vh) : la
+                boutique va du header au footer, plus ou moins haute selon le
+                nombre de produits — c'est ce conteneur qui défile, jamais le
+                contenu qui se fait comprimer/couper. */}
+            <div className="w-full flex-shrink-0 bg-white rounded-xl shadow-sm overflow-hidden transition-all" style={{ width: DEVICE_WIDTH[device], maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+              {produits === null ? (
+                <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
+                  <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
+                </div>
+              ) : (
+                <DigitalStoreShell
+                  slug={tenant.slug}
+                  nomBoutique={tenant.nomBoutique}
+                  logoUrl={tenant.logoUrl}
+                  description={tenant.description}
+                  pays={tenant.pays}
+                  devise={tenant.devise}
+                  colors={config.colors}
+                  radius={config.radius}
+                  templateId={dc.templateId}
+                  digitalConfig={dc}
+                  products={produits}
+                  preview
+                />
+              )}
+            </div>
+            {/* Espace réservé pour ne pas laisser le sélecteur d'appareil
+                (flottant, ci-dessous) cacher le bas de la boutique (pied de
+                page) quand on défile jusqu'en bas. */}
+            <div className="h-14 flex-shrink-0" aria-hidden />
           </div>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden transition-all" style={{ width: DEVICE_WIDTH[device], maxWidth: device === "mobile" ? "420px" : "1024px" }}>
-            {produits === null ? (
-              <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
-                <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
-              </div>
-            ) : (
-              <DigitalStoreShell
-                slug={tenant.slug}
-                nomBoutique={tenant.nomBoutique}
-                logoUrl={tenant.logoUrl}
-                description={tenant.description}
-                pays={tenant.pays}
-                devise={tenant.devise}
-                colors={config.colors}
-                radius={config.radius}
-                templateId={dc.templateId}
-                digitalConfig={dc}
-                products={produits}
-                preview
-              />
-            )}
-          </div>
-          <div className="flex gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5">
+          {/* Sélecteur desktop/mobile flottant — toujours visible, ne défile
+              jamais avec le contenu (façon Chariow, voir d1-d3.png). */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5 shadow-md">
             <button onClick={() => setDevice("desktop")} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === "desktop" ? "bg-[#F5A623]/20 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
               <Monitor size={15} />
             </button>

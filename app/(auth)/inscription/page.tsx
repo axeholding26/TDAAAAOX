@@ -15,6 +15,7 @@ import {
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
+import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
 const NAVY    = "#111111";   // noir AXSO (--axso-navy)
@@ -592,16 +593,110 @@ function PropositionsDesign({
   );
 }
 
+// ─── 4 Propositions de gabarits pour boutique digitale (captures d'écran
+// statiques, pas d'iframe live — les gabarits digitaux ne sont pas des
+// designs clonés/tokenizés comme la bibliothèque AXSO Design, juste une
+// identité de couleurs de départ éditable ensuite dans le Constructeur
+// digital, voir lib/digital-templates.ts). ─────────────────────────────────────
+function PropositionsTemplatesDigitaux({ selectedId, onSelect }: { selectedId: string; onSelect:(id:string)=>void }) {
+  return (
+    <div className="msg-in" style={{ paddingLeft:47 }}>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, maxWidth:560 }}>
+        {DIGITAL_TEMPLATES.map((t, idx) => {
+          const sel = selectedId === t.id;
+          return (
+            <button key={t.id} onClick={()=>onSelect(t.id)}
+              style={{
+                padding:0, borderRadius:18, overflow:"hidden",
+                border:`2px solid ${sel?YELLOW:BORDER}`,
+                cursor:"pointer", textAlign:"left",
+                boxShadow: sel
+                  ? `0 0 0 3px ${YELLOW}22, 0 10px 32px rgba(245,166,35,.18)`
+                  : "0 2px 12px rgba(10,22,40,.08)",
+                background:t.colors.fond,
+                transition:"all .22s cubic-bezier(.34,1.3,.64,1)",
+                position:"relative",
+              }}>
+              <div style={{
+                position:"absolute", top:10, left:10, zIndex:4,
+                width:22, height:22, borderRadius:"50%",
+                background: sel ? YELLOW : "rgba(10,22,40,.55)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                fontSize:10, fontWeight:800, color:"#fff",
+                fontFamily:"'Sora',sans-serif",
+              }}>
+                {idx+1}
+              </div>
+              {idx===0 && (
+                <div style={{
+                  position:"absolute", top:10, right:sel?36:10, zIndex:4,
+                  background:`${YELLOW}ee`, borderRadius:999,
+                  fontSize:9, fontWeight:700, color:"#fff",
+                  padding:"2px 8px", fontFamily:"'Sora',sans-serif",
+                  letterSpacing:".05em", display:"flex", alignItems:"center", gap:4,
+                }}>
+                  <Star size={9} fill="#fff" strokeWidth={0}/> Recommandé
+                </div>
+              )}
+              {sel && (
+                <div style={{
+                  position:"absolute", top:10, right:10, zIndex:4,
+                  width:22, height:22, borderRadius:"50%",
+                  background:YELLOW, display:"flex", alignItems:"center", justifyContent:"center",
+                  boxShadow:`0 2px 8px ${YELLOW}55`,
+                }}>
+                  <Check size={12} color="#fff" strokeWidth={3}/>
+                </div>
+              )}
+              <div style={{ height:170, overflow:"hidden", position:"relative" }}>
+                <img src={t.previewImage} alt={t.label} style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"top" }}/>
+                <div style={{
+                  position:"absolute", bottom:0, left:0, right:0, zIndex:3,
+                  height:50, background:"linear-gradient(to top,rgba(0,0,0,.5),transparent)",
+                  display:"flex", alignItems:"flex-end", padding:"0 10px 7px",
+                }}>
+                  <span style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".09em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
+                    {t.label}
+                  </span>
+                </div>
+              </div>
+              <div style={{
+                padding:"10px 12px",
+                background: sel ? `${YELLOW}08` : BG,
+                borderTop:`1px solid ${sel?YELLOW+"25":BORDER}`,
+              }}>
+                <div style={{ fontSize:11, fontWeight:700, color:sel?YELLOW_D:NAVY, marginBottom:3, fontFamily:"'Sora',sans-serif" }}>
+                  {t.label}
+                </div>
+                <div style={{ fontSize:10, color:MUTED, lineHeight:1.4, fontFamily:"'Inter',sans-serif" }}>
+                  {t.desc}
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ─── Plan card ────────────────────────────────────────────────────────────────
-function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange, onNomChange }: {
+function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onConfirm, onThemeChange, onDigitalTemplateChange, onNomChange }: {
   plan: PlanBoutique & { messageIA?:string };
   vente: string;
   themeIds: string[];
+  typeBoutique: TypeBoutique|"";
+  digitalTemplateId: string;
   onConfirm: ()=>void;
   onThemeChange: (id:string)=>void;
+  onDigitalTemplateChange: (id:string)=>void;
   onNomChange: (nom:string)=>void;
 }) {
-  const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === plan.themeId) || MANIFESTE_LIBRAIRIE[0];
+  const digital = typeBoutique === "digital";
+  const digitalTpl = DIGITAL_TEMPLATES.find(t => t.id === digitalTemplateId) || DIGITAL_TEMPLATES[0];
+  const e = digital
+    ? { nom: digitalTpl.label, ambiance: [digitalTpl.desc] }
+    : (MANIFESTE_LIBRAIRIE.find(x => x.fichier === plan.themeId) || MANIFESTE_LIBRAIRIE[0]);
   const nomValide = plan.nomBoutique.trim().length >= 2;
   return (
     <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:14 }}>
@@ -676,20 +771,31 @@ function PlanCard({ plan, vente, themeIds, onConfirm, onThemeChange, onNomChange
       }}>
         <Wand2 size={15} color={YELLOW}/>
         <span style={{ fontSize:13, color:YELLOW_D, fontWeight:600, fontFamily:"'Sora',sans-serif" }}>
-          Axia a sélectionné 4 designs personnalisés pour <strong>{plan.nomBoutique}</strong> — choisis celui qui te correspond
+          Axia a sélectionné 4 {digital ? "gabarits" : "designs"} personnalisés pour <strong>{plan.nomBoutique}</strong> — choisis celui qui te correspond
         </span>
       </div>
 
-      {/* 4 propositions avec iframes */}
-      <PropositionsDesign
-        themeIds={themeIds}
-        selectedId={plan.themeId}
-        onSelect={onThemeChange}
-        nomBoutique={plan.nomBoutique}
-        produits={plan.produits}
-        devise={plan.devise}
-        vente={vente}
-      />
+      {/* 4 propositions — gabarits digitaux (captures statiques) pour une
+          boutique 100% digitale, designs AXSO Design (iframes live) pour une
+          boutique physique : deux systèmes de rendu totalement différents
+          (voir lib/theme-config.ts::ThemeDigitalConfig vs axso-design-library.ts),
+          jamais mélangés. */}
+      {digital ? (
+        <PropositionsTemplatesDigitaux
+          selectedId={digitalTemplateId}
+          onSelect={onDigitalTemplateChange}
+        />
+      ) : (
+        <PropositionsDesign
+          themeIds={themeIds}
+          selectedId={plan.themeId}
+          onSelect={onThemeChange}
+          nomBoutique={plan.nomBoutique}
+          produits={plan.produits}
+          devise={plan.devise}
+          vente={vente}
+        />
+      )}
 
       {!nomValide && (
         <div style={{ fontSize:11.5, color:YELLOW_D, fontFamily:"'Inter',sans-serif", marginTop:-6 }}>
@@ -768,6 +874,7 @@ export default function InscriptionPage() {
   const [devise,setDevise]         = useState("XAF");
   const [plan,setPlan]             = useState<(PlanBoutique&{messageIA?:string})|null>(null);
   const [themeIds,setThemeIds]     = useState<string[]>([]);
+  const [digitalTemplateId,setDigitalTemplateId] = useState<string>(DIGITAL_TEMPLATES[0].id);
   const [messageIA,setMessageIA]   = useState("");
   const [erreur,setErreur]         = useState("");
   const [loading,setLoading]       = useState(false);
@@ -854,7 +961,7 @@ export default function InscriptionPage() {
       const res = await fetch("/api/ai/onboarding",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({phase:"executer",plan,compte:compteData,typeBoutique:typeBoutique||undefined}),
+        body:JSON.stringify({phase:"executer",plan,compte:compteData,typeBoutique:typeBoutique||undefined,digitalTemplateId:typeBoutique==="digital"?digitalTemplateId:undefined}),
       });
       const data = await res.json();
       clearInterval(iv);
@@ -875,7 +982,7 @@ export default function InscriptionPage() {
       toast("error",err.message||"Erreur lors de la création.");
       setPhase("q-compte");
     }finally{ setLoading(false); }
-  },[plan,typeBoutique,toast]);
+  },[plan,typeBoutique,digitalTemplateId,toast]);
 
   return (
     <div style={{
@@ -1181,8 +1288,11 @@ export default function InscriptionPage() {
                     plan={plan}
                     vente={vente}
                     themeIds={themeIds}
+                    typeBoutique={typeBoutique}
+                    digitalTemplateId={digitalTemplateId}
                     onConfirm={confirmPlan}
                     onThemeChange={id=>setPlan(p=>p?{...p,themeId:id}:p)}
+                    onDigitalTemplateChange={setDigitalTemplateId}
                     onNomChange={nom=>setPlan(p=>p?{...p,nomBoutique:nom}:p)}
                   />
                 )}

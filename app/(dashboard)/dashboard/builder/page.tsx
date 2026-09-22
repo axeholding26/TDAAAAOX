@@ -375,7 +375,7 @@ export default function BuilderPage() {
   if (config.modeBoutique === "digital") {
     return (
       <DigitalBuilder
-        tenant={tenant} config={config} set={set} setColors={setColors} setFonts={setFonts}
+        tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
         handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
       />
     );

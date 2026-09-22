@@ -24,10 +24,25 @@ export async function proxy(request: NextRequest) {
     hostname.endsWith(`.${DOMAINE_APP}`) &&
     !hostname.startsWith("www.");
 
+  // *.vercel.app (preview ET alias de production tant qu'aucun domaine
+  // personnalisé n'est branché) ne doit JAMAIS être traité comme le domaine
+  // custom d'un tenant — ce serait le cas pour absolument tout hostname
+  // différent de NEXT_PUBLIC_AXSO_DOMAIN, y compris l'infrastructure de
+  // déploiement de l'app elle-même. Cause vérifiée du 404 sur toute l'app en
+  // prod Vercel (ex: https://tdaaaaox.vercel.app/) : la réponse portait
+  // `x-matched-path: /[slug]` — le proxy réécrivait "/" en "/tdaaaaox.vercel.app"
+  // (hostname pris comme slug de boutique), qui n'existe pas en base → 404.
+  // Se reproduit pour N'IMPORTE QUEL hostname Vercel tant que
+  // NEXT_PUBLIC_AXSO_DOMAIN ne correspond pas EXACTEMENT au hostname visité
+  // (donc systématiquement en preview, chaque déploiement ayant un
+  // sous-domaine *.vercel.app unique et imprévisible à l'avance).
+  const estDomaineVercel = hostname.endsWith(".vercel.app");
+
   const estDomainePropre =
     hostname !== DOMAINE_APP &&
     !hostname.endsWith(`.${DOMAINE_APP}`) &&
-    !hostname.startsWith("localhost");
+    !hostname.startsWith("localhost") &&
+    !estDomaineVercel;
 
   if (estSousDomaine || estDomainePropre) {
     const slug = estSousDomaine

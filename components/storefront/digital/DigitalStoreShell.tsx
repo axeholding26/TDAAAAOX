@@ -13,7 +13,7 @@
 //   panneau de réglages et l'aperçu partagent directement le même arbre React.
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles } from "lucide-react";
+import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 
@@ -201,27 +201,57 @@ export function DigitalStoreShell({
         )}
       </main>
 
-      {/* ── Pied de page ─────────────────────────────────────────────────── */}
+      {/* ── Pied de page — reproduit le pied de page Chariow (footer.png) :
+             logo + sélecteur de langue | Liens | Légales, puis un avertissement
+             et une barre de copyright avec badge "Powered by". ─────────────── */}
       <footer className="border-t" style={{ borderColor: colors.bordure || `${colors.texte}15` }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm">
-          <div>
-            <p className="font-semibold mb-2">{nomBoutique}</p>
-            <p style={{ color: colors.texteMuted || colors.texte, opacity: 0.8 }}>{description?.trim() || "Boutique de vente de produits digitaux"}</p>
-          </div>
-          <div>
-            <p className="font-semibold mb-2">Liens</p>
-            <div className="flex flex-col gap-1.5">
-              {navItems.map((n) => (
-                <Link key={n.label} href={href(n.href)} style={{ color: colors.texteMuted || colors.texte }} className="hover:opacity-70">{n.label}</Link>
-              ))}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 pb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-sm mb-10">
+            <div>
+              <Link href={href(`/${slug}`)} className="flex items-center gap-2 font-semibold mb-4" style={{ color: colors.texte }}>
+                <span
+                  className="w-6 h-6 flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                  style={{ backgroundColor: colors.accent, color: colors.fond, borderRadius: v.logoShape === "circle" ? "9999px" : "6px" }}
+                >
+                  {logoUrl ? <img src={logoUrl} alt="" className="w-full h-full object-cover" style={{ borderRadius: "inherit" }} /> : nomBoutique.slice(0, 1).toUpperCase()}
+                </span>
+                {nomBoutique}
+              </Link>
+              <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
+                🇫🇷 Français <ChevronDown size={12} />
+              </span>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>Liens</p>
+              <div className="flex flex-col gap-2.5">
+                <Link href={href(`/${slug}/mon-compte`)} className="flex items-center gap-1.5 font-semibold hover:opacity-70" style={{ color: colors.texte }}>
+                  <Lock size={13} /> Mes achats
+                </Link>
+                <Link href={href(`/${slug}/a-propos`)} className="hover:opacity-70" style={{ color: colors.texte }}>À propos</Link>
+                <Link href={href(`/${slug}/contact`)} className="hover:opacity-70" style={{ color: colors.texte }}>Aide</Link>
+                <Link href={href(`/${slug}/contact`)} className="hover:opacity-70" style={{ color: colors.texte }}>Contact</Link>
+                <Link href={href(`/${slug}`)} className="hover:opacity-70" style={{ color: colors.texte }}>Plan du site</Link>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>Légales</p>
+              <div className="flex flex-col gap-2.5">
+                <Link href={href("/legal/cgu")} className="hover:opacity-70" style={{ color: colors.texte }}>Mentions légales</Link>
+                <Link href={href("/legal/cgu")} className="hover:opacity-70" style={{ color: colors.texte }}>Conditions d'utilisation</Link>
+                <Link href={href("/legal/privacy")} className="hover:opacity-70" style={{ color: colors.texte }}>Politique de confidentialité</Link>
+              </div>
             </div>
           </div>
-          <div>
-            <p className="font-semibold mb-2">Légales</p>
-            <div className="flex flex-col gap-1.5">
-              <Link href={href("/legal/cgu")} style={{ color: colors.texteMuted || colors.texte }} className="hover:opacity-70">Conditions générales</Link>
-              <Link href={href("/legal/privacy")} style={{ color: colors.texteMuted || colors.texte }} className="hover:opacity-70">Confidentialité</Link>
-            </div>
+
+          <p className="text-xs leading-relaxed mb-6" style={{ color: colors.texteMuted || colors.texte, opacity: 0.6 }}>
+            Ce site n'est en aucun cas affilié à Facebook ou Meta. Nous utilisons la publicité pour promouvoir nos contenus et produits/services auprès d'un public plus large. Les informations fournies sur ce site sont uniquement à titre informatif et ne constituent pas un conseil professionnel ou financier.
+          </p>
+
+          <div className="pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ borderColor: colors.bordure || `${colors.texte}15`, color: colors.texteMuted || colors.texte }}>
+            <span>{nomBoutique} © {new Date().getFullYear()} Tous droits réservés.</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[11px] font-semibold" style={{ backgroundColor: "#111111" }}>
+              Powered by <strong>AXSO</strong>
+            </span>
           </div>
         </div>
       </footer>

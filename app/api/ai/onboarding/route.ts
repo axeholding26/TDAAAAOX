@@ -22,6 +22,10 @@ const schemaExecuter = z.object({
   // détermine la structure de la boutique (catalogue complet vs page de
   // vente unique). Absent = "catalogue" (comportement historique inchangé).
   typeBoutique: z.enum(["physique", "digital"]).optional(),
+  // Choix explicite du marchand parmi les 4 gabarits digitaux (carte cliquée
+  // dans PropositionsTemplatesDigitaux, voir inscription/page.tsx) — prime
+  // sur l'heuristique par catégorie ci-dessous quand fourni.
+  digitalTemplateId: z.enum(["charriow", "aurore", "onyx", "mint"]).optional(),
   plan: z.object({
     nomBoutique: z.string(),
     slug: z.string(),
@@ -76,18 +80,21 @@ export async function POST(request: Request) {
     }
 
     if (body.phase === "executer") {
-      const { plan, compte, typeBoutique } = schemaExecuter.parse(body);
+      const { plan, compte, typeBoutique, digitalTemplateId: digitalTemplateIdChoisi } = schemaExecuter.parse(body);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
       // Gabarit du Constructeur digital (voir lib/digital-templates.ts pour
       // les 4 choix — plus un arbre de blocs : un layout React dédié,
       // éditable ensuite via "Couleur de votre marque"/"Style des coins"
-      // dans le Constructeur digital) — heuristique déterministe sur la
+      // dans le Constructeur digital). Priorité au choix explicite du
+      // marchand (carte cliquée dans PropositionsTemplatesDigitaux) ; sans
+      // choix (ex. appel API direct), heuristique déterministe sur la
       // catégorie déclarée à l'inscription, pas d'appel IA supplémentaire :
       // "onyx" pour les offres à forte valeur perçue (formation, conseil),
       // "mint" pour le créatif/marketing, "aurore" pour un catalogue nombreux
       // (templates, presets), "charriow" (référence) en défaut sûr.
       const digitalTemplateId = (() => {
         if (modeBoutique !== "digital") return undefined;
+        if (digitalTemplateIdChoisi) return digitalTemplateIdChoisi;
         const c = plan.categorie.toLowerCase();
         if (/formation|coaching|consult|masterclass|cours|luxe|bijou/.test(c)) return "onyx" as const;
         if (/design|creatif|marketing|social|art|musique/.test(c)) return "mint" as const;
