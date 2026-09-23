@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { boutiquesDuCompte } from "./tenant";
 import { MODULES, ROLE_PRESETS, TOUT_ECRITURE, grillePourMembre, type ModuleKey, type GrillePermissions } from "./permissions";
 
 // Fonctions serveur du système de permissions équipe — jamais importées
@@ -14,30 +15,37 @@ const AUCUN_PARTOUT: GrillePermissions = {
 };
 
 /**
- * Permissions effectives pour la session courante. Un compte sans ligne
- * MembreEquipe associée (le propriétaire d'origine) a toujours accès complet.
+ * Permissions effectives pour la session courante, sur la boutique active.
+ * Propriétaire de la boutique => accès complet ; membre d'équipe => sa grille ;
+ * tout autre compte (livreur, membre d'une autre boutique...) => aucun accès.
  */
 export async function permissionsSession(session: any): Promise<GrillePermissions> {
   const userId = session?.user?.id as string | undefined;
-  if (!userId) return AUCUN_PARTOUT;
+  const tenantId = session?.user?.tenantId as string | undefined;
+  if (!userId || !tenantId) return AUCUN_PARTOUT;
 
-  const membre = await prisma.membreEquipe.findUnique({
-    where: { userId },
-    select: { role: true, permissions: true, statut: true },
-  });
+  const [proprio, membre] = await Promise.all([
+    prisma.proprietaireBoutique.findUnique({ where: { userId_tenantId: { userId, tenantId } }, select: { id: true } }),
+    prisma.membreEquipe.findUnique({
+      where: { userId_tenantId: { userId, tenantId } },
+      select: { role: true, permissions: true, statut: true },
+    }),
+  ]);
 
-  // Pas de ligne MembreEquipe => compte propriétaire d'origine, accès complet.
-  if (!membre) return TOUT_ECRITURE;
-  if (membre.statut === "suspendu") return AUCUN_PARTOUT;
-  return grillePourMembre(membre);
+  if (proprio) return TOUT_ECRITURE;
+  if (membre) return membre.statut === "suspendu" ? AUCUN_PARTOUT : grillePourMembre(membre);
+  // Comptes créés avant l'écriture du lien propriétaire : rattrapés ici.
+  const { proprietaire } = await boutiquesDuCompte(userId);
+  return proprietaire.includes(tenantId) ? TOUT_ECRITURE : AUCUN_PARTOUT;
 }
 
 /** true si le membre connecté est un caissier "pur" (préréglage par défaut, sans personnalisation) — utilisé pour le Mode Caisse plein écran. */
 export async function estCaissierPur(session: any): Promise<boolean> {
   const userId = session?.user?.id as string | undefined;
-  if (!userId) return false;
+  const tenantId = session?.user?.tenantId as string | undefined;
+  if (!userId || !tenantId) return false;
   const membre = await prisma.membreEquipe.findUnique({
-    where: { userId },
+    where: { userId_tenantId: { userId, tenantId } },
     select: { role: true, statut: true },
   });
   return !!membre && membre.statut === "actif" && membre.role === "caissier";

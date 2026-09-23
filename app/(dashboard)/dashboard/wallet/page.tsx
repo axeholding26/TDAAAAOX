@@ -7,6 +7,7 @@ import {
   Smartphone, Building2, AlertCircle, Info,
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 
 const WALLET_TUTORIAL_STEPS = [
   { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque paiement client est placé en séquestre 48h (protection acheteur) avant d'être crédité sur ton solde disponible." },
@@ -30,6 +31,7 @@ interface WalletData {
   retraitsEnAttente: number; devise: string;
   transactions: Transaction[]; retraits: RetraitItem[];
 }
+interface SoldeBoutique { id: string; nomBoutique: string; active: boolean; solde: number; devise: string; }
 
 const OPERATEURS = [
   { id: "MTN",    label: "MTN Mobile Money"  },
@@ -86,6 +88,7 @@ function TxIcon({ type }: { type: string }) {
 
 export default function WalletPage() {
   const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [boutiques, setBoutiques] = useState<SoldeBoutique[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRetrait, setShowRetrait] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -105,6 +108,7 @@ export default function WalletPage() {
       const res = await fetch("/api/wallet");
       const data = await res.json();
       setWallet(data.wallet);
+      setBoutiques(data.boutiques ?? []);
     } catch { toast.error("Erreur chargement wallet"); }
     finally { setLoading(false); }
   }
@@ -200,6 +204,33 @@ export default function WalletPage() {
               </div>
             </div>
           </div>
+
+          {/* ── Toutes mes boutiques : total par devise + solde de chacune ── */}
+          {boutiques.length > 1 && (
+            <div className="ax-card p-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <p className="text-[13px] font-bold text-[#111111]">Toutes mes boutiques</p>
+                <p className="text-[12.5px] text-[#888888]">
+                  Total :{" "}
+                  {Object.entries(boutiques.reduce<Record<string, number>>((acc, b) => ({ ...acc, [b.devise]: (acc[b.devise] ?? 0) + b.solde }), {}))
+                    .map(([dev, total]) => fmt(total, dev)).join(" + ")}
+                </p>
+              </div>
+              <div className="divide-y divide-[#F2F2F2]">
+                {boutiques.map(b => (
+                  <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="text-[13px] text-[#333333] truncate">{b.nomBoutique}</span>
+                    <span className="flex items-center gap-3 flex-shrink-0">
+                      <span className="text-[13px] font-semibold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(b.solde, b.devise)}</span>
+                      {b.active
+                        ? <span className="text-[11px] text-[#AAAAAA] w-14 text-right">affichée</span>
+                        : <button onClick={() => basculerBoutique(b.id, "/dashboard/wallet")} className="text-[11.5px] font-semibold text-[#D97706] hover:underline w-14 text-right">Ouvrir</button>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ── Stat cards ── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

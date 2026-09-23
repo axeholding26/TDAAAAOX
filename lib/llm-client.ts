@@ -12,7 +12,7 @@
  * generateSpeechGemini / generateImageGemini / startVideoGemini /
  * pollVideoGemini ci-dessous, ainsi que lib/image-gen.ts.
  */
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -45,7 +45,9 @@ export interface CompletionWithToolsResult {
   provider?: string;
 }
 
-const GEMINI_MODEL = "gemini-3.1-flash-lite";
+// Essayés dans l'ordre : si le premier est saturé (503 "high demand") ou en
+// quota (429), on bascule sur le suivant avant d'aller chercher DeepSeek.
+const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"];
 const GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEEPSEEK_MODEL = "deepseek-chat";
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com";
@@ -71,6 +73,25 @@ export function hasDeepSeek(): boolean {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** gemini-3.1-flash-lite accepte thinkingBudget:0 ; les modèles plus récents le refusent (400) et veulent thinkingLevel. */
+function thinkingOff(model: string) {
+  return model === "gemini-3.1-flash-lite" ? { thinkingBudget: 0 } : { thinkingLevel: ThinkingLevel.MINIMAL };
+}
+
+/** Exécute `run` sur chaque modèle Gemini jusqu'au premier qui répond. */
+async function withGeminiModels<T>(run: (model: string) => Promise<T>): Promise<T> {
+  let lastErr: unknown;
+  for (const model of GEMINI_MODELS) {
+    try {
+      return await run(model);
+    } catch (err) {
+      lastErr = err;
+      console.warn(`[llm-client] ${model} échoué:`, err instanceof Error ? err.message.slice(0, 150) : err);
+    }
+  }
+  throw lastErr;
+}
 
 /** Supprime les balises de raisonnement interne que le modèle peut inclure dans ses réponses */
 function cleanModelResponse(text: string): string {
@@ -204,17 +225,18 @@ export async function completionGemini(messages: ChatMessage[], maxTokens = 800)
   const client = getGeminiClient();
   const { systemInstruction, contents } = await toGeminiContents(messages);
 
-  const response = await client.models.generateContent({
-    model: GEMINI_MODEL,
-    contents,
-    config: {
-      ...(systemInstruction ? { systemInstruction } : {}),
-      maxOutputTokens: maxTokens,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+  return withGeminiModels(async (model) => {
+    const response = await client.models.generateContent({
+      model,
+      contents,
+      config: {
+        ...(systemInstruction ? { systemInstruction } : {}),
+        maxOutputTokens: maxTokens,
+        thinkingConfig: thinkingOff(model),
+      },
+    });
+    return { text: cleanModelResponse(response.text ?? ""), provider: model };
   });
-
-  return { text: cleanModelResponse(response.text ?? ""), provider: GEMINI_MODEL };
 }
 
 // ─── Complétion avec tool use ─────────────────────────────────────────────────
@@ -227,33 +249,35 @@ export async function completionWithToolsGemini(
   const client = getGeminiClient();
   const { systemInstruction, contents } = await toGeminiContents(messages);
 
-  const response = await client.models.generateContent({
-    model: GEMINI_MODEL,
-    contents,
-    config: {
-      ...(systemInstruction ? { systemInstruction } : {}),
-      ...(tools.length ? { tools: toGeminiTools(tools) } : {}),
-      maxOutputTokens: maxTokens,
-      thinkingConfig: { thinkingBudget: 0 },
-    },
+  return withGeminiModels(async (model) => {
+    const response = await client.models.generateContent({
+      model,
+      contents,
+      config: {
+        ...(systemInstruction ? { systemInstruction } : {}),
+        ...(tools.length ? { tools: toGeminiTools(tools) } : {}),
+        maxOutputTokens: maxTokens,
+        thinkingConfig: thinkingOff(model),
+      },
+    });
+
+    // On relit les parts brutes (pas le getter response.functionCalls) pour récupérer le
+    // thoughtSignature attaché à chaque part — l'API l'exige en écho sur le tour suivant,
+    // même thinking désactivé, sous peine de 400 "missing a thought_signature".
+    const rawParts = response.candidates?.[0]?.content?.parts ?? [];
+    const functionCallParts = rawParts.filter((p) => p.functionCall);
+    if (functionCallParts.length > 0) {
+      const toolCalls: ToolCall[] = functionCallParts.map((p) => ({
+        id: p.functionCall!.id ?? `tc-${Math.random().toString(36).slice(2)}`,
+        name: p.functionCall!.name ?? "",
+        arguments: (p.functionCall!.args as Record<string, any>) ?? {},
+        signature: p.thoughtSignature,
+      }));
+      return { toolCalls, stopReason: "tool_use", provider: model };
+    }
+
+    return { text: cleanModelResponse(response.text ?? ""), stopReason: "end_turn", provider: model };
   });
-
-  // On relit les parts brutes (pas le getter response.functionCalls) pour récupérer le
-  // thoughtSignature attaché à chaque part — l'API l'exige en écho sur le tour suivant,
-  // même thinking désactivé, sous peine de 400 "missing a thought_signature".
-  const rawParts = response.candidates?.[0]?.content?.parts ?? [];
-  const functionCallParts = rawParts.filter((p) => p.functionCall);
-  if (functionCallParts.length > 0) {
-    const toolCalls: ToolCall[] = functionCallParts.map((p) => ({
-      id: p.functionCall!.id ?? `tc-${Math.random().toString(36).slice(2)}`,
-      name: p.functionCall!.name ?? "",
-      arguments: (p.functionCall!.args as Record<string, any>) ?? {},
-      signature: p.thoughtSignature,
-    }));
-    return { toolCalls, stopReason: "tool_use", provider: GEMINI_MODEL };
-  }
-
-  return { text: cleanModelResponse(response.text ?? ""), stopReason: "end_turn", provider: GEMINI_MODEL };
 }
 
 // ─── DeepSeek — secours automatique quand Gemini échoue ───────────────────────
@@ -381,15 +405,16 @@ export async function* streamGemini(
     const client = getGeminiClient();
     const { contents } = await toGeminiContents(messages);
 
-    const stream = await client.models.generateContentStream({
-      model: GEMINI_MODEL,
+    // Le 503 tombe à l'ouverture du flux : c'est là qu'on bascule de modèle.
+    const stream = await withGeminiModels((model) => client.models.generateContentStream({
+      model,
       contents,
       config: {
         systemInstruction: systemPrompt,
         maxOutputTokens: maxTokens,
-        thinkingConfig: { thinkingBudget: 0 },
+        thinkingConfig: thinkingOff(model),
       },
-    });
+    }));
 
     let emitted = false;
     for await (const chunk of stream) {

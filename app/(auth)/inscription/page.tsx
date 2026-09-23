@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
-import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
+import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
@@ -149,52 +149,7 @@ const PAYS_AFRIQUE = [
   { code:"ZM", nom:"Zambie" }, { code:"ZW", nom:"Zimbabwe" }, { code:"ZA", nom:"Afrique du Sud" },
 ].sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
 
-// ─── Logique 4 propositions Axia ──────────────────────────────────────────────
-// Détecte la catégorie depuis la description libre de l'utilisateur
-function detecterCategorie(vente: string): string {
-  const v = vente.toLowerCase();
-  const map: { kw: string[]; cat: string }[] = [
-    { kw:["mode","vêtement","tissu","kente","wax","pagne","robe","chemise","couture","habit"], cat:"fashion" },
-    { kw:["bijou","bague","collier","bracelet","or","argent","joaillerie","perle","montre"], cat:"jewelry" },
-    { kw:["cosmétique","beauté","soin","maquillage","parfum","crème","sérum","skincare","cheveux"], cat:"beauty" },
-    { kw:["sport","fitness","gym","training","football","basket","rugby","musculation","running"], cat:"sport" },
-    { kw:["tech","électronique","gadget","téléphone","ordinateur","accessoire tech","console"], cat:"tech" },
-    { kw:["alimentation","nourriture","épice","café","thé","boisson","restaur","food","snack"], cat:"food" },
-    { kw:["artisan","handmade","fait main","poterie","sculpture","art","peinture","tisser"], cat:"artisan" },
-    { kw:["maison","décor","meuble","intérieur","ameublement","bougie","plante"], cat:"home" },
-    { kw:["formation","cours","ebook","digital","service","conseil","coaching","mentoring"], cat:"services" },
-    { kw:["agriculture","bio","naturel","ferme","fruits","légumes","jardinage","herbes"], cat:"agriculture" },
-  ];
-  for (const { kw, cat } of map) {
-    if (kw.some(k => v.includes(k))) return cat;
-  }
-  return "general";
-}
-
-// Retourne 4 IDs de thèmes adaptés à la catégorie, priorité au themeId du plan
-function choisir4Themes(vente: string, planThemeId?: string): string[] {
-  const cat = detecterCategorie(vente);
-  const parCat: Record<string, string[]> = {
-    fashion:     ["ndop-site.html","aube-site.html","halle-site.html","cadran-site.html"],
-    jewelry:     ["aube-site.html","cadran-site.html","halle-site.html","ndop-site.html"],
-    beauty:      ["clarte-site.html","aube-site.html","equilibre-site.html","halle-site.html"],
-    sport:       ["grind-site.html","onze-site.html","circuit-site.html","ring-site.html"],
-    tech:        ["nexus-site.html","opal-site.html","circuit-site.html","ignite-site.html"],
-    food:        ["ignite-site.html","sentier-site.html","halle-site.html","pop-site.html"],
-    artisan:     ["ndop-site.html","halle-site.html","aube-site.html","sentier-site.html"],
-    home:        ["halle-site.html","equilibre-site.html","clarte-site.html","aube-site.html"],
-    services:    ["opal-site.html","nexus-site.html","equilibre-site.html","cadran-site.html"],
-    agriculture: ["sentier-site.html","clarte-site.html","equilibre-site.html","ndop-site.html"],
-    general:     ["ndop-site.html","aube-site.html","halle-site.html","pop-site.html"],
-  };
-  let themes = [...(parCat[cat] || parCat.general)];
-  // Mettre le thème suggéré par l'IA en premier
-  if (planThemeId) {
-    themes = [planThemeId, ...themes.filter(t => t !== planThemeId)];
-  }
-  return themes.slice(0, 4);
-}
-
+// ─── Logique 4 propositions Axia (detecterCategorie/choisir4Themes : lib/axso-design-manifest.ts) ──
 // Explication personnalisée d'Axia pour chaque thème
 function rationaleTheme(fichier: string, nomBoutique: string, vente: string): string {
   const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === fichier);
@@ -961,7 +916,7 @@ export default function InscriptionPage() {
       const res = await fetch("/api/ai/onboarding",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({phase:"executer",plan,compte:compteData,typeBoutique:typeBoutique||undefined,digitalTemplateId:typeBoutique==="digital"?digitalTemplateId:undefined}),
+        body:JSON.stringify({phase:"executer",plan,compte:compteData,typeBoutique:typeBoutique||undefined,digitalTemplateId:typeBoutique==="digital"?digitalTemplateId:undefined,designsProposes:typeBoutique==="digital"?undefined:themeIds}),
       });
       const data = await res.json();
       clearInterval(iv);
@@ -982,7 +937,7 @@ export default function InscriptionPage() {
       toast("error",err.message||"Erreur lors de la création.");
       setPhase("q-compte");
     }finally{ setLoading(false); }
-  },[plan,typeBoutique,digitalTemplateId,toast]);
+  },[plan,typeBoutique,digitalTemplateId,themeIds,toast]);
 
   return (
     <div style={{

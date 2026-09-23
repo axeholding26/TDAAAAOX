@@ -86,6 +86,8 @@ export async function POST(request: Request) {
           password: await hash(data.password, 10),
           tenantId: tenant.id,
           role: "owner",
+          // Lien propriétaire ↔ boutique : sans lui, le multi-boutique ne voit pas cette boutique.
+          boutiques: { create: { tenantId: tenant.id, role: "owner" } },
         },
       });
 

@@ -23,7 +23,7 @@ export const LABELS: Record<string, string> = {
 // interroge Prisma (voir components/storefront/blocks/widgets/ProductsBlock.tsx),
 // ce qui n'est possible que côté SSR storefront. Un aperçu statique
 // représentatif (piloté par nombre/colonnes) le remplace ici.
-function ProductsCanvasPreview({ config }: { config: Record<string, any> }) {
+export function ProductsCanvasPreview({ config }: { config: Record<string, any> }) {
   const nombre = Math.min(Math.max(Number(config.nombre) || 8, 1), 8);
   const colonnes = Number(config.colonnes) || 4;
   return (

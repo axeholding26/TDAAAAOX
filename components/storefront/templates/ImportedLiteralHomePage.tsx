@@ -1,25 +1,8 @@
-import type { ThemeConfig, ThemeColors } from "@/lib/theme-config";
+import type { ThemeConfig } from "@/lib/theme-config";
+import { surchargeCouleursDesign } from "@/lib/scope-css";
 
 interface Props {
   cfg: ThemeConfig;
-}
-
-// Génère un bloc CSS qui surcharge les variables CSS du template en utilisant
-// le mapping stocké à la provision (axsoDesignCssVarMapping). Injecté APRÈS
-// le HTML du template pour avoir la priorité sur son propre :root{}.
-function generateColorOverride(
-  colors: ThemeColors,
-  mapping: Record<string, string>,
-): string {
-  const decls: string[] = [];
-  for (const [colorKey, varNamesStr] of Object.entries(mapping)) {
-    const colorValue = (colors as unknown as Record<string, string | undefined>)[colorKey];
-    if (!colorValue || !varNamesStr) continue;
-    for (const varName of varNamesStr.split(",")) {
-      decls.push(`${varName.trim()}: ${colorValue}`);
-    }
-  }
-  return decls.length > 0 ? `:root { ${decls.join("; ")} }` : "";
 }
 
 // Rendu d'un thème importé tel quel (voir lib/theme-import-clone.ts) : le
@@ -30,7 +13,7 @@ function generateColorOverride(
 export function ImportedLiteralHomePage({ cfg }: Props) {
   const colorOverride =
     cfg.axsoDesignCssVarMapping
-      ? generateColorOverride(cfg.colors, cfg.axsoDesignCssVarMapping)
+      ? surchargeCouleursDesign(cfg.colors as any, cfg.axsoDesignCssVarMapping)
       : "";
 
   return (

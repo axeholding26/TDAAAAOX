@@ -12,7 +12,7 @@ import { prisma } from "./prisma";
 import { resolveThemeConfig, type ThemeConfig } from "./theme-config";
 import { prixClient } from "./pricing";
 import { formatMontant } from "./utils";
-import { MANIFESTE_LIBRAIRIE, selectionnerGabaritLibrairie, type EntreeLibrairie } from "./axso-design-manifest";
+import { MANIFESTE_LIBRAIRIE, selectionnerGabaritLibrairie, choisir4Themes, type EntreeLibrairie } from "./axso-design-manifest";
 import {
   extraireVuesLibrairie,
   injecterGrilleLibrairie,
@@ -67,6 +67,11 @@ export async function provisionerThemeDepuisLibrairie(params: {
   fichier?: string;
 }): Promise<{ id: string }> {
   const { tenantId, categorie, produits, slug, nomBoutique, fichier } = params;
+  // Porte fermée : les designs AXSO sont réservés aux boutiques physiques. Le
+  // digital a ses propres gabarits (lib/digital-templates.ts) — point de
+  // passage unique de tous les appelants (inscription, Thèmes, AXIA…).
+  const cible = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeConfig: true } });
+  if (estBoutiqueDigitale(cible?.themeConfig)) throw new Error(DESIGN_RESERVE_PHYSIQUE);
   const entree = fichier
     ? MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier) ?? selectionnerGabaritLibrairie(categorie)
     : selectionnerGabaritLibrairie(categorie);
@@ -96,6 +101,13 @@ export async function provisionerThemeDepuisLibrairie(params: {
     builderHtmlConfirmationChrome: vues.chromeAvant + vues.confirmation + vues.chromeApres,
     axsoDesignSelecteurVisuelPdp: entree.selecteurVisuelPdp,
   } as ThemeConfig;
+
+  // Pas de doublon : ne garde que le design en cours (encore référencé par
+  // tenant.themeId jusqu'à ce que l'appelant bascule sur le nouveau).
+  // designsOrigine d'abord : il peut lire le plus ancien design.
+  await designsOrigine(tenantId);
+  const actuel = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeId: true } });
+  await supprimerThemesDesignInactifs(tenantId, actuel?.themeId ?? null);
 
   const theme = await prisma.theme.create({
     data: {
@@ -142,4 +154,60 @@ export async function provisionerThemeInitial(params: {
     description: p.description,
   }));
   return provisionerThemeDepuisLibrairie({ tenantId, categorie, produits, slug, nomBoutique, fichier });
+}
+
+// ─── Designs proposés & doublons ───────────────────────────────────────────────
+export const DESIGN_RESERVE_PHYSIQUE = "Les designs AXSO sont réservés aux boutiques de produits physiques";
+
+export function estBoutiqueDigitale(themeConfig: unknown): boolean {
+  const mode = (themeConfig as Record<string, any> | null)?.modeBoutique;
+  return mode === "digital" || mode === "vente_unique";
+}
+
+const PREFIXE_SLUG_DESIGN = "axso-design-";
+
+/** "axso-design-aube-site-1726…" → "aube-site.html" (convention de provisionerThemeDepuisLibrairie). */
+export function fichierDepuisSlugTheme(slug: string): string | null {
+  if (!slug.startsWith(PREFIXE_SLUG_DESIGN)) return null;
+  return slug.slice(PREFIXE_SLUG_DESIGN.length).replace(/-\d+$/, "") + ".html";
+}
+
+/**
+ * Les 4 designs proposés par AXIA à l'inscription — seuls designs proposés
+ * ensuite. Enregistrés dans themeConfig.designsOrigine à l'inscription ; pour
+ * les boutiques plus anciennes, recalculés une fois comme à l'inscription
+ * (1er design provisionné en tête) puis enregistrés.
+ */
+export async function designsOrigine(tenantId: string): Promise<string[]> {
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId },
+    select: { themeConfig: true, description: true, categorie: true },
+  });
+  if (!tenant) return [];
+  const cfg = (tenant.themeConfig as Record<string, any>) || {};
+  if (Array.isArray(cfg.designsOrigine) && cfg.designsOrigine.length) return cfg.designsOrigine;
+  // Designs AXSO = boutiques physiques uniquement ; le digital a ses propres
+  // gabarits (lib/digital-templates.ts), jamais mélangés.
+  if (estBoutiqueDigitale(cfg)) return [];
+
+  const premier = await prisma.theme.findFirst({
+    where: { tenantId, slug: { startsWith: PREFIXE_SLUG_DESIGN } },
+    orderBy: { createdAt: "asc" },
+    select: { slug: true },
+  });
+  const liste = choisir4Themes(`${tenant.description ?? ""} ${tenant.categorie}`, premier ? fichierDepuisSlugTheme(premier.slug) ?? undefined : undefined);
+  await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...cfg, designsOrigine: liste } } });
+  return liste;
+}
+
+/**
+ * Un seul Theme AXSO Design par boutique : chaque changement de design en
+ * créait un nouveau sans supprimer l'ancien (jusqu'à 6 « actifs » pour une
+ * même boutique, doublons dans la page Thèmes). Appeler APRÈS designsOrigine,
+ * qui lit le plus ancien pour les boutiques créées avant son enregistrement.
+ */
+export async function supprimerThemesDesignInactifs(tenantId: string, themeIdActif: string | null) {
+  await prisma.theme.deleteMany({
+    where: { tenantId, slug: { startsWith: PREFIXE_SLUG_DESIGN }, ...(themeIdActif ? { id: { not: themeIdActif } } : {}) },
+  });
 }

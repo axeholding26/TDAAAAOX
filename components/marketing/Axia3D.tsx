@@ -144,31 +144,39 @@ function Scene() {
   );
 }
 
+// Halo statique : affiché pendant l'hydratation, et à la place de la 3D si
+// WebGL est indisponible (accélération matérielle coupée, contexte perdu...).
+function Halo({ visible }: { visible: boolean }) {
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute", inset: 0, borderRadius: "9999px",
+        background: "radial-gradient(circle at 50% 45%, rgba(245,166,35,0.35), rgba(27,42,74,0.15) 55%, transparent 75%)",
+        opacity: visible ? 1 : 0, transition: "opacity 0.6s ease",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
 export function Axia3D({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   return (
     <div className={className} style={{ position: "relative", width: "100%", height: "100%" }}>
-      {/* Halo statique affiché pendant l'hydratation/chargement — évite un
-          flash de contenu vide et donne une continuité visuelle avec le rendu 3D. */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute", inset: 0, borderRadius: "9999px",
-          background: "radial-gradient(circle at 50% 45%, rgba(245,166,35,0.35), rgba(27,42,74,0.15) 55%, transparent 75%)",
-          opacity: mounted ? 0 : 1, transition: "opacity 0.6s ease",
-          pointerEvents: "none",
-        }}
-      />
+      <Halo visible={!mounted} />
       {mounted && (
-        <Canvas
-          camera={{ position: [0, 0, 4.2], fov: 40 }}
-          gl={{ antialias: true, alpha: true }}
-          dpr={[1, 2]}
-        >
-          <Scene />
-        </Canvas>
+        <ModelErrorBoundary fallback={<Halo visible />}>
+          <Canvas
+            camera={{ position: [0, 0, 4.2], fov: 40 }}
+            gl={{ antialias: true, alpha: true }}
+            dpr={[1, 2]}
+          >
+            <Scene />
+          </Canvas>
+        </ModelErrorBoundary>
       )}
     </div>
   );

@@ -9,8 +9,10 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
-  // Ignorer les fichiers statiques
+  // Ignorer les fichiers statiques et les API (appelées en /api/... depuis
+  // une vitrine sur sous-domaine ou domaine custom — ne pas les préfixer du slug)
   if (
+    pathname.startsWith("/api/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.includes(".")

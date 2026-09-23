@@ -370,6 +370,9 @@ export interface ThemeConfig {
   // dans Theme.config pour que ImportedLiteralHomePage puisse injecter des
   // surcharges précises quand le marchand modifie ses couleurs via le builder.
   axsoDesignCssVarMapping?: Record<string, string>;
+  // Les 4 designs AXSO Design proposés par AXIA à l'inscription (fichiers,
+  // ex. "aube-site.html") — seuls designs proposés ensuite dans le Constructeur.
+  designsOrigine?: string[];
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -544,6 +547,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     builderHtmlConfirmationChrome: overrides.builderHtmlConfirmationChrome ?? base.builderHtmlConfirmationChrome,
     axsoDesignSelecteurVisuelPdp: overrides.axsoDesignSelecteurVisuelPdp ?? base.axsoDesignSelecteurVisuelPdp,
     axsoDesignCssVarMapping: overrides.axsoDesignCssVarMapping ?? base.axsoDesignCssVarMapping,
+    designsOrigine: overrides.designsOrigine ?? base.designsOrigine,
   };
 }
 
@@ -608,6 +612,7 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     productPage: ancienConfig.productPage,
     aboutPage: ancienConfig.aboutPage,
     contactPage: ancienConfig.contactPage,
+    designsOrigine: ancienConfig.designsOrigine,
     // builderTree n'est PAS repris de l'ancien thème (contrairement aux champs
     // ci-dessus) : contrairement à customCss/productPage, un arbre de blocs
     // est souvent construit pour un design précis — notamment un bloc

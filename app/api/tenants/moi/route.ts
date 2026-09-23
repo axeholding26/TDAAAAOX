@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { planActif } from "@/lib/abonnement";
 
 export async function GET() {
   const session = await auth();
@@ -43,5 +44,6 @@ export async function GET() {
 
   if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
-  return NextResponse.json({ tenant });
+  // Palier effectif (celui du compte, voir planActif), pas seulement celui payé sur cette boutique.
+  return NextResponse.json({ tenant: { ...tenant, planType: (await planActif(tenantId)).plan } });
 }

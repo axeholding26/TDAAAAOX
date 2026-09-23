@@ -10,6 +10,7 @@ import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { notifierMarchand } from "@/lib/notifications-marchand";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 const schemaCreation = z.object({
   nomBoutique: z.string().min(2),
@@ -38,20 +39,23 @@ export async function GET(req: NextRequest) {
   const userId = (session.user as any)?.id;
   const tenantActif = (session.user as any)?.tenantId;
 
-  const proprietes = await prisma.proprietaireBoutique.findMany({
-    where: { userId },
+  const { proprietaire, membre } = await boutiquesDuCompte(userId);
+  const tenants = await prisma.tenant.findMany({
+    where: { id: { in: [...proprietaire, ...membre] } },
     orderBy: { createdAt: "asc" },
     select: {
-      tenant: {
-        select: {
-          id: true, slug: true, nomBoutique: true, logoUrl: true, planType: true,
-          _count: { select: { produits: true, commandes: true } },
-        },
-      },
+      id: true, slug: true, nomBoutique: true, logoUrl: true, planType: true,
+      _count: { select: { produits: true, commandes: true, notificationsMarchand: { where: { lu: false } } } },
     },
   });
 
-  const boutiques = proprietes.map(p => ({ ...p.tenant, active: p.tenant.id === tenantActif }));
+  const boutiques = await Promise.all(tenants.map(async t => ({
+    ...t,
+    planType: (await planActif(t.id)).plan,
+    active: t.id === tenantActif,
+    proprietaire: proprietaire.includes(t.id),
+    nonLues: t._count.notificationsMarchand,
+  })));
   return NextResponse.json({ boutiques });
 }
 
@@ -64,14 +68,11 @@ export async function POST(req: Request) {
   const userEmail = (session.user as any)?.email as string | undefined;
   if (!userEmail) return NextResponse.json({ error: "Email introuvable sur le compte" }, { status: 400 });
 
-  const proprietes = await prisma.proprietaireBoutique.findMany({
-    where: { userId },
-    select: { tenantId: true },
-  });
+  const { proprietaire } = await boutiquesDuCompte(userId);
 
   let dejaPalier2 = false;
-  for (const p of proprietes) {
-    const { plan } = await planActif(p.tenantId);
+  for (const tenantId of proprietaire) {
+    const { plan } = await planActif(tenantId);
     if (aAcces(plan, "multi_boutique")) { dejaPalier2 = true; break; }
   }
   if (!dejaPalier2) {
@@ -91,10 +92,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `L'URL "${data.slug}" est déjà prise.` }, { status: 400 });
   }
 
-  // Tenant.email est unique — un compte qui possède déjà une boutique sur son
-  // email doit utiliser un alias "+tag" pour la/les suivante(s) (délivré au
-  // même email chez la plupart des fournisseurs).
-  const emailBoutique = userEmail.includes("@") ? userEmail.replace("@", `+${data.slug}@`) : userEmail;
 
   const { themeConfig } = generateStoreConfig({
     categorie: data.categorie,
@@ -108,7 +105,7 @@ export async function POST(req: Request) {
       data: {
         slug: data.slug,
         nomBoutique: data.nomBoutique,
-        email: emailBoutique,
+        email: userEmail,
         categorie: data.categorie,
         pays: data.pays,
         devise: data.devise,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { evaluerPublication } from "@/lib/boutique-completion";
+import { designsOrigine as lireDesignsOrigine, supprimerThemesDesignInactifs } from "@/lib/axso-design-library";
 
 export async function GET() {
   const session = await auth();
@@ -10,8 +11,11 @@ export async function GET() {
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
+  // Avant de lire le tenant : peut enregistrer themeConfig.designsOrigine.
+  const designsOrigine = await lireDesignsOrigine(tenantId);
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+  await supprimerThemesDesignInactifs(tenantId, tenant.themeId);
 
   // Charge la config du thème actif depuis la DB (nécessaire pour que le
   // builder puisse afficher l'état réel du thème, y compris les thèmes
@@ -34,5 +38,5 @@ export async function GET() {
   // boutique n'a pas le minimum requis — voir lib/boutique-completion.ts.
   const completion = await evaluerPublication(tenantId);
 
-  return NextResponse.json({ ...tenant, activeThemeConfig, themeSlug, completion });
+  return NextResponse.json({ ...tenant, activeThemeConfig, themeSlug, completion, designsOrigine });
 }

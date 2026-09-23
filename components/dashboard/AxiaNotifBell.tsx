@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import {
   Bell, ShoppingBag, MessageCircle, AlertTriangle, DollarSign, Star, Package, Info,
 } from "lucide-react";
@@ -8,6 +9,7 @@ import {
 interface NotifMarchand {
   id: string; type: string; titre: string; message: string;
   lien?: string | null; lu: boolean; createdAt: string;
+  tenantId: string; nomBoutique: string; autreBoutique: boolean;
 }
 
 const NOTIF_ICONS: Record<string, { Icon: any; color: string }> = {
@@ -120,10 +122,12 @@ export function AxiaNotifBell() {
                   <div className="min-w-0">
                     <p className="text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.9)", fontWeight: n.lu ? 400 : 700 }}>{n.titre}</p>
                     <p className="text-[11.5px] mt-0.5 leading-snug text-white/45">{n.message}</p>
-                    <p className="text-[10.5px] mt-1 text-white/30">{tempsEcoule(n.createdAt)}</p>
+                    <p className="text-[10.5px] mt-1 text-white/30">{tempsEcoule(n.createdAt)}{n.autreBoutique ? ` · ${n.nomBoutique}` : ""}</p>
                   </div>
                 </div>
               );
+              // Notification d'une autre boutique : on bascule dessus avant d'ouvrir le lien.
+              if (n.autreBoutique) return <div key={n.id} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{content}</div>;
               return n.lien
                 ? <Link key={n.id} href={n.lien}>{content}</Link>
                 : <div key={n.id}>{content}</div>;

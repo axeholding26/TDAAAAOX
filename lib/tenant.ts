@@ -31,3 +31,32 @@ export async function getTenantBySlug(slug: string) {
     where: { slug },
   });
 }
+
+/**
+ * Ids des boutiques accessibles à un compte : celles qu'il possède
+ * (ProprietaireBoutique) et celles où il est membre d'équipe actif.
+ * Rattrape au passage le lien propriétaire des comptes créés avant que
+ * l'inscription ne l'écrive (User.tenantId renseigné, aucun lien).
+ */
+export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire: string[]; membre: string[] }> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      tenantId: true, role: true,
+      boutiques: { select: { tenantId: true } },
+      membresEquipe: { where: { statut: "actif" }, select: { tenantId: true } },
+    },
+  });
+  if (!user) return { proprietaire: [], membre: [] };
+
+  const proprietaire = user.boutiques.map(b => b.tenantId);
+  if (user.tenantId && (user.role === "owner" || user.role === "admin") && !proprietaire.includes(user.tenantId)) {
+    await prisma.proprietaireBoutique.upsert({
+      where: { userId_tenantId: { userId, tenantId: user.tenantId } },
+      create: { userId, tenantId: user.tenantId, role: "owner" },
+      update: {},
+    });
+    proprietaire.push(user.tenantId);
+  }
+  return { proprietaire, membre: user.membresEquipe.map(m => m.tenantId) };
+}

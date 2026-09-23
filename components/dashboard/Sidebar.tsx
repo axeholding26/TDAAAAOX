@@ -19,6 +19,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { BoutiqueSwitcher } from "@/components/dashboard/BoutiqueSwitcher";
 import {
   Home, ShoppingCart, Monitor, Users, Package, Download,
   Star, Truck, MessageSquare, BarChart3, Megaphone,
@@ -477,6 +478,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
 
       {/* Pied — vitrine + compte */}
       <div className="flex-shrink-0 px-3.5 py-3 space-y-2" style={{ borderTop: "1px solid #F0F0F0" }}>
+        <BoutiqueSwitcher />
         {boutiqueSlug && (
           <a
             href={`/${boutiqueSlug}`}

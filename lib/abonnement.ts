@@ -1,24 +1,32 @@
 import { prisma } from "./prisma";
-import { LIMITES, type Palier } from "./plans";
+import { LIMITES, palierAuMoins, type Palier } from "./plans";
 
 const PALIERS_VALIDES = new Set<string>(["palier0", "palier1", "palier2"]);
 
+// L'abonnement vaut pour le COMPTE : une boutique profite du meilleur palier
+// en cours parmi toutes les boutiques de ses propriétaires. Payer le Palier 2
+// sur la boutique A couvre donc aussi la boutique B du même compte.
 export async function planActif(tenantId: string): Promise<{ plan: Palier; actif: boolean }> {
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
+  const tenants = await prisma.tenant.findMany({
+    where: {
+      OR: [
+        { id: tenantId },
+        { proprietaires: { some: { user: { boutiques: { some: { tenantId } } } } } },
+      ],
+    },
     select: { planType: true, planExpiresAt: true },
   });
 
-  if (!tenant) return { plan: "palier0", actif: true };
-  if (tenant.planType === "palier0") return { plan: "palier0", actif: true };
-  if (!tenant.planExpiresAt || tenant.planExpiresAt < new Date()) {
-    return { plan: "palier0", actif: true };
+  const now = new Date();
+  let plan: Palier = "palier0";
+  for (const t of tenants) {
+    // Valeurs héritées ("gratuit", "premium"...) des tenants créés avant les
+    // paliers — ignorées, sinon tout code qui indexe LIMITES/FEATURES par
+    // palier planterait (undefined).
+    if (!PALIERS_VALIDES.has(t.planType) || !t.planExpiresAt || t.planExpiresAt < now) continue;
+    if (palierAuMoins(t.planType as Palier, plan)) plan = t.planType as Palier;
   }
-  // Valeurs héritées ("gratuit", "premium"...) des tenants créés avant les
-  // paliers — jamais renvoyées telles quelles, sinon tout code qui indexe
-  // LIMITES/FEATURES par palier planterait (undefined).
-  if (!PALIERS_VALIDES.has(tenant.planType)) return { plan: "palier0", actif: true };
-  return { plan: tenant.planType as Palier, actif: true };
+  return { plan, actif: true };
 }
 
 // Nombre de commandes créées depuis le début du mois calendaire courant —

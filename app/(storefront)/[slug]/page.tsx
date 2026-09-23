@@ -18,6 +18,8 @@ import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRe
 import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
+import { ordonnerParZone } from "@/lib/block-tree";
+import { cssSectionsDesign } from "@/lib/scope-css";
 import { DigitalCatalogPage } from "@/components/storefront/digital/DigitalCatalogPage";
 
 interface Props {
@@ -127,6 +129,7 @@ export default async function StorefrontPage({ params, searchParams }: Props) {
   const SECTION_PY = SECTION_PY_MAP[layoutCfg.paddingSection || "lg"];
 
   if (cfg.builderTree?.length) {
+    const cssDesign = cssSectionsDesign(cfg as any);
     return (
       // container-type:inline-size — les surcharges responsives (vague 3)
       // sont des @container, pas des @media : ce wrapper fait toute la
@@ -134,8 +137,9 @@ export default async function StorefrontPage({ params, searchParams }: Props) {
       // fonctionne aussi dans l'aperçu rétréci du canevas du tableau de
       // bord (voir components/storefront/blocks/styleUtils.ts).
       <div style={{ containerType: "inline-size" }}>
+        {cssDesign && <style dangerouslySetInnerHTML={{ __html: cssDesign }} />}
         <BlockTreeRenderer
-          nodes={cfg.builderTree}
+          nodes={ordonnerParZone(cfg.builderTree)}
           ctx={{ slug, colors: c, container: CONTAINER, sectionPy: SECTION_PY, tenantId: tenant.id, editable: false }}
         />
       </div>

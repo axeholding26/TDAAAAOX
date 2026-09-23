@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { apiLimiter, getClientIp } from "@/lib/rate-limit";
 
 const schemaEvent = z.object({
   tenantSlug: z.string(),
@@ -17,6 +18,8 @@ const schemaEvent = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Route publique : limite par IP pour qu'on ne puisse pas gonfler les stats d'une boutique.
+    if (!apiLimiter.check(getClientIp(req)).success) return NextResponse.json({ ok: true });
     const body = await req.json();
     const data = schemaEvent.parse(body);
 
@@ -41,6 +44,11 @@ export async function POST(req: NextRequest) {
         userAgent: req.headers.get("user-agent") || undefined,
       },
     });
+
+    // Les stats du tableau de bord (visites, conversion) lisent Analytics "page_view".
+    if (data.type === "PageView") {
+      await prisma.analytics.create({ data: { tenantId: tenant.id, type: "page_view" } });
+    }
 
     return NextResponse.json({ ok: true });
   } catch {

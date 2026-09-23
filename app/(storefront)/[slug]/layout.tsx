@@ -11,6 +11,7 @@ import { SnapchatPixel } from "@/components/storefront/SnapchatPixel";
 import { GoogleTagManager } from "@/components/storefront/GoogleTagManager";
 import { CustomTrackingScripts } from "@/components/storefront/CustomTrackingScripts";
 import { AffiliationRefCapture } from "@/components/storefront/AffiliationRefCapture";
+import { StorefrontPageView } from "@/components/storefront/StorefrontPageView";
 
 interface Props {
   children: React.ReactNode;
@@ -43,6 +44,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
       <Suspense fallback={null}>
         <AffiliationRefCapture />
       </Suspense>
+      <StorefrontPageView slug={slug} />
       <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
       <StorefrontPopups slug={slug} accentColor={accent} />
       {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}

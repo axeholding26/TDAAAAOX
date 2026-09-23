@@ -42,14 +42,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const passwordOk = await compare(parsed.data.password, user.password);
         if (!passwordOk) return null;
 
-        // Membre d'équipe suspendu par le propriétaire de la boutique : accès
-        // refusé dès la connexion (les comptes propriétaires n'ont pas de
-        // ligne MembreEquipe et ne sont jamais concernés par ce check).
-        const membre = await prisma.membreEquipe.findUnique({
-          where: { userId: user.id },
-          select: { statut: true },
-        });
-        if (membre && membre.statut === "suspendu") return null;
+        // Membre d'équipe suspendu de TOUTES ses boutiques : accès refusé dès
+        // la connexion. Suspendu d'une seule boutique => il se connecte, et
+        // permissionsSession lui refuse juste celle-là.
+        if (user.role === "membre_equipe") {
+          const membres = await prisma.membreEquipe.findMany({ where: { userId: user.id }, select: { statut: true } });
+          if (membres.length && membres.every(m => m.statut === "suspendu")) return null;
+        }
 
         // 2FA active uniquement si Resend est configuré (sinon le code n'a
         // jamais pu être envoyé — voir /api/auth/2fa/demander).

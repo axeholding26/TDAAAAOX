@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import {
   Search, Bell, ChevronDown, LogOut, Settings,
   User, ExternalLink, Store, X, ShoppingBag, DollarSign, Star,
@@ -19,6 +20,7 @@ interface HeaderProps {
 interface NotifMarchand {
   id: string; type: string; titre: string; message: string;
   lien?: string | null; lu: boolean; createdAt: string;
+  tenantId: string; nomBoutique: string; autreBoutique: boolean;
 }
 
 const NOTIF_ICONS: Record<string, { Icon: any; color: string }> = {
@@ -287,10 +289,12 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
                         <div>
                           <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4", fontWeight: n.lu ? 400 : 600 }}>{n.titre}</p>
                           <p style={{ fontSize:"12px", color:"#999", margin:"2px 0 0", lineHeight:"1.4" }}>{n.message}</p>
-                          <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{tempsEcoule(n.createdAt)}</p>
+                          <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{tempsEcoule(n.createdAt)}{n.autreBoutique ? ` · ${n.nomBoutique}` : ""}</p>
                         </div>
                       </div>
                     );
+                    // Notification d'une autre boutique : on bascule dessus avant d'ouvrir le lien.
+                    if (n.autreBoutique) return <div key={n.id} style={{ cursor:"pointer" }} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{content}</div>;
                     return n.lien ? <Link key={n.id} href={n.lien} onClick={() => setNotifOpen(false)}>{content}</Link> : content;
                   })}
                   {notifications.length > 0 && (

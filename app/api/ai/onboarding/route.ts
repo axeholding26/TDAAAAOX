@@ -26,6 +26,9 @@ const schemaExecuter = z.object({
   // dans PropositionsTemplatesDigitaux, voir inscription/page.tsx) — prime
   // sur l'heuristique par catégorie ci-dessous quand fourni.
   digitalTemplateId: z.enum(["charriow", "aurore", "onyx", "mint"]).optional(),
+  // Les 4 designs AXSO Design proposés à l'inscription — seuls designs
+  // proposés ensuite dans le Constructeur (ThemeConfig.designsOrigine).
+  designsProposes: z.array(z.string()).max(4).optional(),
   plan: z.object({
     nomBoutique: z.string(),
     slug: z.string(),
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     if (body.phase === "executer") {
-      const { plan, compte, typeBoutique, digitalTemplateId: digitalTemplateIdChoisi } = schemaExecuter.parse(body);
+      const { plan, compte, typeBoutique, digitalTemplateId: digitalTemplateIdChoisi, designsProposes } = schemaExecuter.parse(body);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
       // Gabarit du Constructeur digital (voir lib/digital-templates.ts pour
       // les 4 choix — plus un arbre de blocs : un layout React dédié,
@@ -147,6 +150,7 @@ export async function POST(request: Request) {
       const themeConfig: Record<string, any> = {
         ...generatedConfig,
         ...(customSections.length > 0 && { customSections }),
+        ...(designsProposes?.length && { designsOrigine: designsProposes }),
         ...(digitalTemplate && {
           digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, templateId: digitalTemplate.id },
           colors: { ...generatedConfig.colors, ...digitalTemplate.colors },
@@ -184,6 +188,8 @@ export async function POST(request: Request) {
             password: await hash(compte.password, 10),
             tenantId: tenant.id,
             role: "owner",
+            // Lien propriétaire ↔ boutique : sans lui, le multi-boutique ne voit pas cette boutique.
+            boutiques: { create: { tenantId: tenant.id, role: "owner" } },
           },
         });
 

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hash } from "bcryptjs";
+import { hash, compare } from "bcryptjs";
 import { z } from "zod";
+import { authLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -15,6 +16,9 @@ const schema = z.object({
 // suspension déjà en place.
 export async function POST(req: Request) {
   try {
+    // Vérifie un mot de passe existant : limité comme une connexion.
+    const rl = authLimiter.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     const body = await req.json();
     const { token, password } = schema.parse(body);
 
@@ -26,25 +30,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Cette invitation a expiré — demande un nouveau lien au responsable de la boutique" }, { status: 400 });
     }
 
+    // Compte déjà existant (propriétaire ou membre d'une autre boutique) : on
+    // rattache cette boutique au compte, après vérification de son mot de passe
+    // actuel — jamais d'écrasement.
     const compteExistant = await prisma.user.findUnique({ where: { email: membre.email } });
+    let userId: string;
     if (compteExistant) {
-      return NextResponse.json({ error: "Un compte Axso existe déjà avec cet email" }, { status: 400 });
+      if (!compteExistant.password || !(await compare(password, compteExistant.password))) {
+        return NextResponse.json({ error: "Un compte Axso existe déjà avec cet email — saisis son mot de passe actuel pour rejoindre l'équipe" }, { status: 400 });
+      }
+      userId = compteExistant.id;
+    } else {
+      const user = await prisma.user.create({
+        data: {
+          email: membre.email,
+          name: membre.nom,
+          password: await hash(password, 10),
+          tenantId: membre.tenantId,
+          role: "membre_equipe",
+        },
+      });
+      userId = user.id;
     }
-
-    const passwordHash = await hash(password, 10);
-    const user = await prisma.user.create({
-      data: {
-        email: membre.email,
-        name: membre.nom,
-        password: passwordHash,
-        tenantId: membre.tenantId,
-        role: "membre_equipe",
-      },
-    });
 
     await prisma.membreEquipe.update({
       where: { id: membre.id },
-      data: { userId: user.id, statut: "actif", inviteToken: null, inviteExpiresAt: null },
+      data: { userId, statut: "actif", inviteToken: null, inviteExpiresAt: null },
     });
 
     return NextResponse.json({ success: true });

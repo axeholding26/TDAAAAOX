@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { boutiquesDuCompte } from "@/lib/tenant";
 import { getToken, encode } from "next-auth/jwt";
 
 const SECRET = process.env.AUTH_SECRET!;
@@ -23,10 +24,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "tenantId requis" }, { status: 400 });
   }
 
-  const acces = await prisma.proprietaireBoutique.findUnique({
-    where: { userId_tenantId: { userId, tenantId } },
-  });
-  if (!acces) return NextResponse.json({ error: "Vous ne possédez pas cette boutique" }, { status: 403 });
+  const { proprietaire, membre } = await boutiquesDuCompte(userId);
+  if (!proprietaire.includes(tenantId) && !membre.includes(tenantId)) {
+    return NextResponse.json({ error: "Vous n'avez pas accès à cette boutique" }, { status: 403 });
+  }
 
   await prisma.user.update({ where: { id: userId }, data: { tenantId } });
 

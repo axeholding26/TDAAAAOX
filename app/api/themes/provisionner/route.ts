@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
+import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial, designsOrigine, supprimerThemesDesignInactifs, estBoutiqueDigitale, DESIGN_RESERVE_PHYSIQUE } from "@/lib/axso-design-library";
 import { appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 
@@ -23,8 +23,15 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const fichier = typeof body.fichier === "string" ? body.fichier : null;
 
+    // Seuls les designs proposés à l'inscription peuvent être appliqués. Avant de lire le
+    // tenant : peut enregistrer themeConfig.designsOrigine.
+    const origine = await designsOrigine(tenantId);
+    if (fichier && origine.length && !origine.includes(fichier)) {
+      return NextResponse.json({ error: "Ce design n'est pas proposé pour ta boutique" }, { status: 400 });
+    }
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+    if (estBoutiqueDigitale(tenant.themeConfig)) return NextResponse.json({ error: DESIGN_RESERVE_PHYSIQUE }, { status: 400 });
 
     if (fichier && !MANIFESTE_LIBRAIRIE.some((e) => e.fichier === fichier)) {
       return NextResponse.json({ error: "Design inconnu" }, { status: 400 });
@@ -53,6 +60,8 @@ export async function POST(req: NextRequest) {
     const themeConfig = appliquerNouveauTheme(ancienConfig, nouveauBase);
 
     await prisma.tenant.update({ where: { id: tenantId }, data: { themeId: theme.id, themeConfig: themeConfig as any } });
+    // Un seul Theme de design par boutique — l'ancien n'est plus référencé.
+    await supprimerThemesDesignInactifs(tenantId, theme.id);
     revalidatePath(`/${tenant.slug}`, "layout");
 
     return NextResponse.json({ theme }, { status: 201 });

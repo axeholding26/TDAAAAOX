@@ -40,6 +40,7 @@ const CHAMPS_ENUM: Record<string, Array<{ value: string; label: string }>> = {
 
 interface Props {
   node: BlockNode;
+  titre?: string; // nom affiché (ex. « Bannière principale ») — défaut : type du bloc
   device: Device;
   canMoveUp: boolean;
   canMoveDown: boolean;
@@ -53,7 +54,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function BlockStylePanel({ node, device, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onChangeStyle, onChangeResponsiveStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
+export function BlockStylePanel({ node, titre, device, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onChangeStyle, onChangeResponsiveStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
   const [tab, setTab] = useState<Tab>(node.type === "section" || node.type === "row" || node.type === "column" ? "style" : "contenu");
   const estConteneur = node.type === "section" || node.type === "row" || node.type === "column";
   const style = node.style || {};
@@ -73,8 +74,8 @@ export function BlockStylePanel({ node, device, canMoveUp, canMoveDown, onMoveUp
     <div className="w-[340px] flex-shrink-0 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0 gap-2">
         <div className="min-w-0">
-          <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide">{LABELS[node.type] || node.type}</p>
-          <p className="text-[12px] text-gray-400 font-mono truncate max-w-[180px]">{node.id}</p>
+          <p className="text-[15px] font-semibold text-[#111111] truncate max-w-[200px]">{titre || LABELS[node.type] || node.type}</p>
+          {titre && <p className="text-[12.5px] text-gray-400">{LABELS[node.type] || node.type}</p>}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           {/* Position — boutons ↑/↓ façon Shopify : alternative fiable au
@@ -101,7 +102,7 @@ export function BlockStylePanel({ node, device, canMoveUp, canMoveDown, onMoveUp
       <div className="flex-1 overflow-y-auto scrollbar-thin p-3.5 space-y-5">
         {tab === "contenu" && node.type === "embed-html" && (
           <p className="text-[14px] text-gray-500 leading-relaxed bg-gray-50 border border-gray-200 rounded-lg p-3.5">
-            Ton design AXSO Design importé tel quel — pas encore décomposable en blocs individuels. Utilise l'onglet <strong>Style</strong> pour l'espacement/la visibilité, ou <strong>déplace</strong>-le et ajoute de nouveaux blocs autour depuis la bibliothèque à gauche.
+            Section issue de ton design. <strong>Clique sur un texte dans l'aperçu</strong> pour le modifier directement. Utilise l'onglet <strong>Style</strong> pour l'espacement et la visibilité, et le panneau de gauche pour la déplacer, la masquer ou la supprimer.
           </p>
         )}
         {tab === "contenu" && !estConteneur && node.type !== "embed-html" && <ContentEditor nodeType={node.type} config={node.config || {}} onChange={onChangeConfig} />}

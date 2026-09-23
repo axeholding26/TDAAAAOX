@@ -20,7 +20,7 @@ model Tenant {
   devise              String   @default("XAF")
   whatsapp            String
   whatsappNumero      String?  // Numéro WhatsApp marchand pour commandes physiques ex: "+22507XXXXXXXX"
-  email               String   @unique
+  email               String
   telephone           String?
   adresse             String?
   logoUrl             String?
@@ -486,7 +486,7 @@ model Wishlist {
 model MembreEquipe {
   id              String    @id @default(cuid())
   tenantId        String
-  userId          String?   @unique // lié une fois l'invitation acceptée
+  userId          String?   // lié une fois l'invitation acceptée — un compte peut être membre de plusieurs boutiques
   email           String
   nom             String
   role            String    @default("gerant") // gerant | caissier | comptable | lecture | personnalise
@@ -500,6 +500,8 @@ model MembreEquipe {
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User?  @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tenantId])
 }
 
 // =====================
@@ -584,7 +586,7 @@ model User {
   sessions Session[]
   livreur  Livreur?
   boutiques ProprietaireBoutique[]
-  membreEquipe MembreEquipe?
+  membresEquipe MembreEquipe[]
 }
 
 // Boutiques possédées par un compte utilisateur — permet le multi-boutique

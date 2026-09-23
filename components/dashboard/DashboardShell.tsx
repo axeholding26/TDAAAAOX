@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Sparkles, ShoppingCart, Store, Users } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { BoutiqueSwitcher } from "@/components/dashboard/BoutiqueSwitcher";
 import { Header } from "@/components/dashboard/Header";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
@@ -144,6 +145,7 @@ function MobileHeader({ boutiqueNom }: { boutiqueNom?: string }) {
           <span className="text-white text-xs font-bold">A</span>
         </div>
       </div>
+      <div className="px-4 pb-2.5 empty:hidden"><BoutiqueSwitcher /></div>
     </header>
   );
 }

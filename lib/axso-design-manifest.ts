@@ -185,3 +185,51 @@ export function selectionnerGabaritLibrairie(categorie: string): EntreeLibrairie
   const general = MANIFESTE_LIBRAIRIE.find((e) => e.categories.includes("general"));
   return general || MANIFESTE_LIBRAIRIE[0];
 }
+
+// ─── Les 4 designs proposés par AXIA à l'inscription ─────────────────────────
+// Partagé entre l'inscription (app/(auth)/inscription) et le Constructeur, qui
+// ne propose ensuite QUE ces 4 designs (voir ThemeConfig.designsOrigine).
+export function detecterCategorie(vente: string): string {
+  const v = vente.toLowerCase();
+  const map: { kw: string[]; cat: string }[] = [
+    { kw:["mode","vêtement","tissu","kente","wax","pagne","robe","chemise","couture","habit"], cat:"fashion" },
+    { kw:["bijou","bague","collier","bracelet","or","argent","joaillerie","perle","montre"], cat:"jewelry" },
+    { kw:["cosmétique","beauté","soin","maquillage","parfum","crème","sérum","skincare","cheveux"], cat:"beauty" },
+    { kw:["sport","fitness","gym","training","football","basket","rugby","musculation","running"], cat:"sport" },
+    { kw:["tech","électronique","gadget","téléphone","ordinateur","accessoire tech","console"], cat:"tech" },
+    { kw:["alimentation","nourriture","épice","café","thé","boisson","restaur","food","snack"], cat:"food" },
+    { kw:["artisan","handmade","fait main","poterie","sculpture","art","peinture","tisser"], cat:"artisan" },
+    { kw:["maison","décor","meuble","intérieur","ameublement","bougie","plante"], cat:"home" },
+    { kw:["formation","cours","ebook","digital","service","conseil","coaching","mentoring"], cat:"services" },
+    { kw:["agriculture","bio","naturel","ferme","fruits","légumes","jardinage","herbes"], cat:"agriculture" },
+  ];
+  for (const { kw, cat } of map) {
+    if (kw.some(k => v.includes(k))) return cat;
+  }
+  return "general";
+}
+
+// Retourne 4 IDs de thèmes adaptés à la catégorie, priorité au themeId du plan
+export function choisir4Themes(vente: string, planThemeId?: string): string[] {
+  const cat = detecterCategorie(vente);
+  const parCat: Record<string, string[]> = {
+    fashion:     ["ndop-site.html","aube-site.html","halle-site.html","cadran-site.html"],
+    jewelry:     ["aube-site.html","cadran-site.html","halle-site.html","ndop-site.html"],
+    beauty:      ["clarte-site.html","aube-site.html","equilibre-site.html","halle-site.html"],
+    sport:       ["grind-site.html","onze-site.html","circuit-site.html","ring-site.html"],
+    tech:        ["nexus-site.html","opal-site.html","circuit-site.html","ignite-site.html"],
+    food:        ["ignite-site.html","sentier-site.html","halle-site.html","pop-site.html"],
+    artisan:     ["ndop-site.html","halle-site.html","aube-site.html","sentier-site.html"],
+    home:        ["halle-site.html","equilibre-site.html","clarte-site.html","aube-site.html"],
+    services:    ["opal-site.html","nexus-site.html","equilibre-site.html","cadran-site.html"],
+    agriculture: ["sentier-site.html","clarte-site.html","equilibre-site.html","ndop-site.html"],
+    general:     ["ndop-site.html","aube-site.html","halle-site.html","pop-site.html"],
+  };
+  let themes = [...(parCat[cat] || parCat.general)];
+  // Mettre le thème suggéré par l'IA en premier
+  if (planThemeId) {
+    themes = [planThemeId, ...themes.filter(t => t !== planThemeId)];
+  }
+  return themes.slice(0, 4);
+}
+

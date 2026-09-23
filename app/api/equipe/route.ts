@@ -40,12 +40,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Grille de permissions requise pour un rôle personnalisé" }, { status: 400 });
     }
 
-    // Un email déjà lié à un compte Axso (propriétaire d'une autre boutique,
-    // ou déjà membre ailleurs) ne peut pas être ré-utilisé — User.email est
-    // unique globalement sur la plateforme. Limitation connue v1.
-    const compteExistant = await prisma.user.findUnique({ where: { email } });
+    // Un compte Axso existant (propriétaire ou membre d'une autre boutique)
+    // peut être invité : il rattachera cette boutique à son compte en
+    // acceptant avec son mot de passe actuel. Sauf s'il possède déjà celle-ci.
+    const compteExistant = await prisma.user.findUnique({ where: { email }, select: { id: true } });
     if (compteExistant) {
-      return NextResponse.json({ error: "Un compte Axso existe déjà avec cet email — impossible de l'inviter pour le moment." }, { status: 400 });
+      const proprio = await prisma.proprietaireBoutique.findUnique({
+        where: { userId_tenantId: { userId: compteExistant.id, tenantId } },
+      });
+      if (proprio) return NextResponse.json({ error: "Ce compte est déjà propriétaire de cette boutique" }, { status: 400 });
     }
 
     const existant = await prisma.membreEquipe.findFirst({ where: { tenantId, email } });
