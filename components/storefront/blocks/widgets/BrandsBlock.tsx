@@ -5,7 +5,7 @@ export function BrandsBlock({ id, config, colors: c }: BlockRenderProps) {
   if (!logos.length) return null;
   return (
     <section data-axs-id={id} className="py-14">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8">
         {config?.titre && (
           <p className="text-center text-sm font-bold uppercase tracking-widest mb-8" style={{ color: c.texte, opacity: 0.4 }}>{config.titre}</p>
         )}

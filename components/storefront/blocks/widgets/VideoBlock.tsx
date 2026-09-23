@@ -5,7 +5,7 @@ export function VideoBlock({ id, config, colors: c, sectionPy: SECTION_PY }: Blo
   const isEmbed = /youtube|vimeo/.test(config.videoUrl);
   return (
     <section data-axs-id={id} className={SECTION_PY}>
-      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${config.style === "fullwidth" ? "max-w-full" : "max-w-4xl"}`}>
+      <div className={`mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 ${config.style === "fullwidth" ? "max-w-full" : "max-w-4xl"}`}>
         {config?.titre && (
           <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: c.texte }}>{config.titre}</h2>
         )}

@@ -100,6 +100,7 @@ export async function provisionerThemeDepuisLibrairie(params: {
     builderHtmlCheckoutChrome: vues.chromeAvant + vues.commande + vues.chromeApres,
     builderHtmlConfirmationChrome: vues.chromeAvant + vues.confirmation + vues.chromeApres,
     axsoDesignSelecteurVisuelPdp: entree.selecteurVisuelPdp,
+    axsoDesignPolices: entree.polices,
   } as ThemeConfig;
 
   // Pas de doublon : ne garde que le design en cours (encore référencé par

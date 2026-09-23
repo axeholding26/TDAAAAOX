@@ -57,6 +57,11 @@ export interface ThemeDigitalConfig {
   afficherBoutonAchatCarte: boolean;
   afficherRecommandes: boolean;
   afficherAffiliation: boolean;
+  // Réglages par élément de la vitrine (panneau de droite du Constructeur
+  // digital) — voir lib/element-styles.ts et DigitalStoreShell (data-axs-el).
+  elementStyles?: import("./element-styles").ElementStyles;
+  // Textes remplacés (titre, « En vedette », bouton « Acheter »…), par id d'élément.
+  textes?: Record<string, string>;
 }
 
 // ─── Navigation ──────────────────────────────────────────────────────────────
@@ -285,9 +290,11 @@ export type BlockNodeType =
   | "embed-html";
 
 export interface BlockStyleOverrides {
-  spacing?: { pt?: string; pb?: string; pl?: string; pr?: string; mt?: string; mb?: string };
+  spacing?: { pt?: string; pb?: string; pl?: string; pr?: string; mt?: string; mb?: string; ml?: string; mr?: string };
   background?: { color?: string; image?: string; gradient?: string };
-  typography?: { color?: string; taille?: string; poids?: string; align?: "left" | "center" | "right" };
+  typography?: { color?: string; taille?: string; poids?: string; align?: "left" | "center" | "right"; police?: string; interligne?: string; espacement?: string };
+  // Au survol (desktop) — couleurs du texte et du fond.
+  hover?: { color?: string; background?: string };
   border?: { radius?: string; width?: string; color?: string };
   visibility?: { desktop?: boolean; tablet?: boolean; mobile?: boolean };
   width?: string;
@@ -373,6 +380,9 @@ export interface ThemeConfig {
   // Les 4 designs AXSO Design proposés par AXIA à l'inscription (fichiers,
   // ex. "aube-site.html") — seuls designs proposés ensuite dans le Constructeur.
   designsOrigine?: string[];
+  // Polices d'origine du design AXSO (manifeste) — pour y substituer celles
+  // choisies dans le Constructeur (lib/scope-css.ts::cssDesignPersonnalise).
+  axsoDesignPolices?: { titre?: string; corps?: string };
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -548,6 +558,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     axsoDesignSelecteurVisuelPdp: overrides.axsoDesignSelecteurVisuelPdp ?? base.axsoDesignSelecteurVisuelPdp,
     axsoDesignCssVarMapping: overrides.axsoDesignCssVarMapping ?? base.axsoDesignCssVarMapping,
     designsOrigine: overrides.designsOrigine ?? base.designsOrigine,
+    axsoDesignPolices: overrides.axsoDesignPolices ?? base.axsoDesignPolices,
   };
 }
 

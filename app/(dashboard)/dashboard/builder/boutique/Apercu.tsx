@@ -9,11 +9,14 @@ import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveSty
 import { cssSectionsDesign, scoperCss } from "@/lib/scope-css";
 import { zoneDe, type Zone } from "@/lib/block-tree";
 import { ProductsCanvasPreview } from "../canvas/CanvasNode";
+import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
 import { nomNoeud } from "./libelles";
+import { ATTR_EL, cibleSelectionnable, genElId, nomElement } from "./elements-dom";
+import { useSurvol, cssSelection } from "../SurvolApercu";
 
 type Device = "desktop" | "tablet" | "mobile";
 const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
-const SECTION_PY: Record<string, string> = { sm: "py-8 sm:py-10", md: "py-12 sm:py-16", lg: "py-16 sm:py-20", xl: "py-20 sm:py-28" };
+const SECTION_PY: Record<string, string> = { sm: "py-8 @min-[640px]:py-10", md: "py-12 @min-[640px]:py-16", lg: "py-16 @min-[640px]:py-20", xl: "py-20 @min-[640px]:py-28" };
 const EDITABLE_INLINE = new Set(["heading", "text", "button"]);
 
 interface Props {
@@ -25,6 +28,8 @@ interface Props {
   onSelect: (id: string | null) => void;
   onChangeConfig: (id: string, patch: Record<string, any>) => void;
   onAjouterSection: (zone: Zone, index: number) => void;
+  selectedEl: string | null; // élément d'une section de design (data-axs-el)
+  onSelectElement: (noeudId: string, elId: string) => void;
 }
 
 // Aperçu en direct façon Shopify : la page telle qu'elle s'affichera, avec la
@@ -32,7 +37,7 @@ interface Props {
 // sur ses bords pour insérer une section juste avant/après. Pas de
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
-export function Apercu({ config, tree, slug, device, selectedId, onSelect, onChangeConfig, onAjouterSection }: Props) {
+export function Apercu({ config, tree, slug, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement }: Props) {
   const racine = useRef<HTMLDivElement>(null);
   const layout = config.layout ?? {};
   const ctx = useMemo(() => ({
@@ -51,18 +56,31 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
 
   const visibles = tree.filter((n) => n.actif !== false);
 
+  // Survol : cadre pointillé sur l'élément du design sous la souris.
+  const { survol, onMouseMove, onMouseLeave } = useSurvol(racine, (t) => {
+    const embed = t instanceof Element ? (t.closest("[data-embed-noeud]") as HTMLElement | null) : null;
+    const el = embed && cibleSelectionnable(t, embed);
+    return el ? { el, label: nomElement(el.tagName, String(el.getAttribute("class") || "")) } : null;
+  });
+
   return (
     <div className="flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
       <div
         ref={racine}
-        className="mx-auto bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] min-h-full transition-[width] duration-300"
+        onMouseMove={onMouseMove}
+        onMouseLeave={onMouseLeave}
+        className="relative mx-auto bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] min-h-full transition-[width] duration-300"
         style={{ width: LARGEUR[device], maxWidth: "100%", backgroundColor: config.colors.fond, color: config.colors.texte }}
         // Liens du design : jamais suivis dans l'éditeur.
         onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }}
       >
         {cssDesign && <style dangerouslySetInnerHTML={{ __html: cssDesign }} />}
+        {selectedEl && <style dangerouslySetInnerHTML={{ __html: cssSelection(selectedEl) }} />}
+        {survol}
+        {/* Mêmes polices que la vitrine (StorefrontTypography, portée .axs-store). */}
+        <StorefrontTypography fonts={config.fonts} />
         {config.customCss && <style dangerouslySetInnerHTML={{ __html: scoperCss(config.customCss, "[data-apercu-page]") }} />}
-        <div data-apercu-page>
+        <div data-apercu-page className="axs-store" style={{ containerType: "inline-size" }}>
           {visibles.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-3 text-center px-6">
               <p className="text-[15px] font-semibold text-[#111111]">Ta page d'accueil est vide</p>
@@ -84,6 +102,7 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
                 selectedId={selectedId}
                 onSelect={onSelect}
                 onChangeConfig={onChangeConfig}
+                onSelectElement={onSelectElement}
                 onAjouterAvant={() => onAjouterSection(zone, indexDansZone)}
                 onAjouterApres={() => onAjouterSection(zone, indexDansZone + 1)}
               />
@@ -97,9 +116,10 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
 
 type Ctx = { slug: string; colors: ThemeConfig["colors"]; container: string; sectionPy: string };
 
-function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onAjouterAvant, onAjouterApres }: {
+function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onSelectElement, onAjouterAvant, onAjouterApres }: {
   section: BlockNode; ctx: Ctx; selectedId: string | null;
   onSelect: (id: string) => void; onChangeConfig: (id: string, patch: Record<string, any>) => void;
+  onSelectElement: (noeudId: string, elId: string) => void;
   onAjouterAvant: () => void; onAjouterApres: () => void;
 }) {
   const selectionnee = selectedId === section.id;
@@ -112,7 +132,7 @@ function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onA
       onClick={(e) => { e.stopPropagation(); onSelect(section.id); }}
       className={`group/section relative cursor-pointer ${actif ? "z-10" : "hover:z-10"}`}
     >
-      <Noeud node={section} ctx={ctx} selectedId={selectedId} sectionActive={actif} onSelect={onSelect} onChangeConfig={onChangeConfig} />
+      <Noeud node={section} ctx={ctx} selectedId={selectedId} sectionActive={actif} onSelect={onSelect} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />
 
       {/* Cadre + étiquette + insertion : au-dessus du contenu, sans le décaler. */}
       <div className={`pointer-events-none absolute inset-0 transition-opacity ${actif ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
@@ -147,9 +167,10 @@ function contient(node: BlockNode, id: string): boolean {
   return (node.children ?? []).some((c) => c.id === id || contient(c, id));
 }
 
-function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig }: {
+function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig, onSelectElement }: {
   node: BlockNode; ctx: Ctx; selectedId: string | null; sectionActive: boolean;
   onSelect: (id: string) => void; onChangeConfig: (id: string, patch: Record<string, any>) => void;
+  onSelectElement: (noeudId: string, elId: string) => void;
 }) {
   if (node.actif === false) return null;
   const style = blockStyleToCss(node.style);
@@ -157,12 +178,12 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig 
 
   if (node.type === "section" || node.type === "row" || node.type === "column") {
     const Tag = node.type === "section" ? "section" : "div";
-    const flex = node.type === "row" ? "flex flex-col sm:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
+    const flex = node.type === "row" ? "flex flex-col @min-[640px]:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
     return (
-      <Tag style={style} className={`${flex} ${classe}`}>
+      <Tag data-axs-id={node.id} style={style} className={`${flex} ${classe}`}>
         <ResponsiveStyleTag nodeId={node.id} style={node.style} />
         {(node.children ?? []).map((c) => (
-          <Noeud key={c.id} node={c} ctx={ctx} selectedId={selectedId} sectionActive={sectionActive} onSelect={onSelect} onChangeConfig={onChangeConfig} />
+          <Noeud key={c.id} node={c} ctx={ctx} selectedId={selectedId} sectionActive={sectionActive} onSelect={onSelect} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />
         ))}
       </Tag>
     );
@@ -173,12 +194,13 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig 
   const selectionner = (e: React.MouseEvent) => { e.stopPropagation(); onSelect(node.id); };
 
   if (node.type === "embed-html") {
-    return <EmbedEditable node={node} actif={sectionActive} onChangeConfig={onChangeConfig} />;
+    return <EmbedEditable node={node} actif={sectionActive} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />;
   }
 
   if (node.type === "products") {
     return (
-      <div data-apercu-id={node.id} onClick={selectionner} style={style} className={`${classe} ${cadreBloc}`}>
+      <div data-apercu-id={node.id} data-axs-id={node.id} onClick={selectionner} style={style} className={`${classe} ${cadreBloc}`}>
+        <ResponsiveStyleTag nodeId={node.id} style={node.style} />
         <ProductsCanvasPreview config={node.config ?? {}} />
       </div>
     );
@@ -188,7 +210,7 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig 
   if (!Widget) return null;
   const inline = EDITABLE_INLINE.has(node.type);
   return (
-    <div data-apercu-id={node.id} onClick={selectionner} style={style} className={`${classe} ${cadreBloc}`}>
+    <div data-apercu-id={node.id} data-axs-id={node.id} onClick={selectionner} style={style} className={`${classe} ${cadreBloc}`}>
       <ResponsiveStyleTag nodeId={node.id} style={node.style} />
       <div className={inline ? "" : "pointer-events-none"}>
         <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy}
@@ -198,20 +220,41 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig 
   );
 }
 
-// Section issue d'un design importé : ses textes s'éditent directement dans
-// l'aperçu une fois la section sélectionnée (enregistrés à la sortie du champ).
-function EmbedEditable({ node, actif, onChangeConfig }: { node: BlockNode; actif: boolean; onChangeConfig: (id: string, patch: Record<string, any>) => void }) {
+// Section issue d'un design importé. Clic sur un élément (titre, bouton,
+// image…) → il est sélectionné et s'édite dans le panneau de droite ; il reçoit
+// au premier clic un identifiant data-axs-el enregistré dans le HTML. Section
+// active → ses textes s'éditent aussi directement (enregistrés à la sortie).
+function EmbedEditable({ node, actif, onChangeConfig, onSelectElement }: {
+  node: BlockNode; actif: boolean;
+  onChangeConfig: (id: string, patch: Record<string, any>) => void;
+  onSelectElement: (noeudId: string, elId: string) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const html = node.config?.html || "";
+  const selectionner = (e: React.MouseEvent) => {
+    const racine = ref.current;
+    const el = racine && cibleSelectionnable(e.target, racine);
+    if (!racine || !el) return; // fond de la section : c'est la section qui est sélectionnée
+    e.stopPropagation();
+    let id = el.getAttribute(ATTR_EL);
+    if (!id) {
+      id = genElId();
+      el.setAttribute(ATTR_EL, id);
+      onChangeConfig(node.id, { html: racine.innerHTML });
+    }
+    onSelectElement(node.id, id);
+  };
   return (
     <div data-axs-embed-html="1">
       <div
         ref={ref}
+        data-embed-noeud={node.id}
         contentEditable={actif}
         suppressContentEditableWarning
         spellCheck={false}
         className={actif ? "outline-none cursor-text" : ""}
         dangerouslySetInnerHTML={{ __html: html }}
+        onClick={selectionner}
         onBlur={() => { const nouveau = ref.current?.innerHTML; if (nouveau != null && nouveau !== html) onChangeConfig(node.id, { html: nouveau }); }}
       />
     </div>

@@ -62,9 +62,10 @@ export function ImportedLiteralProductPage({ css, htmlLie, slug, produit }: Prop
   }, [produit, slug, ajouterItem, setTenant]);
 
   return (
-    <>
+    // Conteneur de référence des règles responsives du design (@container, voir lib/scope-css.ts).
+    <div style={{ containerType: "inline-size" }}>
       {css && <style dangerouslySetInnerHTML={{ __html: css }} />}
-      {htmlLie && <div ref={containerRef} dangerouslySetInnerHTML={{ __html: htmlLie }} />}
-    </>
+      {htmlLie && <div ref={containerRef} data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: htmlLie }} />}
+    </div>
   );
 }

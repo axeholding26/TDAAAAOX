@@ -1,6 +1,7 @@
 // Résolution multi-tenant pour Axso
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 
 // Extraire le slug ou domaine custom depuis l'hôte HTTP
 export async function getTenantFromHost(): Promise<string | null> {
@@ -59,4 +60,16 @@ export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire:
     proprietaire.push(user.tenantId);
   }
   return { proprietaire, membre: user.membresEquipe.map(m => m.tenantId) };
+}
+
+
+/**
+ * Une boutique non publiée est invisible du public (404). Pour son équipe
+ * connectée, la page ne lève pas de 404 : le layout de la vitrine affiche à
+ * la place un message l'invitant à publier (components/storefront/BoutiqueNonPubliee).
+ */
+export async function boutiqueVisible(tenant: { id: string; statut: string }): Promise<boolean> {
+  if (tenant.statut === "active") return true;
+  const session = await auth();
+  return (session?.user as any)?.tenantId === tenant.id;
 }

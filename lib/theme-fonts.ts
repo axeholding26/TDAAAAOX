@@ -85,6 +85,20 @@ export function typographyCss(fonts: StorefrontFontsCfg | undefined, scopeSelect
   const ligne = LIGNE_MAP[fonts.hauteurLigne || "normal"] ?? "1.5";
   const transform = fonts.transformTitre && fonts.transformTitre !== "none" ? fonts.transformTitre : "none";
 
+  // Vitrine/aperçu : @scope « en donut » — s'arrête aux designs importés
+  // ([data-axs-embed-html]), dont les polices d'origine sont remplacées
+  // directement dans leur CSS (lib/scope-css.ts::cssDesignPersonnalise) :
+  // un `*{…!important}` écrasait toutes leurs polices (logo, prix…).
+  if (scopeSelector) {
+    return (
+      `@scope (${scopeSelector}) to ([data-axs-embed-html]) {` +
+      `:scope, *{font-family:'${corps}',sans-serif!important;}` +
+      `h1, h2, h3, h4, .font-playfair{font-family:'${titre}',serif!important;font-weight:${poids}!important;text-transform:${transform}!important;}` +
+      `:scope{font-size:${taille};line-height:${ligne};letter-spacing:${lettreEsp};}` +
+      `}`
+    );
+  }
+
   const base = scopeSelector ? scopeSelector : "body";
   const all = scopeSelector ? `${scopeSelector}, ${scopeSelector} *` : "*";
   const headings = scopeSelector

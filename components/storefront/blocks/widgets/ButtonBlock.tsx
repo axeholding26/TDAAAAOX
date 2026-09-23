@@ -27,7 +27,7 @@ export function ButtonBlock({ config, colors, container, editable, onEditText }:
   );
 
   return (
-    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
+    <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
       {editable ? contenu : <a href={lien}>{contenu}</a>}
     </div>
   );

@@ -1,6 +1,8 @@
 import { Suspense } from "react";
+import { auth } from "@/lib/auth";
+import { BoutiqueNonPubliee } from "@/components/storefront/BoutiqueNonPubliee";
 import { prisma } from "@/lib/prisma";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
@@ -24,14 +26,21 @@ export default async function StorefrontLayout({ children, params }: Props) {
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
     select: {
-      id: true, nomBoutique: true, themeId: true, themeConfig: true,
+      id: true, nomBoutique: true, themeId: true, themeConfig: true, statut: true,
       metaPixelId: true, tiktokPixelId: true, snapPixelId: true, gtmId: true, trackingScripts: true,
     },
   });
 
   if (!tenant) return <>{children}</>;
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
+  // Pas encore publiée : l'équipe connectée voit un message l'invitant à
+  // publier (au lieu d'un 404) ; le public reçoit le 404 de la page.
+  if (tenant.statut !== "active") {
+    const session = await auth();
+    if ((session?.user as any)?.tenantId === tenant.id) return <BoutiqueNonPubliee nomBoutique={tenant.nomBoutique} />;
+  }
+
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const accent = cfg.colors?.accent ?? "#F5A623";
 
   return (

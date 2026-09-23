@@ -1,14 +1,16 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { pourcentageRemise } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
+import { cssDesignPersonnalise } from "@/lib/scope-css";
 import { ImportedLiteralProductPage } from "@/components/storefront/templates/ImportedLiteralProductPage";
 import { lierProduitAuGabarit, lierProduitLibrairieAuGabarit } from "@/lib/theme-import-clone";
 import { formatMontant } from "@/lib/utils";
@@ -40,7 +42,7 @@ export default async function ProduitPage({ params }: Props) {
     where: { slug },
     include: { collections: { where: { actif: true }, take: 5 } },
   });
-  if (!tenant || tenant.statut !== "active") notFound();
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const produitInclude = {
     variantes: { orderBy: { nom: "asc" as const } },
@@ -70,7 +72,7 @@ export default async function ProduitPage({ params }: Props) {
   const visiteurTenantId = (session?.user as any)?.tenantId as string | undefined;
   const peutDevenirAffilie = !!visiteurTenantId && visiteurTenantId !== tenant.id && produit.affiliationActive;
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
   const taux = tenant.commissionRate ?? 0.06;
@@ -119,7 +121,7 @@ export default async function ProduitPage({ params }: Props) {
       : lierProduitAuGabarit(cfg.builderHtmlProduit, slug, produitPourClone);
     return (
       <ImportedLiteralProductPage
-        css={cfg.builderCss || ""}
+        css={cssDesignPersonnalise(cfg as any)}
         htmlLie={htmlLie}
         slug={slug}
         produit={{

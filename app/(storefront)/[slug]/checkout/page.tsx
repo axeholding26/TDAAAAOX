@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { ImportedLiteralCheckoutShell } from "@/components/storefront/templates/ImportedLiteralCheckoutShell";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { Lock } from "lucide-react";
 
 interface Props {
@@ -18,7 +18,7 @@ export default async function CheckoutPage({ params }: Props) {
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || tenant.statut !== "active") notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const theme = cfg.colors;
 
   if (cfg.builderHtmlCheckoutChrome) {

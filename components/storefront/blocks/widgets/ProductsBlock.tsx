@@ -7,7 +7,7 @@ import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton
 import type { BlockRenderProps } from "../types";
 
 const COLONNES_MAP: Record<number, string> = {
-  2: "grid-cols-2", 3: "grid-cols-2 sm:grid-cols-3", 4: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4",
+  2: "grid-cols-2", 3: "grid-cols-2 @min-[640px]:grid-cols-3", 4: "grid-cols-2 @min-[640px]:grid-cols-3 @min-[1024px]:grid-cols-4",
 };
 
 // Widget "Produits" (atome, vague 2) — seul widget de la bibliothèque à
@@ -37,9 +37,9 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
   if (produits.length === 0) return null;
 
   return (
-    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8`}>
-      {config.titre && <h2 className="text-2xl sm:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{config.titre}</h2>}
-      <div className={`grid ${colonnes} gap-4 sm:gap-6`}>
+    <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8`}>
+      {config.titre && <h2 className="text-2xl @min-[640px]:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{config.titre}</h2>}
+      <div className={`grid ${colonnes} gap-4 @min-[640px]:gap-6`}>
         {produits.map((p) => {
           const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06);
           return (

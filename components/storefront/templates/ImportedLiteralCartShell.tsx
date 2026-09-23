@@ -3,6 +3,7 @@
 import { CartContent } from "@/components/storefront/CartContent";
 import { MARQUEUR_SLOT } from "@/lib/theme-import-clone";
 import type { ThemeConfig } from "@/lib/theme-config";
+import { cssDesignPersonnalise } from "@/lib/scope-css";
 
 // Panier d'un thème importé/généré tel quel — n'essaie jamais de recloner
 // ni de rebrancher la logique JS d'origine (trop risqué sur un flux qui
@@ -25,11 +26,12 @@ export function ImportedLiteralCartShell({ cfg, slug, devise }: Props) {
   const theme = { fond: cfg.colors.fond, accent: cfg.colors.accent, texte: cfg.colors.texte, surface: cfg.colors.surface };
 
   return (
-    <>
-      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cfg.builderCss }} />}
-      <div dangerouslySetInnerHTML={{ __html: avant }} />
+    // Conteneur de référence des règles responsives du design (@container, voir lib/scope-css.ts).
+    <div style={{ containerType: "inline-size" }}>
+      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cssDesignPersonnalise(cfg as any) }} />}
+      <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: avant }} />
       <CartContent theme={theme} slug={slug} devise={devise} />
-      {apres && <div dangerouslySetInnerHTML={{ __html: apres }} />}
-    </>
+      {apres && <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: apres }} />}
+    </div>
   );
 }

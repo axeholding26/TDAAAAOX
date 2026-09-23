@@ -118,7 +118,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
   if (estConteneur) {
     const children = node.children ?? [];
     const Tag = node.type === "section" ? "section" : "div";
-    const flexClass = node.type === "row" ? "flex flex-col sm:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
+    const flexClass = node.type === "row" ? "flex flex-col @min-[640px]:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
     return (
       <Tag ref={setNodeRef as any} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${flexClass} ${node.style?.customClass || ""} ${children.length === 0 ? "min-h-[64px] p-2" : ""}`}>
         <ResponsiveStyleTag nodeId={node.id} style={node.style} />

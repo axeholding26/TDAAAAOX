@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 import type { BlockStyleOverrides } from "@/lib/theme-config";
+import { fontEntry } from "@/lib/theme-fonts";
+import { importPolices } from "@/lib/element-styles";
 
 // Seuils partagés par tout le système responsive du constructeur libre —
 // mêmes coupures que le sélecteur Device du tableau de bord
@@ -25,6 +27,8 @@ function flattenStyleKebab(style?: Omit<BlockStyleOverrides, "responsive" | "cus
   if (style.spacing?.pr) out["padding-right"] = style.spacing.pr;
   if (style.spacing?.mt) out["margin-top"] = style.spacing.mt;
   if (style.spacing?.mb) out["margin-bottom"] = style.spacing.mb;
+  if (style.spacing?.ml) out["margin-left"] = style.spacing.ml;
+  if (style.spacing?.mr) out["margin-right"] = style.spacing.mr;
   if (style.background?.gradient) out["background"] = style.background.gradient;
   else if (style.background?.color) out["background-color"] = style.background.color;
   if (style.background?.image) {
@@ -36,6 +40,9 @@ function flattenStyleKebab(style?: Omit<BlockStyleOverrides, "responsive" | "cus
   if (style.typography?.taille) out["font-size"] = style.typography.taille;
   if (style.typography?.poids) out["font-weight"] = style.typography.poids;
   if (style.typography?.align) out["text-align"] = style.typography.align;
+  if (style.typography?.police) out["font-family"] = `'${fontEntry(style.typography.police)?.label ?? style.typography.police}', sans-serif`;
+  if (style.typography?.interligne) out["line-height"] = style.typography.interligne;
+  if (style.typography?.espacement) out["letter-spacing"] = style.typography.espacement;
   if (style.border?.radius) out["border-radius"] = style.border.radius;
   if (style.border?.width && style.border?.color) out["border"] = `${style.border.width} solid ${style.border.color}`;
   return out;
@@ -56,6 +63,11 @@ export function blockStyleToCss(style?: BlockStyleOverrides): CSSProperties {
   if (flat["padding-right"]) css.paddingRight = flat["padding-right"];
   if (flat["margin-top"]) css.marginTop = flat["margin-top"];
   if (flat["margin-bottom"]) css.marginBottom = flat["margin-bottom"];
+  if (flat["margin-left"]) css.marginLeft = flat["margin-left"];
+  if (flat["margin-right"]) css.marginRight = flat["margin-right"];
+  if (flat["font-family"]) css.fontFamily = flat["font-family"];
+  if (flat["line-height"]) css.lineHeight = flat["line-height"];
+  if (flat["letter-spacing"]) css.letterSpacing = flat["letter-spacing"];
   if (flat["background"]) css.background = flat["background"];
   else if (flat["background-color"]) css.backgroundColor = flat["background-color"];
   if (flat["background-image"]) { css.backgroundImage = flat["background-image"]; css.backgroundSize = "cover"; css.backgroundPosition = "center"; }
@@ -108,10 +120,16 @@ export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides):
     rules.push(`@container (max-width:${BREAKPOINT_MOBILE_MAX}){${selector}{${cssTextFromKebab(mobileProps)}}}`);
   }
 
+  // Survol : couleurs de texte/fond ; !important pour passer devant le style inline.
+  const survol = [style.hover?.color && `color:${style.hover.color} !important;`, style.hover?.background && `background:${style.hover.background} !important;`].filter(Boolean).join("");
+  if (survol) rules.push(`${selector}:hover{${survol}}`);
+
   const vis = style.visibility;
   if (vis?.desktop === false) rules.push(`@container (min-width:${parseInt(BREAKPOINT_TABLET_MAX) + 1}px){${selector}{display:none !important;}}`);
   if (vis?.tablet === false) rules.push(`@container (min-width:${parseInt(BREAKPOINT_MOBILE_MAX) + 1}px) and (max-width:${BREAKPOINT_TABLET_MAX}){${selector}{display:none !important;}}`);
   if (vis?.mobile === false) rules.push(`@container (max-width:${BREAKPOINT_MOBILE_MAX}){${selector}{display:none !important;}}`);
 
-  return rules.join("");
+  // Polices choisies (base + tablette/mobile) : chargées en tête de cette feuille.
+  const polices = [style.typography?.police, style.responsive?.tablet?.typography?.police, style.responsive?.mobile?.typography?.police].filter(Boolean) as string[];
+  return importPolices(polices) + rules.join("");
 }

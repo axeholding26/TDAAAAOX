@@ -5,7 +5,7 @@ export function ColumnsBlock({ id, config, colors: c }: BlockRenderProps) {
   if (!colonnes.length) return null;
   const nb = config?.nombreColonnes || colonnes.length;
   return (
-    <section data-axs-id={id} className="py-16 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section data-axs-id={id} className="py-16 @min-[640px]:py-20 max-w-6xl mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8">
       {config?.titre && <h2 className="text-3xl font-bold font-playfair text-center mb-12" style={{ color: c.texte }}>{config.titre}</h2>}
       <div className="grid gap-8" style={{ gridTemplateColumns: `repeat(${Math.min(nb, colonnes.length)}, minmax(0, 1fr))` }}>
         {colonnes.map((col) => (

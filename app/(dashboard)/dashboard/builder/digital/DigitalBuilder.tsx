@@ -9,11 +9,11 @@
 // composant React que la vraie vitrine (DigitalStoreShell), monté ici avec
 // les valeurs de `config` en direct — un changement de réglage re-rend
 // l'aperçu dans la même passe React, sans sérialisation ni rechargement.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
 import {
-  ArrowLeft, Monitor, Smartphone, ExternalLink, Save, RefreshCw, Check,
+  ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, Check, Rocket,
   LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight,
   ShoppingBag, Rows, Columns,
 } from "lucide-react";
@@ -22,10 +22,16 @@ import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { FONTS } from "@/lib/theme-fonts";
 import { DIGITAL_TEMPLATES, getDigitalTemplate } from "@/lib/digital-templates";
 import { prixClient } from "@/lib/pricing";
-import { DigitalStoreShell, type DigitalProductVM } from "@/components/storefront/digital/DigitalStoreShell";
+import { DigitalStoreShell, ELEMENTS_DIGITAUX, type DigitalProductVM } from "@/components/storefront/digital/DigitalStoreShell";
+import { majStyleElement } from "@/lib/element-styles";
+import { PanneauElement } from "../PanneauElement";
+import { useSurvol, cssSelection } from "../SurvolApercu";
 
-type Device = "desktop" | "mobile";
-const DEVICE_WIDTH: Record<Device, string> = { desktop: "100%", mobile: "390px" };
+type Device = "desktop" | "tablet" | "mobile";
+// Largeur de l'aperçu ; la boutique s'y adapte réellement (container queries,
+// voir DigitalStoreShell) — pas une simple vue rétrécie de la version ordinateur.
+const DEVICE_WIDTH: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
+const DEVICES: [Device, typeof Monitor, string][] = [["desktop", Monitor, "Ordinateur"], ["tablet", Tablet, "Tablette"], ["mobile", Smartphone, "Mobile"]];
 
 const ACCENT_PRESETS = ["#F5A623", "#111111", "#0d9488", "#3b82f6", "#e91e8c", "#c2622d"];
 
@@ -40,11 +46,26 @@ interface Props {
   saving: boolean;
   saved: boolean;
   hasChanges: boolean | null;
+  publier: () => void;
+  publishing: boolean;
+  criteresManquants: { label: string }[];
+  bandeaux: React.ReactNode; // infos manquantes pour publier (partagé avec le constructeur boutique)
 }
 
-export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges }: Props) {
+export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, publishing, criteresManquants, bandeaux }: Props) {
   const [device, setDevice] = useState<Device>("desktop");
   const [produits, setProduits] = useState<DigitalProductVM[] | null>(null);
+  // Élément de la vitrine sélectionné dans l'aperçu (data-axs-el) → panneau de droite.
+  const [selectedEl, setSelectedEl] = useState<string | null>(null);
+  const apercu = useRef<HTMLDivElement>(null);
+  const elementSous = (t: EventTarget | null): HTMLElement | null => {
+    const el = t instanceof Element ? (t.closest("[data-axs-el]") as HTMLElement | null) : null;
+    return el && apercu.current?.contains(el) ? el : null;
+  };
+  const { survol, onMouseMove, onMouseLeave } = useSurvol(apercu, (t) => {
+    const el = elementSous(t);
+    return el ? { el, label: ELEMENTS_DIGITAUX[el.dataset.axsEl!]?.label ?? "Élément" } : null;
+  });
 
   useEffect(() => {
     fetch("/api/produits?limit=24&actif=true")
@@ -72,6 +93,10 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
   // config réellement enregistrée en base (pas aux réglages d'usine du
   // gabarit, qui effaceraient aussi tout ce qui avait déjà été sauvegardé
   // avant cette session d'édition).
+  const infoEl = selectedEl ? ELEMENTS_DIGITAUX[selectedEl] : null;
+  const texteEditable = selectedEl === "titre" || !!infoEl?.texte;
+  const texteActuel = selectedEl ? dc.textes?.[selectedEl] ?? (selectedEl === "titre" ? tenant.description || "" : infoEl?.texte ?? "") : "";
+
   const reinitialiser = () => {
     if (!originalConfig) return;
     set(() => originalConfig);
@@ -99,7 +124,22 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           <ShoppingBag size={13} /> Boutique digitale
         </div>
         <div className="flex items-center gap-2">
-          {tenant.statut !== "brouillon" && (
+          <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
+            {DEVICES.map(([d, Icon, label]) => (
+              <button key={d} onClick={() => setDevice(d)} title={label} aria-label={label} aria-pressed={device === d}
+                className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === d ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-800"}`}>
+                <Icon size={16} />
+              </button>
+            ))}
+          </div>
+          {tenant.statut === "brouillon" ? (
+            <button onClick={publier} disabled={publishing || criteresManquants.length > 0}
+              title={criteresManquants.length ? `Complète d'abord : ${criteresManquants.map((c) => c.label).join(", ")}` : "Rendre ma boutique visible en ligne"}
+              className="h-9 flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              {publishing ? <RefreshCw size={14} className="animate-spin" /> : <Rocket size={14} />}
+              {publishing ? "Publication…" : "Publier"}
+            </button>
+          ) : (
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 transition-all">
               <ExternalLink size={13} /> Visiter ma boutique
             </a>
@@ -107,17 +147,16 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
         </div>
       </header>
 
+      {bandeaux}
+
       {/* Barre secondaire — Prévisualisation / Réinitialiser / Enregistrer,
           au-dessus de l'aperçu, comme la référence Chariow. */}
       <div className="h-14 flex items-center justify-end gap-2 px-4 bg-white border-b border-gray-200 flex-shrink-0">
-        {/* ?preview=1 : la boutique reste en brouillon tant qu'elle n'est pas
-            publiée (app/(storefront)/[slug]/page.tsx bloque tout visiteur
-            normal) — sans ce paramètre, ce lien tombait sur une 404 pour
-            toute boutique pas encore publiée, c'est-à-dire la quasi-totalité
-            des boutiques en cours de construction. */}
-        <a href={`/${tenant.slug}?preview=1`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
-          <ExternalLink size={13} /> Prévisualisation
-        </a>
+        {tenant.statut !== "brouillon" && (
+          <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
+            <ExternalLink size={13} /> Prévisualisation
+          </a>
+        )}
         <button onClick={reinitialiser} disabled={!hasChanges} title="Annule les modifications non sauvegardées"
           className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent">
           <RefreshCw size={13} /> Réinitialiser
@@ -246,7 +285,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
             simplement défiler dans sa zone). */}
         <div className="flex-1 min-h-0 relative bg-[#EEF0F3]">
           <div className="h-full overflow-y-auto scrollbar-thin flex flex-col items-center p-6 gap-4">
-            <div className="w-full flex-shrink-0 flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2" style={{ maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+            <div className="w-full flex-shrink-0 flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2" style={{ maxWidth: DEVICE_WIDTH[device] }}>
               <span className="w-2 h-2 rounded-full bg-red-300" /><span className="w-2 h-2 rounded-full bg-yellow-300" /><span className="w-2 h-2 rounded-full bg-green-300" />
               <span className="text-[12px] text-gray-400 truncate ml-2">axso.shop/{tenant.slug}</span>
             </div>
@@ -254,7 +293,23 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
                 boutique va du header au footer, plus ou moins haute selon le
                 nombre de produits — c'est ce conteneur qui défile, jamais le
                 contenu qui se fait comprimer/couper. */}
-            <div className="w-full flex-shrink-0 bg-white rounded-xl shadow-sm overflow-hidden transition-all" style={{ width: DEVICE_WIDTH[device], maxWidth: device === "mobile" ? "420px" : "1024px" }}>
+            <div
+              ref={apercu}
+              onMouseMove={onMouseMove}
+              onMouseLeave={onMouseLeave}
+              // Capture : un clic choisit l'élément au lieu de suivre un lien / ouvrir un menu.
+              onClickCapture={(e) => {
+                const el = elementSous(e.target);
+                if (!el) return;
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedEl(el.dataset.axsEl!);
+              }}
+              className="relative w-full flex-shrink-0 bg-white rounded-xl shadow-sm transition-all"
+              style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}
+            >
+              {selectedEl && <style dangerouslySetInnerHTML={{ __html: cssSelection(selectedEl) }} />}
+              {survol}
               {produits === null ? (
                 <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
                   <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
@@ -276,22 +331,23 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
                 />
               )}
             </div>
-            {/* Espace réservé pour ne pas laisser le sélecteur d'appareil
-                (flottant, ci-dessous) cacher le bas de la boutique (pied de
-                page) quand on défile jusqu'en bas. */}
-            <div className="h-14 flex-shrink-0" aria-hidden />
-          </div>
-          {/* Sélecteur desktop/mobile flottant — toujours visible, ne défile
-              jamais avec le contenu (façon Chariow, voir d1-d3.png). */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5 shadow-md">
-            <button onClick={() => setDevice("desktop")} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === "desktop" ? "bg-[#F5A623]/20 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
-              <Monitor size={15} />
-            </button>
-            <button onClick={() => setDevice("mobile")} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device === "mobile" ? "bg-[#F5A623]/20 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
-              <Smartphone size={15} />
-            </button>
           </div>
         </div>
+
+        {selectedEl && infoEl && (
+          <PanneauElement
+            key={selectedEl}
+            titre={infoEl.label}
+            sousTitre="Vitrine digitale"
+            contenu={texteEditable ? { texte: texteActuel } : undefined}
+            onContenu={(patch) => patch.texte != null && setDc({ textes: { ...dc.textes, [selectedEl]: patch.texte } })}
+            styles={dc.elementStyles?.[selectedEl] ?? {}}
+            device={device}
+            onStyle={(etat, patch) => setDc({ elementStyles: majStyleElement(dc.elementStyles, selectedEl, etat, patch) })}
+            onReinitialiser={() => { const { [selectedEl]: _retire, ...reste } = dc.elementStyles ?? {}; setDc({ elementStyles: reste }); }}
+            onClose={() => setSelectedEl(null)}
+          />
+        )}
       </div>
     </div>
   );

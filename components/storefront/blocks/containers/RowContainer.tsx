@@ -10,7 +10,7 @@ export function RowContainer({ node, ctx }: { node: BlockNode; ctx: TreeRenderCt
     <div
       data-axs-id={node.id}
       style={blockStyleToCss(node.style)}
-      className={["flex flex-col sm:flex-row gap-6", node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
+      className={["flex flex-col @min-[640px]:flex-row gap-6", node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
       onClick={ctx.editable ? (e) => { e.stopPropagation(); ctx.onSelect?.(node.id); } : undefined}
     >
       <ResponsiveStyleTag nodeId={node.id} style={node.style} />

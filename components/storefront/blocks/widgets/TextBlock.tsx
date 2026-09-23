@@ -8,7 +8,7 @@ export function TextBlock({ config, colors, container, editable, onEditText }: B
   const texte = config.texte || "Votre texte ici — cliquez pour modifier.";
 
   return (
-    <div className={`py-2 ${container} mx-auto px-4 sm:px-6 lg:px-8 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
+    <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
       <InlineEditable
         as="p"
         value={texte}

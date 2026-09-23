@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { FormationPlayer } from "@/components/storefront/FormationPlayer";
 
 interface Props {
@@ -37,7 +37,7 @@ export default async function FormationAccessPage({ params }: Props) {
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || tenant.id !== acces.produit.tenantId) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c } = cfg;
 
   const leconIds = acces.produit.formation.chapitres.flatMap((ch) => ch.lecons.map((l) => l.id));

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   LogOut, LayoutList, Settings2, LayoutTemplate, Home, Monitor, Tablet, Smartphone,
@@ -21,6 +21,9 @@ import { MenuAjout, type ChoixAjout } from "./MenuAjout";
 import { Apercu } from "./Apercu";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "./decoupage";
+import { lireElement, modifierElement, appliquerContenu, selectionnerParent } from "./elements-dom";
+import { PanneauElement } from "../PanneauElement";
+import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Onglet = "sections" | "parametres" | "modeles";
@@ -58,7 +61,11 @@ export function BoutiqueBuilder(p: Props) {
   const { config, set, tenant, device } = p;
   const [onglet, setOnglet] = useState<Onglet>("sections");
   const [reglageOuvert, setReglageOuvert] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedIdBrut] = useState<string | null>(null);
+  // Élément d'une section de design (titre, bouton, image…) sélectionné dans
+  // l'aperçu ; selectedId est alors le bloc embed-html qui le contient.
+  const [selectedEl, setSelectedEl] = useState<string | null>(null);
+  const setSelectedId = useCallback((id: string | null | ((s: string | null) => string | null)) => { setSelectedEl(null); setSelectedIdBrut(id); }, []);
   const [ajout, setAjout] = useState<{ mode: "section"; zone: Zone; index: number } | { mode: "bloc"; sectionId: string } | null>(null);
 
   const tree = ordonnerParZone(config.builderTree ?? []);
@@ -124,6 +131,16 @@ export function BoutiqueBuilder(p: Props) {
       if (parent) deplacer(selection.id, parent.id, position.index + sens);
     }
   };
+
+  // ── Élément sélectionné dans une section de design ─────────────────────
+  const embed = selectedEl && selection?.type === "embed-html" ? selection : null;
+  const infoEl = useMemo(() => (embed && selectedEl ? lireElement(embed.config?.html || "", selectedEl) : null), [embed, selectedEl]);
+  const majEmbed = (fn: (cfg: Record<string, any>) => Record<string, any>) => {
+    if (!embed) return;
+    const id = embed.id;
+    setTree((t) => { const n = findNode(t, id); return n ? updateNodeConfig(t, id, fn(n.config ?? {})) : t; });
+  };
+  const sectionDe = (id: string) => tree.find((n) => n.id === id || !!findNode(n.children ?? [], id)) ?? null;
 
   const design = MANIFESTE_LIBRAIRIE.find((e) => typeof tenant.themeSlug === "string" && tenant.themeSlug.startsWith(`axso-design-${e.fichier.replace(".html", "")}-`));
   const reglage = p.reglages.find((r) => r.id === reglageOuvert);
@@ -266,10 +283,33 @@ export function BoutiqueBuilder(p: Props) {
           onSelect={setSelectedId}
           onChangeConfig={(id, patch) => setTree((t) => updateNodeConfig(t, id, patch))}
           onAjouterSection={(zone, index) => { setOnglet("sections"); setAjout({ mode: "section", zone, index }); }}
+          selectedEl={selectedEl}
+          onSelectElement={(noeudId, elId) => { setSelectedIdBrut(noeudId); setSelectedEl(elId); }}
         />
 
         {/* ── Réglages de l'élément sélectionné ── */}
-        {selection && (
+        {embed && selectedEl && infoEl && (
+          <PanneauElement
+            key={selectedEl}
+            titre={infoEl.nom}
+            sousTitre={`Dans « ${nomNoeud(sectionDe(embed.id) ?? embed)} »`}
+            contenu={{ texte: infoEl.texte, lien: infoEl.lien, image: infoEl.image, alt: infoEl.alt, placeholder: infoEl.placeholder, texteEnLigne: infoEl.texteEnLigne }}
+            onContenu={(patch) => majEmbed((c) => ({ html: modifierElement(c.html || "", selectedEl, (el) => appliquerContenu(el, patch)) }))}
+            styles={(embed.config?.elementStyles as ElementStyles | undefined)?.[selectedEl] ?? {}}
+            device={device}
+            onStyle={(etat, patch) => majEmbed((c) => ({ elementStyles: majStyleElement(c.elementStyles, selectedEl, etat, patch) }))}
+            onReinitialiser={() => majEmbed((c) => { const { [selectedEl]: _retire, ...reste } = (c.elementStyles ?? {}) as ElementStyles; return { elementStyles: reste }; })}
+            onParent={() => {
+              const parent = selectionnerParent(embed.config?.html || "", selectedEl);
+              if (!parent) { const sec = sectionDe(embed.id); setSelectedId(sec?.id ?? null); return; }
+              majEmbed(() => ({ html: parent.html }));
+              setSelectedEl(parent.id);
+            }}
+            onSupprimer={() => { majEmbed((c) => ({ html: modifierElement(c.html || "", selectedEl, (el) => el.remove()) })); setSelectedEl(null); }}
+            onClose={() => setSelectedEl(null)}
+          />
+        )}
+        {selection && !(embed && selectedEl && infoEl) && (
           <BlockStylePanel
             key={selection.id}
             node={selection}

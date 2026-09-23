@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Trash2, X, Monitor, Tablet, Smartphone, ArrowUp, ArrowDown, Plus } from "lucide-react";
 import type { BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
+import { FONTS } from "@/lib/theme-fonts";
 
 type Tab = "contenu" | "style" | "avance";
 type Device = "desktop" | "tablet" | "mobile";
@@ -322,8 +323,8 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
       <div>
         <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">Espacement</p>
         <div className="grid grid-cols-2 gap-2.5">
-          {(["pt", "pb", "pl", "pr", "mt", "mb"] as const).map((k) => (
-            <Field key={k} label={{ pt: "Haut (padding)", pb: "Bas (padding)", pl: "Gauche (padding)", pr: "Droite (padding)", mt: "Haut (marge)", mb: "Bas (marge)" }[k]}>
+          {(["pt", "pb", "pl", "pr", "mt", "mb", "ml", "mr"] as const).map((k) => (
+            <Field key={k} label={{ pt: "Haut (padding)", pb: "Bas (padding)", pl: "Gauche (padding)", pr: "Droite (padding)", mt: "Haut (marge)", mb: "Bas (marge)", ml: "Gauche (marge)", mr: "Droite (marge)" }[k]}>
               <input type="text" value={spacing[k] || ""} onChange={(e) => onChange({ spacing: { ...spacing, [k]: e.target.value } })}
                 placeholder="24px" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
             </Field>
@@ -335,7 +336,7 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
         <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">Fond</p>
         <div className="space-y-2.5">
           <Field label="Couleur">
-            <input type="color" value={background.color || "#ffffff"} onChange={(e) => onChange({ background: { ...background, color: e.target.value } })} className="w-full h-9 rounded-md border border-gray-200" />
+            <CouleurEffacable value={background.color} onChange={(v) => onChange({ background: { ...background, color: v || undefined } })} />
           </Field>
           <Field label="Image (URL)">
             <input type="text" value={background.image || ""} onChange={(e) => onChange({ background: { ...background, image: e.target.value } })}
@@ -352,7 +353,7 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
         <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">Typographie</p>
         <div className="space-y-2.5">
           <Field label="Couleur du texte">
-            <input type="color" value={typography.color || "#000000"} onChange={(e) => onChange({ typography: { ...typography, color: e.target.value } })} className="w-full h-9 rounded-md border border-gray-200" />
+            <CouleurEffacable value={typography.color} onChange={(v) => onChange({ typography: { ...typography, color: v || undefined } })} />
           </Field>
           <div className="grid grid-cols-2 gap-2.5">
             <Field label="Taille">
@@ -369,6 +370,40 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
               </select>
             </Field>
           </div>
+          <Field label="Police">
+            <select value={typography.police || ""} onChange={(e) => onChange({ typography: { ...typography, police: e.target.value || undefined } })}
+              className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none">
+              <option value="">Police du thème</option>
+              {[...new Set(FONTS.map((f) => f.cat))].map((cat) => (
+                <optgroup key={cat} label={cat}>{FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{f.label}</option>)}</optgroup>
+              ))}
+            </select>
+          </Field>
+          <div className="grid grid-cols-3 gap-2.5">
+            <Field label="Graisse">
+              <select value={typography.poids || ""} onChange={(e) => onChange({ typography: { ...typography, poids: e.target.value || undefined } })}
+                className="w-full px-2 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none">
+                <option value="">Hérité</option>
+                {["300", "400", "500", "600", "700", "800", "900"].map((v) => <option key={v} value={v}>{v}</option>)}
+              </select>
+            </Field>
+            <Field label="Interligne">
+              <input type="text" value={typography.interligne || ""} onChange={(e) => onChange({ typography: { ...typography, interligne: e.target.value } })}
+                placeholder="1.5" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
+            </Field>
+            <Field label="Lettres">
+              <input type="text" value={typography.espacement || ""} onChange={(e) => onChange({ typography: { ...typography, espacement: e.target.value } })}
+                placeholder="0.02em" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">Au survol</p>
+        <div className="space-y-2.5">
+          <Field label="Couleur du texte"><CouleurEffacable value={style.hover?.color} onChange={(v) => onChange({ hover: { ...style.hover, color: v || undefined } })} /></Field>
+          <Field label="Fond"><CouleurEffacable value={style.hover?.background} onChange={(v) => onChange({ hover: { ...style.hover, background: v || undefined } })} /></Field>
         </div>
       </div>
 
@@ -385,7 +420,7 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
           </Field>
         </div>
         <Field label="Couleur">
-          <input type="color" value={border.color || "#e5e7eb"} onChange={(e) => onChange({ border: { ...border, color: e.target.value } })} className="w-full h-9 rounded-md border border-gray-200 mt-2.5" />
+          <CouleurEffacable value={border.color} onChange={(v) => onChange({ border: { ...border, color: v || undefined } })} />
         </Field>
       </div>
 
@@ -393,6 +428,21 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
         <input type="text" value={style.width || ""} onChange={(e) => onChange({ width: e.target.value })}
           placeholder="50%" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
       </Field>
+    </div>
+  );
+}
+
+// Couleur facultative : vide = valeur héritée (un <input type="color"> seul ne
+// peut pas être vide et affichait une fausse valeur par défaut).
+function CouleurEffacable({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="relative w-9 h-9 flex-shrink-0 rounded-md border border-gray-200 overflow-hidden" style={{ background: value || "repeating-conic-gradient(#EEE 0 25%, #FFF 0 50%) 0 0 / 10px 10px" }}>
+        <input type="color" value={/^#[0-9a-f]{6}$/i.test(value ?? "") ? value : "#000000"} onChange={(e) => onChange(e.target.value)} aria-label="Choisir une couleur" className="absolute inset-0 opacity-0 cursor-pointer" />
+      </span>
+      <input type="text" value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder="Héritée"
+        className="flex-1 min-w-0 px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
+      {value && <button type="button" onClick={() => onChange("")} aria-label="Retirer la couleur" className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"><X size={14} /></button>}
     </div>
   );
 }

@@ -2,11 +2,12 @@ export const dynamic = "force-dynamic";
 
 // Storefront — Page panier
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CartContent } from "@/components/storefront/CartContent";
 import { ImportedLiteralCartShell } from "@/components/storefront/templates/ImportedLiteralCartShell";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -15,9 +16,9 @@ interface Props {
 export default async function PanierPage({ params }: Props) {
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
-  if (!tenant || tenant.statut !== "active") notFound();
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const theme = cfg.colors;
 
   if (cfg.builderHtmlPanierChrome) {

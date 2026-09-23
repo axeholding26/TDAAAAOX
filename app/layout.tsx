@@ -32,7 +32,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={poppins.variable}>
+    // data-scroll-behavior : globals.css met scroll-behavior:smooth sur <html> ; Next le désactive
+    // pendant les changements de page (sinon avertissement à chaque chargement).
+    <html lang="fr" className={poppins.variable} data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

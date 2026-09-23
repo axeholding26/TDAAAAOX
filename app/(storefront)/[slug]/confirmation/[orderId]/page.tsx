@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
@@ -55,7 +55,7 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
   });
   if (!commande || commande.tenantId !== tenant.id) notFound();
 
-  const themeConfig = await resolveThemeConfigAsync(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
+  const themeConfig = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const theme = themeConfig.colors;
 
   const paye = commande.paiementStatut === "completed";

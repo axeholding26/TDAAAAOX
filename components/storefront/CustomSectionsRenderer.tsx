@@ -20,7 +20,8 @@ interface Props {
 
 export function CustomSectionsRenderer({ sections, slug, colors, container, sectionPy }: Props) {
   return (
-    <>
+    // Conteneur de référence : les blocs s'adaptent à sa largeur (@container, voir widgets).
+    <div style={{ containerType: "inline-size" }}>
       {(sections ?? [])
         .filter((s: any) => s.actif !== false)
         .sort((a: any, b: any) => (a.ordre ?? 99) - (b.ordre ?? 99))
@@ -39,6 +40,6 @@ export function CustomSectionsRenderer({ sections, slug, colors, container, sect
             />
           );
         })}
-    </>
+    </div>
   );
 }

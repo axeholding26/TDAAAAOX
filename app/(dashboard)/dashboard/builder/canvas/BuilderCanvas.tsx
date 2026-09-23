@@ -175,6 +175,9 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, var
           style={{ backgroundColor: config.colors.fond, color: config.colors.texte, width: DEVICE_WIDTH[device], maxWidth: "100%" }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Conteneur de référence des blocs (@container) — sur un enfant stable de
+              la boîte, jamais sur la boîte elle-même (voir la note ci-dessus). */}
+          <div style={{ containerType: "inline-size" }}>
           {tree.length === 0 ? (
             config.builderHtml ? (
               // Import automatique en cours (voir l'effet ci-dessus) — ne
@@ -220,6 +223,7 @@ export function BuilderCanvas({ config, set, slug, device, onSyncWithServer, var
               ))}
             </>
           )}
+          </div>
         </div>
       </div>
 

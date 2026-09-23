@@ -3,6 +3,7 @@
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { MARQUEUR_SLOT } from "@/lib/theme-import-clone";
 import type { ThemeConfig } from "@/lib/theme-config";
+import { cssDesignPersonnalise } from "@/lib/scope-css";
 import type { ParametresCommande } from "@/components/storefront/CheckoutForm";
 
 // Commande (checkout) d'un thème importé/généré tel quel — même principe que
@@ -28,11 +29,12 @@ export function ImportedLiteralCheckoutShell({ cfg, slug, devise, tenantId, nomB
   const theme = { fond: cfg.colors.fond, accent: cfg.colors.accent, texte: cfg.colors.texte, surface: cfg.colors.surface };
 
   return (
-    <>
-      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cfg.builderCss }} />}
-      <div dangerouslySetInnerHTML={{ __html: avant }} />
+    // Conteneur de référence des règles responsives du design (@container, voir lib/scope-css.ts).
+    <div style={{ containerType: "inline-size" }}>
+      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cssDesignPersonnalise(cfg as any) }} />}
+      <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: avant }} />
       <CheckoutForm theme={theme} slug={slug} devise={devise} tenantId={tenantId} nomBoutique={nomBoutique} logoUrl={logoUrl} parametresCommande={parametresCommande} />
-      {apres && <div dangerouslySetInnerHTML={{ __html: apres }} />}
-    </>
+      {apres && <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: apres }} />}
+    </div>
   );
 }

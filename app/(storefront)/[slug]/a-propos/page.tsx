@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 
@@ -32,9 +33,9 @@ export default async function AProposPage({ params }: Props) {
     where: { slug },
     include: { collections: { where: { actif: true }, take: 6, orderBy: { createdAt: "desc" } } },
   });
-  if (!tenant || tenant.statut !== "active") notFound();
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const c = cfg.colors;
   const layoutCfg = cfg.layout ?? {};
   const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;

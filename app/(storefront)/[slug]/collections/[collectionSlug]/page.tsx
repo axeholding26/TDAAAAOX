@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
@@ -21,12 +22,12 @@ export default async function CollectionPage({ params }: Props) {
     where: { slug },
     include: { collections: { where: { actif: true }, orderBy: { createdAt: "desc" } } },
   });
-  if (!tenant || tenant.statut !== "active") notFound();
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const collection = tenant.collections.find((c) => c.slug === collectionSlug);
   if (!collection) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
   const taux = tenant.commissionRate ?? 0.06;
 

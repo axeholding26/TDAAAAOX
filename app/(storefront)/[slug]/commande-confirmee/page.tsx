@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
 import { ImportedLiteralConfirmationShell } from "@/components/storefront/templates/ImportedLiteralConfirmationShell";
 import { Lock } from "lucide-react";
@@ -29,7 +29,7 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
   });
   if (!commande) notFound();
 
-  const cfg = await resolveThemeConfigAsync(
+  const cfg = await resolveConfigVitrine(
     tenant.themeId,
     tenant.id,
     (tenant.themeConfig as Record<string, any>) || {}

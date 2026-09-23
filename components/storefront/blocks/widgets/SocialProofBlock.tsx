@@ -5,7 +5,7 @@ export function SocialProofBlock({ id, config, colors: c }: BlockRenderProps) {
   const certs: string[] = config?.certifications ?? [];
   return (
     <section data-axs-id={id} className="py-10" style={{ background: `${c.accent}06` }}>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-center gap-8 text-center">
+      <div className="max-w-5xl mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 flex flex-wrap items-center justify-center gap-8 text-center">
         {config?.note && (
           <div className="flex items-center gap-1.5">
             <Star size={16} fill={c.accent} style={{ color: c.accent }} />

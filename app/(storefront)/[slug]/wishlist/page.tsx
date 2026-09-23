@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistGrid } from "@/components/storefront/WishlistGrid";
 
@@ -17,9 +18,9 @@ export default async function WishlistPage({ params }: Props) {
     where: { slug },
     include: { collections: { where: { actif: true }, orderBy: { createdAt: "desc" } } },
   });
-  if (!tenant || tenant.statut !== "active") notFound();
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
   const layoutCfg = cfg.layout ?? {};

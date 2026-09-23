@@ -323,18 +323,6 @@ export default function BuilderPage() {
     </div>
   );
 
-  // Boutique 100% digitale — Constructeur entièrement séparé (façon
-  // Chariow), plus le Constructeur libre par blocs. Toute la plomberie de
-  // chargement/sauvegarde/undo ci-dessus reste partagée (même API, même
-  // debounce d'auto-save) ; seule l'interface change.
-  if (config.modeBoutique === "digital") {
-    return (
-      <DigitalBuilder
-        tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
-        handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
-      />
-    );
-  }
 
   // Un seul constructeur (arbre de blocs, dnd-kit) — plus de bascule
   // classique/libre : les deux anciens modes étaient deux systèmes
@@ -400,6 +388,20 @@ export default function BuilderPage() {
       )}
     </>
   );
+
+  // Boutique 100% digitale — Constructeur entièrement séparé (façon
+  // Chariow), plus le Constructeur libre par blocs. Toute la plomberie de
+  // chargement/sauvegarde/undo ci-dessus reste partagée (même API, même
+  // debounce d'auto-save) ; seule l'interface change.
+  if (config.modeBoutique === "digital") {
+    return (
+      <DigitalBuilder
+        tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
+        handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
+        publier={publierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
+      />
+    );
+  }
 
   if (varianteConstructeur === "boutique") {
     return (

@@ -1,11 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
-import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { auth } from "@/lib/auth";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
@@ -24,7 +24,6 @@ import { DigitalCatalogPage } from "@/components/storefront/digital/DigitalCatal
 
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ preview?: string }>;
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -40,9 +39,8 @@ export async function generateMetadata({ params }: Props) {
 
 const DEFAULT_SECTION_ORDER = ["hero", "confiance", "vedettes", "collections", "about", "promo", "faq", "avis", "newsletter"];
 
-export default async function StorefrontPage({ params, searchParams }: Props) {
+export default async function StorefrontPage({ params }: Props) {
   const { slug } = await params;
-  const { preview } = await searchParams;
 
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
@@ -59,17 +57,10 @@ export default async function StorefrontPage({ params, searchParams }: Props) {
 
   if (!tenant) notFound();
 
-  // Boutique pas encore publiée (brouillon) — normalement invisible, SAUF
-  // pour son propriétaire via le bouton "Prévisualisation" du Constructeur
-  // (?preview=1), qui doit pouvoir voir sa boutique avant de la publier.
-  // Jamais un accès public : vérifié contre la session, pas juste le flag.
-  if (tenant.statut !== "active") {
-    const session = preview === "1" ? await auth() : null;
-    const tenantIdSession = (session?.user as any)?.tenantId;
-    if (tenantIdSession !== tenant.id) notFound();
-  }
+  // Pas encore publiée : 404 pour le public (message « publie ta boutique » pour l'équipe, voir layout).
+  if (!(await boutiqueVisible(tenant))) notFound();
 
-  const cfg = await resolveThemeConfigAsync(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
+  const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
 
   // Boutique 100% digitale — rendu entièrement séparé (Constructeur dédié,
   // voir lib/theme-config.ts::ThemeDigitalConfig), jamais le socle catalogue
