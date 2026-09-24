@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
-  Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight,
+  Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight, Eye, EyeOff,
   X, Bell, Info, AlertCircle, Wand2, Star, Package, Download,
   type LucideIcon,
 } from "lucide-react";
@@ -771,6 +771,7 @@ function CompteForm({ onSubmit, loading, erreur }: {
   onSubmit:(d:CompteData)=>void; loading:boolean; erreur?:string;
 }) {
   const { register, handleSubmit, formState:{errors} } = useForm<CompteData>({ resolver:zodResolver(schemaCompte) });
+  const [voirMdp,setVoirMdp] = useState(false);
   const fields = [
     { key:"name"     as const, Icon:User,  label:"Ton prénom",    type:"text",     ph:"Aminata" },
     { key:"email"    as const, Icon:Mail,  label:"Adresse email", type:"email",    ph:"aminata@example.com" },
@@ -789,7 +790,15 @@ function CompteForm({ onSubmit, loading, erreur }: {
               <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
                 <f.Icon size={14} color={MUTED}/>
               </div>
-              <input {...register(f.key)} type={f.type} placeholder={f.ph} className="field"/>
+              <input {...register(f.key)} type={f.key==="password"&&voirMdp?"text":f.type} placeholder={f.ph} className="field"
+                style={f.key==="password"?{paddingRight:44}:undefined}/>
+              {f.key==="password" && (
+                <button type="button" onClick={()=>setVoirMdp(v=>!v)}
+                  aria-label={voirMdp?"Masquer le mot de passe":"Afficher le mot de passe"}
+                  style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", padding:4, cursor:"pointer", display:"flex" }}>
+                  {voirMdp ? <EyeOff size={16} color={MUTED}/> : <Eye size={16} color={MUTED}/>}
+                </button>
+              )}
             </div>
             {errors[f.key] && (
               <p style={{ color:ERROR, fontSize:11, marginTop:4, fontFamily:"'Inter',sans-serif" }}>
@@ -861,7 +870,7 @@ export default function InscriptionPage() {
   },[nomInput,toast]);
 
   const submitPays = useCallback((code:string,nom:string,dev:string)=>{
-    setPaysCode(code); setPaysNom(nom); setDevise(dev);
+    setPaysCode(code); setPaysNom(nom); setDevise(dev); setErreur("");
     toast("info",`Marché ${nom} détecté — devise ${dev} 🌍`);
     setTimeout(()=>setPhase("analyse"),600);
   },[toast]);
@@ -891,12 +900,14 @@ export default function InscriptionPage() {
         toast("success","4 designs personnalisés prêts — choisis ton site !");
         setPhase("plan");
       } else {
+        // Échec : on reste sur la question pays (re-cliquer relance l'analyse)
+        // au lieu de renvoyer le marchand à "Dis-moi ce que tu vends".
         setErreur(data.message||"Erreur d'analyse.");
         toast("error","Erreur lors de l'analyse. Réessaie.");
-        setPhase("q-vente");
+        setPhase("q-pays");
       }
     })
-    .catch(()=>{ setErreur("Erreur réseau."); toast("error","Erreur réseau."); setPhase("q-vente"); });
+    .catch(()=>{ setErreur("Erreur réseau."); toast("error","Erreur réseau."); setPhase("q-pays"); });
   },[phase,vente,nomChoisi,paysCode,paysNom,typeBoutique,toast]);
 
   const confirmPlan = useCallback(()=>{
@@ -1218,6 +1229,11 @@ export default function InscriptionPage() {
               <AxiaMsg delay={80}>
                 Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
               </AxiaMsg>
+            )}
+            {phase==="q-pays" && erreur && (
+              <div className="msg-in" style={{ paddingLeft:47, fontSize:13, color:"#DC2626" }}>
+                {erreur} — choisis à nouveau ton pays pour relancer l'analyse.
+              </div>
             )}
             {phase==="q-pays" && <PaysSelector onSelect={submitPays}/>}
             {paysNom&&phase!=="q-pays" && <UserMsg>📍 {paysNom}</UserMsg>}

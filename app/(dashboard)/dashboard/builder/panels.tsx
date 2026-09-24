@@ -2,7 +2,7 @@
 
 // Panneaux de réglages du Constructeur (couleurs, typo, mise en page, pages
 // annexes…) — partagés par le constructeur boutique (boutique/) et landing.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Save, Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft,
@@ -698,6 +698,15 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
 export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: () => Promise<void> }) {
   const [applying, setApplying] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [produits, setProduits] = useState<{ nom: string; prix: number; description?: string }[]>([]);
+
+  // Vrais produits de la boutique injectés dans les aperçus (vide → produits de démo du gabarit).
+  useEffect(() => {
+    fetch("/api/produits?limit=6").then((r) => r.json())
+      .then((d) => setProduits((d.produits ?? []).map((p: any) => ({ nom: p.nom, prix: p.prix, description: p.description ?? "" }))))
+      .catch(() => {});
+  }, []);
+  const apercuParams = `&nom=${encodeURIComponent(tenant?.nomBoutique || "Ma Boutique")}&devise=${encodeURIComponent(tenant?.devise || "XAF")}&produits=${encodeURIComponent(JSON.stringify(produits))}`;
 
   function estActif(fichier: string) {
     // Theme.slug suit la convention `axso-design-<fichier sans .html>-<timestamp>`
@@ -740,9 +749,17 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
               disabled={busy}
               className={`relative rounded-xl border overflow-hidden text-left transition-all ${actif ? "border-[#F5A623] ring-1 ring-[#F5A623]" : "border-gray-200 hover:border-gray-300"} ${busy ? "opacity-60" : ""}`}
             >
-              <div className="h-14 flex items-center justify-center gap-1" style={{ background: `linear-gradient(135deg, ${e.couleurs.fond || "#f5f5f5"}, ${e.couleurs.surface || e.couleurs.fond || "#eee"})` }}>
-                <span className="w-3 h-3 rounded-full border border-white/60" style={{ backgroundColor: e.couleurs.accent || "#F5A623" }} />
-                <span className="w-3 h-3 rounded-full border border-white/60" style={{ backgroundColor: e.couleurs.texte || "#111" }} />
+              {/* Aperçu réel du design (même rendu que les propositions de l'inscription) */}
+              <div className="relative h-[115px] overflow-hidden" style={{ background: e.couleurs.fond || "#f5f5f5" }}>
+                <iframe
+                  src={`/api/preview-theme?fichier=${encodeURIComponent(e.fichier)}${apercuParams}`}
+                  title={e.nom}
+                  loading="lazy"
+                  sandbox="allow-same-origin allow-scripts"
+                  scrolling="no"
+                  className="absolute top-0 left-0 border-0 pointer-events-none origin-top-left"
+                  style={{ width: 960, height: 720, transform: "scale(0.16)" }}
+                />
               </div>
               <div className="px-2 py-1.5">
                 <p className="text-[13px] font-semibold text-gray-800 truncate">{e.nom}</p>

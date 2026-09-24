@@ -11,6 +11,9 @@ import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 
+// Analyse IA (10-30 s) + création avec images : le défaut serverless coupe avant.
+export const maxDuration = 60;
+
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
   description: z.string().min(10),
