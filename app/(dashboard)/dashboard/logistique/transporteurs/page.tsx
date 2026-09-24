@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Truck, ToggleRight, KeyRound, Settings } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const TRANSPORTEURS_TUTORIAL_STEPS = [
   { Icon: Truck,        titre: "Tes partenaires de livraison", description: "Chaque transporteur est listé avec ses zones de couverture et son logo." },
   { Icon: ToggleRight,  titre: "Active un transporteur",       description: "Bascule l'interrupteur pour le rendre disponible lors de la création d'une livraison." },
@@ -16,6 +17,7 @@ type Transporteur = {
 };
 
 export default function TransporteursPage() {
+  const { devise, fmt } = useDevise();
   const [liste, setListe] = useState<Transporteur[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);
@@ -85,7 +87,7 @@ export default function TransporteursPage() {
                   placeholder="Clé API (laisser vide pour ne pas changer)"
                   value={apiKey} onChange={e => setApiKey(e.target.value)} type="password" />
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50"
-                  placeholder="Tarif fixe XAF (optionnel)" type="number"
+                  placeholder={`Tarif fixe ${devise} (optionnel)`} type="number"
                   value={tarif} onChange={e => setTarif(e.target.value)} />
                 <div className="flex gap-2">
                   <button onClick={() => saveConfig(t.code)} disabled={saving}

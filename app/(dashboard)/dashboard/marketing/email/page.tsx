@@ -19,7 +19,7 @@ interface Campagne {
 
 const SEGMENTS = [
   { value: "tous",     label: "Tous les clients",          Icon: Users    },
-  { value: "vip",      label: "VIP (≥ 50 000 XAF dépensés)", Icon: Gem   },
+  { value: "vip",      label: "VIP (≥ 50 000 dépensés)", Icon: Gem   },
   { value: "nouveaux", label: "Nouveaux (≤ 1 commande)",   Icon: UserPlus },
   { value: "inactifs", label: "Inactifs (30+ jours)",      Icon: Moon     },
 ];

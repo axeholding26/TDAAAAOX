@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const OBJECTIFS_TUTORIAL_STEPS = [
   { Icon: Target,     titre: "4 types d'objectifs", description: "Chiffre d'affaires, commandes, nouveaux clients ou panier moyen — choisis le type qui compte le plus pour ta boutique." },
   { Icon: Plus,       titre: "Fixe ta cible",        description: "Donne un titre, une valeur à atteindre et une date limite, puis clique \"Nouvel objectif\" pour te lancer." },
@@ -49,10 +50,11 @@ function formatValeur(v: number, type: TypeObjectif, devise: string) {
 }
 
 export default function ObjectifsPage() {
+  const { devise, fmt } = useDevise();
   const [objectifs, setObjectifs] = useState<Objectif[] | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ type: "ca" as TypeObjectif, titre: "", cible: "", devise: "XAF", deadline: "" });
+  const [form, setForm] = useState({ type: "ca" as TypeObjectif, titre: "", cible: "", devise, deadline: "" });
 
   function charger() {
     fetch("/api/objectifs").then(r => r.json()).then(d => setObjectifs(d.objectifs ?? []));
@@ -75,7 +77,7 @@ export default function ObjectifsPage() {
       if (!res.ok) throw new Error(data.error ?? "Erreur");
       toast.success("Objectif créé");
       setShowForm(false);
-      setForm({ type: "ca", titre: "", cible: "", devise: "XAF", deadline: "" });
+      setForm({ type: "ca", titre: "", cible: "", devise, deadline: "" });
       charger();
     } catch (e: any) {
       toast.error(e.message ?? "Erreur lors de la création");
@@ -146,7 +148,7 @@ export default function ObjectifsPage() {
           <div>
             <label className="ax-label block mb-1.5">Titre</label>
             <input value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))}
-              placeholder="Ex : Atteindre 1M FCFA ce mois-ci"
+              placeholder={`Ex : Atteindre 1 000 000 ${devise} ce mois-ci`}
               className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#F5A623]" />
           </div>
 

@@ -15,6 +15,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { agentConstructeurLibre } from "@/lib/gemini";
 import { validerActions, applyAgentActions } from "@/lib/agent-actions";
+import { SECTIONS_FICHE, TYPES_FICHE, LAYOUTS_FICHE, appliquerActionFiche, resumerFiche, type ActionFiche } from "@/lib/fiche-produit";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -214,6 +215,39 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
         instruction: { type: "string", description: "La demande du marchand reformulée clairement, avec tout le contexte utile (ex: \"mets le titre principal en plus grand et centré\", \"ajoute une section avec 3 avantages : livraison rapide, paiement sécurisé, support 24/7\")" },
       },
       required: ["instruction"],
+    },
+  },
+  {
+    name: "modifier_fiche_produit",
+    tier: "palier1",
+    // Mêmes opérations que le panneau « Fiche produit » du Constructeur (lib/fiche-produit.ts).
+    description: `Modifie la FICHE PRODUIT (page de chaque produit, commune à tous les produits) exactement comme le panneau « Fiche produit » du Constructeur : ajouter/supprimer/déplacer/masquer/afficher une section, modifier ses options (config) ou son style, changer la mise en page. Appelle d'abord avec actions=[] pour lire l'ordre et les ids actuels. Plusieurs actions possibles en un appel, appliquées dans l'ordre. `
+      + `Types de section et options de config : ${TYPES_FICHE.map((t) => `${t}{${Object.keys(SECTIONS_FICHE[t].defaut()).join(",")}}`).join(" ; ")}. `
+      + `Style (action styliser) : bgColor, textColor (hex), paddingY (none|sm|md|lg|xl), marginY (none|sm|md|lg), maxWidth (full|medium|narrow), align (left|center), fontScale (sm|md|lg|xl). `
+      + `Mises en page : ${LAYOUTS_FICHE.join(", ")}. Les sections de base (gallery, info, variants, quantity, trust, description, reviews, similar) se masquent mais ne se suppriment pas ; une seule section par type sauf richtext, features, banner, video. `
+      + `"section" = id OU type de la section. index = position 0-based dans la liste.`,
+    parameters: {
+      type: "object" as const,
+      properties: {
+        actions: {
+          type: "array",
+          description: "Liste d'actions à appliquer (vide = lire la fiche actuelle).",
+          items: {
+            type: "object",
+            properties: {
+              action: { type: "string", enum: ["ajouter", "supprimer", "deplacer", "afficher", "masquer", "configurer", "styliser", "mise_en_page"] },
+              type: { type: "string", description: "Type de section (action ajouter)" },
+              section: { type: "string", description: "Id ou type de la section visée" },
+              index: { type: "number", description: "Position (ajouter, deplacer)" },
+              config: { type: "object", description: "Options à fusionner (ajouter, configurer)" },
+              style: { type: "object", description: "Style à fusionner (styliser)" },
+              layout: { type: "string", enum: LAYOUTS_FICHE },
+            },
+            required: ["action"],
+          },
+        },
+      },
+      required: ["actions"],
     },
   },
   // ─── MARKETING ────────────────────────────────────────────────────────────
@@ -1031,6 +1065,30 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         return { succes: true, resultat: `✅ ${resume}` };
       }
 
+      case "modifier_fiche_produit": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, themeConfig: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const config = (tenant.themeConfig as any) || {};
+        const actions: ActionFiche[] = Array.isArray(args.actions) ? args.actions : [];
+        let pp = config.productPage ?? null;
+        const faits: string[] = [];
+        for (const a of actions) {
+          try {
+            pp = appliquerActionFiche(pp, a).pp;
+            faits.push(`✓ ${a.action}${"section" in a && a.section ? ` ${a.section}` : ""}${"type" in a && a.type ? ` ${a.type}` : ""}`);
+          } catch (e: any) {
+            // Rien n'est enregistré si une action échoue : état toujours cohérent.
+            return { succes: false, resultat: `${e.message}${faits.length ? ` (aucune modification enregistrée ; actions valides avant l'erreur : ${faits.join(", ")})` : ""}\n\nFiche actuelle :\n${resumerFiche(config.productPage)}` };
+          }
+        }
+        if (actions.length) {
+          await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...config, productPage: pp } } });
+          // Invalidation du cache vitrine : sans effet (et sans erreur) hors requête Next, ex. tâche planifiée.
+          try { (await import("next/cache")).revalidatePath(`/${tenant.slug}`, "layout"); } catch {}
+        }
+        return { succes: true, resultat: `${actions.length ? `✅ Fiche produit mise à jour (${faits.join(", ")}).\n\n` : ""}${resumerFiche(pp)}` };
+      }
+
       case "creer_code_promo": {
         const exists = await prisma.codePromo.findUnique({ where: { tenantId_code: { tenantId, code: args.code.toUpperCase() } } });
         if (exists) return { succes: false, resultat: `Code "${args.code.toUpperCase()}" existe déjà` };
@@ -1462,12 +1520,14 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
           data: { tenantId, affilieurId: args.affilieurId, montant: args.montant, methode: args.methode ?? "mobile_money", telephone: args.telephone, notes: args.notes },
         }).catch((e: any) => ({ error: e.message }));
         if ((paiement as any).error) return { succes: false, resultat: `Erreur: ${(paiement as any).error}` };
-        return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} XAF enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
+        const devP = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XAF";
+        return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} ${devP} enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
       }
 
       case "calculer_tva": {
-        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true } });
-        const juridiction = args.juridiction ?? "CM";
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true, pays: true, devise: true } });
+        const juridiction = args.juridiction ?? tenant?.pays ?? "CM";
+        const dev = tenant?.devise ?? "XAF";
         const TVA_RATES: Record<string, { taux: number; nom: string; incluse: boolean }> = {
           CM: { taux: 0.1925, nom: "TVA Cameroun (19,25%)", incluse: true },
           CI: { taux: 0.18, nom: "TVA Côte d'Ivoire (18%)", incluse: true },
@@ -1482,7 +1542,7 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         const montant = args.montant;
         const montantHT = reg.incluse ? montant / (1 + reg.taux) : montant;
         const montantTVA = montant - montantHT;
-        return { succes: true, resultat: `TVA ${juridiction} — ${reg.nom}\nMontant TTC: ${montant.toLocaleString()} XAF\nMontant HT: ${Math.round(montantHT).toLocaleString()} XAF\nTVA: ${Math.round(montantTVA).toLocaleString()} XAF (${Math.round(reg.taux * 100)}%)` };
+        return { succes: true, resultat: `TVA ${juridiction} — ${reg.nom}\nMontant TTC: ${montant.toLocaleString()} ${dev}\nMontant HT: ${Math.round(montantHT).toLocaleString()} ${dev}\nTVA: ${Math.round(montantTVA).toLocaleString()} ${dev} (${Math.round(reg.taux * 100)}%)` };
       }
 
       case "sync_fournisseurs": {

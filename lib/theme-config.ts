@@ -218,15 +218,18 @@ export interface ThemeSections {
 // ─── Page produit — sections style Shopify ───────────────────────────────────
 export type ProductPageSectionType =
   | "gallery" | "info" | "variants" | "quantity" | "trust" | "description" | "reviews" | "similar"
-  | "richtext" | "banner" | "video" | "faq" | "specs" | "countdown" | "social";
+  | "richtext" | "banner" | "video" | "faq" | "specs" | "countdown" | "social"
+  | "features" | "howto" | "ingredients" | "testimonials" | "sizeguide" | "guarantee" | "bundle" | "comparison";
 
 // Style personnalisable par section de fiche produit (fond, couleurs, espacement, largeur)
 export interface ProductPageSectionStyle {
   bgColor?: string;
   textColor?: string;
   paddingY?: "none" | "sm" | "md" | "lg" | "xl";
+  marginY?: "none" | "sm" | "md" | "lg";
   maxWidth?: "full" | "medium" | "narrow";
   align?: "left" | "center";
+  fontScale?: "sm" | "md" | "lg" | "xl"; // taille du texte de la section
 }
 
 export interface ProductPageSection {

@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const COMPTA_TUTORIAL_STEPS = [
   { Icon: BarChart3,  titre: "Bénéfice brut vs net",  description: "Le bénéfice brut, c'est ton revenu moins le coût d'achat des produits vendus. Le bénéfice net va plus loin : il retire aussi ta part des charges d'exploitation (loyer, salaires...)." },
   { Icon: ShoppingBag, titre: "Rentabilité par produit", description: "Vois quels produits te rapportent vraiment, une fois le coût d'achat ET la quote-part des charges pris en compte — pas juste le chiffre d'affaires." },
@@ -52,6 +53,7 @@ function CardResume({ label, value, Icon, color, sub }: { label: string; value: 
 }
 
 export default function ComptabilitePage() {
+  const { devise, fmt } = useDevise();
   const [periode, setPeriode] = useState("mois");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -97,19 +99,19 @@ export default function ComptabilitePage() {
         <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">Bénéfice net de la période</p>
         <p className="text-[32px] font-black text-white flex items-center gap-2">
           {resultatPositif ? <TrendingUp size={26} /> : <TrendingDown size={26} />}
-          {r.beneficeNet.toLocaleString()} XAF
+          {fmt(r.beneficeNet)}
         </p>
         <p className="text-[12px] text-white/70 mt-1">
-          {r.revenu.toLocaleString()} XAF de revenu − {r.coutMarchandises.toLocaleString()} XAF de coût d'achat − {r.chargesExploitation.toLocaleString()} XAF de charges d'exploitation
+          {fmt(r.revenu)} de revenu − {fmt(r.coutMarchandises)} de coût d'achat − {fmt(r.chargesExploitation)} de charges d'exploitation
         </p>
       </div>
 
       {/* Résumé */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <CardResume label="Chiffre d'affaires" value={`${r.revenu.toLocaleString()} XAF`} Icon={Wallet} color="#1B2A4A" sub={`${r.nombreVentes} vente${r.nombreVentes > 1 ? "s" : ""}`} />
-        <CardResume label="Coût d'achat marchandises" value={`${r.coutMarchandises.toLocaleString()} XAF`} Icon={Package} color="#8b5cf6" />
-        <CardResume label="Bénéfice brut" value={`${r.beneficeBrut.toLocaleString()} XAF`} Icon={ShoppingBag} color="#10b981" sub="Avant charges d'exploitation" />
-        <CardResume label="Charges d'exploitation" value={`${r.chargesExploitation.toLocaleString()} XAF`} Icon={TrendingDown} color="#ef4444" />
+        <CardResume label="Chiffre d'affaires" value={`${fmt(r.revenu)}`} Icon={Wallet} color="#1B2A4A" sub={`${r.nombreVentes} vente${r.nombreVentes > 1 ? "s" : ""}`} />
+        <CardResume label="Coût d'achat marchandises" value={`${fmt(r.coutMarchandises)}`} Icon={Package} color="#8b5cf6" />
+        <CardResume label="Bénéfice brut" value={`${fmt(r.beneficeBrut)}`} Icon={ShoppingBag} color="#10b981" sub="Avant charges d'exploitation" />
+        <CardResume label="Charges d'exploitation" value={`${fmt(r.chargesExploitation)}`} Icon={TrendingDown} color="#ef4444" />
       </div>
 
       {/* Fonds généraux cumulés */}
@@ -117,15 +119,15 @@ export default function ComptabilitePage() {
         <p className="text-[12.5px] font-bold text-[#111] mb-4 flex items-center gap-1.5"><PiggyBank size={14} className="text-[#F5A623]" /> Fonds généraux (tout historique)</p>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <p className="text-[16px] font-bold text-green-600">{data.fondsGeneraux.entreesTotales.toLocaleString()} XAF</p>
+            <p className="text-[16px] font-bold text-green-600">{fmt(data.fondsGeneraux.entreesTotales)}</p>
             <p className="text-[10.5px] text-gray-400">Entrées totales</p>
           </div>
           <div>
-            <p className="text-[16px] font-bold text-red-500">{data.fondsGeneraux.chargesTotales.toLocaleString()} XAF</p>
+            <p className="text-[16px] font-bold text-red-500">{fmt(data.fondsGeneraux.chargesTotales)}</p>
             <p className="text-[10.5px] text-gray-400">Charges totales</p>
           </div>
           <div>
-            <p className="text-[16px] font-bold text-[#111]">{data.fondsGeneraux.soldeNet.toLocaleString()} XAF</p>
+            <p className="text-[16px] font-bold text-[#111]">{fmt(data.fondsGeneraux.soldeNet)}</p>
             <p className="text-[10.5px] text-gray-400">Solde net</p>
           </div>
         </div>
@@ -145,16 +147,16 @@ export default function ComptabilitePage() {
                   {p.image ? <img src={p.image} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-[#111] truncate">{p.nom}</p>
-                    <p className="text-[10.5px] text-gray-400">{p.quantiteVendue} vendu(s) · {p.revenu.toLocaleString()} XAF de revenu · {p.cout.toLocaleString()} XAF de coût d'achat</p>
+                    <p className="text-[10.5px] text-gray-400">{p.quantiteVendue} vendu(s) · {fmt(p.revenu)} de revenu · {fmt(p.cout)} de coût d'achat</p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[13px] font-bold" style={{ color: p.beneficeNet >= 0 ? "#10b981" : "#ef4444" }}>{p.beneficeNet.toLocaleString()} XAF</p>
+                    <p className="text-[13px] font-bold" style={{ color: p.beneficeNet >= 0 ? "#10b981" : "#ef4444" }}>{fmt(p.beneficeNet)}</p>
                     <p className="text-[10px] text-gray-400">{p.beneficeNetPct}% net</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 mt-2 pl-12 text-[10.5px]">
-                  <span className="text-gray-400">Brut : <strong style={{ color: p.beneficeBrut >= 0 ? "#10b981" : "#ef4444" }}>{p.beneficeBrut.toLocaleString()} XAF</strong> ({p.beneficeBrutPct}%)</span>
-                  <span className="text-gray-400">Charges allouées : <strong className="text-red-400">-{p.quotePartCharges.toLocaleString()} XAF</strong></span>
+                  <span className="text-gray-400">Brut : <strong style={{ color: p.beneficeBrut >= 0 ? "#10b981" : "#ef4444" }}>{fmt(p.beneficeBrut)}</strong> ({p.beneficeBrutPct}%)</span>
+                  <span className="text-gray-400">Charges allouées : <strong className="text-red-400">-{fmt(p.quotePartCharges)}</strong></span>
                 </div>
               </div>
             ))}
@@ -173,7 +175,7 @@ export default function ComptabilitePage() {
                 <div key={cat}>
                   <div className="flex items-center justify-between text-[12px] mb-1">
                     <span className="capitalize text-gray-600">{cat}</span>
-                    <span className="font-bold text-[#111]">{montant.toLocaleString()} XAF</span>
+                    <span className="font-bold text-[#111]">{fmt(montant)}</span>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-[#F5A623] rounded-full" style={{ width: `${pct}%` }} />

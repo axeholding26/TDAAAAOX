@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 import { BarcodeCaptureModal } from "@/components/dashboard/BarcodeCaptureModal";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const CATEGORIES = [
   "Mode & Vêtements", "Beauté & Cosmétiques", "Alimentation & Épicerie",
   "Artisanat & Art", "Électronique", "Maison & Décoration",
@@ -49,6 +50,7 @@ function formatTaille(octets: number): string {
 }
 
 export default function NouveauProduitPage() {
+  const { devise, fmt } = useDevise();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [genIA, setGenIA] = useState(false);
@@ -746,7 +748,7 @@ export default function NouveauProduitPage() {
                 <p className="font-medium text-gray-800 text-sm line-clamp-2">{form.nom || "Nom du produit"}</p>
                 {form.prix && (
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[#F5A623] font-bold text-sm">{form.prix} FCFA</span>
+                    <span className="text-[#F5A623] font-bold text-sm">{fmt(Number(form.prix) || 0)}</span>
                     {form.prixCompare && <span className="text-gray-400 text-xs line-through">{form.prixCompare}</span>}
                   </div>
                 )}

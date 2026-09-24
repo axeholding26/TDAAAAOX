@@ -16,7 +16,9 @@ import {
   ShoppingBag, Maximize2, Minimize2,
   ShoppingCart, Share2, Info, Phone, Undo2, Redo2, Rocket, AlertCircle, Images, Wand2,
 } from "lucide-react";
-import { type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
+import { type ThemeConfig, type CustomSection, type ProductPageSection } from "@/lib/theme-config";
+import { SECTIONS_FICHE, TYPES_FICHE, appliquerActionFiche, sectionsFiche, typesIndisponibles, type ActionFiche } from "@/lib/fiche-produit";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
@@ -814,60 +816,41 @@ export function PanelAvance({ config, set, tenant, onReset }: any) {
 }
 
 // ─── Panel Fiche Produit — Shopify-style section editor ──────────────────────
-const BUILTIN_TYPES = new Set(["gallery","info","variants","quantity","trust","description","reviews","similar"]);
-
-const PRODUIT_SECTION_META: Record<string, { label: string; Icon: any }> = {
-  gallery:      { label: "Galerie photos",           Icon: ImageIcon },
-  info:         { label: "Infos produit",            Icon: FileText },
-  variants:     { label: "Variantes",                Icon: Layers },
-  quantity:     { label: "Quantité & panier",        Icon: ShoppingCart },
-  trust:        { label: "Badges confiance",         Icon: Shield },
-  description:  { label: "Description",              Icon: BookOpen },
-  reviews:      { label: "Avis clients",             Icon: Star },
-  similar:      { label: "Produits similaires",      Icon: LayoutGrid },
-  richtext:     { label: "Texte libre",              Icon: FileText },
-  features:     { label: "Points forts",             Icon: Zap },
-  howto:        { label: "Mode d'emploi",            Icon: BookOpen },
-  banner:       { label: "Bannière image",           Icon: ImageIcon },
-  video:        { label: "Vidéo",                    Icon: Video },
-  faq:          { label: "FAQ produit",              Icon: HelpCircle },
-  specs:        { label: "Caractéristiques",         Icon: BarChart3 },
-  ingredients:  { label: "Ingrédients / Matières",  Icon: FileText },
-  testimonials: { label: "Témoignages",              Icon: MessageCircle },
-  sizeguide:    { label: "Guide des tailles",        Icon: ArrowUpDown },
-  guarantee:    { label: "Garantie & SAV",           Icon: Shield },
-  bundle:       { label: "Pack / Bundle",            Icon: Layers },
-  comparison:   { label: "Tableau comparatif",       Icon: LayoutGrid },
-  countdown:    { label: "Compte à rebours",         Icon: Timer },
-  social:       { label: "Partage social",           Icon: Share2 },
+const PRODUIT_SECTION_META: Record<string, { Icon: any; desc: string }> = {
+  gallery:      { Icon: ImageIcon,     desc: "Photos du produit" },
+  info:         { Icon: FileText,      desc: "Nom, prix, stock, fil d'Ariane" },
+  variants:     { Icon: Layers,        desc: "Tailles, couleurs…" },
+  quantity:     { Icon: ShoppingCart,  desc: "Quantité et boutons d'achat" },
+  trust:        { Icon: Shield,        desc: "Badges de réassurance" },
+  description:  { Icon: BookOpen,      desc: "Description et livraison" },
+  reviews:      { Icon: Star,          desc: "Avis clients" },
+  similar:      { Icon: LayoutGrid,    desc: "Produits similaires" },
+  richtext:     { Icon: FileText,      desc: "Bloc de texte avec titre et bouton CTA" },
+  features:     { Icon: Zap,           desc: "Grille d'avantages avec icône et description" },
+  howto:        { Icon: BookOpen,      desc: "Étapes numérotées ou accordéon" },
+  banner:       { Icon: ImageIcon,     desc: "Image pleine largeur avec texte overlay" },
+  video:        { Icon: Video,         desc: "YouTube, Vimeo ou fichier mp4" },
+  faq:          { Icon: HelpCircle,    desc: "Questions fréquentes en accordéon" },
+  specs:        { Icon: BarChart3,     desc: "Tableau des spécifications techniques" },
+  ingredients:  { Icon: FileText,      desc: "Liste détaillée de composition" },
+  testimonials: { Icon: MessageCircle, desc: "Citations et avis clients mis en avant" },
+  sizeguide:    { Icon: ArrowUpDown,   desc: "Tableau de correspondance des tailles" },
+  guarantee:    { Icon: Shield,        desc: "Informations garantie et service client" },
+  bundle:       { Icon: Layers,        desc: "Produits fréquemment achetés ensemble" },
+  comparison:   { Icon: LayoutGrid,    desc: "Comparez avec d'autres versions" },
+  countdown:    { Icon: Timer,         desc: "Urgence pour une offre limitée" },
+  social:       { Icon: Share2,        desc: "Boutons Facebook, WhatsApp, lien copie" },
 };
 
-const PRODUIT_LIBRARY = [
-  { type: "richtext",      label: "Texte libre",           Icon: FileText,      desc: "Bloc de texte avec titre et bouton CTA" },
-  { type: "features",      label: "Points forts",          Icon: Zap,           desc: "Grille d'avantages avec icône et description" },
-  { type: "howto",         label: "Mode d'emploi",         Icon: BookOpen,      desc: "Étapes numérotées pour utiliser le produit" },
-  { type: "banner",        label: "Bannière image",        Icon: ImageIcon,     desc: "Image pleine largeur avec texte overlay" },
-  { type: "video",         label: "Vidéo",                 Icon: Video,         desc: "YouTube, Vimeo ou fichier mp4" },
-  { type: "faq",           label: "FAQ produit",           Icon: HelpCircle,    desc: "Questions fréquentes sur le produit" },
-  { type: "specs",         label: "Caractéristiques",      Icon: BarChart3,     desc: "Tableau des spécifications techniques" },
-  { type: "ingredients",   label: "Ingrédients / Matières",Icon: FileText,      desc: "Liste détaillée de composition" },
-  { type: "testimonials",  label: "Témoignages",           Icon: MessageCircle, desc: "Citations et avis clients mis en avant" },
-  { type: "sizeguide",     label: "Guide des tailles",     Icon: ArrowUpDown,   desc: "Tableau de correspondance des tailles" },
-  { type: "guarantee",     label: "Garantie & SAV",        Icon: Shield,        desc: "Informations garantie et service client" },
-  { type: "bundle",        label: "Pack / Bundle",         Icon: Layers,        desc: "Produits fréquemment achetés ensemble" },
-  { type: "comparison",    label: "Tableau comparatif",    Icon: LayoutGrid,    desc: "Comparez avec d'autres versions ou concurrents" },
-  { type: "countdown",     label: "Compte à rebours",      Icon: Timer,         desc: "Urgence pour une offre limitée" },
-  { type: "social",        label: "Partage social",        Icon: Share2,        desc: "Boutons Facebook, WhatsApp, lien copie" },
-];
-
 const LAYOUT_OPTIONS = [
-  { v: "amazon",    l: "Amazon",         desc: "Galerie gauche · infos droite · sticky · zoom hover" },
-  { v: "classic",   l: "Classique",      desc: "Image en haut · infos en dessous" },
-  { v: "minimal",   l: "Minimal",        desc: "Épuré, sans sidebar — idéal pour les services" },
+  { v: "amazon",    l: "Amazon",       desc: "Galerie + infos côte à côte" },
+  { v: "classic",   l: "Classique",    desc: "Image en haut, infos dessous" },
+  { v: "minimal",   l: "Minimal",      desc: "Épuré, sans sidebar — idéal pour les services" },
   { v: "fullwidth", l: "Pleine largeur", desc: "Image en plein écran avec overlay d'infos" },
 ];
 
-const STYLE_DISABLED_TYPES = new Set(["gallery", "info", "variants", "quantity", "trust"]);
+// Galerie et infos sont la charpente de la fiche : pas de style par section.
+const STYLE_DISABLED_TYPES = new Set(["gallery", "info"]);
 
 function ProduitSectionSettings({ section, update, updateStyle }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void; updateStyle: (id: string, patch: Record<string, any>) => void }) {
   return (
@@ -885,6 +868,9 @@ function SectionStylePanel({ section, updateStyle }: { section: ProductPageSecti
   return (
     <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 pt-2.5">
       <p className="text-[13px] text-gray-500 font-black uppercase tracking-[0.16em]">Style de la section</p>
+      <FSel label="Taille du texte" value={st.fontScale || "md"} onChange={v => up({ fontScale: v })} opts={[
+        { v: "sm", l: "Petite" }, { v: "md", l: "Normale" }, { v: "lg", l: "Grande" }, { v: "xl", l: "Très grande" },
+      ]} />
       <div className="flex items-center justify-between py-1">
         <span className="text-[13px] text-gray-400">Fond coloré</span>
         <button onClick={() => up({ bgColor: bgActive ? undefined : "#F8F8F6" })} className="flex-shrink-0">
@@ -893,168 +879,287 @@ function SectionStylePanel({ section, updateStyle }: { section: ProductPageSecti
       </div>
       {bgActive && <FCol label="Couleur de fond" value={st.bgColor || "#F8F8F6"} onChange={v => up({ bgColor: v })} />}
       <FCol label="Couleur du texte" value={st.textColor || "#111111"} onChange={v => up({ textColor: v })} />
-      <FSel label="Espacement vertical" value={st.paddingY || "none"} onChange={v => up({ paddingY: v as any })} opts={[
-        { v: "none", l: "Aucun" }, { v: "sm", l: "Petit" }, { v: "md", l: "Moyen" }, { v: "lg", l: "Grand" }, { v: "xl", l: "Très grand" },
-      ]} />
-      <FSel label="Largeur du contenu" value={st.maxWidth || "full"} onChange={v => up({ maxWidth: v as any })} opts={[
+      <div className="grid grid-cols-2 gap-2">
+        <FSel label="Espacement interne" value={st.paddingY || "none"} onChange={v => up({ paddingY: v })} opts={[
+          { v: "none", l: "Aucun" }, { v: "sm", l: "Petit" }, { v: "md", l: "Moyen" }, { v: "lg", l: "Grand" }, { v: "xl", l: "Très grand" },
+        ]} />
+        <FSel label="Marge extérieure" value={st.marginY || "none"} onChange={v => up({ marginY: v })} opts={[
+          { v: "none", l: "Par défaut" }, { v: "sm", l: "Petite" }, { v: "md", l: "Moyenne" }, { v: "lg", l: "Grande" },
+        ]} />
+      </div>
+      <FSel label="Largeur du contenu" value={st.maxWidth || "full"} onChange={v => up({ maxWidth: v })} opts={[
         { v: "full", l: "Pleine largeur" }, { v: "medium", l: "Moyenne" }, { v: "narrow", l: "Étroite" },
       ]} />
-      <FSel label="Alignement" value={st.align || "left"} onChange={v => up({ align: v as any })} opts={[
+      <FSel label="Alignement" value={st.align || "left"} onChange={v => up({ align: v })} opts={[
         { v: "left", l: "Gauche" }, { v: "center", l: "Centré" },
       ]} />
     </div>
   );
 }
 
+// ─── Éditeurs génériques (listes d'éléments, tableaux, icônes) ────────────────
+type Champ = { cle: string; label: string; type?: "text" | "textarea" | "icone" | "image" | "note" };
+
+function FIcone({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const estImage = /^(https?:|\/|data:image)/.test(value || "");
+  return (
+    <div>
+      <label className="block text-[12px] text-gray-500 mb-1">{label}</label>
+      <div className="flex items-center gap-2">
+        {estImage
+          ? <img src={value} alt="" className="w-9 h-9 rounded-lg object-contain bg-white border border-gray-200" />
+          : <input value={value || ""} onChange={e => onChange(e.target.value)} maxLength={4} placeholder="✓" className="w-12 text-center bg-gray-100 border border-gray-200 rounded-lg px-2 py-2 text-sm" />}
+        <label className="text-[12px] text-[#C77C0A] font-semibold cursor-pointer hover:underline">
+          {estImage ? "Changer" : "Envoyer une icône"}
+          <input type="file" accept="image/*" className="hidden" onChange={async e => {
+            const f = e.target.files?.[0]; if (!f) return;
+            const fd = new FormData(); fd.append("file", f);
+            const r = await fetch("/api/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => null);
+            if (r?.url) onChange(r.url);
+          }} />
+        </label>
+        {estImage && <button onClick={() => onChange("✓")} className="text-[12px] text-gray-500 hover:text-red-500">Retirer</button>}
+      </div>
+    </div>
+  );
+}
+
+function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string; items: any[]; champs: Champ[]; onChange: (items: any[]) => void; nouvel: () => any }) {
+  const maj = (i: number, patch: any) => onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
+  const bouger = (i: number, d: number) => { const n = [...items]; const [x] = n.splice(i, 1); n.splice(Math.max(0, Math.min(n.length, i + d)), 0, x); onChange(n); };
+  return (
+    <div className="space-y-2">
+      <p className="text-[12px] text-gray-500 font-semibold">{titre}</p>
+      {items.map((item, i) => (
+        <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl p-2 space-y-1.5">
+          <div className="flex items-center justify-end gap-1 -mb-1">
+            <button onClick={() => bouger(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-[12px] px-1">↑</button>
+            <button onClick={() => bouger(i, 1)} disabled={i === items.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-[12px] px-1">↓</button>
+            <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-red-500/50 hover:text-red-500 px-1"><Trash2 size={11} /></button>
+          </div>
+          {champs.map(c => c.type === "icone"
+            ? <FIcone key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} />
+            : c.type === "note"
+              ? <FSel key={c.cle} label={c.label} value={String(item[c.cle] ?? 5)} onChange={v => maj(i, { [c.cle]: Number(v) })} opts={[5, 4, 3, 2, 1].map(n => ({ v: String(n), l: "★".repeat(n) }))} />
+              : <FInp key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} multiline={c.type === "textarea"} />)}
+        </div>
+      ))}
+      <button onClick={() => onChange([...items, nouvel()])}
+        className="w-full text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623] hover:text-[#C77C0A] transition-colors">
+        + Ajouter
+      </button>
+    </div>
+  );
+}
+
+function TableEdit({ headers, rows, onChange }: { headers: string[]; rows: { cells: string[] }[]; onChange: (p: { headers?: string[]; rows?: { cells: string[] }[] }) => void }) {
+  const nbCol = headers.length;
+  return (
+    <div className="space-y-2">
+      <p className="text-[12px] text-gray-500 font-semibold">En-têtes</p>
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${nbCol}, minmax(0,1fr))` }}>
+        {headers.map((h, j) => <input key={j} value={h} onChange={e => onChange({ headers: headers.map((x, k) => (k === j ? e.target.value : x)) })} className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-semibold min-w-0" />)}
+      </div>
+      <p className="text-[12px] text-gray-500 font-semibold">Lignes</p>
+      {rows.map((r, i) => (
+        <div key={i} className="flex gap-1 items-center">
+          <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: `repeat(${nbCol}, minmax(0,1fr))` }}>
+            {Array.from({ length: nbCol }, (_, j) => (
+              <input key={j} value={r.cells[j] ?? ""} onChange={e => onChange({ rows: rows.map((x, k) => (k === i ? { cells: Array.from({ length: nbCol }, (_, m) => (m === j ? e.target.value : x.cells[m] ?? "")) } : x)) })} className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] min-w-0" />
+            ))}
+          </div>
+          <button onClick={() => onChange({ rows: rows.filter((_, k) => k !== i) })} className="text-red-500/50 hover:text-red-500"><Trash2 size={11} /></button>
+        </div>
+      ))}
+      <div className="flex gap-1.5">
+        <button onClick={() => onChange({ rows: [...rows, { cells: Array(nbCol).fill("") }] })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Ligne</button>
+        <button onClick={() => onChange({ headers: [...headers, "Colonne"], rows: rows.map(r => ({ cells: [...r.cells, ""] })) })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Colonne</button>
+        {nbCol > 2 && <button onClick={() => onChange({ headers: headers.slice(0, -1), rows: rows.map(r => ({ cells: r.cells.slice(0, nbCol - 1) })) })} className="text-[12px] text-gray-500 px-2 hover:text-red-500">− Col.</button>}
+      </div>
+    </div>
+  );
+}
+
+function Bascule({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="text-[13px] text-gray-500">{label}</span>
+      <button onClick={() => onChange(!value)} className="flex-shrink-0">
+        {value ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
+      </button>
+    </div>
+  );
+}
+
+function Bloc({ children }: { children: React.ReactNode }) {
+  return <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 pt-2.5">{children}</div>;
+}
+
 function SectionTypeSettings({ section, update }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void }) {
-  const c = section.config;
+  // Valeurs par défaut complétées : le marchand voit (et édite) exactement ce qui s'affiche.
+  const c: Record<string, any> = { ...SECTIONS_FICHE[section.type]?.defaut(), ...section.config };
   const up = (patch: Record<string, any>) => update(section.id, patch);
+  const titre = <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />;
 
-  if (section.type === "gallery") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FSel label="Style de galerie" value={c.style || "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
-        { v: "vertical-thumbs", l: "Miniatures verticales (Amazon)" },
-        { v: "horizontal-thumbs", l: "Miniatures horizontales" },
-        { v: "dots", l: "Points" },
-      ]} />
-      <div className="flex items-center justify-between py-1">
-        <span className="text-[13px] text-gray-400">Zoom au survol</span>
-        <button onClick={() => up({ zoom: c.zoom === false ? true : false })} className="flex-shrink-0">
-          {c.zoom !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
-        </button>
-      </div>
-      <div className="flex items-center justify-between py-1">
-        <span className="text-[13px] text-gray-400">Panneau fixe au scroll</span>
-        <button onClick={() => up({ sticky: c.sticky === false ? true : false })} className="flex-shrink-0">
-          {c.sticky !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
-        </button>
-      </div>
-    </div>
-  );
-
-  if (section.type === "info") return (
-    <div className="px-3 pb-3 space-y-0 border-t border-gray-200 pt-2.5">
-      {[
-        { key: "breadcrumbs", label: "Fil d'Ariane" },
-        { key: "badges",      label: "Badges promo" },
-        { key: "stock",       label: "Indicateur de stock" },
-      ].map(({ key, label }) => (
-        <div key={key} className="flex items-center justify-between py-1.5">
-          <span className="text-[13px] text-gray-400">{label}</span>
-          <button onClick={() => up({ [key]: c[key] === false ? true : false })} className="flex-shrink-0">
-            {c[key] !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
-          </button>
+  switch (section.type) {
+    case "gallery": return (
+      <Bloc>
+        <FSel label="Style de galerie" value={c.style} onChange={v => up({ style: v })} opts={[
+          { v: "vertical-thumbs", l: "Miniatures verticales (Amazon)" }, { v: "horizontal-thumbs", l: "Miniatures horizontales" }, { v: "dots", l: "Points" },
+        ]} />
+        <Bascule label="Zoom au survol" value={c.zoom !== false} onChange={v => up({ zoom: v })} />
+        <Bascule label="Panneau fixe au scroll" value={c.sticky !== false} onChange={v => up({ sticky: v })} />
+      </Bloc>
+    );
+    case "info": return (
+      <Bloc>
+        <Bascule label="Fil d'Ariane" value={c.breadcrumbs !== false} onChange={v => up({ breadcrumbs: v })} />
+        <Bascule label="Badges promo et confiance" value={c.badges !== false} onChange={v => up({ badges: v })} />
+        <Bascule label="Indicateur de stock" value={c.stock !== false} onChange={v => up({ stock: v })} />
+      </Bloc>
+    );
+    case "variants": return (
+      <Bloc>
+        <FSel label="Affichage" value={c.style} onChange={v => up({ style: v })} opts={[
+          { v: "boutons", l: "Boutons" }, { v: "pastilles", l: "Pastilles arrondies" }, { v: "liste", l: "Liste déroulante" },
+        ]} />
+        <div className="grid grid-cols-2 gap-2">
+          <FSel label="Taille du texte" value={c.taille} onChange={v => up({ taille: v })} opts={[{ v: "sm", l: "Petite" }, { v: "md", l: "Moyenne" }, { v: "lg", l: "Grande" }]} />
+          <FSel label="Espacement" value={c.espacement} onChange={v => up({ espacement: v })} opts={[{ v: "serre", l: "Serré" }, { v: "normal", l: "Normal" }, { v: "large", l: "Large" }]} />
         </div>
-      ))}
-    </div>
-  );
-
-  if (section.type === "description") return (
-    <div className="px-3 pb-3 border-t border-gray-200 pt-2.5">
-      <div className="flex items-center justify-between py-1.5">
-        <span className="text-[13px] text-gray-400">Description IA</span>
-        <button onClick={() => up({ ai: c.ai === false ? true : false })} className="flex-shrink-0">
-          {c.ai !== false ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
-        </button>
-      </div>
-    </div>
-  );
-
-  if (section.type === "similar") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre de section" value={c.titre || "Vous aimerez aussi"} onChange={v => up({ titre: v })} />
-      <FSel label="Nombre de produits" value={String(c.count || 4)} onChange={v => up({ count: Number(v) })} opts={[
-        { v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" },
-      ]} />
-    </div>
-  );
-
-  if (section.type === "richtext") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-      <FInp label="Bouton CTA (vide = masqué)" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
-    </div>
-  );
-
-  if (section.type === "banner") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-      <FInp label="URL de l'image" value={c.imageUrl || ""} onChange={v => up({ imageUrl: v })} />
-      <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
-    </div>
-  );
-
-  if (section.type === "video") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} />
-      <div className="flex items-center justify-between py-1">
-        <span className="text-[13px] text-gray-400">Lecture automatique</span>
-        <button onClick={() => up({ autoplay: !c.autoplay })} className="flex-shrink-0">
-          {c.autoplay ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
-        </button>
-      </div>
-    </div>
-  );
-
-  if (section.type === "faq") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      {(c.items || []).map((item: any, i: number) => (
-        <div key={i} className="bg-gray-50 rounded-xl p-2 space-y-1.5">
-          <div className="flex gap-1.5">
-            <div className="flex-1 space-y-1.5 min-w-0">
-              <FInp label="Question" value={item.question} onChange={v => { const it=[...c.items]; it[i]={...it[i],question:v}; up({ items: it }); }} />
-              <FInp label="Réponse" value={item.reponse} onChange={v => { const it=[...c.items]; it[i]={...it[i],reponse:v}; up({ items: it }); }} multiline />
-            </div>
-            <button onClick={() => up({ items: c.items.filter((_: any, j: number) => j !== i) })} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-5"><Trash2 size={11} /></button>
-          </div>
+        <Bascule label="Afficher le nom (Taille, Couleur…)" value={c.afficherLibelle !== false} onChange={v => up({ afficherLibelle: v })} />
+        <p className="text-[12px] text-gray-400 leading-relaxed">Les valeurs (S, M, Rouge…) se gèrent sur chaque produit.</p>
+      </Bloc>
+    );
+    case "quantity": return (
+      <Bloc>
+        <Bascule label="Sélecteur de quantité" value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
+        <FInp label="Texte du bouton (vide = « Ajouter au panier »)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
+        <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
+        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">Revenir aux couleurs du thème</button>}
+        <Bascule label="Bouton « Acheter maintenant »" value={c.afficherAcheterMaintenant !== false} onChange={v => up({ afficherAcheterMaintenant: v })} />
+        <Bascule label="Bouton WhatsApp" value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+      </Bloc>
+    );
+    case "trust": return (
+      <Bloc>
+        <div className="grid grid-cols-2 gap-2">
+          <FSel label="Disposition" value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
+          <FSel label="Colonnes" value={String(c.colonnes)} onChange={v => up({ colonnes: Number(v) })} opts={[{ v: "2", l: "2" }, { v: "3", l: "3" }, { v: "4", l: "4" }]} />
         </div>
-      ))}
-      <button onClick={() => up({ items: [...(c.items || []), { question: "Question ?", reponse: "Réponse ici." }] })}
-        className="w-full text-[12px] text-gray-600 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300 transition-colors">
-        + Ajouter une question
-      </button>
-    </div>
-  );
-
-  if (section.type === "specs") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      {(c.rows || []).map((row: any, i: number) => (
-        <div key={i} className="flex gap-1.5 items-end">
-          <div className="flex-1 min-w-0">
-            <FInp label={i === 0 ? "Clé" : ""} value={row.cle} onChange={v => { const r=[...c.rows]; r[i]={...r[i],cle:v}; up({ rows: r }); }} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <FInp label={i === 0 ? "Valeur" : ""} value={row.valeur} onChange={v => { const r=[...c.rows]; r[i]={...r[i],valeur:v}; up({ rows: r }); }} />
-          </div>
-          <button onClick={() => up({ rows: c.rows.filter((_: any, j: number) => j !== i) })} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mb-1.5"><Trash2 size={11} /></button>
+        <ListeItems titre="Badges" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", texte: "Nouveau badge" })}
+          champs={[{ cle: "icone", label: "Icône (emoji ou image)", type: "icone" }, { cle: "texte", label: "Texte" }]} />
+        <Bascule label="Encadré « Vendu par »" value={c.afficherVendeur !== false} onChange={v => up({ afficherVendeur: v })} />
+      </Bloc>
+    );
+    case "description": return (
+      <Bloc>
+        <Bascule label="Description enrichie par IA" value={c.ai !== false} onChange={v => up({ ai: v })} />
+        <Bascule label="Onglet « Livraison & retours »" value={c.afficherLivraison !== false} onChange={v => up({ afficherLivraison: v })} />
+        {c.afficherLivraison !== false && (
+          <ListeItems titre="Contenu de l'onglet livraison" items={c.livraison || []} onChange={livraison => up({ livraison })} nouvel={() => ({ titre: "Nouveau point", texte: "" })}
+            champs={[{ cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
+        )}
+      </Bloc>
+    );
+    case "reviews": return (
+      <Bloc>
+        {titre}
+        <div className="grid grid-cols-2 gap-2">
+          <FSel label="Disposition" value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
+          <FSel label="Avis affichés" value={String(c.max)} onChange={v => up({ max: Number(v) })} opts={[{ v: "4", l: "4" }, { v: "8", l: "8" }, { v: "20", l: "20" }]} />
         </div>
-      ))}
-      <button onClick={() => up({ rows: [...(c.rows || []), { cle: "", valeur: "" }] })}
-        className="w-full text-[12px] text-gray-600 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300 transition-colors">
-        + Ajouter une ligne
-      </button>
-    </div>
-  );
-
-  if (section.type === "countdown") return (
-    <div className="px-3 pb-3 space-y-2 border-t border-gray-200 pt-2.5">
-      <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />
-      <FInp label="Sous-texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-      <div>
-        <label className="block text-[12px] text-gray-500 mb-1">Date de fin</label>
-        <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
-          className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 focus:outline-none focus:border-[#F5A623]/50 transition-colors" />
-      </div>
-      <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
-    </div>
-  );
-
-  return null;
+        <FCol label="Couleur des étoiles" value={c.couleurEtoiles || "#F5A623"} onChange={v => up({ couleurEtoiles: v })} />
+        <Bascule label="Résumé des notes" value={c.afficherResume !== false} onChange={v => up({ afficherResume: v })} />
+        <Bascule label="Badge « Achat vérifié »" value={c.afficherVerifie !== false} onChange={v => up({ afficherVerifie: v })} />
+        <Bascule label="Formulaire « Laisser un avis »" value={c.afficherFormulaire !== false} onChange={v => up({ afficherFormulaire: v })} />
+      </Bloc>
+    );
+    case "similar": return (
+      <Bloc>
+        {titre}
+        <FSel label="Nombre de produits" value={String(c.count)} onChange={v => up({ count: Number(v) })} opts={[{ v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" }]} />
+      </Bloc>
+    );
+    case "richtext": return (
+      <Bloc>{titre}<FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline /><FInp label="Bouton CTA (vide = masqué)" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} /></Bloc>
+    );
+    case "features": case "guarantee": return (
+      <Bloc>{titre}
+        <ListeItems titre="Éléments" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", titre: "Titre", texte: "" })}
+          champs={[{ cle: "icone", label: "Icône", type: "icone" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
+      </Bloc>
+    );
+    case "howto": return (
+      <Bloc>{titre}
+        <FSel label="Présentation" value={c.style} onChange={v => up({ style: v })} opts={[{ v: "etapes", l: "Étapes numérotées" }, { v: "accordeon", l: "Accordéon" }]} />
+        <ListeItems titre="Étapes" items={c.steps || []} onChange={steps => up({ steps })} nouvel={() => ({ num: String((c.steps?.length ?? 0) + 1).padStart(2, "0"), titre: "Nouvelle étape", texte: "" })}
+          champs={[{ cle: "num", label: "Numéro" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
+      </Bloc>
+    );
+    case "banner": return (
+      <Bloc>{titre}
+        <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+        <ImageUpload value={c.imageUrl || ""} onChange={(url: string) => up({ imageUrl: url })} onRemove={() => up({ imageUrl: "" })} label="Image de fond" aspectRatio="banner" />
+        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+      </Bloc>
+    );
+    case "video": return (
+      <Bloc>
+        <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
+        <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} />
+        <Bascule label="Lecture automatique" value={!!c.autoplay} onChange={v => up({ autoplay: v })} />
+      </Bloc>
+    );
+    case "faq": return (
+      <Bloc>{titre}
+        <ListeItems titre="Questions" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici." })}
+          champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }]} />
+      </Bloc>
+    );
+    case "specs": return (
+      <Bloc>{titre}
+        <ListeItems titre="Lignes" items={c.rows || []} onChange={rows => up({ rows })} nouvel={() => ({ cle: "", valeur: "" })}
+          champs={[{ cle: "cle", label: "Caractéristique" }, { cle: "valeur", label: "Valeur" }]} />
+      </Bloc>
+    );
+    case "ingredients": return (
+      <Bloc>{titre}
+        <FInp label="Introduction" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+        <ListeItems titre="Composants" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Composant", desc: "" })}
+          champs={[{ cle: "nom", label: "Nom" }, { cle: "desc", label: "Détail", type: "textarea" }]} />
+      </Bloc>
+    );
+    case "testimonials": return (
+      <Bloc>{titre}
+        <ListeItems titre="Témoignages" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Client", note: 5, texte: "", avatar: "" })}
+          champs={[{ cle: "nom", label: "Nom" }, { cle: "note", label: "Note", type: "note" }, { cle: "texte", label: "Témoignage", type: "textarea" }, { cle: "avatar", label: "Photo (URL, optionnel)" }]} />
+      </Bloc>
+    );
+    case "sizeguide": case "comparison": return (
+      <Bloc>{titre}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} /></Bloc>
+    );
+    case "bundle": return (
+      <Bloc>{titre}
+        <ListeItems titre="Produits du pack" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Produit", imageUrl: "", prix: "" })}
+          champs={[{ cle: "nom", label: "Nom" }, { cle: "prix", label: "Prix affiché" }, { cle: "imageUrl", label: "Image (URL)" }]} />
+        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+      </Bloc>
+    );
+    case "countdown": return (
+      <Bloc>{titre}
+        <FInp label="Sous-texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+        <div>
+          <label className="block text-[12px] text-gray-500 mb-1">Date de fin</label>
+          <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
+            className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
+        </div>
+        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+      </Bloc>
+    );
+    default: return null; // social : aucun contenu à régler, seulement le style
+  }
 }
 
 // ─── Panel pages À propos / Contact ───────────────────────────────────────────
@@ -1196,87 +1301,90 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
 
 export function PanelProduit({ config, setProductPage }: any) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [dragIdx, setDragIdx] = useState<number | null>(null);
-  const [overIdx, setOverIdx] = useState<number | null>(null);
+  // Position d'insertion de la bibliothèque (null = fermée).
+  const [insertion, setInsertion] = useState<number | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropIdx, setDropIdx] = useState<number | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   const pp = config.productPage || {};
   const layout: string = pp.layout || "amazon";
-  const sections: ProductPageSection[] = pp.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS;
+  const sections = sectionsFiche(pp);
+  const indisponibles = typesIndisponibles(sections);
 
-  const setSections = (newSections: ProductPageSection[]) => setProductPage({ sections: newSections });
+  // Toutes les modifications passent par lib/fiche-produit.ts — le même code
+  // qu'exécute AXIA (outil modifier_fiche_produit) : mêmes règles, mêmes ids.
+  const agir = (a: ActionFiche) => {
+    try {
+      const { pp: next, id } = appliquerActionFiche(pp, a);
+      setErreur(null);
+      setProductPage(next);
+      return id;
+    } catch (e: any) { setErreur(e.message); }
+  };
+  const updateSection = (id: string, patch: Record<string, any>) => agir({ action: "configurer", section: id, config: patch });
+  const updateSectionStyle = (id: string, patch: Record<string, any>) => agir({ action: "styliser", section: id, style: patch });
 
-  const reorderSection = (from: number, to: number) => {
-    if (from === to) return;
-    const next = [...sections];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
-    setSections(next);
+  const ajouter = (type: string) => {
+    const id = agir({ action: "ajouter", type, index: insertion ?? sections.length });
+    setInsertion(null);
+    if (id) setActiveSection(id);
   };
 
-  const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
-
-  const updateSection = (id: string, patch: Record<string, any>) =>
-    setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
-
-  const updateSectionStyle = (id: string, patch: Record<string, any>) =>
-    setSections(sections.map(s => s.id === id ? { ...s, style: { ...s.style, ...patch } } : s));
-
-  const addSection = (type: string) => {
-    const defaults: Record<string, any> = {
-      richtext:     { titre: "Notre engagement", texte: "Votre texte ici.", ctaTexte: "" },
-      features:     { titre: "Pourquoi choisir ce produit ?", items: [{ icone: "✓", titre: "Qualité premium", texte: "Matériaux soigneusement sélectionnés." }, { icone: "⚡", titre: "Livraison rapide", texte: "Expédié en 24-48h." }, { icone: "♻️", titre: "Éco-responsable", texte: "Fabriqué de façon durable." }] },
-      howto:        { titre: "Comment l'utiliser ?", steps: [{ num: "01", titre: "Étape 1", texte: "Description de l'étape ici." }, { num: "02", titre: "Étape 2", texte: "Description de l'étape ici." }, { num: "03", titre: "Étape 3", texte: "Description de l'étape ici." }] },
-      banner:       { titre: "Offre spéciale", texte: "", imageUrl: "", ctaTexte: "Profiter maintenant" },
-      video:        { titre: "", videoUrl: "", autoplay: false },
-      faq:          { titre: "Questions fréquentes", items: [{ question: "Comment utiliser ce produit ?", reponse: "Répondez ici." }] },
-      specs:        { titre: "Caractéristiques techniques", rows: [{ cle: "Matière", valeur: "" }, { cle: "Dimensions", valeur: "" }, { cle: "Poids", valeur: "" }] },
-      ingredients:  { titre: "Composition", texte: "", items: [{ nom: "Ingrédient 1", desc: "" }, { nom: "Ingrédient 2", desc: "" }] },
-      testimonials: { titre: "Ils en parlent", items: [{ nom: "Marie D.", note: 5, texte: "Excellent produit, je recommande !", avatar: "" }, { nom: "Jean K.", note: 5, texte: "Très satisfait de mon achat.", avatar: "" }] },
-      sizeguide:    { titre: "Guide des tailles", headers: ["Taille", "Tour de poitrine", "Tour de taille", "Tour de hanches"], rows: [{ cells: ["XS", "80-84 cm", "60-64 cm", "86-90 cm"] }, { cells: ["S", "84-88 cm", "64-68 cm", "90-94 cm"] }, { cells: ["M", "88-92 cm", "68-72 cm", "94-98 cm"] }] },
-      guarantee:    { titre: "Notre garantie", items: [{ icone: "🛡️", titre: "Garantie 2 ans", texte: "Pièces et main-d'œuvre couvertes." }, { icone: "🔄", titre: "Retour 30 jours", texte: "Remboursement intégral si insatisfait." }, { icone: "📞", titre: "Support 7j/7", texte: "Notre équipe est là pour vous." }] },
-      bundle:       { titre: "Souvent achetés ensemble", items: [{ nom: "Produit complémentaire 1", imageUrl: "", prix: "" }, { nom: "Produit complémentaire 2", imageUrl: "", prix: "" }], ctaTexte: "Tout ajouter au panier" },
-      comparison:   { titre: "Comparaison", headers: ["Caractéristique", "Ce produit", "Standard"], rows: [{ cells: ["Qualité", "✓ Premium", "Basique"] }, { cells: ["Garantie", "✓ 2 ans", "6 mois"] }, { cells: ["Support", "✓ Prioritaire", "Email"] }] },
-      countdown:    { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité !", dateFin: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" },
-      social:       {},
-    };
-    const id = `custom_${Date.now()}`;
-    const newSec: ProductPageSection = { id, type: type as any, actif: true, config: defaults[type] || {} };
-    setSections([...sections, newSec]);
-    setShowLibrary(false);
-    setActiveSection(id);
+  // Ligne d'insertion façon Shopify : avant ou après la section survolée selon la moitié visée.
+  const survol = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const cible = e.clientY < r.top + r.height / 2 ? idx : idx + 1;
+    if (cible !== dropIdx) setDropIdx(cible);
+  };
+  const deposer = () => {
+    if (dragId !== null && dropIdx !== null) {
+      const from = sections.findIndex(s => s.id === dragId);
+      agir({ action: "deplacer", section: dragId, index: dropIdx > from ? dropIdx - 1 : dropIdx });
+    }
+    setDragId(null); setDropIdx(null);
   };
 
-  const removeSection = (id: string) => {
-    setSections(sections.filter(s => s.id !== id));
-    if (activeSection === id) setActiveSection(null);
-  };
-
-  // Library view
-  if (showLibrary) return (
+  if (insertion !== null) return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-        <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">Bibliothèque de sections</p>
-        <button onClick={() => setShowLibrary(false)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
+        <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">Ajouter une section</p>
+        <button onClick={() => setInsertion(null)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
       </div>
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-        {PRODUIT_LIBRARY.map(lib => {
-          const Li = lib.Icon;
+        {TYPES_FICHE.filter(t => !SECTIONS_FICHE[t].base).map(type => {
+          const meta = PRODUIT_SECTION_META[type];
+          const Li = meta?.Icon ?? FileText;
+          const pris = indisponibles.has(type);
           return (
-            <button key={lib.type} onClick={() => addSection(lib.type)}
-              className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 hover:border-[#F5A623]/40 hover:bg-[#F5A623]/5 transition-all group">
+            <button key={type} onClick={() => !pris && ajouter(type)} disabled={pris}
+              className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 enabled:hover:border-[#F5A623]/40 enabled:hover:bg-[#F5A623]/5 transition-all group disabled:opacity-45 disabled:cursor-not-allowed">
               <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
                 <Li size={14} className="text-gray-500 group-hover:text-[#F5A623]" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-700">{lib.label}</p>
-                <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{lib.desc}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-gray-700">{SECTIONS_FICHE[type].label}</p>
+                <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{pris ? "Déjà sur la fiche (une seule autorisée)" : meta?.desc}</p>
               </div>
-              <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />
+              {!pris && <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />}
             </button>
           );
         })}
       </div>
+    </div>
+  );
+
+  const LigneInsertion = ({ idx }: { idx: number }) => (
+    <div className="group/ins relative h-2 -my-0.5 flex items-center">
+      {dragId !== null && dropIdx === idx
+        ? <div className="w-full h-0.5 rounded-full bg-[#F5A623]" />
+        : dragId === null && (
+          <button onClick={() => setInsertion(idx)} title="Insérer une section ici"
+            className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#F5A623] text-[#050508] flex items-center justify-center opacity-0 group-hover/ins:opacity-100 transition-opacity z-10">
+            <Plus size={11} />
+          </button>
+        )}
     </div>
   );
 
@@ -1289,7 +1397,7 @@ export function PanelProduit({ config, setProductPage }: any) {
           <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2.5">Mise en page</p>
           <div className="grid grid-cols-2 gap-1.5">
             {LAYOUT_OPTIONS.map(lay => (
-              <button key={lay.v} onClick={() => setProductPage({ layout: lay.v })}
+              <button key={lay.v} onClick={() => agir({ action: "mise_en_page", layout: lay.v })}
                 className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
                 <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1">
                   {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {lay.l}
@@ -1304,52 +1412,51 @@ export function PanelProduit({ config, setProductPage }: any) {
         <div className="p-4">
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">Sections de la fiche</p>
-            <button onClick={() => setShowLibrary(true)}
+            <button onClick={() => setInsertion(sections.length)}
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-semibold transition-all"
               style={{ backgroundColor: "#F5A623", color: "#050508" }}>
               <Plus size={9} /> Ajouter
             </button>
           </div>
-          <div className="space-y-1">
+          {erreur && <p className="mb-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{erreur}</p>}
+          <div onDragOver={e => e.preventDefault()} onDrop={deposer}>
+            <LigneInsertion idx={0} />
             {sections.map((sec, idx) => {
               const meta = PRODUIT_SECTION_META[sec.type];
               const SIcon = meta?.Icon ?? FileText;
               const isActive = activeSection === sec.id;
-              const isBuiltIn = BUILTIN_TYPES.has(sec.type);
+              const isBuiltIn = !!SECTIONS_FICHE[sec.type]?.base;
               return (
-                <div key={sec.id}
-                  draggable
-                  onDragStart={() => setDragIdx(idx)}
-                  onDragOver={e => { e.preventDefault(); if (overIdx !== idx) setOverIdx(idx); }}
-                  onDragLeave={() => setOverIdx(o => o === idx ? null : o)}
-                  onDrop={e => { e.preventDefault(); if (dragIdx !== null) reorderSection(dragIdx, idx); setDragIdx(null); setOverIdx(null); }}
-                  onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
-                  className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"} ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-[#F5A623]/50" : ""}`}>
-                  <div className="flex items-center gap-1.5 px-2 py-2">
-                    {/* Drag handle */}
-                    <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner">
-                      <GripVertical size={13} />
+                <div key={sec.id}>
+                  <div
+                    draggable
+                    onDragStart={e => { e.dataTransfer.effectAllowed = "move"; setDragId(sec.id); }}
+                    onDragOver={e => survol(e, idx)}
+                    onDragEnd={() => { setDragId(null); setDropIdx(null); }}
+                    className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"} ${dragId === sec.id ? "opacity-40" : ""}`}>
+                    <div className="flex items-center gap-1.5 px-2 py-2">
+                      <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner">
+                        <GripVertical size={13} />
+                      </div>
+                      <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <SIcon size={11} className="text-gray-500" />
+                      </div>
+                      <button onClick={() => setActiveSection(isActive ? null : sec.id)} className={`flex-1 text-left text-[13px] font-medium truncate ${sec.actif ? "text-gray-800" : "text-gray-400"}`}>
+                        {SECTIONS_FICHE[sec.type]?.label ?? sec.type}
+                      </button>
+                      <button onClick={() => agir({ action: sec.actif ? "masquer" : "afficher", section: sec.id })} className="flex-shrink-0" title={sec.actif ? "Masquer" : "Afficher"}>
+                        {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
+                      </button>
+                      {!isBuiltIn && (
+                        <button onClick={() => { agir({ action: "supprimer", section: sec.id }); if (isActive) setActiveSection(null); }} title="Supprimer" className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
+                      )}
+                      <button onClick={() => setActiveSection(isActive ? null : sec.id)} className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
+                        <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
+                      </button>
                     </div>
-                    {/* Icon */}
-                    <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <SIcon size={11} className="text-gray-500" />
-                    </div>
-                    {/* Label */}
-                    <span className={`flex-1 text-[13px] font-medium truncate ${sec.actif ? "text-gray-800" : "text-gray-400"}`}>{meta?.label ?? sec.type}</span>
-                    {/* Toggle */}
-                    <button onClick={() => toggleSection(sec.id)} className="flex-shrink-0">
-                      {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
-                    </button>
-                    {/* Delete (custom only) */}
-                    {!isBuiltIn && (
-                      <button onClick={() => removeSection(sec.id)} className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
-                    )}
-                    {/* Expand */}
-                    <button onClick={() => setActiveSection(isActive ? null : sec.id)} className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
-                      <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
-                    </button>
+                    {isActive && <ProduitSectionSettings section={sec} update={updateSection} updateStyle={updateSectionStyle} />}
                   </div>
-                  {isActive && <ProduitSectionSettings section={sec} update={updateSection} updateStyle={updateSectionStyle} />}
+                  <LigneInsertion idx={idx + 1} />
                 </div>
               );
             })}
@@ -1357,7 +1464,7 @@ export function PanelProduit({ config, setProductPage }: any) {
         </div>
 
         <div className="px-4 pb-4">
-          <p className="text-[13px] text-gray-600 leading-relaxed">Ces réglages s'appliquent à toutes les fiches produits. Sauvegardez pour voir les changements.</p>
+          <p className="text-[13px] text-gray-600 leading-relaxed">Ces réglages s'appliquent à toutes les fiches produits. Survolez l'espace entre deux sections pour en insérer une à cet endroit.</p>
         </div>
       </div>
     </div>

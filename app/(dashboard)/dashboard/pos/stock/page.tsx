@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const STOCK_TUTORIAL_STEPS = [
   { Icon: Box,        titre: "Vue d'ensemble du stock", description: "Chaque produit physique de ta boutique avec son stock actuel, sa valeur (au coût d'achat) et son statut — OK, stock bas ou rupture." },
   { Icon: Plus,        titre: "Mouvements de stock",     description: "Clique \"Mouvement\" sur un produit pour enregistrer une entrée (réassort), une sortie, une perte ou un ajustement après inventaire." },
@@ -111,6 +112,7 @@ function MouvementModal({ produit, onClose, onDone }: { produit: Produit; onClos
 }
 
 export default function PosStockPage() {
+  const { devise, fmt } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -143,7 +145,7 @@ export default function PosStockPage() {
           <StatCard label="Produits suivis" value={String(stats.total)} Icon={Box} color="#1B2A4A" />
           <StatCard label="Stock bas" value={String(stats.stockBas)} Icon={AlertTriangle} color="#F5A623" />
           <StatCard label="En rupture" value={String(stats.enRupture)} Icon={XCircle} color="#ef4444" />
-          <StatCard label="Valeur du stock" value={`${stats.valeurStock.toLocaleString()} XAF`} Icon={Wallet} color="#10b981" />
+          <StatCard label="Valeur du stock" value={`${fmt(stats.valeurStock)}`} Icon={Wallet} color="#10b981" />
         </div>
       )}
 

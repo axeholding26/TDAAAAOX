@@ -48,7 +48,7 @@ const OUTILS: AgentTool[] = [
     parameters: {
       type: "object",
       properties: {
-        recompense_parrain: { type: "number", description: "Récompense en XAF pour le parrain" },
+        recompense_parrain: { type: "number", description: "Récompense pour le parrain, dans la devise de la boutique" },
         recompense_file: { type: "number", description: "Réduction en % pour le filleul" },
         duree_jours: { type: "number", description: "Durée du programme" },
       },
@@ -118,6 +118,7 @@ const OUTILS: AgentTool[] = [
 
 const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (name, args) => {
   try {
+    const devise = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XAF";
     if (name === "analyser_acquisition") {
       const [clients, commandes, codesPromo] = await Promise.all([
         prisma.client.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 100 }),
@@ -161,7 +162,7 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
         },
       });
       await logDecision(tenantId, "agent-growth", "programme_parrainage",
-        `Programme parrainage créé — ${args.recompense_parrain} XAF pour le parrain, ${args.recompense_file}% pour le filleul`,
+        `Programme parrainage créé — ${args.recompense_parrain} ${devise} pour le parrain, ${args.recompense_file}% pour le filleul`,
         { code, recompense_parrain: args.recompense_parrain, recompense_file: args.recompense_file }
       );
       return {
@@ -183,9 +184,9 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
       }
 
       const messages: Record<string, string> = {
-        promotion: `🔥 PROMO EXCEPTIONNELLE chez ${tenant?.nomBoutique} !\n\n${produit ? `✨ ${produit.nom} à seulement ${produit.prix} XAF` : "Des réductions incroyables sur tout le catalogue"}\n${args.code_promo ? `\n🎁 Code : *${args.code_promo}*` : ""}\n\n📦 Livraison rapide\n💳 Paiement Mobile Money accepté\n\n👆 Commander : ${tenant?.whatsapp ? `wa.me/${tenant.whatsapp.replace(/\D/g, "")}` : "notre boutique"}`,
-        parrainage: `🌟 Invite tes amis, gagne de l'argent !\n\nChaque ami que tu nous envoies = *${args.code_promo ? "500 XAF" : "une surprise"} pour toi* 🎁\n\n${args.code_promo ? `Partage le code *${args.code_promo}*` : "Partage notre boutique"} et touche ta récompense dès la première commande de ton filleul.\n\n🛍️ ${tenant?.nomBoutique}`,
-        nouveau_produit: `🆕 NOUVEAU chez ${tenant?.nomBoutique} !\n\n${produit ? `🌟 *${produit.nom}*\n💰 ${produit.prix} XAF seulement\n\n${produit.description?.slice(0, 100) ?? ""}` : "Découvrez nos nouveautés"}\n\n${args.code_promo ? `🎁 Code promo : *${args.code_promo}*` : ""}\n📲 Commander maintenant !`,
+        promotion: `🔥 PROMO EXCEPTIONNELLE chez ${tenant?.nomBoutique} !\n\n${produit ? `✨ ${produit.nom} à seulement ${produit.prix} ${devise}` : "Des réductions incroyables sur tout le catalogue"}\n${args.code_promo ? `\n🎁 Code : *${args.code_promo}*` : ""}\n\n📦 Livraison rapide\n💳 Paiement Mobile Money accepté\n\n👆 Commander : ${tenant?.whatsapp ? `wa.me/${tenant.whatsapp.replace(/\D/g, "")}` : "notre boutique"}`,
+        parrainage: `🌟 Invite tes amis, gagne de l'argent !\n\nChaque ami que tu nous envoies = *${args.code_promo ? `500 ${devise}` : "une surprise"} pour toi* 🎁\n\n${args.code_promo ? `Partage le code *${args.code_promo}*` : "Partage notre boutique"} et touche ta récompense dès la première commande de ton filleul.\n\n🛍️ ${tenant?.nomBoutique}`,
+        nouveau_produit: `🆕 NOUVEAU chez ${tenant?.nomBoutique} !\n\n${produit ? `🌟 *${produit.nom}*\n💰 ${produit.prix} ${devise} seulement\n\n${produit.description?.slice(0, 100) ?? ""}` : "Découvrez nos nouveautés"}\n\n${args.code_promo ? `🎁 Code promo : *${args.code_promo}*` : ""}\n📲 Commander maintenant !`,
         evenement: `🎊 Offre spéciale pour les fêtes !\n\n${tenant?.nomBoutique} vous gâte avec des prix exceptionnels 🎁\n${args.code_promo ? `\nCode : *${args.code_promo}*` : ""}\n\n⏰ Offre limitée — ne ratez pas ça !`,
         relance: `Bonjour ! 👋\n\nNous pensons à vous chez ${tenant?.nomBoutique} 🌟\n\n${args.code_promo ? `Profitez de *${args.code_promo}* pour votre prochaine commande 🎁` : "Revenez découvrir nos nouveautés !"}\n\n📲 On reste disponibles sur WhatsApp !`,
       };
@@ -215,12 +216,12 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
       });
 
       await logDecision(tenantId, "agent-growth", "pack_bundle_cree",
-        `Pack "${args.nom_pack}" créé — ${prixOriginal} XAF → ${prixBundle} XAF (-${args.remise_pourcent}%)`,
+        `Pack "${args.nom_pack}" créé — ${prixOriginal} ${devise} → ${prixBundle} ${devise} (-${args.remise_pourcent}%)`,
         { nom: args.nom_pack, prixOriginal, prixBundle },
         (prixOriginal - prixBundle) * 10
       );
 
-      return { succes: true, resultat: `Pack "${args.nom_pack}" créé : ${prixOriginal} XAF → ${prixBundle} XAF (-${args.remise_pourcent}%)` };
+      return { succes: true, resultat: `Pack "${args.nom_pack}" créé : ${prixOriginal} ${devise} → ${prixBundle} ${devise} (-${args.remise_pourcent}%)` };
     }
 
     if (name === "campagne_acquisition_email") {
@@ -306,8 +307,9 @@ export async function POST(req: NextRequest) {
     { role: "user" as const, content: "Analyse la croissance et propose les meilleures actions pour acquérir de nouveaux clients maintenant." },
   ];
 
+  const devise = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XAF";
   const result = await runAgent(
-    SYSTEM_PROMPT + (Object.keys(memoire).length > 0
+    SYSTEM_PROMPT + `\n\nDEVISE DE LA BOUTIQUE : ${devise} — exprime TOUS les montants dans cette devise (les exemples ci-dessus sont en XAF).` + (Object.keys(memoire).length > 0
       ? `\n\nTA MÉMOIRE :\n${Object.entries(memoire).map(([k, v]) => `- ${k}: ${v}`).join("\n")}`
       : ""),
     messages,

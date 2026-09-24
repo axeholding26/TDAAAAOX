@@ -19,6 +19,7 @@ import { genererEAN13 } from "@/lib/barcode";
 import Link from "next/link";
 import { toast } from "sonner";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const CATEGORIES = [
   "Mode & Vêtements", "Beauté & Cosmétiques", "Alimentation & Épicerie",
   "Artisanat & Art", "Électronique", "Maison & Décoration",
@@ -53,6 +54,7 @@ type FormState = {
 };
 
 export default function EditProduitPage() {
+  const { devise, fmt } = useDevise();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -65,8 +67,7 @@ export default function EditProduitPage() {
   const [tagInput, setTagInput] = useState("");
   const [imageInput, setImageInput] = useState("");
   const [stats, setStats] = useState({ ventes: 0, vues: 0, avis: 0, commandes: 0 });
-  const [devise, setDevise] = useState("FCFA");
-  const [boutiqueSlug, setBoutiqueSlug] = useState("");
+    const [boutiqueSlug, setBoutiqueSlug] = useState("");
   const [variantes, setVariantes] = useState<{ id?: string; nom: string; valeur: string; sku: string; prix: string; stock: string; image: string; actif: boolean }[]>([]);
   const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
   const [savingVariante, setSavingVariante] = useState(false);
@@ -100,7 +101,6 @@ export default function EditProduitPage() {
       .then(d => {
         const p = d.produit;
         setStats({ ventes: p.ventes ?? 0, vues: p.vues ?? 0, avis: p._count?.avis ?? 0, commandes: p._count?.lignesCommande ?? 0 });
-        setDevise(p.devise ?? "FCFA");
         setFormState({
           nom: p.nom ?? "",
           slug: p.slug ?? "",
@@ -476,7 +476,7 @@ export default function EditProduitPage() {
                       </button>
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1.5">Pas de code d'origine ? Génère-en un, imprime l'étiquette et colle-la sur le produit.</p>
-                    <BarcodeLabelPreview value={form.codeBarres} nom={form.nom || "Produit"} prix={form.prix ? `${form.prix} FCFA` : undefined} />
+                    <BarcodeLabelPreview value={form.codeBarres} nom={form.nom || "Produit"} prix={form.prix ? `${fmt(Number(form.prix) || 0)}` : undefined} />
                   </div>
                 </>
               )}

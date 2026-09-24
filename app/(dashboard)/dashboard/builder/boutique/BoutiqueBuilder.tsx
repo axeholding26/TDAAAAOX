@@ -19,6 +19,7 @@ import { createDefaultNode, STARTER_TEMPLATES } from "../canvas/blockDefaults";
 import { PanneauSections } from "./PanneauSections";
 import { MenuAjout, type ChoixAjout } from "./MenuAjout";
 import { Apercu } from "./Apercu";
+import { ApercuFiche } from "./ApercuFiche";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "./decoupage";
 import { lireElement, modifierElement, appliquerContenu, selectionnerParent } from "./elements-dom";
@@ -273,8 +274,8 @@ export function BoutiqueBuilder(p: Props) {
           {ajout && <MenuAjout mode={ajout.mode} onChoisir={choisirAjout} onFermer={() => setAjout(null)} />}
         </aside>
 
-        {/* ── Aperçu ── */}
-        <Apercu
+        {/* ── Aperçu ── (fiche produit quand son panneau est ouvert) */}
+        {onglet === "parametres" && reglageOuvert === "produit" ? <ApercuFiche config={config} tenant={tenant} device={device} /> : <Apercu
           config={config}
           tree={tree}
           slug={tenant.slug}
@@ -285,7 +286,7 @@ export function BoutiqueBuilder(p: Props) {
           onAjouterSection={(zone, index) => { setOnglet("sections"); setAjout({ mode: "section", zone, index }); }}
           selectedEl={selectedEl}
           onSelectElement={(noeudId, elId) => { setSelectedIdBrut(noeudId); setSelectedEl(elId); }}
-        />
+        />}
 
         {/* ── Réglages de l'élément sélectionné ── */}
         {embed && selectedEl && infoEl && (

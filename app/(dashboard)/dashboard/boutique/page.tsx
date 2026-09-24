@@ -14,6 +14,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
@@ -23,11 +24,6 @@ const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Layers,  titre: "Gérez plusieurs boutiques",       description: "Basculez d'une boutique à l'autre en un clic ou créez-en une nouvelle si votre palier le permet." },
 ];
 
-const PAYS = [
-  { code: "SN", nom: "Sénégal" }, { code: "CM", nom: "Cameroun" }, { code: "CI", nom: "Côte d'Ivoire" },
-  { code: "GH", nom: "Ghana" }, { code: "NG", nom: "Nigeria" }, { code: "KE", nom: "Kenya" },
-  { code: "MA", nom: "Maroc" }, { code: "TG", nom: "Togo" }, { code: "BJ", nom: "Bénin" },
-];
 
 const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] leading-normal outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 const labelCls = "flex items-center gap-1.5 mb-1.5 ax-label leading-none";
@@ -366,8 +362,11 @@ export default function BoutiquePage() {
                   <select value={form.pays} onChange={e => set("pays", e.target.value)}
                     className={inputCls} style={{ appearance: "none" }}>
                     <option value="">Sélectionner…</option>
-                    {PAYS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
+                    {PAYS_OPTIONS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
                   </select>
+                  {form.pays && PAYS_DEVISES[form.pays] && (
+                    <p className="text-[11px] text-[#999999] mt-1">Devise de la boutique : <strong>{PAYS_DEVISES[form.pays]}</strong> (définie par le pays)</p>
+                  )}
                 </div>
               </div>
               <div>

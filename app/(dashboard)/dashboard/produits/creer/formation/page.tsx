@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, BookOpen, Check, Globe } from "lucide-react";
 import Link from "next/link";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 type Etape = 1 | 2 | 3;
 
 interface Infos {
@@ -40,6 +41,7 @@ function autoSlug(nom: string) {
 }
 
 export default function CreerFormationPage() {
+  const { devise, fmt } = useDevise();
   const router = useRouter();
   const [etape,     setEtape]     = useState<Etape>(1);
   const [produitId, setProduitId] = useState<string | null>(null);
@@ -160,7 +162,7 @@ export default function CreerFormationPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Prix (FCFA) *</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1.5">Prix ({devise}) *</label>
               <input
                 type="number" min={0} value={infos.prix}
                 onChange={(e) => setInfos((p) => ({ ...p, prix: e.target.value }))}
@@ -251,7 +253,7 @@ export default function CreerFormationPage() {
             </div>
             <h3 className="font-bold text-gray-900 mb-1">{infos.nom}</h3>
             <p className="text-sm text-gray-500 mb-3">{infos.description || "Formation digitale"}</p>
-            <span className="text-2xl font-bold text-[#0ea5e9]">{parseInt(infos.prix).toLocaleString("fr")} FCFA</span>
+            <span className="text-2xl font-bold text-[#0ea5e9]">{fmt(parseInt(infos.prix))}</span>
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600 space-y-1.5">

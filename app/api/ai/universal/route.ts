@@ -1485,12 +1485,14 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           data: { tenantId, affilieurId: args.affilieurId, montant: args.montant, methode: args.methode ?? "mobile_money", telephone: args.telephone, notes: args.notes },
         }).catch((e: any) => ({ error: e.message }));
         if ((paiement as any).error) return { succes: false, resultat: `Erreur: ${(paiement as any).error}` };
-        return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} XAF enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
+        const devP = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XAF";
+        return { succes: true, resultat: `✅ Paiement de ${args.montant.toLocaleString()} ${devP} enregistré pour l'affilié ${args.affilieurId} via ${args.methode ?? "mobile money"}` };
       }
 
       case "calculer_tva": {
-        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true } });
-        const juridiction = args.juridiction ?? "CM";
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { tauxTVA: true, pays: true, devise: true } });
+        const juridiction = args.juridiction ?? tenant?.pays ?? "CM";
+        const dev = tenant?.devise ?? "XAF";
         const TVA_RATES: Record<string, { taux: number; nom: string; incluse: boolean }> = {
           CM: { taux: 0.1925, nom: "TVA Cameroun (19,25%)", incluse: true },
           CI: { taux: 0.18, nom: "TVA Côte d'Ivoire (18%)", incluse: true },
@@ -1507,7 +1509,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         const montantTVA = montant - montantHT;
         return {
           succes: true,
-          resultat: `TVA ${juridiction} — ${reg.nom}\nMontant TTC: ${montant.toLocaleString()} XAF\nMontant HT: ${Math.round(montantHT).toLocaleString()} XAF\nTVA: ${Math.round(montantTVA).toLocaleString()} XAF (${Math.round(reg.taux * 100)}%)`,
+          resultat: `TVA ${juridiction} — ${reg.nom}\nMontant TTC: ${montant.toLocaleString()} ${dev}\nMontant HT: ${Math.round(montantHT).toLocaleString()} ${dev}\nTVA: ${Math.round(montantTVA).toLocaleString()} ${dev} (${Math.round(reg.taux * 100)}%)`,
         };
       }
 

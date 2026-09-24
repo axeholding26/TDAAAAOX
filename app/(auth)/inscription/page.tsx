@@ -13,7 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
-import { PAYS_DEVISES } from "@/lib/ai-agent";
+import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
 
@@ -115,12 +115,7 @@ const PAYS_LIST = [
   { code:"BJ", nom:"Bénin",         flag:"🇧🇯", devise:"XOF" },
   { code:"ML", nom:"Mali",          flag:"🇲🇱", devise:"XOF" },
   { code:"KE", nom:"Kenya",         flag:"🇰🇪", devise:"KES" },
-  { code:"FR", nom:"France",        flag:"🇫🇷", devise:"EUR" },
-  { code:"BE", nom:"Belgique",      flag:"🇧🇪", devise:"EUR" },
-  { code:"CA", nom:"Canada",        flag:"🇨🇦", devise:"CAD" },
-  { code:"US", nom:"États-Unis",    flag:"🇺🇸", devise:"USD" },
-  { code:"AE", nom:"Émirats",       flag:"🇦🇪", devise:"AED" },
-  { code:"GB", nom:"Royaume-Uni",   flag:"🇬🇧", devise:"GBP" },
+  { code:"CD", nom:"RDC",           flag:"🇨🇩", devise:"CDF" },
   { code:"AUTRE_AFRIQUE", nom:"Autre pays d'Afrique", flag:"🌍", devise:"" },
 ];
 
@@ -128,26 +123,7 @@ const PAYS_LIST = [
 // marchand clique "Autre pays d'Afrique" dans PaysSelector (les pays déjà
 // présents dans PAYS_LIST ci-dessus, comme le Sénégal ou le Maroc, y figurent
 // aussi pour une recherche complète en un seul endroit).
-const PAYS_AFRIQUE = [
-  { code:"DZ", nom:"Algérie" }, { code:"AO", nom:"Angola" }, { code:"BJ", nom:"Bénin" },
-  { code:"BW", nom:"Botswana" }, { code:"BF", nom:"Burkina Faso" }, { code:"BI", nom:"Burundi" },
-  { code:"CV", nom:"Cabo Verde" }, { code:"CM", nom:"Cameroun" }, { code:"CF", nom:"Centrafrique" },
-  { code:"KM", nom:"Comores" }, { code:"CG", nom:"Congo-Brazzaville" }, { code:"CD", nom:"Congo (RDC)" },
-  { code:"CI", nom:"Côte d'Ivoire" }, { code:"DJ", nom:"Djibouti" }, { code:"EG", nom:"Égypte" },
-  { code:"ER", nom:"Érythrée" }, { code:"SZ", nom:"Eswatini" }, { code:"ET", nom:"Éthiopie" },
-  { code:"GA", nom:"Gabon" }, { code:"GM", nom:"Gambie" }, { code:"GH", nom:"Ghana" },
-  { code:"GN", nom:"Guinée" }, { code:"GW", nom:"Guinée-Bissau" }, { code:"GQ", nom:"Guinée équatoriale" },
-  { code:"KE", nom:"Kenya" }, { code:"LS", nom:"Lesotho" }, { code:"LR", nom:"Libéria" },
-  { code:"LY", nom:"Libye" }, { code:"MG", nom:"Madagascar" }, { code:"MW", nom:"Malawi" },
-  { code:"ML", nom:"Mali" }, { code:"MA", nom:"Maroc" }, { code:"MR", nom:"Mauritanie" },
-  { code:"MU", nom:"Maurice" }, { code:"MZ", nom:"Mozambique" }, { code:"NA", nom:"Namibie" },
-  { code:"NE", nom:"Niger" }, { code:"NG", nom:"Nigeria" }, { code:"UG", nom:"Ouganda" },
-  { code:"RW", nom:"Rwanda" }, { code:"ST", nom:"São Tomé-et-Príncipe" }, { code:"SN", nom:"Sénégal" },
-  { code:"SC", nom:"Seychelles" }, { code:"SL", nom:"Sierra Leone" }, { code:"SO", nom:"Somalie" },
-  { code:"SD", nom:"Soudan" }, { code:"SS", nom:"Soudan du Sud" }, { code:"TZ", nom:"Tanzanie" },
-  { code:"TD", nom:"Tchad" }, { code:"TG", nom:"Togo" }, { code:"TN", nom:"Tunisie" },
-  { code:"ZM", nom:"Zambie" }, { code:"ZW", nom:"Zimbabwe" }, { code:"ZA", nom:"Afrique du Sud" },
-].sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+const PAYS_AFRIQUE = PAYS_OPTIONS;
 
 // ─── Logique 4 propositions Axia (detecterCategorie/choisir4Themes : lib/axso-design-manifest.ts) ──
 // Explication personnalisée d'Axia pour chaque thème
@@ -890,7 +866,8 @@ export default function InscriptionPage() {
       if(data.plan){
         // Le nom vient du marchand (Q1.5), jamais de l'invention de l'IA —
         // on l'impose ici même si le JSON retourné en propose un autre.
-        const p = { ...(data.plan as PlanBoutique & { messageIA?:string }), nomBoutique: nomChoisi };
+        // Idem pour le pays : celui cliqué par le marchand, et SA devise.
+        const p = { ...(data.plan as PlanBoutique & { messageIA?:string }), nomBoutique: nomChoisi, pays: paysCode, devise: PAYS_DEVISES[paysCode] || devise };
         setMessageIA(data.messageIA || p.messageIA || "Voici ce que j'ai préparé pour toi !");
         // Choisir 4 themes adaptés à la catégorie de boutique
         const ids = choisir4Themes(vente, p.themeId);
@@ -908,7 +885,7 @@ export default function InscriptionPage() {
       }
     })
     .catch(()=>{ setErreur("Erreur réseau."); toast("error","Erreur réseau."); setPhase("q-pays"); });
-  },[phase,vente,nomChoisi,paysCode,paysNom,typeBoutique,toast]);
+  },[phase,vente,nomChoisi,paysCode,paysNom,devise,typeBoutique,toast]);
 
   const confirmPlan = useCallback(()=>{
     toast("info","Design sélectionné ! Crée ton compte pour lancer. 🚀");

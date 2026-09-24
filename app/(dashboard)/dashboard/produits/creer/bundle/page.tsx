@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ProduitOption = {
@@ -105,6 +106,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
 // ─── Étape 2 — Sélection produits ────────────────────────────────────────────
 
 function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const { devise, fmt } = useDevise();
   const [recherche, setRecherche] = useState("");
   const [resultats, setResultats] = useState<ProduitOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,7 +171,7 @@ function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 truncate">{p.nom}</p>
-                <p className="text-xs text-gray-400">{p.prix.toLocaleString("fr-FR")} FCFA · {p.type}</p>
+                <p className="text-xs text-gray-400">{fmt(p.prix)} · {p.type}</p>
               </div>
               <Plus size={14} className="text-[#F5A623] flex-shrink-0" />
             </button>
@@ -194,7 +196,7 @@ function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 truncate">{p.nom}</p>
-                <p className="text-xs text-gray-400">{p.prix.toLocaleString("fr-FR")} FCFA</p>
+                <p className="text-xs text-gray-400">{fmt(p.prix)}</p>
               </div>
               <button onClick={() => retirer(p.id)} className="text-gray-400 hover:text-red-500 transition-colors">
                 <X size={15} />
@@ -204,7 +206,7 @@ function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
 
           <div className="flex items-center justify-between px-1 pt-1">
             <span className="text-xs text-gray-500">Valeur totale des produits</span>
-            <span className="text-sm font-bold text-gray-800">{valeurTotale.toLocaleString("fr-FR")} FCFA</span>
+            <span className="text-sm font-bold text-gray-800">{fmt(valeurTotale)}</span>
           </div>
         </div>
       ) : (
@@ -220,6 +222,7 @@ function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
 // ─── Étape 3 — Tarification ──────────────────────────────────────────────────
 
 function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const { devise, fmt } = useDevise();
   const valeurTotale = e.produitsSelectionnes.reduce((s, p) => s + p.prix, 0);
   const prixNum = parseFloat(e.prix) || 0;
   const remise = valeurTotale > 0 && prixNum > 0
@@ -236,7 +239,7 @@ function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWiz
       {/* Valeur totale */}
       <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
         <p className="text-xs text-gray-500 mb-1">Valeur cumulée des produits inclus</p>
-        <p className="text-2xl font-black text-gray-800">{valeurTotale.toLocaleString("fr-FR")} FCFA</p>
+        <p className="text-2xl font-black text-gray-800">{fmt(valeurTotale)}</p>
       </div>
 
       {/* Remises rapides */}
@@ -261,7 +264,7 @@ function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWiz
 
       {/* Prix manuel */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix du bundle (FCFA) *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix du bundle ({devise}) *</label>
         <div className="relative">
           <input
             type="number"
@@ -295,6 +298,7 @@ function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWiz
 // ─── Étape 4 — Publication ────────────────────────────────────────────────────
 
 function EtapePublication({ e }: { e: EtatWizard }) {
+  const { devise, fmt } = useDevise();
   const valeurTotale = e.produitsSelectionnes.reduce((s, p) => s + p.prix, 0);
   const prixNum = parseFloat(e.prix) || 0;
   const checks = [
@@ -310,8 +314,8 @@ function EtapePublication({ e }: { e: EtatWizard }) {
         <h3 className="font-semibold text-gray-800 mb-3">Récapitulatif bundle</h3>
         <div className="flex justify-between"><span className="text-gray-500">Nom</span><span className="font-medium">{e.nom || "—"}</span></div>
         <div className="flex justify-between"><span className="text-gray-500">Produits inclus</span><span className="font-medium">{e.produitsSelectionnes.length}</span></div>
-        <div className="flex justify-between"><span className="text-gray-500">Valeur totale</span><span className="font-medium">{valeurTotale.toLocaleString("fr-FR")} FCFA</span></div>
-        <div className="flex justify-between"><span className="text-gray-500">Prix bundle</span><span className="font-bold text-[#F5A623]">{prixNum > 0 ? `${prixNum.toLocaleString("fr-FR")} FCFA` : "—"}</span></div>
+        <div className="flex justify-between"><span className="text-gray-500">Valeur totale</span><span className="font-medium">{fmt(valeurTotale)}</span></div>
+        <div className="flex justify-between"><span className="text-gray-500">Prix bundle</span><span className="font-bold text-[#F5A623]">{prixNum > 0 ? `${fmt(prixNum)}` : "—"}</span></div>
         {valeurTotale > 0 && prixNum > 0 && (
           <div className="flex justify-between"><span className="text-gray-500">Économie client</span>
             <span className="text-green-600 font-semibold">{Math.round((1 - prixNum / valeurTotale) * 100)}%</span>

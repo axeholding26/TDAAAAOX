@@ -1,3 +1,5 @@
+import { formatMontant } from "./utils";
+import { convertirDepuisXAF } from "./devise-convert";
 /**
  * Génère un themeConfig complet et optimisé à partir du profil business du marchand.
  * Chaque boutique créée démarre avec un setup premium calibré pour sa catégorie.
@@ -680,5 +682,11 @@ export function generateStoreConfig(opts: {
     contactPage,
   };
 
-  return { themeConfig };
+  // Les textes par défaut (bandeaux "livraison offerte dès 25 000 XOF"…) sont
+  // écrits en franc CFA : on les convertit dans la devise de la boutique.
+  const devise = opts.devise || "XOF";
+  if (devise === "XOF" || devise === "XAF") return { themeConfig };
+  const converti = JSON.stringify(themeConfig).replace(/(\d{1,3}(?: \d{3})+|\d+) XOF/g, (_, n: string) =>
+    formatMontant(convertirDepuisXAF(Number(n.replace(/ /g, "")), devise), devise));
+  return { themeConfig: JSON.parse(converti) };
 }

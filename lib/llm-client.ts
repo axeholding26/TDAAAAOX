@@ -47,7 +47,9 @@ export interface CompletionWithToolsResult {
 
 // Essayés dans l'ordre : si le premier est saturé (503 "high demand") ou en
 // quota (429), on bascule sur le suivant avant d'aller chercher DeepSeek.
-const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite"];
+// Les "lite" saturent souvent ensemble : les "flash" (plus lents, capacité
+// séparée) servent de secours — sans eux l'onboarding tombe en "Erreur serveur".
+const GEMINI_MODELS = ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash"];
 const GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
 const DEEPSEEK_MODEL = "deepseek-chat";
 const DEEPSEEK_BASE_URL = "https://api.deepseek.com";

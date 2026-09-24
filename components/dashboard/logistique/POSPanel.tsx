@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote, Smartphone, CreditCard, Building2, ShoppingBag, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
@@ -41,6 +42,7 @@ const METHODES = [
 ];
 
 export function POSPanel() {
+  const { fmt } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [recherche, setRecherche] = useState("");
   const [cart, setCart] = useState<LigneCart[]>([]);
@@ -324,7 +326,7 @@ export function POSPanel() {
             className="w-full py-3 rounded-xl text-white font-bold text-[14px] disabled:opacity-40 transition-all"
             style={{ background: "#F5A623" }}
           >
-            {loading ? "Enregistrement..." : `Valider la vente — ${total.toLocaleString()} XAF`}
+            {loading ? "Enregistrement..." : `Valider la vente — ${fmt(total)}`}
           </button>
         </div>
       </div>

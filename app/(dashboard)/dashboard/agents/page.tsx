@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AgentAvatar3D, AGENT_META } from "@/components/dashboard/AgentAvatar3D";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const SUGGESTIONS = [
   { cat: "Analytics",  Icon: BarChart3,  items: ["Fais un rapport complet de mes ventes", "Quels sont mes produits les plus rentables ?", "Analyse mes clients VIP"] },
   { cat: "Revenus",    Icon: DollarSign, items: ["Optimise mes prix pour maximiser le CA", "Crée une offre flash 24h", "Relance les paniers abandonnés"] },
@@ -114,6 +115,7 @@ function inlineMarkdown(text: string): React.ReactNode {
 
 // ── Panneau Orchestrateur ────────────────────────────────────────────────────
 function OrchestratorPanel({ onClose }: { onClose: () => void }) {
+  const { devise, fmt } = useDevise();
   const [loading, setLoading] = useState(false);
   const [etat, setEtat] = useState<any>(null);
   const [actions, setActions] = useState<string[]>([]);
@@ -157,7 +159,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           action: "creer_objectif", type: "revenu_mensuel",
           titre: `Objectif ${new Date(deadline).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`,
-          cible: parseFloat(cible), devise: "XAF", deadline,
+          cible: parseFloat(cible), devise, deadline,
         }),
       });
       const data = await res.json();
@@ -221,7 +223,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
           </div>
           {objectifForm && (
             <div className="bg-purple-50 border border-purple-200 rounded-2xl p-3 mb-3 space-y-2">
-              <input type="number" value={cible} onChange={e => setCible(e.target.value)} placeholder="Cible en XAF" className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400"/>
+              <input type="number" value={cible} onChange={e => setCible(e.target.value)} placeholder={`Cible en ${devise}`} className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400"/>
               <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-purple-400"/>
               <button onClick={creerObjectif} disabled={!cible || parseFloat(cible) <= 0} className="w-full py-2 bg-purple-600 text-white rounded-xl text-sm font-bold disabled:opacity-50">Créer l'objectif</button>
             </div>
@@ -259,7 +261,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
                     <p className="text-xs text-gray-700">{d.description}</p>
                     <p className="text-[10px] text-gray-400 mt-0.5">{d.agentId} · {new Date(d.createdAt).toLocaleDateString("fr-FR")}</p>
                   </div>
-                  {d.impactEstime && <span className="text-[10px] text-green-600 font-bold ml-auto flex-shrink-0">+{d.impactEstime.toLocaleString()} XAF</span>}
+                  {d.impactEstime && <span className="text-[10px] text-green-600 font-bold ml-auto flex-shrink-0">+{fmt(d.impactEstime)}</span>}
                 </div>
               ))}
             </div>

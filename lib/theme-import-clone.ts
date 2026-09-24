@@ -51,7 +51,6 @@ const REGEX_TEXTE_BOUTON_ACTION = /ajouter|acheter|commander|add to cart|buy|pan
 // façon fiable au ré-encodage) — recherché tel quel comme simple chaîne dans
 // le HTML final pour couper avant/après (voir ImportedLiteral*Shell.tsx).
 export const MARQUEUR_SLOT = '<div data-axso-slot="1"></div>';
-export const ATTR_AJOUTER_PANIER = "data-axso-add-to-cart";
 
 function nettoyerElement(el: ParsedElement) {
   // Retire tout gestionnaire d'événement inline et tout lien javascript:.
@@ -191,73 +190,6 @@ export function construireTemplateBoutique(params: {
   return { html, css, conteneurTrouve };
 }
 
-// Fiche produit (PDP) — clone la zone désignée UNE SEULE FOIS (pas de
-// répétition) et y injecte le produit réel. Ne branche aucun handler de clic
-// ici : le bouton d'achat retrouvé par son texte est juste marqué
-// (ATTR_AJOUTER_PANIER) — c'est le composant client React qui lui attache le
-// vrai onClick (useCartStore), jamais de JS cloné/exécuté.
-//
-// Contrairement à l'accueil/la liste boutique (figées avec un instantané de
-// produits au moment de l'import — limitation acceptée, comme aujourd'hui),
-// la fiche produit affiche un produit DIFFÉRENT à chaque URL : on ne peut
-// donc pas figer une seule liaison au moment de l'import. Découpé en deux
-// étapes : extraireGabaritFicheProduit (une fois, à l'import — isole juste
-// la zone comme fragment réutilisable, sans produit) et lierProduitAuGabarit
-// (à chaque requête storefront, avec le vrai produit demandé).
-
-// Étape import — isole la zone fiche-produit comme fragment réutilisable
-// (aucun produit encore lié). Stocké tel quel dans ThemeConfig.builderHtmlProduit.
-export function extraireGabaritFicheProduit(params: {
-  htmlBrut: string;
-  selecteurZoneProduit: string | null;
-}): { gabarit: string; css: string; zoneTrouvee: boolean } {
-  const { htmlBrut, selecteurZoneProduit } = params;
-  const { root, css } = parserEtExtraireCss(htmlBrut);
-  const zone = selecteurZoneProduit ? root.querySelector(selecteurZoneProduit) : null;
-  if (!zone) return { gabarit: "", css, zoneTrouvee: false };
-  nettoyerElement(zone as ParsedElement);
-  return { gabarit: zone.outerHTML.trim(), css, zoneTrouvee: true };
-}
-
-// Étape requête — reçoit le petit fragment déjà isolé (pas la page entière)
-// et y lie le produit réellement demandé. Rapide (fragment isolé, pas de
-// sélecteur à chercher dans tout le document) : appelable à chaque rendu
-// SSR de la fiche produit sans coût d'appel IA.
-export function lierProduitAuGabarit(gabarit: string, slug: string, produit: ProduitPourClone): string {
-  if (!gabarit) return "";
-  const zone = parse(gabarit).firstChild as ParsedElement;
-  if (!zone) return gabarit;
-
-  const img = zone.querySelector("img");
-  if (img && produit.image) img.setAttribute("src", produit.image);
-
-  const candidats = zone.querySelectorAll("*").filter((el) => {
-    const t = (el.textContent || "").trim();
-    return t.length > 0 && el.childNodes.every((c) => (c as any).nodeType === 3 || (c as any).nodeType === undefined || !(c as ParsedElement).tagName);
-  });
-  const candidatPrix = candidats.find((el) =>
-    /^[\d][\d\s.,]*\s*(FCFA|CFA|XOF|XAF|F|€|EUR|\$|USD)?$/i.test((el.textContent || "").trim())
-  );
-  const candidatNom = candidats
-    .filter((el) => el !== candidatPrix && !REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim()))
-    .sort((a, b) =>
-      (b.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length -
-      (a.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length
-    )[0];
-  if (candidatPrix) candidatPrix.set_content(produit.prixAffiche);
-  if (candidatNom) candidatNom.set_content(produit.nom);
-
-  // Bouton d'achat retrouvé par texte visible — jamais par classe (trop
-  // spécifique à un template précis).
-  const boutonAchat = zone.querySelectorAll("button, a").find((el) =>
-    REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim())
-  );
-  boutonAchat?.setAttribute(ATTR_AJOUTER_PANIER, "1");
-
-  reecrireLiensNav(zone, slug);
-  return zone.outerHTML.trim();
-}
-
 // Panier / commande / confirmation — n'essaie jamais de recloner ni de
 // rebrancher la logique JS d'origine (trop risqué sur un flux qui touche à
 // de l'argent réel). Garde tout le chrome visuel de la page, remplace
@@ -297,7 +229,7 @@ function echapperHtml(s: string): string {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function remplacerTokensCarte(gabarit: string, p: ProduitPourClone, slug: string): string {
+export function remplacerTokensCarte(gabarit: string, p: ProduitPourClone, slug: string): string {
   return gabarit
     .replaceAll("{{ID}}", echapperHtml(p.id))
     .replaceAll("{{NOM}}", echapperHtml(p.nom))
@@ -415,38 +347,3 @@ export function injecterGrilleLibrairie(params: {
   return racine.outerHTML;
 }
 
-// Lie le produit réellement demandé au gabarit de fiche produit — appelé à
-// CHAQUE requête storefront (contrairement à l'accueil/la liste boutique,
-// une fiche produit affiche un produit différent par URL, impossible à
-// figer une fois pour toutes). 100% par id (#pdpName/#pdpDesc/#pdpPriceRow/
-// #pdpAddBtn), aucune heuristique de texte nécessaire — la convention de la
-// bibliothèque garantit ces ids. `selecteurVisuelPdp` (trouvé une fois par
-// IA, voir extraireGabaritsLibrairie) désigne le conteneur du visuel
-// principal, remplacé par une vraie photo produit.
-export function lierProduitLibrairieAuGabarit(params: {
-  gabaritPage: string;
-  selecteurVisuelPdp: string | null;
-  produit: ProduitPourClone;
-}): string {
-  const { gabaritPage, selecteurVisuelPdp, produit } = params;
-  // `gabaritPage` (builderHtmlProduit) est chromeAvant+vue+chromeApres, donc
-  // PLUSIEURS éléments racines — un simple `.firstChild` ne capturerait que
-  // le premier fragment de chrome (ex. les <defs> SVG) et perdrait tout le
-  // reste. On enveloppe dans un conteneur de travail avant de parser.
-  const racine = parse(`<div>${gabaritPage}</div>`).firstChild as ParsedElement;
-  if (!racine) return gabaritPage;
-
-  racine.querySelector("#pdpName")?.set_content(echapperHtml(produit.nom));
-  racine.querySelector("#pdpDesc")?.set_content(echapperHtml(produit.description || ""));
-  racine.querySelector("#pdpPriceRow")?.set_content(echapperHtml(produit.prixAffiche));
-
-  const visuel = selecteurVisuelPdp ? racine.querySelector(selecteurVisuelPdp) : null;
-  if (visuel && produit.image) {
-    visuel.set_content(`<img src="${echapperHtml(produit.image)}" alt="${echapperHtml(produit.nom)}" style="width:100%;height:100%;object-fit:cover;">`);
-  }
-
-  racine.querySelector("#pdpAddBtn")?.setAttribute(ATTR_AJOUTER_PANIER, "1");
-
-  nettoyerElement(racine);
-  return racine.innerHTML;
-}

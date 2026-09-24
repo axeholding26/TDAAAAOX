@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
-import { analyserBusinessEtCreerPlan, type PlanBoutique } from "@/lib/ai-agent";
+import { analyserBusinessEtCreerPlan, deviseDuPays, type PlanBoutique } from "@/lib/ai-agent";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
@@ -11,8 +11,8 @@ import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 
-// Analyse IA (10-30 s) + création avec images : le défaut serverless coupe avant.
-export const maxDuration = 60;
+// Analyse IA (10-45 s quand Gemini bascule sur ses modèles de secours) : le défaut serverless coupe avant.
+export const maxDuration = 120;
 
 const schemaAnalyser = z.object({
   phase: z.literal("analyser"),
@@ -87,6 +87,7 @@ export async function POST(request: Request) {
 
     if (body.phase === "executer") {
       const { plan, compte, typeBoutique, digitalTemplateId: digitalTemplateIdChoisi, designsProposes } = schemaExecuter.parse(body);
+      plan.devise = deviseDuPays(plan.pays, plan.devise);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
       // Gabarit du Constructeur digital (voir lib/digital-templates.ts pour
       // les 4 choix — plus un arbre de blocs : un layout React dédié,

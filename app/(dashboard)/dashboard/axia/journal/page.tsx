@@ -7,6 +7,7 @@ import {
   BarChart3, Users, ShoppingBag, Truck, Loader2, Filter, Zap,
 } from "lucide-react";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 interface Decision {
   id: string;
   agentId: string;
@@ -48,6 +49,7 @@ function grouperParJour(decisions: Decision[]): Array<{ jour: string; items: Dec
 }
 
 export default function JournalAxiaPage() {
+  const { devise, fmt } = useDevise();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [agents, setAgents] = useState<string[]>([]);
   const [filtre, setFiltre] = useState<string | null>(null);
@@ -140,12 +142,12 @@ export default function JournalAxiaPage() {
                             <div className="flex items-center gap-2 mt-2">
                               {d.impactEstime != null && (
                                 <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                  Impact estimé : {formatMontant(d.impactEstime)}
+                                  Impact estimé : {fmt(d.impactEstime)}
                                 </span>
                               )}
                               {d.impactReel != null && (
                                 <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#111111] border border-[#F5A623]/25">
-                                  Impact réel : {formatMontant(d.impactReel)}
+                                  Impact réel : {fmt(d.impactReel)}
                                 </span>
                               )}
                             </div>

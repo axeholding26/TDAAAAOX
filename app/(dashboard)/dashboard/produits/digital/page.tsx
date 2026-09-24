@@ -11,6 +11,7 @@ import {
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const DIGITAL_TUTORIAL_STEPS = [
   { Icon: Package,    titre: "4 types de produits digitaux", description: "Fichier téléchargeable, licence à clés, bundle ou formation — clique \"Nouveau produit digital\" pour créer le tien." },
   { Icon: TrendingUp, titre: "Suivi en un coup d'œil",         description: "Téléchargements, revenu total, licences actives et nombre de produits — tes stats clés tout en haut de la page." },
@@ -744,6 +745,7 @@ function ProductCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DigitalProduitsPage() {
+  const { devise, fmt } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -752,7 +754,6 @@ export default function DigitalProduitsPage() {
   const [statutFilter, setStatutFilter] = useState("tous");
   const [search, setSearch] = useState("");
   const [selectedProduit, setSelectedProduit] = useState<Produit | null>(null);
-  const [devise] = useState("XAF");
 
   const fetchData = useCallback(async () => {
     setLoading(true);

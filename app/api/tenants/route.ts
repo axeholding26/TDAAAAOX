@@ -1,4 +1,5 @@
 // API Route — Création de tenant (inscription boutique)
+import { deviseDuPays } from "@/lib/ai-agent";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const data = schemaCreation.parse(body);
+    data.devise = deviseDuPays(data.pays, data.devise);
 
     // Vérifier si l'email ou slug existe déjà
     const [emailExiste, slugExiste] = await Promise.all([
@@ -216,6 +218,8 @@ export async function PATCH(request: Request) {
       if (body[key] !== undefined) champs[key] = body[key];
     }
     if (body.domainePropre !== undefined) champs.customDomain = body.domainePropre || null;
+    // Pays changé → devise alignée d'office (vitrine, dashboard et AXIA lisent tenant.devise).
+    if (champs.pays) champs.devise = deviseDuPays(champs.pays, champs.devise ?? body.devise ?? "XOF");
 
     const actuel = await prisma.tenant.findUnique({
       where: { id: tenantId },

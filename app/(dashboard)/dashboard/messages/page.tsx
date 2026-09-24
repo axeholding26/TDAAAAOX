@@ -10,6 +10,7 @@ import {
   FileText, Music4, User, Globe, BarChart3,
 } from "lucide-react";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 // ─── Brand ────────────────────────────────────────────────────────────────────
 const C = {
   orange:     "#F5A623",
@@ -293,6 +294,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
   post: PostSocial; myTenantId: string; myNom: string; myLogo?: string | null;
   onDelete: (id: string) => void; onRepost: (p: PostSocial) => void;
 }) {
+  const { devise, fmt } = useDevise();
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked]               = useState(post.reactions.some(r => r.tenantId === myTenantId));
   const [likeCount, setLikeCount]       = useState(post._count.reactions);
@@ -386,7 +388,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
             </div>
             <div style={{ padding: "14px 16px", flex: 1 }}>
               <div style={{ fontWeight: 800, fontSize: 14, color: C.gray900 }}>{post.produitNom}</div>
-              {post.produitPrix && <div style={{ fontWeight: 900, fontSize: 18, color: C.orange, marginTop: 4, letterSpacing: "-0.5px" }}>{post.produitPrix.toLocaleString("fr-FR")} FCFA</div>}
+              {post.produitPrix && <div style={{ fontWeight: 900, fontSize: 18, color: C.orange, marginTop: 4, letterSpacing: "-0.5px" }}>{fmt(post.produitPrix)}</div>}
               <button style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: C.white, background: C.orange, border: "none", borderRadius: 999, padding: "6px 18px", cursor: "pointer", boxShadow: `0 2px 8px rgba(245,166,35,0.35)` }}>Voir le produit →</button>
             </div>
           </div>

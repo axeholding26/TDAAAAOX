@@ -13,7 +13,7 @@ export const XAF_TO: Record<string, number> = {
   ETB: 0.21, TZS: 4.39,  UGX: 6.18,  RWF: 2.27,
   GNF: 14,   MZN: 0.104, AOA: 1.5,   ZMW: 0.044,
   CDF: 4.6,  MAD: 0.016, DZD: 0.22,  TND: 0.005,
-  EGP: 0.078,
+  EGP: 0.078, MGA: 7.5,
   INR: 0.136, CNY: 0.012, JPY: 0.245, IDR: 25.6,
   PHP: 0.094, THB: 0.056, VND: 40,   SGD: 0.00216,
   MYR: 0.0075, KRW: 2.17, PKR: 0.454, BDT: 0.18,

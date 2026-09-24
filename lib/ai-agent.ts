@@ -52,7 +52,7 @@ export const PAYS_DEVISES: Record<string, string> = {
   SL: "SLE", LR: "LRD", GM: "GMD", CV: "CVE", MR: "MRU", KM: "KMF",
   DJ: "DJF", ER: "ERN", SO: "SOS", SS: "SSP", SD: "SDG", BI: "BIF",
   MW: "MWK", NA: "NAD", BW: "BWP", LS: "LSL", SZ: "SZL", MU: "MUR",
-  SC: "SCR", ST: "STN",
+  SC: "SCR", ST: "STN", MG: "MGA",
   // Afrique du Nord
   MA: "MAD", DZ: "DZD", TN: "TND", EG: "EGP", LY: "LYD",
   // Europe
@@ -71,6 +71,19 @@ export const PAYS_DEVISES: Record<string, string> = {
   // Océanie
   AU: "AUD", NZ: "NZD",
 };
+
+/** Les 54 pays de l'Union africaine — seuls pays proposés à la création/modification d'une boutique. */
+export const PAYS_AFRICAINS = "DZ AO BJ BW BF BI CV CM CF KM CG CD CI DJ EG ER SZ ET GA GM GH GN GW GQ KE LS LR LY MG MW ML MA MR MU MZ NA NE NG UG RW ST SN SC SL SO SD SS TZ TD TG TN ZM ZW ZA".split(" ");
+
+/** Liste des pays proposés dans les formulaires (code ISO2 + nom français natif). */
+export const PAYS_OPTIONS = PAYS_AFRICAINS
+  .map((code) => ({ code, nom: new Intl.DisplayNames(["fr"], { type: "region" }).of(code) ?? code }))
+  .sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+
+/** La devise d'une boutique découle TOUJOURS de son pays ; `repli` seulement pour un pays hors carte. */
+export function deviseDuPays(pays: string | null | undefined, repli: string): string {
+  return (pays && PAYS_DEVISES[pays]) || repli;
+}
 
 const PROMPT_ANALYSTE = `Tu es AXIA, l'agent IA d'Axso — la plateforme e-commerce mondiale propulsée par l'IA.
 Tu aides les entrepreneurs du monde entier à lancer leur boutique en ligne.

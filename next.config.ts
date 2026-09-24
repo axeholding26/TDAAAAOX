@@ -12,11 +12,12 @@ const OWASP_HEADERS = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline' https://unpkg.com",
+      // Google Fonts : polices des thèmes (StorefrontTypography, designs AXSO) — bloquées sans ça.
+      "style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "media-src 'self' blob: https:",
       "connect-src 'self' https:",
-      "font-src 'self' data:",
+      "font-src 'self' data: https://fonts.gstatic.com",
       "frame-src 'self' https://www.openstreetmap.org",
       "frame-ancestors 'self'",
     ].join("; "),

@@ -6,17 +6,18 @@ import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
 import { permissionsSession, estCaissierPur } from "@/lib/permissions-server";
 import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { DeviseProvider } from "@/components/dashboard/DeviseProvider";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/connexion");
 
   const tenantId = (session.user as any)?.tenantId;
-  let boutique: { slug: string; nomBoutique: string } | null = null;
+  let boutique: { slug: string; nomBoutique: string; devise: string } | null = null;
   if (tenantId) {
     boutique = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { slug: true, nomBoutique: true },
+      select: { slug: true, nomBoutique: true, devise: true },
     });
   }
 
@@ -28,7 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <AbonnementOverlayProvider>
       <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse}>
-        {children}
+        <DeviseProvider devise={boutique?.devise || "XAF"}>{children}</DeviseProvider>
       </DashboardShell>
       {/* Son audio sur chaque notification toast */}
       <NotificationSound />

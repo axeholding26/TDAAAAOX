@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 interface Campagne {
   id: string;
   plateforme: string;
@@ -180,6 +181,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
 }
 
 export default function PublicitePage() {
+  const { devise, fmt } = useDevise();
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
   const [stats, setStats] = useState<any>({});
   const [loading, setLoading] = useState(true);
@@ -194,7 +196,7 @@ export default function PublicitePage() {
     objectif: "conversions",
     budget: "",
     budgetJour: "",
-    devise: "XOF",
+    devise,
     dateDebut: "",
     dateFin: "",
     ciblePays: [] as string[],
@@ -331,7 +333,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
       {/* KPIs globaux */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={DollarSign} label="Total dépensé" value={`${(stats.totalDepense || 0).toLocaleString()} XOF`} color="#F5A623" />
+        <MetricCard icon={DollarSign} label="Total dépensé" value={`${fmt((stats.totalDepense || 0))}`} color="#F5A623" />
         <MetricCard icon={Eye} label="Impressions totales" value={(stats.totalImpressions || 0).toLocaleString()} color="#818cf8" />
         <MetricCard icon={MousePointer} label="Clics totaux" value={(stats.totalClics || 0).toLocaleString()} sub={stats.totalImpressions ? `CTR: ${((stats.totalClics/stats.totalImpressions)*100).toFixed(2)}%` : undefined} color="#60a5fa" />
         <MetricCard icon={ShoppingCart} label="Conversions" value={stats.totalConversions || 0} sub={stats.roas > 0 ? `ROAS: ${stats.roas.toFixed(2)}x` : undefined} color="#34d399" />

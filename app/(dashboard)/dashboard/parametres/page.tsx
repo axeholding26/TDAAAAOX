@@ -6,6 +6,7 @@ import {
   Settings, MessageCircle, ChevronRight, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
+import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
 const PARAMETRES_TUTORIAL_STEPS = [
@@ -15,8 +16,6 @@ const PARAMETRES_TUTORIAL_STEPS = [
   { Icon: Bell,          titre: "Domaine, notifications, équipe", description: "Retrouvez ici les réglages avancés : domaine personnalisé, alertes et accès de vos collaborateurs." },
 ];
 
-const PAYS = ["Sénégal", "Côte d'Ivoire", "Mali", "Burkina Faso", "Guinée", "Cameroun", "Bénin", "Togo", "Niger", "Mauritanie", "Gabon", "Congo", "RDC", "Madagascar", "France", "Maroc", "Tunisie", "Algérie", "Autre"];
-const DEVISES = ["XOF", "XAF", "GNF", "MAD", "TND", "EUR", "USD"];
 const CATEGORIES = ["Mode & Vêtements", "Électronique", "Alimentation", "Beauté & Cosmétiques", "Maison & Décoration", "Sport & Loisirs", "Livres & Culture", "Artisanat", "Services", "Autre"];
 
 const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
@@ -43,7 +42,8 @@ export default function ParametresPage() {
           nomBoutique: data.nomBoutique || "", description: data.description || "",
           whatsapp: data.whatsapp || "", telephone: data.telephone || "",
           adresse: data.adresse || "", email: data.email || "",
-          categorie: data.categorie || "", pays: data.pays || "", devise: data.devise || "XOF",
+          // Anciennes boutiques : pays enregistré en toutes lettres ("Cameroun") → code ISO2.
+          categorie: data.categorie || "", pays: PAYS_OPTIONS.find(p => p.nom === data.pays)?.code ?? data.pays ?? "", devise: data.devise || "XOF",
         });
         setWhatsappNumero(data.whatsappNumero || "");
         const pc = data.parametresCommande || {};
@@ -236,18 +236,17 @@ export default function ParametresPage() {
           </div>
           <div>
             <label className={labelCls}>Pays</label>
-            <select value={form.pays} onChange={e => setForm({ ...form, pays: e.target.value })}
+            <select value={form.pays} onChange={e => setForm({ ...form, pays: e.target.value, devise: PAYS_DEVISES[e.target.value] ?? form.devise })}
               className={inputCls} style={{ appearance: "none" }}>
               <option value="">Sélectionner…</option>
-              {PAYS.map(p => <option key={p} value={p}>{p}</option>)}
+              {PAYS_OPTIONS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
             </select>
           </div>
           <div>
             <label className={labelCls}>Devise</label>
-            <select value={form.devise} onChange={e => setForm({ ...form, devise: e.target.value })}
-              className={inputCls} style={{ appearance: "none" }}>
-              {DEVISES.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
+            {/* Dérivée du pays (imposé aussi côté serveur, PATCH /api/tenants). */}
+            <input value={form.devise} readOnly className={inputCls + " bg-[#FAFAFA] text-[#777777] cursor-not-allowed"} />
+            <p className="text-[11px] text-[#999999] mt-1">Définie automatiquement par le pays.</p>
           </div>
         </div>
 

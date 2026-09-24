@@ -6,14 +6,11 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { pourcentageRemise } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
-import { resolveConfigVitrine } from "@/lib/vitrine-design";
+import { resolveConfigVitrine, decouperChrome } from "@/lib/vitrine-design";
 import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
-import { cssDesignPersonnalise } from "@/lib/scope-css";
-import { ImportedLiteralProductPage } from "@/components/storefront/templates/ImportedLiteralProductPage";
-import { lierProduitAuGabarit, lierProduitLibrairieAuGabarit } from "@/lib/theme-import-clone";
-import { formatMontant } from "@/lib/utils";
+import { cssSectionsDesign } from "@/lib/scope-css";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -111,32 +108,10 @@ export default async function ProduitPage({ params }: Props) {
     prixAffiche: prixClient(p.prix, taux),
   }));
 
-  if (cfg.builderHtmlProduit) {
-    const produitPourClone = { id: produit.id, nom: produit.nom, prixAffiche: formatMontant(prixAffiche, tenant.devise), image: produit.images[0] ?? null, description: produit.description };
-    // Bibliothèque AXSO Design (lib/axso-design-library.ts) : liaison 100%
-    // par id, jamais l'heuristique de texte (réservée à l'import manuel
-    // d'un fichier arbitraire, qui n'a pas ces ids garantis).
-    const htmlLie = cfg.axsoDesignSelecteurVisuelPdp
-      ? lierProduitLibrairieAuGabarit({ gabaritPage: cfg.builderHtmlProduit, selecteurVisuelPdp: cfg.axsoDesignSelecteurVisuelPdp, produit: produitPourClone })
-      : lierProduitAuGabarit(cfg.builderHtmlProduit, slug, produitPourClone);
-    return (
-      <ImportedLiteralProductPage
-        css={cssDesignPersonnalise(cfg as any)}
-        htmlLie={htmlLie}
-        slug={slug}
-        produit={{
-          id: produit.id,
-          nom: produit.nom,
-          prix: prixAffiche,
-          images: produit.images,
-          stock: produit.stock,
-          type: produit.type,
-          fichierUrl: produit.fichierUrl,
-          fichierNom: produit.fichierNom,
-        }}
-      />
-    );
-  }
+  // Boutique à design : en-tête / pied de page du design (tels que modifiés
+  // dans le Constructeur) autour de la fiche pilotée par les sections du
+  // panneau « Fiche produit » — variantes, quantité, badges, avis réels.
+  const chrome = decouperChrome(cfg.builderHtmlProduit);
 
   // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   // Programme de la formation — affiché avant achat (aperçu gratuit pour les
@@ -226,6 +201,18 @@ export default async function ProduitPage({ params }: Props) {
     boutons: cfg.boutons ?? null,
     peutDevenirAffilie,
   };
+
+  if (chrome) {
+    return (
+      <div style={{ containerType: "inline-size" }}>
+        <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={prixAffiche} devise={tenant.devise} />
+        <style dangerouslySetInnerHTML={{ __html: cssSectionsDesign(cfg as any) }} />
+        <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: chrome.avant }} />
+        <ProductPageClient produit={produitProps} tenant={tenantProps} produitsSimilaires={produitsSimilaires} sansPied />
+        <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: chrome.apres }} />
+      </div>
+    );
+  }
 
   return (
     <>

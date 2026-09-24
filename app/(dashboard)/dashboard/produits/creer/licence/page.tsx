@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Key, Settings, RefreshCw, Check, Upload } from "
 import Link from "next/link";
 import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 type Etape = 1 | 2 | 3 | 4;
 
 interface Infos {
@@ -40,6 +41,7 @@ function SlugInput({ value, onChange }: { value: string; onChange: (v: string) =
 }
 
 export default function CreerLicencePage() {
+  const { devise, fmt } = useDevise();
   const router = useRouter();
   const [etape, setEtape] = useState<Etape>(1);
   const [produitId, setProduitId] = useState<string | null>(null);
@@ -178,7 +180,7 @@ export default function CreerLicencePage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix (FCFA) *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix ({devise}) *</label>
             <input
               type="number" min={0} value={infos.prix}
               onChange={(e) => setInfos((p) => ({ ...p, prix: e.target.value }))}
@@ -338,7 +340,7 @@ export default function CreerLicencePage() {
             </div>
             <h3 className="font-bold text-gray-900 mb-1">{infos.nom}</h3>
             <p className="text-sm text-gray-500 mb-3">{infos.description || "Clé de licence"}</p>
-            <span className="text-2xl font-bold text-[#16a34a]">{parseInt(infos.prix).toLocaleString("fr")} FCFA</span>
+            <span className="text-2xl font-bold text-[#16a34a]">{fmt(parseInt(infos.prix))}</span>
           </div>
 
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4 text-sm text-gray-600 space-y-1.5">

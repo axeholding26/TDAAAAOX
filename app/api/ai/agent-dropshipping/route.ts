@@ -72,7 +72,7 @@ const OUTILS: ToolDefinition[] = [
       properties: {
         niche: { type: "string", description: "La niche ou catégorie ciblée (ex: mode femme, cosmétiques, tech, sport)" },
         pays: { type: "string", description: "Pays africain cible (ex: Sénégal, Côte d'Ivoire, Cameroun...)" },
-        budget_achat_max: { type: "number", description: "Prix d'achat maximum par produit en XOF" },
+        budget_achat_max: { type: "number", description: "Prix d'achat maximum par produit dans la devise de la boutique" },
         nb_produits: { type: "number", description: "Nombre de suggestions à retourner (3 à 8)" },
         fournisseur_prefere: { type: "string", description: "Fournisseur préféré: aliexpress|cj|jumia|local|any" },
       },
@@ -97,8 +97,8 @@ const OUTILS: ToolDefinition[] = [
     parameters: {
       type: "object",
       properties: {
-        prix_achat: { type: "number", description: "Prix d'achat fournisseur en XOF" },
-        frais_livraison: { type: "number", description: "Frais de livraison estimés en XOF" },
+        prix_achat: { type: "number", description: "Prix d'achat fournisseur dans la devise de la boutique" },
+        frais_livraison: { type: "number", description: "Frais de livraison estimés dans la devise de la boutique" },
         marge_cible: { type: "number", description: "Marge bénéficiaire cible en % (ex: 60 pour 60%)" },
         taux_retour: { type: "number", description: "Taux de retour produit estimé en % (ex: 5)" },
       },
@@ -114,9 +114,9 @@ const OUTILS: ToolDefinition[] = [
         nom: { type: "string", description: "Nom du produit" },
         description: { type: "string", description: "Description optimisée du produit" },
         categorie: { type: "string", description: "Catégorie du produit" },
-        prix: { type: "number", description: "Prix de vente en XOF" },
-        prixAchat: { type: "number", description: "Prix d'achat fournisseur en XOF" },
-        prixCompare: { type: "number", description: "Prix barré/comparaison en XOF" },
+        prix: { type: "number", description: "Prix de vente dans la devise de la boutique" },
+        prixAchat: { type: "number", description: "Prix d'achat fournisseur dans la devise de la boutique" },
+        prixCompare: { type: "number", description: "Prix barré/comparaison dans la devise de la boutique" },
         fournisseurNom: { type: "string", description: "Nom du fournisseur" },
         fournisseurType: { type: "string", description: "Type: aliexpress|cj|jumia|local|autre" },
         tags: { type: "array", items: { type: "string" }, description: "Tags produit" },
@@ -274,8 +274,9 @@ async function runDropshippingAgent(
   const actions: string[] = [];
   const MAX_TURNS = 5;
 
+  const devise = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XOF";
   const conversation: any[] = [
-    { role: "system", content: SYSTEM },
+    { role: "system", content: `${SYSTEM}\n\nDEVISE DE LA BOUTIQUE : ${devise} — tous les prix (achat, vente, livraison) dans cette devise.` },
     ...messages,
   ];
 

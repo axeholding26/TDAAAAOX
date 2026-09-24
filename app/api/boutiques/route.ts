@@ -1,5 +1,6 @@
 // Multi-boutique (Palier 2) — liste et création de boutiques supplémentaires
 // pour un compte déjà propriétaire d'au moins une boutique.
+import { deviseDuPays } from "@/lib/ai-agent";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
   let data;
   try {
     data = schemaCreation.parse(await req.json());
+    data.devise = deviseDuPays(data.pays, data.devise);
   } catch (err: any) {
     if (err instanceof z.ZodError) return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     throw err;

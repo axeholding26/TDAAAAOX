@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { slugify, formatMontant } from "@/lib/utils";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Fichier = { id?: string; nom: string; url: string; taille: number; mimeType: string; ordre: number };
@@ -59,6 +60,7 @@ function formatTaille(o: number) {
 // ─── Composant étape 1 ────────────────────────────────────────────────────────
 
 function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const { devise, fmt } = useDevise();
   const [uploadImg, setUploadImg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -119,7 +121,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
       {/* Prix */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix de vente (FCFA) *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix de vente ({devise}) *</label>
           <input
             type="number" min="0" value={e.prix}
             onChange={(ev) => set({ prix: ev.target.value })}
@@ -373,6 +375,7 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
 // ─── Composant étape 4 (résumé) ───────────────────────────────────────────────
 
 function EtapePublication({ e }: { e: EtatWizard }) {
+  const { devise, fmt } = useDevise();
   const prixNum = parseFloat(e.prix) || 0;
 
   const checks = [
@@ -389,7 +392,7 @@ function EtapePublication({ e }: { e: EtatWizard }) {
         <h3 className="font-semibold text-gray-800 mb-3">Récapitulatif</h3>
         <div className="space-y-1.5 text-sm">
           <Row label="Nom"       val={e.nom || "—"} />
-          <Row label="Prix"      val={prixNum > 0 ? `${prixNum.toLocaleString("fr-FR")} FCFA` : "—"} />
+          <Row label="Prix"      val={prixNum > 0 ? `${fmt(prixNum)}` : "—"} />
           <Row label="Fichiers"  val={`${e.fichiers.length} fichier${e.fichiers.length > 1 ? "s" : ""}`} />
           <Row label="Filigrane" val={e.filigrane ? "Oui (PDF)" : "Non"} />
           <Row label="Mot de passe" val={e.motDePasse ? "Oui" : "Non"} />

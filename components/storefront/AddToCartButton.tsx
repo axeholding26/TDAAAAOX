@@ -1,4 +1,5 @@
 "use client";
+import { formatMontant } from "@/lib/utils";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
@@ -13,9 +14,10 @@ interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
   tenantSlug: string;
   whatsappNumero?: string | null;
+  devise?: string;
 }
 
-export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: Props) {
+export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero, devise = "XAF" }: Props) {
   const router = useRouter();
   const { ajouterItem, setTenant } = useCartStore();
   const [ajoute, setAjoute] = useState(false);
@@ -110,7 +112,7 @@ export function AddToCartButton({ produit, theme, tenantSlug, whatsappNumero }: 
       {/* Option 3 — Contacter via WhatsApp (optionnel) */}
       {whatsappNumero && (
         <a
-          href={`https://wa.me/${whatsappNumero.replace(/\D/g, "")}?text=${encodeURIComponent(`Bonjour, je suis intéressé par *${produit.nom}* à ${produit.prix} FCFA. Pouvez-vous confirmer la disponibilité ?`)}`}
+          href={`https://wa.me/${whatsappNumero.replace(/\D/g, "")}?text=${encodeURIComponent(`Bonjour, je suis intéressé par *${produit.nom}* à ${formatMontant(produit.prix, devise)}. Pouvez-vous confirmer la disponibilité ?`)}`}
           target="_blank" rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-3 text-sm font-medium rounded-2xl transition-all hover:opacity-80"
           style={{ color: theme.texte, opacity: 0.7 }}>

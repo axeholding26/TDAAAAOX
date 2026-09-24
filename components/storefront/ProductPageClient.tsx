@@ -6,6 +6,7 @@ import { useCartStore } from "@/store/cartStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { WishlistHeartButton } from "./WishlistHeartButton";
+import { SECTIONS_FICHE } from "@/lib/fiche-produit";
 import {
   Package, AlertTriangle, Lock, RotateCcw, Check,
   Star, Minus, Plus, ShoppingCart, Truck, ZoomIn,
@@ -19,7 +20,12 @@ type Avis = {
   id: string; note: number; titre: string | null; commentaire: string | null;
   verifie: boolean; client: { nom: string } | null; createdAt: string;
 };
-type ProdSection = { id: string; type: string; actif: boolean; config: Record<string, any>; style?: { bgColor?: string; textColor?: string; paddingY?: string; maxWidth?: string; align?: string } };
+type SectionStyle = { bgColor?: string; textColor?: string; paddingY?: string; marginY?: string; maxWidth?: string; align?: string; fontScale?: string };
+type ProdSection = { id: string; type: string; actif: boolean; config: Record<string, any>; style?: SectionStyle };
+
+/** Config d'une section complétée par ses valeurs par défaut (sections enregistrées avant l'ajout d'une option). */
+const cfgDe = (sec?: ProdSection): Record<string, any> => ({ ...(sec ? SECTIONS_FICHE[sec.type]?.defaut() : {}), ...(sec?.config ?? {}) });
+const estImage = (v: string) => /^(https?:|\/|data:image)/.test(v);
 
 const DEFAULT_SECTIONS: ProdSection[] = [
   { id: "gallery",     type: "gallery",     actif: true, config: { style: "vertical-thumbs", zoom: true, sticky: true } },
@@ -292,10 +298,13 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
 }
 
 // ─── Variant Selector ─────────────────────────────────────────────────────────
-function VariantSelector({ variantes, accent, radius, selected, onSelect }: {
+function VariantSelector({ variantes, accent, radius, selected, onSelect, cfg }: {
   variantes: Variante[]; accent: string; radius: string;
-  selected: Variante | null; onSelect: (v: Variante | null) => void;
+  selected: Variante | null; onSelect: (v: Variante | null) => void; cfg: Record<string, any>;
 }) {
+  const TAILLE: Record<string, string> = { sm: "px-3 py-1.5 text-sm", md: "px-4 py-2.5 text-[15px]", lg: "px-5 py-3 text-base" };
+  const GAP: Record<string, string> = { serre: "gap-1.5", normal: "gap-2.5", large: "gap-4" };
+  const rayon = cfg.style === "pastilles" ? "999px" : radius;
   const grouped = variantes.reduce<Record<string, Variante[]>>((acc, v) => {
     (acc[v.nom] ??= []).push(v);
     return acc;
@@ -306,24 +315,35 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect }: {
         const current = variants.find(v => v.id === selected?.id);
         return (
           <div key={nom}>
-            <p className="text-sm font-medium mb-2.5">
-              <span className="opacity-55">{nom} :</span>{" "}
-              {current && <span className="font-bold" style={{ color: accent }}>{current.valeur}</span>}
-            </p>
-            <div className="flex flex-wrap gap-2">
+            {cfg.afficherLibelle !== false && (
+              <p className="text-[15px] font-medium mb-2.5">
+                <span className="opacity-60">{nom} :</span>{" "}
+                {current && <span className="font-bold" style={{ color: accent }}>{current.valeur}</span>}
+              </p>
+            )}
+            {cfg.style === "liste" ? (
+              <select value={current?.id ?? ""} onChange={e => onSelect(variants.find(v => v.id === e.target.value) ?? null)}
+                className={`w-full ${TAILLE[cfg.taille] ?? TAILLE.md} bg-transparent outline-none`}
+                style={{ borderRadius: radius, border: `2px solid ${current ? accent : "rgba(0,0,0,0.12)"}` }}>
+                <option value="">Choisir {nom.toLowerCase()}…</option>
+                {variants.map(v => <option key={v.id} value={v.id} disabled={v.stock === 0}>{v.valeur}{v.stock === 0 ? " (épuisé)" : ""}</option>)}
+              </select>
+            ) : (
+            <div className={`flex flex-wrap ${GAP[cfg.espacement] ?? GAP.normal}`}>
               {variants.map(v => {
                 const isSelected = selected?.id === v.id;
                 const isOut = v.stock === 0;
                 return (
                   <button key={v.id} onClick={() => onSelect(isSelected ? null : v)} disabled={isOut}
-                    className="relative px-4 py-2 text-sm font-medium transition-all duration-150"
-                    style={{ borderRadius: radius, border: `2px solid ${isSelected ? accent : "rgba(0,0,0,0.12)"}`, background: isSelected ? `${accent}12` : "transparent", color: isSelected ? accent : "inherit", opacity: isOut ? 0.3 : 1 }}>
+                    className={`relative ${TAILLE[cfg.taille] ?? TAILLE.md} font-medium transition-all duration-150`}
+                    style={{ borderRadius: rayon, border: `2px solid ${isSelected ? accent : "rgba(0,0,0,0.12)"}`, background: isSelected ? `${accent}12` : "transparent", color: isSelected ? accent : "inherit", opacity: isOut ? 0.3 : 1 }}>
                     {v.valeur}
                     {isOut && <span className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="w-[130%] h-px bg-current opacity-50 rotate-[-15deg] absolute" /></span>}
                   </button>
                 );
               })}
             </div>
+            )}
           </div>
         );
       })}
@@ -332,20 +352,23 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect }: {
 }
 
 // ─── Wrapper de style par section (fond, texte, espacement, largeur, alignement) ─
-function StyledSection({ style, children }: { style?: { bgColor?: string; textColor?: string; paddingY?: string; maxWidth?: string; align?: string }; children: React.ReactNode }) {
-  if (!style || (!style.bgColor && !style.textColor && (!style.paddingY || style.paddingY === "none") && (!style.maxWidth || style.maxWidth === "full") && !style.align)) {
-    return <>{children}</>;
-  }
+function StyledSection({ style, children }: { style?: SectionStyle; children: React.ReactNode }) {
+  if (!style) return <>{children}</>;
   const paddingMap: Record<string, string> = { none: "0", sm: "24px", md: "48px", lg: "72px", xl: "96px" };
+  const margeMap: Record<string, string> = { none: "0", sm: "16px", md: "32px", lg: "56px" };
   const maxWidthMap: Record<string, string> = { full: "100%", medium: "896px", narrow: "640px" };
+  // zoom : agrandit tout le contenu (textes Tailwind en rem compris) sans toucher au reste de la page.
+  const zoomMap: Record<string, number> = { sm: 0.92, md: 1, lg: 1.1, xl: 1.2 };
   const py = paddingMap[style.paddingY || "none"];
+  const my = style.marginY ? margeMap[style.marginY] : style.bgColor ? "32px" : undefined;
   return (
     <div style={{
       background: style.bgColor || undefined,
       color: style.textColor || undefined,
       padding: style.bgColor ? `${py} 24px` : (py !== "0" ? `${py} 0` : undefined),
       borderRadius: style.bgColor ? "24px" : undefined,
-      marginTop: style.bgColor ? "32px" : undefined,
+      marginTop: my, marginBottom: style.marginY ? my : undefined,
+      zoom: style.fontScale && style.fontScale !== "md" ? zoomMap[style.fontScale] : undefined,
     }}>
       <div style={{ maxWidth: maxWidthMap[style.maxWidth || "full"], margin: style.align === "center" ? "0 auto" : undefined, textAlign: style.align as any }}>
         {children}
@@ -403,10 +426,10 @@ function FaqSection({ config, accent, surface }: { config: Record<string, any>; 
         {items.map((item, i) => (
           <div key={i} className="rounded-2xl overflow-hidden" style={{ background: surface }}>
             <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left">
-              <span className="font-semibold text-sm pr-4">{item.question}</span>
+              <span className="font-semibold text-[15px] pr-4">{item.question}</span>
               <ChevronDown size={16} className="flex-shrink-0 transition-transform duration-200" style={{ transform: open === i ? "rotate(180deg)" : "", color: accent }} />
             </button>
-            {open === i && <div className="px-5 pb-5 text-sm leading-relaxed opacity-60">{item.reponse}</div>}
+            {open === i && <div className="px-5 pb-5 text-[15px] leading-relaxed opacity-70">{item.reponse}</div>}
           </div>
         ))}
       </div>
@@ -513,7 +536,7 @@ function RichtextSection({ config, accent, radius, slug }: { config: Record<stri
   return (
     <div className="py-12 border-t max-w-3xl" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-4">{config.titre}</h3>}
-      {config.texte && <p className="text-base leading-relaxed opacity-70 mb-6">{config.texte}</p>}
+      {config.texte && <p className="text-[17px] leading-relaxed opacity-75 mb-6">{config.texte}</p>}
       {config.ctaTexte && (
         <Link href={`/${slug}/produits`} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm"
           style={{ background: accent, color: "#fff" }}>{config.ctaTexte}</Link>
@@ -534,7 +557,7 @@ function FeaturesSection({ config, accent, surface, radius }: { config: Record<s
             <div className="text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl" style={{ background: `${accent}15` }}>{item.icone}</div>
             <div>
               <p className="font-bold text-sm mb-1">{item.titre}</p>
-              <p className="text-sm opacity-60 leading-relaxed">{item.texte}</p>
+              <p className="text-[15px] opacity-70 leading-relaxed">{item.texte}</p>
             </div>
           </div>
         ))}
@@ -546,21 +569,73 @@ function FeaturesSection({ config, accent, surface, radius }: { config: Record<s
 // ─── Howto Section ────────────────────────────────────────────────────────────
 function HowtoSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
   const steps: { num: string; titre: string; texte: string }[] = config.steps || [];
+  const [open, setOpen] = useState<number | null>(0);
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
-      <div className="space-y-4 max-w-2xl">
-        {steps.map((step, i) => (
-          <div key={i} className="flex gap-5 items-start">
-            <div className="w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center flex-shrink-0" style={{ background: `${accent}15`, color: accent }}>{step.num}</div>
-            <div className="pt-1">
-              <p className="font-bold mb-1">{step.titre}</p>
-              <p className="text-sm opacity-60 leading-relaxed">{step.texte}</p>
+      {config.style === "accordeon" ? (
+        <div className="space-y-2 max-w-3xl">
+          {steps.map((step, i) => (
+            <div key={i} className="rounded-2xl overflow-hidden" style={{ background: surface }}>
+              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center gap-4 p-5 text-left">
+                <span className="font-black text-sm" style={{ color: accent }}>{step.num}</span>
+                <span className="flex-1 font-semibold text-[15px]">{step.titre}</span>
+                <ChevronDown size={16} className="flex-shrink-0 transition-transform duration-200" style={{ transform: open === i ? "rotate(180deg)" : "", color: accent }} />
+              </button>
+              {open === i && <div className="px-5 pb-5 text-[15px] leading-relaxed opacity-70">{step.texte}</div>}
             </div>
-            {i < steps.length - 1 && <div className="absolute left-[23px] mt-12 w-px h-4 bg-current opacity-10" />}
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-4 max-w-2xl">
+          {steps.map((step, i) => (
+            <div key={i} className="flex gap-5 items-start">
+              <div className="w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center flex-shrink-0" style={{ background: `${accent}15`, color: accent }}>{step.num}</div>
+              <div className="pt-1">
+                <p className="font-bold text-base mb-1">{step.titre}</p>
+                <p className="text-[15px] opacity-70 leading-relaxed">{step.texte}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Avis clients (même rendu dans l'onglet Description et en section seule) ─
+function ReviewsBlock({ cfg, avis, moyenne, accent, surface, radius, tenantId, produitId }: {
+  cfg: Record<string, any>; avis: Avis[]; moyenne: number; accent: string; surface: string; radius: string; tenantId: string; produitId: string;
+}) {
+  const etoiles = cfg.couleurEtoiles || accent;
+  const liste = avis.slice(0, Number(cfg.max) || 20);
+  return (
+    <div className="space-y-8">
+      {liste.length > 0 ? (
+        <>
+          {cfg.afficherResume !== false && <RatingBreakdown avis={avis} accent={etoiles} moyenne={moyenne} />}
+          {cfg.afficherResume !== false && <div className="h-px" style={{ background: `${accent}12` }} />}
+          <div className={cfg.disposition === "liste" ? "space-y-3" : "grid gap-4 sm:grid-cols-2"}>
+            {liste.map(a => (
+              <div key={a.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
+                <div className="flex items-center justify-between mb-2">
+                  <Stars note={a.note} size={14} accent={etoiles} />
+                  {cfg.afficherVerifie !== false && a.verifie && <span className="text-[11px] text-emerald-500 font-bold flex items-center gap-0.5"><Check size={10} /> Achat vérifié</span>}
+                </div>
+                {a.titre && <p className="font-semibold text-[15px] mb-1">{a.titre}</p>}
+                {a.commentaire && <p className="text-[15px] leading-relaxed" style={{ opacity: 0.7 }}>{a.commentaire}</p>}
+                <p className="text-xs mt-3 font-semibold" style={{ opacity: 0.4 }}>— {a.client?.nom || "Client"}</p>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      ) : (
+        <div className="text-center py-10">
+          <Star size={32} className="mx-auto mb-3" style={{ opacity: 0.12, color: etoiles }} />
+          <p className="font-medium text-[15px]" style={{ opacity: 0.4 }}>Soyez le premier à laisser un avis.</p>
+        </div>
+      )}
+      {cfg.afficherFormulaire !== false && <AvisForm tenantId={tenantId} produitId={produitId} accent={accent} surface={surface} radius={radius} />}
     </div>
   );
 }
@@ -579,7 +654,7 @@ function TestimonialsSection({ config, accent, surface }: { config: Record<strin
                 <span key={s} style={{ color: s <= item.note ? accent : "currentColor", opacity: s <= item.note ? 1 : 0.15, fontSize: 13 }}>★</span>
               ))}
             </div>
-            <p className="text-sm leading-relaxed opacity-70 mb-4 italic">"{item.texte}"</p>
+            <p className="text-[15px] leading-relaxed opacity-75 mb-4 italic">"{item.texte}"</p>
             <div className="flex items-center gap-2">
               {item.avatar ? (
                 <img src={item.avatar} alt={item.nom} className="w-8 h-8 rounded-full object-cover" />
@@ -903,7 +978,7 @@ function AffiliateLinkButton({ tenantId, produitId, accent, surface }: {
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function ProductPageClient({ produit, tenant, produitsSimilaires }: ProductPageClientProps) {
+export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPied }: ProductPageClientProps & { sansPied?: boolean }) {
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
 
   // ─── Layout + Boutons (config globale du builder, comme sur la page d'accueil) ──
@@ -945,10 +1020,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
   const layoutMode: "amazon" | "classic" | "minimal" | "fullwidth" = (pp?.layout as any) || "amazon";
 
   // Derived config
-  const galCfg     = getSec("gallery")?.config ?? {};
-  const infoCfg    = getSec("info")?.config ?? {};
-  const descCfg    = getSec("description")?.config ?? {};
-  const simCfg     = getSec("similar")?.config ?? {};
+  const galCfg     = cfgDe(getSec("gallery"));
+  const infoCfg    = cfgDe(getSec("info"));
+  const descCfg    = cfgDe(getSec("description"));
+  const simCfg     = cfgDe(getSec("similar"));
+  const avisCfg    = cfgDe(getSec("reviews"));
 
   const zoomEnabled    = galCfg.zoom !== false;
   const stickyGallery  = galCfg.sticky !== false;
@@ -1045,7 +1121,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             </p>
           )}
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-2xl sm:text-3xl font-bold leading-snug">{produit.nom}</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold leading-tight">{produit.nom}</h1>
             <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
           </div>
           {produit.avis.length > 0 && (
@@ -1090,7 +1166,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
             </div>
           )}
           {produit.description && (
-            <p className="text-sm leading-relaxed" style={{ opacity: 0.6, paddingLeft: "12px", borderLeft: `3px solid ${accent}30` }}>
+            <p className="text-[15px] leading-relaxed" style={{ opacity: 0.7, paddingLeft: "12px", borderLeft: `3px solid ${accent}30` }}>
               {produit.description.length > 220 ? produit.description.slice(0, 220) + "…" : produit.description}
             </p>
           )}
@@ -1102,82 +1178,92 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
 
   const renderRightSections = () => (
     <>
-      {rightSections.map(sec => (
-        <React.Fragment key={sec.id}>
+      {rightSections.map(sec => {
+        const cfg = cfgDe(sec);
+        const btnFond = cfg.couleurBouton || accent;
+        const btnTexte = cfg.couleurTexteBouton || "#fff";
+        return (
+        <StyledSection key={sec.id} style={sec.style}>
           {sec.type === "variants" && produit.variantes.length > 0 && (
-            <VariantSelector variantes={produit.variantes} accent={accent} radius={radius}
+            <VariantSelector variantes={produit.variantes} accent={accent} radius={radius} cfg={cfg}
               selected={selectedVariante} onSelect={setSelectedVariante} />
           )}
           {sec.type === "quantity" && (
-            <>
-              <div className="flex items-center gap-4">
-                <span className="text-sm font-medium opacity-55">Quantité</span>
-                <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
-                  <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={14} /></button>
-                  <span className="w-10 text-center text-sm font-bold tabular-nums">{quantite}</span>
-                  <button onClick={() => setQuantite(q => Math.min(enRupture ? 1 : stockEffectif, q + 1))} disabled={enRupture} className="w-10 h-10 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={14} /></button>
+            <div className="space-y-4">
+              {cfg.afficherQuantite !== false && (
+                <div className="flex items-center gap-4">
+                  <span className="text-[15px] font-medium opacity-60">Quantité</span>
+                  <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
+                    <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={15} /></button>
+                    <span className="w-10 text-center text-base font-bold tabular-nums">{quantite}</span>
+                    <button onClick={() => setQuantite(q => Math.min(enRupture ? 1 : stockEffectif, q + 1))} disabled={enRupture} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={15} /></button>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="space-y-2.5">
                 <button onClick={doAddToCart} disabled={enRupture}
                   className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
                   style={{
                     ...btnAchatSizing,
-                    background: enRupture ? "#E0E0E0" : (btnRempli ? `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)` : "transparent"),
-                    color: enRupture ? "#999" : (btnRempli ? "#fff" : accent),
-                    border: !btnRempli ? `2px solid ${accent}` : "none",
+                    background: enRupture ? "#E0E0E0" : (btnRempli ? (cfg.couleurBouton ? btnFond : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`) : "transparent"),
+                    color: enRupture ? "#999" : (btnRempli ? btnTexte : btnFond),
+                    border: !btnRempli ? `2px solid ${btnFond}` : "none",
                     textDecoration: btnStyle === "ghost" ? "underline" : "none",
-                    boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${accent}40`,
-                    ["--ax-accent-glow" as any]: `${accent}80`,
+                    boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${btnFond}40`,
+                    ["--ax-accent-glow" as any]: `${btnFond}80`,
                   }}>
                   {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
-                  {enRupture ? "Indisponible" : (produit.texteBoutonAchat || "Ajouter au panier")}
+                  {enRupture ? "Indisponible" : (cfg.texteBouton || produit.texteBoutonAchat || "Ajouter au panier")}
                 </button>
-                <button onClick={buyNow} disabled={enRupture}
-                  className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
-                  style={{ borderColor: accent, color: accent, background: `${accent}08`, borderRadius: btnRadiusPx }}>
-                  <ShoppingBag size={16} /> Acheter maintenant
-                </button>
-                {waNum && (
+                {cfg.afficherAcheterMaintenant !== false && (
+                  <button onClick={buyNow} disabled={enRupture}
+                    className="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
+                    style={{ borderColor: btnFond, color: btnFond, background: `${btnFond}08`, borderRadius: btnRadiusPx }}>
+                    <ShoppingBag size={16} /> Acheter maintenant
+                  </button>
+                )}
+                {cfg.afficherWhatsApp !== false && waNum && (
                   <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-sm border-2 transition-all hover:opacity-80"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] border-2 transition-all hover:opacity-80"
                     style={{ borderColor: "rgba(37,211,102,0.35)", color: "#25D366", background: "rgba(37,211,102,0.05)" }}>
                     <MessageCircle size={16} /> Contacter via WhatsApp
                   </a>
                 )}
               </div>
-            </>
+            </div>
           )}
           {sec.type === "trust" && (
-            <>
-              {showBadges && (
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  {[
-                    { icon: <Lock size={15} style={{ color: accent }} />, label: "Paiement sécurisé" },
-                    { icon: <Truck size={15} style={{ color: accent }} />, label: "Livraison rapide" },
-                    { icon: <RotateCcw size={15} style={{ color: accent }} />, label: "Retour 14 jours" },
-                  ].map(b => (
-                    <div key={b.label} className="flex flex-col items-center gap-1.5 py-3.5 rounded-xl text-center" style={{ background: surface }}>
-                      {b.icon}
-                      <p className="text-[10px] font-semibold leading-tight" style={{ opacity: 0.55 }}>{b.label}</p>
+            <div className="space-y-3">
+              {showBadges && (cfg.items ?? []).length > 0 && (
+                <div className={cfg.disposition === "liste" ? "space-y-2" : "grid gap-2"}
+                  style={cfg.disposition === "liste" ? undefined : { gridTemplateColumns: `repeat(${Number(cfg.colonnes) || 3}, minmax(0, 1fr))` }}>
+                  {(cfg.items as { icone: string; texte: string }[]).map((b, i) => (
+                    <div key={i} className={cfg.disposition === "liste" ? "flex items-center gap-3 px-4 py-3 rounded-xl" : "flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-xl text-center"} style={{ background: surface }}>
+                      {b.icone && (estImage(b.icone)
+                        ? <img src={b.icone} alt="" className="w-6 h-6 object-contain" />
+                        : <span className="text-lg leading-none" style={{ color: accent }}>{b.icone}</span>)}
+                      <p className="text-xs font-semibold leading-tight" style={{ opacity: 0.7 }}>{b.texte}</p>
                     </div>
                   ))}
                 </div>
               )}
-              <div className="rounded-xl p-4" style={{ background: surface }}>
-                <p className="text-xs opacity-50 mb-0.5">Vendu par</p>
-                <p className="text-sm font-semibold">
-                  {nomBoutique}
-                  {certifie && <span className="ml-1.5 text-[10px] text-emerald-500 font-bold">✓ Certifié Axso</span>}
-                </p>
-              </div>
+              {cfg.afficherVendeur !== false && (
+                <div className="rounded-xl p-4" style={{ background: surface }}>
+                  <p className="text-xs opacity-50 mb-0.5">Vendu par</p>
+                  <p className="text-[15px] font-semibold">
+                    {nomBoutique}
+                    {certifie && <span className="ml-1.5 text-[10px] text-emerald-500 font-bold">✓ Certifié Axso</span>}
+                  </p>
+                </div>
+              )}
               {tenant.peutDevenirAffilie && (
                 <AffiliateLinkButton tenantId={tenant.id} produitId={produit.id} accent={accent} surface={surface} />
               )}
-            </>
+            </div>
           )}
-        </React.Fragment>
-      ))}
+        </StyledSection>
+        );
+      })}
     </>
   );
 
@@ -1260,7 +1346,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                   <div className="flex gap-1 overflow-x-auto">
                     {[
                       { key: "description", label: "Description" },
-                      { key: "livraison", label: "Livraison & retours" },
+                      ...(descCfg.afficherLivraison !== false ? [{ key: "livraison", label: "Livraison & retours" }] : []),
                       ...(isOn("reviews") ? [{ key: "avis", label: `Avis (${produit.avis.length})` }] : []),
                     ].map(t => (
                       <button key={t.key} onClick={() => setTab(t.key as any)}
@@ -1274,7 +1360,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                 <div className="py-10 max-w-3xl">
                   {tab === "description" && (
                     <div className="space-y-5">
-                      {produit.description && <p className="text-base leading-relaxed" style={{ opacity: 0.7 }}>{produit.description}</p>}
+                      {produit.description && <p className="text-[17px] leading-relaxed" style={{ opacity: 0.8 }}>{produit.description}</p>}
                       {showAiDesc && produit.descriptionIA && (
                         <div className="p-5 rounded-2xl" style={{ background: surface }}>
                           <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: accent }}>Description enrichie par IA</p>
@@ -1286,81 +1372,33 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
                   )}
                   {tab === "livraison" && (
                     <div className="space-y-3">
-                      {[
-                        { icon: <Truck size={18} style={{ color: accent }} />, titre: "Livraison standard", texte: "Préparée sous 24–48h ouvrées." },
-                        { icon: <RotateCcw size={18} style={{ color: accent }} />, titre: "Politique de retour", texte: "Retours sous 14 jours, produit intact." },
-                        { icon: <Lock size={18} style={{ color: accent }} />, titre: "Paiement sécurisé", texte: "Transactions SSL. Mobile money, carte ou à la livraison." },
-                      ].map(item => (
-                        <div key={item.titre} className="flex gap-4 p-5 rounded-2xl" style={{ background: surface }}>
-                          <div className="flex-shrink-0 mt-0.5">{item.icon}</div>
-                          <div><p className="font-semibold text-sm mb-1">{item.titre}</p><p className="text-sm" style={{ opacity: 0.6 }}>{item.texte}</p></div>
+                      {(descCfg.livraison as { titre: string; texte: string }[] ?? []).map((item, i) => (
+                        <div key={i} className="flex gap-4 p-5 rounded-2xl" style={{ background: surface }}>
+                          <div className="flex-shrink-0 mt-0.5">{[<Truck key="t" size={18} style={{ color: accent }} />, <RotateCcw key="r" size={18} style={{ color: accent }} />, <Lock key="l" size={18} style={{ color: accent }} />][i % 3]}</div>
+                          <div><p className="font-semibold text-[15px] mb-1">{item.titre}</p><p className="text-[15px]" style={{ opacity: 0.7 }}>{item.texte}</p></div>
                         </div>
                       ))}
                     </div>
                   )}
                   {tab === "avis" && isOn("reviews") && (
-                    <div className="space-y-8">
-                      {produit.avis.length > 0 ? (
-                        <>
-                          <RatingBreakdown avis={produit.avis} accent={accent} moyenne={produit.noteMoyenne} />
-                          <div className="h-px" style={{ background: `${accent}12` }} />
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {produit.avis.map(avis => (
-                              <div key={avis.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
-                                <div className="flex items-center justify-between mb-2">
-                                  <Stars note={avis.note} size={13} accent={accent} />
-                                  {avis.verifie && <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5"><Check size={10} /> Achat vérifié</span>}
-                                </div>
-                                {avis.titre && <p className="font-semibold text-sm mb-1">{avis.titre}</p>}
-                                {avis.commentaire && <p className="text-sm leading-relaxed" style={{ opacity: 0.6 }}>{avis.commentaire}</p>}
-                                <p className="text-xs mt-3 font-semibold" style={{ opacity: 0.3 }}>— {avis.client?.nom || "Client"}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center py-10">
-                          <Star size={32} className="mx-auto mb-3" style={{ opacity: 0.12, color: accent }} />
-                          <p className="font-medium text-sm" style={{ opacity: 0.35 }}>Soyez le premier à laisser un avis.</p>
-                        </div>
-                      )}
-                      <AvisForm
-                        tenantId={tenant.id}
-                        produitId={produit.id}
-                        accent={accent}
-                        surface={surface}
-                        radius={radius}
-                      />
-                    </div>
+                    <ReviewsBlock cfg={avisCfg} avis={produit.avis} moyenne={produit.noteMoyenne} accent={accent} surface={surface} radius={radius} tenantId={tenant.id} produitId={produit.id} />
                   )}
                 </div>
               </>
             )}
 
-            {sec.type === "reviews" && !isOn("description") && produit.avis.length > 0 && (
+            {sec.type === "reviews" && !isOn("description") && (
               <div className="mt-12 border-t pt-12" style={{ borderColor: `${accent}10` }}>
-                <h2 className="text-xl font-bold mb-8">Avis clients</h2>
-                <div className="space-y-8 max-w-3xl">
-                  <RatingBreakdown avis={produit.avis} accent={accent} moyenne={produit.noteMoyenne} />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {produit.avis.map(avis => (
-                      <div key={avis.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
-                        <div className="flex items-center justify-between mb-2">
-                          <Stars note={avis.note} size={13} accent={accent} />
-                          {avis.verifie && <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5"><Check size={10} /> Achat vérifié</span>}
-                        </div>
-                        {avis.commentaire && <p className="text-sm leading-relaxed" style={{ opacity: 0.6 }}>{avis.commentaire}</p>}
-                        <p className="text-xs mt-3 font-semibold" style={{ opacity: 0.3 }}>— {avis.client?.nom || "Client"}</p>
-                      </div>
-                    ))}
-                  </div>
+                {avisCfg.titre && <h2 className="text-2xl font-bold mb-8">{avisCfg.titre}</h2>}
+                <div className="max-w-3xl">
+                  <ReviewsBlock cfg={avisCfg} avis={produit.avis} moyenne={produit.noteMoyenne} accent={accent} surface={surface} radius={radius} tenantId={tenant.id} produitId={produit.id} />
                 </div>
               </div>
             )}
 
             {sec.type === "similar" && produitsSimilaires.length > 0 && (
               <div className="mt-8 border-t pt-12" style={{ borderColor: `${accent}10` }}>
-                <h2 className="text-xl font-bold mb-6">{similarTitre}</h2>
+                <h2 className="text-2xl font-bold mb-6">{similarTitre}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {produitsSimilaires.map(p => (
                     <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
@@ -1412,9 +1450,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires }: Produ
         )}
       </main>
 
-      <footer className="border-t py-8 text-center text-xs" style={{ borderColor: `${accent}10`, opacity: 0.35 }}>
-        <p>{nomBoutique} · Propulsé par <span style={{ color: accent, opacity: 1 }}>Axso</span></p>
-      </footer>
+      {!sansPied && (
+        <footer className="border-t py-8 text-center text-xs" style={{ borderColor: `${accent}10`, opacity: 0.35 }}>
+          <p>{nomBoutique} · Propulsé par <span style={{ color: accent, opacity: 1 }}>Axso</span></p>
+        </footer>
+      )}
     </div>
   );
 }

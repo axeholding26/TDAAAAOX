@@ -12,6 +12,7 @@ import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicato
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { toast } from "sonner";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const AFFILIATION_TUTORIAL_STEPS = [
   { Icon: Settings, titre: "Configure ton programme",       description: "Définis ton taux de commission, la durée du cookie d'attribution et des paliers pour récompenser tes meilleurs affiliés." },
   { Icon: Users,    titre: "Recrute et valide tes affiliés", description: "Approuve les demandes, suis les clics et conversions de chacun, et repère tes ambassadeurs les plus performants." },
@@ -92,6 +93,7 @@ function Badge({ statut }: { statut: string }) {
 
 // ─── Vue d'ensemble ───────────────────────────────────────────────────────────
 function OngletStats() {
+  const { devise, fmt } = useDevise();
   const [stats, setStats] = useState<Stats | null>(null);
   const [top, setTop] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,9 +114,9 @@ function OngletStats() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard label="Affiliés actifs"      value={String(stats.affiliesActifs)}                         Icon={Users}       color="#111111" sub={`/ ${stats.totalAffilies} total`} />
-        <StatCard label="Commissions versées"  value={`${stats.commissionsPaid.toLocaleString()} XAF`}      Icon={DollarSign}  color="#10b981" />
-        <StatCard label="En attente de paiement" value={`${stats.commissionsPending.toLocaleString()} XAF`} Icon={Clock}       color="#F5A623" />
-        <StatCard label="GMV généré"           value={`${stats.gmvAffilies.toLocaleString()} XAF`}          Icon={TrendingUp}  color="#0ea5e9" sub="via affiliés" />
+        <StatCard label="Commissions versées"  value={`${fmt(stats.commissionsPaid)}`}      Icon={DollarSign}  color="#10b981" />
+        <StatCard label="En attente de paiement" value={`${fmt(stats.commissionsPending)}`} Icon={Clock}       color="#F5A623" />
+        <StatCard label="GMV généré"           value={`${fmt(stats.gmvAffilies)}`}          Icon={TrendingUp}  color="#0ea5e9" sub="via affiliés" />
       </div>
 
       {/* Funnel */}
@@ -159,7 +161,7 @@ function OngletStats() {
                   <p className="text-[12px] font-semibold text-[#111] truncate">{a.nom}</p>
                   <p className="text-[10px] text-gray-400">{a.clics} clics · {a.conversions} ventes</p>
                 </div>
-                <p className="text-[13px] font-bold text-[#F5A623]">{(a.commissionTotal ?? 0).toLocaleString()} XAF</p>
+                <p className="text-[13px] font-bold text-[#F5A623]">{fmt((a.commissionTotal ?? 0))}</p>
               </div>
             ))}
           </div>
@@ -171,6 +173,7 @@ function OngletStats() {
 
 // ─── Mon programme ────────────────────────────────────────────────────────────
 function OngletProgramme() {
+  const { devise, fmt } = useDevise();
   const [prog, setProg] = useState<Programme | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -265,7 +268,7 @@ function OngletProgramme() {
             </div>
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-                Valeur ({form.typeCommission === "pourcentage" ? "%" : "XAF"})
+                Valeur ({form.typeCommission === "pourcentage" ? "%" : devise})
               </label>
               <input type="number" value={form.valeurCommission} onChange={e => setForm(v => ({ ...v, valeurCommission: +e.target.value }))}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
@@ -372,9 +375,9 @@ function OngletProgramme() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Commission", value: prog.typeCommission === "pourcentage" ? `${prog.valeurCommission}%` : `${prog.valeurCommission.toLocaleString()} XAF` },
+            { label: "Commission", value: prog.typeCommission === "pourcentage" ? `${prog.valeurCommission}%` : `${fmt(prog.valeurCommission)}` },
             { label: "Cookie attribution", value: `${prog.dureeCookie} jours` },
-            { label: "Seuil paiement",     value: `${prog.seuilPaiement.toLocaleString()} XAF` },
+            { label: "Seuil paiement",     value: `${fmt(prog.seuilPaiement)}` },
             { label: "Affiliés",           value: String(prog._count?.affilies ?? 0) },
           ].map(({ label, value }) => (
             <div key={label} className="bg-gray-50 rounded-xl p-3">
@@ -412,6 +415,7 @@ function CopyButton({ text }: { text: string }) {
 
 // ─── Gestion des affiliés ─────────────────────────────────────────────────────
 function OngletAffilies() {
+  const { fmt } = useDevise();
   const [affilies, setAffilies] = useState<Affilie[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -521,7 +525,7 @@ function OngletAffilies() {
                   <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-400">
                     <span><Eye size={10} className="inline mr-1"/>{a.clics} clics</span>
                     <span><ShoppingBag size={10} className="inline mr-1"/>{a.conversions} ventes</span>
-                    <span className="text-[#F5A623] font-bold">{a.commissionTotal.toLocaleString()} XAF</span>
+                    <span className="text-[#F5A623] font-bold">{fmt(a.commissionTotal)}</span>
                     {a.commissionPending > 0 && (
                       <span className="text-amber-600">({a.commissionPending.toLocaleString()} en att.)</span>
                     )}
@@ -562,6 +566,7 @@ function OngletAffilies() {
 
 // ─── Paiements ────────────────────────────────────────────────────────────────
 function OngletPaiements() {
+  const { devise, fmt } = useDevise();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
@@ -581,7 +586,7 @@ function OngletPaiements() {
       const res = await fetch("/api/affiliation/paiements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ affilieId }) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
-      toast.success(`Paiement de ${d.montant.toLocaleString()} XAF envoyé`);
+      toast.success(`Paiement de ${fmt(d.montant)} envoyé`);
     } catch (e: any) {
       toast.error(e.message || "Erreur lors du paiement");
     } finally {
@@ -600,11 +605,11 @@ function OngletPaiements() {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white border border-gray-100 rounded-2xl p-4">
           <p className="text-[10px] text-gray-400">Total payé</p>
-          <p className="text-[18px] font-bold text-[#10b981]">{stats.totalPaye.toLocaleString()} XAF</p>
+          <p className="text-[18px] font-bold text-[#10b981]">{fmt(stats.totalPaye)}</p>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl p-4">
           <p className="text-[10px] text-gray-400">Dû aux affiliés</p>
-          <p className="text-[18px] font-bold text-[#F5A623]">{stats.totalDu.toLocaleString()} XAF</p>
+          <p className="text-[18px] font-bold text-[#F5A623]">{fmt(stats.totalDu)}</p>
         </div>
       </div>
 
@@ -625,7 +630,7 @@ function OngletPaiements() {
                   <p className="text-[11px] text-gray-400">{g.nombreCommissions} commission{g.nombreCommissions > 1 ? "s" : ""} · {g.affilie?.telephone ?? "pas de téléphone"}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-[14px] font-bold text-[#F5A623]">{g.montant.toLocaleString()} XAF</p>
+                  <p className="text-[14px] font-bold text-[#F5A623]">{fmt(g.montant)}</p>
                 </div>
                 <button onClick={() => payer(g.affilieId)} disabled={paying === g.affilieId || !g.affilie?.telephone}
                   className="px-3 py-1.5 bg-green-500 text-white rounded-xl text-[10px] font-bold hover:bg-green-600 disabled:opacity-50 flex-shrink-0">
@@ -655,7 +660,7 @@ function OngletPaiements() {
                   <p className="text-[11px] text-gray-400">{p.methode} · {p.telephone ?? "—"} · {new Date(p.createdAt).toLocaleDateString("fr-FR")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[14px] font-bold text-[#F5A623]">{p.montant.toLocaleString()} XAF</p>
+                  <p className="text-[14px] font-bold text-[#F5A623]">{fmt(p.montant)}</p>
                   <Badge statut={p.statut === "traite" ? "payee" : p.statut === "echec" ? "rejetee" : "pending"} />
                 </div>
               </div>
@@ -669,6 +674,7 @@ function OngletPaiements() {
 
 // ─── Mes liens (B2B sortants) ─────────────────────────────────────────────────
 function OngletLiens() {
+  const { devise, fmt } = useDevise();
   const [liens, setLiens] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [totaux, setTotaux] = useState({ total: 0, pending: 0, captured: 0 });
@@ -698,8 +704,8 @@ function OngletLiens() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Total gagné",    value: `${totaux.total.toLocaleString()} XAF`,   color: "#10b981" },
-          { label: "En attente",     value: `${totaux.pending.toLocaleString()} XAF`,  color: "#F5A623" },
+          { label: "Total gagné",    value: `${fmt(totaux.total)}`,   color: "#10b981" },
+          { label: "En attente",     value: `${fmt(totaux.pending)}`,  color: "#F5A623" },
           { label: "Clics",          value: totalClics.toLocaleString(),                color: "#0ea5e9" },
           { label: "Conversions",    value: totalConversions.toLocaleString(),          color: "#111111" },
         ].map(s => (
@@ -742,7 +748,7 @@ function OngletLiens() {
                     <div className="mt-2 flex gap-4 text-[11px] text-gray-400">
                       <span><Eye size={10} className="inline mr-1"/>{lien.clics} clics</span>
                       <span><ShoppingBag size={10} className="inline mr-1"/>{lien.conversions} ventes</span>
-                      <span className="text-green-600 font-bold">+{(lien.montantGenere ?? 0).toLocaleString()} XAF</span>
+                      <span className="text-green-600 font-bold">+{fmt((lien.montantGenere ?? 0))}</span>
                     </div>
                   </div>
                 </div>
@@ -759,13 +765,14 @@ function OngletLiens() {
 const COULEURS_BANNIERE = ["#F5A623", "#111111", "#22c55e", "#3b82f6", "#ef4444"];
 
 function BannierePreview({ lien, couleur, texte, baseUrl }: { lien: any; couleur: string; texte: string; baseUrl: string }) {
+  const { devise, fmt } = useDevise();
   const url = `${baseUrl}?ref=${lien.code}`;
   return (
     <div className="border border-[#E8E8E8] rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 text-white" style={{ background: `linear-gradient(135deg, ${couleur}, ${couleur}dd)`, minHeight: 80 }}>
         <div>
           <p className="font-bold text-[15px]">{texte || "Découvrez nos produits"}</p>
-          <p className="text-[11px] opacity-80 mt-0.5">{lien.produit ? `${lien.produit.nom} — ${lien.produit.prix.toLocaleString()} XAF` : "Boutique complète"}</p>
+          <p className="text-[11px] opacity-80 mt-0.5">{lien.produit ? `${lien.produit.nom} — ${fmt(lien.produit.prix)}` : "Boutique complète"}</p>
         </div>
         <div className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-[12px] font-bold">Voir →</div>
       </div>
@@ -889,6 +896,7 @@ function OngletMateriel() {
 const ENTRANTE_EMPTY = { nom: "", marchand: "", url: "", categorie: "", commission: "10", devise: "XAF" };
 
 function OngletEntrante() {
+  const { devise, fmt } = useDevise();
   const [programmes, setProgrammes] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ total: 0, actifs: 0, revenuTotal: 0, clicsTotal: 0 });
   const [form, setForm] = useState({ ...ENTRANTE_EMPTY });
@@ -934,7 +942,7 @@ function OngletEntrante() {
           { label: "Programmes", v: stats.total },
           { label: "Actifs", v: stats.actifs, color: "#22c55e" },
           { label: "Clics", v: stats.clicsTotal },
-          { label: "Revenus", v: `${(stats.revenuTotal ?? 0).toLocaleString()} XAF`, color: "#F5A623" },
+          { label: "Revenus", v: `${fmt((stats.revenuTotal ?? 0))}`, color: "#F5A623" },
         ].map(s => (
           <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-3 text-center">
             <p className="text-[16px] font-bold" style={{ color: s.color ?? "#111" }}>{s.v}</p>

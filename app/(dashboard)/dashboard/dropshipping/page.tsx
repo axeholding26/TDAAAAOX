@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 const TABS = [
   { id: "agent", label: "Agent IA", icon: Zap },
   { id: "fournisseurs", label: "Fournisseurs", icon: Globe },
@@ -367,6 +368,7 @@ function ProductCard({
   marge: number; categorie: string; fournisseur: string; blockText: string;
   onImport: () => void; importing: boolean; imported: boolean;
 }) {
+  const { devise, fmt } = useDevise();
   const [expanded, setExpanded] = useState(false);
   const benefice = prixVente - prixAchat;
 
@@ -396,9 +398,9 @@ function ProductCard({
 
         <div className="grid grid-cols-3 gap-2 mt-3">
           {[
-            { label: "Achat",   val: `${prixAchat.toLocaleString()} XOF`, sub: "fournisseur" },
-            { label: "Vente",   val: `${prixVente.toLocaleString()} XOF`, sub: "suggéré", accent: true },
-            { label: "Marge",   val: `+${marge}%`, sub: `${benefice.toLocaleString()} XOF`, green: true },
+            { label: "Achat",   val: `${fmt(prixAchat)}`, sub: "fournisseur" },
+            { label: "Vente",   val: `${fmt(prixVente)}`, sub: "suggéré", accent: true },
+            { label: "Marge",   val: `+${marge}%`, sub: `${fmt(benefice)}`, green: true },
           ].map(({ label, val, sub, accent, green }) => (
             <div key={label} className="rounded-xl px-2.5 py-2 text-center"
               style={{ background: green ? "rgba(34,197,94,0.07)" : accent ? "rgba(245,166,35,0.08)" : "rgba(255,255,255,0.6)", border: `1px solid ${green ? "rgba(34,197,94,0.15)" : accent ? "rgba(245,166,35,0.2)" : "rgba(0,0,0,0.06)"}` }}>
