@@ -49,7 +49,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
 
   const c = config.colors;
   return (
-    <div className="flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5">
+    <div className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5">
       <div className="relative mx-auto rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden transition-[width] duration-300"
         style={{ width: LARGEUR[device], maxWidth: "100%" }}
         // Aperçu : liens non suivis, formulaires (avis) jamais envoyés.

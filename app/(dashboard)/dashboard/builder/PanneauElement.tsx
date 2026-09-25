@@ -135,6 +135,14 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
         <Groupe titre="Arrière-plan">
           <Champ label="Couleur de fond"><Couleur value={s.fond} onChange={(v) => maj({ fond: v })} /></Champ>
           <Champ label="Dégradé (prioritaire)"><input value={s.degrade ?? ""} onChange={(e) => maj({ degrade: e.target.value })} placeholder="linear-gradient(135deg, #F5A623, #E8590C)" className={INPUT} /></Champ>
+          <Champ label="Image de fond"><input value={s.imageFond ?? ""} onChange={(e) => maj({ imageFond: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
+          <MediaUpload type="image" onUrl={(url) => maj({ imageFond: url })} />
+          {s.imageFond && (
+            <div className="relative">
+              <img src={s.imageFond} alt="" className="w-full h-24 object-cover rounded-lg border border-[#E5E5E5]" />
+              <button onClick={() => maj({ imageFond: "" })} className="absolute top-1.5 right-1.5 text-[12px] px-2 py-1 rounded-md bg-white/90 text-[#DC2626] shadow-sm hover:bg-white">Retirer</button>
+            </div>
+          )}
         </Groupe>
 
         <Groupe titre="Bordure">

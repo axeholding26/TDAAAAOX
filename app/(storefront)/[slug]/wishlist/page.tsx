@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistGrid } from "@/components/storefront/WishlistGrid";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -70,6 +71,27 @@ export default async function WishlistPage({ params }: Props) {
   };
   const btnPrimaryClass = `inline-flex items-center justify-center gap-2 font-semibold ${btnHoverClass}`;
 
+  const grille = (
+      <WishlistGrid
+        slug={slug}
+        devise={tenant.devise}
+        accent={c.accent}
+        fond={c.fond}
+        texte={c.texte}
+        surface={c.surface}
+        radius={radius}
+        container={CONTAINER}
+        gridProduits={GRID_PRODUITS}
+        carteClass={carteClass}
+        btnPrimaryStyle={btnPrimaryStyle}
+        btnPrimaryClass={btnPrimaryClass}
+      />
+  );
+
+  // Boutique à design : en-tête et pied de page du design, comme À propos / Contact.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) return <Habillage>{grille}</Habillage>;
+
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <StorefrontNavbar
@@ -87,20 +109,7 @@ export default async function WishlistPage({ params }: Props) {
         showContact={cfg.contactPage?.actif}
       />
 
-      <WishlistGrid
-        slug={slug}
-        devise={tenant.devise}
-        accent={c.accent}
-        fond={c.fond}
-        texte={c.texte}
-        surface={c.surface}
-        radius={radius}
-        container={CONTAINER}
-        gridProduits={GRID_PRODUITS}
-        carteClass={carteClass}
-        btnPrimaryStyle={btnPrimaryStyle}
-        btnPrimaryClass={btnPrimaryClass}
-      />
+      {grille}
 
       <footer className="border-t mt-16 py-8 text-center text-xs" style={{ borderColor: `${c.accent}10`, opacity: 0.4 }}>
         <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>

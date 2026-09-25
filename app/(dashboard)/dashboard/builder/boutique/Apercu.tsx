@@ -52,7 +52,7 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
   // builderTree (réglages par élément du panneau de droite) et fonts en dépendances :
   // sans eux l'aperçu gardait l'ancien CSS et aucun réglage ne s'y voyait.
   const cssPerso = useMemo(() => (config.customCss ? scoperCss(config.customCss, "[data-apercu-page]") : ""), [config.customCss]);
-  const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices, config.boutons, config.navigationStyle, config.animations, (config as any).reglagesDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sélection depuis le panneau de gauche : amène l'élément à l'écran.
   useEffect(() => {
@@ -70,7 +70,9 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
   });
 
   return (
-    <div className="flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
+    // isolate : les z-index du design (en-tête collant à z-index 60…) restent
+    // confinés à l'aperçu — sinon il passait par-dessus le menu des pages du Constructeur.
+    <div className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
       <div
         ref={racine}
         onMouseMove={onMouseMove}
@@ -86,9 +88,10 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
           const href = lien.getAttribute("href");
           if (!href || !onNaviguer) return;
           const page = pageDepuisChemin(slug, new URL(href, window.location.origin).pathname);
-          // Seulement produit / panier / commande : les autres liens sont des boutons
-          // du design, dont le texte se modifie au clic.
-          if (page === "produit" || page === "panier" || page === "commande") { e.stopPropagation(); onNaviguer(page); }
+          // Seulement produit / commande : les autres liens — dont le bouton
+          // « Panier » de l'en-tête — sont des éléments du design, qu'un clic
+          // sélectionne pour les modifier (bordure, police, fond…).
+          if (page === "produit" || page === "commande") { e.stopPropagation(); onNaviguer(page); }
         }}
       >
         {cssDesign && <StyleCss css={cssDesign} />}

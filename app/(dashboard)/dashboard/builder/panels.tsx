@@ -2,10 +2,14 @@
 
 // Panneaux de réglages du Constructeur (couleurs, typo, mise en page, pages
 // annexes…) — partagés par le constructeur boutique (boutique/) et landing.
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, LayoutGrid, LayoutTemplate, ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2, Check, Layers, Image as ImageIcon, X, GripVertical, Zap, Copy, BarChart3, Timer, Building2, Video, Star, Target, FileText, ArrowUpDown, Shield, BookOpen, HelpCircle, MessageCircle, ShoppingCart, Share2 } from "lucide-react";
-import { type ThemeConfig, type CustomSection, type ProductPageSection } from "@/lib/theme-config";
+import { type ThemeConfig, type CustomSection, type ProductPageSection, type BlockNode } from "@/lib/theme-config";
+import { findNode, updateNodeConfig } from "@/lib/block-tree";
+import { nomNoeud } from "./boutique/libelles";
+import { ATTR_EL, racineElement } from "./boutique/elements-dom";
+import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
 import { appliquerActionPage, uid, type ActionPage } from "@/lib/pages-annexes";
 import { SECTIONS_FICHE, TYPES_FICHE, appliquerActionFiche, sectionsFiche, typesIndisponibles, type ActionFiche } from "@/lib/fiche-produit";
 import { ImageUpload } from "@/components/ui/ImageUpload";
@@ -61,9 +65,10 @@ function ChampRecherche({ value, onChange }: { value: string; onChange: (v: stri
   );
 }
 
-function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) => void; onClose: () => void }) {
+function SectionLibrary({ onAdd, onClose, avecFaq }: { onAdd: (t: CustomSection["type"]) => void; onClose: () => void; avecFaq: boolean }) {
   const [q, setQ] = useState("");
-  const types = CUSTOM_SECTION_TYPES.filter(t => correspond(q, t.label, t.desc));
+  // FAQ : page À propos uniquement.
+  const types = CUSTOM_SECTION_TYPES.filter(t => (avecFaq || t.type !== "faq") && correspond(q, t.label, t.desc));
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
@@ -516,7 +521,88 @@ export function PanelLayout({ config, setLayout, set }: any) {
 }
 
 // ─── Panel Médias ─────────────────────────────────────────────────────────────
-export function PanelMedias({ config, setSection, updateCustomSection }: any) {
+// ─── Médias d'un design importé : toutes ses images (balises <img> et fonds
+// déclarés dans le HTML), section par section, remplaçables sur place.
+const RE_FOND = /background(?:-image)?\s*:[^;"]*url\((['"]?)([^'")]+)\1\)/i;
+type ImageDesign = { sectionId: string; section: string; embedId: string; index: number; src: string };
+
+function imagesDuDesign(tree: BlockNode[]): ImageDesign[] {
+  const liste: ImageDesign[] = [];
+  for (const section of tree) {
+    const parcourir = (n: BlockNode) => {
+      if (n.type === "embed-html" && n.config?.html) {
+        const doc = new DOMParser().parseFromString(`<body>${n.config.html}</body>`, "text/html");
+        [...doc.body.querySelectorAll<HTMLElement>("img, [style*='url(']")].forEach((el, index) => {
+          const src = el.tagName === "IMG" ? el.getAttribute("src") || "" : el.getAttribute("style")?.match(RE_FOND)?.[2] || "";
+          if (src) liste.push({ sectionId: section.id, section: nomNoeud(section), embedId: n.id, index, src });
+        });
+      }
+      (n.children ?? []).forEach(parcourir);
+    };
+    parcourir(section);
+  }
+  return liste;
+}
+
+function remplacerImage(html: string, index: number, url: string): string {
+  const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+  const el = doc.body.querySelectorAll<HTMLElement>("img, [style*='url(']")[index];
+  if (!el) return html;
+  if (el.tagName === "IMG") { el.setAttribute("src", url); el.removeAttribute("srcset"); }
+  else el.setAttribute("style", (el.getAttribute("style") || "").replace(RE_FOND, (m, q, ancien) => m.replace(ancien, url)));
+  return doc.body.innerHTML;
+}
+
+function MediasDesign({ config, set }: { config: ThemeConfig; set: (u: (p: ThemeConfig) => ThemeConfig) => void }) {
+  const tree = config.builderTree ?? [];
+  const images = useMemo(() => imagesDuDesign(tree), [tree]);
+  // Une ligne par section du design (bloc embed-html unique) : image de fond de sa racine.
+  const sections = useMemo(() => tree.map((sec) => {
+    const embeds: BlockNode[] = [];
+    const parcourir = (n: BlockNode) => { if (n.type === "embed-html") embeds.push(n); (n.children ?? []).forEach(parcourir); };
+    parcourir(sec);
+    if (embeds.length !== 1) return null;
+    const html = embeds[0].config?.html || "";
+    const doc = new DOMParser().parseFromString(`<body>${html}</body>`, "text/html");
+    const idRacine = doc.body.children.length === 1 ? doc.body.firstElementChild!.getAttribute(ATTR_EL) : null;
+    const fond = idRacine ? (embeds[0].config?.elementStyles as ElementStyles | undefined)?.[idRacine]?.base?.imageFond ?? "" : "";
+    return { id: sec.id, nom: nomNoeud(sec), embedId: embeds[0].id, fond };
+  }).filter(Boolean) as { id: string; nom: string; embedId: string; fond: string }[], [tree]);
+
+  const majFond = (embedId: string, url: string) => set((p) => {
+    const embed = findNode(p.builderTree ?? [], embedId);
+    const racine = embed && racineElement(embed.config?.html || "");
+    if (!embed || !racine) return p;
+    return { ...p, builderTree: updateNodeConfig(p.builderTree ?? [], embedId, { html: racine.html, elementStyles: majStyleElement(embed.config?.elementStyles, racine.id, "base", { imageFond: url }) }) };
+  });
+  const remplacer = (img: ImageDesign, url: string) => set((p) => ({
+    ...p,
+    builderTree: updateNodeConfig(p.builderTree ?? [], img.embedId, { html: remplacerImage(findNode(p.builderTree ?? [], img.embedId)?.config?.html || "", img.index, url) }),
+  }));
+
+  return (
+    <div className="p-4 space-y-4">
+      <p className="text-[12.5px] text-gray-600 leading-relaxed">Ajoute une image de fond à chaque section de ton design, et remplace ses photos. Colle un lien ou importe depuis ton appareil.</p>
+      {sections.map((sec) => (
+        <div key={sec.id} className="rounded-xl border border-gray-200 bg-white p-3 space-y-2">
+          <p className="text-[13px] font-semibold text-gray-800">{sec.nom}</p>
+          <FInp label="Image de fond" value={sec.fond} onChange={(v) => majFond(sec.embedId, v.trim())} media="image" />
+          {sec.fond && <button onClick={() => majFond(sec.embedId, "")} className="text-[12px] text-red-500 hover:underline">Retirer l'image de fond</button>}
+          {images.filter((img) => img.sectionId === sec.id).map((img) => (
+            <div key={`${img.embedId}-${img.index}`} className="flex gap-3 items-start pt-2 border-t border-gray-100">
+              <img src={img.src} alt="" className="w-14 h-14 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
+              <div className="flex-1 min-w-0"><FInp label="Photo" value={img.src.startsWith("data:") ? "" : img.src} onChange={(v) => v.trim() && remplacer(img, v.trim())} media="image" /></div>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function PanelMedias({ config, set, setSection, updateCustomSection }: any) {
+  // Design importé : ses images réelles (les sections hero/promo/à propos ci-dessous sont celles des anciens modèles).
+  if (config.builderCss && set) return <MediasDesign config={config} set={set} />;
   const sec = config.sections as any;
   return (
     <div className="p-4 space-y-5">
@@ -653,8 +739,6 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
 
   const NAV_TYPES = [
     { v:"classic",           l:"Classique",           desc:"Logo gauche, menu droite" },
-    { v:"centered",          l:"Centré",              desc:"Menu | Logo centre | CTA" },
-    { v:"floating",          l:"Floating pill",       desc:"Barre flottante arrondie en haut" },
     { v:"minimal",           l:"Minimal",             desc:"Logo + hamburger uniquement" },
     { v:"mega",              l:"Mega menu",           desc:"Avec dropdown de collections" },
     { v:"transparent-scroll",l:"Transparent → Opaque",desc:"Transparente puis solide au scroll" },
@@ -1232,7 +1316,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
 
-  if (showLibrary) return <SectionLibrary onAdd={addSection} onClose={() => setShowLibrary(false)} />;
+  if (showLibrary) return <SectionLibrary onAdd={addSection} onClose={() => setShowLibrary(false)} avecFaq={pageKey === "aboutPage"} />;
 
   return (
     <div className="flex flex-col h-full">

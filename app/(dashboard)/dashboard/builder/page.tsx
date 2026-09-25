@@ -195,9 +195,10 @@ export default function BuilderPage() {
   const setColors   = useCallback((patch: any) => set(p => ({ ...p, colors: { ...p.colors, ...patch } })), [set]);
   const setFonts    = useCallback((patch: any) => set(p => ({ ...p, fonts: { ...p.fonts, ...patch } })), [set]);
   const setLayout   = useCallback((patch: any) => set(p => ({ ...p, layout: { ...p.layout, ...patch } })), [set]);
-  const setBoutons  = useCallback((patch: any) => set(p => ({ ...p, boutons: { ...p.boutons, ...patch } })), [set]);
-  const setNavStyle = useCallback((patch: any) => set(p => ({ ...p, navigationStyle: { ...p.navigationStyle, ...patch } })), [set]);
-  const setAnim     = useCallback((patch: any) => set(p => ({ ...p, animations: { ...p.animations, ...patch } as any })), [set]);
+  // reglagesDesign : panneau modifié par le marchand → appliqué aussi au design importé (lib/reglages-design.ts).
+  const setBoutons  = useCallback((patch: any) => set(p => ({ ...p, boutons: { ...p.boutons, ...patch }, reglagesDesign: { ...p.reglagesDesign, boutons: true } })), [set]);
+  const setNavStyle = useCallback((patch: any) => set(p => ({ ...p, navigationStyle: { ...p.navigationStyle, ...patch }, reglagesDesign: { ...p.reglagesDesign, navigation: true } })), [set]);
+  const setAnim     = useCallback((patch: any) => set(p => ({ ...p, animations: { ...p.animations, ...patch } as any, reglagesDesign: { ...p.reglagesDesign, animations: true } })), [set]);
   const setProductPage = useCallback((patch: any) => set(p => ({ ...p, productPage: { ...(p.productPage || DEFAULT_PRODUCT_PAGE), ...patch } })), [set]);
 
   const updateCustomSection = useCallback((id: string, patch: any) => {
@@ -209,7 +210,8 @@ export default function BuilderPage() {
     setSaving(true);
     try {
       // Merge animation CSS into customCss
-      const animCss = generateAnimationCss(config.animations);
+      // Design importé : ses animations viennent de lib/reglages-design.ts (sinon doublées).
+      const animCss = config.builderCss ? "" : generateAnimationCss(config.animations);
       const finalCss = (config.customCss || "").replace(/\/\* __anim__ \*\/[\s\S]*?\/\* __endanim__ \*\//g, "").trim();
       const mergedCss = animCss ? `/* __anim__ */\n${animCss}\n/* __endanim__ */\n${finalCss}` : finalCss;
       const res = await fetch("/api/tenants", {
@@ -401,7 +403,7 @@ export default function BuilderPage() {
             { id: "layout", label: "Mise en page", desc: "Largeur, espacements, cartes produits", Icon: LayoutTemplate, contenu: <PanelLayout config={config} setLayout={setLayout} set={set} /> },
             { id: "boutons", label: "Boutons et navigation", desc: "Style des boutons et du menu", Icon: MousePointer2, contenu: <PanelBoutons config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} /> },
             { id: "animations", label: "Animations", desc: "Apparition des sections", Icon: Sparkles, contenu: <PanelAnimations config={config} setAnim={setAnim} /> },
-            { id: "medias", label: "Médias", desc: "Images et vidéos", Icon: ImageIcon, contenu: <PanelMedias config={config} setSection={setSection} updateCustomSection={updateCustomSection} /> },
+            { id: "medias", label: "Médias", desc: "Images et vidéos", Icon: ImageIcon, contenu: <PanelMedias config={config} set={set} setSection={setSection} updateCustomSection={updateCustomSection} /> },
             { id: "avance", label: "CSS avancé", desc: "Code CSS personnalisé", Icon: Code2, contenu: <PanelAvance config={config} set={set} tenant={tenant} onReset={() => { setConfig({ ...resolveThemeConfig(tenant.themeId) }); }} /> },
           ]}
         />

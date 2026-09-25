@@ -5,6 +5,7 @@ import { Copy, Trash2, X, Monitor, Tablet, Smartphone, ArrowUp, ArrowDown, Plus 
 import type { BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
 import { FONTS } from "@/lib/theme-fonts";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 
 type Tab = "contenu" | "style" | "avance";
 type Device = "desktop" | "tablet" | "mobile";
@@ -338,10 +339,12 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
           <Field label="Couleur">
             <CouleurEffacable value={background.color} onChange={(v) => onChange({ background: { ...background, color: v || undefined } })} />
           </Field>
-          <Field label="Image (URL)">
+          <Field label="Image de fond">
             <input type="text" value={background.image || ""} onChange={(e) => onChange({ background: { ...background, image: e.target.value } })}
               placeholder="https://..." className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
           </Field>
+          <MediaUpload type="image" onUrl={(url) => onChange({ background: { ...background, image: url } })} />
+          {background.image && <button onClick={() => onChange({ background: { ...background, image: undefined } })} className="text-[12px] text-red-500 hover:underline">Retirer l'image de fond</button>}
           <Field label="Dégradé CSS (prioritaire sur couleur)">
             <input type="text" value={background.gradient || ""} onChange={(e) => onChange({ background: { ...background, gradient: e.target.value } })}
               placeholder="linear-gradient(...)" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />

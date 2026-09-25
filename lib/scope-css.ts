@@ -10,6 +10,7 @@ import { MANIFESTE_LIBRAIRIE } from "./axso-design-manifest";
 import { fontEntry } from "./theme-fonts";
 import { cssElements, importPolices, policesDe, type ElementStyles } from "./element-styles";
 import type { BlockNode } from "./theme-config";
+import { cssReglagesDesign, cssReglagesDesignPage } from "./reglages-design";
 
 const AT_RULES_GLOBALES = /^@(import|charset|font-face|keyframes|-webkit-keyframes|property|namespace)\b/i;
 
@@ -73,7 +74,7 @@ export function surchargeCouleursDesign(colors: Record<string, any>, mapping?: R
 }
 
 type Polices = { titre?: string; corps?: string };
-type CfgDesign = { builderCss?: string; colors: Record<string, any>; fonts?: Polices; axsoDesignCssVarMapping?: Record<string, string>; axsoDesignPolices?: Polices; builderTree?: BlockNode[] };
+type CfgDesign = Partial<Pick<Parameters<typeof cssReglagesDesign>[0], "boutons" | "navigationStyle" | "animations" | "reglagesDesign">> & { builderCss?: string; colors: Record<string, any>; fonts?: Polices; axsoDesignCssVarMapping?: Record<string, string>; axsoDesignPolices?: Polices; builderTree?: BlockNode[] };
 
 // Responsive du design dans l'aperçu : ses @media de largeur deviennent des
 // @container et ses `vw` des `cqw` — ils suivent la largeur du conteneur
@@ -143,6 +144,8 @@ export function cssDesignPersonnalise(cfg: CfgDesign): string {
     css,
     surchargeCouleursDesign(cfg.colors, cfg.axsoDesignCssVarMapping),
     SECURITE_RESPONSIVE,
+    // Panneaux Boutons et navigation / Animations, s'ils ont été modifiés.
+    cssReglagesDesign(cfg as any),
     cssElements(elements, "", false),
   ].join("\n");
 }
@@ -150,7 +153,7 @@ export function cssDesignPersonnalise(cfg: CfgDesign): string {
 /** CSS du design, commun à toutes les sections découpées (blocs embed-html sans CSS propre). */
 export function cssSectionsDesign(cfg: CfgDesign): string {
   const css = cssDesignPersonnalise(cfg);
-  return css ? scoperCss(css, "[data-axs-embed-html]") : "";
+  return css ? scoperCss(css, "[data-axs-embed-html]") + cssReglagesDesignPage(cfg as any) : "";
 }
 
 // Auto-vérification : `SCOPE_CSS_CHECK=1 npx tsx lib/scope-css.ts`

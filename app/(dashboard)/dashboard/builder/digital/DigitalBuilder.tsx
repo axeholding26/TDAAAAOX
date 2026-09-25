@@ -326,7 +326,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
             qu'on ne force pas min-height:0 — sans ça, une boutique avec
             beaucoup de produits "déformait" tout le Constructeur au lieu de
             simplement défiler dans sa zone). */}
-        <div className="flex-1 min-h-0 relative bg-[#EEF0F3]">
+        <div className="isolate flex-1 min-h-0 relative bg-[#EEF0F3]">
           <div className="h-full overflow-y-auto scrollbar-thin flex flex-col items-center p-6 gap-4">
             <div className="w-full flex-shrink-0 flex items-center gap-2 rounded-lg bg-white border border-gray-200 px-3 py-2" style={{ maxWidth: DEVICE_WIDTH[device] }}>
               <span className="w-2 h-2 rounded-full bg-red-300" /><span className="w-2 h-2 rounded-full bg-yellow-300" /><span className="w-2 h-2 rounded-full bg-green-300" />

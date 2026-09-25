@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { ecouterNotifications } from "@/components/dashboard/AlerteCommande";
 import Link from "next/link";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import {
@@ -51,21 +52,8 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const pillRef   = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await fetch("/api/notifications-marchand");
-      if (!res.ok) return;
-      const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setNonLues(data.nonLues ?? 0);
-    } catch { /* silencieux — pas de blocage UI si l'API est temporairement indisponible */ }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-    const id = setInterval(fetchNotifications, 30_000);
-    return () => clearInterval(id);
-  }, []);
+  // Données fournies par AlerteCommande (une seule interrogation pour tout le dashboard).
+  useEffect(() => ecouterNotifications((d) => { setNotifications(d.notifications); setNonLues(d.nonLues); }), []);
 
   const marquerToutLu = async () => {
     setNonLues(0);

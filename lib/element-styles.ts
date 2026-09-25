@@ -20,6 +20,7 @@ export interface ElementStyle {
   couleur?: string;
   fond?: string;
   degrade?: string;
+  imageFond?: string; // image de fond (couvre l'élément), par-dessus couleur et dégradé
   bordureEpaisseur?: string;
   bordureCouleur?: string;
   rayon?: string;
@@ -48,6 +49,10 @@ function declarations(s: ElementStyle): string {
     ["color", s.couleur],
     ["background", s.degrade || undefined],
     ["background-color", s.degrade ? undefined : s.fond],
+    ["background-image", s.imageFond ? `url("${s.imageFond.replace(/"/g, "%22")}")` : undefined],
+    ["background-size", s.imageFond ? "cover" : undefined],
+    ["background-position", s.imageFond ? "center" : undefined],
+    ["background-repeat", s.imageFond ? "no-repeat" : undefined],
     ["border-width", s.bordureEpaisseur],
     ["border-style", s.bordureEpaisseur ? "solid" : undefined],
     ["border-color", s.bordureCouleur],

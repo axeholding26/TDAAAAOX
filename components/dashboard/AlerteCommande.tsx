@@ -12,6 +12,18 @@ const TYPES_COMMANDE = new Set(["nouvelle_commande", "commande_whatsapp"]);
 
 interface Notif { id: string; type: string; titre: string; message: string; lien?: string | null; nomBoutique?: string }
 
+// Une seule interrogation des notifications pour tout le dashboard : les
+// cloches (Header, AxiaNotifBell) s'abonnent ici au lieu d'interroger le
+// serveur chacune de leur côté.
+type Donnees = { notifications: any[]; nonLues: number };
+let derniere: Donnees | null = null;
+const abonnes = new Set<(d: Donnees) => void>();
+export function ecouterNotifications(cb: (d: Donnees) => void) {
+  abonnes.add(cb);
+  if (derniere) cb(derniere);
+  return () => { abonnes.delete(cb); };
+}
+
 function sonCaisse() {
   try {
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
@@ -42,8 +54,11 @@ export function AlerteCommande() {
       try {
         const res = await fetch("/api/notifications-marchand");
         if (!res.ok) return;
-        const liste: (Notif & { lu: boolean })[] = (await res.json()).notifications ?? [];
+        const donnees = await res.json();
+        const liste: (Notif & { lu: boolean })[] = donnees.notifications ?? [];
         if (!actif) return;
+        derniere = { notifications: liste, nonLues: donnees.nonLues ?? 0 };
+        abonnes.forEach((cb) => cb(derniere!));
         if (!vues.current) { vues.current = new Set(liste.map((n) => n.id)); return; }
         const nouvelles = liste.filter((n) => !vues.current!.has(n.id) && !n.lu && TYPES_COMMANDE.has(n.type));
         liste.forEach((n) => vues.current!.add(n.id));

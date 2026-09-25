@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { ecouterNotifications } from "@/components/dashboard/AlerteCommande";
 import Link from "next/link";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import {
@@ -42,21 +43,8 @@ export function AxiaNotifBell() {
   const [nonLues, setNonLues] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
-  const charger = async () => {
-    try {
-      const res = await fetch("/api/notifications-marchand");
-      if (!res.ok) return;
-      const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setNonLues(data.nonLues ?? 0);
-    } catch { /* silencieux */ }
-  };
-
-  useEffect(() => {
-    charger();
-    const id = setInterval(charger, 30_000);
-    return () => clearInterval(id);
-  }, []);
+  // Données fournies par AlerteCommande (une seule interrogation pour tout le dashboard).
+  useEffect(() => ecouterNotifications((d) => { setNotifications(d.notifications); setNonLues(d.nonLues); }), []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };

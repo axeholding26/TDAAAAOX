@@ -337,6 +337,8 @@ export interface ThemeConfig {
   layout?: ThemeLayout;
   boutons?: ThemeBoutons;
   navigationStyle?: ThemeNavigationCfg;
+  /** Panneaux de thème modifiés par le marchand, appliqués aussi au design importé (lib/reglages-design.ts). */
+  reglagesDesign?: { boutons?: boolean; navigation?: boolean; animations?: boolean };
   animations?: ThemeAnimations;
   customSections?: CustomSection[];
   sectionOrder?: string[];
@@ -529,6 +531,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     customSections: overrides.customSections ?? base.customSections,
     sectionOrder: overrides.sectionOrder ?? base.sectionOrder,
     modeBoutique: overrides.modeBoutique ?? base.modeBoutique,
+    reglagesDesign: overrides.reglagesDesign ?? base.reglagesDesign,
     digitalConfig: (overrides.digitalConfig || base.digitalConfig) ? { ...DEFAULT_DIGITAL_CONFIG, ...base.digitalConfig, ...(overrides.digitalConfig || {}) } : undefined,
     sectionSousBlocs: overrides.sectionSousBlocs ?? base.sectionSousBlocs ?? {},
     customCss: overrides.customCss ?? base.customCss,

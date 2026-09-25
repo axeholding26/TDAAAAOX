@@ -67,6 +67,7 @@ export function appliquerActionPage(page: PageAnnexe | null | undefined, cle: Cl
     case "ajouter": {
       const cat = BLOCS_PAGE[a.type as CustomSection["type"]];
       if (!cat) throw new Error(`Type de bloc inconnu : « ${a.type} » (${Object.keys(BLOCS_PAGE).join(", ")}).`);
+      if (a.type === "faq" && cle !== "aboutPage") throw new Error("Le bloc FAQ n'est disponible que sur la page À propos.");
       const id = uid("custom");
       const next = [...sections];
       next.splice(clamp(a.index ?? next.length, next.length), 0,
