@@ -1,5 +1,5 @@
 import type { ThemeConfig } from "@/lib/theme-config";
-import { cssDesignPersonnalise } from "@/lib/scope-css";
+import { cssSectionsDesign } from "@/lib/scope-css";
 
 interface Props {
   cfg: ThemeConfig;
@@ -15,7 +15,7 @@ export function ImportedLiteralHomePage({ cfg }: Props) {
     // Conteneur de référence des règles responsives du design (@container, voir lib/scope-css.ts).
     <div style={{ containerType: "inline-size" }}>
       {/* CSS du design avec les couleurs/polices choisies dans le Constructeur. */}
-      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cssDesignPersonnalise(cfg as any) }} />}
+      {cfg.builderCss && <style dangerouslySetInnerHTML={{ __html: cssSectionsDesign(cfg as any) }} />}
       {cfg.builderHtml && <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: cfg.builderHtml }} />}
       {/* CSS libre du marchand (panneau "Avancé" du builder) */}
       {cfg.customCss && <style dangerouslySetInnerHTML={{ __html: cfg.customCss }} />}

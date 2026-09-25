@@ -103,6 +103,8 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: "axso-panier",
+      // Rechargé après montage par components/storefront/PanierVitrine.tsx (sinon erreur d'hydratation).
+      skipHydration: true,
       partialize: (state) => ({
         items: state.items,
         tenantSlug: state.tenantSlug,

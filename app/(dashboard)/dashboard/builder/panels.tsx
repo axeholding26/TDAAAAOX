@@ -22,6 +22,17 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 
+/** Id unique (préfixe + horodatage + aléa) — jamais deux blocs/sections avec le même id. */
+const uid = (prefixe: string) => `${prefixe}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+
+/** Copie profonde d'une config par défaut avec des ids neufs pour ses onglets/colonnes. */
+function avecIdsNeufs(config: Record<string, any> = {}): Record<string, any> {
+  const c = JSON.parse(JSON.stringify(config));
+  if (Array.isArray(c.onglets)) c.onglets = c.onglets.map((o: any) => ({ ...o, id: uid("tab") }));
+  if (Array.isArray(c.colonnes)) c.colonnes = c.colonnes.map((o: any) => ({ ...o, id: uid("col") }));
+  return c;
+}
+
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
   { type: "features",      label: "Avantages / Features", Icon: Zap,          desc: "Grille de 3 à 6 caractéristiques avec icône et texte" },
@@ -208,7 +219,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <SousBlocsEditor blocs={tab.blocs||[]} onChange={(blocs: any[])=>{ const t=[...c.onglets]; t[i]={...t[i],blocs}; up({onglets:t}); }} />
         </div>
       ))}
-      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:`tab_${Date.now()}`,label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un onglet</button>
+      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:uid("tab"),label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un onglet</button>
     </>
   );
 
@@ -225,7 +236,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
           <SousBlocsEditor blocs={col.blocs||[]} onChange={(blocs: any[])=>{ const cols=[...c.colonnes]; cols[i]={...cols[i],blocs}; up({colonnes:cols}); }} />
         </div>
       ))}
-      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:`col_${Date.now()}`,blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une colonne</button>
+      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:uid("col"),blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une colonne</button>
     </>
   );
 
@@ -249,7 +260,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
       liste: { items: [""] },
       spacer: { hauteur: "40px" },
     };
-    onChange([...blocs, { id: `bloc_${Date.now()}`, type, config: defaults[type] }]);
+    onChange([...blocs, { id: uid("bloc"), type, config: defaults[type] }]);
   };
   const updateBloc = (i: number, patch: any) => {
     const next = [...blocs]; next[i] = { ...next[i], config: { ...next[i].config, ...patch } }; onChange(next);
@@ -1193,9 +1204,9 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
   const setSections = (next: CustomSection[]) => setPage({ sections: next });
 
   const addSection = (type: CustomSection["type"]) => {
-    const id = `custom_${Date.now()}`;
+    const id = uid("custom");
     const label = CUSTOM_SECTION_TYPES.find(t => t.type === type)?.label || type;
-    setSections([...sections, { id, type, actif: true, label, ordre: sections.length, config: PAGE_SECTION_DEFAULTS[type] || {} }]);
+    setSections([...sections, { id, type, actif: true, label, ordre: sections.length, config: avecIdsNeufs(PAGE_SECTION_DEFAULTS[type]) }]);
     setShowLibrary(false);
     setActiveSection(id);
   };
@@ -1204,8 +1215,8 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
     const idx = sections.findIndex(s => s.id === id);
     if (idx === -1) return;
     const src = sections[idx];
-    const newId = `custom_${Date.now()}`;
-    const copy: CustomSection = { ...src, id: newId, label: `${src.label} (copie)`, config: JSON.parse(JSON.stringify(src.config)) };
+    const newId = uid("custom");
+    const copy: CustomSection = { ...src, id: newId, label: `${src.label} (copie)`, config: avecIdsNeufs(src.config) };
     const next = [...sections];
     next.splice(idx + 1, 0, copy);
     setSections(next.map((s, i) => ({ ...s, ordre: i })));

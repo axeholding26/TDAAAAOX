@@ -153,6 +153,13 @@ export default function BuilderPage() {
 
   useEffect(() => { refetchTenant(); }, [refetchTenant]);
 
+  // Cookie d'aperçu (voir proxy.ts et le layout de la vitrine) : les pages de
+  // la boutique s'affichent dans le cadre d'aperçu, même en brouillon.
+  useEffect(() => {
+    document.cookie = "axso_apercu=1; path=/; SameSite=Strict";
+    return () => { document.cookie = "axso_apercu=; path=/; max-age=0"; };
+  }, []);
+
   // ─── Historique annuler / rétablir ──────────────────────────────────────────
   const undoStack   = useRef<ThemeConfig[]>([]);
   const redoStack   = useRef<ThemeConfig[]>([]);
@@ -399,6 +406,11 @@ export default function BuilderPage() {
         tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
         handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
         publier={publierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
+        panneauxPages={{
+          produit: <PanelProduit config={config} setProductPage={setProductPage} />,
+          apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
+          contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
+        }}
       />
     );
   }
@@ -426,6 +438,11 @@ export default function BuilderPage() {
           bandeaux={bandeaux}
           onSyncWithServer={syncWithServer}
           modeles={<PanelModeles tenant={tenant} onApplied={refetchTenant} />}
+          panneauxPages={{
+            produit: <PanelProduit config={config} setProductPage={setProductPage} />,
+            apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
+            contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
+          }}
           reglages={[
             { id: "couleurs", label: "Couleurs", desc: "Palette de la boutique", Icon: Palette, contenu: <PanelCouleurs config={config} setColors={setColors} /> },
             { id: "typo", label: "Typographie", desc: "Polices des titres et du texte", Icon: Type, contenu: <PanelTypo config={config} setFonts={setFonts} /> },
@@ -433,9 +450,6 @@ export default function BuilderPage() {
             { id: "boutons", label: "Boutons et navigation", desc: "Style des boutons et du menu", Icon: MousePointer2, contenu: <PanelBoutons config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} /> },
             { id: "animations", label: "Animations", desc: "Apparition des sections", Icon: Sparkles, contenu: <PanelAnimations config={config} setAnim={setAnim} /> },
             { id: "medias", label: "Médias", desc: "Images et vidéos", Icon: ImageIcon, contenu: <PanelMedias config={config} setSection={setSection} updateCustomSection={updateCustomSection} /> },
-            { id: "produit", label: "Fiche produit", desc: "Mise en page des pages produits", Icon: ShoppingBag, contenu: <PanelProduit config={config} setProductPage={setProductPage} /> },
-            { id: "apropos", label: "Page À propos", desc: "Sections de la page À propos", Icon: Info, contenu: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" /> },
-            { id: "contact", label: "Page Contact", desc: "Sections de la page Contact", Icon: Phone, contenu: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" /> },
             { id: "avance", label: "CSS avancé", desc: "Code CSS personnalisé", Icon: Code2, contenu: <PanelAvance config={config} set={set} tenant={tenant} onReset={() => { setConfig({ ...resolveThemeConfig(tenant.themeId) }); }} /> },
           ]}
         />

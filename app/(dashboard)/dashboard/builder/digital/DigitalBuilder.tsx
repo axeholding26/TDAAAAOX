@@ -23,6 +23,10 @@ import { FONTS } from "@/lib/theme-fonts";
 import { DIGITAL_TEMPLATES, getDigitalTemplate } from "@/lib/digital-templates";
 import { prixClient } from "@/lib/pricing";
 import { DigitalStoreShell, ELEMENTS_DIGITAUX, type DigitalProductVM } from "@/components/storefront/digital/DigitalStoreShell";
+import { ApercuFiche } from "../boutique/ApercuFiche";
+import { ApercuPage } from "../pages/ApercuPage";
+import { PanneauPage } from "../pages/PanneauPage";
+import { PAGES, type PageEditee } from "../pages/pages";
 import { majStyleElement } from "@/lib/element-styles";
 import { PanneauElement } from "../PanneauElement";
 import { useSurvol, cssSelection } from "../SurvolApercu";
@@ -50,10 +54,22 @@ interface Props {
   publishing: boolean;
   criteresManquants: { label: string }[];
   bandeaux: React.ReactNode; // infos manquantes pour publier (partagé avec le constructeur boutique)
+  // Panneaux des pages à sections (fiche produit, À propos, Contact) — les mêmes que le Constructeur physique.
+  panneauxPages: Partial<Record<PageEditee, React.ReactNode>>;
 }
 
-export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, publishing, criteresManquants, bandeaux }: Props) {
+export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, publishing, criteresManquants, bandeaux, panneauxPages }: Props) {
   const [device, setDevice] = useState<Device>("desktop");
+  // Page de la boutique en cours d'édition — même sélecteur que le Constructeur physique.
+  const [page, setPage] = useState<PageEditee>("accueil");
+  const [versionApercu, setVersionApercu] = useState(0);
+  useEffect(() => { if (saved) setVersionApercu((v) => v + 1); }, [saved]);
+  const pageEnCadre = !["accueil", "produit"].includes(page);
+  useEffect(() => {
+    if (!pageEnCadre || !hasChanges || saving) return;
+    const t = setTimeout(handleSave, 800);
+    return () => clearTimeout(t);
+  }, [pageEnCadre, hasChanges, saving, config, handleSave]);
   const [produits, setProduits] = useState<DigitalProductVM[] | null>(null);
   // Élément de la vitrine sélectionné dans l'aperçu (data-axs-el) → panneau de droite.
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
@@ -120,9 +136,13 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon</span>}
           {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">Modifié</span>}
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
-          <ShoppingBag size={13} /> Boutique digitale
-        </div>
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <ShoppingBag size={14} className="text-gray-500" />
+          <select value={page} onChange={(e) => { setPage(e.target.value as PageEditee); setSelectedEl(null); }} aria-label="Page à modifier"
+            className="h-9 pl-2 pr-7 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:border-gray-300 focus:outline-none focus:border-[#F5A623] cursor-pointer">
+            {PAGES.map((pg) => <option key={pg.id} value={pg.id}>{pg.id === "accueil" ? "Accueil (boutique)" : pg.label}</option>)}
+          </select>
+        </label>
         <div className="flex items-center gap-2">
           <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
             {DEVICES.map(([d, Icon, label]) => (
@@ -175,6 +195,18 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
 
       {/* MAIN */}
       <div className="flex-1 flex overflow-hidden min-h-0">
+        {page !== "accueil" && (
+          <div className="w-[420px] flex-shrink-0 min-h-0 bg-white border-r border-gray-200 flex flex-col">
+            {panneauxPages[page]
+              ? <><div className="px-5 h-12 flex items-center border-b border-gray-100 flex-shrink-0"><p className="text-[15px] font-semibold">{PAGES.find((pg) => pg.id === page)?.label}</p></div>
+                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{panneauxPages[page]}</div></>
+              : <PanneauPage page={page} onPage={setPage} />}
+          </div>
+        )}
+        {page === "produit" && <ApercuFiche config={config} tenant={tenant} device={device} />}
+        {pageEnCadre && <ApercuPage slug={tenant.slug} chemin={PAGES.find((pg) => pg.id === page)!.chemin} device={device} version={versionApercu} onNaviguer={setPage} />}
+
+        {page === "accueil" && <>
         {/* Panneau de réglages */}
         <div className="w-[420px] flex-shrink-0 min-h-0 bg-[#FAFAFB] border-r border-gray-200 overflow-y-auto scrollbar-thin p-4 space-y-4">
           <Carte icon={<LayoutTemplate size={16} />} titre="Modèle de boutique" desc="Choisis la mise en page de ta boutique digitale.">
@@ -334,7 +366,9 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           </div>
         </div>
 
-        {selectedEl && infoEl && (
+        </>}
+
+        {page === "accueil" && selectedEl && infoEl && (
           <PanneauElement
             key={selectedEl}
             titre={infoEl.label}

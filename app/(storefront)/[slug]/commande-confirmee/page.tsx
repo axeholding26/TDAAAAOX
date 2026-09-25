@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
-import { ImportedLiteralConfirmationShell } from "@/components/storefront/templates/ImportedLiteralConfirmationShell";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { Lock } from "lucide-react";
 
 interface Props {
@@ -61,8 +61,9 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
     />
   );
 
-  if (cfg.builderHtmlConfirmationChrome) {
-    return <ImportedLiteralConfirmationShell cfg={cfg}>{contenuConfirmation}</ImportedLiteralConfirmationShell>;
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) {
+    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{contenuConfirmation}</div></Habillage>;
   }
 
   return (

@@ -6,11 +6,11 @@ import { auth } from "@/lib/auth";
 import { notFound } from "next/navigation";
 import { pourcentageRemise } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
-import { resolveConfigVitrine, decouperChrome } from "@/lib/vitrine-design";
+import { resolveConfigVitrine } from "@/lib/vitrine-design";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
-import { cssSectionsDesign } from "@/lib/scope-css";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -108,11 +108,6 @@ export default async function ProduitPage({ params }: Props) {
     prixAffiche: prixClient(p.prix, taux),
   }));
 
-  // Boutique à design : en-tête / pied de page du design (tels que modifiés
-  // dans le Constructeur) autour de la fiche pilotée par les sections du
-  // panneau « Fiche produit » — variantes, quantité, badges, avis réels.
-  const chrome = decouperChrome(cfg.builderHtmlProduit);
-
   // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   // Programme de la formation — affiché avant achat (aperçu gratuit pour les
   // leçons marquées "gratuite", verrouillé pour le reste) pour donner
@@ -202,15 +197,16 @@ export default async function ProduitPage({ params }: Props) {
     peutDevenirAffilie,
   };
 
-  if (chrome) {
+  // Boutique à design : en-tête / pied de page du design (tels que modifiés
+  // dans le Constructeur) autour de la fiche pilotée par les sections du
+  // panneau « Fiche produit » — variantes, quantité, badges, avis réels.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) {
     return (
-      <div style={{ containerType: "inline-size" }}>
+      <Habillage>
         <ViewContentTracker produitId={produit.id} nom={produit.nom} prix={prixAffiche} devise={tenant.devise} />
-        <style dangerouslySetInnerHTML={{ __html: cssSectionsDesign(cfg as any) }} />
-        <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: chrome.avant }} />
         <ProductPageClient produit={produitProps} tenant={tenantProps} produitsSimilaires={produitsSimilaires} sansPied />
-        <div data-axs-embed-html="1" dangerouslySetInnerHTML={{ __html: chrome.apres }} />
-      </div>
+      </Habillage>
     );
   }
 

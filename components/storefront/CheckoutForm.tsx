@@ -25,7 +25,11 @@ interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
   slug: string; devise: string; tenantId: string; nomBoutique: string; logoUrl?: string;
   parametresCommande?: ParametresCommande;
+  paysBoutique?: string; // code ISO2 — pays présélectionné dans le formulaire
 }
+
+/** Nom du pays (clé de PAYS_CONFIG) de la boutique, sinon Sénégal. */
+const paysParDefaut = (code?: string) => Object.keys(PAYS_CONFIG).find((n) => PAYS_CONFIG[n].code === code) ?? "Sénégal";
 
 // ─── Config opérateurs ───────────────────────────────────────────────────────
 const PAYS_CONFIG: Record<string, { code: string; operateurs: { id: string; label: string; logo: string }[] }> = {
@@ -107,7 +111,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT PHYSIQUE — Paiement à la livraison → WhatsApp
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande }: any) {
+function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const cfg: ParametresCommande = parametresCommande || {};
@@ -117,7 +121,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [loadingCanal, setLoadingCanal] = useState<"whatsapp" | "direct" | null>(null);
   const loading = loadingCanal !== null;
   const [done, setDone] = useState<{ commandeId: string; numero: string; viaWhatsapp: boolean; whatsappUrl: string | null; trackingToken?: string } | null>(null);
-  const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: "Sénégal", email: "" });
+  const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique), email: "" });
   const [champPersoValeur, setChampPersoValeur] = useState("");
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -685,14 +689,14 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT DIGITAL — Paiement NotchPay · Wallet Axso · Livraison instantanée
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier }: any) {
+function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, paysBoutique }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [phase, setPhase] = useState<"form" | "paiement">("form");
   const [loading, setLoading] = useState(false);
   const [commandeId, setCommandeId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nom: "", email: "", telephone: "", pays: "Sénégal" });
+  const [form, setForm] = useState({ nom: "", email: "", telephone: "", pays: paysParDefaut(paysBoutique) });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
   // Code d'affiliation depuis l'URL (?ref=CODE) ou localStorage
@@ -894,7 +898,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT MIXTE — Avertissement + deux sections
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande }: any) {
+function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande, paysBoutique }: any) {
   const itemsPhysiques = items.filter((i: any) => i.type === "physique");
   const itemsDigitaux  = items.filter((i: any) => i.type === "digital" || i.type === "dropshipping");
   const totalPhysique  = itemsPhysiques.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
@@ -929,10 +933,10 @@ function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, it
       </div>
 
       {section === "physique" && itemsPhysiques.length > 0 && (
-        <CheckoutPhysique theme={theme} slug={slug} devise={devise} tenantId={tenantId} items={itemsPhysiques} total={totalPhysique} codePromo={null} viderPanier={() => {}} parametresCommande={parametresCommande} />
+        <CheckoutPhysique theme={theme} slug={slug} devise={devise} tenantId={tenantId} items={itemsPhysiques} total={totalPhysique} codePromo={null} viderPanier={() => {}} parametresCommande={parametresCommande} paysBoutique={paysBoutique} />
       )}
       {section === "digital" && itemsDigitaux.length > 0 && (
-        <CheckoutDigital theme={theme} slug={slug} devise={devise} tenantId={tenantId} nomBoutique={nomBoutique} logoUrl={logoUrl} items={itemsDigitaux} total={totalDigital} codePromo={null} viderPanier={() => {}} />
+        <CheckoutDigital theme={theme} slug={slug} devise={devise} tenantId={tenantId} nomBoutique={nomBoutique} logoUrl={logoUrl} items={itemsDigitaux} total={totalDigital} codePromo={null} viderPanier={() => {}} paysBoutique={paysBoutique} />
       )}
     </div>
   );
@@ -941,7 +945,7 @@ function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, it
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
-export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande }: Props) {
+export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande, paysBoutique }: Props) {
   const { items, totalAvecReduction, viderPanier, codePromo } = useCartStore();
   const total = totalAvecReduction();
 
@@ -981,7 +985,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
     );
   }
 
-  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande };
+  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande, paysBoutique };
 
   return (
     <>

@@ -7,7 +7,7 @@ import { verifierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { ConfirmationDigitaleContent } from "@/components/storefront/ConfirmationDigitaleContent";
-import { ImportedLiteralConfirmationShell } from "@/components/storefront/templates/ImportedLiteralConfirmationShell";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
@@ -121,8 +121,9 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
     />
   );
 
-  if (themeConfig.builderHtmlConfirmationChrome) {
-    return <ImportedLiteralConfirmationShell cfg={themeConfig}>{contenuConfirmation}</ImportedLiteralConfirmationShell>;
+  const Habillage = habillageDesign(themeConfig);
+  if (Habillage) {
+    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{contenuConfirmation}</div></Habillage>;
   }
 
   return (

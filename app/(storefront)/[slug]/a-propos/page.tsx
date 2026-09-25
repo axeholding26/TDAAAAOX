@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 
 interface Props {
@@ -46,6 +47,47 @@ export default async function AProposPage({ params }: Props) {
   const aboutPage = cfg.aboutPage;
   const about = cfg.sections.about; // section "Notre histoire" déjà existante sur la home — repli si aboutPage vide
 
+  const contenu = (
+    <>
+        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4`}>
+          <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>À propos</h1>
+          <p className="text-sm mt-2" style={{ opacity: 0.5 }}>
+            <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tenant.nomBoutique}</Link> · À propos
+          </p>
+        </div>
+  
+        {aboutPage?.actif && aboutPage.sections?.length ? (
+          <CustomSectionsRenderer sections={aboutPage.sections} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
+        ) : (
+          <section className={SECTION_PY}>
+            <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
+              <div className="max-w-2xl">
+                <h2 className="text-2xl font-bold font-playfair mb-4" style={{ color: c.texte }}>{about?.titre || "Notre histoire"}</h2>
+                <p className="text-base leading-relaxed" style={{ opacity: 0.65 }}>
+                  {about?.texte || tenant.description || "Cette boutique n'a pas encore renseigné sa page À propos."}
+                </p>
+                {about?.stats && about.stats.length > 0 && (
+                  <div className="grid grid-cols-3 gap-4 mt-8">
+                    {about.stats.map((s, i) => (
+                      <div key={i} className="text-center p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
+                        <p className="text-xl font-bold" style={{ color: c.accent }}>{s.valeur}</p>
+                        <p className="text-xs mt-1" style={{ opacity: 0.6 }}>{s.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+  
+    </>
+  );
+
+  // Boutique à design : même en-tête / pied de page que le reste de la boutique.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) return <Habillage>{contenu}</Habillage>;
+
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <StorefrontNavbar
@@ -63,37 +105,7 @@ export default async function AProposPage({ params }: Props) {
         showContact={cfg.contactPage?.actif}
       />
 
-      <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4`}>
-        <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>À propos</h1>
-        <p className="text-sm mt-2" style={{ opacity: 0.5 }}>
-          <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tenant.nomBoutique}</Link> · À propos
-        </p>
-      </div>
-
-      {aboutPage?.actif && aboutPage.sections?.length ? (
-        <CustomSectionsRenderer sections={aboutPage.sections} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
-      ) : (
-        <section className={SECTION_PY}>
-          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
-            <div className="max-w-2xl">
-              <h2 className="text-2xl font-bold font-playfair mb-4" style={{ color: c.texte }}>{about?.titre || "Notre histoire"}</h2>
-              <p className="text-base leading-relaxed" style={{ opacity: 0.65 }}>
-                {about?.texte || tenant.description || "Cette boutique n'a pas encore renseigné sa page À propos."}
-              </p>
-              {about?.stats && about.stats.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mt-8">
-                  {about.stats.map((s, i) => (
-                    <div key={i} className="text-center p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
-                      <p className="text-xl font-bold" style={{ color: c.accent }}>{s.valeur}</p>
-                      <p className="text-xs mt-1" style={{ opacity: 0.6 }}>{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
+      {contenu}
 
       {/* ─── FOOTER (identique aux autres pages storefront) ─── */}
       <footer className="border-t mt-0" style={{ backgroundColor: c.fond, borderColor: `${c.accent}15` }}>

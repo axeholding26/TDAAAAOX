@@ -13,6 +13,7 @@ import { StorefrontTypography } from "@/components/storefront/StorefrontTypograp
 import { nomNoeud } from "./libelles";
 import { ATTR_EL, cibleSelectionnable, genElId, nomElement } from "./elements-dom";
 import { useSurvol, cssSelection } from "../SurvolApercu";
+import { pageDepuisChemin, type PageEditee } from "../pages/pages";
 
 type Device = "desktop" | "tablet" | "mobile";
 const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
@@ -30,6 +31,7 @@ interface Props {
   onAjouterSection: (zone: Zone, index: number) => void;
   selectedEl: string | null; // élément d'une section de design (data-axs-el)
   onSelectElement: (noeudId: string, elId: string) => void;
+  onNaviguer?: (page: PageEditee) => void; // lien cliqué → page correspondante dans l'éditeur
 }
 
 // Aperçu en direct façon Shopify : la page telle qu'elle s'affichera, avec la
@@ -37,7 +39,7 @@ interface Props {
 // sur ses bords pour insérer une section juste avant/après. Pas de
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
-export function Apercu({ config, tree, slug, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement }: Props) {
+export function Apercu({ config, tree, slug, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer }: Props) {
   const racine = useRef<HTMLDivElement>(null);
   const layout = config.layout ?? {};
   const ctx = useMemo(() => ({
@@ -71,8 +73,19 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
         onMouseLeave={onMouseLeave}
         className="relative mx-auto bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] min-h-full transition-[width] duration-300"
         style={{ width: LARGEUR[device], maxWidth: "100%", backgroundColor: config.colors.fond, color: config.colors.texte }}
-        // Liens du design : jamais suivis dans l'éditeur.
-        onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }}
+        // Liens du design : jamais suivis tels quels dans l'éditeur — un lien vers
+        // une autre page de la boutique (produit, panier…) ouvre cette page ici.
+        onClickCapture={(e) => {
+          const lien = (e.target as HTMLElement).closest("a");
+          if (!lien) return;
+          e.preventDefault();
+          const href = lien.getAttribute("href");
+          if (!href || !onNaviguer) return;
+          const page = pageDepuisChemin(slug, new URL(href, window.location.origin).pathname);
+          // Seulement produit / panier / commande : les autres liens sont des boutons
+          // du design, dont le texte se modifie au clic.
+          if (page === "produit" || page === "panier" || page === "commande") { e.stopPropagation(); onNaviguer(page); }
+        }}
       >
         {cssDesign && <style dangerouslySetInnerHTML={{ __html: cssDesign }} />}
         {selectedEl && <style dangerouslySetInnerHTML={{ __html: cssSelection(selectedEl) }} />}

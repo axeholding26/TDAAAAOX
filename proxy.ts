@@ -61,7 +61,9 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set("x-pathname", pathname);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set("X-Frame-Options", "DENY");
+  // Aperçu du Constructeur (cookie posé par /dashboard/builder) : la vitrine
+  // s'affiche dans le cadre d'aperçu de l'éditeur, même origine uniquement.
+  response.headers.set("X-Frame-Options", request.cookies.get("axso_apercu")?.value === "1" ? "SAMEORIGIN" : "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   return response;

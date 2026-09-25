@@ -658,7 +658,8 @@ export function generateStoreConfig(opts: {
   const type   = detectCategory(categorie);
   const langue = detectLangue(pays);
   const { sections, sectionOrder, customSections } = buildHomeSections(type, nomBoutique, langue);
-  const productSections = buildProductSections(type);
+  // Boutique digitale : pas de guide des tailles ni de composition (produits téléchargeables).
+  const productSections = buildProductSections(type).filter((sec) => modeBoutique !== "digital" || !["sizeguide", "ingredients"].includes(sec.type));
   const productLayout = selectProductLayout(type);
   const { aboutPage, contactPage } = buildAboutContactPages(type, nomBoutique, langue);
 

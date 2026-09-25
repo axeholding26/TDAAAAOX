@@ -20,6 +20,9 @@ import { PanneauSections } from "./PanneauSections";
 import { MenuAjout, type ChoixAjout } from "./MenuAjout";
 import { Apercu } from "./Apercu";
 import { ApercuFiche } from "./ApercuFiche";
+import { ApercuPage } from "../pages/ApercuPage";
+import { PanneauPage } from "../pages/PanneauPage";
+import { PAGES, type PageEditee } from "../pages/pages";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "./decoupage";
 import { lireElement, modifierElement, appliquerContenu, selectionnerParent } from "./elements-dom";
@@ -50,6 +53,8 @@ interface Props {
   bandeaux: ReactNode;
   reglages: Reglage[];
   modeles: ReactNode;
+  // Panneaux des pages à sections (fiche produit, À propos, Contact).
+  panneauxPages: Partial<Record<PageEditee, ReactNode>>;
   onSyncWithServer: () => Promise<void>;
 }
 
@@ -61,6 +66,19 @@ interface Props {
 export function BoutiqueBuilder(p: Props) {
   const { config, set, tenant, device } = p;
   const [onglet, setOnglet] = useState<Onglet>("sections");
+  // Page de la boutique en cours d'édition (sélecteur de la barre du haut).
+  const [page, setPageBrute] = useState<PageEditee>("accueil");
+  const setPage = (pg: PageEditee) => { setPageBrute(pg); setOnglet("sections"); setReglageOuvert(null); setAjout(null); };
+  // Aperçus en cadre (catalogue, panier…) : rechargés à chaque enregistrement.
+  const [versionApercu, setVersionApercu] = useState(0);
+  useEffect(() => { if (p.saved) setVersionApercu((v) => v + 1); }, [p.saved]);
+  const pageEnCadre = !["accueil", "produit"].includes(page);
+  // Sur ces pages, enregistrement rapide pour que l'aperçu suive sans attendre.
+  useEffect(() => {
+    if (!pageEnCadre || !p.hasChanges || p.saving) return;
+    const t = setTimeout(p.handleSave, 800);
+    return () => clearTimeout(t);
+  }, [pageEnCadre, p.hasChanges, p.saving, config, p.handleSave]);
   const [reglageOuvert, setReglageOuvert] = useState<string | null>(null);
   const [selectedId, setSelectedIdBrut] = useState<string | null>(null);
   // Élément d'une section de design (titre, bouton, image…) sélectionné dans
@@ -175,7 +193,13 @@ export function BoutiqueBuilder(p: Props) {
             ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">Brouillon</span>
             : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">Actif</span>}
           <span className="w-px h-5 bg-[#E5E5E5]" />
-          <span className="flex items-center gap-2 text-[#333333]"><Home size={16} className="text-[#777777]" /> Page d'accueil</span>
+          <label className="flex items-center gap-2 text-[#333333]">
+            <Home size={16} className="text-[#777777]" />
+            <select value={page} onChange={(e) => setPage(e.target.value as PageEditee)} aria-label="Page à modifier"
+              className="h-9 pl-2 pr-7 rounded-lg border border-[#E5E5E5] bg-white text-[14px] font-medium hover:border-[#CCCCCC] focus:outline-none focus:border-[#F5A623] cursor-pointer">
+              {PAGES.map((pg) => <option key={pg.id} value={pg.id}>{pg.label}</option>)}
+            </select>
+          </label>
         </div>
 
         <div className="flex items-center justify-end gap-1.5 min-w-0">
@@ -220,7 +244,16 @@ export function BoutiqueBuilder(p: Props) {
       <div className="flex-1 flex min-h-0">
         {/* ── Panneau de gauche ── */}
         <aside className="relative w-[320px] flex-shrink-0 flex flex-col bg-white border-r border-[#E5E5E5]">
-          {onglet === "sections" && (
+          {onglet === "sections" && page !== "accueil" && (
+            p.panneauxPages[page]
+              ? <div className="flex-1 flex flex-col min-h-0">
+                  <div className="px-5 h-14 flex items-center border-b border-[#EEEEEE] flex-shrink-0"><p className="text-[15px] font-semibold">{PAGES.find((pg) => pg.id === page)?.label}</p></div>
+                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{p.panneauxPages[page]}</div>
+                </div>
+              : <PanneauPage page={page} onPage={setPage} />
+          )}
+
+          {onglet === "sections" && page === "accueil" && (
             <PanneauSections
               tree={tree}
               selectedId={selectedId}
@@ -275,7 +308,10 @@ export function BoutiqueBuilder(p: Props) {
         </aside>
 
         {/* ── Aperçu ── (fiche produit quand son panneau est ouvert) */}
-        {onglet === "parametres" && reglageOuvert === "produit" ? <ApercuFiche config={config} tenant={tenant} device={device} /> : <Apercu
+        {page === "produit" ? <ApercuFiche config={config} tenant={tenant} device={device} />
+          : pageEnCadre ? <ApercuPage slug={tenant.slug} chemin={PAGES.find((pg) => pg.id === page)!.chemin} device={device} version={versionApercu} onNaviguer={setPage} />
+          : <Apercu
+          onNaviguer={setPage}
           config={config}
           tree={tree}
           slug={tenant.slug}

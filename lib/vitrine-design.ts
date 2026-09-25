@@ -77,18 +77,23 @@ export function appliquerConstructeur(cfg: ThemeConfig): ThemeConfig {
 
 const RE_GRILLE = /id="(homeGrid|plpGrid)"/;
 
-function remplirGrilles(html: string | undefined, cartes: string): string | undefined {
+function remplirGrilles(html: string | undefined, cartes: string, nb: number): string | undefined {
   if (!html || !RE_GRILLE.test(html)) return html;
   const racine = parse(html);
   racine.querySelectorAll("#homeGrid, #plpGrid").forEach((g) => g.set_content(cartes));
+  // Compteur du catalogue (« 8 pièces » figé dans le design) → vrai nombre, même mot.
+  racine.querySelectorAll("#plpCount").forEach((el) => {
+    const mot = el.text.trim().match(/^\d+\s+(.+?)s?$/)?.[1];
+    if (mot) el.set_content(`${nb} ${mot}${nb > 1 ? "s" : ""}`);
+  });
   return racine.toString();
 }
 
-function remplirGrillesArbre(nodes: BlockNode[], cartes: string): BlockNode[] {
+function remplirGrillesArbre(nodes: BlockNode[], cartes: string, nb: number): BlockNode[] {
   return nodes.map((n) => ({
     ...n,
-    ...(n.type === "embed-html" && n.config?.html ? { config: { ...n.config, html: remplirGrilles(n.config.html, cartes) } } : {}),
-    ...(n.children ? { children: remplirGrillesArbre(n.children, cartes) } : {}),
+    ...(n.type === "embed-html" && n.config?.html ? { config: { ...n.config, html: remplirGrilles(n.config.html, cartes, nb) } } : {}),
+    ...(n.children ? { children: remplirGrillesArbre(n.children, cartes, nb) } : {}),
   }));
 }
 
@@ -114,9 +119,9 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
   }, tenant.slug)).join("");
   return {
     ...cfg,
-    builderHtml: remplirGrilles(cfg.builderHtml, cartes),
-    builderHtmlProduits: remplirGrilles(cfg.builderHtmlProduits, cartes),
-    ...(tree.length ? { builderTree: remplirGrillesArbre(tree, cartes) } : {}),
+    builderHtml: remplirGrilles(cfg.builderHtml, cartes, produits.length),
+    builderHtmlProduits: remplirGrilles(cfg.builderHtmlProduits, cartes, produits.length),
+    ...(tree.length ? { builderTree: remplirGrillesArbre(tree, cartes, produits.length) } : {}),
   };
 }
 

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Mail, Phone, MapPin, MessageCircle } from "lucide-react";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { ContactForm } from "@/components/storefront/ContactForm";
 
@@ -51,6 +52,65 @@ export default async function ContactPage({ params }: Props) {
     tenant.adresse && { Icon: MapPin, label: "Adresse", value: tenant.adresse, href: undefined },
   ].filter(Boolean) as Array<{ Icon: any; label: string; value: string; href?: string }>;
 
+  const contenu = (
+    <>
+        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4`}>
+          <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>Contact</h1>
+          <p className="text-sm mt-2" style={{ opacity: 0.5 }}>
+            <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tenant.nomBoutique}</Link> · Contact
+          </p>
+          {contactPage?.intro && (
+            <p className="text-base mt-4 max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{contactPage.intro}</p>
+          )}
+        </div>
+  
+        <section className={SECTION_PY}>
+          <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10`}>
+            {/* Coordonnées */}
+            <div className="space-y-3">
+              {coordonnees.length === 0 && (
+                <p className="text-sm" style={{ opacity: 0.5 }}>Aucune coordonnée renseignée pour l'instant.</p>
+              )}
+              {coordonnees.map((item, i) => {
+                const content = (
+                  <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${c.accent}18` }}>
+                      <item.Icon size={16} style={{ color: c.accent }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: c.accent }}>{item.label}</p>
+                      <p className="text-sm truncate" style={{ color: c.texte }}>{item.value}</p>
+                    </div>
+                  </div>
+                );
+                return item.href ? (
+                  <a key={i} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{content}</a>
+                ) : (
+                  <div key={i}>{content}</div>
+                );
+              })}
+            </div>
+  
+            {/* Formulaire */}
+            {afficherFormulaire && (
+              <div>
+                <ContactForm slug={slug} accent={c.accent} texte={c.texte} fond={c.fond} />
+              </div>
+            )}
+          </div>
+        </section>
+  
+        {contactPage?.sections?.length ? (
+          <CustomSectionsRenderer sections={contactPage.sections} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
+        ) : null}
+  
+    </>
+  );
+
+  // Boutique à design : même en-tête / pied de page que le reste de la boutique.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) return <Habillage>{contenu}</Habillage>;
+
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <StorefrontNavbar
@@ -68,55 +128,7 @@ export default async function ContactPage({ params }: Props) {
         showContact={cfg.contactPage?.actif}
       />
 
-      <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4`}>
-        <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>Contact</h1>
-        <p className="text-sm mt-2" style={{ opacity: 0.5 }}>
-          <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tenant.nomBoutique}</Link> · Contact
-        </p>
-        {contactPage?.intro && (
-          <p className="text-base mt-4 max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{contactPage.intro}</p>
-        )}
-      </div>
-
-      <section className={SECTION_PY}>
-        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10`}>
-          {/* Coordonnées */}
-          <div className="space-y-3">
-            {coordonnees.length === 0 && (
-              <p className="text-sm" style={{ opacity: 0.5 }}>Aucune coordonnée renseignée pour l'instant.</p>
-            )}
-            {coordonnees.map((item, i) => {
-              const content = (
-                <div className="flex items-center gap-3 p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${c.accent}18` }}>
-                    <item.Icon size={16} style={{ color: c.accent }} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: c.accent }}>{item.label}</p>
-                    <p className="text-sm truncate" style={{ color: c.texte }}>{item.value}</p>
-                  </div>
-                </div>
-              );
-              return item.href ? (
-                <a key={i} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{content}</a>
-              ) : (
-                <div key={i}>{content}</div>
-              );
-            })}
-          </div>
-
-          {/* Formulaire */}
-          {afficherFormulaire && (
-            <div>
-              <ContactForm slug={slug} accent={c.accent} texte={c.texte} fond={c.fond} />
-            </div>
-          )}
-        </div>
-      </section>
-
-      {contactPage?.sections?.length ? (
-        <CustomSectionsRenderer sections={contactPage.sections} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
-      ) : null}
+      {contenu}
 
       {/* ─── FOOTER (identique aux autres pages storefront) ─── */}
       <footer className="border-t mt-0" style={{ backgroundColor: c.fond, borderColor: `${c.accent}15` }}>

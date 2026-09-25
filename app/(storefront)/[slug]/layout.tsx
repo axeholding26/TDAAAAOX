@@ -1,9 +1,11 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { BoutiqueNonPubliee } from "@/components/storefront/BoutiqueNonPubliee";
 import { prisma } from "@/lib/prisma";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
+import { PanierVitrine } from "@/components/storefront/PanierVitrine";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
@@ -35,9 +37,13 @@ export default async function StorefrontLayout({ children, params }: Props) {
 
   // Pas encore publiée : l'équipe connectée voit un message l'invitant à
   // publier (au lieu d'un 404) ; le public reçoit le 404 de la page.
+  // Aperçu du Constructeur : le propriétaire voit sa boutique telle quelle
+  // (même en brouillon), sans compter de visite ni déclencher pixels/popups.
+  const apercu = (await cookies()).get("axso_apercu")?.value === "1";
   if (tenant.statut !== "active") {
     const session = await auth();
-    if ((session?.user as any)?.tenantId === tenant.id) return <BoutiqueNonPubliee nomBoutique={tenant.nomBoutique} />;
+    const proprietaire = (session?.user as any)?.tenantId === tenant.id;
+    if (proprietaire && !apercu) return <BoutiqueNonPubliee nomBoutique={tenant.nomBoutique} />;
   }
 
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
@@ -53,14 +59,19 @@ export default async function StorefrontLayout({ children, params }: Props) {
       <Suspense fallback={null}>
         <AffiliationRefCapture />
       </Suspense>
-      <StorefrontPageView slug={slug} />
-      <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
-      <StorefrontPopups slug={slug} accentColor={accent} />
-      {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}
-      {tenant.tiktokPixelId && <TikTokPixel pixelId={tenant.tiktokPixelId} />}
-      {tenant.snapPixelId && <SnapchatPixel pixelId={tenant.snapPixelId} />}
-      {tenant.gtmId && <GoogleTagManager containerId={tenant.gtmId} />}
-      {tenant.trackingScripts && <CustomTrackingScripts html={tenant.trackingScripts} />}
+      <PanierVitrine />
+      {!apercu && (
+        <>
+          <StorefrontPageView slug={slug} />
+          <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
+          <StorefrontPopups slug={slug} accentColor={accent} />
+          {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}
+          {tenant.tiktokPixelId && <TikTokPixel pixelId={tenant.tiktokPixelId} />}
+          {tenant.snapPixelId && <SnapchatPixel pixelId={tenant.snapPixelId} />}
+          {tenant.gtmId && <GoogleTagManager containerId={tenant.gtmId} />}
+          {tenant.trackingScripts && <CustomTrackingScripts html={tenant.trackingScripts} />}
+        </>
+      )}
     </>
   );
 }

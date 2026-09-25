@@ -3,9 +3,10 @@ export const dynamic = "force-dynamic";
 // Storefront — Page checkout
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { boutiqueVisible } from "@/lib/tenant";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/storefront/CheckoutForm";
-import { ImportedLiteralCheckoutShell } from "@/components/storefront/templates/ImportedLiteralCheckoutShell";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { Lock } from "lucide-react";
 
@@ -16,22 +17,22 @@ interface Props {
 export default async function CheckoutPage({ params }: Props) {
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
-  if (!tenant || tenant.statut !== "active") notFound();
+  // Même règle que les autres pages : publique si active, visible par le propriétaire (aperçu du Constructeur).
+  if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const theme = cfg.colors;
 
-  if (cfg.builderHtmlCheckoutChrome) {
+  // Boutique à design : même en-tête / pied de page que le reste de la boutique.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) {
     return (
-      <ImportedLiteralCheckoutShell
-        cfg={cfg}
-        slug={slug}
-        devise={tenant.devise}
-        tenantId={tenant.id}
-        nomBoutique={tenant.nomBoutique}
-        logoUrl={tenant.logoUrl || undefined}
-        parametresCommande={(tenant.parametresCommande as any) || {}}
-      />
+      <Habillage>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <CheckoutForm paysBoutique={tenant.pays} theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique}
+            logoUrl={tenant.logoUrl || undefined} parametresCommande={(tenant.parametresCommande as any) || {}} />
+        </div>
+      </Habillage>
     );
   }
 
@@ -62,7 +63,7 @@ export default async function CheckoutPage({ params }: Props) {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        <CheckoutForm theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique} logoUrl={tenant.logoUrl || undefined}
+        <CheckoutForm paysBoutique={tenant.pays} theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique} logoUrl={tenant.logoUrl || undefined}
           parametresCommande={(tenant.parametresCommande as any) || {}} />
       </div>
 

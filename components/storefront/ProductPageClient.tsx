@@ -1031,7 +1031,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const galleryStyle: "vertical-thumbs" | "horizontal-thumbs" | "dots" = galCfg.style || "vertical-thumbs";
   const showBreadcrumbs = isOn("info") && infoCfg.breadcrumbs !== false;
   const showBadges      = isOn("info") && infoCfg.badges !== false;
-  const showStock       = isOn("info") && infoCfg.stock !== false;
+  // Produits digitaux : pas de stock, de quantité ni de livraison physique.
+  const estDigital      = TYPES_DIGITAUX.has(produit.type);
+  const showStock       = isOn("info") && infoCfg.stock !== false && !estDigital;
   const showAiDesc      = descCfg.ai !== false;
   const similarTitre    = simCfg.titre || "Vous aimerez aussi";
 
@@ -1069,7 +1071,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   const prixEffectif = variantePrix?.prix ?? selectedVariante?.prix ?? produit.prixAffiche;
   const stockEffectif = selectedVariante !== null ? selectedVariante.stock : produit.stock;
-  const enRupture     = stockEffectif === 0;
+  const enRupture     = !estDigital && stockEffectif === 0;
 
   function doAddToCart() {
     if (enRupture) return;
@@ -1190,7 +1192,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
           )}
           {sec.type === "quantity" && (
             <div className="space-y-4">
-              {cfg.afficherQuantite !== false && (
+              {cfg.afficherQuantite !== false && !estDigital && (
                 <div className="flex items-center gap-4">
                   <span className="text-[15px] font-medium opacity-60">Quantité</span>
                   <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
@@ -1346,7 +1348,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   <div className="flex gap-1 overflow-x-auto">
                     {[
                       { key: "description", label: "Description" },
-                      ...(descCfg.afficherLivraison !== false ? [{ key: "livraison", label: "Livraison & retours" }] : []),
+                      ...(descCfg.afficherLivraison !== false && !estDigital ? [{ key: "livraison", label: "Livraison & retours" }] : []),
                       ...(isOn("reviews") ? [{ key: "avis", label: `Avis (${produit.avis.length})` }] : []),
                     ].map(t => (
                       <button key={t.key} onClick={() => setTab(t.key as any)}

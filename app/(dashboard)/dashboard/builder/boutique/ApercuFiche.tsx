@@ -39,7 +39,10 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
       setProduit({
         ...EXEMPLE, id: p.id, nom: p.nom, description: p.description, descriptionIA: p.descriptionIA ?? null,
         images: p.images ?? [], prixAffiche: p.prix, prixCompareAffiche: p.prixCompare ?? null, remise: 0, stock: p.stock, type: p.type,
-        variantes: p.variantes?.length ? p.variantes.map((v: any) => ({ id: v.id, nom: v.nom, valeur: v.valeur, prix: v.prix, stock: v.stock })) : EXEMPLE.variantes,
+        // Variantes d'exemple seulement pour un produit physique qui n'en a pas (pour voir leur style) ;
+        // jamais de tailles sur un ebook ou une formation.
+        variantes: p.variantes?.length ? p.variantes.map((v: any) => ({ id: v.id, nom: v.nom, valeur: v.valeur, prix: v.prix, stock: v.stock }))
+          : p.type === "physique" ? EXEMPLE.variantes : [],
       });
     }).catch(() => {});
   }, []);
@@ -52,6 +55,9 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
         // Aperçu : liens non suivis, formulaires (avis) jamais envoyés.
         onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }}
         onSubmitCapture={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+        <p className="px-4 py-2 text-[12px] text-[#8A6D1F] bg-[#FFF8E6] border-b border-[#F5E6BF]">
+          Aperçu avec {produit.id === "exemple" ? "un produit d'exemple" : `« ${produit.nom} »`} — les avis{produit.id === "exemple" ? " et variantes" : ""} affichés sont des exemples pour visualiser le style.
+        </p>
         <StorefrontTypography fonts={config.fonts} />
         <div className="axs-store pointer-events-auto">
           <Suspense>

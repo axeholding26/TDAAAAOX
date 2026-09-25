@@ -196,6 +196,13 @@ export async function POST(request: Request) {
   }
 }
 
+// Champs fournis par le Theme du design (lib/axso-design-library.ts), jamais édités dans le Constructeur.
+const CHAMPS_DU_DESIGN = [
+  "builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome",
+  "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp",
+  "axsoDesignCssVarMapping", "axsoDesignPolices",
+];
+
 export async function PATCH(request: Request) {
   try {
     const { auth } = await import("@/lib/auth");
@@ -263,6 +270,20 @@ export async function PATCH(request: Request) {
         fusion = mergeThemeConfig(fusion, body.themeConfig);
       }
       champs.themeConfig = fusion;
+    }
+
+    // Le Constructeur envoie la config RÉSOLUE (design + réglages) : sans ce
+    // tri, tout le HTML/CSS du design était recopié dans la config de la
+    // boutique à chaque sauvegarde (≈15 Ko dupliqués, qui masquaient ensuite le
+    // design réel). On ne garde que ce qui appartient à la boutique — et on ne
+    // retire une copie que si le thème actif la fournit bien (jamais de perte
+    // de design, ex. boutique dont le thème a disparu).
+    if (champs.themeConfig && typeof champs.themeConfig === "object" && actuel?.themeId) {
+      const theme = await prisma.theme.findFirst({ where: { id: champs.themeId ?? actuel.themeId, tenantId }, select: { config: true } });
+      const cfgTheme = (theme?.config as Record<string, unknown> | null) ?? {};
+      const propre = { ...champs.themeConfig };
+      for (const cle of CHAMPS_DU_DESIGN) if (cle in cfgTheme) delete propre[cle];
+      champs.themeConfig = propre;
     }
 
     const tenant = await prisma.tenant.update({ where: { id: tenantId }, data: champs });

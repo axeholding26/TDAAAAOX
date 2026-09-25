@@ -6,7 +6,7 @@ import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CartContent } from "@/components/storefront/CartContent";
-import { ImportedLiteralCartShell } from "@/components/storefront/templates/ImportedLiteralCartShell";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 
 interface Props {
@@ -21,8 +21,17 @@ export default async function PanierPage({ params }: Props) {
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const theme = cfg.colors;
 
-  if (cfg.builderHtmlPanierChrome) {
-    return <ImportedLiteralCartShell cfg={cfg} slug={slug} devise={tenant.devise} />;
+  // Boutique à design : même en-tête / pied de page que le reste de la boutique.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) {
+    return (
+      <Habillage>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-8">Mon panier</h1>
+          <CartContent theme={theme} slug={slug} devise={tenant.devise} />
+        </div>
+      </Habillage>
+    );
   }
 
   return (
