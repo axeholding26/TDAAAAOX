@@ -21,6 +21,7 @@ export function HeadingBlock({ config, colors, container, editable, onEditText }
         as={niveau as any}
         value={texte}
         editable={editable}
+        cible
         onCommit={(t) => onEditText?.({ texte: t })}
         className={`${TAILLE_MAP[niveau] || TAILLE_MAP.h2} font-playfair`}
         style={{ color: colors.texte }}

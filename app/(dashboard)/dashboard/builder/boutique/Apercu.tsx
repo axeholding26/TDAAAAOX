@@ -4,12 +4,13 @@ import { useEffect, useMemo, useRef } from "react";
 import { Plus } from "lucide-react";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
-import { blockStyleToCss } from "@/components/storefront/blocks/styleUtils";
+import { blockStyleToCss, TYPES_A_CIBLE } from "@/components/storefront/blocks/styleUtils";
 import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveStyleTag";
 import { cssSectionsDesign, scoperCss } from "@/lib/scope-css";
 import { zoneDe, type Zone } from "@/lib/block-tree";
 import { ProductsCanvasPreview } from "../canvas/CanvasNode";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
+import { StyleCss } from "@/components/storefront/StyleCss";
 import { nomNoeud } from "./libelles";
 import { ATTR_EL, cibleSelectionnable, genElId, nomElement } from "./elements-dom";
 import { useSurvol, cssSelection } from "../SurvolApercu";
@@ -48,7 +49,10 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
     container: layout.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layout.largeurContainer || "1280px"}]`,
     sectionPy: SECTION_PY[layout.paddingSection || "lg"],
   }), [slug, config.colors, layout.largeurContainer, layout.paddingSection]);
-  const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping]); // eslint-disable-line react-hooks/exhaustive-deps
+  // builderTree (réglages par élément du panneau de droite) et fonts en dépendances :
+  // sans eux l'aperçu gardait l'ancien CSS et aucun réglage ne s'y voyait.
+  const cssPerso = useMemo(() => (config.customCss ? scoperCss(config.customCss, "[data-apercu-page]") : ""), [config.customCss]);
+  const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sélection depuis le panneau de gauche : amène l'élément à l'écran.
   useEffect(() => {
@@ -87,12 +91,12 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
           if (page === "produit" || page === "panier" || page === "commande") { e.stopPropagation(); onNaviguer(page); }
         }}
       >
-        {cssDesign && <style dangerouslySetInnerHTML={{ __html: cssDesign }} />}
-        {selectedEl && <style dangerouslySetInnerHTML={{ __html: cssSelection(selectedEl) }} />}
+        {cssDesign && <StyleCss css={cssDesign} />}
+        {selectedEl && <StyleCss css={cssSelection(selectedEl)} />}
         {survol}
         {/* Mêmes polices que la vitrine (StorefrontTypography, portée .axs-store). */}
         <StorefrontTypography fonts={config.fonts} />
-        {config.customCss && <style dangerouslySetInnerHTML={{ __html: scoperCss(config.customCss, "[data-apercu-page]") }} />}
+        {cssPerso && <StyleCss css={cssPerso} />}
         <div data-apercu-page className="axs-store" style={{ containerType: "inline-size" }}>
           {visibles.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-3 text-center px-6">
@@ -222,9 +226,10 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig,
   const Widget = BLOCK_REGISTRY[node.type];
   if (!Widget) return null;
   const inline = EDITABLE_INLINE.has(node.type);
+  const cible = TYPES_A_CIBLE.has(node.type);
   return (
-    <div data-apercu-id={node.id} data-axs-id={node.id} onClick={selectionner} style={style} className={`${classe} ${cadreBloc}`}>
-      <ResponsiveStyleTag nodeId={node.id} style={node.style} />
+    <div data-apercu-id={node.id} data-axs-id={node.id} onClick={selectionner} style={cible ? blockStyleToCss(node.style, true) : style} className={`${classe} ${cadreBloc}`}>
+      <ResponsiveStyleTag nodeId={node.id} style={node.style} cible={cible} />
       <div className={inline ? "" : "pointer-events-none"}>
         <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy}
           editable={inline} onEditText={inline ? (patch) => onChangeConfig(node.id, patch) : undefined} />
@@ -244,6 +249,9 @@ function EmbedEditable({ node, actif, onChangeConfig, onSelectElement }: {
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const html = node.config?.html || "";
+  // Même objet tant que le HTML ne change pas : sinon React 19 réécrit tout le
+  // contenu à chaque rendu (clics perdus entre mousedown et mouseup, survol qui clignote).
+  const contenu = useMemo(() => ({ __html: html }), [html]);
   const selectionner = (e: React.MouseEvent) => {
     const racine = ref.current;
     const el = racine && cibleSelectionnable(e.target, racine);
@@ -266,7 +274,7 @@ function EmbedEditable({ node, actif, onChangeConfig, onSelectElement }: {
         suppressContentEditableWarning
         spellCheck={false}
         className={actif ? "outline-none cursor-text" : ""}
-        dangerouslySetInnerHTML={{ __html: html }}
+        dangerouslySetInnerHTML={contenu}
         onClick={selectionner}
         onBlur={() => { const nouveau = ref.current?.innerHTML; if (nouveau != null && nouveau !== html) onChangeConfig(node.id, { html: nouveau }); }}
       />

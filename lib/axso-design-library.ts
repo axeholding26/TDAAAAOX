@@ -162,7 +162,7 @@ export const DESIGN_RESERVE_PHYSIQUE = "Les designs AXSO sont réservés aux bou
 
 export function estBoutiqueDigitale(themeConfig: unknown): boolean {
   const mode = (themeConfig as Record<string, any> | null)?.modeBoutique;
-  return mode === "digital" || mode === "vente_unique";
+  return mode === "digital";
 }
 
 const PREFIXE_SLUG_DESIGN = "axso-design-";

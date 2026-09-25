@@ -34,23 +34,6 @@ export async function genererCodeParrainageUnique(nom: string): Promise<string> 
   return `${code}${Date.now().toString(36).toUpperCase().slice(-3)}`;
 }
 
-// ─── Répartition B2B (legacy, AffiliationLien/AffiliationCommission) ────────
-
-export function calculerRepartition(
-  montantTotal: number,
-  tauxCommission: number,
-  tauxAff: number | null | undefined,
-  codeAffiliation: string | null | undefined
-): { axso: number; affilieur: number; tenant: number } {
-  const axso = Math.round(montantTotal * tauxCommission * 100) / 100;
-  let affilieur = 0;
-  if (codeAffiliation && tauxAff && tauxAff > 0) {
-    affilieur = Math.round(montantTotal * tauxAff * 100) / 100;
-  }
-  const tenant = Math.round((montantTotal - axso - affilieur) * 100) / 100;
-  return { axso, affilieur, tenant };
-}
-
 // ─── Moteur de commission B2C (programme d'affiliation individuel) ──────────
 // C'est le moteur "standard international" (type PartnerStack/Rewardful) :
 // un marchand recrute des affiliés individuels via ProgrammeAffiliation, ils

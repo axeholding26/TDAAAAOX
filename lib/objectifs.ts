@@ -2,13 +2,6 @@ import { prisma } from "./prisma";
 
 export type TypeObjectif = "ca" | "commandes" | "clients" | "panier_moyen";
 
-export const LABELS_TYPE_OBJECTIF: Record<TypeObjectif, string> = {
-  ca: "Chiffre d'affaires",
-  commandes: "Nombre de commandes",
-  clients: "Nouveaux clients",
-  panier_moyen: "Panier moyen",
-};
-
 // Calcule la progression réelle d'un objectif depuis sa création jusqu'à
 // maintenant — jamais stockée comme seule source de vérité (actuel n'est
 // qu'un cache), toujours recalculée en direct pour éviter toute dérive.

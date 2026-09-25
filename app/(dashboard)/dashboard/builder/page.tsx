@@ -2,30 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
-import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
-import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-import {
-  Save, Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft,
-  LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2,
-  ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw,
-  Plus, Trash2, Check, Layers, Sparkles,
-  Image as ImageIcon, X, GripVertical, Zap, Copy,
-  BarChart3, Timer, Building2, Video, Star, Target, FileText,
-  ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
-  MessageCircle, Mail, LucideIcon,
-  ShoppingBag, Maximize2, Minimize2,
-  ShoppingCart, Share2, Info, Phone, Undo2, Redo2, Rocket, AlertCircle, Images, Wand2,
-} from "lucide-react";
-import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, type CustomSection, DEFAULT_PRODUCT_SECTIONS, type ProductPageSection } from "@/lib/theme-config";
-import { FONTS } from "@/lib/theme-fonts";
-import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
-import { BuilderCanvas } from "./canvas/BuilderCanvas";
+import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+import { Image as ImageIcon, Save, Monitor, LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2, Sparkles, X, Undo2, AlertCircle } from "lucide-react";
+import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, DEFAULT_PRODUCT_SECTIONS } from "@/lib/theme-config";
 import { DigitalBuilder } from "./digital/DigitalBuilder";
 import { BoutiqueBuilder } from "./boutique/BoutiqueBuilder";
 import { PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
 
 type Device = "desktop" | "tablet" | "mobile";
-type Panel = "sections" | "couleurs" | "typo" | "layout" | "medias" | "animations" | "boutons" | "avance" | "produit" | "apropos" | "contact" | "themes";
 
 const BUILDER_TUTORIAL_STEPS = [
   { Icon: LayoutGrid, titre: "Tes sections, à gauche",          description: "En-tête, Modèle et Pied de page : clique une section pour la modifier, glisse-la pour changer l'ordre, masque-la avec l'œil ou ajoute-en une nouvelle." },
@@ -34,27 +18,6 @@ const BUILDER_TUTORIAL_STEPS = [
   { Icon: Undo2,      titre: "Annule sans crainte",              description: "Ctrl+Z pour annuler, Ctrl+Y pour rétablir — expérimente librement." },
   { Icon: Monitor,    titre: "Prévisualise sur tous les écrans", description: "Bascule entre ordinateur, tablette et mobile en haut à droite." },
   { Icon: Save,       titre: "Enregistre",                       description: "Tes changements s'enregistrent automatiquement après quelques secondes, ou tout de suite avec « Enregistrer »." },
-];
-
-// catalogueOnly : réglages qui ne font sens que pour une boutique catalogue
-// (physique) — "Fiche produit" pilote la page produit d'un catalogue
-// (miniatures, fil d'Ariane, produits similaires...), des notions qui
-// n'existent pas sur une page de vente à un seul produit (landing/digital,
-// où le produit EST la page). Masqué en mode landing, pas supprimé : les
-// réglages restent en base si le marchand repasse un jour en catalogue.
-const NAV_TABS: Array<{ id: Panel; icon: React.ReactNode; tooltip: string; catalogueOnly?: boolean }> = [
-  { id: "sections",   icon: <LayoutGrid size={17} />,    tooltip: "Sections" },
-  { id: "themes",     icon: <Images size={17} />,        tooltip: "Thèmes", catalogueOnly: true }, // designs AXSO = physique uniquement
-  { id: "couleurs",   icon: <Palette size={17} />,       tooltip: "Couleurs" },
-  { id: "typo",       icon: <Type size={17} />,          tooltip: "Typographie" },
-  { id: "layout",     icon: <LayoutTemplate size={17} />,tooltip: "Mise en page" },
-  { id: "medias",     icon: <ImageIcon size={17} />,     tooltip: "Médias" },
-  { id: "animations", icon: <Sparkles size={17} />,      tooltip: "Animations" },
-  { id: "boutons",    icon: <MousePointer2 size={17} />, tooltip: "Boutons & Nav" },
-  { id: "produit",    icon: <ShoppingBag size={17} />,   tooltip: "Fiche produit", catalogueOnly: true },
-  { id: "apropos",    icon: <Info size={17} />,          tooltip: "À propos" },
-  { id: "contact",    icon: <Phone size={17} />,         tooltip: "Contact" },
-  { id: "avance",     icon: <Code2 size={17} />,         tooltip: "Avancé" },
 ];
 
 // ─── Génération CSS animations ────────────────────────────────────────────────
@@ -106,13 +69,11 @@ const DEFAULT_PRODUCT_PAGE = {
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function BuilderPage() {
   const [device, setDevice]           = useState<Device>("desktop");
-  const [panel, setPanel]             = useState<Panel>("sections");
   const [tenant, setTenant]           = useState<any>(null);
   const [config, setConfig]           = useState<ThemeConfig | null>(null);
   const [originalConfig, setOriginalConfig] = useState<ThemeConfig | null>(null);
   const [saving, setSaving]           = useState(false);
   const [saved, setSaved]             = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(true);
   const [publishing, setPublishing]   = useState(false);
   const [manquants, setManquants]     = useState<string[] | null>(null);
   const [infosForm, setInfosForm]     = useState({ nomBoutique: "", whatsapp: "", pays: "", description: "" });
@@ -166,7 +127,7 @@ export default function BuilderPage() {
   const skipHistory = useRef(false);
   const lastSnapshot = useRef<ThemeConfig | null>(null);
   const historyTimer = useRef<NodeJS.Timeout | null>(null);
-  const [historyTick, setHistoryTick] = useState(0);
+  const [, setHistoryTick] = useState(0);
 
   // Miroir de `config` en ref, tenu à jour à chaque rendu — permet à undo/redo
   // de lire la valeur courante sans passer par la forme fonctionnelle de
@@ -331,14 +292,6 @@ export default function BuilderPage() {
   );
 
 
-  // Un seul constructeur (arbre de blocs, dnd-kit) — plus de bascule
-  // classique/libre : les deux anciens modes étaient deux systèmes
-  // d'édition non composables (passer en "libre" faisait disparaître
-  // l'accès à Couleurs/Typo/Mise en page/etc). L'habillage varie selon le
-  // type de boutique (voir BuilderCanvas::variante) : Shopify-like pour le
-  // catalogue physique, Chariow/Lovable-like pour la page de vente digitale.
-  const varianteConstructeur: "boutique" | "landing" = config.modeBoutique === "vente_unique" ? "landing" : "boutique";
-
   const bandeaux = (
     <>
       {/* Bandeau "à compléter" — proactif (calculé au chargement), pas seulement
@@ -415,8 +368,7 @@ export default function BuilderPage() {
     );
   }
 
-  if (varianteConstructeur === "boutique") {
-    return (
+  return (
       <>
         <BoutiqueBuilder
           tenant={tenant}
@@ -456,130 +408,4 @@ export default function BuilderPage() {
         <ModuleTutorial moduleKey="builder" titre="Constructeur de boutique" sousTitre="Personnalise ta boutique en direct" steps={BUILDER_TUTORIAL_STEPS} />
       </>
     );
-  }
-
-  return (
-    <div className={`flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden ${isFullscreen ? "fixed inset-0 z-[9999]" : "h-screen"}`} style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      <PCOnlyGate label="Le Constructeur de boutique" />
-      <ModuleTutorial moduleKey="builder" titre="Constructeur de boutique" sousTitre="Personnalise ta boutique en direct" steps={BUILDER_TUTORIAL_STEPS} />
-
-      {/* HEADER */}
-      <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <Link href="/dashboard" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-800 transition-colors text-sm">
-            <ArrowLeft size={13} /> Dashboard
-          </Link>
-          <div className="h-4 w-px bg-gray-100" />
-          <span className="text-sm text-gray-800 font-medium truncate max-w-32">{tenant.nomBoutique}</span>
-          {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon — pas encore publiée</span>}
-          {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 animate-pulse">Modifié</span>}
-          {saved && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-400">✓ Sauvegardé</span>}
-        </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
-          {varianteConstructeur === "landing" ? <Wand2 size={13} /> : <Layers size={13} />}
-          {varianteConstructeur === "landing" ? "Constructeur Landing" : "Constructeur Boutique"}
-          <BoutonRevoirTutoriel moduleKey="builder" dark />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            <button onClick={undo} disabled={!undoStack.current.length} title="Annuler (Ctrl+Z)"
-              className="w-9 h-9 rounded-md flex items-center justify-center transition-all text-gray-600 hover:text-gray-400 disabled:opacity-30 disabled:hover:text-gray-600">
-              <Undo2 size={15} />
-            </button>
-            <button onClick={redo} disabled={!redoStack.current.length} title="Rétablir (Ctrl+Y)"
-              className="w-9 h-9 rounded-md flex items-center justify-center transition-all text-gray-600 hover:text-gray-400 disabled:opacity-30 disabled:hover:text-gray-600">
-              <Redo2 size={15} />
-            </button>
-          </div>
-          <div className="h-5 w-px bg-gray-100" />
-          <div className="flex gap-0.5 bg-gray-100 rounded-lg p-0.5">
-            {([["desktop",Monitor],["tablet",Tablet],["mobile",Smartphone]] as [Device, any][]).map(([d,Icon]) => (
-              <button key={d} onClick={() => setDevice(d)} className={`w-9 h-9 rounded-md flex items-center justify-center transition-all ${device===d?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-600 hover:text-gray-400"}`}>
-                <Icon size={15} />
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setIsFullscreen(v => !v)}
-            title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
-            className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-all ${isFullscreen ? "border-[#F5A623]/50 bg-[#F5A623]/15 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:text-gray-800 hover:border-gray-300"}`}>
-            {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </button>
-          {tenant.statut !== "brouillon" && (
-            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 transition-all">
-              <ExternalLink size={13} /> Voir
-            </a>
-          )}
-          <button onClick={handleSave} disabled={saving}
-            className={`h-9 flex items-center gap-1.5 px-3.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              saved ? "bg-emerald-100 text-emerald-700" : "bg-[#F5A623] text-[#050508] hover:bg-[#e8990f]"
-            }`}>
-            {saving ? <RefreshCw size={14} className="animate-spin flex-shrink-0" /> : saved ? <Check size={14} className="flex-shrink-0" /> : <Save size={14} className="flex-shrink-0" />}
-            <span>{saving ? "Sauvegarde…" : saved ? "Sauvegardé" : "Sauvegarder"}</span>
-          </button>
-          {tenant.statut === "brouillon" && (
-            <button onClick={publierBoutique} disabled={publishing || criteresManquants.length > 0}
-              title={criteresManquants.length > 0 ? `Complète d'abord : ${criteresManquants.map(c => c.label).join(", ")}` : undefined}
-              className="h-9 flex items-center gap-1.5 px-3.5 rounded-lg text-sm font-semibold transition-colors hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-500 text-white">
-              {publishing ? <RefreshCw size={14} className="animate-spin flex-shrink-0" /> : <Rocket size={14} className="flex-shrink-0" />}
-              <span>{publishing ? "Publication…" : "Publier ma boutique"}</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      {bandeaux}
-
-      {/* MAIN */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Icon sidebar — toujours visible, quel que soit l'onglet actif.
-            overflow-y-auto : 12 onglets ne tiennent pas toujours sur un
-            écran bas sans défilement (Thèmes/Avancé pouvaient déborder). */}
-        <div className="w-12 flex-shrink-0 bg-white border-r border-gray-200 flex flex-col items-center py-3 gap-1 overflow-y-auto scrollbar-thin">
-          {NAV_TABS.filter(t => !(t.catalogueOnly && varianteConstructeur === "landing")).map(t => (
-            <button key={t.id} onClick={() => setPanel(t.id)} title={t.tooltip}
-              className={`w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center transition-all ${panel===t.id?"bg-[#F5A623]/20 text-[#F5A623]":"text-gray-400 hover:text-gray-700 hover:bg-gray-100"}`}>
-              {t.icon}
-            </button>
-          ))}
-        </div>
-
-        {/* Le canevas reste TOUJOURS monté — un seul rendu live, jamais de
-            deuxième aperçu (iframe) à synchroniser en parallèle. Réglages
-            globaux (couleurs, typo...) : remplacent juste la bibliothèque de
-            blocs à gauche via leftPanelOverride, l'aperçu au centre reste
-            visible et réagit en direct, comme les réglages de thème Shopify.
-            N'est jamais atteint pour une boutique digitale (retour anticipé
-            vers <DigitalBuilder> plus haut). */}
-        <BuilderCanvas
-          config={config} set={set} slug={tenant.slug} device={device} onSyncWithServer={syncWithServer} variante={varianteConstructeur}
-          leftPanelOverride={panel === "sections" ? undefined : (
-            <div className="w-[340px] flex-shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-gray-200 flex-shrink-0 flex items-center gap-2">
-                <button onClick={() => setPanel("sections")} title="Retour au plan de la page" className="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all">
-                  <ArrowLeft size={14} />
-                </button>
-                <p className="text-[12px] font-black text-gray-400 uppercase tracking-[0.18em]">{NAV_TABS.find(t=>t.id===panel)?.tooltip}</p>
-              </div>
-              <div className="flex-1 overflow-y-auto scrollbar-thin">
-                {panel === "couleurs"   && <PanelCouleurs  config={config} setColors={setColors} />}
-                {panel === "typo"       && <PanelTypo      config={config} setFonts={setFonts} />}
-                {panel === "layout"     && <PanelLayout    config={config} setLayout={setLayout} set={set} />}
-                {panel === "medias"     && <PanelMedias    config={config} setSection={setSection} updateCustomSection={updateCustomSection} />}
-                {panel === "animations" && <PanelAnimations config={config} setAnim={setAnim} />}
-                {panel === "boutons"    && <PanelBoutons   config={config} setBoutons={setBoutons} setNavStyle={setNavStyle} />}
-                {panel === "produit"    && <PanelProduit   config={config} setProductPage={setProductPage} />}
-                {panel === "apropos"    && <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />}
-                {panel === "contact"    && <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />}
-                {panel === "avance"     && <PanelAvance    config={config} set={set} tenant={tenant} onReset={() => { setConfig({ ...resolveThemeConfig(tenant.themeId) }); }} />}
-                {panel === "themes"     && <PanelModeles   tenant={tenant} onApplied={refetchTenant} />}
-              </div>
-            </div>
-          )}
-        />
-      </div>
-    </div>
-  );
 }

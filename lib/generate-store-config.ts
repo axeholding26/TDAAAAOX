@@ -4,7 +4,7 @@ import { convertirDepuisXAF } from "./devise-convert";
  * Génère un themeConfig complet et optimisé à partir du profil business du marchand.
  * Chaque boutique créée démarre avec un setup premium calibré pour sa catégorie.
  */
-import type { ThemeConfig, ProductPageSection, CustomSection, ThemeAboutPageConfig, ThemeContactPageConfig } from "./theme-config";
+import type { ProductPageSection, CustomSection, ThemeAboutPageConfig, ThemeContactPageConfig } from "./theme-config";
 
 // ─── Détection de catégorie ───────────────────────────────────────────────────
 export type CategoryType =
@@ -642,17 +642,12 @@ export function generateStoreConfig(opts: {
   nomBoutique: string;
   pays?: string;
   devise?: string;
-  // "vente_unique" : boutique 100% digitale — une page de vente centrée sur
-  // le produit (hero, avantages, témoignages, FAQ, CTA), sans "Collections"
-  // qui n'a pas de sens pour un catalogue d'un seul ebook/formation/template.
-  // Le Constructeur (panneau Sections) reflète directement sectionOrder, donc
-  // retirer "collections" ici suffit à la masquer partout — vitrine et builder.
   // "digital" : catalogue multi-produits digitaux (DigitalCatalogPage, un
   // rendu entièrement séparé, voir lib/theme-config.ts) — traité comme
   // "catalogue" par cette fonction (sections/sectionOrder générés ici ne
   // sont jamais lus par ce chemin de rendu, mais restent un socle de repli
   // inoffensif si le marchand bascule un jour vers le catalogue classique).
-  modeBoutique?: "catalogue" | "vente_unique" | "digital";
+  modeBoutique?: "catalogue" | "digital";
 }): { themeConfig: Record<string, any> } {
   const { categorie, nomBoutique, pays, modeBoutique = "catalogue" } = opts;
   const type   = detectCategory(categorie);
@@ -663,17 +658,10 @@ export function generateStoreConfig(opts: {
   const productLayout = selectProductLayout(type);
   const { aboutPage, contactPage } = buildAboutContactPages(type, nomBoutique, langue);
 
-  const sectionOrderFinal = modeBoutique === "vente_unique"
-    ? sectionOrder.filter(id => id !== "collections")
-    : sectionOrder;
-  const sectionsFinal = modeBoutique === "vente_unique" && sections.collections
-    ? { ...sections, collections: { ...sections.collections, actif: false } }
-    : sections;
-
   const themeConfig: Record<string, any> = {
     modeBoutique,
-    sections: sectionsFinal,
-    sectionOrder: sectionOrderFinal,
+    sections,
+    sectionOrder,
     customSections,
     productPage: {
       layout: productLayout,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { prixClient } from "@/lib/pricing";
+import { boutiqueVisible } from "@/lib/tenant";
 
 // GET public — suggestions de recherche instantanée pour la navbar storefront
 // (dropdown live sous l'input de recherche, pas de session requise). Reprend
@@ -16,7 +17,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     where: { slug },
     select: { id: true, statut: true, devise: true, commissionRate: true },
   });
-  if (!tenant || tenant.statut !== "active") return NextResponse.json({ produits: [] });
+  // Même règle que les pages de la vitrine : publiée, ou vue par son propriétaire
+  // (brouillon / aperçu du Constructeur) — sinon la recherche restait vide en test.
+  if (!tenant || !(await boutiqueVisible(tenant))) return NextResponse.json({ produits: [] });
 
   const taux = tenant.commissionRate ?? 0.06;
 
@@ -32,7 +35,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
       ],
     },
     orderBy: { ventes: "desc" },
-    take: 5,
+    take: 8,
     select: { id: true, nom: true, prix: true, images: true },
   });
 

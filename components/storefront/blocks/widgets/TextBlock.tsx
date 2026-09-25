@@ -13,6 +13,7 @@ export function TextBlock({ config, colors, container, editable, onEditText }: B
         as="p"
         value={texte}
         editable={editable}
+        cible
         multiline
         onCommit={(t) => onEditText?.({ texte: t })}
         className="text-base leading-relaxed max-w-2xl"

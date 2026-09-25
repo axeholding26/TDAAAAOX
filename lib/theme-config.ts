@@ -88,7 +88,7 @@ export interface ThemeAnimations {
 // ─── Sections custom (bibliothèque) ──────────────────────────────────────────
 export interface CustomSection {
   id: string;
-  type: "features" | "stats" | "countdown" | "brands" | "video" | "gallery" | "social-proof" | "spacer" | "richtext" | "cta-band" | "tabs" | "columns";
+  type: "features" | "stats" | "countdown" | "brands" | "video" | "gallery" | "social-proof" | "spacer" | "richtext" | "cta-band" | "tabs" | "columns" | "faq";
   actif: boolean;
   label: string;
   animation?: string;
@@ -340,15 +340,12 @@ export interface ThemeConfig {
   animations?: ThemeAnimations;
   customSections?: CustomSection[];
   sectionOrder?: string[];
-  // "vente_unique" (page de vente à un seul produit) et "digital" (catalogue
-  // multi-produits digitaux) sont deux variantes du même besoin "boutique
-  // 100% digitale" — voir lib/generate-store-config.ts. "vente_unique"
-  // utilise le Constructeur de blocs (variante "landing"). "digital" a son
+  // "digital" (boutique 100% digitale) a son
   // propre Constructeur dédié (builder/digital/DigitalBuilder.tsx) et son
   // propre rendu (components/storefront/digital/DigitalCatalogPage.tsx),
   // piloté par `digitalConfig` ci-dessous — jamais par builderTree. Absent
   // ou "catalogue" = comportement historique (catalogue physique multi-produits).
-  modeBoutique?: "catalogue" | "vente_unique" | "digital";
+  modeBoutique?: "catalogue" | "digital";
   // Uniquement pour modeBoutique === "digital" — voir ThemeDigitalConfig.
   digitalConfig?: ThemeDigitalConfig;
   // Sous-sections personnalisées ajoutées dans n'importe quelle section (built-in ou custom),

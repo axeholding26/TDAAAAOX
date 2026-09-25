@@ -96,11 +96,6 @@ export async function initierTransfertNotchPay(params: {
   return { transfer: data.transfer };
 }
 
-export async function verifierTransfertNotchPay(id: string): Promise<{ transfer: any }> {
-  const data = await notchpayFetch(`/transfers/${encodeURIComponent(id)}`, { withGrant: true });
-  return { transfer: data.transfer };
-}
-
 // ─── Webhooks ────────────────────────────────────────────────────────────────
 
 export function verifierSignatureWebhook(rawBody: string, signatureHeader: string | null): boolean {

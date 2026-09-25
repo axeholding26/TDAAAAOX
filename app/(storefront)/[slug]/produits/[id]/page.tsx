@@ -195,6 +195,7 @@ export default async function ProduitPage({ params }: Props) {
     layout: cfg.layout ?? null,
     boutons: cfg.boutons ?? null,
     peutDevenirAffilie,
+    boutiqueDigitale: cfg.modeBoutique === "digital",
   };
 
   // Boutique à design : en-tête / pied de page du design (tels que modifiés

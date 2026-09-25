@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { NotificationSound } from "@/components/ui/NotificationSound";
+import { AlerteCommande } from "@/components/dashboard/AlerteCommande";
 import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
 import { permissionsSession, estCaissierPur } from "@/lib/permissions-server";
 import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
@@ -33,6 +34,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </DashboardShell>
       {/* Son audio sur chaque notification toast */}
       <NotificationSound />
+      {/* Nouvelle commande : alerte distincte (son de caisse + carte). */}
+      <AlerteCommande />
     </AbonnementOverlayProvider>
   );
 }

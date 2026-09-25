@@ -382,5 +382,3 @@ FORMAT : Solde net → entrées de la période → en attente → recommandation
 export function getAgentById(id: string): AgentModuleDefinition | undefined {
   return MODULE_AGENTS.find(a => a.id === id);
 }
-
-export const AGENT_IDS = MODULE_AGENTS.map(a => a.id) as [string, ...string[]];

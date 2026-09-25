@@ -450,13 +450,3 @@ export const MCP_CONNECTEURS: ConnecteurDef[] = [
     ],
   },
 ];
-
-export function getOutilsMcp(connecteurs: ConnecteurType[]): McpTool[] {
-  return MCP_CONNECTEURS
-    .filter((c) => connecteurs.includes(c.type))
-    .flatMap((c) => c.outils);
-}
-
-export function getConnecteurDef(type: ConnecteurType): ConnecteurDef | undefined {
-  return MCP_CONNECTEURS.find((c) => c.type === type);
-}

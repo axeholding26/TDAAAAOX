@@ -1,3 +1,4 @@
+import { urlVideoIntegree } from "@/lib/utils";
 import { Star, Check } from "lucide-react";
 
 interface SousBloc { id: string; type: "photos" | "temoignage" | "promo" | "texte" | "video" | "stats" | "features" | "countdown" | "logos" | "confiance" | "liste" | "spacer"; config: Record<string, any>; }
@@ -61,11 +62,11 @@ export function SousBlocsRenderer({ blocs, accent, texte }: { blocs?: SousBloc[]
           );
         }
         if (bloc.type === "video") {
-          const isEmbed = /youtube|vimeo/.test(bloc.config.videoUrl || "");
+          const integree = urlVideoIntegree(bloc.config.videoUrl || "");
           return (
             <div key={bloc.id} className="max-w-3xl mx-auto rounded-2xl overflow-hidden" style={{ aspectRatio: "16/9", border: `1px solid ${accent}15` }}>
-              {isEmbed ? (
-                <iframe className="w-full h-full" src={bloc.config.videoUrl} allow="autoplay; fullscreen" allowFullScreen style={{ border: "none" }} />
+              {integree ? (
+                <iframe className="w-full h-full" src={integree} title="Vidéo" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen style={{ border: "none" }} />
               ) : (
                 <video className="w-full h-full object-cover" src={bloc.config.videoUrl} controls playsInline />
               )}

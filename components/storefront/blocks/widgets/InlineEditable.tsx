@@ -10,6 +10,7 @@ interface Props {
   multiline?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  cible?: boolean; // élément qui reçoit les réglages visuels du bloc (styleUtils)
 }
 
 // Édition de texte inline directement sur le canevas — premier vrai WYSIWYG
@@ -19,14 +20,16 @@ interface Props {
 // React.createElement (plutôt que JSX <Tag>) car un nom de balise dynamique
 // typé par union (keyof JSX.IntrinsicElements) fait autrement collapser les
 // props JSX vers `never` — limitation connue du typage JSX de React/TS.
-export function InlineEditable({ as: tag, value, onCommit, editable, multiline, className, style }: Props) {
+export function InlineEditable({ as: tag, value, onCommit, editable, multiline, className, style, cible }: Props) {
+  const attrCible = cible ? { "data-axs-cible": "" } : {};
   if (!editable) {
-    return createElement(tag, { className, style: { ...style, whiteSpace: multiline ? "pre-wrap" : undefined } }, value);
+    return createElement(tag, { ...attrCible, className, style: { ...style, whiteSpace: multiline ? "pre-wrap" : undefined } }, value);
   }
 
   return createElement(
     tag,
     {
+      ...attrCible,
       className: `${className || ""} outline-none focus:ring-2 focus:ring-[#F5A623]/50 rounded-sm`,
       style: { ...style, whiteSpace: multiline ? "pre-wrap" : undefined, cursor: "text" },
       contentEditable: true,

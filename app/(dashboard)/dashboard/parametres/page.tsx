@@ -117,7 +117,9 @@ export default function ParametresPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const boutiquUrl = tenant ? `https://${tenant.slug}.axso.com` : "";
+  const [origine, setOrigine] = useState("");
+  useEffect(() => setOrigine(window.location.origin), []);
+  const boutiquUrl = tenant && origine ? `${origine}/${tenant.slug}` : "";
 
   return (
     <div className="space-y-5 max-w-2xl"

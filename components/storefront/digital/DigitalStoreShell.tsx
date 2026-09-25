@@ -13,10 +13,11 @@
 //   panneau de réglages et l'aperçu partagent directement le même arbre React.
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock } from "lucide-react";
+import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock, X } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 import { cssElements } from "@/lib/element-styles";
+import { StyleCss } from "../StyleCss";
 
 // Éléments de la vitrine sélectionnables dans le Constructeur digital
 // (attribut data-axs-el). `texte` : valeur par défaut d'un texte remplaçable
@@ -26,12 +27,16 @@ export const ELEMENTS_DIGITAUX: Record<string, { label: string; texte?: string }
   entete: { label: "Barre de navigation" },
   logo: { label: "Logo" },
   "nom-boutique": { label: "Nom de la boutique" },
-  "menu-lien": { label: "Liens du menu" },
-  "lien-achats": { label: "Lien « Mes achats »" },
+  "menu-produits": { label: "Menu « Produits »", texte: "Produits" },
+  "menu-affiliation": { label: "Menu « Affiliation »", texte: "Affiliation" },
+  "menu-a-propos": { label: "Menu « À propos »", texte: "À propos" },
+  "menu-contact": { label: "Menu « Contact »", texte: "Contact" },
+  "lien-achats": { label: "Lien « Mes achats »", texte: "Mes achats" },
   "pastille-pays": { label: "Pastille pays / devise" },
   titre: { label: "Titre principal" },
   recherche: { label: "Barre de recherche", texte: "Rechercher" },
-  filtre: { label: "Filtres" },
+  "filtre-categorie": { label: "Filtre « Catégorie »", texte: "Catégorie" },
+  "filtre-type": { label: "Filtre « Type de produit »", texte: "Type de produit" },
   "vedettes-titre": { label: "Titre « En vedette »", texte: "En vedette" },
   grille: { label: "Grille de produits" },
   carte: { label: "Cartes produit" },
@@ -41,8 +46,19 @@ export const ELEMENTS_DIGITAUX: Record<string, { label: string; texte?: string }
   "carte-bouton": { label: "Bouton des cartes", texte: "Acheter" },
   "recommandes-titre": { label: "Titre des recommandations", texte: "Vous pourriez aussi aimer" },
   pied: { label: "Pied de page" },
-  "pied-titre": { label: "Titres du pied de page" },
-  "pied-lien": { label: "Liens du pied de page" },
+  "pied-logo": { label: "Logo du pied de page" },
+  "pied-nom": { label: "Nom de la boutique (pied de page)" },
+  "pied-langue": { label: "Sélecteur de langue" },
+  "pied-titre-liens": { label: "Titre « Liens »", texte: "Liens" },
+  "pied-titre-legales": { label: "Titre « Légales »", texte: "Légales" },
+  "pied-achats": { label: "Lien « Mes achats » (pied)", texte: "Mes achats" },
+  "pied-a-propos": { label: "Lien « À propos » (pied)", texte: "À propos" },
+  "pied-aide": { label: "Lien « Aide »", texte: "Aide" },
+  "pied-contact": { label: "Lien « Contact » (pied)", texte: "Contact" },
+  "pied-plan": { label: "Lien « Plan du site »", texte: "Plan du site" },
+  "pied-mentions": { label: "Lien « Mentions légales »", texte: "Mentions légales" },
+  "pied-cgu": { label: "Lien « Conditions d'utilisation »", texte: "Conditions d'utilisation" },
+  "pied-confidentialite": { label: "Lien « Politique de confidentialité »", texte: "Politique de confidentialité" },
   avertissement: { label: "Avertissement", texte: "Ce site n'est en aucun cas affilié à Facebook ou Meta. Nous utilisons la publicité pour promouvoir nos contenus et produits/services auprès d'un public plus large. Les informations fournies sur ce site sont uniquement à titre informatif et ne constituent pas un conseil professionnel ou financier." },
   copyright: { label: "Copyright" },
 };
@@ -74,13 +90,25 @@ export interface DigitalStoreShellProps {
   preview?: boolean;
 }
 
-const TRI_LABEL: Record<ThemeDigitalConfig["tri"], string> = {
-  alphabetique: "Ordre alphabétique",
-  populaires: "Les plus vendus",
-  recents: "Les plus récents",
-  "prix-desc": "Prix décroissant",
-  "prix-asc": "Prix croissant",
+// Ordre d'affichage choisi dans le Constructeur — appliqué ici pour que
+// l'aperçu (produits chargés par date) et la boutique affichent le même
+// ordre. « recents » : ordre reçu (date de création décroissante).
+const COMPARER: Partial<Record<ThemeDigitalConfig["tri"], (a: DigitalProductVM, b: DigitalProductVM) => number>> = {
+  alphabetique: (a, b) => a.nom.localeCompare(b.nom, "fr"),
+  populaires: (a, b) => b.ventes - a.ventes,
+  "prix-desc": (a, b) => b.prixAffiche - a.prixAffiche,
+  "prix-asc": (a, b) => a.prixAffiche - b.prixAffiche,
 };
+
+const sansAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+// Pays de la boutique (code ISO enregistré à l'inscription) → drapeau + nom.
+function drapeau(code: string) {
+  return /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "";
+}
+function nomPays(code: string) {
+  try { return new Intl.DisplayNames(["fr"], { type: "region" }).of(code) ?? code; } catch { return code; }
+}
 
 const VARIANT = {
   charriow: { logoShape: "square" as const, navUnderline: true, card: "flat" as const, filter: "rect" as const, titleClass: "text-[28px] @min-[640px]:text-4xl font-medium", uppercaseNav: false },
@@ -97,19 +125,24 @@ export function DigitalStoreShell({
   const [categorie, setCategorie] = useState("");
   const [type, setType] = useState("");
 
+  const tries = useMemo(() => {
+    const comparer = COMPARER[digitalConfig.tri];
+    return comparer ? [...products].sort(comparer) : products;
+  }, [products, digitalConfig.tri]);
   const categories = useMemo(() => Array.from(new Set(products.map((p) => p.categorie).filter(Boolean))) as string[], [products]);
   const types = useMemo(() => Array.from(new Set(products.flatMap((p) => p.tags))).slice(0, 12), [products]);
 
   const filtres = useMemo(() => {
-    return products.filter((p) => {
-      if (q && !p.nom.toLowerCase().includes(q.toLowerCase())) return false;
+    return tries.filter((p) => {
+      // Recherche : nom, catégorie et étiquettes, sans tenir compte des accents ni de la casse.
+      if (q && !sansAccents([p.nom, p.categorie ?? "", ...p.tags].join(" ")).includes(sansAccents(q.trim()))) return false;
       if (categorie && p.categorie !== categorie) return false;
       if (type && !p.tags.includes(type)) return false;
       return true;
     });
-  }, [products, q, categorie, type]);
+  }, [tries, q, categorie, type]);
 
-  const vedettes = digitalConfig.afficherVedettes ? products.filter((p) => p.featured).slice(0, 6) : [];
+  const vedettes = digitalConfig.afficherVedettes ? tries.filter((p) => p.featured).slice(0, 6) : [];
   const recommandes = digitalConfig.afficherRecommandes
     ? [...products].filter((p) => !p.featured).slice(-4).reverse()
     : [];
@@ -120,10 +153,10 @@ export function DigitalStoreShell({
   const t = (id: string, defaut?: string) => digitalConfig.textes?.[id]?.trim() || defaut || ELEMENTS_DIGITAUX[id]?.texte || "";
 
   const navItems = [
-    { label: "Produits", href: `/${slug}`, actif: true },
-    ...(digitalConfig.afficherAffiliation ? [{ label: "Affiliation", href: `/${slug}/produits`, actif: false }] : []),
-    { label: "À propos", href: `/${slug}/a-propos`, actif: false },
-    { label: "Contact", href: `/${slug}/contact`, actif: false },
+    { id: "menu-produits", href: `/${slug}`, actif: true },
+    ...(digitalConfig.afficherAffiliation ? [{ id: "menu-affiliation", href: `/${slug}/produits`, actif: false }] : []),
+    { id: "menu-a-propos", href: `/${slug}/a-propos`, actif: false },
+    { id: "menu-contact", href: `/${slug}/contact`, actif: false },
   ];
 
   return (
@@ -133,7 +166,7 @@ export function DigitalStoreShell({
     // du Constructeur digital affiche enfin la vraie mise en page mobile.
     <div className="@container axs-digital-store min-h-full flex flex-col" style={{ backgroundColor: colors.fond, color: colors.texte }}>
       {/* Réglages par élément du Constructeur — même CSS dans l'aperçu et en ligne. */}
-      {digitalConfig.elementStyles && <style dangerouslySetInnerHTML={{ __html: cssElements(digitalConfig.elementStyles) }} />}
+      {digitalConfig.elementStyles && <StyleCss css={cssElements(digitalConfig.elementStyles)} />}
       {/* ── Nav ─────────────────────────────────────────────────────────── */}
       <header data-axs-el="entete" className={v.navUnderline ? "border-b-2" : "border-b"} style={{ borderColor: colors.bordure || `${colors.texte}15` }}>
         <div className="max-w-6xl mx-auto flex items-center justify-between h-16 px-4 @min-[640px]:px-6 gap-4">
@@ -150,8 +183,8 @@ export function DigitalStoreShell({
 
           <nav className={`hidden @min-[768px]:flex items-center gap-6 text-sm ${v.uppercaseNav ? "uppercase tracking-wide" : ""}`}>
             {navItems.map((n) => (
-              <Link key={n.label} data-axs-el="menu-lien" href={href(n.href)} className="transition-opacity hover:opacity-70" style={{ color: colors.texte, fontWeight: n.actif ? 600 : 400 }}>
-                {n.label}
+              <Link key={n.id} data-axs-el={n.id} href={href(n.href)} className="transition-opacity hover:opacity-70" style={{ color: colors.texte, fontWeight: n.actif ? 600 : 400 }}>
+                {t(n.id)}
               </Link>
             ))}
           </nav>
@@ -159,11 +192,11 @@ export function DigitalStoreShell({
           <div className="flex items-center gap-3 @min-[640px]:gap-4 flex-shrink-0">
             <Link data-axs-el="lien-achats" href={href(`/${slug}/mon-compte`)} className="hidden @min-[640px]:flex items-center gap-1.5 text-sm transition-opacity hover:opacity-70" style={{ color: colors.texte }}>
               <ShoppingBag size={16} />
-              <span>Mes achats</span>
+              <span>{t("lien-achats")}</span>
             </Link>
             <div data-axs-el="pastille-pays" className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
-              <Globe2 size={13} />
-              <span>{pays} ({devise})</span>
+              {drapeau(pays) ? <span aria-hidden>{drapeau(pays)}</span> : <Globe2 size={13} />}
+              <span>{nomPays(pays)} ({devise})</span>
             </div>
           </div>
         </div>
@@ -184,15 +217,22 @@ export function DigitalStoreShell({
           >
             <Search size={16} style={{ color: colors.texteMuted || colors.texte }} />
             <input
+              type="search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t("recherche")}
-              className="flex-1 bg-transparent outline-none text-sm placeholder:opacity-60"
+              aria-label="Rechercher un produit"
+              className="flex-1 min-w-0 bg-transparent outline-none text-sm placeholder:opacity-60 [&::-webkit-search-cancel-button]:hidden"
               style={{ color: colors.texte }}
             />
+            {q && (
+              <button type="button" onClick={() => setQ("")} aria-label="Effacer la recherche" className="w-6 h-6 flex items-center justify-center rounded-full opacity-50 hover:opacity-100" style={{ color: colors.texte }}>
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <FiltreSelect label="Catégorie" value={categorie} onChange={setCategorie} options={categories} colors={colors} radius={v.filter === "pill" ? "9999px" : v.filter === "rounded" ? radius : "8px"} />
-          <FiltreSelect label="Type de produit" value={type} onChange={setType} options={types} colors={colors} radius={v.filter === "pill" ? "9999px" : v.filter === "rounded" ? radius : "8px"} />
+          <FiltreSelect id="filtre-categorie" label={t("filtre-categorie")} value={categorie} onChange={setCategorie} options={categories} colors={colors} radius={v.filter === "pill" ? "9999px" : v.filter === "rounded" ? radius : "8px"} />
+          <FiltreSelect id="filtre-type" label={t("filtre-type")} value={type} onChange={setType} options={types} colors={colors} radius={v.filter === "pill" ? "9999px" : v.filter === "rounded" ? radius : "8px"} />
         </div>
 
         {/* ── Vedettes ─────────────────────────────────────────────────── */}
@@ -249,35 +289,36 @@ export function DigitalStoreShell({
             <div>
               <Link href={href(`/${slug}`)} className="flex items-center gap-2 font-semibold mb-4" style={{ color: colors.texte }}>
                 <span
+                  data-axs-el="pied-logo"
                   className="w-6 h-6 flex items-center justify-center text-[11px] font-bold flex-shrink-0"
                   style={{ backgroundColor: colors.accent, color: colors.fond, borderRadius: v.logoShape === "circle" ? "9999px" : "6px" }}
                 >
                   {logoUrl ? <img src={logoUrl} alt="" className="w-full h-full object-cover" style={{ borderRadius: "inherit" }} /> : nomBoutique.slice(0, 1).toUpperCase()}
                 </span>
-                {nomBoutique}
+                <span data-axs-el="pied-nom">{nomBoutique}</span>
               </Link>
-              <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
+              <span data-axs-el="pied-langue" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
                 🇫🇷 Français <ChevronDown size={12} />
               </span>
             </div>
             <div>
-              <p data-axs-el="pied-titre" className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>Liens</p>
+              <p data-axs-el="pied-titre-liens" className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>{t("pied-titre-liens")}</p>
               <div className="flex flex-col gap-2.5">
-                <Link href={href(`/${slug}/mon-compte`)} data-axs-el="pied-lien" className="flex items-center gap-1.5 font-semibold hover:opacity-70" style={{ color: colors.texte }}>
-                  <Lock size={13} /> Mes achats
+                <Link href={href(`/${slug}/mon-compte`)} data-axs-el="pied-achats" className="flex items-center gap-1.5 font-semibold hover:opacity-70" style={{ color: colors.texte }}>
+                  <Lock size={13} /> {t("pied-achats")}
                 </Link>
-                <Link href={href(`/${slug}/a-propos`)} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>À propos</Link>
-                <Link href={href(`/${slug}/contact`)} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Aide</Link>
-                <Link href={href(`/${slug}/contact`)} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Contact</Link>
-                <Link href={href(`/${slug}`)} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Plan du site</Link>
+                <Link href={href(`/${slug}/a-propos`)} data-axs-el="pied-a-propos" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-a-propos")}</Link>
+                <Link href={href(`/${slug}/contact`)} data-axs-el="pied-aide" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-aide")}</Link>
+                <Link href={href(`/${slug}/contact`)} data-axs-el="pied-contact" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-contact")}</Link>
+                <Link href={href(`/${slug}`)} data-axs-el="pied-plan" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-plan")}</Link>
               </div>
             </div>
             <div>
-              <p data-axs-el="pied-titre" className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>Légales</p>
+              <p data-axs-el="pied-titre-legales" className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>{t("pied-titre-legales")}</p>
               <div className="flex flex-col gap-2.5">
-                <Link href={href("/legal/cgu")} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Mentions légales</Link>
-                <Link href={href("/legal/cgu")} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Conditions d'utilisation</Link>
-                <Link href={href("/legal/privacy")} data-axs-el="pied-lien" className="hover:opacity-70" style={{ color: colors.texte }}>Politique de confidentialité</Link>
+                <Link href={href("/legal/cgu")} data-axs-el="pied-mentions" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-mentions")}</Link>
+                <Link href={href("/legal/cgu")} data-axs-el="pied-cgu" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-cgu")}</Link>
+                <Link href={href("/legal/privacy")} data-axs-el="pied-confidentialite" className="hover:opacity-70" style={{ color: colors.texte }}>{t("pied-confidentialite")}</Link>
               </div>
             </div>
           </div>
@@ -288,7 +329,10 @@ export function DigitalStoreShell({
 
           <div className="pt-5 border-t flex flex-col @min-[640px]:flex-row items-center justify-between gap-3 text-xs" style={{ borderColor: colors.bordure || `${colors.texte}15`, color: colors.texteMuted || colors.texte }}>
             <span data-axs-el="copyright">{nomBoutique} © {new Date().getFullYear()} Tous droits réservés.</span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-[11px] font-semibold" style={{ backgroundColor: "#111111" }}>
+            {/* Mention obligatoire : jamais sélectionnable (pas de data-axs-el), ni
+                modifiable, ni masquable — styles en ligne complets pour ne rien
+                hériter des réglages du pied de page. */}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: "#111111", color: "#FFFFFF", fontSize: 11, fontWeight: 600, fontFamily: "'Poppins',system-ui,sans-serif", letterSpacing: "normal", textTransform: "none", opacity: 1, visibility: "visible" }}>
               Powered by <strong>AXSO</strong>
             </span>
           </div>
@@ -298,9 +342,9 @@ export function DigitalStoreShell({
   );
 }
 
-function FiltreSelect({ label, value, onChange, options, colors, radius }: { label: string; value: string; onChange: (v: string) => void; options: string[]; colors: ThemeColors; radius: string }) {
+function FiltreSelect({ id, label, value, onChange, options, colors, radius }: { id: string; label: string; value: string; onChange: (v: string) => void; options: string[]; colors: ThemeColors; radius: string }) {
   return (
-    <div data-axs-el="filtre" className="relative flex-shrink-0 w-full @min-[640px]:w-44">
+    <div data-axs-el={id} className="relative flex-shrink-0 w-full @min-[640px]:w-44">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}

@@ -119,6 +119,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const demanderGps = cfg.demanderGps ?? true;
   const champPerso = cfg.champPersonnalise?.actif ? cfg.champPersonnalise.label : null;
   const [loadingCanal, setLoadingCanal] = useState<"whatsapp" | "direct" | null>(null);
+  const [popup, setPopup] = useState<"whatsapp" | "direct" | null>(null);
   const loading = loadingCanal !== null;
   const [done, setDone] = useState<{ commandeId: string; numero: string; viaWhatsapp: boolean; whatsappUrl: string | null; trackingToken?: string } | null>(null);
   const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique), email: "" });
@@ -259,6 +260,10 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   async function commander(canal: "whatsapp" | "direct") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error("Nom et téléphone obligatoires"); return; }
     if (zones.length > 0 && !zone) { toast.error("Sélectionnez votre zone de livraison"); return; }
+    // WhatsApp : onglet ouvert PENDANT le clic — ouvert après la requête, il
+    // était bloqué par le navigateur (surtout sur mobile) et le client
+    // n'arrivait jamais sur le WhatsApp du marchand.
+    const onglet = canal === "whatsapp" ? window.open("", "_blank") : null;
     setLoadingCanal(canal);
     try {
       const res = await fetch("/api/commandes/whatsapp-creer", {
@@ -290,9 +295,11 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       viderPanier();
       setDone(data);
       if (canal === "whatsapp" && data.whatsappUrl) {
-        window.open(data.whatsappUrl, "_blank", "noopener,noreferrer");
-      }
+        if (onglet) { onglet.opener = null; onglet.location.href = data.whatsappUrl; }
+        else window.location.href = data.whatsappUrl; // onglet refusé : on y va directement
+      } else onglet?.close();
     } catch (e: any) {
+      onglet?.close();
       toast.error(e.message || "Erreur");
     } finally {
       setLoadingCanal(null);
@@ -348,8 +355,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
-      <div className="lg:col-span-3 space-y-5">
+    <div className="max-w-xl mx-auto space-y-5">
+      <div className="space-y-5">
         {/* Bandeau info */}
         <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
           <Package size={18} className="text-green-500 flex-shrink-0 mt-0.5" />
@@ -361,6 +368,22 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           </div>
         </div>
 
+      </div>
+
+      {/* Pop-up « VOS INFORMATIONS » : les coordonnées de livraison, demandées
+          au moment de commander (bouton WhatsApp ou « Commander maintenant »). */}
+      {popup && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4" style={{ background: "rgba(0,0,0,0.55)" }}
+          onClick={(e) => { if (e.target === e.currentTarget && !loading) setPopup(null); }}
+          onKeyDown={(e) => { if (e.key === "Escape" && !loading) setPopup(null); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="titre-vos-informations"
+            className="w-full sm:max-w-xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl shadow-2xl"
+            style={{ backgroundColor: theme.fond, color: theme.texte }}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b" style={{ backgroundColor: theme.fond, borderColor: `${theme.accent}20` }}>
+              <h2 id="titre-vos-informations" className="font-extrabold text-base tracking-[0.12em] flex items-center gap-2"><ClipboardList size={17} /> VOS INFORMATIONS</h2>
+              <button type="button" onClick={() => setPopup(null)} disabled={loading} aria-label="Fermer" className="w-9 h-9 rounded-full flex items-center justify-center opacity-60 hover:opacity-100">✕</button>
+            </div>
+            <div className="p-5 space-y-4">
         {/* Formulaire */}
         <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
           <h2 className="font-bold font-playfair text-base flex items-center gap-2"><ClipboardList size={16} /> Vos informations</h2>
@@ -656,21 +679,32 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </Field>
           </div>
         </div>
-      </div>
+            </div>
+            <div className="sticky bottom-0 px-5 py-4 border-t" style={{ backgroundColor: theme.fond, borderColor: `${theme.accent}20` }}>
+              <button onClick={() => commander(popup)} disabled={loading}
+                className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3"
+                style={popup === "whatsapp" ? { background: "#25D366", color: "#fff" } : { background: theme.accent, color: "#fff" }}>
+                {loading ? <Loader2 size={18} className="animate-spin" /> : popup === "whatsapp" ? <MessageCircle size={18} /> : <ClipboardList size={18} />}
+                {loading ? "Création de la commande…" : popup === "whatsapp" ? "Confirmer via WhatsApp" : "Confirmer la commande"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Récap + CTA */}
-      <div className="lg:col-span-2">
-        <div className="lg:sticky lg:top-24 space-y-4">
+      <div>
+        <div className="space-y-4">
           <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label="Votre commande" fraisLivraison={zones.length > 0 ? fraisLivraison : null} />
 
-          <button onClick={() => commander("whatsapp")} disabled={loading}
+          <button onClick={() => setPopup("whatsapp")} disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
             style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.4)" }}>
             {loadingCanal === "whatsapp" ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
             {loadingCanal === "whatsapp" ? "Création de la commande…" : "Commander via WhatsApp"}
           </button>
 
-          <button onClick={() => commander("direct")} disabled={loading}
+          <button onClick={() => setPopup("direct")} disabled={loading}
             className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 border-2"
             style={{ borderColor: theme.accent, color: theme.accent, background: `${theme.accent}08` }}>
             {loadingCanal === "direct" ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}

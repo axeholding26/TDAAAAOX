@@ -1,12 +1,5 @@
 import { prisma } from "./prisma";
 
-export async function readMemory(tenantId: string, agentId: string, cle: string): Promise<string | null> {
-  const mem = await prisma.agentMemory.findUnique({
-    where: { tenantId_agentId_cle: { tenantId, agentId, cle } },
-  });
-  return mem?.valeur ?? null;
-}
-
 export async function writeMemory(tenantId: string, agentId: string, cle: string, valeur: string): Promise<void> {
   await prisma.agentMemory.upsert({
     where: { tenantId_agentId_cle: { tenantId, agentId, cle } },
@@ -30,13 +23,5 @@ export async function logDecision(
 ): Promise<void> {
   await prisma.agentDecision.create({
     data: { tenantId, agentId, type, description, donnees, impactEstime },
-  });
-}
-
-export async function getDecisionsRecentes(tenantId: string, limite = 20) {
-  return prisma.agentDecision.findMany({
-    where: { tenantId },
-    orderBy: { createdAt: "desc" },
-    take: limite,
   });
 }

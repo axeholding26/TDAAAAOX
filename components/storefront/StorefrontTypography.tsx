@@ -1,3 +1,4 @@
+import { StyleCss } from "./StyleCss";
 import { googleFontsHref, typographyCss, type StorefrontFontsCfg } from "@/lib/theme-fonts";
 
 // Injecte les polices choisies dans l'onglet "Typographie" du builder sur la
@@ -10,7 +11,7 @@ export function StorefrontTypography({ fonts }: { fonts?: StorefrontFontsCfg }) 
   return (
     <>
       {href && <link rel="stylesheet" href={href} />}
-      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <StyleCss css={css} />
     </>
   );
 }

@@ -2,10 +2,12 @@
 import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Save, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 
 export interface FaqItem {
   question: string;
   reponse: string;
+  image?: string; // illustration affichée sous la réponse
 }
 
 interface Props {
@@ -143,6 +145,22 @@ export default function FaqManager({ produitId, initial, nom = "", description =
                       placeholder="La réponse complète…"
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 resize-none bg-white"
                     />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-500 block">Image (optionnelle)</label>
+                    <input
+                      value={item.image ?? ""}
+                      onChange={e => updateItem(idx, "image", e.target.value)}
+                      placeholder="https://…"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
+                    />
+                    <MediaUpload type="image" onUrl={url => updateItem(idx, "image", url)} />
+                    {item.image && (
+                      <div className="relative">
+                        <img src={item.image} alt="" className="w-full max-h-40 object-cover rounded-lg border border-gray-200" />
+                        <button type="button" onClick={() => updateItem(idx, "image", "")} className="absolute top-1.5 right-1.5 text-[11px] px-2 py-1 rounded-md bg-white/90 text-red-500 shadow-sm hover:bg-white">Retirer</button>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-between pt-1">
                     <button

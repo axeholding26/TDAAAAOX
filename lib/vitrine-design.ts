@@ -14,7 +14,7 @@ import { ordonnerParZone, zoneDe, type Zone } from "./block-tree";
 import { resolveThemeConfigAsync } from "./theme-config-server";
 import { prisma } from "./prisma";
 import { prixClient } from "./pricing";
-import { formatMontant } from "./utils";
+import { formatMontant, slugify } from "./utils";
 import { MANIFESTE_LIBRAIRIE } from "./axso-design-manifest";
 import { fichierDepuisSlugTheme } from "./axso-design-library";
 import { remplacerTokensCarte } from "./theme-import-clone";
@@ -77,23 +77,43 @@ export function appliquerConstructeur(cfg: ThemeConfig): ThemeConfig {
 
 const RE_GRILLE = /id="(homeGrid|plpGrid)"/;
 
-function remplirGrilles(html: string | undefined, cartes: string, nb: number): string | undefined {
+type Catalogue = { cartes: string; nb: number; categories: { slug: string; label: string }[] };
+
+const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Filtres du catalogue : les designs livrent des catégories inventées
+// (« Vêtements, Accessoires, Maison ») dont le script a été retiré à l'import.
+// On les reconstruit avec les VRAIES catégories de la boutique, dans le style
+// du design ; le filtrage au clic est fait par components/storefront/FiltresCatalogue.tsx.
+function reconstruireFiltres(racine: ParsedElement, categories: Catalogue["categories"]) {
+  // Convention commune aux designs de la bibliothèque : pastilles `[data-cat]`, « Tout » = data-cat="all".
+  racine.querySelectorAll('[data-cat="all"]').forEach((tout) => {
+    const conteneur = tout.parentNode as ParsedElement;
+    if (!conteneur || conteneur.closest("#plpGrid, #homeGrid")) return;
+    if (categories.length < 2) { conteneur.remove(); return; }
+    const classe = (tout.getAttribute("class") ?? "").replace(/\bactive\b/, "").trim();
+    conteneur.set_content(tout.outerHTML + categories.map((c) => `<div class="${esc(classe)}" data-cat="${esc(c.slug)}">${esc(c.label)}</div>`).join(""));
+  });
+}
+
+function remplirGrilles(html: string | undefined, cat: Catalogue): string | undefined {
   if (!html || !RE_GRILLE.test(html)) return html;
   const racine = parse(html);
-  racine.querySelectorAll("#homeGrid, #plpGrid").forEach((g) => g.set_content(cartes));
-  // Compteur du catalogue (« 8 pièces » figé dans le design) → vrai nombre, même mot.
+  racine.querySelectorAll("#homeGrid, #plpGrid").forEach((g) => g.set_content(cat.cartes));
+  // Compteur figé dans le design (« 8 pièces ») → vrai nombre, même mot.
   racine.querySelectorAll("#plpCount").forEach((el) => {
     const mot = el.text.trim().match(/^\d+\s+(.+?)s?$/)?.[1];
-    if (mot) el.set_content(`${nb} ${mot}${nb > 1 ? "s" : ""}`);
+    if (mot) el.set_content(`${cat.nb} ${mot}${cat.nb > 1 ? "s" : ""}`);
   });
+  if (racine.querySelector("#plpGrid")) reconstruireFiltres(racine, cat.categories);
   return racine.toString();
 }
 
-function remplirGrillesArbre(nodes: BlockNode[], cartes: string, nb: number): BlockNode[] {
+function remplirGrillesArbre(nodes: BlockNode[], cat: Catalogue): BlockNode[] {
   return nodes.map((n) => ({
     ...n,
-    ...(n.type === "embed-html" && n.config?.html ? { config: { ...n.config, html: remplirGrilles(n.config.html, cartes, nb) } } : {}),
-    ...(n.children ? { children: remplirGrillesArbre(n.children, cartes, nb) } : {}),
+    ...(n.type === "embed-html" && n.config?.html ? { config: { ...n.config, html: remplirGrilles(n.config.html, cat) } } : {}),
+    ...(n.children ? { children: remplirGrillesArbre(n.children, cat) } : {}),
   }));
 }
 
@@ -114,14 +134,20 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
   // Sans produit, on garde les cartes de démonstration du design.
   if (!tenant || !carte || produits.length === 0) return cfg;
   const taux = tenant.commissionRate ?? 0.06;
-  const cartes = produits.map((p) => remplacerTokensCarte(carte, {
-    id: p.id, nom: p.nom, prixAffiche: formatMontant(prixClient(p.prix, taux), tenant.devise), image: p.images[0] ?? null, description: p.description,
-  }, tenant.slug)).join("");
+  const categories = [...new Map(produits.filter((p) => p.categorie?.trim()).map((p) => [slugify(p.categorie!), p.categorie!.trim()])).entries()]
+    .map(([slug, label]) => ({ slug, label }));
+  // Catégorie sur chaque carte : de quoi filtrer dans le navigateur.
+  const cartes = produits.map((p) => {
+    const prix = prixClient(p.prix, taux);
+    const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(prix, tenant.devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
+    return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}"`);
+  }).join("");
+  const cat: Catalogue = { cartes, nb: produits.length, categories };
   return {
     ...cfg,
-    builderHtml: remplirGrilles(cfg.builderHtml, cartes, produits.length),
-    builderHtmlProduits: remplirGrilles(cfg.builderHtmlProduits, cartes, produits.length),
-    ...(tree.length ? { builderTree: remplirGrillesArbre(tree, cartes, produits.length) } : {}),
+    builderHtml: remplirGrilles(cfg.builderHtml, cat),
+    builderHtmlProduits: remplirGrilles(cfg.builderHtmlProduits, cat),
+    ...(tree.length ? { builderTree: remplirGrillesArbre(tree, cat) } : {}),
   };
 }
 

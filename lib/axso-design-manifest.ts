@@ -25,9 +25,7 @@ export interface EntreeLibrairie {
 }
 
 // Figé le 2026-09-12 par app/api/internal/build-library-manifest — 15/15
-// fichiers analysés avec succès (sur les 18 fournis ; codex-site.html,
-// noir-atelier-single.html et pulse-site.html sont mono-page, hors
-// périmètre de cette bibliothèque pour l'instant).
+// fichiers de Templates/ analysés avec succès.
 export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
   {
     fichier: "aube-site.html", nom: "AUBE", categories: ["jewelry"],

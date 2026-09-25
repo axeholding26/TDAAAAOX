@@ -4,34 +4,14 @@
 // annexes…) — partagés par le constructeur boutique (boutique/) et landing.
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  Save, Monitor, Tablet, Smartphone, ExternalLink, ArrowLeft,
-  LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2,
-  ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw,
-  Plus, Trash2, Check, Layers, Sparkles,
-  Image as ImageIcon, X, GripVertical, Zap, Copy,
-  BarChart3, Timer, Building2, Video, Star, Target, FileText,
-  ArrowUpDown, Megaphone, Shield, FolderOpen, BookOpen, HelpCircle,
-  MessageCircle, Mail, LucideIcon,
-  ShoppingBag, Maximize2, Minimize2,
-  ShoppingCart, Share2, Info, Phone, Undo2, Redo2, Rocket, AlertCircle, Images, Wand2,
-} from "lucide-react";
+import { Search, LayoutGrid, LayoutTemplate, ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2, Check, Layers, Image as ImageIcon, X, GripVertical, Zap, Copy, BarChart3, Timer, Building2, Video, Star, Target, FileText, ArrowUpDown, Shield, BookOpen, HelpCircle, MessageCircle, ShoppingCart, Share2 } from "lucide-react";
 import { type ThemeConfig, type CustomSection, type ProductPageSection } from "@/lib/theme-config";
+import { appliquerActionPage, uid, type ActionPage } from "@/lib/pages-annexes";
 import { SECTIONS_FICHE, TYPES_FICHE, appliquerActionFiche, sectionsFiche, typesIndisponibles, type ActionFiche } from "@/lib/fiche-produit";
 import { ImageUpload } from "@/components/ui/ImageUpload";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
-
-/** Id unique (préfixe + horodatage + aléa) — jamais deux blocs/sections avec le même id. */
-const uid = (prefixe: string) => `${prefixe}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
-
-/** Copie profonde d'une config par défaut avec des ids neufs pour ses onglets/colonnes. */
-function avecIdsNeufs(config: Record<string, any> = {}): Record<string, any> {
-  const c = JSON.parse(JSON.stringify(config));
-  if (Array.isArray(c.onglets)) c.onglets = c.onglets.map((o: any) => ({ ...o, id: uid("tab") }));
-  if (Array.isArray(c.colonnes)) c.colonnes = c.colonnes.map((o: any) => ({ ...o, id: uid("col") }));
-  return c;
-}
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
@@ -44,6 +24,7 @@ const CUSTOM_SECTION_TYPES = [
   { type: "social-proof",  label: "Preuve sociale",       Icon: Star,         desc: "Barre de confiance avec notes, certifications, médias" },
   { type: "cta-band",      label: "Bande CTA",            Icon: Target,       desc: "Bandeau pleine largeur avec appel à l'action fort" },
   { type: "richtext",      label: "Texte riche",          Icon: FileText,     desc: "Bloc de texte libre avec titre, sous-titre et bouton" },
+  { type: "faq",           label: "FAQ",                  Icon: HelpCircle,   desc: "Questions fréquentes en accordéon, avec image facultative" },
   { type: "spacer",        label: "Espacement",           Icon: ArrowUpDown,  desc: "Espace vertical personnalisable entre deux sections" },
   { type: "tabs",          label: "Onglets",              Icon: LayoutTemplate, desc: "Contenu organisé en onglets — photos, témoignages, promo (style Shopify)" },
   { type: "columns",       label: "Colonnes",             Icon: LayoutGrid,   desc: "Colonnes personnalisables, chacune avec ses propres blocs de contenu" },
@@ -65,15 +46,34 @@ const SOUS_BLOC_TYPES = [
 ] as const;
 
 // ─── Section Library ──────────────────────────────────────────────────────────
+// Recherche dans les bibliothèques de sections (nom + description, sans accents).
+const sansAccents = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const correspond = (q: string, ...textes: (string | undefined)[]) => !q.trim() || sansAccents(textes.join(" ")).includes(sansAccents(q.trim()));
+
+function ChampRecherche({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="relative">
+      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      <input autoFocus value={value} onChange={e => onChange(e.target.value)} placeholder="Rechercher une section…"
+        className="w-full h-10 pl-9 pr-8 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20" />
+      {value && <button onClick={() => onChange("")} aria-label="Effacer" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"><X size={14} /></button>}
+    </div>
+  );
+}
+
 function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) => void; onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const types = CUSTOM_SECTION_TYPES.filter(t => correspond(q, t.label, t.desc));
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm font-semibold text-gray-700">Bibliothèque de sections</p>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-300"><X size={13} /></button>
       </div>
+      <div className="mb-3"><ChampRecherche value={q} onChange={setQ} /></div>
       <div className="space-y-1.5">
-        {CUSTOM_SECTION_TYPES.map(t => (
+        {!types.length && <p className="text-[13px] text-gray-500 text-center py-6">Aucune section pour « {q.trim()} »</p>}
+        {types.map(t => (
           <button key={t.type} onClick={() => onAdd(t.type as CustomSection["type"])}
             className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 hover:border-[#F5A623]/30 hover:bg-[#F5A623]/5 transition-all group">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,166,35,0.08)" }}><t.Icon size={15} style={{ color: "#F5A623" }} /></div>
@@ -93,6 +93,14 @@ function SectionLibrary({ onAdd, onClose }: { onAdd: (t: CustomSection["type"]) 
 function CustomSectionControls({ section, update }: { section: CustomSection; update: (id: string, patch: any) => void }) {
   const c = section.config;
   const up = (patch: any) => update(section.id, patch);
+
+  if (section.type === "faq") return (
+    <>
+      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
+      <ListeItems titre="Questions" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici.", image: "" })}
+        champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
+    </>
+  );
 
   if (section.type === "features") return (
     <>
@@ -155,7 +163,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
   if (section.type === "video") return (
     <>
       <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={c.videoUrl||""} onChange={v=>up({videoUrl:v})} />
+      <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={c.videoUrl||""} onChange={v=>up({videoUrl:v})} media="video" />
       <FSel label="Style" value={c.style||"centered"} onChange={v=>up({style:v})} opts={[{v:"centered",l:"Centré (16:9)"},{v:"fullwidth",l:"Pleine largeur"},{v:"split",l:"Divisé (texte + vidéo)"}]} />
       <FCheck label="Lecture automatique" checked={c.autoplay||false} onChange={v=>up({autoplay:v})} />
     </>
@@ -169,7 +177,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
         <p className="text-[12px] text-gray-500 mb-2">URLs des photos</p>
         {(c.images||[]).map((url: string, i: number) => (
           <div key={i} className="flex gap-1 mb-1.5">
-            <FInp label="" value={url} onChange={v=>{ const imgs=[...c.images]; imgs[i]=v; up({images:imgs}); }} />
+            <FInp label="" value={url} onChange={v=>{ const imgs=[...c.images]; imgs[i]=v; up({images:imgs}); }} media="image" />
             <button onClick={()=>up({images:c.images.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
           </div>
         ))}
@@ -282,7 +290,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
             {b.type === "photos" && (
               <div>
                 {(b.config.images || [""]).map((url: string, j: number) => (
-                  <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const imgs = [...(b.config.images || [""])]; imgs[j] = v; updateBloc(i, { images: imgs }); }} /></div>
+                  <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const imgs = [...(b.config.images || [""])]; imgs[j] = v; updateBloc(i, { images: imgs }); }} media="image" /></div>
                 ))}
                 <button onClick={() => updateBloc(i, { images: [...(b.config.images || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ photo</button>
               </div>
@@ -301,7 +309,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
               <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
             </>)}
             {b.type === "video" && (
-              <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={b.config.videoUrl || ""} onChange={v => updateBloc(i, { videoUrl: v })} />
+              <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={b.config.videoUrl || ""} onChange={v => updateBloc(i, { videoUrl: v })} media="video" />
             )}
             {b.type === "stats" && (
               <div>
@@ -525,7 +533,7 @@ export function PanelMedias({ config, setSection, updateCustomSection }: any) {
                 <p className="text-[12px] text-gray-500 mb-2">Images du diaporama</p>
                 {(sec.hero.slideshowImages||[""]).map((url: string, i: number) => (
                   <div key={i} className="flex gap-1 mb-1.5 items-center">
-                    <FInp label="" value={url} onChange={v=>{ const imgs=[...(sec.hero.slideshowImages||[""])]; imgs[i]=v; setSection("hero",{slideshowImages:imgs}); }} />
+                    <FInp label="" value={url} onChange={v=>{ const imgs=[...(sec.hero.slideshowImages||[""])]; imgs[i]=v; setSection("hero",{slideshowImages:imgs}); }} media="image" />
                     {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                   </div>
                 ))}
@@ -538,8 +546,7 @@ export function PanelMedias({ config, setSection, updateCustomSection }: any) {
           {sec.about?.actif && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
               <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={12} /> Notre histoire — Image</p>
-              <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} />
-              {sec.about?.imageUrl && <img src={sec.about.imageUrl} alt="" className="w-full h-20 rounded-lg object-cover border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
+              <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} media="image" />
             </div>
           )}
 
@@ -547,7 +554,7 @@ export function PanelMedias({ config, setSection, updateCustomSection }: any) {
           {sec.promo?.actif && sec.promo?.style === "image" && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
               <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Target size={12} /> Bannière promo — Image</p>
-              <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} />
+              <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} media="image" />
             </div>
           )}
 
@@ -556,13 +563,13 @@ export function PanelMedias({ config, setSection, updateCustomSection }: any) {
             <div key={s.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
               <p className="text-sm font-semibold text-gray-700">{s.label}</p>
               {s.type === "video" && (
-                <FInp label="URL vidéo" value={s.config.videoUrl||""} onChange={v=>updateCustomSection(s.id,{videoUrl:v})} />
+                <FInp label="URL vidéo" value={s.config.videoUrl||""} onChange={v=>updateCustomSection(s.id,{videoUrl:v})} media="video" />
               )}
               {s.type === "gallery" && (
                 <div>
                   {(s.config.images||[]).map((url: string, i: number) => (
                     <div key={i} className="flex gap-1 mb-1.5 items-center">
-                      <FInp label="" value={url} onChange={v=>{ const imgs=[...s.config.images]; imgs[i]=v; updateCustomSection(s.id,{images:imgs}); }} />
+                      <FInp label="" value={url} onChange={v=>{ const imgs=[...s.config.images]; imgs[i]=v; updateCustomSection(s.id,{images:imgs}); }} media="image" />
                       {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                     </div>
                   ))}
@@ -952,7 +959,7 @@ function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string;
             ? <FIcone key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} />
             : c.type === "note"
               ? <FSel key={c.cle} label={c.label} value={String(item[c.cle] ?? 5)} onChange={v => maj(i, { [c.cle]: Number(v) })} opts={[5, 4, 3, 2, 1].map(n => ({ v: String(n), l: "★".repeat(n) }))} />
-              : <FInp key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} multiline={c.type === "textarea"} />)}
+              : <FInp key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} multiline={c.type === "textarea"} media={c.type === "image" ? "image" : undefined} />)}
         </div>
       ))}
       <button onClick={() => onChange([...items, nouvel()])}
@@ -963,7 +970,8 @@ function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string;
   );
 }
 
-function TableEdit({ headers, rows, onChange }: { headers: string[]; rows: { cells: string[] }[]; onChange: (p: { headers?: string[]; rows?: { cells: string[] }[] }) => void }) {
+// `images` (tableau comparatif) : une image facultative par colonne, alignée sur `headers`.
+function TableEdit({ headers, rows, images, onChange }: { headers: string[]; rows: { cells: string[] }[]; images?: string[]; onChange: (p: { headers?: string[]; rows?: { cells: string[] }[]; images?: string[] }) => void }) {
   const nbCol = headers.length;
   return (
     <div className="space-y-2">
@@ -984,9 +992,13 @@ function TableEdit({ headers, rows, onChange }: { headers: string[]; rows: { cel
       ))}
       <div className="flex gap-1.5">
         <button onClick={() => onChange({ rows: [...rows, { cells: Array(nbCol).fill("") }] })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Ligne</button>
-        <button onClick={() => onChange({ headers: [...headers, "Colonne"], rows: rows.map(r => ({ cells: [...r.cells, ""] })) })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Colonne</button>
-        {nbCol > 2 && <button onClick={() => onChange({ headers: headers.slice(0, -1), rows: rows.map(r => ({ cells: r.cells.slice(0, nbCol - 1) })) })} className="text-[12px] text-gray-500 px-2 hover:text-red-500">− Col.</button>}
+        <button onClick={() => onChange({ headers: [...headers, "Colonne"], rows: rows.map(r => ({ cells: [...r.cells, ""] })), ...(images && { images: [...images, ""] }) })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Colonne</button>
+        {nbCol > 2 && <button onClick={() => onChange({ headers: headers.slice(0, -1), rows: rows.map(r => ({ cells: r.cells.slice(0, nbCol - 1) })), ...(images && { images: images.slice(0, nbCol - 1) }) })} className="text-[12px] text-gray-500 px-2 hover:text-red-500">− Col.</button>}
       </div>
+      {images && headers.map((h, j) => (
+        <FInp key={j} label={`Image de la colonne « ${h || j + 1} » (optionnelle)`} value={images[j] || ""} media="image"
+          onChange={v => onChange({ images: Array.from({ length: nbCol }, (_, k) => (k === j ? v : images[k] || "")) })} />
+      ))}
     </div>
   );
 }
@@ -1045,6 +1057,8 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     case "quantity": return (
       <Bloc>
         <Bascule label="Sélecteur de quantité" value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
+        <Bascule label="Bouton « Ajouter au panier » (boutique physique)" value={c.afficherAjoutPanier !== false} onChange={v => up({ afficherAjoutPanier: v })} />
+        <p className="text-[11.5px] text-gray-400 -mt-1">Jamais affiché dans une boutique digitale : le client achète directement.</p>
         <FInp label="Texte du bouton (vide = « Ajouter au panier »)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
         <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
         <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
@@ -1104,9 +1118,9 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     );
     case "howto": return (
       <Bloc>{titre}
-        <FSel label="Présentation" value={c.style} onChange={v => up({ style: v })} opts={[{ v: "etapes", l: "Étapes numérotées" }, { v: "accordeon", l: "Accordéon" }]} />
-        <ListeItems titre="Étapes" items={c.steps || []} onChange={steps => up({ steps })} nouvel={() => ({ num: String((c.steps?.length ?? 0) + 1).padStart(2, "0"), titre: "Nouvelle étape", texte: "" })}
-          champs={[{ cle: "num", label: "Numéro" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
+        <FSel label="Présentation" value={c.style} onChange={v => up({ style: v })} opts={[{ v: "etapes", l: "Étapes numérotées" }, { v: "accordeon", l: "Accordéon" }, { v: "carrousel", l: "Carrousel" }, { v: "colonnes", l: "Colonnes" }]} />
+        <ListeItems titre="Étapes" items={c.steps || []} onChange={steps => up({ steps })} nouvel={() => ({ num: String((c.steps?.length ?? 0) + 1).padStart(2, "0"), titre: "Nouvelle étape", texte: "", image: "" })}
+          champs={[{ cle: "num", label: "Numéro" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
       </Bloc>
     );
     case "banner": return (
@@ -1119,14 +1133,14 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     case "video": return (
       <Bloc>
         <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
-        <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} />
+        <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} media="video" />
         <Bascule label="Lecture automatique" value={!!c.autoplay} onChange={v => up({ autoplay: v })} />
       </Bloc>
     );
     case "faq": return (
       <Bloc>{titre}
         <ListeItems titre="Questions" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici." })}
-          champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }]} />
+          champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
       </Bloc>
     );
     case "specs": return (
@@ -1138,23 +1152,26 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     case "ingredients": return (
       <Bloc>{titre}
         <FInp label="Introduction" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-        <ListeItems titre="Composants" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Composant", desc: "" })}
-          champs={[{ cle: "nom", label: "Nom" }, { cle: "desc", label: "Détail", type: "textarea" }]} />
+        <ListeItems titre="Éléments (image et/ou texte)" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ image: "", nom: "", desc: "" })}
+          champs={[{ cle: "image", label: "Image (optionnelle)", type: "image" }, { cle: "nom", label: "Titre (optionnel)" }, { cle: "desc", label: "Texte (optionnel)", type: "textarea" }]} />
       </Bloc>
     );
     case "testimonials": return (
       <Bloc>{titre}
         <ListeItems titre="Témoignages" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Client", note: 5, texte: "", avatar: "" })}
-          champs={[{ cle: "nom", label: "Nom" }, { cle: "note", label: "Note", type: "note" }, { cle: "texte", label: "Témoignage", type: "textarea" }, { cle: "avatar", label: "Photo (URL, optionnel)" }]} />
+          champs={[{ cle: "nom", label: "Nom" }, { cle: "note", label: "Note", type: "note" }, { cle: "texte", label: "Témoignage", type: "textarea" }, { cle: "avatar", label: "Photo (optionnelle)", type: "image" }]} />
       </Bloc>
     );
-    case "sizeguide": case "comparison": return (
+    case "sizeguide": return (
       <Bloc>{titre}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} /></Bloc>
+    );
+    case "comparison": return (
+      <Bloc>{titre}<TableEdit headers={c.headers || []} rows={c.rows || []} images={c.images || []} onChange={up} /></Bloc>
     );
     case "bundle": return (
       <Bloc>{titre}
         <ListeItems titre="Produits du pack" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Produit", imageUrl: "", prix: "" })}
-          champs={[{ cle: "nom", label: "Nom" }, { cle: "prix", label: "Prix affiché" }, { cle: "imageUrl", label: "Image (URL)" }]} />
+          champs={[{ cle: "nom", label: "Nom" }, { cle: "prix", label: "Prix affiché" }, { cle: "imageUrl", label: "Image", type: "image" }]} />
         <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
       </Bloc>
     );
@@ -1178,20 +1195,6 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
 // tous les deux une liste `sections: CustomSection[]` — même bibliothèque de
 // blocs que la home (SectionLibrary/CustomSectionControls déjà génériques),
 // juste reciblée sur ce tableau au lieu de config.customSections.
-const PAGE_SECTION_DEFAULTS: Record<string, any> = {
-  richtext:     { titre: "Notre histoire", texte: "Racontez ici l'histoire de votre boutique.", ctaTexte: "", ctaLien: "" },
-  features:     { titre: "Nos valeurs", items: [{ icone: "★", titre: "Valeur 1", texte: "Description" }, { icone: "→", titre: "Valeur 2", texte: "Description" }, { icone: "✓", titre: "Valeur 3", texte: "Description" }], colonnes: 3 },
-  stats:        { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
-  gallery:      { titre: "Notre galerie", images: ["", "", "", "", "", ""], layout: "masonry" },
-  video:        { titre: "Découvrez notre monde", videoUrl: "", style: "centered", autoplay: false },
-  "cta-band":   { titre: "Une question ?", texte: "Contactez-nous, on vous répond vite", ctaTexte: "Nous écrire", ctaLien: "contact", style: "gradient" },
-  brands:       { titre: "Ils nous font confiance", logos: ["", "", "", ""], style: "carousel" },
-  "social-proof": { note: "4.9/5", nbClients: "12 000+", nbCommandes: "30 000+", certifications: ["✓ Paiement sécurisé", "✓ Livraison garantie"] },
-  countdown:    { titre: "Offre limitée", texte: "Ne manquez pas cette opportunité unique !", dateFin: new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,16), ctaTexte: "Profiter maintenant" },
-  spacer:       { hauteur: "80px" },
-  tabs:         { titre: "Découvrez-en plus", onglets: [{ id: `tab_${Date.now()}_1`, label: "Photos", blocs: [] }, { id: `tab_${Date.now()}_2`, label: "Témoignages", blocs: [] }] },
-  columns:      { titre: "", nombreColonnes: 3, colonnes: [{ id: `col_${Date.now()}_1`, blocs: [] }, { id: `col_${Date.now()}_2`, blocs: [] }, { id: `col_${Date.now()}_3`, blocs: [] }] },
-};
 
 export function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfig; set: any; pageKey: "aboutPage" | "contactPage"; titre: string }) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -1199,38 +1202,32 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
 
   const page: any = (config as any)[pageKey] || {};
   const sections: CustomSection[] = page.sections || [];
+  const [erreur, setErreur] = useState<string | null>(null);
 
-  const setPage = (patch: any) => set((p: ThemeConfig) => ({ ...p, [pageKey]: { ...(p as any)[pageKey], actif: (p as any)[pageKey]?.actif ?? false, sections: (p as any)[pageKey]?.sections || [], ...patch } }));
-  const setSections = (next: CustomSection[]) => setPage({ sections: next });
-
+  // Toutes les modifications passent par lib/pages-annexes.ts — le même code
+  // qu'exécute AXIA (outil modifier_page) : mêmes règles, mêmes ids.
+  const agir = (a: ActionPage) => {
+    try {
+      const r = appliquerActionPage(page, pageKey, a);
+      set((p: ThemeConfig) => ({ ...p, [pageKey]: r.page }));
+      setErreur(null);
+      return r.id;
+    } catch (e: any) { setErreur(e.message); }
+  };
+  const setPage = (patch: { actif?: boolean; intro?: string; afficherFormulaire?: boolean }) => {
+    if (patch.actif !== undefined) agir({ action: patch.actif ? "afficher_page" : "masquer_page" });
+    else agir({ action: "reglages_contact", ...patch });
+  };
   const addSection = (type: CustomSection["type"]) => {
-    const id = uid("custom");
-    const label = CUSTOM_SECTION_TYPES.find(t => t.type === type)?.label || type;
-    setSections([...sections, { id, type, actif: true, label, ordre: sections.length, config: avecIdsNeufs(PAGE_SECTION_DEFAULTS[type]) }]);
+    const id = agir({ action: "ajouter", type });
     setShowLibrary(false);
-    setActiveSection(id);
+    if (id) setActiveSection(id);
   };
-  const removeSection = (id: string) => { setSections(sections.filter(s => s.id !== id)); if (activeSection === id) setActiveSection(null); };
-  const duplicateSection = (id: string) => {
-    const idx = sections.findIndex(s => s.id === id);
-    if (idx === -1) return;
-    const src = sections[idx];
-    const newId = uid("custom");
-    const copy: CustomSection = { ...src, id: newId, label: `${src.label} (copie)`, config: avecIdsNeufs(src.config) };
-    const next = [...sections];
-    next.splice(idx + 1, 0, copy);
-    setSections(next.map((s, i) => ({ ...s, ordre: i })));
-    setActiveSection(newId);
-  };
-  const toggleSection = (id: string) => setSections(sections.map(s => s.id === id ? { ...s, actif: !s.actif } : s));
-  const updateSection = (id: string, patch: any) => setSections(sections.map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s));
-  const reorderSection = (from: number, to: number) => {
-    if (from === to) return;
-    const arr = [...sections];
-    const [moved] = arr.splice(from, 1);
-    arr.splice(to, 0, moved);
-    setSections(arr.map((s, i) => ({ ...s, ordre: i })));
-  };
+  const removeSection = (id: string) => { agir({ action: "supprimer", bloc: id }); if (activeSection === id) setActiveSection(null); };
+  const duplicateSection = (id: string) => { const n = agir({ action: "dupliquer", bloc: id }); if (n) setActiveSection(n); };
+  const toggleSection = (id: string) => agir({ action: sections.find(s => s.id === id)?.actif ? "masquer" : "afficher", bloc: id });
+  const updateSection = (id: string, patch: any) => agir({ action: "configurer", bloc: id, config: patch });
+  const reorderSection = (from: number, to: number) => { if (from !== to) agir({ action: "deplacer", bloc: sections[from].id, index: to }); };
 
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [overIdx, setOverIdx] = useState<number | null>(null);
@@ -1243,7 +1240,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
         <div className="flex items-center justify-between">
           <p className="text-[13px] font-semibold text-gray-700">Afficher la page {titre}</p>
           <button onClick={() => setPage({ actif: !page.actif })}>
-            {page.actif ?? true ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
+            {page.actif === true ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
           </button>
         </div>
         {pageKey === "contactPage" && (
@@ -1265,6 +1262,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
           <Plus size={9} /> Ajouter
         </button>
       </div>
+      {erreur && <p className="mx-4 mt-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{erreur}</p>}
 
       <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
         {sections.length === 0 && (
@@ -1312,6 +1310,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
 
 export function PanelProduit({ config, setProductPage }: any) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [rechercheSection, setRechercheSection] = useState("");
   // Position d'insertion de la bibliothèque (null = fermée).
   const [insertion, setInsertion] = useState<number | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -1363,8 +1362,9 @@ export function PanelProduit({ config, setProductPage }: any) {
         <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">Ajouter une section</p>
         <button onClick={() => setInsertion(null)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
       </div>
+      <div className="px-3 pt-3"><ChampRecherche value={rechercheSection} onChange={setRechercheSection} /></div>
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-        {TYPES_FICHE.filter(t => !SECTIONS_FICHE[t].base).map(type => {
+        {TYPES_FICHE.filter(t => !SECTIONS_FICHE[t].base && correspond(rechercheSection, SECTIONS_FICHE[t].label, PRODUIT_SECTION_META[t]?.desc)).map(type => {
           const meta = PRODUIT_SECTION_META[type];
           const Li = meta?.Icon ?? FileText;
           const pris = indisponibles.has(type);
@@ -1483,14 +1483,17 @@ export function PanelProduit({ config, setProductPage }: any) {
 }
 
 // ─── Champs helper ────────────────────────────────────────────────────────────
-function FInp({ label, value, onChange, multiline }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean }) {
+// `media` : champ d'URL d'image/vidéo — ajoute l'import depuis l'appareil (+ aperçu de l'image).
+function FInp({ label, value, onChange, multiline, media }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; media?: "image" | "video" }) {
   return (
-    <div>
+    <div className={media ? "space-y-1.5" : undefined}>
       {label && <label className="block text-[12px] text-gray-500 mb-1">{label}</label>}
       {multiline
         ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={2} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
-        : <input value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
+        : <input value={value} onChange={e=>onChange(e.target.value)} placeholder={media === "video" ? "Lien YouTube, Vimeo ou fichier .mp4" : media === "image" ? "https://…" : undefined} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
       }
+      {media && <MediaUpload type={media} onUrl={onChange} />}
+      {media === "image" && value && <img src={value} alt="" className="w-full h-20 rounded-lg object-cover border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
     </div>
   );
 }
@@ -1514,15 +1517,6 @@ function FSel({ label, value, opts, onChange }: { label: string; value: string; 
       <select value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
         {opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
       </select>
-    </div>
-  );
-}
-
-function FSli({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
-  return (
-    <div>
-      <label className="block text-[12px] text-gray-500 mb-1.5">{label}</label>
-      <input type="range" min={min} max={max} value={value} onChange={e=>onChange(Number(e.target.value))} className="w-full h-1.5 rounded-full appearance-none bg-gray-100 accent-[#F5A623] cursor-pointer" />
     </div>
   );
 }

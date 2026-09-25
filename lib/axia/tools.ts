@@ -16,6 +16,7 @@ import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axs
 import { agentConstructeurLibre } from "@/lib/gemini";
 import { validerActions, applyAgentActions } from "@/lib/agent-actions";
 import { SECTIONS_FICHE, TYPES_FICHE, LAYOUTS_FICHE, appliquerActionFiche, resumerFiche, type ActionFiche } from "@/lib/fiche-produit";
+import { BLOCS_PAGE, appliquerActionPage, resumerPage, type ActionPage, type CleePage } from "@/lib/pages-annexes";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -248,6 +249,39 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
         },
       },
       required: ["actions"],
+    },
+  },
+  {
+    name: "modifier_page",
+    tier: "palier1",
+    // Mêmes opérations que les pages À propos / Contact du Constructeur (lib/pages-annexes.ts).
+    description: `Modifie la page À PROPOS ou CONTACT de la boutique exactement comme le Constructeur : afficher/masquer la page, ajouter/supprimer/dupliquer/déplacer/masquer/afficher un bloc, modifier son contenu (config) ; pour Contact, l'introduction et l'affichage du formulaire. Appelle d'abord avec actions=[] pour lire l'état, l'ordre et les ids. Plusieurs actions possibles en un appel, appliquées dans l'ordre. `
+      + `Types de bloc et options de config : ${Object.entries(BLOCS_PAGE).map(([t, b]) => `${t}{${Object.keys(b.defaut()).join(",")}}`).join(" ; ")}. `
+      + `"bloc" = id, libellé ou type du bloc visé. index = position 0-based. Pour la page d'accueil utilise personnaliser_page_boutique, pour la fiche produit modifier_fiche_produit.`,
+    parameters: {
+      type: "object" as const,
+      properties: {
+        page: { type: "string", enum: ["a-propos", "contact"], description: "Page à modifier" },
+        actions: {
+          type: "array",
+          description: "Liste d'actions à appliquer (vide = lire la page actuelle).",
+          items: {
+            type: "object",
+            properties: {
+              action: { type: "string", enum: ["afficher_page", "masquer_page", "ajouter", "supprimer", "dupliquer", "deplacer", "afficher", "masquer", "configurer", "reglages_contact"] },
+              type: { type: "string", description: "Type de bloc (action ajouter)" },
+              bloc: { type: "string", description: "Id, libellé ou type du bloc visé" },
+              index: { type: "number", description: "Position (ajouter, deplacer)" },
+              config: { type: "object", description: "Contenu à fusionner (ajouter, configurer)" },
+              label: { type: "string", description: "Nom du bloc dans le Constructeur (ajouter, configurer)" },
+              intro: { type: "string", description: "Texte d'introduction (reglages_contact)" },
+              afficherFormulaire: { type: "boolean", description: "Formulaire de contact visible (reglages_contact)" },
+            },
+            required: ["action"],
+          },
+        },
+      },
+      required: ["page", "actions"],
     },
   },
   // ─── MARKETING ────────────────────────────────────────────────────────────
@@ -1089,6 +1123,30 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         return { succes: true, resultat: `${actions.length ? `✅ Fiche produit mise à jour (${faits.join(", ")}).\n\n` : ""}${resumerFiche(pp)}` };
       }
 
+      case "modifier_page": {
+        const cle: CleePage = args.page === "contact" ? "contactPage" : "aboutPage";
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, themeConfig: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const config = (tenant.themeConfig as any) || {};
+        const actions: ActionPage[] = Array.isArray(args.actions) ? args.actions : [];
+        let page = config[cle] ?? null;
+        const faits: string[] = [];
+        for (const a of actions) {
+          try {
+            page = appliquerActionPage(page, cle, a).page;
+            faits.push(`✓ ${a.action}${"bloc" in a && a.bloc ? ` ${a.bloc}` : ""}${"type" in a && a.type ? ` ${a.type}` : ""}`);
+          } catch (e: any) {
+            // Rien n'est enregistré si une action échoue : état toujours cohérent.
+            return { succes: false, resultat: `${e.message}${faits.length ? ` (aucune modification enregistrée ; actions valides avant l'erreur : ${faits.join(", ")})` : ""}\n\n${resumerPage(config[cle], cle)}` };
+          }
+        }
+        if (actions.length) {
+          await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...config, [cle]: page } } });
+          try { (await import("next/cache")).revalidatePath(`/${tenant.slug}`, "layout"); } catch {}
+        }
+        return { succes: true, resultat: `${actions.length ? `✅ Page mise à jour (${faits.join(", ")}).\n\n` : ""}${resumerPage(page, cle)}` };
+      }
+
       case "creer_code_promo": {
         const exists = await prisma.codePromo.findUnique({ where: { tenantId_code: { tenantId, code: args.code.toUpperCase() } } });
         if (exists) return { succes: false, resultat: `Code "${args.code.toUpperCase()}" existe déjà` };
@@ -1454,10 +1512,7 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
       case "analyser_avis": {
         const where: any = { tenantId, approuve: true };
         if (args.produitId) where.produitId = args.produitId;
-        const [avis, tenant] = await Promise.all([
-          prisma.avis.findMany({ where, select: { note: true, commentaire: true, createdAt: true }, take: 50, orderBy: { createdAt: "desc" } }),
-          prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
-        ]);
+        const avis = await prisma.avis.findMany({ where, select: { note: true, commentaire: true, createdAt: true }, take: 50, orderBy: { createdAt: "desc" } });
         if (!avis.length) return { succes: true, resultat: "Pas encore d'avis approuvés à analyser." };
         const moy = avis.reduce((s, a) => s + a.note, 0) / avis.length;
         const dist = [1, 2, 3, 4, 5].map(n => ({ note: n, count: avis.filter(a => a.note === n).length }));

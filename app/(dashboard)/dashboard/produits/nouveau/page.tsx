@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { envoyerImagesCarrees, dimensions, estCarre, MESSAGE_REFUS } from "@/lib/images-carrees";
 import { slugify } from "@/lib/utils";
 import { BarcodeCaptureModal } from "@/components/dashboard/BarcodeCaptureModal";
 
@@ -115,6 +116,33 @@ export default function NouveauProduitPage() {
     : null;
 
   // ─── Upload image/vidéo ──────────────────────────────────────────
+  // Images du produit : plusieurs à la fois, carrées uniquement (lib/images-carrees.ts).
+  async function ajouterImages(fichiers: File[]) {
+    if (!fichiers.length) return;
+    setUploadingMedia(true);
+    try {
+      const { urls, refusees, erreur } = await envoyerImagesCarrees(fichiers);
+      if (erreur) toast.error(erreur);
+      if (urls.length) { setForm(f => ({ ...f, images: [...f.images, ...urls] })); toast.success(`${urls.length} image${urls.length > 1 ? "s" : ""} ajoutée${urls.length > 1 ? "s" : ""}`); }
+      if (refusees.length) toast.error(MESSAGE_REFUS(refusees));
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setUploadingMedia(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function ajouterImageUrl() {
+    const u = imageInput.trim();
+    if (!u) return;
+    const d = await dimensions(u).catch(() => null);
+    if (!d) return void toast.error("Image introuvable à cette adresse");
+    if (!estCarre(d.l, d.h)) return void toast.error(MESSAGE_REFUS([`${d.l}×${d.h}`]));
+    setForm(f => ({ ...f, images: [...f.images, u] }));
+    setImageInput("");
+  }
+
   async function uploadMedia(file: File, type: "image" | "video") {
     const fd = new FormData();
     fd.append("file", file);
@@ -521,18 +549,18 @@ export default function NouveauProduitPage() {
                   </button>
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploadingMedia}
                     className="flex items-center gap-1.5 text-xs bg-gray-50 text-gray-600 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-all">
-                    {uploadingMedia ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />} Upload
+                    {uploadingMedia ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />} Importer (images carrées)
                   </button>
-                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*"
-                    onChange={e => e.target.files?.[0] && uploadMedia(e.target.files[0], "image")} />
+                  <input ref={fileInputRef} type="file" className="hidden" accept="image/*" multiple
+                    onChange={e => ajouterImages(Array.from(e.target.files ?? []))} />
                 </div>
               </div>
               <div className="flex gap-2">
                 <input value={imageInput} onChange={e => setImageInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter") { const u = imageInput.trim(); if (u) { set("images", [...form.images, u]); setImageInput(""); }}}}
+                  onKeyDown={e => { if (e.key === "Enter") ajouterImageUrl(); }}
                   placeholder="Ou collez une URL d'image..."
                   className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400" />
-                <button onClick={() => { const u = imageInput.trim(); if (u) { set("images", [...form.images, u]); setImageInput(""); }}}
+                <button onClick={ajouterImageUrl}
                   className="px-3 py-2 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] rounded-xl text-sm hover:bg-[#F5A623]/20 transition-all">
                   <Plus size={15} />
                 </button>

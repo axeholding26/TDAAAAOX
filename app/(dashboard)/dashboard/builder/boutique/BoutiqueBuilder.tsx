@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import {
-  LogOut, LayoutList, Settings2, LayoutTemplate, Home, Monitor, Tablet, Smartphone,
-  Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, ChevronRight, ArrowLeft, type LucideIcon,
-} from "lucide-react";
+import { LogOut, LayoutList, Settings2, LayoutTemplate, Monitor, Tablet, Smartphone, Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, ChevronRight, ArrowLeft, type LucideIcon } from "lucide-react";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import {
   ZONES, zoneDe, ordonnerParZone, insertNode, moveNode, removeNode, duplicateNode, toggleNodeActif,
@@ -22,11 +19,14 @@ import { Apercu } from "./Apercu";
 import { ApercuFiche } from "./ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";
+import { SelecteurPage } from "../pages/SelecteurPage";
 import { PAGES, type PageEditee } from "../pages/pages";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "./decoupage";
-import { lireElement, modifierElement, appliquerContenu, selectionnerParent } from "./elements-dom";
+import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement } from "./elements-dom";
 import { PanneauElement } from "../PanneauElement";
+import { StyleCss } from "@/components/storefront/StyleCss";
+import { CSS_MENUS_DEROULANTS } from "../menusDeroulants";
 import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
 
 type Device = "desktop" | "tablet" | "mobile";
@@ -159,13 +159,28 @@ export function BoutiqueBuilder(p: Props) {
     const id = embed.id;
     setTree((t) => { const n = findNode(t, id); return n ? updateNodeConfig(t, id, fn(n.config ?? {})) : t; });
   };
+  // Section de design sélectionnée (liste, étiquette) : ses réglages sont ceux
+  // de la racine du design — styler l'enveloppe du bloc ne se voyait pas sous
+  // le fond et les couleurs propres du design.
+  const feuilles = (n: BlockNode): BlockNode[] => (n.children?.length ? n.children.flatMap(feuilles) : [n]);
+  const embedSeul = selection && !selectedEl ? feuilles(selection) : [];
+  const embedDeSection = embedSeul.length === 1 && embedSeul[0].type === "embed-html" ? embedSeul[0] : null;
+  const racine = embedDeSection && racineElement(embedDeSection.config?.html || "");
+  useEffect(() => {
+    if (!embedDeSection || !racine) return;
+    if (racine.html !== embedDeSection.config?.html) setTree((t) => updateNodeConfig(t, embedDeSection.id, { html: racine.html }));
+    setSelectedIdBrut(embedDeSection.id);
+    setSelectedEl(racine.id);
+  }, [embedDeSection?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  const estRacine = !!embed && !!selectedEl && racineElement(embed.config?.html || "")?.id === selectedEl;
   const sectionDe = (id: string) => tree.find((n) => n.id === id || !!findNode(n.children ?? [], id)) ?? null;
 
   const design = MANIFESTE_LIBRAIRIE.find((e) => typeof tenant.themeSlug === "string" && tenant.themeSlug.startsWith(`axso-design-${e.fichier.replace(".html", "")}-`));
   const reglage = p.reglages.find((r) => r.id === reglageOuvert);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#F1F2F4] text-[#111111] overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F1F2F4] text-[#111111] overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <StyleCss css={CSS_MENUS_DEROULANTS} />
       <PCOnlyGate label="Le Constructeur de boutique" />
 
       {/* ── Barre du haut : fixe, identique quel que soit le design ── */}
@@ -193,13 +208,7 @@ export function BoutiqueBuilder(p: Props) {
             ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">Brouillon</span>
             : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">Actif</span>}
           <span className="w-px h-5 bg-[#E5E5E5]" />
-          <label className="flex items-center gap-2 text-[#333333]">
-            <Home size={16} className="text-[#777777]" />
-            <select value={page} onChange={(e) => setPage(e.target.value as PageEditee)} aria-label="Page à modifier"
-              className="h-9 pl-2 pr-7 rounded-lg border border-[#E5E5E5] bg-white text-[14px] font-medium hover:border-[#CCCCCC] focus:outline-none focus:border-[#F5A623] cursor-pointer">
-              {PAGES.map((pg) => <option key={pg.id} value={pg.id}>{pg.label}</option>)}
-            </select>
-          </label>
+          <SelecteurPage page={page} onChange={setPage} />
         </div>
 
         <div className="flex items-center justify-end gap-1.5 min-w-0">
@@ -336,17 +345,17 @@ export function BoutiqueBuilder(p: Props) {
             device={device}
             onStyle={(etat, patch) => majEmbed((c) => ({ elementStyles: majStyleElement(c.elementStyles, selectedEl, etat, patch) }))}
             onReinitialiser={() => majEmbed((c) => { const { [selectedEl]: _retire, ...reste } = (c.elementStyles ?? {}) as ElementStyles; return { elementStyles: reste }; })}
-            onParent={() => {
+            onParent={estRacine ? undefined : () => {
               const parent = selectionnerParent(embed.config?.html || "", selectedEl);
               if (!parent) { const sec = sectionDe(embed.id); setSelectedId(sec?.id ?? null); return; }
               majEmbed(() => ({ html: parent.html }));
               setSelectedEl(parent.id);
             }}
             onSupprimer={() => { majEmbed((c) => ({ html: modifierElement(c.html || "", selectedEl, (el) => el.remove()) })); setSelectedEl(null); }}
-            onClose={() => setSelectedEl(null)}
+            onClose={() => setSelectedId(null)}
           />
         )}
-        {selection && !(embed && selectedEl && infoEl) && (
+        {selection && !(embed && selectedEl && infoEl) && !racine && (
           <BlockStylePanel
             key={selection.id}
             node={selection}
@@ -366,7 +375,7 @@ export function BoutiqueBuilder(p: Props) {
         )}
       </div>
 
-      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} variante="boutique" decalageDroite={selection ? 340 : 0} />
+      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection ? 340 : 0} />
     </div>
   );
 }

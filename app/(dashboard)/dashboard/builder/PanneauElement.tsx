@@ -10,6 +10,7 @@ import { useState } from "react";
 import { X, ArrowUpToLine, RotateCcw, Trash2, AlignLeft, AlignCenter, AlignRight, AlignJustify, Monitor, Tablet, Smartphone } from "lucide-react";
 import { FONTS } from "@/lib/theme-fonts";
 import type { ElementStyle, EtatStyle } from "@/lib/element-styles";
+import { MediaUpload } from "@/components/ui/MediaUpload";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -34,6 +35,7 @@ interface Props {
   onParent?: () => void;
   onSupprimer?: () => void;
   onClose: () => void;
+  masquable?: boolean; // false : élément obligatoire (ex. pied de page portant « Powered by AXSO »)
 }
 
 const APPAREIL: Record<Device, { etat: EtatStyle; label: string; Icon: typeof Monitor }> = {
@@ -42,7 +44,7 @@ const APPAREIL: Record<Device, { etat: EtatStyle; label: string; Icon: typeof Mo
   mobile: { etat: "mobile", label: "Mobile", Icon: Smartphone },
 };
 
-export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, device, onStyle, onReinitialiser, onParent, onSupprimer, onClose }: Props) {
+export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, device, onStyle, onReinitialiser, onParent, onSupprimer, onClose, masquable = true }: Props) {
   const [survol, setSurvol] = useState(false);
   const etat: EtatStyle = device === "desktop" && survol ? "hover" : APPAREIL[device].etat;
   const s = styles[etat] ?? {};
@@ -83,7 +85,10 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
             {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">Ce texte contient une mise en forme : <strong className="text-[#111111]">clique dessus dans l'aperçu</strong> pour le modifier directement.</p>}
             {contenu!.texte != null && <Champ label="Texte"><textarea value={contenu!.texte} rows={3} onChange={(e) => onContenu({ texte: e.target.value })} className={INPUT + " h-auto py-2 resize-y"} /></Champ>}
             {contenu!.lien != null && <Champ label="Lien (URL ou page)"><input value={contenu!.lien} onChange={(e) => onContenu({ lien: e.target.value })} placeholder="/ma-boutique/produits" className={INPUT} /></Champ>}
-            {contenu!.image != null && <Champ label="Image (URL)"><input value={contenu!.image} onChange={(e) => onContenu({ image: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>}
+            {contenu!.image != null && <>
+              <Champ label="Image (URL)"><input value={contenu!.image} onChange={(e) => onContenu({ image: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
+              <MediaUpload type="image" onUrl={(url) => onContenu({ image: url })} />
+            </>}
             {contenu!.alt != null && <Champ label="Texte alternatif"><input value={contenu!.alt} onChange={(e) => onContenu({ alt: e.target.value })} className={INPUT} /></Champ>}
             {contenu!.placeholder != null && <Champ label="Texte indicatif"><input value={contenu!.placeholder} onChange={(e) => onContenu({ placeholder: e.target.value })} className={INPUT} /></Champ>}
           </Groupe>
@@ -155,7 +160,7 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
           </div>
         </Groupe>
 
-        {etat !== "hover" && (
+        {etat !== "hover" && masquable && (
           <label className="flex items-center justify-between gap-3 cursor-pointer">
             <span className="text-[14px]">Masquer {device === "desktop" ? "partout" : `sur ${APPAREIL[device].label.toLowerCase()}`}</span>
             <input type="checkbox" checked={!!s.masque} onChange={(e) => maj({ masque: e.target.checked })} className="w-4 h-4 accent-[#F5A623]" />

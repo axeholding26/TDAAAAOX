@@ -19,6 +19,7 @@ export function ButtonBlock({ config, colors, container, editable, onEditText }:
 
   const contenu = (
     <span
+      data-axs-cible=""
       className={`inline-flex items-center justify-center rounded-full font-semibold transition-transform hover:scale-105 ${taille}`}
       style={styleProps}
     >

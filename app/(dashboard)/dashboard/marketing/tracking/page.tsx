@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { FORMAT_PIXEL } from "@/lib/pixels";
 import {
   CheckCircle2, Loader2, LogOut, ChevronDown, ChevronUp,
   Code2, Info, Target, Music2, Ghost, Blocks, Eye, EyeOff, Zap,
@@ -162,6 +163,10 @@ function PlatformCard({
     setSaving(true);
     try {
       const v = valeur.trim() || null;
+      if (v && !FORMAT_PIXEL[key].test(v)) {
+        toast.error(`Un seul ${nom} par boutique : colle un seul identifiant (ex. ${placeholder}).`);
+        return;
+      }
       await patchTenant({ [key]: v });
       setSaved(v);
       setOpen(false);

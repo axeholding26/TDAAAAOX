@@ -147,13 +147,16 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
 
           {/* Filters */}
           <form className="flex flex-wrap gap-2">
-            <input
-              name="q"
-              defaultValue={q}
-              placeholder="Rechercher un produit…"
-              className="flex-1 min-w-48 px-4 py-2.5 text-sm border focus:outline-none"
-              style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
-            />
+            <div className="relative flex-1 min-w-48">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: c.texte, opacity: 0.45 }} />
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Rechercher un produit…"
+                className="w-full pl-10 pr-4 py-2.5 text-sm border focus:outline-none"
+                style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
+              />
+            </div>
             <select
               name="tri"
               defaultValue={tri}
@@ -168,10 +171,10 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
             </select>
             <button
               type="submit"
-              className={`text-sm ${btnPrimaryClass}`}
+              className={`text-sm inline-flex items-center gap-2 ${btnPrimaryClass}`}
               style={btnPrimaryStyle}
             >
-              Filtrer
+              <Search size={14} /> Filtrer
             </button>
             {hasFilters && (
               <Link

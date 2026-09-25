@@ -36,16 +36,6 @@ export const BLOCK_LIBRARY_ITEMS: Array<{ type: BlockNodeType; label: string; Ic
   { type: "products", label: "Produits", Icon: ShoppingBag, desc: "Grille de produits de la boutique", categorie: "widget" },
 ];
 
-// Composition de départ proposée quand le canevas est vide — une section
-// avec une ligne à une colonne, prête à recevoir des blocs.
-export function createStarterSection(): BlockNode {
-  return {
-    id: genBlockId("section"),
-    type: "section",
-    children: [{ id: genBlockId("row"), type: "row", children: [{ id: genBlockId("col"), type: "column", children: [] }] }],
-  };
-}
-
 function colonne(children: BlockNode[], style?: BlockNode["style"]): BlockNode {
   return { id: genBlockId("col"), type: "column", children, style };
 }

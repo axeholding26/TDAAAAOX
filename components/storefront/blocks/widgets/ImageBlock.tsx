@@ -9,7 +9,7 @@ export function ImageBlock({ config }: BlockRenderProps) {
   const ratio = RATIO_MAP[(config.ratio as string) || "auto"] || "";
 
   const img = url ? (
-    <img src={url} alt={alt} className={`w-full h-full object-cover ${ratio}`} />
+    <img data-axs-cible="" src={url} alt={alt} className={`w-full h-full object-cover rounded-xl ${ratio}`} />
   ) : (
     <div className={`w-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs ${ratio || "aspect-video"}`}>
       Aucune image — ajoute une URL dans le panneau Contenu
@@ -17,7 +17,7 @@ export function ImageBlock({ config }: BlockRenderProps) {
   );
 
   return (
-    <div className="py-2 overflow-hidden rounded-xl">
+    <div className="py-2">
       {lien ? <a href={lien}>{img}</a> : img}
     </div>
   );

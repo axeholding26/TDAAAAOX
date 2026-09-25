@@ -28,10 +28,6 @@ export function peutDeposer(typeParent: BlockNodeType | "root", typeEnfant: Bloc
   return (REGLES_IMBRICATION[typeParent] || []).includes(typeEnfant);
 }
 
-export function estWidget(type: BlockNodeType): boolean {
-  return TYPES_WIDGETS.includes(type);
-}
-
 // ─── Recherche ─────────────────────────────────────────────────────────────────
 export function findNode(tree: BlockNode[], id: string): BlockNode | null {
   for (const node of tree) {
@@ -155,20 +151,6 @@ export function getSiblingPosition(tree: BlockNode[], nodeId: string): { index: 
   const emplacement = trouverConteneur(tree, nodeId);
   if (!emplacement) return null;
   return { index: emplacement.index, total: emplacement.liste.length };
-}
-
-// Réordonnancement explicite (boutons ↑/↓ du panneau d'édition) — alternative
-// fiable au glisser-déposer pour changer la position d'un bloc parmi ses
-// frères, sans changer de parent. Renvoie l'arbre inchangé en bout de liste
-// (no-op silencieux, le bouton correspondant est de toute façon désactivé
-// dans l'UI plutôt que de le vérifier ici en double).
-export function moveNodeRelative(tree: BlockNode[], nodeId: string, direction: "up" | "down"): BlockNode[] {
-  const emplacement = trouverConteneur(tree, nodeId);
-  if (!emplacement) return tree;
-  const newIndex = direction === "up" ? emplacement.index - 1 : emplacement.index + 1;
-  if (newIndex < 0 || newIndex >= emplacement.liste.length) return tree;
-  const parentId = emplacement.parent ? emplacement.parent.id : null;
-  return moveNode(tree, nodeId, parentId, newIndex);
 }
 
 export function removeNode(tree: BlockNode[], nodeId: string): BlockNode[] {

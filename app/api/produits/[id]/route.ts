@@ -37,7 +37,7 @@ const schemaUpdate = z.object({
   masquerVentes: z.boolean().optional(),
   visibleListage: z.boolean().optional(),
   texteBoutonAchat: z.string().optional().nullable(),
-  faq: z.array(z.object({ question: z.string(), reponse: z.string() })).optional().nullable(),
+  faq: z.array(z.object({ question: z.string(), reponse: z.string(), image: z.string().optional() })).optional().nullable(),
   champsCommande: z.array(z.object({
     label: z.string(), type: z.string(), requis: z.boolean(),
     options: z.array(z.string()).optional(),

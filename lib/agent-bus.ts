@@ -48,11 +48,3 @@ export async function marquerEchec(taskId: string, erreur: string): Promise<void
     data: { statut: "echec", resultat: { erreur }, updatedAt: new Date() },
   });
 }
-
-export async function getTachesEnCours(tenantId: string) {
-  return prisma.agentTask.findMany({
-    where: { tenantId, statut: { in: ["pending", "en_cours"] } },
-    orderBy: { createdAt: "desc" },
-    take: 30,
-  });
-}

@@ -1,7 +1,7 @@
 import type { BlockNode } from "@/lib/theme-config";
 import type { TreeRenderCtx } from "./context";
 import { BLOCK_REGISTRY } from "./registry";
-import { blockStyleToCss } from "./styleUtils";
+import { blockStyleToCss, TYPES_A_CIBLE } from "./styleUtils";
 import { SectionContainer } from "./containers/SectionContainer";
 import { RowContainer } from "./containers/RowContainer";
 import { ColumnContainer } from "./containers/ColumnContainer";
@@ -34,15 +34,16 @@ export function BlockTreeRenderer({ nodes, ctx }: { nodes: BlockNode[]; ctx: Tre
         const Widget = BLOCK_REGISTRY[node.type];
         if (!Widget) return null;
         const selectionne = ctx.editable && ctx.selectedId === node.id;
+        const cible = TYPES_A_CIBLE.has(node.type);
         return (
           <div
             key={node.id}
             data-axs-id={node.id}
-            style={blockStyleToCss(node.style)}
+            style={blockStyleToCss(node.style, cible)}
             className={[node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
             onClick={ctx.editable ? (e) => { e.stopPropagation(); ctx.onSelect?.(node.id); } : undefined}
           >
-            <ResponsiveStyleTag nodeId={node.id} style={node.style} />
+            <ResponsiveStyleTag nodeId={node.id} style={node.style} cible={cible} />
             <Widget id={node.id} config={node.config ?? {}} colors={ctx.colors} slug={ctx.slug} container={ctx.container} sectionPy={ctx.sectionPy} tenantId={ctx.tenantId} />
           </div>
         );

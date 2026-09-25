@@ -74,6 +74,9 @@ export default function BoutiquePage() {
   const [section, setSection] = useState<Section>("infos");
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Hôte lu côté client (évite un décalage d'hydratation) : la vitrine est servie en /<slug>.
+  const [hote, setHote] = useState("");
+  useEffect(() => setHote(window.location.host), []);
   const [tenant, setTenant] = useState<any>(null);
   const [statutLocal, setStatutLocal] = useState<string>("active");
   const [savingStatut, setSavingStatut] = useState(false);
@@ -189,16 +192,18 @@ export default function BoutiquePage() {
     finally { setSavingStatut(false); }
   }
 
-  function partager() {
-    if (navigator.share) {
-      navigator.share({ title: form.nomBoutique || "Ma Boutique", url: `https://${urlProd}` }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(`https://${urlProd}`);
-      setCopied(true); setTimeout(() => setCopied(false), 2000);
-    }
+  function copierLien() {
+    navigator.clipboard.writeText(`${window.location.origin}/${tenant!.slug}`);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
   }
 
-  const urlProd = tenant ? `${tenant.slug}.axso.com` : "";
+  function partager() {
+    const url = `${window.location.origin}/${tenant!.slug}`;
+    if (navigator.share) navigator.share({ title: form.nomBoutique || "Ma Boutique", url }).catch(() => {});
+    else copierLien();
+  }
+
+  const urlProd = tenant && hote ? `${hote}/${tenant.slug}` : "";
   // Aperçu décoratif — palette AXSO jaune & noir (jamais bleu ni marron).
   // Le choix du design réel de la boutique se fait dans Theme Studio
   // (voir bannière ci-dessous).
@@ -285,7 +290,7 @@ export default function BoutiquePage() {
                 <Globe size={11} className="flex-shrink-0" />
                 <span className="truncate">{urlProd || "votre-boutique.axso.com"}</span>
                 {tenant && (
-                  <button onClick={() => { navigator.clipboard.writeText(urlProd); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+                  <button onClick={copierLien}
                     className="text-[#CCCCCC] hover:text-[#888888] transition-colors flex-shrink-0">
                     <Copy size={10} />
                   </button>
@@ -435,7 +440,7 @@ export default function BoutiquePage() {
               <div className="border border-[#E8E8E8] rounded-2xl p-4 bg-[#FAFAFA] space-y-1.5">
                 <p className="ax-label mb-2 flex items-center gap-1.5 leading-none"><Sparkles size={10} /> Aperçu Google</p>
                 <p className="text-[15px] font-semibold text-[#111111] leading-tight">{form.metaTitle || form.nomBoutique || "Ma Boutique"}</p>
-                <p className="text-green-700 text-[11.5px] leading-tight">{tenant?.slug ? `${tenant.slug}.axso.com` : "votre-boutique.axso.com"}</p>
+                <p className="text-green-700 text-[11.5px] leading-tight">{urlProd || "votre-boutique.axso.com"}</p>
                 <p className="text-[#666666] text-[12px] leading-relaxed">{form.metaDescription || form.description?.slice(0, 160) || "Ajoutez une description pour améliorer votre visibilité sur Google."}</p>
               </div>
             </div>
@@ -668,7 +673,7 @@ export default function BoutiquePage() {
 
         {/* Aperçu en direct */}
         <aside className="hidden xl:block xl:sticky xl:top-5">
-          <LivePreview form={form} theme={theme} slug={tenant?.slug} />
+          <LivePreview form={form} theme={theme} url={urlProd} />
         </aside>
       </div>
 
@@ -817,7 +822,7 @@ function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) 
 }
 
 // ─── Aperçu en direct de la vitrine ──────────────────────────────────────────
-function LivePreview({ form, theme, slug }: { form: any; theme: { fond: string; accent: string; texte: string }; slug?: string }) {
+function LivePreview({ form, theme, url }: { form: any; theme: { fond: string; accent: string; texte: string }; url: string }) {
   return (
     <div className="ax-card overflow-hidden">
       <div className="px-4 py-2.5 border-b border-[#F0F0F0] flex items-center gap-2 bg-[#FAFAFA]">
@@ -827,7 +832,7 @@ function LivePreview({ form, theme, slug }: { form: any; theme: { fond: string; 
           <div className="w-2 h-2 rounded-full bg-[#A9DFB0]" />
         </div>
         <div className="flex-1 min-w-0 bg-white border border-[#EFEFEF] rounded-full px-3 py-1 text-[9.5px] leading-tight text-[#AAAAAA] text-center truncate">
-          {slug ? `${slug}.axso.com` : "votre-boutique.axso.com"}
+          {url || "votre-boutique.axso.com"}
         </div>
       </div>
       <div style={{ backgroundColor: theme.fond }}>

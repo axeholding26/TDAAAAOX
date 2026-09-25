@@ -86,14 +86,6 @@ async function crediterPlateformeTx(tx: any, montant: number, devise: string, de
   });
 }
 
-// Crédit direct plein montant (aucun partage marchand) — utilisé pour le revenu
-// d'abonnement, qui appartient à 100% à Axso.
-export async function crediterPlateforme(montant: number, devise: string, description: string, reference?: string) {
-  await prisma.$transaction(async (tx) => {
-    await crediterPlateformeTx(tx, montant, devise, description, reference);
-  });
-}
-
 async function logFraisPasserelleTx(tx: any, frais: number, devise: string, description: string, reference?: string) {
   if (frais <= 0) return;
   const platformTenantId = await getOrCreatePlatformTenantId(tx);

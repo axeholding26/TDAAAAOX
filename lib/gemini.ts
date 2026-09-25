@@ -38,62 +38,6 @@ La description doit faire 2-3 phrases, mettre en valeur les bénéfices, et donn
   );
 }
 
-// Générer les balises SEO pour un produit
-export async function genererSEO(
-  nomProduit: string,
-  description: string,
-  categorie: string
-): Promise<{ metaTitle: string; metaDescription: string }> {
-  try {
-    const texte = await completion(
-      [
-        { role: "system", content: SYSTEME_PROMPT },
-        {
-          role: "user",
-          content: `Génère les balises SEO pour ce produit :
-Nom: ${nomProduit}
-Description: ${description}
-Catégorie: ${categorie}
-
-Réponds en JSON avec : {"metaTitle": "...", "metaDescription": "..."}
-Le metaTitle doit faire max 60 caractères. La metaDescription max 155 caractères.`,
-        },
-      ],
-      300
-    );
-    const json = texte.match(/\{[\s\S]*\}/)?.[0];
-    return JSON.parse(json || "{}");
-  } catch {
-    return {
-      metaTitle: nomProduit,
-      metaDescription: description.slice(0, 155),
-    };
-  }
-}
-
-// Suggérer un prix selon le marché africain
-export async function suggererPrix(
-  nom: string,
-  categorie: string,
-  pays: string
-): Promise<string> {
-  return completion(
-    [
-      { role: "system", content: SYSTEME_PROMPT },
-      {
-        role: "user",
-        content: `Suggère une fourchette de prix réaliste pour ce produit sur le marché africain :
-Produit: ${nom}
-Catégorie: ${categorie}
-Pays: ${pays}
-
-Donne une réponse courte avec la fourchette de prix conseillée et un bref raisonnement.`,
-      },
-    ],
-    300
-  );
-}
-
 // Générer une FAQ produit
 export async function genererFaqProduit(
   nom: string,
@@ -229,40 +173,6 @@ ${html.slice(0, 60000)}
     };
   } catch {
     return { selecteurConteneurProduits: null, selecteurCarteProduit: null };
-  }
-}
-
-// Généralisation d'identifierStructureTemplate pour les autres pages
-// clonées/habillées (vague A du clonage multi-pages) : fiche produit,
-// panier, commande, confirmation — un seul sélecteur à chaque fois, jamais
-// de reproduction de HTML. `description` cadre en une phrase ce qu'il faut
-// retrouver (ex: "la zone qui affiche le produit unique, image+nom+prix+
-// bouton d'achat", "le formulaire de commande avec les champs livraison").
-export async function identifierZoneUnique(html: string, description: string): Promise<string | null> {
-  try {
-    const texte = await completion(
-      [
-        { role: "system", content: SYSTEME_PROMPT },
-        {
-          role: "user",
-          content: `Voici le HTML d'une page de boutique en ligne. Identifie UN SEUL sélecteur CSS simple (classe ou balise, jamais un chemin complexe) pour cette zone : ${description}
-
-Réponds uniquement en JSON strict : {"selecteur":".ma-zone"}
-Si tu ne trouves pas cette zone clairement, réponds {"selecteur":null}.
-
-Fichier :
-\`\`\`html
-${html.slice(0, 60000)}
-\`\`\``,
-        },
-      ],
-      150
-    );
-    const json = texte.match(/\{[\s\S]*\}/)?.[0];
-    const parsed = JSON.parse(json || "{}");
-    return typeof parsed.selecteur === "string" ? parsed.selecteur : null;
-  } catch {
-    return null;
   }
 }
 

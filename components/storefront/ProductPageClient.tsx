@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { formatMontant } from "@/lib/utils";
+import { formatMontant, urlVideoIntegree } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -54,7 +54,7 @@ export interface ProductPageClientProps {
     collections: { nom: string; slug: string }[]; noteMoyenne: number;
     masquerVentes?: boolean;
     texteBoutonAchat?: string | null;
-    faq?: { question: string; reponse: string }[];
+    faq?: { question: string; reponse: string; image?: string }[];
     formationCurriculum?: {
       chapitres: {
         id: string; titre: string;
@@ -70,6 +70,7 @@ export interface ProductPageClientProps {
     layout?: { largeurContainer?: string } | null;
     boutons?: { style?: string; taille?: string; hover?: string } | null;
     peutDevenirAffilie?: boolean;
+    boutiqueDigitale?: boolean; // pas de panier : achat direct
   };
   produitsSimilaires: { id: string; nom: string; images: string[]; prixAffiche: number }[];
 }
@@ -418,7 +419,7 @@ function CountdownSection({ config, accent, surface, slug }: { config: Record<st
 // ─── FAQ Section ──────────────────────────────────────────────────────────────
 function FaqSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
   const [open, setOpen] = useState<number | null>(null);
-  const items: { question: string; reponse: string }[] = config.items || [];
+  const items: { question: string; reponse: string; image?: string }[] = config.items || [];
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
@@ -429,7 +430,12 @@ function FaqSection({ config, accent, surface }: { config: Record<string, any>; 
               <span className="font-semibold text-[15px] pr-4">{item.question}</span>
               <ChevronDown size={16} className="flex-shrink-0 transition-transform duration-200" style={{ transform: open === i ? "rotate(180deg)" : "", color: accent }} />
             </button>
-            {open === i && <div className="px-5 pb-5 text-[15px] leading-relaxed opacity-70">{item.reponse}</div>}
+            {open === i && (
+              <div className="px-5 pb-5 text-[15px] leading-relaxed">
+                <p className="opacity-70">{item.reponse}</p>
+                {item.image && <img src={item.image} alt="" loading="lazy" className="mt-4 w-full max-h-96 object-cover rounded-xl" />}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -463,22 +469,15 @@ function SpecsSection({ config, accent, surface }: { config: Record<string, any>
 // ─── Video Section ────────────────────────────────────────────────────────────
 function VideoSection({ config, accent, radius }: { config: Record<string, any>; accent: string; radius: string }) {
   const url = config.videoUrl || "";
-  const getEmbed = (u: string) => {
-    const yt = u.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-    if (yt) return `https://www.youtube.com/embed/${yt[1]}${config.autoplay ? "?autoplay=1" : ""}`;
-    const vm = u.match(/vimeo\.com\/(\d+)/);
-    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
-    return u;
-  };
   if (!url) return null;
-  const isMp4 = url.endsWith(".mp4") || url.includes(".mp4?");
+  const integree = urlVideoIntegree(url, !!config.autoplay);
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
       <div className="relative w-full overflow-hidden" style={{ borderRadius: radius, paddingBottom: "56.25%", background: "#000" }}>
-        {isMp4
-          ? <video src={url} controls autoPlay={config.autoplay} className="absolute inset-0 w-full h-full object-cover" />
-          : <iframe src={getEmbed(url)} className="absolute inset-0 w-full h-full border-0" allowFullScreen />}
+        {integree
+          ? <iframe src={integree} title={config.titre || "Vidéo"} className="absolute inset-0 w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+          : <video src={url} controls autoPlay={config.autoplay} muted={!!config.autoplay} playsInline className="absolute inset-0 w-full h-full object-cover" />}
       </div>
     </div>
   );
@@ -568,12 +567,31 @@ function FeaturesSection({ config, accent, surface, radius }: { config: Record<s
 
 // ─── Howto Section ────────────────────────────────────────────────────────────
 function HowtoSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
-  const steps: { num: string; titre: string; texte: string }[] = config.steps || [];
+  const steps: { num: string; titre: string; texte: string; image?: string }[] = config.steps || [];
   const [open, setOpen] = useState<number | null>(0);
+  // Carte d'une étape (carrousel / colonnes) : image en tête, puis numéro, titre, texte.
+  const carte = (step: (typeof steps)[number], i: number, classe = "") => (
+    <div key={i} className={`rounded-2xl overflow-hidden flex flex-col ${classe}`} style={{ background: surface }}>
+      {step.image && <img src={step.image} alt={step.titre} loading="lazy" className="w-full aspect-[4/3] object-cover" />}
+      <div className="p-5">
+        <span className="font-black text-sm" style={{ color: accent }}>{step.num}</span>
+        <p className="font-bold text-base mt-1 mb-1">{step.titre}</p>
+        {step.texte && <p className="text-[15px] opacity-70 leading-relaxed">{step.texte}</p>}
+      </div>
+    </div>
+  );
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
-      {config.style === "accordeon" ? (
+      {config.style === "carrousel" ? (
+        <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1">
+          {steps.map((step, i) => carte(step, i, "snap-start flex-shrink-0 w-[78%] sm:w-72"))}
+        </div>
+      ) : config.style === "colonnes" ? (
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {steps.map((step, i) => carte(step, i))}
+        </div>
+      ) : config.style === "accordeon" ? (
         <div className="space-y-2 max-w-3xl">
           {steps.map((step, i) => (
             <div key={i} className="rounded-2xl overflow-hidden" style={{ background: surface }}>
@@ -582,7 +600,12 @@ function HowtoSection({ config, accent, surface }: { config: Record<string, any>
                 <span className="flex-1 font-semibold text-[15px]">{step.titre}</span>
                 <ChevronDown size={16} className="flex-shrink-0 transition-transform duration-200" style={{ transform: open === i ? "rotate(180deg)" : "", color: accent }} />
               </button>
-              {open === i && <div className="px-5 pb-5 text-[15px] leading-relaxed opacity-70">{step.texte}</div>}
+              {open === i && (
+                <div className="px-5 pb-5 text-[15px] leading-relaxed">
+                  <p className="opacity-70">{step.texte}</p>
+                  {step.image && <img src={step.image} alt={step.titre} loading="lazy" className="mt-4 w-full max-h-80 object-cover rounded-xl" />}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -591,9 +614,10 @@ function HowtoSection({ config, accent, surface }: { config: Record<string, any>
           {steps.map((step, i) => (
             <div key={i} className="flex gap-5 items-start">
               <div className="w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center flex-shrink-0" style={{ background: `${accent}15`, color: accent }}>{step.num}</div>
-              <div className="pt-1">
+              <div className="pt-1 flex-1 min-w-0">
                 <p className="font-bold text-base mb-1">{step.titre}</p>
                 <p className="text-[15px] opacity-70 leading-relaxed">{step.texte}</p>
+                {step.image && <img src={step.image} alt={step.titre} loading="lazy" className="mt-3 w-full max-h-72 object-cover rounded-xl" />}
               </div>
             </div>
           ))}
@@ -672,19 +696,25 @@ function TestimonialsSection({ config, accent, surface }: { config: Record<strin
 
 // ─── Ingredients Section ──────────────────────────────────────────────────────
 function IngredientsSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
-  const items: { nom: string; desc: string }[] = config.items || [];
+  // Chaque élément : image et/ou texte (titre, détail) — l'un ou l'autre suffit.
+  const items: { nom?: string; desc?: string; image?: string }[] = (config.items || []).filter((it: any) => it?.image || it?.nom || it?.desc);
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-4">{config.titre}</h3>}
       {config.texte && <p className="text-sm opacity-60 mb-8 max-w-2xl leading-relaxed">{config.texte}</p>}
       <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
         {items.map((item, i) => (
-          <div key={i} className="flex items-start gap-3 p-4 rounded-xl" style={{ background: surface }}>
-            <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: accent }} />
-            <div>
-              <p className="text-sm font-semibold">{item.nom}</p>
-              {item.desc && <p className="text-xs opacity-50 mt-0.5 leading-relaxed">{item.desc}</p>}
-            </div>
+          <div key={i} className="rounded-xl overflow-hidden" style={{ background: surface }}>
+            {item.image && <img src={item.image} alt={item.nom || ""} loading="lazy" className="w-full aspect-[4/3] object-cover" />}
+            {(item.nom || item.desc) && (
+              <div className="flex items-start gap-3 p-4">
+                {!item.image && <div className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: accent }} />}
+                <div>
+                  {item.nom && <p className="text-sm font-semibold">{item.nom}</p>}
+                  {item.desc && <p className="text-xs opacity-50 mt-0.5 leading-relaxed whitespace-pre-line">{item.desc}</p>}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -776,10 +806,18 @@ function BundleSection({ config, accent, surface, radius, slug }: { config: Reco
 function ComparisonSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
   const headers: string[] = config.headers || [];
   const rows: { cells: string[] }[] = config.rows || [];
+  const images: string[] = config.images || [];
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{config.titre}</h3>}
       <div className="overflow-x-auto max-w-3xl">
+        {images.some(Boolean) && (
+          <div className="grid gap-2 mb-2 min-w-[360px]" style={{ gridTemplateColumns: `repeat(${headers.length}, minmax(0,1fr))` }}>
+            {headers.map((_, k) => images[k]
+              ? <img key={k} src={images[k]} alt={headers[k]} loading="lazy" className="w-full aspect-square object-cover rounded-xl" />
+              : <div key={k} />)}
+          </div>
+        )}
         <table className="w-full text-sm min-w-[360px]">
           <thead>
             <tr>
@@ -808,7 +846,7 @@ function ComparisonSection({ config, accent, surface }: { config: Record<string,
 }
 
 // ─── FAQ produit (questions spécifiques au produit, définies par le marchand) ──
-function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; reponse: string }[]; accent: string; surface: string }) {
+function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; reponse: string; image?: string }[]; accent: string; surface: string }) {
   const [open, setOpen] = React.useState<number | null>(null);
   return (
     <section className="max-w-3xl mx-auto px-4 py-10">
@@ -824,8 +862,9 @@ function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; 
               <ChevronDown size={16} style={{ color: accent, flexShrink: 0, transform: open === idx ? "rotate(180deg)" : "none", transition: "transform .2s" }} />
             </button>
             {open === idx && (
-              <div className="px-5 pb-5 text-sm opacity-80 leading-relaxed border-t" style={{ borderColor: `${accent}10` }}>
-                {item.reponse}
+              <div className="px-5 pb-5 text-sm leading-relaxed border-t" style={{ borderColor: `${accent}10` }}>
+                <p className="opacity-80 pt-4">{item.reponse}</p>
+                {item.image && <img src={item.image} alt="" loading="lazy" className="mt-4 w-full max-h-96 object-cover rounded-xl" />}
               </div>
             )}
           </div>
@@ -1203,6 +1242,8 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                 </div>
               )}
               <div className="space-y-2.5">
+                {/* Ajout au panier : jamais en boutique digitale, facultatif en boutique physique. */}
+                {!tenant.boutiqueDigitale && cfg.afficherAjoutPanier !== false && (
                 <button onClick={doAddToCart} disabled={enRupture}
                   className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
                   style={{
@@ -1217,7 +1258,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
                   {enRupture ? "Indisponible" : (cfg.texteBouton || produit.texteBoutonAchat || "Ajouter au panier")}
                 </button>
-                {cfg.afficherAcheterMaintenant !== false && (
+                )}
+                {/* Toujours présent sans bouton panier : sinon aucun moyen d'acheter. */}
+                {(cfg.afficherAcheterMaintenant !== false || tenant.boutiqueDigitale || cfg.afficherAjoutPanier === false) && (
                   <button onClick={buyNow} disabled={enRupture}
                     className="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
                     style={{ borderColor: btnFond, color: btnFond, background: `${btnFond}08`, borderRadius: btnRadiusPx }}>

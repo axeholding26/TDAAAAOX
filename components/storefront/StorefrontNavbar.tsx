@@ -225,7 +225,8 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       {showSearch && !minimal && (
         <div className="hidden sm:flex items-center relative" ref={searchBoxRef}>
           {rechercheOuverte ? (
-            <form action={`/${slug}/produits`} method="GET" className="flex items-center">
+            <form action={`/${slug}/produits`} method="GET" className="relative flex items-center">
+              <Search size={15} className="absolute left-3 pointer-events-none" style={{ color: txt, opacity: 0.5 }} />
               <input
                 ref={searchRef}
                 name="q"
@@ -234,8 +235,8 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                 onFocus={() => { if (resultats.length) setDropdownOuvert(true); }}
                 placeholder="Rechercher…"
                 autoComplete="off"
-                className="w-40 px-3 py-1.5 text-sm rounded-lg outline-none"
-                style={{ backgroundColor: `${accent}12`, color: txt, border: `1px solid ${accent}25` }}
+                className="w-56 h-9 pl-9 pr-3 text-sm rounded-full outline-none transition-shadow focus:shadow-[0_0_0_3px_var(--ax-anneau)]"
+                style={{ backgroundColor: `${accent}12`, color: txt, border: `1px solid ${accent}30`, ["--ax-anneau" as any]: `${accent}33` }}
               />
               {dropdownOuvert && resultats.length > 0 && (
                 <div className="absolute top-full right-0 mt-2 w-72 rounded-2xl overflow-hidden z-50" style={{ backgroundColor: fond, border: `1px solid ${accent}20`, boxShadow: "0 20px 50px rgba(0,0,0,0.18)" }}>
@@ -316,14 +317,15 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       <div className="px-4 py-4 space-y-1">
         {showSearch && (
           <div className="pb-2 relative" ref={mobileSearchBoxRef}>
-            <form action={`/${slug}/produits`} method="GET">
+            <form action={`/${slug}/produits`} method="GET" className="relative">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: texte, opacity: 0.45 }} />
               <input
                 name="q"
                 value={mobileQuery}
                 onChange={e => onQueryChange(e.target.value, "mobile")}
                 placeholder="Rechercher un produit…"
                 autoComplete="off"
-                className="w-full px-3 py-2.5 text-sm rounded-xl outline-none"
+                className="w-full pl-10 pr-3 py-2.5 text-sm rounded-xl outline-none"
                 style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
               />
             </form>

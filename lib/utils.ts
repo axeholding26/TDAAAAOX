@@ -90,3 +90,14 @@ export function initiales(nom: string): string {
     .toUpperCase()
     .slice(0, 2);
 }
+
+// Lien YouTube/Vimeo → adresse du lecteur intégrable (un lien « watch » ou
+// « vimeo.com/123 » refuse de s'afficher dans une iframe) ; null pour un
+// fichier vidéo (mp4…) à lire avec <video>.
+export function urlVideoIntegree(url: string, autoplay = false): string | null {
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/);
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}${autoplay ? "?autoplay=1&mute=1" : ""}`;
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}${autoplay ? "?autoplay=1&muted=1" : ""}`;
+  return null;
+}

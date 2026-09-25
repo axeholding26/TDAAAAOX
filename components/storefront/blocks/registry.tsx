@@ -17,6 +17,7 @@ import { TextBlock } from "./widgets/TextBlock";
 import { ImageBlock } from "./widgets/ImageBlock";
 import { ButtonBlock } from "./widgets/ButtonBlock";
 import { EmbedHtmlBlock } from "./widgets/EmbedHtmlBlock";
+import { FaqBlock } from "./widgets/FaqBlock";
 // "products" (ProductsBlock) est DÉLIBÉRÉMENT absent de ce registre : ce
 // widget interroge Prisma directement (voir widgets/ProductsBlock.tsx) et ce
 // fichier est importé aussi bien côté SSR (BlockTreeRenderer,
@@ -45,6 +46,7 @@ export const BLOCK_REGISTRY: Record<string, ComponentType<BlockRenderProps>> = {
   "cta-band": CtaBandBlock,
   tabs: TabsBlock,
   columns: ColumnsBlock,
+  faq: FaqBlock,
   // Atomes (vague 2) — voir la note en tête de fichier pour "products".
   heading: HeadingBlock,
   text: TextBlock,

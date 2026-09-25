@@ -182,38 +182,3 @@ export async function envoyerMessageContact(params: {
     `,
   });
 }
-
-// Email de newsletter marketing
-export async function envoyerNewsletter(params: {
-  emails: string[];
-  sujet: string;
-  contenu: string;
-  boutique: string;
-}) {
-  const resend = getResendClient();
-  if (!resend) return;
-
-  // Envoi par lots de 50 (limite Resend)
-  const lots = [];
-  for (let i = 0; i < params.emails.length; i += 50) {
-    lots.push(params.emails.slice(i, i + 50));
-  }
-
-  for (const lot of lots) {
-    await resend.emails.send({
-      from: `${params.boutique} <noreply@axso.com>`,
-      to: lot,
-      subject: params.sujet,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          ${params.contenu}
-          <hr/>
-          <p style="font-size:12px;color:#666;">
-            Envoyé par ${params.boutique} via Axso.
-            <a href="#">Se désabonner</a>
-          </p>
-        </div>
-      `,
-    });
-  }
-}

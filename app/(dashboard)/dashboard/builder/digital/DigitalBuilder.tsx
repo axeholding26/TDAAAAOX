@@ -11,12 +11,9 @@
 // l'aperçu dans la même passe React, sans sérialisation ni rechargement.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
-import {
-  ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, Check, Rocket,
-  LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight,
-  ShoppingBag, Rows, Columns,
-} from "lucide-react";
+import { ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, Check, Rocket, LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight, Rows, Columns } from "lucide-react";
 import type { ThemeConfig, ThemeDigitalConfig } from "@/lib/theme-config";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { FONTS } from "@/lib/theme-fonts";
@@ -26,10 +23,14 @@ import { DigitalStoreShell, ELEMENTS_DIGITAUX, type DigitalProductVM } from "@/c
 import { ApercuFiche } from "../boutique/ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";
+import { SelecteurPage } from "../pages/SelecteurPage";
 import { PAGES, type PageEditee } from "../pages/pages";
 import { majStyleElement } from "@/lib/element-styles";
 import { PanneauElement } from "../PanneauElement";
 import { useSurvol, cssSelection } from "../SurvolApercu";
+import { StyleCss } from "@/components/storefront/StyleCss";
+import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
+import { CSS_MENUS_DEROULANTS } from "../menusDeroulants";
 
 type Device = "desktop" | "tablet" | "mobile";
 // Largeur de l'aperçu ; la boutique s'y adapte réellement (container queries,
@@ -109,6 +110,21 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
   // config réellement enregistrée en base (pas aux réglages d'usine du
   // gabarit, qui effaceraient aussi tout ce qui avait déjà été sauvegardé
   // avant cette session d'édition).
+  // Logo : image de la boutique (tenant.logoUrl, commune à tout le site),
+  // enregistrée directement ; taille et coins passent par les réglages d'élément.
+  const [logoUrl, setLogoUrl] = useState<string>(tenant.logoUrl ?? "");
+  const logoEnregistre = useRef(logoUrl);
+  useEffect(() => {
+    if (logoUrl === logoEnregistre.current) return;
+    const t = setTimeout(() => {
+      fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl }) })
+        .then((r) => { if (r.ok) logoEnregistre.current = logoUrl; else toast.error("Logo non enregistré"); })
+        .catch(() => toast.error("Logo non enregistré"));
+    }, 600);
+    return () => clearTimeout(t);
+  }, [logoUrl]);
+  const estLogo = selectedEl === "logo" || selectedEl === "pied-logo";
+
   const infoEl = selectedEl ? ELEMENTS_DIGITAUX[selectedEl] : null;
   const texteEditable = selectedEl === "titre" || !!infoEl?.texte;
   const texteActuel = selectedEl ? dc.textes?.[selectedEl] ?? (selectedEl === "titre" ? tenant.description || "" : infoEl?.texte ?? "") : "";
@@ -123,7 +139,8 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
     // du dashboard (montée en permanence par DashboardShell, seulement
     // masquée par CSS sur mobile) restait visible à côté de l'aperçu sur
     // desktop : rien ne la recouvrait.
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+      <StyleCss css={CSS_MENUS_DEROULANTS} />
       <PCOnlyGate label="Le Constructeur de boutique digitale" />
       {/* HEADER */}
       <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
@@ -136,13 +153,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon</span>}
           {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">Modifié</span>}
         </div>
-        <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-          <ShoppingBag size={14} className="text-gray-500" />
-          <select value={page} onChange={(e) => { setPage(e.target.value as PageEditee); setSelectedEl(null); }} aria-label="Page à modifier"
-            className="h-9 pl-2 pr-7 rounded-lg border border-gray-200 bg-white text-sm font-medium hover:border-gray-300 focus:outline-none focus:border-[#F5A623] cursor-pointer">
-            {PAGES.map((pg) => <option key={pg.id} value={pg.id}>{pg.id === "accueil" ? "Accueil (boutique)" : pg.label}</option>)}
-          </select>
-        </label>
+        <SelecteurPage page={page} onChange={(pg) => { setPage(pg); setSelectedEl(null); }} labelAccueil="Accueil de la boutique" />
         <div className="flex items-center gap-2">
           <div className="flex items-center rounded-lg bg-gray-100 p-0.5">
             {DEVICES.map(([d, Icon, label]) => (
@@ -340,17 +351,21 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
               className="relative w-full flex-shrink-0 bg-white rounded-xl shadow-sm transition-all"
               style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}
             >
-              {selectedEl && <style dangerouslySetInnerHTML={{ __html: cssSelection(selectedEl) }} />}
+              {selectedEl && <StyleCss css={cssSelection(selectedEl)} />}
               {survol}
               {produits === null ? (
                 <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
                   <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
                 </div>
               ) : (
+                // Même habillage que la boutique en ligne (layout de la vitrine) :
+                // sans lui, les polices choisies ne s'affichaient pas dans l'aperçu.
+                <div className="axs-store">
+                <StorefrontTypography fonts={config.fonts} />
                 <DigitalStoreShell
                   slug={tenant.slug}
                   nomBoutique={tenant.nomBoutique}
-                  logoUrl={tenant.logoUrl}
+                  logoUrl={logoUrl || null}
                   description={tenant.description}
                   pays={tenant.pays}
                   devise={tenant.devise}
@@ -361,6 +376,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
                   products={produits}
                   preview
                 />
+                </div>
               )}
             </div>
           </div>
@@ -373,8 +389,12 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
             key={selectedEl}
             titre={infoEl.label}
             sousTitre="Vitrine digitale"
-            contenu={texteEditable ? { texte: texteActuel } : undefined}
-            onContenu={(patch) => patch.texte != null && setDc({ textes: { ...dc.textes, [selectedEl]: patch.texte } })}
+            contenu={estLogo ? { image: logoUrl } : texteEditable ? { texte: texteActuel } : undefined}
+            onContenu={(patch) => {
+              if (patch.image != null) setLogoUrl(patch.image);
+              if (patch.texte != null) setDc({ textes: { ...dc.textes, [selectedEl]: patch.texte } });
+            }}
+            masquable={selectedEl !== "pied"}
             styles={dc.elementStyles?.[selectedEl] ?? {}}
             device={device}
             onStyle={(etat, patch) => setDc({ elementStyles: majStyleElement(dc.elementStyles, selectedEl, etat, patch) })}

@@ -10,6 +10,7 @@ import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { notifierMarchand } from "@/lib/notifications-marchand";
+import { FORMAT_PIXEL } from "@/lib/pixels";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -225,6 +226,13 @@ export async function PATCH(request: Request) {
       if (body[key] !== undefined) champs[key] = body[key];
     }
     if (body.domainePropre !== undefined) champs.customDomain = body.domainePropre || null;
+    // Un seul pixel par plateforme : refuse une liste ou un ID mal formé.
+    for (const [cle, format] of Object.entries(FORMAT_PIXEL)) {
+      const v = champs[cle];
+      if (typeof v === "string" && v.trim() && !format.test(v.trim())) {
+        return NextResponse.json({ error: `Identifiant ${cle} invalide : un seul pixel par plateforme.` }, { status: 400 });
+      }
+    }
     // Pays changé → devise alignée d'office (vitrine, dashboard et AXIA lisent tenant.devise).
     if (champs.pays) champs.devise = deviseDuPays(champs.pays, champs.devise ?? body.devise ?? "XOF");
 

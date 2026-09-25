@@ -18,6 +18,18 @@ export const BREAKPOINT_MOBILE_MAX = "639px";
 // redimensionnée" (flex-basis fixe) que combiné à flex-grow/shrink forcés à
 // 0, traité séparément dans blockStyleToCss pour ne pas dupliquer cette
 // intention dans les surcharges responsives.
+// Blocs simples (titre, texte, bouton, image) : leurs réglages visuels vont sur
+// l'élément affiché (marqué data-axs-cible) et non sur l'enveloppe — le widget
+// y impose sa couleur, sa taille, sa police, son arrondi… qui masquaient ceux
+// du panneau. Espacements et dimensions restent sur l'enveloppe.
+export const TYPES_A_CIBLE = new Set(["heading", "text", "button", "image"]);
+const estVisuel = (prop: string) => /^(color|font-|text-align|line-height|letter-spacing|background|border)/.test(prop);
+const partager = (props: Record<string, string>) => {
+  const visuels: Record<string, string> = {}, autres: Record<string, string> = {};
+  for (const [k, v] of Object.entries(props)) (estVisuel(k) ? visuels : autres)[k] = v;
+  return { visuels, autres };
+};
+
 function flattenStyleKebab(style?: Omit<BlockStyleOverrides, "responsive" | "customClass" | "visibility" | "width">): Record<string, string> {
   if (!style) return {};
   const out: Record<string, string> = {};
@@ -44,7 +56,7 @@ function flattenStyleKebab(style?: Omit<BlockStyleOverrides, "responsive" | "cus
   if (style.typography?.interligne) out["line-height"] = style.typography.interligne;
   if (style.typography?.espacement) out["letter-spacing"] = style.typography.espacement;
   if (style.border?.radius) out["border-radius"] = style.border.radius;
-  if (style.border?.width && style.border?.color) out["border"] = `${style.border.width} solid ${style.border.color}`;
+  if (style.border?.width) out["border"] = `${style.border.width} solid ${style.border.color || "currentColor"}`;
   return out;
 }
 
@@ -54,8 +66,8 @@ function flattenStyleKebab(style?: Omit<BlockStyleOverrides, "responsive" | "cus
 // surcharges tablette/mobile ne peuvent pas passer par du style inline
 // (spécificité trop forte pour être re-surchargées par une media query) —
 // voir blockResponsiveCss.
-export function blockStyleToCss(style?: BlockStyleOverrides): CSSProperties {
-  const flat = flattenStyleKebab(style);
+export function blockStyleToCss(style?: BlockStyleOverrides, cible = false): CSSProperties {
+  const flat = cible ? partager(flattenStyleKebab(style)).autres : flattenStyleKebab(style);
   const css: CSSProperties = {};
   if (flat["padding-top"]) css.paddingTop = flat["padding-top"];
   if (flat["padding-bottom"]) css.paddingBottom = flat["padding-bottom"];
@@ -103,26 +115,30 @@ function cssTextFromKebab(props: Record<string, string>): string {
 // BuilderCanvas). Ciblée par attribut ([data-axs-id]) pour rester scopée à
 // ce seul nœud sans avoir besoin d'une classe dédiée. `!important` requis :
 // la base desktop est un style inline (spécificité imbattable autrement).
-export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides): string {
+export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides, cible = false): string {
   if (!style) return "";
   const rules: string[] = [];
   const selector = `[data-axs-id="${nodeId}"]`;
+  const selCible = `${selector} [data-axs-cible]`;
+  // Réglages visuels de l'appareil : sur l'élément affiché (bloc simple) ou sur l'enveloppe.
+  const regle = (props: Record<string, string>, enveloppe = (css: string) => css) => {
+    const { visuels, autres } = cible ? partager(props) : { visuels: {}, autres: props };
+    if (Object.keys(autres).length) rules.push(enveloppe(`${selector}{${cssTextFromKebab(autres)}}`));
+    if (Object.keys(visuels).length) rules.push(enveloppe(`${selCible}{${cssTextFromKebab(visuels)}}`));
+  };
+  if (cible) regle(partager(flattenStyleKebab(style)).visuels);
 
   const tabletProps = flattenStyleKebab(style.responsive?.tablet);
   if (style.responsive?.tablet?.width) { tabletProps["flex-basis"] = style.responsive.tablet.width; tabletProps["flex-grow"] = "0"; tabletProps["flex-shrink"] = "0"; }
-  if (Object.keys(tabletProps).length) {
-    rules.push(`@container (max-width:${BREAKPOINT_TABLET_MAX}){${selector}{${cssTextFromKebab(tabletProps)}}}`);
-  }
+  regle(tabletProps, (css) => `@container (max-width:${BREAKPOINT_TABLET_MAX}){${css}}`);
 
   const mobileProps = flattenStyleKebab(style.responsive?.mobile);
   if (style.responsive?.mobile?.width) { mobileProps["flex-basis"] = style.responsive.mobile.width; mobileProps["flex-grow"] = "0"; mobileProps["flex-shrink"] = "0"; }
-  if (Object.keys(mobileProps).length) {
-    rules.push(`@container (max-width:${BREAKPOINT_MOBILE_MAX}){${selector}{${cssTextFromKebab(mobileProps)}}}`);
-  }
+  regle(mobileProps, (css) => `@container (max-width:${BREAKPOINT_MOBILE_MAX}){${css}}`);
 
   // Survol : couleurs de texte/fond ; !important pour passer devant le style inline.
   const survol = [style.hover?.color && `color:${style.hover.color} !important;`, style.hover?.background && `background:${style.hover.background} !important;`].filter(Boolean).join("");
-  if (survol) rules.push(`${selector}:hover{${survol}}`);
+  if (survol) rules.push(`${cible ? selCible : selector}:hover{${survol}}`);
 
   const vis = style.visibility;
   if (vis?.desktop === false) rules.push(`@container (min-width:${parseInt(BREAKPOINT_TABLET_MAX) + 1}px){${selector}{display:none !important;}}`);

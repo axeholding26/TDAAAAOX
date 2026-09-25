@@ -136,10 +136,3 @@ export const HIGGSFIELD_VIDEO_MODELS = [
   { id: "minimax-02",    nom: "MiniMax Hailuo 02", type: "video", qualite: "high" },
   { id: "cinema-3.5",    nom: "Cinema Studio 3.5", type: "video", qualite: "cinematic" },
 ];
-
-export const HIGGSFIELD_IMAGE_MODELS = [
-  { id: "recraft-4.1",   nom: "Recraft 4.1",    type: "image" },
-  { id: "gpt-image",     nom: "GPT Image",       type: "image" },
-  { id: "seedream-4.0",  nom: "Seedream 4.0",    type: "image" },
-  { id: "wan-2.5",       nom: "Wan 2.5",         type: "image" },
-];

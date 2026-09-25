@@ -18,7 +18,8 @@ const OWASP_HEADERS = [
       "media-src 'self' blob: https:",
       "connect-src 'self' https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "frame-src 'self' https://www.openstreetmap.org",
+      // Lecteurs vidéo intégrés (blocs Vidéo) — sans eux : « Ce contenu est bloqué ».
+      "frame-src 'self' https://www.openstreetmap.org https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com",
       "frame-ancestors 'self'",
     ].join("; "),
   },

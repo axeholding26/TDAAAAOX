@@ -84,6 +84,18 @@ export function appliquerContenu(el: Element, patch: Partial<Pick<InfoElement, "
   if (patch.placeholder != null) el.setAttribute("placeholder", patch.placeholder);
 }
 
+/** Racine unique du HTML d'une section (identifiant posé si besoin) ; null s'il y en a plusieurs. */
+export function racineElement(html: string): { html: string; id: string } | null {
+  const doc = parser(html);
+  const racine = doc.body.children.length === 1 ? doc.body.firstElementChild : null;
+  if (!racine) return null;
+  const id = racine.getAttribute(ATTR_EL);
+  if (id) return { html, id };
+  const neuf = genElId();
+  racine.setAttribute(ATTR_EL, neuf);
+  return { html: doc.body.innerHTML, id: neuf };
+}
+
 /**
  * Parent de l'élément `id`, en lui posant un identifiant si besoin. `null` si
  * le parent est la racine de la section (on sélectionne alors la section).

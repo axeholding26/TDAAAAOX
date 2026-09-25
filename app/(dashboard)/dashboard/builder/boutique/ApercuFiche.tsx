@@ -70,6 +70,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
                 certifie: !!tenant?.certifie, accent: c.accent, fond: c.fond, texte: c.texte, surface: c.surface, radius: config.radius,
                 whatsapp: tenant?.whatsapp ?? null, whatsappNumero: tenant?.whatsappNumero ?? null,
                 productPage: config.productPage ?? null, layout: config.layout ?? null, boutons: config.boutons ?? null,
+                boutiqueDigitale: config.modeBoutique === "digital",
               }}
             />
           </Suspense>
