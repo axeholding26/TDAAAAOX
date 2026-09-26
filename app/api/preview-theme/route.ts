@@ -15,7 +15,7 @@ function toKey(nom: string, i: number) {
   return "p" + i + "_" + nom.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
 }
 
-// Remplace `const PRODUCTS = { … };` en comptant les accolades (le regex
+// Repère la fin de `const PRODUCTS = { … };` (on y ajoute les vrais produits) en comptant les accolades (le regex
 // échouait sur les objets multi-niveaux ou avec des lookaheads instables).
 function replacePRODUCTS(html: string, newDef: string): string {
   const start = html.indexOf("const PRODUCTS");
@@ -31,7 +31,7 @@ function replacePRODUCTS(html: string, newDef: string): string {
   // sauter le `;` et les espaces / sauts de ligne qui suivent
   let end = i + 1;
   while (end < html.length && (html[end] === ";" || html[end] === "\n" || html[end] === "\r" || html[end] === " ")) end++;
-  return html.slice(0, start) + newDef + "\n" + html.slice(end);
+  return html.slice(0, end) + newDef + "\n" + html.slice(end); // après le catalogue d'origine, conservé
 }
 
 // Même approche pour `function fmt(n){…}` (peut être multi-lignes).
@@ -82,15 +82,19 @@ export async function GET(request: Request) {
   // Construire l'objet PRODUCTS en JS compatible avec tous les templates
   const productEntries = produits.slice(0, 9).map((p, i) => {
     const key = toKey(p.nom, i);
-    const safeNom = p.nom.replace(/'/g, "\\'").replace(/\\/g, "\\\\");
-    const safeDesc = (p.description || p.nom).replace(/'/g, "\\'").replace(/\\/g, "\\\\");
-    return `${key}:{name:'${safeNom}',price:${p.prix},was:null,cat:'all',tone:'t1',metal:'',stone:'',desc:'${safeDesc}',sizes:[],colors:['#888']}`;
+    // Valeurs venues de l'URL : chaînes via JSON (apostrophes, « </script> »…), prix forcé en nombre —
+    // sinon « d'été » cassait le script, et une URL fabriquée pouvait y injecter du code.
+    const js = (v: unknown) => JSON.stringify(String(v ?? "")).replace(/</g, "\\u003c");
+    return `${key}:Object.assign({},__modele,{name:${js(p.nom)},price:${Number(p.prix) || 0},was:null,desc:${js(p.description || p.nom)}})`;
   });
 
   const keys = produits.slice(0, 9).map((p, i) => toKey(p.nom, i));
   const homeKeys = keys.slice(0, 3);
 
-  const injectedProducts = `const PRODUCTS = {\n  ${productEntries.join(",\n  ")}\n};`;
+  // Ajoutés au catalogue de démonstration du design (jamais à sa place) : ses
+  // autres références (produit mis en avant…) restent valides, et chaque vrai
+  // produit hérite des champs visuels propres au design (fond, motif…).
+  const injectedProducts = `const __modele = Object.values(PRODUCTS)[0] || {};\nObject.assign(PRODUCTS, {\n  ${productEntries.join(",\n  ")}\n});`;
 
   // Override renderHomeGrid et renderBoutiqueGrid pour utiliser les vrais ids
   const gridOverride = `
@@ -107,15 +111,12 @@ function renderBoutiqueGrid(){
 }`;
 
   // Override fmt pour utiliser la bonne devise
-  const safeDev = devise.replace(/'/g, "");
+  const safeDev = /^[A-Z]{3}$/.test(devise) ? devise : "XAF"; // code devise uniquement : rien d'autre n'entre dans le script
   const fmtOverride = `function fmt(n){ return n.toLocaleString('fr-FR') + ' ${safeDev}'; }`;
 
   // Injection du nom dans la balise logo (regex tolérante)
   const safeNom = nom.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  html = html.replace(
-    /(<[^>]+class="[^"]*\blogo\b[^"]*"[^>]*>)[^<]*/g,
-    `$1${safeNom}`
-  );
+  html = html.replace(/(<[^>]+class="[^"]*\blogo\b[^"]*"[^>]*>)[^<]*/g, (_m, balise: string) => balise + safeNom);
 
   // Remplacer le bloc PRODUCTS existant (comptage d'accolades)
   html = replacePRODUCTS(html, injectedProducts);

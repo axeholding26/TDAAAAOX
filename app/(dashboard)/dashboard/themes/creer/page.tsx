@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, FileCode, Loader2, Wand2 } from "lucide-react";
+import { ApercuDesign, parametresApercu, CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
 
 type Mode = "librairie" | "import";
 
@@ -14,13 +15,19 @@ export default function CreerThemePage() {
   const [librairie, setLibrairie] = useState<any[]>([]);
   const [provisionnant, setProvisionnant] = useState<string | null>(null);
 
+  const [params, setParams] = useState("");
   useEffect(() => {
     fetch("/api/themes").then((r) => r.json()).then((d) => {
       setLibrairie((d.themes || []).filter((t: any) => t.axsoDesign));
     });
+    // Aperçus avec les vrais nom, devise et produits de la boutique.
+    Promise.all([fetch("/api/tenants/moi").then((r) => r.json()), fetch("/api/produits?limit=6").then((r) => r.json())])
+      .then(([t, p]) => setParams(parametresApercu(t.tenant, (p.produits ?? []).map((x: any) => ({ nom: x.nom, prix: x.prix, description: x.description ?? "" })))))
+      .catch(() => {});
   }, []);
 
   async function utiliserDesignLibrairie(fichier: string, nom: string) {
+    if (!confirm(CONFIRMER_CHANGEMENT(nom))) return;
     setProvisionnant(fichier);
     try {
       const res = await fetch("/api/themes/provisionner", {
@@ -44,27 +51,25 @@ export default function CreerThemePage() {
 
   async function importerDepuisFichier() {
     if (!importFile) { toast.error("Choisissez un fichier .html à analyser"); return; }
+    if (importFile.size > 300_000) { toast.error("Fichier trop volumineux (300 Ko maximum)."); return; }
+    if (!confirm(CONFIRMER_CHANGEMENT(importFile.name))) return;
     setImporting(true);
     try {
-      const fd = new FormData();
-      fd.append("file", importFile);
-      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
-      const upData = await upRes.json();
-      if (!upRes.ok) throw new Error(upData.error || "Échec de l'envoi du fichier");
-
+      // Le HTML est lu ici et envoyé tel quel : pas de passage par le stockage de fichiers.
       const res = await fetch("/api/themes/importer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: upData.url }),
+        body: JSON.stringify({ html: await importFile.text() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Échec de l'analyse du fichier");
 
-      await fetch("/api/tenants", {
+      const activation = await fetch("/api/tenants", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ themeId: data.theme.id }),
       });
+      if (!activation.ok) throw new Error("Thème créé, mais son activation a échoué — active-le depuis « Mes thèmes ».");
       toast.success("Thème créé à partir de votre design !");
       router.push("/dashboard/themes");
     } catch (e: any) {
@@ -75,7 +80,7 @@ export default function CreerThemePage() {
   }
 
   return (
-    <div className="flex flex-col bg-gray-50 overflow-hidden h-screen -m-6">
+    <div className="flex-1 min-h-0 flex flex-col bg-gray-50 overflow-hidden">
       {/* Header */}
       <header className="h-14 flex items-center gap-3 px-4 bg-white border-b border-gray-200 flex-shrink-0 z-10">
         <button onClick={() => router.push("/dashboard/themes")}
@@ -99,17 +104,13 @@ export default function CreerThemePage() {
       {mode === "librairie" ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
           <p className="text-xs text-gray-500 mb-4 max-w-2xl">
-            15 designs prêts à l'emploi, pensés pour différents univers. En choisir un crée
-            immédiatement une boutique avec vos vrais produits déjà branchés dans la grille.
+            {librairie.length} designs choisis pour votre boutique. En choisir un remplace votre design
+            actuel, avec vos vrais produits déjà branchés dans la grille.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl">
             {librairie.map((t) => (
               <div key={t.id} className="rounded-2xl border-2 border-gray-200 bg-white overflow-hidden hover:border-gray-300 transition-all">
-                <div className="h-24 flex items-center justify-center gap-1.5 p-4" style={{ backgroundColor: t.config?.colors?.fond }}>
-                  {[t.config?.colors?.accent, t.config?.colors?.texte, t.config?.colors?.surface].map((c, i) => (
-                    <div key={i} className="w-6 h-6 rounded-full border border-black/10" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
+                <ApercuDesign fichier={t.fichier} fond={t.config?.colors?.fond} params={params} className="h-44" />
                 <div className="p-3.5">
                   <p className="text-sm font-bold text-gray-800">{t.nom}</p>
                   <p className="text-[11px] text-gray-400 mb-3 leading-snug">{t.description}</p>

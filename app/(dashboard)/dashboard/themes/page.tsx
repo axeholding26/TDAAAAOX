@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
+import { ApercuDesign, parametresApercu, fichierDuTheme, CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import {
   Plus, Palette, Trash2, Edit2, ExternalLink,
@@ -32,14 +33,17 @@ export default function ThemesPage() {
   const [loading, setLoading] = useState(true);
   const [activating, setActivating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [params, setParams] = useState(""); // aperçus avec les vrais nom, devise et produits
 
   useEffect(() => {
     Promise.all([
       fetch("/api/themes").then((r) => r.json()),
       fetch("/api/tenants/moi").then((r) => r.json()),
-    ]).then(([td, te]) => {
+      fetch("/api/produits?limit=6").then((r) => r.json()).catch(() => ({})),
+    ]).then(([td, te, pr]) => {
       setThemes(td.themes || []);
       setTenant(te.tenant);
+      setParams(parametresApercu(te.tenant, (pr.produits ?? []).map((x: any) => ({ nom: x.nom, prix: x.prix, description: x.description ?? "" }))));
       setLoading(false);
     });
   }, []);
@@ -47,6 +51,7 @@ export default function ThemesPage() {
   // Thèmes perso (import manuel ou anciens thèmes créés avant la bibliothèque) —
   // un Theme existe déjà, on ne fait qu'assigner directement son id.
   async function activerCustom(id: string) {
+    if (!confirm(CONFIRMER_CHANGEMENT(themes.find((t) => t.id === id)?.nom || "ce thème"))) return;
     setActivating(id);
     try {
       await fetch("/api/tenants", {
@@ -68,6 +73,7 @@ export default function ThemesPage() {
   // crée un vrai Theme propre à CE tenant (vos produits déjà branchés dans
   // la grille) — voir app/api/themes/provisionner.
   async function activerLibrairie(fichier: string, nom: string) {
+    if (!confirm(CONFIRMER_CHANGEMENT(nom))) return;
     setActivating(fichier);
     try {
       const res = await fetch("/api/themes/provisionner", {
@@ -92,7 +98,8 @@ export default function ThemesPage() {
 
   function isLibrairieActive(fichier: string) {
     const actif = themes.find((t) => t.id === tenant?.themeId);
-    return !!actif && typeof actif.slug === "string" && actif.slug.startsWith(`axso-design-${fichier}-`);
+    // Slug posé au provisionnement : « axso-design-<fichier sans .html>-<horodatage> » (lib/axso-design-library.ts).
+    return !!actif && typeof actif.slug === "string" && actif.slug.startsWith(`axso-design-${fichier.replace(/\.html$/, "")}-`);
   }
 
   async function supprimer(id: string) {
@@ -190,6 +197,8 @@ export default function ThemesPage() {
                 actif={isLibrairieActive(t.fichier)}
                 activating={activating === t.fichier}
                 onActivate={() => activerLibrairie(t.fichier, t.nom)}
+                fichier={t.fichier}
+                params={params}
               />
             ))}
           </div>
@@ -212,7 +221,9 @@ export default function ThemesPage() {
                   activating={activating === t.id}
                   deleting={deleting === t.id}
                   onActivate={() => activerCustom(t.id)}
-                  onDelete={() => supprimer(t.id)}
+                  onDelete={tenant?.themeId === t.id ? undefined : () => supprimer(t.id)} // jamais le thème actif : la boutique n'en aurait plus
+                  fichier={fichierDuTheme(t.slug)}
+                  params={params}
                 />
               ))}
             </div>
@@ -229,7 +240,7 @@ function ThemePreview({ colors, radius }: { colors: ThemeColors; radius: string 
   const rSm = `${Math.min(r, 8)}px`;
   const rMd = `${Math.min(r, 12)}px`;
   return (
-    <div className="h-48 sm:h-full min-h-[160px] p-3 flex flex-col gap-2" style={{ backgroundColor: colors.fond }}>
+    <div className="h-48 p-3 flex flex-col gap-2" style={{ backgroundColor: colors.fond }}>
       {/* Navbar */}
       <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: colors.surface, borderRadius: rSm }}>
         <div className="h-2 w-14 rounded" style={{ backgroundColor: colors.accent, borderRadius: "4px" }} />
@@ -264,11 +275,12 @@ function ThemePreview({ colors, radius }: { colors: ThemeColors; radius: string 
 
 // ─── Carte simple (thèmes custom) ────────────────────────────────────────────
 function SimpleThemeCard({
-  theme, actif, activating, deleting, onActivate, onEdit, onDelete,
+  theme, actif, activating, deleting, onActivate, onEdit, onDelete, fichier, params,
 }: {
   theme: any; actif: boolean; activating: boolean;
   deleting?: boolean; onActivate: () => void; onEdit?: () => void;
   onDelete?: () => void;
+  fichier?: string | null; params?: string; // design AXSO : vrai aperçu au lieu de la vignette schématique
 }) {
   const colors: ThemeColors = {
     fond:    theme.config?.colors?.fond    || "#fff8f0",
@@ -279,7 +291,7 @@ function SimpleThemeCard({
 
   return (
     <div className={`rounded-2xl border-2 overflow-hidden transition-all ${actif ? "border-[#F5A623] shadow-lg shadow-[#F5A623]/15" : "border-gray-200 hover:border-gray-300"}`}>
-      <ThemePreview colors={colors} radius={theme.config?.radius || "12px"} />
+      {fichier ? <ApercuDesign fichier={fichier} fond={colors.fond} params={params} /> : <ThemePreview colors={colors} radius={theme.config?.radius || "12px"} />}
       <div className="bg-white p-3.5">
         <div className="flex items-center justify-between mb-1">
           <p className="text-sm font-semibold text-gray-800">{theme.nom}</p>

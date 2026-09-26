@@ -263,6 +263,17 @@ export default function BuilderPage() {
     } finally { setPublishing(false); }
   }, [handleSave, hasChanges, refetchTenant]);
 
+  // Dépublier : la boutique passe « en pause » (même statut que l'interrupteur
+  // de Ma boutique) — invisible pour le public, republiable d'un clic.
+  const depublierBoutique = useCallback(async () => {
+    if (!confirm("Dépublier ta boutique ?\n\nElle ne sera plus visible en ligne tant que tu ne la republies pas. Tes produits, commandes et réglages sont conservés.")) return;
+    setPublishing(true);
+    try {
+      const res = await fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: "pause" }) });
+      if (res.ok) await refetchTenant();
+    } finally { setPublishing(false); }
+  }, [refetchTenant]);
+
   const sauvegarderInfos = useCallback(async () => {
     setSavingInfos(true);
     try {
@@ -360,7 +371,7 @@ export default function BuilderPage() {
       <DigitalBuilder
         tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
         handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
-        publier={publierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
+        publier={publierBoutique} depublier={depublierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
         panneauxPages={{
           produit: <PanelProduit config={config} setProductPage={setProductPage} />,
           apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
@@ -387,6 +398,7 @@ export default function BuilderPage() {
           saved={saved}
           hasChanges={!!hasChanges}
           publier={publierBoutique}
+          depublier={depublierBoutique}
           publishing={publishing}
           criteresManquants={criteresManquants}
           bandeaux={bandeaux}

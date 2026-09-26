@@ -21,7 +21,10 @@ import { construireTemplateBoutique } from "@/lib/theme-import-clone";
 const TAILLE_MAX_HTML = 300_000; // 300 Ko — au-delà, prompt trop volumineux
 const HEX_REGEX = /^#[0-9a-fA-F]{6}$/;
 
-const bodySchema = z.object({ url: z.string().url() });
+// Le HTML est envoyé tel quel par la page (lu dans le navigateur) : plus de
+// passage par le stockage de fichiers, et le serveur n'ouvre jamais une
+// adresse fournie par le client (évite qu'il serve à interroger autre chose).
+const bodySchema = z.object({ html: z.string().min(1) });
 
 export async function POST(req: NextRequest) {
   try {
@@ -32,17 +35,16 @@ export async function POST(req: NextRequest) {
 
     const parsedBody = bodySchema.safeParse(await req.json());
     if (!parsedBody.success) {
-      return NextResponse.json({ error: "URL de fichier invalide" }, { status: 400 });
+      return NextResponse.json({ error: "Fichier HTML vide ou invalide" }, { status: 400 });
     }
 
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
-    const fichierRes = await fetch(parsedBody.data.url);
-    if (!fichierRes.ok) {
-      return NextResponse.json({ error: "Impossible de récupérer le fichier envoyé" }, { status: 400 });
+    const htmlBrut = parsedBody.data.html;
+    if (!/<(html|body|div|section|header|main)\b/i.test(htmlBrut)) {
+      return NextResponse.json({ error: "Ce fichier ne ressemble pas à une page HTML." }, { status: 400 });
     }
-    const htmlBrut = await fichierRes.text();
     if (htmlBrut.length > TAILLE_MAX_HTML) {
       return NextResponse.json({ error: "Ce fichier est trop volumineux pour être analysé (max 300 Ko)." }, { status: 400 });
     }

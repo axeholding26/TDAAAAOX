@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { PCOnlyGate } from "@/components/dashboard/PCOnlyGate";
-import { ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, Check, Rocket, LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight, Rows, Columns } from "lucide-react";
+import { ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, Check, Rocket, EyeOff, LayoutTemplate, Palette, Type, Square, LayoutGrid, ArrowUpDown, ToggleLeft, ToggleRight, Rows, Columns } from "lucide-react";
 import type { ThemeConfig, ThemeDigitalConfig } from "@/lib/theme-config";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { FONTS } from "@/lib/theme-fonts";
@@ -52,6 +52,7 @@ interface Props {
   saved: boolean;
   hasChanges: boolean | null;
   publier: () => void;
+  depublier: () => void; // boutique en ligne → en pause (invisible au public)
   publishing: boolean;
   criteresManquants: { label: string }[];
   bandeaux: React.ReactNode; // infos manquantes pour publier (partagé avec le constructeur boutique)
@@ -59,7 +60,7 @@ interface Props {
   panneauxPages: Partial<Record<PageEditee, React.ReactNode>>;
 }
 
-export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, publishing, criteresManquants, bandeaux, panneauxPages }: Props) {
+export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, depublier, publishing, criteresManquants, bandeaux, panneauxPages }: Props) {
   const [device, setDevice] = useState<Device>("desktop");
   // Page de la boutique en cours d'édition — même sélecteur que le Constructeur physique.
   const [page, setPage] = useState<PageEditee>("accueil");
@@ -151,6 +152,8 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           <div className="h-4 w-px bg-gray-100" />
           <span className="text-sm text-gray-800 font-medium truncate max-w-32">{tenant.nomBoutique}</span>
           {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon</span>}
+          {tenant.statut === "pause" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">Hors ligne</span>}
+          {tenant.statut === "active" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">En ligne</span>}
           {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">Modifié</span>}
         </div>
         <SelecteurPage page={page} onChange={(pg) => { setPage(pg); setSelectedEl(null); }} labelAccueil="Accueil de la boutique" />
@@ -163,7 +166,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
               </button>
             ))}
           </div>
-          {tenant.statut === "brouillon" ? (
+          {tenant.statut !== "active" ? (
             <button onClick={publier} disabled={publishing || criteresManquants.length > 0}
               title={criteresManquants.length ? `Complète d'abord : ${criteresManquants.map((c) => c.label).join(", ")}` : "Rendre ma boutique visible en ligne"}
               className="h-9 flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
@@ -171,9 +174,12 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
               {publishing ? "Publication…" : "Publier"}
             </button>
           ) : (
-            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-1.5 h-9 px-3 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-300 transition-all">
-              <ExternalLink size={13} /> Visiter ma boutique
-            </a>
+            // « Voir la boutique » est dans la barre en dessous (Prévisualisation) — ici, la retirer de la vente.
+            <button onClick={depublier} disabled={publishing} title="Retirer la boutique de la vente en ligne"
+              className="h-9 flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 transition-colors">
+              {publishing ? <RefreshCw size={14} className="animate-spin" /> : <EyeOff size={14} />}
+              {publishing ? "…" : "Dépublier"}
+            </button>
           )}
         </div>
       </header>
@@ -183,7 +189,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
       {/* Barre secondaire — Prévisualisation / Réinitialiser / Enregistrer,
           au-dessus de l'aperçu, comme la référence Chariow. */}
       <div className="h-14 flex items-center justify-end gap-2 px-4 bg-white border-b border-gray-200 flex-shrink-0">
-        {tenant.statut !== "brouillon" && (
+        {tenant.statut === "active" && (
           <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
             <ExternalLink size={13} /> Prévisualisation
           </a>

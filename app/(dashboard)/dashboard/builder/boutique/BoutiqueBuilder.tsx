@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { LogOut, LayoutList, Settings2, LayoutTemplate, Monitor, Tablet, Smartphone, Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, ChevronRight, ArrowLeft, type LucideIcon } from "lucide-react";
+import { LogOut, LayoutList, Settings2, LayoutTemplate, Monitor, Tablet, Smartphone, Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, EyeOff, ChevronRight, ArrowLeft, type LucideIcon } from "lucide-react";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import {
   ZONES, zoneDe, ordonnerParZone, insertNode, moveNode, removeNode, duplicateNode, toggleNodeActif,
@@ -48,6 +48,7 @@ interface Props {
   saved: boolean;
   hasChanges: boolean;
   publier: () => void;
+  depublier: () => void; // boutique en ligne → en pause (invisible au public)
   publishing: boolean;
   criteresManquants: { label: string }[];
   bandeaux: ReactNode;
@@ -204,9 +205,11 @@ export function BoutiqueBuilder(p: Props) {
             <LayoutTemplate size={16} className="text-[#777777] flex-shrink-0" />
             {design?.nom ?? "Mon thème"}
           </span>
-          {tenant.statut === "brouillon"
-            ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">Brouillon</span>
-            : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">Actif</span>}
+          {tenant.statut === "active"
+            ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">En ligne</span>
+            : tenant.statut === "brouillon"
+              ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">Brouillon</span>
+              : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#F3F4F6] text-[#4B5563]">Hors ligne</span>}
           <span className="w-px h-5 bg-[#E5E5E5]" />
           <SelecteurPage page={page} onChange={setPage} />
         </div>
@@ -225,7 +228,7 @@ export function BoutiqueBuilder(p: Props) {
           </div>
           <BoutonBarre titre="Annuler (Ctrl+Z)" onClick={p.undo} disabled={!p.peutAnnuler}><Undo2 size={17} /></BoutonBarre>
           <BoutonBarre titre="Rétablir (Ctrl+Y)" onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={17} /></BoutonBarre>
-          {tenant.statut !== "brouillon" && (
+          {tenant.statut === "active" && (
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" title="Voir la boutique" aria-label="Voir la boutique"
               className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
               <ExternalLink size={17} />
@@ -237,7 +240,13 @@ export function BoutiqueBuilder(p: Props) {
             {p.saving ? <RefreshCw size={15} className="animate-spin" /> : p.saved ? <Check size={15} /> : <Save size={15} />}
             {p.saving ? "Enregistrement…" : p.saved ? "Enregistré" : "Enregistrer"}
           </button>
-          {tenant.statut === "brouillon" && (
+          {tenant.statut === "active" ? (
+            <button onClick={p.depublier} disabled={p.publishing} title="Retirer la boutique de la vente en ligne"
+              className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold border border-[#E5E5E5] text-[#444444] hover:border-[#FCA5A5] hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-40 transition-colors">
+              {p.publishing ? <RefreshCw size={15} className="animate-spin" /> : <EyeOff size={15} />}
+              {p.publishing ? "…" : "Dépublier"}
+            </button>
+          ) : (
             <button onClick={p.publier} disabled={p.publishing || p.criteresManquants.length > 0}
               title={p.criteresManquants.length ? `Complète d'abord : ${p.criteresManquants.map((c) => c.label).join(", ")}` : undefined}
               className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">

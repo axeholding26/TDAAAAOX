@@ -16,6 +16,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { MediaUpload } from "@/components/ui/MediaUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
+import { CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
@@ -819,6 +820,8 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
   }
 
   async function appliquer(fichier: string) {
+    const nom = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.nom ?? fichier;
+    if (!confirm(CONFIRMER_CHANGEMENT(nom))) return;
     setApplying(fichier);
     setErreur(null);
     try {
