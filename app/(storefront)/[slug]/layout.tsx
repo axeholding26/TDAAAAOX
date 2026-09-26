@@ -9,6 +9,7 @@ import { PanierVitrine } from "@/components/storefront/PanierVitrine";
 import { FiltresCatalogue } from "@/components/storefront/FiltresCatalogue";
 import { RechercheDesign } from "@/components/storefront/RechercheDesign";
 import { NavigationDesign } from "@/components/storefront/NavigationDesign";
+import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
 import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
@@ -52,8 +53,8 @@ export default async function StorefrontLayout({ children, params }: Props) {
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const accent = cfg.colors?.accent ?? "#F5A623";
   // Design importé + panneau « Boutons et navigation » modifié : favoris, mega menu, en-tête transparent.
-  const nav = cfg.builderCss && cfg.reglagesDesign?.navigation ? cfg.navigationStyle : undefined;
-  const navDesign = nav && (nav.showWishlist || nav.type === "mega" || nav.type === "transparent-scroll") ? nav : undefined;
+  const navDesign = cfg.builderCss && cfg.reglagesDesign?.navigation ? cfg.navigationStyle : undefined;
+  const animDesign = cfg.builderCss && cfg.reglagesDesign?.animations ? cfg.animations : undefined;
   const collectionsMega = navDesign?.type === "mega"
     ? await prisma.collection.findMany({ where: { tenantId: tenant.id, actif: true }, select: { slug: true, nom: true, imageUrl: true }, orderBy: { createdAt: "asc" }, take: 12 })
     : [];
@@ -77,6 +78,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
         <NavigationDesign slug={slug} type={navDesign.type} favoris={!!navDesign.showWishlist} collections={collectionsMega}
           fondEntete={navDesign.style === "dark" ? "#111111" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
       )}
+      {animDesign && <AnimationsDesign animations={animDesign} />}
       {!apercu && (
         <>
           <StorefrontPageView slug={slug} />

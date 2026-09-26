@@ -1609,7 +1609,7 @@ function FCheck({ label, checked, onChange }: { label: string; checked: boolean;
   return (
     <div className="flex items-center justify-between py-1">
       <span className="text-sm text-gray-600">{label}</span>
-      <button onClick={()=>onChange(!checked)}>
+      <button role="switch" aria-checked={checked} aria-label={label} onClick={()=>onChange(!checked)}>
         {checked ? <ToggleRight size={18} style={{color:"#F5A623"}} /> : <ToggleLeft size={18} className="text-gray-600" />}
       </button>
     </div>

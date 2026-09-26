@@ -44,43 +44,35 @@ function cssBoutons(b: NonNullable<Cfg["boutons"]>, c: Couleurs): string {
 
 function cssNavigation(n: NonNullable<Cfg["navigationStyle"]>, c: Couleurs): string {
   const r: string[] = [];
+  // L'en-tête des designs est une rangée flex (logo · menu · actions) : on n'y
+  // touche jamais (display/direction), seulement fond, couleurs et hauteur.
   const apparence: Record<string, string> = {
-    light: `background:#FFFFFF!important;color:#111111!important;`,
-    dark: `background:#111111!important;color:#FFFFFF!important;`,
-    glass: `background:${c.fond || "#FFFFFF"}B3!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);`,
-    transparent: `background:transparent!important;box-shadow:none!important;`,
+    light: `header{background:#FFFFFF!important;color:#111111!important;border-bottom:1px solid rgba(0,0,0,.08)!important}`,
+    dark: `header{background:#111111!important;color:#FFFFFF!important;border-bottom-color:rgba(255,255,255,.08)!important}`,
+    glass: `header{background:${c.fond || "#FFFFFF"}B8!important;backdrop-filter:blur(14px) saturate(1.4)!important;-webkit-backdrop-filter:blur(14px) saturate(1.4)!important}`,
+    transparent: `header{background:transparent!important;box-shadow:none!important;border-color:transparent!important;backdrop-filter:none!important}`,
   };
-  if (apparence[n.style || ""]) r.push(`header{${apparence[n.style!]}}header a{color:inherit!important}`);
-  if (n.hauteur) r.push(`header{min-height:${n.hauteur}!important;display:flex;flex-direction:column;justify-content:center}`);
-  if (n.type === "minimal") r.push(`header nav{display:none!important}`);
+  if (apparence[n.style || ""]) r.push(apparence[n.style!], `header :is(nav a, .logo, [class*="logo"]){color:inherit!important}`);
+  // Hauteur : celle de la rangée, contenu toujours centré verticalement (align-items du design).
+  if (n.hauteur) r.push(`header{min-height:${n.hauteur}!important;padding-top:0!important;padding-bottom:0!important;box-sizing:border-box!important}`);
+  // Minimal : logo + bouton menu ; les liens s'ouvrent en panneau sous l'en-tête (components/storefront/NavigationDesign.tsx).
+  if (n.type === "minimal") r.push(
+    `header nav{display:none!important}`,
+    `header[data-axs-menu-ouvert] nav{display:flex!important;flex-direction:column;gap:14px;position:absolute;top:100%;left:0;right:0;padding:18px 4vw;background:inherit;box-shadow:0 12px 24px rgba(0,0,0,.08);z-index:5}`,
+    `header{position:relative}`,
+  );
   if (n.showSearch === false) r.push(`[data-axs-recherche]{display:none!important}`);
   return r.join("");
 }
 
-const KEYFRAMES: Record<string, string> = {
-  "fade-in": `from{opacity:0}to{opacity:1}`,
-  "slide-up": `from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}`,
-  "slide-left": `from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}`,
-  "zoom-in": `from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}`,
-  flip: `from{opacity:0;transform:perspective(600px) rotateX(20deg)}to{opacity:1;transform:none}`,
-  "blur-in": `from{opacity:0;filter:blur(12px)}to{opacity:1;filter:none}`,
-};
-
+// Animations d'apparition : jouées par components/storefront/AnimationsDesign.tsx
+// (au défilement, rejouées dans l'aperçu à chaque réglage). Ici, le parallaxe :
+// le contenu de la bannière défile plus lentement que la page.
 function cssAnimations(a: NonNullable<Cfg["animations"]>): string {
-  const kf = KEYFRAMES[a.global || ""];
-  const r: string[] = [];
-  if (kf) {
-    const duree = a.vitesse === "fast" ? ".4s" : a.vitesse === "slow" ? ".9s" : ".6s";
-    const cibles = `section${a.stagger !== false ? `, [class*="grid"]:not([class*="foot"]) > *` : ""}`;
-    r.push(`@keyframes axs-apparition{${kf}}`);
-    // Apparition au défilement (Chrome, Edge, Safari récents) ; ailleurs au chargement.
-    r.push(`${cibles}{animation:axs-apparition ${duree} cubic-bezier(.16,1,.3,1) both}`);
-    r.push(`@supports (animation-timeline: view()){${cibles}{animation-timeline:view();animation-range:entry 0% entry 55%}}`);
-    if (a.stagger !== false) for (let i = 2; i <= 8; i++) r.push(`[class*="grid"]:not([class*="foot"]) > :nth-child(${i}){animation-delay:${(i - 1) * 70}ms}`);
-    r.push(`@media (prefers-reduced-motion: reduce){${cibles}{animation:none!important}}`);
-  }
-  if (a.parallax) r.push(`:is(section,div)[class*="hero"]{background-attachment:fixed!important}`);
-  return r.join("");
+  if (!a.parallax) return "";
+  return `@keyframes axs-parallaxe{to{transform:translateY(28%)}}`
+    + `@supports (animation-timeline: scroll()){:is(section,div)[class*="hero"] > *{animation:axs-parallaxe linear both;animation-timeline:scroll();animation-range:0 100vh}}`
+    + `@media (prefers-reduced-motion: reduce){:is(section,div)[class*="hero"] > *{animation:none!important}}`;
 }
 
 /** CSS à ajouter au design (portée [data-axs-embed-html]) — vide si aucun panneau touché. */

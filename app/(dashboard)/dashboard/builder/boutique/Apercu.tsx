@@ -11,6 +11,8 @@ import { zoneDe, type Zone } from "@/lib/block-tree";
 import { ProductsCanvasPreview } from "../canvas/CanvasNode";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
 import { StyleCss } from "@/components/storefront/StyleCss";
+import { NavigationDesign } from "@/components/storefront/NavigationDesign";
+import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { nomNoeud } from "./libelles";
 import { ATTR_EL, cibleSelectionnable, genElId, nomElement } from "./elements-dom";
 import { useSurvol, cssSelection } from "../SurvolApercu";
@@ -25,6 +27,7 @@ interface Props {
   config: ThemeConfig;
   tree: BlockNode[]; // déjà ordonné par zone
   slug: string;
+  collections: { slug: string; nom: string; imageUrl: string | null }[]; // mega menu
   device: Device;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
@@ -40,8 +43,13 @@ interface Props {
 // sur ses bords pour insérer une section juste avant/après. Pas de
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
-export function Apercu({ config, tree, slug, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer }: Props) {
+export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer }: Props) {
   const racine = useRef<HTMLDivElement>(null);
+  const defileur = useRef<HTMLDivElement>(null);
+  // Même comportement que sur la boutique (navigation, animations), sans rien écrire dans le HTML du design.
+  const reglages = (config as any).reglagesDesign ?? {};
+  const nav = config.builderCss && reglages.navigation ? config.navigationStyle ?? {} : null;
+  const apercuNav = useMemo(() => ({ racine: () => defileur.current }), []);
   const layout = config.layout ?? {};
   const ctx = useMemo(() => ({
     slug,
@@ -72,7 +80,12 @@ export function Apercu({ config, tree, slug, device, selectedId, onSelect, onCha
   return (
     // isolate : les z-index du design (en-tête collant à z-index 60…) restent
     // confinés à l'aperçu — sinon il passait par-dessus le menu des pages du Constructeur.
-    <div className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
+    <div ref={defileur} className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
+      {nav && (
+        <NavigationDesign slug={slug} type={nav.type} favoris={!!nav.showWishlist} collections={collections} apercu={apercuNav}
+          fondEntete={nav.style === "dark" ? "#111111" : nav.style === "light" ? "#FFFFFF" : config.colors.fond} accent={config.colors.accent} texte={nav.style === "dark" ? "#FFFFFF" : config.colors.texte} />
+      )}
+      {config.builderCss && reglages.animations && config.animations && <AnimationsDesign animations={config.animations} racine={() => defileur.current} />}
       <div
         ref={racine}
         onMouseMove={onMouseMove}

@@ -36,7 +36,11 @@ export async function GET() {
 
   // Le Constructeur en a besoin pour désactiver "Publier" tant que la
   // boutique n'a pas le minimum requis — voir lib/boutique-completion.ts.
-  const completion = await evaluerPublication(tenantId);
+  // Collections : mega menu dans l'aperçu du Constructeur.
+  const [completion, collections] = await Promise.all([
+    evaluerPublication(tenantId),
+    prisma.collection.findMany({ where: { tenantId, actif: true }, select: { slug: true, nom: true, imageUrl: true }, orderBy: { createdAt: "asc" }, take: 12 }),
+  ]);
 
-  return NextResponse.json({ ...tenant, activeThemeConfig, themeSlug, completion, designsOrigine });
+  return NextResponse.json({ ...tenant, activeThemeConfig, themeSlug, completion, designsOrigine, collections });
 }

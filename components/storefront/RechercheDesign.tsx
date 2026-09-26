@@ -11,9 +11,9 @@ import { formatMontant } from "@/lib/utils";
 // « Recherche(r) » sans action. Monté une fois par le layout de la vitrine
 // (comme PanierVitrine) : délégation de clic + icône loupe en CSS — le HTML
 // du design n'est jamais modifié (React le compare à l'hydratation).
-const SELECTEUR = "[data-axs-embed-html] a, [data-axs-embed-html] button";
-const estLienRecherche = (el: Element) => !el.getAttribute("href") && /^\s*recherche(r)?\s*$/i.test(el.textContent || "");
-const CSS_LIEN = () => `[data-axs-recherche]{cursor:pointer;display:inline-flex!important;align-items:center;gap:.4em}[data-axs-recherche]::before{content:"";width:1em;height:1em;flex-shrink:0;background:currentColor;-webkit-mask:${LOUPE} center/contain no-repeat;mask:${LOUPE} center/contain no-repeat}`;
+export const SELECTEUR = "[data-axs-embed-html] a, [data-axs-embed-html] button";
+export const estLienRecherche = (el: Element) => !el.getAttribute("href") && /^\s*recherche(r)?\s*$/i.test(el.textContent || "");
+export const CSS_LIEN = () => `[data-axs-recherche]{cursor:pointer;display:inline-flex!important;align-items:center;gap:.4em}[data-axs-recherche]::before{content:"";width:1em;height:1em;flex-shrink:0;background:currentColor;-webkit-mask:${LOUPE} center/contain no-repeat;mask:${LOUPE} center/contain no-repeat}`;
 const LOUPE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E")`;
 
 interface Resultat { id: string; nom: string; prix: number; image: string | null }

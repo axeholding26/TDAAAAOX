@@ -324,6 +324,7 @@ export function BoutiqueBuilder(p: Props) {
           config={config}
           tree={tree}
           slug={tenant.slug}
+          collections={tenant.collections ?? []}
           device={device}
           selectedId={selectedId}
           onSelect={setSelectedId}
