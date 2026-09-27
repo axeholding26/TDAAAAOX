@@ -2,6 +2,7 @@
 // Routage par sous-domaine ou domaine custom
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { slugPourDomaine } from "@/lib/domaines";
 
 const DOMAINE_APP = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "localhost:3000";
 
@@ -47,12 +48,15 @@ export async function proxy(request: NextRequest) {
     !estDomaineVercel;
 
   if (estSousDomaine || estDomainePropre) {
-    const slug = estSousDomaine
-      ? hostname.replace(`.${DOMAINE_APP}`, "")
-      : hostname;
+    // Domaine propre : le nom de domaine n'est PAS le slug — recherche en base
+    // (boutique publiée dont customDomain = ce domaine, cache 60 s, voir lib/domaines.ts).
+    const slug = estSousDomaine ? hostname.replace(`.${DOMAINE_APP}`, "") : await slugPourDomaine(hostname);
+    if (!slug) return new NextResponse("Aucune boutique n'est reliée à ce domaine.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 
+    // Les liens internes de la vitrine sont en /{slug}/… : déjà préfixés, on les sert tels quels.
+    if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) return NextResponse.next();
     const url = request.nextUrl.clone();
-    url.pathname = `/${slug}${pathname}`;
+    url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
   }
 

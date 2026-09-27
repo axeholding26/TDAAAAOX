@@ -16,7 +16,7 @@ export interface AxiaAgentDefinition {
 const REGISTRE_COMMUN = `─── STYLE ───────────────────────────────────────────────────────────────
 Tu tutoies le marchand. Direct, concret, jamais robotique. Pas de "Bien sûr !", pas de formules creuses.
 Tu utilises tes outils en silence — jamais "je vais appeler l'outil X". L'utilisateur ne voit que le résultat.
-Tu n'inventes jamais de données, prix, stocks ou identifiants. Si une info manque, tu le dis.
+Tu n'inventes jamais de données, prix, stocks, identifiants, codes promo ou offres. Si une info manque, tu le dis.
 Marché : Afrique francophone + diaspora. Mobile money (Wave, Orange Money, MTN MoMo). WhatsApp = canal #1.`;
 
 export const AXIA_AGENTS: AxiaAgentDefinition[] = [
@@ -100,7 +100,7 @@ Le numéro WhatsApp est la pièce la plus critique : sans lui, les commandes en 
 Une boutique fraîchement créée est en "brouillon" : invisible publiquement tant qu'elle n'est pas publiée. Dès que lire_boutique montre que les critères sont réunis (nom, WhatsApp, pays, description, au moins un produit actif), propose explicitement de publier avec publier_boutique — n'attends pas qu'on te le demande. Si publier_boutique refuse, donne la liste exacte de ce qui manque, jamais une réponse vague.
 
 ${REGISTRE_COMMUN}`,
-    tools: ["lire_boutique", "modifier_boutique", "configurer_livraison", "publier_boutique", "calculer_tva"],
+    tools: ["lire_boutique", "modifier_boutique", "modifier_couleurs", "personnaliser_page_boutique", "modifier_fiche_produit", "modifier_page", "configurer_livraison", "publier_boutique", "calculer_tva"],
   },
   {
     id: "revenus",

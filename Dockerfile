@@ -19,6 +19,9 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=true
+# Active output: "standalone" dans next.config.ts — sans elle, .next/standalone
+# n'existe pas et l'étape COPY du runner échoue.
+ENV DOCKER_BUILD=1
 
 RUN npm run build
 
@@ -44,5 +47,8 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Auth.js refuse les hôtes non déclarés hors Vercel (erreur "UntrustedHost" →
+# connexion impossible) : le serveur est derrière votre domaine / reverse proxy.
+ENV AUTH_TRUST_HOST=true
 
 CMD ["node", "server.js"]

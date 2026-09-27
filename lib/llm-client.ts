@@ -223,7 +223,8 @@ async function toGeminiContents(messages: any[]): Promise<{ systemInstruction: s
 
 // ─── Complétion simple (sans tool use) ────────────────────────────────────────
 
-export async function completionGemini(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
+// json = mode JSON contraint de Gemini : syntaxe garantie (un petit modèle se trompait sur les crochets d'un JSON imbriqué).
+export async function completionGemini(messages: ChatMessage[], maxTokens = 800, json = false): Promise<CompletionResult> {
   const client = getGeminiClient();
   const { systemInstruction, contents } = await toGeminiContents(messages);
 
@@ -235,6 +236,7 @@ export async function completionGemini(messages: ChatMessage[], maxTokens = 800)
         ...(systemInstruction ? { systemInstruction } : {}),
         maxOutputTokens: maxTokens,
         thinkingConfig: thinkingOff(model),
+        ...(json ? { responseMimeType: "application/json" } : {}),
       },
     });
     return { text: cleanModelResponse(response.text ?? ""), provider: model };
@@ -436,9 +438,9 @@ export async function* streamGemini(
 
 // ─── Points d'entrée génériques (compat des appelants existants) ─────────────
 
-export async function completionAuto(messages: ChatMessage[], maxTokens = 800): Promise<CompletionResult> {
+export async function completionAuto(messages: ChatMessage[], maxTokens = 800, json = false): Promise<CompletionResult> {
   try {
-    return await completionGemini(messages, maxTokens);
+    return await completionGemini(messages, maxTokens, json);
   } catch (err) {
     if (!hasDeepSeek()) throw err;
     console.warn("[llm-client] completionGemini échoué, secours DeepSeek:", err instanceof Error ? err.message.slice(0, 150) : err);

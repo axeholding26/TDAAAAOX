@@ -39,5 +39,7 @@ export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire:
 export async function boutiqueVisible(tenant: { id: string; statut: string }): Promise<boolean> {
   if (tenant.statut === "active") return true;
   const session = await auth();
-  return (session?.user as any)?.tenantId === tenant.id;
+  const role = (session?.user as any)?.role;
+  // Propriétaire (aperçu) ou admin AXSO (modération depuis /admin/boutiques).
+  return (session?.user as any)?.tenantId === tenant.id || role === "admin" || role === "admin_lecteur";
 }

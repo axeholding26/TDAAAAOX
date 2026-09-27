@@ -3,6 +3,7 @@
 // Panneaux de réglages du Constructeur (couleurs, typo, mise en page, pages
 // annexes…) — partagés par le constructeur boutique (boutique/) et landing.
 import { useEffect, useMemo, useState } from "react";
+import { televerser } from "@/lib/televerser";
 import Link from "next/link";
 import { Search, LayoutGrid, LayoutTemplate, ChevronDown, ChevronRight, ToggleLeft, ToggleRight, RefreshCw, Plus, Trash2, Check, Layers, Image as ImageIcon, X, GripVertical, Zap, Copy, BarChart3, Timer, Building2, Video, Star, Target, FileText, ArrowUpDown, Shield, BookOpen, HelpCircle, MessageCircle, ShoppingCart, Share2 } from "lucide-react";
 import { type ThemeConfig, type CustomSection, type ProductPageSection, type BlockNode } from "@/lib/theme-config";
@@ -1019,7 +1020,7 @@ function FIcone({ label, value, onChange }: { label: string; value: string; onCh
           <input type="file" accept="image/*" className="hidden" onChange={async e => {
             const f = e.target.files?.[0]; if (!f) return;
             const fd = new FormData(); fd.append("file", f);
-            const r = await fetch("/api/upload", { method: "POST", body: fd }).then(x => x.json()).catch(() => null);
+            const r = await televerser(fd).then(x => x.json()).catch(() => null);
             if (r?.url) onChange(r.url);
           }} />
         </label>

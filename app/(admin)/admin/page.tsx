@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { totalCommissionsXAF } from "@/lib/finances-admin";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Store, DollarSign, ShoppingCart, Users, Truck, ArrowUpRight, CheckCircle, Clock } from "lucide-react";
@@ -32,8 +33,8 @@ export default async function AdminDashboard() {
     prisma.tenant.count({ where: { statut: "active", ...filtreBoutiques } }),
     prisma.commande.count({ where: { paiementStatut: "completed" } }),
     prisma.commande.count({ where: { paiementStatut: "completed", createdAt: { gte: debutMois } } }),
-    prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "captured" } }),
-    prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "captured", createdAt: { gte: debutMois } } }),
+    totalCommissionsXAF({ statut: "captured" }), // converties en XAF, voir lib/finances-admin.ts
+    totalCommissionsXAF({ statut: "captured", createdAt: { gte: debutMois } }),
     prisma.client.count(),
     prisma.livreur.count({ where: { actif: true } }),
     prisma.tenant.findMany({ where: filtreBoutiques, orderBy: { createdAt: "desc" }, take: 5, include: { _count: { select: { commandes: true, produits: true } } } }),
@@ -43,19 +44,19 @@ export default async function AdminDashboard() {
       take: 8,
       include: { tenant: { select: { nomBoutique: true, slug: true } }, commission: { select: { montantCommission: true } } },
     }),
-    prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "pending" } }),
+    totalCommissionsXAF({ statut: "pending" }),
   ]);
 
-  const revenuTotal = commissionsTotal._sum.montantCommission || 0;
-  const revenuMois = commissionsMois._sum.montantCommission || 0;
-  const revenuPending = commissionsPending._sum.montantCommission || 0;
+  const revenuTotal = commissionsTotal;
+  const revenuMois = commissionsMois;
+  const revenuPending = commissionsPending;
 
   const kpis = [
     { label: "Boutiques actives", value: boutiquesActives, total: totalBoutiques, icon: Store, color: "#F5A623", href: "/admin/boutiques" },
-    { label: "Revenus capturés", value: formatMontant(revenuTotal, "XOF"), sub: `+${formatMontant(revenuMois, "XOF")} ce mois`, icon: DollarSign, color: "#16A34A", href: "/admin/finances" },
+    { label: "Revenus capturés", value: formatMontant(revenuTotal, "XAF"), sub: `+${formatMontant(revenuMois, "XAF")} ce mois`, icon: DollarSign, color: "#16A34A", href: "/admin/finances" },
     { label: "Commandes payées", value: totalCommandes, sub: `${commandesMois} ce mois`, icon: ShoppingCart, color: "#AAAAAA", href: null },
     { label: "Clients totaux", value: totalClients.toLocaleString("fr-FR"), icon: Users, color: "#AAAAAA", href: null },
-    { label: "En attente capture", value: formatMontant(revenuPending, "XOF"), sub: "Commandes non finalisées", icon: Clock, color: "#D97706", href: "/admin/finances" },
+    { label: "En attente capture", value: formatMontant(revenuPending, "XAF"), sub: "Commandes non finalisées", icon: Clock, color: "#D97706", href: "/admin/finances" },
     { label: "Livreurs actifs", value: totalLivreurs, icon: Truck, color: "#AAAAAA", href: "/admin/livreurs" },
   ];
 

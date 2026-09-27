@@ -207,6 +207,22 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
     },
   },
   {
+    name: "modifier_couleurs",
+    tier: "palier1",
+    description: "Change les couleurs GLOBALES de la boutique (celles du panneau « Couleurs » du Constructeur) : accent (boutons, prix, liens), fond de page, texte, surfaces (cartes), texte secondaire, bordures. S'applique à toutes les pages, y compris aux designs AXSO. Format hexadécimal #RRGGBB uniquement ; ne renseigne que les couleurs demandées.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        accent: { type: "string", description: "Couleur principale, ex : #E11D48" },
+        fond: { type: "string", description: "Fond des pages" },
+        texte: { type: "string", description: "Texte principal" },
+        surface: { type: "string", description: "Fond des cartes et blocs" },
+        texteMuted: { type: "string", description: "Texte secondaire" },
+        bordure: { type: "string", description: "Bordures" },
+      },
+    },
+  },
+  {
     name: "personnaliser_page_boutique",
     tier: "palier1",
     description: "Modifie la page d'accueil de la boutique construite avec le Constructeur libre : ajoute, supprime, déplace, duplique ou masque un bloc (section, titre, texte, image, bouton, grille de produits, avantages, statistiques, compte à rebours, logos, vidéo, galerie, preuve sociale, bande CTA, texte riche, espacement, onglets, colonnes), ou change son style (couleur, espacement, police, alignement, largeur de colonne, visibilité par appareil). Utilise cet outil pour TOUTE demande de personnalisation visuelle de la page d'accueil — jamais modifier_boutique pour ça (réservé au thème/description globale).",
@@ -994,6 +1010,17 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
         if (tenant?.statut !== "brouillon") return { succes: false, resultat: "La boutique est en pause ou suspendue — utilise les réglages de la boutique pour la réactiver." };
         await prisma.tenant.update({ where: { id: tenantId }, data: { statut: "active" } });
         return { succes: true, resultat: `✅ Boutique publiée — elle est maintenant visible sur /${tenant.slug}` };
+      }
+
+      case "modifier_couleurs": {
+        const maj = Object.fromEntries(["accent", "fond", "texte", "surface", "texteMuted", "bordure"]
+          .filter((k) => typeof args[k] === "string" && /^#[0-9a-f]{6}$/i.test(args[k].trim()))
+          .map((k) => [k, args[k].trim()]));
+        if (!Object.keys(maj).length) return { succes: false, resultat: "Aucune couleur valide reçue (format attendu : #RRGGBB)." };
+        const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeConfig: true } });
+        const cfg = (t?.themeConfig as Record<string, any>) ?? {};
+        await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...cfg, colors: { ...(cfg.colors ?? {}), ...maj } } } });
+        return { succes: true, resultat: `Couleurs mises à jour sur toute la boutique : ${Object.entries(maj).map(([k, v]) => `${k} ${v}`).join(", ")}` };
       }
 
       case "modifier_boutique": {

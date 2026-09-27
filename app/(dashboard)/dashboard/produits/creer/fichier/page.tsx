@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useCallback } from "react";
+import { televerser } from "@/lib/televerser";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Check, Upload, X, Loader2, ImageIcon, FileDown, Lock, Droplets, Eye, EyeOff, Sparkles, AlertCircle, GripVertical, ChevronRight } from "lucide-react";
@@ -65,7 +66,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
     setUploadImg(true);
     try {
       const fd = new FormData(); fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await televerser(fd);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       set({ images: [...e.images, data.url] });
@@ -274,7 +275,7 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
       const results = await Promise.all(
         arr.map(async (file) => {
           const fd = new FormData(); fd.append("file", file);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
+          const res = await televerser(fd);
           const data = await res.json();
           if (!res.ok) throw new Error(`${file.name}: ${data.error}`);
           return {

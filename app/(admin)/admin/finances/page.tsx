@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { commissionsParBoutiqueXAF, totalCommissionsXAF } from "@/lib/finances-admin";
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { DollarSign, TrendingUp, AlertCircle, Receipt } from "lucide-react";
@@ -13,22 +14,17 @@ export default async function AdminFinancesPage() {
   const platformTenantId = await getPlatformTenantId();
   const platformWallet = await prisma.wallet.findUnique({ where: { tenantId: platformTenantId } });
 
-  const [commissionsCapturees, commissionsPending, topBoutiques, fraisNotchPay] = await Promise.all([
-    prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "captured" } }),
-    prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "pending" } }),
-    prisma.commission.groupBy({
-      by: ["tenantId"],
-      _sum: { montantCommission: true, montantMarchand: true },
-      where: { statut: "captured" },
-      orderBy: { _sum: { montantCommission: "desc" } },
-      take: 10,
-    }),
+  // Montants de toutes les boutiques convertis en XAF (devise du portefeuille AXSO) — voir lib/finances-admin.ts
+  const [parBoutique, revenuPending, fraisNotchPay] = await Promise.all([
+    commissionsParBoutiqueXAF({ statut: "captured" }),
+    totalCommissionsXAF({ statut: "pending" }),
     prisma.walletTransaction.aggregate({
       _sum: { montant: true },
       where: { walletId: platformWallet?.id, type: "FRAIS" },
     }),
   ]);
 
+  const topBoutiques = parBoutique.slice(0, 10);
   const tenantIds = topBoutiques.map(t => t.tenantId);
   const tenants = await prisma.tenant.findMany({
     where: { id: { in: tenantIds } },
@@ -42,8 +38,7 @@ export default async function AdminFinancesPage() {
     include: { tenant: { select: { nomBoutique: true } }, commande: { select: { numero: true, clientNom: true } } },
   });
 
-  const revenuCapture = commissionsCapturees._sum.montantCommission || 0;
-  const revenuPending = commissionsPending._sum.montantCommission || 0;
+  const revenuCapture = Math.round(parBoutique.reduce((s, g) => s + g.commissionXAF, 0));
   const fraisTotal = Math.abs(fraisNotchPay._sum.montant || 0);
   const revenuNetReel = Math.max(0, revenuCapture - fraisTotal);
 
@@ -69,15 +64,15 @@ export default async function AdminFinancesPage() {
         <p className="text-xs mb-5" style={{ color: "#AAAAAA" }}>NotchPay prélève son propre frais de traitement sur chaque paiement — jamais sur le vendeur, toujours sur la commission Axso.</p>
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
-            <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(revenuCapture, "XOF")}</p>
+            <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(revenuCapture, "XAF")}</p>
             <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Commission brute (6%)</p>
           </div>
           <div>
-            <p className="text-lg font-bold" style={{ color: "#DC2626" }}>−{formatMontant(fraisTotal, "XOF")}</p>
+            <p className="text-lg font-bold" style={{ color: "#DC2626" }}>−{formatMontant(fraisTotal, "XAF")}</p>
             <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Frais NotchPay prélevés</p>
           </div>
           <div>
-            <p className="text-lg font-bold" style={{ color: "#16A34A" }}>{formatMontant(revenuNetReel, "XOF")}</p>
+            <p className="text-lg font-bold" style={{ color: "#16A34A" }}>{formatMontant(revenuNetReel, "XAF")}</p>
             <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Commission nette réelle (dans le wallet)</p>
           </div>
         </div>
@@ -86,8 +81,8 @@ export default async function AdminFinancesPage() {
       {/* KPIs financiers */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Revenus capturés", value: formatMontant(revenuCapture, "XOF"), icon: TrendingUp, color: "#16A34A", desc: "Commissions libérées" },
-          { label: "En attente", value: formatMontant(revenuPending, "XOF"), icon: AlertCircle, color: "#D97706", desc: "Après livraison" },
+          { label: "Revenus capturés", value: formatMontant(revenuCapture, "XAF"), icon: TrendingUp, color: "#16A34A", desc: "Commissions libérées" },
+          { label: "En attente", value: formatMontant(revenuPending, "XAF"), icon: AlertCircle, color: "#D97706", desc: "Après livraison" },
         ].map((k, i) => {
           const Icon = k.icon;
           return (
@@ -114,21 +109,21 @@ export default async function AdminFinancesPage() {
         <div className="space-y-3">
           {topBoutiques.map((t, i) => {
             const tenant = tenantMap[t.tenantId];
-            const comm = t._sum.montantCommission || 0;
-            const marchand = t._sum.montantMarchand || 0;
-            const maxComm = topBoutiques[0]._sum.montantCommission || 1;
+            const comm = t.commission;
+            const marchand = t.marchand;
+            const maxComm = topBoutiques[0].commissionXAF || 1;
             return (
               <div key={t.tenantId} className="flex items-center gap-4">
                 <span className="text-sm w-5 text-right" style={{ color: "#666666" }}>{i + 1}</span>
                 <div className="flex-1">
                   <div className="flex justify-between mb-1">
                     <span className="text-sm" style={{ color: "#ffffff" }}>{tenant?.nomBoutique || t.tenantId}</span>
-                    <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{formatMontant(comm, tenant?.devise || "XOF")}</span>
+                    <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{formatMontant(comm, t.devise)}</span>
                   </div>
                   <div className="w-full rounded-full h-1.5" style={{ background: "rgba(255,255,255,0.08)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${(comm / maxComm) * 100}%`, background: "linear-gradient(90deg,#F5A623,#D4911A)" }} />
+                    <div className="h-full rounded-full" style={{ width: `${(t.commissionXAF / maxComm) * 100}%`, background: "linear-gradient(90deg,#F5A623,#D4911A)" }} />
                   </div>
-                  <p className="text-[10px] mt-0.5" style={{ color: "#666666" }}>Versé au marchand : {formatMontant(marchand, tenant?.devise || "XOF")}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "#666666" }}>Versé au marchand : {formatMontant(marchand, t.devise)}</p>
                 </div>
               </div>
             );

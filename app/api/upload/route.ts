@@ -1,28 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
+import { categorieFichier, TAILLE_MAX } from "@/lib/types-fichiers";
 
-const TYPES_IMAGE = ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"];
-const TYPES_VIDEO = ["video/mp4", "video/webm", "video/quicktime", "video/x-msvideo"];
-const TYPES_DIGITAL = [
-  "application/pdf",
-  "application/zip", "application/x-zip-compressed",
-  "application/octet-stream",
-  "audio/mpeg", "audio/wav", "audio/ogg",
-  "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-];
-
-const TAILLE_MAX_IMAGE = 5 * 1024 * 1024;    // 5 MB
-const TAILLE_MAX_VIDEO = 100 * 1024 * 1024;  // 100 MB
-const TAILLE_MAX_DIGITAL = 200 * 1024 * 1024; // 200 MB
-
-function getFileCategory(type: string): "image" | "video" | "digital" | null {
-  if (TYPES_IMAGE.includes(type)) return "image";
-  if (TYPES_VIDEO.includes(type)) return "video";
-  if (TYPES_DIGITAL.includes(type) || type.startsWith("text/")) return "digital";
-  return null;
-}
+// Types et tailles : source unique partagée avec l'envoi direct (lib/televerser.ts).
+// ⚠ Sur Vercel, une fonction serveur accepte 4,5 Mo maximum par requête : l'interface
+// passe par /api/upload/client ; cette route reste pour les petits fichiers et la compatibilité.
+const getFileCategory = categorieFichier;
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,8 +28,8 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const tailleMax = categorie === "image" ? TAILLE_MAX_IMAGE : categorie === "video" ? TAILLE_MAX_VIDEO : TAILLE_MAX_DIGITAL;
-    const tailleMaxLabel = categorie === "image" ? "5 MB" : categorie === "video" ? "100 MB" : "200 MB";
+    const tailleMax = TAILLE_MAX[categorie].octets;
+    const tailleMaxLabel = TAILLE_MAX[categorie].libelle;
 
     if (file.size > tailleMax) {
       return NextResponse.json({ error: `Fichier trop volumineux (max ${tailleMaxLabel} pour les ${categorie}s)` }, { status: 400 });

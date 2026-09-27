@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { televerser } from "@/lib/televerser";
 import { Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,7 +36,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await televerser(fd);
       const data = await res.json();
       if (res.status === 503 && data.error === "blob_not_configured") {
         // Fallback : convertir en base64 data URL (stockée en DB)

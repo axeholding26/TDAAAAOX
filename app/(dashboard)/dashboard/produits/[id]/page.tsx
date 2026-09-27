@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { televerser } from "@/lib/televerser";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Save, Trash2, X, Plus, Sparkles, Loader2,
@@ -236,7 +237,7 @@ export default function EditProduitPage() {
     const fd = new FormData(); fd.append("file", file);
     setUploadingMedia(true);
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await televerser(fd);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur upload");
       if (type === "image") set("images", [...form.images, data.url]);
@@ -250,7 +251,7 @@ export default function EditProduitPage() {
     const fd = new FormData(); fd.append("file", file);
     setUploadingFichier(true);
     try {
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const res = await televerser(fd);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur upload");
       set("fichierUrl", data.url); set("fichierNom", file.name); set("fichierTaille", file.size);

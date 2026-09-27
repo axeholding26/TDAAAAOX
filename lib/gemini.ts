@@ -9,8 +9,8 @@ Tu aides les marchands africains à vendre mieux en ligne.
 Tu connais les marchés africains, les habitudes d'achat, les prix locaux.
 Sois concis, pratique et positif. Utilise des emojis occasionnellement pour rendre les réponses plus vivantes.`;
 
-async function completion(messages: ChatMessage[], maxTokens = 500): Promise<string> {
-  const result = await completionAuto(messages, maxTokens);
+async function completion(messages: ChatMessage[], maxTokens = 500, json = false): Promise<string> {
+  const result = await completionAuto(messages, maxTokens, json);
   return result.text;
 }
 
@@ -57,8 +57,7 @@ Réponds uniquement en JSON : [{"question":"...","reponse":"..."},...]
 Les questions doivent être pratiques (accès, remboursement, format, délai…).`,
         },
       ],
-      600
-    );
+      600, true);
     const json = texte.match(/\[[\s\S]*\]/)?.[0];
     return JSON.parse(json || "[]");
   } catch {
@@ -95,8 +94,7 @@ prénoms/noms africains variés et réalistes, français naturel (pas de tournur
 Réponds uniquement en JSON : [{"note":5,"titre":"...","commentaire":"...","clientNom":"..."},...]`,
         },
       ],
-      900
-    );
+      900, true);
     const json = texte.match(/\[[\s\S]*\]/)?.[0];
     const avis = JSON.parse(json || "[]");
     return Array.isArray(avis) ? avis.slice(0, 8) : [];
@@ -163,8 +161,7 @@ ${html.slice(0, 60000)}
 \`\`\``,
         },
       ],
-      200
-    );
+      200, true);
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     const parsed = JSON.parse(json || "{}");
     return {
@@ -217,8 +214,7 @@ ${html.slice(0, 60000)}
 \`\`\``,
         },
       ],
-      4000
-    );
+      4000, true);
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     const parsed = JSON.parse(json || "{}");
     return {
@@ -259,8 +255,7 @@ ${html.slice(0, 60000)}
 \`\`\``,
         },
       ],
-      700
-    );
+      700, true);
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     const parsed = JSON.parse(json || "{}");
     return {
@@ -357,15 +352,17 @@ Réponds UNIQUEMENT en JSON strict, cette forme exacte :
 
 DEMANDE DU MARCHAND : "${params.instruction}"`;
 
+  let texte = "";
   try {
-    const texte = await completion([{ role: "system", content: SYSTEME_PROMPT }, { role: "user", content: prompt }], 3000);
+    texte = await completion([{ role: "system", content: SYSTEME_PROMPT }, { role: "user", content: prompt }], 3000, true);
     const json = texte.match(/\{[\s\S]*\}/)?.[0];
     const parsed = JSON.parse(json || "{}");
     return {
       actions: Array.isArray(parsed.actions) ? parsed.actions : [],
       resume: typeof parsed.resume === "string" ? parsed.resume : "C'est fait.",
     };
-  } catch {
+  } catch (e) {
+    console.error("[agentConstructeurLibre]", e instanceof Error ? e.message : e, "| réponse :", texte.slice(0, 700));
     return { actions: [], resume: "Désolé, je n'ai pas réussi à traiter cette demande — reformule ou essaie une action plus simple." };
   }
 }

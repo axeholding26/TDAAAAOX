@@ -1,3 +1,4 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const OWASP_HEADERS = [
@@ -26,6 +27,10 @@ const OWASP_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  // Racine explicite : sans elle, un package-lock.json dans un dossier parent
+  // (ex. ~/package-lock.json) fait prendre tout le dossier personnel pour le
+  // projet — Turbopack le surveille et le serveur de dev sature la mémoire.
+  turbopack: { root: path.resolve(__dirname) },
   // Erreurs TypeScript bloquantes : un déploiement avec une erreur de types échoue au lieu de partir en production.
   typescript: { ignoreBuildErrors: false },
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,

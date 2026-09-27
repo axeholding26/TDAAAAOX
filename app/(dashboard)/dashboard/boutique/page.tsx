@@ -655,7 +655,7 @@ export default function BoutiquePage() {
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-none flex-shrink-0"
                     style={tenant?.customDomain ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#F5F5F5", color: "#AAAAAA" }}>
-                    {tenant?.customDomain ? "Domaine connecté" : "Sous-domaine par défaut"}
+                    {tenant?.customDomain ? "Domaine personnalisé" : "Adresse AXSO"}
                   </span>
                 </div>
               </div>

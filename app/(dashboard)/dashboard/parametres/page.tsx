@@ -98,6 +98,8 @@ export default function ParametresPage() {
 
   async function sauvegarder(e: React.FormEvent) {
     e.preventDefault();
+    const changeDevise = !!tenant?.devise && form.devise !== tenant.devise;
+    if (changeDevise && !confirm(`Votre devise va passer de ${tenant.devise} à ${form.devise}.\n\nTous les montants de la boutique seront convertis au taux du jour : prix des produits et variantes, frais de livraison, codes promo, commandes, commissions et solde du wallet (les factures déjà émises restent inchangées).\n\nContinuer ?`)) return;
     setSaving(true);
     try {
       const res = await fetch("/api/tenants", {
@@ -106,7 +108,8 @@ export default function ParametresPage() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error();
-      toast.success("Informations mises à jour !");
+      toast.success(changeDevise ? `Devise changée : tous vos montants sont maintenant en ${form.devise}` : "Informations mises à jour !");
+      if (changeDevise) setTimeout(() => window.location.reload(), 900); // tout le dashboard passe dans la nouvelle devise
     } catch { toast.error("Erreur lors de la sauvegarde"); }
     finally { setSaving(false); }
   }
@@ -248,7 +251,9 @@ export default function ParametresPage() {
             <label className={labelCls}>Devise</label>
             {/* Dérivée du pays (imposé aussi côté serveur, PATCH /api/tenants). */}
             <input value={form.devise} readOnly className={inputCls + " bg-[#FAFAFA] text-[#777777] cursor-not-allowed"} />
-            <p className="text-[11px] text-[#999999] mt-1">Définie automatiquement par le pays.</p>
+            {tenant?.devise && form.devise !== tenant.devise
+              ? <p className="text-[11px] text-[#B45309] mt-1">Vos montants seront convertis de {tenant.devise} en {form.devise} au taux du jour à l'enregistrement.</p>
+              : <p className="text-[11px] text-[#999999] mt-1">Définie automatiquement par le pays.</p>}
           </div>
         </div>
 

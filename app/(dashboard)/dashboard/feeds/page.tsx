@@ -87,7 +87,9 @@ function CopyButton({ text }: { text: string }) {
 export default function FeedsPage() {
   const [slug, setSlug] = useState("");
   const [nbProduits, setNbProduits] = useState(0);
-  const appUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || "";
+  // Origine lue après le montage : même HTML côté serveur et navigateur (sinon erreur d'hydratation).
+  const [appUrl, setAppUrl] = useState(process.env.NEXT_PUBLIC_APP_URL || "");
+  useEffect(() => setAppUrl(window.location.origin), []);
 
   useEffect(() => {
     fetch("/api/tenants/moi").then(r => r.json()).then(d => {

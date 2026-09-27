@@ -1,5 +1,7 @@
 // API Route — Création de tenant (inscription boutique)
 import { deviseDuPays } from "@/lib/ai-agent";
+import { convertirDeviseBoutique } from "@/lib/changement-devise";
+import { tauxDuJour } from "@/lib/taux-change";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -225,7 +227,7 @@ export async function PATCH(request: Request) {
     for (const key of autorises) {
       if (body[key] !== undefined) champs[key] = body[key];
     }
-    if (body.domainePropre !== undefined) champs.customDomain = body.domainePropre || null;
+    // Domaine personnalisé : uniquement via /api/domaine (validation, unicité, ajout au projet Vercel).
     // Un seul pixel par plateforme : refuse une liste ou un ID mal formé.
     for (const [cle, format] of Object.entries(FORMAT_PIXEL)) {
       const v = champs[cle];
@@ -238,7 +240,7 @@ export async function PATCH(request: Request) {
 
     const actuel = await prisma.tenant.findUnique({
       where: { id: tenantId },
-      select: { statut: true, themeId: true, themeConfig: true },
+      select: { statut: true, themeId: true, themeConfig: true, devise: true },
     });
 
     // Le marchand ne peut basculer sa boutique qu'entre "active" et "pause" —
@@ -294,7 +296,16 @@ export async function PATCH(request: Request) {
       champs.themeConfig = propre;
     }
 
-    const tenant = await prisma.tenant.update({ where: { id: tenantId }, data: champs });
+    // Devise changée (pays changé) : tous les montants de la boutique sont convertis
+    // dans la MÊME transaction — tout ou rien (voir lib/changement-devise.ts).
+    const changeDevise = typeof champs.devise === "string" && actuel?.devise && champs.devise !== actuel.devise;
+    const taux = changeDevise ? await tauxDuJour() : null; // hors transaction : aucun appel réseau pendant qu'elle est ouverte
+    const tenant = changeDevise
+      ? await prisma.$transaction(async (tx) => {
+          await convertirDeviseBoutique(tx, tenantId, actuel!.devise, champs.devise, taux!);
+          return tx.tenant.update({ where: { id: tenantId }, data: champs });
+        }, { timeout: 30000 })
+      : await prisma.tenant.update({ where: { id: tenantId }, data: champs });
 
     // Invalider le cache de toutes les pages storefront de cette boutique
     revalidatePath(`/${tenant.slug}`, "layout");

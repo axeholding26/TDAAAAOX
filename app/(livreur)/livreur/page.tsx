@@ -125,9 +125,9 @@ export default async function LivreurDashboard() {
           />
 
           {/* Détails commande */}
-          <Link href={`/livreur/commande/${commandePrioritaire.id}`}>
-            <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
-              <div className="flex items-start justify-between gap-3 mb-3">
+          {/* Pas de lien dans un lien (HTML invalide → erreur d'hydratation, et Maps/WhatsApp ouvraient la fiche) */}
+          <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
+              <Link href={`/livreur/commande/${commandePrioritaire.id}`} className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="text-white font-bold">{commandePrioritaire.clientNom}</p>
                   <div className="flex items-center gap-1.5 mt-1 text-gray-400 text-sm">
@@ -143,7 +143,7 @@ export default async function LivreurDashboard() {
                   <p className="text-[#1B4FD8] font-bold text-lg">{formatMontant(commandePrioritaire.montantTotal, commandePrioritaire.devise)}</p>
                   <p className="text-gray-500 text-xs">{commandePrioritaire.lignes.length} article{commandePrioritaire.lignes.length > 1 ? "s" : ""}</p>
                 </div>
-              </div>
+              </Link>
 
               <div className="flex items-center gap-2 pt-3 border-t border-white/5">
                 <a
@@ -162,12 +162,11 @@ export default async function LivreurDashboard() {
                 >
                   <MessageCircle size={14} /> WhatsApp
                 </a>
-                <div className="flex items-center gap-1 text-gray-400 text-sm ml-auto px-3">
+                <Link href={`/livreur/commande/${commandePrioritaire.id}`} className="flex items-center gap-1 text-gray-400 text-sm ml-auto px-3">
                   Détails <ChevronRight size={14} />
-                </div>
+                </Link>
               </div>
-            </div>
-          </Link>
+          </div>
         </div>
       )}
 
