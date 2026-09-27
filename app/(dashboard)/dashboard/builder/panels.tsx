@@ -17,7 +17,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { MediaUpload } from "@/components/ui/MediaUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
-import { CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
+import { CONFIRMER_CHANGEMENT, parametresApercu } from "@/components/dashboard/ApercuDesign";
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
@@ -804,15 +804,15 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
 export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: () => Promise<void> }) {
   const [applying, setApplying] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [produits, setProduits] = useState<{ nom: string; prix: number; description?: string }[]>([]);
+  const [produits, setProduits] = useState<any[]>([]);
 
   // Vrais produits de la boutique injectés dans les aperçus (vide → produits de démo du gabarit).
   useEffect(() => {
-    fetch("/api/produits?limit=6").then((r) => r.json())
-      .then((d) => setProduits((d.produits ?? []).map((p: any) => ({ nom: p.nom, prix: p.prix, description: p.description ?? "" }))))
+    fetch("/api/produits?limit=24&actif=true").then((r) => r.json())
+      .then((d) => setProduits(d.produits ?? []))
       .catch(() => {});
   }, []);
-  const apercuParams = `&nom=${encodeURIComponent(tenant?.nomBoutique || "Ma Boutique")}&devise=${encodeURIComponent(tenant?.devise || "XAF")}&produits=${encodeURIComponent(JSON.stringify(produits))}`;
+  const apercuParams = parametresApercu(tenant, produits);
 
   function estActif(fichier: string) {
     // Theme.slug suit la convention `axso-design-<fichier sans .html>-<timestamp>`

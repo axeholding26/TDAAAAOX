@@ -48,7 +48,7 @@ const BELOW_TYPES = new Set(["description","reviews","similar","richtext","featu
 export interface ProductPageClientProps {
   produit: {
     id: string; nom: string; description: string | null; descriptionIA: string | null;
-    images: string[]; prixAffiche: number; prixCompareAffiche: number | null;
+    images: string[]; videos?: string[]; prixAffiche: number; prixCompareAffiche: number | null;
     remise: number; stock: number; type: string; fichierUrl: string | null;
     fichierNom: string | null; categorie: string | null; marque: string | null;
     variantes: Variante[]; avis: Avis[];
@@ -1484,6 +1484,15 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
           <div className={`max-w-2xl mx-auto space-y-5 rounded-3xl p-6 sm:p-8 ${isOn("gallery") && produit.images[0] ? "-mt-24 relative z-10 shadow-xl" : "mt-8"}`} style={{ background: surface }}>
             {renderInfoHeader()}
             {renderRightSections()}
+          </div>
+        )}
+
+        {/* Vidéos produit (ajoutées dans Dashboard → Produit → Images & Vidéos) */}
+        {(produit.videos ?? []).length > 0 && (
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {produit.videos!.map(v => (
+              <video key={v} src={v} controls playsInline preload="metadata" className="w-full aspect-video bg-black" style={{ borderRadius: radius }} />
+            ))}
           </div>
         )}
 

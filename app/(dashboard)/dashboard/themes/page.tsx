@@ -39,11 +39,11 @@ export default function ThemesPage() {
     Promise.all([
       fetch("/api/themes").then((r) => r.json()),
       fetch("/api/tenants/moi").then((r) => r.json()),
-      fetch("/api/produits?limit=6").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/produits?limit=24&actif=true").then((r) => r.json()).catch(() => ({})),
     ]).then(([td, te, pr]) => {
       setThemes(td.themes || []);
       setTenant(te.tenant);
-      setParams(parametresApercu(te.tenant, (pr.produits ?? []).map((x: any) => ({ nom: x.nom, prix: x.prix, description: x.description ?? "" }))));
+      setParams(parametresApercu(te.tenant, pr.produits ?? []));
       setLoading(false);
     });
   }, []);

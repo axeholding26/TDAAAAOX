@@ -131,6 +131,7 @@ export default async function ProduitPage({ params }: Props) {
     description: produit.description,
     descriptionIA: produit.descriptionIA,
     images: produit.images,
+    videos: produit.videos,
     prixAffiche,
     prixCompareAffiche,
     remise,

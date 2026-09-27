@@ -1,38 +1,17 @@
 // GET /api/preview-theme?fichier=aube-site.html&nom=Ma+Boutique&produits=[...]&devise=XAF
 // Sert le HTML du template avec les données de l'utilisateur injectées :
-// - PRODUCTS remplacé par les produits de l'utilisateur
+// - grilles accueil/boutique remplies avec les cartes des vrais produits (comme la vitrine)
 // - Logo remplacé par le nom de la boutique
 // - devise/fmt correcte
 // - Vue "home" forcée, navigations désactivées pour le mode aperçu
 import { readFileSync } from "fs";
 import { join } from "path";
 import { NextResponse } from "next/server";
+import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
+import { remplacerTokensCarte } from "@/lib/theme-import-clone";
+import { formatMontant } from "@/lib/utils";
 
 const TEMPLATES_DIR = join(process.cwd(), "Templates");
-
-// Clés de produits sûres pour l'objet JS
-function toKey(nom: string, i: number) {
-  return "p" + i + "_" + nom.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
-}
-
-// Repère la fin de `const PRODUCTS = { … };` (on y ajoute les vrais produits) en comptant les accolades (le regex
-// échouait sur les objets multi-niveaux ou avec des lookaheads instables).
-function replacePRODUCTS(html: string, newDef: string): string {
-  const start = html.indexOf("const PRODUCTS");
-  if (start === -1) return html;
-  const braceStart = html.indexOf("{", start);
-  if (braceStart === -1) return html;
-  let depth = 0, i = braceStart;
-  while (i < html.length) {
-    if (html[i] === "{") depth++;
-    else if (html[i] === "}") { if (--depth === 0) break; }
-    i++;
-  }
-  // sauter le `;` et les espaces / sauts de ligne qui suivent
-  let end = i + 1;
-  while (end < html.length && (html[end] === ";" || html[end] === "\n" || html[end] === "\r" || html[end] === " ")) end++;
-  return html.slice(0, end) + newDef + "\n" + html.slice(end); // après le catalogue d'origine, conservé
-}
 
 // Même approche pour `function fmt(n){…}` (peut être multi-lignes).
 function replaceFmt(html: string, newFmt: string): string {
@@ -68,47 +47,19 @@ export async function GET(request: Request) {
     return new NextResponse("Template introuvable", { status: 404 });
   }
 
-  // Parse les produits
-  let produits: { nom: string; prix: number; description?: string }[] = [];
-  try { produits = JSON.parse(raw); } catch {}
-  if (produits.length === 0) {
-    produits = [
-      { nom: "Produit Signature", prix: 45000 },
-      { nom: "Édition Limitée",   prix: 78000 },
-      { nom: "Collection Phare",  prix: 32000 },
-    ];
-  }
+  // Vrais produits de la boutique (voir components/dashboard/ApercuDesign.tsx::parametresApercu)
+  let produits: { id?: string; nom: string; prix: number; image?: string }[] = [];
+  try { const v = JSON.parse(raw); if (Array.isArray(v)) produits = v; } catch {}
 
-  // Construire l'objet PRODUCTS en JS compatible avec tous les templates
-  const productEntries = produits.slice(0, 9).map((p, i) => {
-    const key = toKey(p.nom, i);
-    // Valeurs venues de l'URL : chaînes via JSON (apostrophes, « </script> »…), prix forcé en nombre —
-    // sinon « d'été » cassait le script, et une URL fabriquée pouvait y injecter du code.
-    const js = (v: unknown) => JSON.stringify(String(v ?? "")).replace(/</g, "\\u003c");
-    return `${key}:Object.assign({},__modele,{name:${js(p.nom)},price:${Number(p.prix) || 0},was:null,desc:${js(p.description || p.nom)}})`;
-  });
-
-  const keys = produits.slice(0, 9).map((p, i) => toKey(p.nom, i));
-  const homeKeys = keys.slice(0, 3);
-
-  // Ajoutés au catalogue de démonstration du design (jamais à sa place) : ses
-  // autres références (produit mis en avant…) restent valides, et chaque vrai
-  // produit hérite des champs visuels propres au design (fond, motif…).
-  const injectedProducts = `const __modele = Object.values(PRODUCTS)[0] || {};\nObject.assign(PRODUCTS, {\n  ${productEntries.join(",\n  ")}\n});`;
-
-  // Override renderHomeGrid et renderBoutiqueGrid pour utiliser les vrais ids
-  const gridOverride = `
-function renderHomeGrid(){
-  const el = document.getElementById('homeGrid');
-  if(!el) return;
-  el.innerHTML = [${homeKeys.map(k => `'${k}'`).join(",")}].filter(k=>PRODUCTS[k]).map(cardHTML).join('');
-}
-function renderBoutiqueGrid(){
-  const el = document.getElementById('plpGrid');
-  if(!el) return;
-  el.innerHTML = Object.keys(PRODUCTS).map(cardHTML).join('');
-  if(typeof applyFilters==='function') applyFilters();
-}`;
+  // Mêmes cartes que la vraie vitrine (lib/vitrine-design.ts::rafraichirGrillesProduits) :
+  // gabarit de carte du manifeste, vraie image, vrai prix — sur l'accueil ET la
+  // boutique. Sans produit, on garde les cartes de démonstration du design (comme la vitrine).
+  const carte = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
+  const safeDevCarte = /^[A-Z]{3}$/.test(devise) ? devise : "XAF";
+  const cartes = carte ? produits.slice(0, 24).map((p, i) => remplacerTokensCarte(carte, {
+    id: String(p.id ?? i), nom: String(p.nom ?? ""), prixAffiche: formatMontant(Number(p.prix) || 0, safeDevCarte),
+    image: typeof p.image === "string" && /^https?:\/\//.test(p.image) ? p.image : null, description: null,
+  }, "apercu")).join("") : "";
 
   // Override fmt pour utiliser la bonne devise
   const safeDev = /^[A-Z]{3}$/.test(devise) ? devise : "XAF"; // code devise uniquement : rien d'autre n'entre dans le script
@@ -118,16 +69,15 @@ function renderBoutiqueGrid(){
   const safeNom = nom.replace(/</g, "&lt;").replace(/>/g, "&gt;");
   html = html.replace(/(<[^>]+class="[^"]*\blogo\b[^"]*"[^>]*>)[^<]*/g, (_m, balise: string) => balise + safeNom);
 
-  // Remplacer le bloc PRODUCTS existant (comptage d'accolades)
-  html = replacePRODUCTS(html, injectedProducts);
-
   // Remplacer fmt (comptage d'accolades)
   html = replaceFmt(html, fmtOverride);
 
-  // Injecter les overrides de grilles juste avant </body> ; on les enveloppe
-  // dans un listener 'load' pour qu'ils s'exécutent après le rendu initial.
-  const gridScript = `<script>\n${gridOverride}\nwindow.addEventListener('load',function(){if(typeof renderHomeGrid==='function')renderHomeGrid();if(typeof renderBoutiqueGrid==='function')renderBoutiqueGrid();});\n</script>`;
-  html = html.replace(/<\/body>/i, gridScript + "\n</body>");
+  // Grilles remplies après le rendu du design (listener 'load'), qui les remplit d'abord avec sa démo.
+  if (cartes) {
+    const js = JSON.stringify(cartes).replace(/</g, "\\u003c");
+    const gridScript = `<script>window.addEventListener('load',function(){var h=${js};['homeGrid','plpGrid'].forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML=h;});});</script>`;
+    html = html.replace(/<\/body>/i, gridScript + "\n</body>");
+  }
 
   // Mode PREVIEW : désactiver les liens de navigation et rendre non-interactif
   const previewStyle = `

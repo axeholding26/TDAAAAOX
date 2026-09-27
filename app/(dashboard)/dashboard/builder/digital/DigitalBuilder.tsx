@@ -232,7 +232,16 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
                 <button key={t.id} onClick={() => choisirTemplate(t.id)}
                   className={`rounded-xl overflow-hidden text-left transition-all border-2 ${dc.templateId === t.id ? "border-[#111111]" : "border-transparent hover:border-gray-200"}`}>
                   <div className="relative h-24 overflow-hidden" style={{ backgroundColor: t.colors.fond }}>
-                    <img src={t.previewImage} alt={t.label} className="w-full h-full object-cover object-top" />
+                    {produits?.length ? (
+                      // Miniature vivante : ce modèle avec TES produits (même rendu que la boutique), réduit.
+                      <div inert className="pointer-events-none origin-top-left" style={{ width: 1280, zoom: 0.145 }}>
+                        <DigitalStoreShell slug={tenant.slug} nomBoutique={tenant.nomBoutique} logoUrl={logoUrl || null} description={tenant.description}
+                          pays={tenant.pays} devise={tenant.devise} colors={{ ...config.colors, ...t.colors }} radius={t.radius}
+                          templateId={t.id} digitalConfig={{ ...dc, templateId: t.id }} products={produits} preview />
+                      </div>
+                    ) : (
+                      <img src={t.previewImage} alt={t.label} className="w-full h-full object-cover object-top" />
+                    )}
                     {dc.templateId === t.id && (
                       <span className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 shadow" style={{ backgroundColor: "#F5A623" }}>
                         <Check size={12} className="text-[#050508]" />

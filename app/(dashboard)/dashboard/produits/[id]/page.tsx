@@ -205,6 +205,10 @@ export default function EditProduitPage() {
     ? Math.round((1 - parseFloat(form.prixFournisseur) / parseFloat(form.prix)) * 100) : null;
   const margeCout = form.cout && form.prix
     ? Math.round((1 - parseFloat(form.cout) / parseFloat(form.prix)) * 100) : null;
+  const estDigital = ["digital", "fichier", "licence", "formation"].includes(form.type);
+  const prixNum = parseFloat(form.prix), prixCompareNum = parseFloat(form.prixCompare);
+  const promoInvalide = !!form.prixCompare && prixCompareNum > 0 && prixNum > 0 && prixCompareNum <= prixNum;
+  const remisePct = prixCompareNum > prixNum && prixNum > 0 ? Math.round((1 - prixNum / prixCompareNum) * 100) : null;
 
   // Images du produit : plusieurs à la fois, carrées uniquement (lib/images-carrees.ts).
   async function ajouterImages(fichiers: File[]) {
@@ -286,47 +290,52 @@ export default function EditProduitPage() {
     finally { setGenImage(false); }
   }
 
-  async function sauvegarder() {
-    if (!form.nom || !form.prix) { toast.error("Nom et prix obligatoires"); return; }
+  async function sauvegarder(overrides: Partial<FormState> = {}) {
+    const form_ = { ...form, ...overrides };
+    if (!form_.nom || !form_.prix) { toast.error("Nom et prix obligatoires"); return; }
+    const prix = parseFloat(form_.prix), stock = parseInt(form_.stock, 10);
+    if (!(prix > 0)) { toast.error("Le prix de vente doit être supérieur à 0"); return; }
+    if (!estDigital && (isNaN(stock) || stock < 0)) { toast.error("Le stock doit être un nombre entier positif"); return; }
+    if (form_.cout && parseFloat(form_.cout) < 0) { toast.error("Le coût ne peut pas être négatif"); return; }
     setSaving(true);
     try {
       const payload: any = {
-        nom: form.nom, slug: form.slug, description: form.description || null,
-        prix: parseFloat(form.prix),
-        prixCompare: form.prixCompare ? parseFloat(form.prixCompare) : null,
-        stock: form.type === "digital" ? 99999 : parseInt(form.stock) || 0,
-        sku: form.sku || null, codeBarres: form.codeBarres || null, categorie: form.categorie || null,
-        tags: form.tags, images: form.images, videos: form.videos,
-        actif: form.actif, featured: form.featured, type: form.type,
-        metaTitle: form.metaTitle || null, metaDesc: form.metaDesc || null,
-        ogImage: form.ogImage || null,
-        masquerVentes: form.masquerVentes,
-        visibleListage: form.visibleListage,
-        texteBoutonAchat: form.texteBoutonAchat || null,
-        affiliationActive: form.affiliationActive,
-        tauxCommissionAff: form.affiliationActive && form.tauxCommissionAff ? parseFloat(form.tauxCommissionAff) / 100 : null,
+        nom: form_.nom, slug: form_.slug, description: form_.description || null,
+        prix,
+        prixCompare: parseFloat(form_.prixCompare) > prix ? parseFloat(form_.prixCompare) : null,
+        stock: estDigital ? 99999 : stock,
+        sku: form_.sku || null, codeBarres: form_.codeBarres || null, categorie: form_.categorie || null,
+        tags: form_.tags, images: form_.images, videos: form_.videos,
+        actif: form_.actif, featured: form_.featured, type: form_.type,
+        metaTitle: form_.metaTitle || null, metaDesc: form_.metaDesc || null,
+        ogImage: form_.ogImage || null,
+        masquerVentes: form_.masquerVentes,
+        visibleListage: form_.visibleListage,
+        texteBoutonAchat: form_.texteBoutonAchat || null,
+        affiliationActive: form_.affiliationActive,
+        tauxCommissionAff: form_.affiliationActive && form_.tauxCommissionAff ? parseFloat(form_.tauxCommissionAff) / 100 : null,
       };
-      if (form.type === "physique") {
-        payload.poids = form.poids ? parseFloat(form.poids) : null;
-        payload.cout = form.cout ? parseFloat(form.cout) : null;
+      if (form_.type === "physique") {
+        payload.poids = form_.poids ? parseFloat(form_.poids) : null;
+        payload.cout = form_.cout ? parseFloat(form_.cout) : null;
       }
-      if (form.type === "digital") {
-        payload.fichierUrl = form.fichierUrl || null;
-        payload.fichierNom = form.fichierNom || null;
-        payload.fichierTaille = form.fichierTaille || null;
-        payload.instructionsTelechargement = form.instructionsTelechargement || null;
+      if (form_.type === "digital") {
+        payload.fichierUrl = form_.fichierUrl || null;
+        payload.fichierNom = form_.fichierNom || null;
+        payload.fichierTaille = form_.fichierTaille || null;
+        payload.instructionsTelechargement = form_.instructionsTelechargement || null;
       }
-      if (form.type === "dropshipping") {
-        payload.prixFournisseur = form.prixFournisseur ? parseFloat(form.prixFournisseur) : null;
-        payload.urlFournisseur = form.urlFournisseur || null;
-        payload.nomFournisseur = form.nomFournisseur || null;
+      if (form_.type === "dropshipping") {
+        payload.prixFournisseur = form_.prixFournisseur ? parseFloat(form_.prixFournisseur) : null;
+        payload.urlFournisseur = form_.urlFournisseur || null;
+        payload.nomFournisseur = form_.nomFournisseur || null;
       }
       const res = await fetch(`/api/produits/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erreur");
+      if (!res.ok) throw new Error(data.details?.[0] ? `${data.error} : ${data.details[0].path?.join(".")} — ${data.details[0].message}` : data.error || "Erreur");
       toast.success("Produit mis à jour !");
     } catch (e: any) { toast.error(e.message); }
     finally { setSaving(false); }
@@ -386,7 +395,7 @@ export default function EditProduitPage() {
               : { background: "#F9F9F9", borderColor: "#E8E8E8", color: "#888888" }}>
             {form.actif ? "✓ Actif" : "Publier"}
           </button>
-          <button onClick={sauvegarder} disabled={saving}
+          <button onClick={() => sauvegarder()} disabled={saving}
             className="flex items-center gap-1.5 text-[12px] font-semibold px-4 py-2 rounded-2xl text-white transition-all disabled:opacity-50"
             style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 12px rgba(245,166,35,0.25)" }}>
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />} Enregistrer
@@ -460,78 +469,95 @@ export default function EditProduitPage() {
           </div>
 
           {/* Prix & Stock */}
-          <div className="ax-card p-6 space-y-4">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="ax-card p-6 space-y-6">
+            <div className="flex items-center gap-2">
               <BarChart2 size={15} className="text-[#F5A623]" />
               <h2 className="text-[13px] font-semibold text-[#111111]">Prix & Stock</h2>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="ax-label block mb-1.5">Prix de vente *</label>
-                <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} min="0" className={inputClass} />
-              </div>
-              <div>
-                <label className="ax-label block mb-1.5">Prix barré (promo)</label>
-                <input type="number" value={form.prixCompare} onChange={e => set("prixCompare", e.target.value)} min="0" className={inputClass} />
-              </div>
-              {form.type !== "digital" && (
-                <>
+
+            {/* Tarification */}
+            <div className="space-y-3">
+              <div className={`grid grid-cols-1 gap-4 ${form.type === "physique" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+                <div>
+                  <label className="ax-label block mb-1.5">Prix de vente *</label>
+                  <div className="relative">
+                    <input type="number" inputMode="decimal" step="any" min="0" value={form.prix} onChange={e => set("prix", e.target.value)} placeholder="0" className={`${inputClass} pr-16`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#AAAAAA]">{devise}</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="ax-label block mb-1.5">Prix barré (avant promo)</label>
+                  <div className="relative">
+                    <input type="number" inputMode="decimal" step="any" min="0" value={form.prixCompare} onChange={e => set("prixCompare", e.target.value)} placeholder="Optionnel" className={`${inputClass} pr-16 ${promoInvalide ? "!border-red-300" : ""}`} />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#AAAAAA]">{devise}</span>
+                  </div>
+                </div>
+                {form.type === "physique" && (
                   <div>
-                    <label className="ax-label block mb-1.5">Stock</label>
-                    <input type="number" value={form.stock} onChange={e => set("stock", e.target.value)} min="0" className={inputClass} />
+                    <label className="ax-label block mb-1.5">Prix d'achat (coût)</label>
+                    <div className="relative">
+                      <input type="number" inputMode="decimal" step="any" min="0" value={form.cout} onChange={e => set("cout", e.target.value)} placeholder="Optionnel" className={`${inputClass} pr-16`} />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#AAAAAA]">{devise}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {promoInvalide && <p className="text-[11px] text-red-500">Le prix barré doit être supérieur au prix de vente, sinon il ne s'affiche pas comme une promo.</p>}
+              {(remisePct !== null || (form.type === "physique" && margeCout !== null) || (form.type === "dropshipping" && marge !== null)) && (
+                <div className="flex flex-wrap gap-2">
+                  {remisePct !== null && (
+                    <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#FFF8EC] text-[#B45309]">Promo affichée : -{remisePct}%</span>
+                  )}
+                  {[form.type === "physique" ? margeCout : form.type === "dropshipping" ? marge : null].filter((m): m is number => m !== null).map(m => (
+                    <span key="marge" className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${m >= 30 ? "bg-green-50 text-green-700" : m >= 10 ? "bg-yellow-50 text-yellow-700" : "bg-red-50 text-red-600"}`}>
+                      Marge : {m}% · {fmt(Math.max(0, (parseFloat(form.prix) || 0) - (parseFloat(form.type === "physique" ? form.cout : form.prixFournisseur) || 0)))} / vente
+                    </span>
+                  ))}
+                </div>
+              )}
+              {form.type === "physique" && <p className="text-[11px] text-gray-400">Le coût sert à calculer ta vraie rentabilité (marge, bénéfices) dans le Point de vente. Il n'est jamais visible par les clients.</p>}
+            </div>
+
+            {/* Inventaire */}
+            {estDigital ? (
+              <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 text-purple-700 text-xs flex items-center gap-2">
+                <Info size={12} /> Stock automatiquement illimité pour les produits digitaux
+              </div>
+            ) : (
+              <div className="space-y-4 pt-5 border-t border-gray-100">
+                <p className="text-[12px] font-semibold text-[#111111]">Inventaire</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="ax-label block mb-1.5">Stock disponible</label>
+                    <input type="number" inputMode="numeric" step="1" min="0" value={form.stock} onChange={e => set("stock", e.target.value)} className={inputClass} />
+                    {variantes.length > 0 && <p className="text-[11px] text-gray-400 mt-1">Les variantes ont chacune leur propre stock (colonne de droite).</p>}
                   </div>
                   <div>
                     <label className="ax-label block mb-1.5">SKU / Référence</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder="SKU-001" className={inputClass} />
                   </div>
-                  <div>
-                    <label className="ax-label block mb-1.5">Code-barres (EAN/UPC)</label>
-                    <div className="flex items-center gap-2">
-                      <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={`${inputClass} flex-1`} />
-                      <button
-                        type="button"
-                        onClick={() => setScanBarcodeOuvert(true)}
-                        title="Scanner le code-barres avec la caméra"
-                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-semibold text-[12.5px] text-white shrink-0 transition-all hover:opacity-90"
-                        style={{ background: "#F5A623" }}
-                      >
+                </div>
+                <div>
+                  <label className="ax-label block mb-1.5">Code-barres (EAN/UPC)</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={`${inputClass} flex-1 min-w-0`} />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setScanBarcodeOuvert(true)} title="Scanner le code-barres avec la caméra"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-semibold text-[12.5px] text-white transition-all hover:opacity-90"
+                        style={{ background: "#F5A623" }}>
                         <ScanLine size={14} /> Scanner
                       </button>
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => { set("codeBarres", genererEAN13()); toast.success("Code-barres généré — pense à enregistrer, puis imprime l'étiquette ci-dessous"); }}
                         title="Générer un code-barres pour ce produit"
-                        className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl font-semibold text-[12.5px] text-gray-700 border border-gray-200 shrink-0 transition-all hover:bg-gray-50"
-                      >
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-semibold text-[12.5px] text-gray-700 border border-[#E8E8E8] bg-white transition-all hover:bg-gray-50">
                         <RefreshCw size={14} /> Générer
                       </button>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-1.5">Pas de code d'origine ? Génère-en un, imprime l'étiquette et colle-la sur le produit.</p>
-                    <BarcodeLabelPreview value={form.codeBarres} nom={form.nom || "Produit"} prix={form.prix ? `${fmt(Number(form.prix) || 0)}` : undefined} />
                   </div>
-                </>
-              )}
-              {form.type === "physique" && (
-                <div>
-                  <label className="ax-label block mb-1.5">Prix d'achat (coût)</label>
-                  <input type="number" value={form.cout} onChange={e => set("cout", e.target.value)} min="0" placeholder="0" className={inputClass} />
-                  <p className="text-[11px] text-gray-400 mt-1">Utilisé pour calculer la vraie rentabilité (marge, bénéfices) dans le module Point de vente</p>
+                  <p className="text-[11px] text-gray-400 mt-1.5">Pas de code d'origine ? Génère-en un, imprime l'étiquette et colle-la sur le produit.</p>
+                  <BarcodeLabelPreview value={form.codeBarres} nom={form.nom || "Produit"} prix={form.prix ? `${fmt(Number(form.prix) || 0)}` : undefined} />
                 </div>
-              )}
-            </div>
-            {form.type === "digital" && (
-              <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-2.5 text-purple-700 text-xs flex items-center gap-2">
-                <Info size={12} /> Stock automatiquement illimité pour les produits digitaux
-              </div>
-            )}
-            {form.type === "dropshipping" && marge !== null && (
-              <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${marge >= 30 ? "bg-green-50 border border-green-200 text-green-700" : marge >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
-                <BarChart2 size={12} /> Marge : {marge}% {marge >= 30 ? "✓ Bonne marge" : marge >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
-              </div>
-            )}
-            {form.type === "physique" && margeCout !== null && (
-              <div className={`rounded-xl px-4 py-2.5 text-xs flex items-center gap-2 ${margeCout >= 30 ? "bg-green-50 border border-green-200 text-green-700" : margeCout >= 10 ? "bg-yellow-50 border border-yellow-200 text-yellow-700" : "bg-red-50 border border-red-200 text-red-600"}`}>
-                <BarChart2 size={12} /> Marge brute : {margeCout}% {margeCout >= 30 ? "✓ Bonne marge" : margeCout >= 10 ? "⚠ Marge faible" : "✗ Marge insuffisante"}
               </div>
             )}
           </div>
@@ -706,18 +732,17 @@ export default function EditProduitPage() {
                   onChange={e => e.target.files?.[0] && uploadMedia(e.target.files[0], "video")} />
               </div>
               {(form.videos ?? []).length > 0 ? (
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {form.videos.map((v, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl p-3">
-                      <Video size={14} className="text-gray-400 flex-shrink-0" />
-                      <p className="text-xs text-gray-600 flex-1 truncate">{v}</p>
-                      <button onClick={() => set("videos", form.videos.filter((_, j) => j !== i))}
-                        className="text-red-400 hover:text-red-600"><X size={13} /></button>
+                    <div key={v} className="relative rounded-xl overflow-hidden bg-black border border-gray-200">
+                      <video src={v} controls playsInline preload="metadata" className="w-full aspect-video" />
+                      <button onClick={() => set("videos", form.videos.filter((_, j) => j !== i))} title="Retirer la vidéo"
+                        className="absolute top-1.5 right-1.5 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center"><X size={11} className="text-white" /></button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-3">Aucune vidéo</p>
+                <p className="text-xs text-gray-400 text-center py-3">Aucune vidéo — elles s'affichent sur la page produit de ta boutique, sous la fiche.</p>
               )}
             </div>
           </div>
@@ -855,7 +880,7 @@ export default function EditProduitPage() {
           </div>
 
           {/* ─── Variantes ─── */}
-          {form.type !== "digital" && (
+          {!estDigital && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-[13px] font-semibold text-[#111111]">Variantes</h2>
@@ -869,7 +894,7 @@ export default function EditProduitPage() {
                       <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{v.nom}</span>
                       <span className="text-[12px] font-semibold text-[#111] flex-1">{v.valeur}</span>
                       {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{v.sku}</span>}
-                      <span className="text-[12px] text-[#F5A623] font-bold">{v.prix || form.prix} XAF</span>
+                      <span className="text-[12px] text-[#F5A623] font-bold">{fmt(Number(v.prix || form.prix) || 0)}</span>
                       <span className="text-[11px] text-[#888]">S:{v.stock}</span>
                       <button onClick={() => supprimerVariante(v.id, idx)} className="text-red-400 hover:text-red-600 ml-1 text-xs">✕</button>
                     </div>
@@ -957,8 +982,8 @@ export default function EditProduitPage() {
                 <p className="font-medium text-gray-800 text-sm line-clamp-2">{form.nom || "Nom du produit"}</p>
                 {form.prix && (
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[#F5A623] font-bold text-sm">{form.prix} {devise}</span>
-                    {form.prixCompare && <span className="text-gray-400 text-xs line-through">{form.prixCompare}</span>}
+                    <span className="text-[#F5A623] font-bold text-sm">{fmt(Number(form.prix) || 0)}</span>
+                    {remisePct !== null && <span className="text-gray-400 text-xs line-through">{fmt(prixCompareNum)}</span>}
                   </div>
                 )}
               </div>
@@ -981,7 +1006,7 @@ export default function EditProduitPage() {
         onClose={() => setShowPubAssistant(false)}
         onPublier={async () => {
           set("actif", true);
-          await sauvegarder();
+          await sauvegarder({ actif: true });
         }}
       />
     )}

@@ -21,8 +21,8 @@ export default function CreerThemePage() {
       setLibrairie((d.themes || []).filter((t: any) => t.axsoDesign));
     });
     // Aperçus avec les vrais nom, devise et produits de la boutique.
-    Promise.all([fetch("/api/tenants/moi").then((r) => r.json()), fetch("/api/produits?limit=6").then((r) => r.json())])
-      .then(([t, p]) => setParams(parametresApercu(t.tenant, (p.produits ?? []).map((x: any) => ({ nom: x.nom, prix: x.prix, description: x.description ?? "" })))))
+    Promise.all([fetch("/api/tenants/moi").then((r) => r.json()), fetch("/api/produits?limit=24&actif=true").then((r) => r.json())])
+      .then(([t, p]) => setParams(parametresApercu(t.tenant, p.produits ?? [])))
       .catch(() => {});
   }, []);
 
