@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Phone, Package, ChevronRight, TrendingUp, Clock, Star, Zap, Bike, Car, PersonStanding, Truck, Map, MessageCircle } from "lucide-react";
+import { MapPin, Phone, Package, ChevronRight, TrendingUp, Zap, Bike, Car, PersonStanding, Truck, Map, MessageCircle } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { MapLivraisonClient } from "@/components/livreur/MapLivraisonClient";
 
@@ -27,7 +27,7 @@ export default async function LivreurDashboard() {
   const debutJour = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const debutSemaine = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
 
-  const [commandesActives, livraisonsJour, livraisonsSemaine, notifNonLues] = await Promise.all([
+  const [commandesActives, livraisonsJour, livraisonsSemaine] = await Promise.all([
     prisma.commande.findMany({
       where: { livreurId: livreur.id, statut: { in: ["confirmee", "en_preparation", "expediee"] } },
       include: { lignes: { take: 3 } },
@@ -35,7 +35,6 @@ export default async function LivreurDashboard() {
     }),
     prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutJour } } }),
     prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutSemaine } } }),
-    prisma.notification.count({ where: { livreurId: livreur.id, lu: false } }),
   ]);
 
   // Commande en cours (prioritaire = expediée, sinon première active)

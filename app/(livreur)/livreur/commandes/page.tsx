@@ -2,7 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Package, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight } from "lucide-react";
 import { formatDate, formatMontant } from "@/lib/utils";
 
 const STATUT_CONFIG: Record<string, { label: string; color: string; bg: string }> = {

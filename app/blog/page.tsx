@@ -1,6 +1,5 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
-import Link from "next/link";
 import { Package, CreditCard, Cpu, Truck, Globe, MessageCircle, TrendingUp, Clock } from "lucide-react";
 import type { Metadata } from "next";
 

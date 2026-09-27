@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { formatMontant, urlVideoIntegree } from "@/lib/utils";
+import { urlVideoIntegree } from "@/lib/utils";
+import { usePrix } from "@/components/storefront/DeviseVitrine";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { WishlistHeartButton } from "./WishlistHeartButton";
 import { SECTIONS_FICHE } from "@/lib/fiche-produit";
 import {
-  Package, AlertTriangle, Lock, RotateCcw, Check,
+  Package, AlertTriangle, Lock, RotateCcw, Check, Loader2, ChevronLeft,
   Star, Minus, Plus, ShoppingCart, Truck, ZoomIn,
   MessageCircle, Download, ChevronRight, ShoppingBag,
   ChevronDown, Share2, PlayCircle, Headphones, FileText,
@@ -204,16 +205,79 @@ function RatingBreakdown({ avis, accent, moyenne }: { avis: Avis[]; accent: stri
   );
 }
 
-// ─── Image Gallery ────────────────────────────────────────────────────────────
-function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky = true, style = "vertical-thumbs" }: {
-  images: string[]; nom: string; accent: string; radius: string; zoomEnabled?: boolean; sticky?: boolean;
-  style?: "vertical-thumbs" | "horizontal-thumbs" | "dots";
-}) {
+// ─── Diaporama (galerie + bannière pleine largeur) ───────────────────────────
+// Flèches, clavier, glissement du doigt, défilement automatique (4 s, en pause
+// au survol / au toucher, coupé si l'utilisateur réduit les animations).
+function useDiaporama(n: number, autoplay: boolean) {
   const [selected, setSelected] = useState(0);
+  const [pause, setPause] = useState(false);
+  const toucheX = React.useRef<number | null>(null);
+  const aller = (i: number) => setSelected(((i % n) + n) % n);
+  useEffect(() => {
+    if (!autoplay || pause || n < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = setInterval(() => setSelected((s) => (s + 1) % n), 4000);
+    return () => clearInterval(id);
+  }, [autoplay, pause, n]);
+  const props = n > 1 ? {
+    role: "region", "aria-roledescription": "diaporama", tabIndex: 0,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === "ArrowRight") aller(selected + 1); if (e.key === "ArrowLeft") aller(selected - 1); },
+    onTouchStart: (e: React.TouchEvent) => { toucheX.current = e.touches[0].clientX; setPause(true); },
+    onTouchEnd: (e: React.TouchEvent) => { const d = toucheX.current == null ? 0 : e.changedTouches[0].clientX - toucheX.current; if (Math.abs(d) > 40) aller(selected + (d < 0 ? 1 : -1)); toucheX.current = null; },
+  } : {};
+  return { selected, setSelected, aller, setPause, props };
+}
+
+function FlechesDiaporama({ n, selected, aller, toujoursVisibles = false }: { n: number; selected: number; aller: (i: number) => void; toujoursVisibles?: boolean }) {
+  if (n < 2) return null;
+  return (
+    <>
+      {[-1, 1].map((sens) => (
+        <button key={sens} type="button" onClick={(e) => { e.stopPropagation(); aller(selected + sens); }} aria-label={sens < 0 ? "Image précédente" : "Image suivante"}
+          className={`absolute top-1/2 -translate-y-1/2 ${sens < 0 ? "left-2" : "right-2"} z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/90 text-[#111111] shadow-md transition-opacity ${toujoursVisibles ? "" : "sm:opacity-0 sm:group-hover:opacity-100"} focus-visible:opacity-100`}>
+          {sens < 0 ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </button>
+      ))}
+      <span className="absolute top-3 left-3 z-10 text-[11px] font-semibold px-2 py-1 rounded-full bg-black/55 text-white pointer-events-none tabular-nums">{selected + 1} / {n}</span>
+    </>
+  );
+}
+
+function PisteImages({ images, nom, selected }: { images: string[]; nom: string; selected: number }) {
+  const n = images.length;
+  return (
+    <div className="flex h-full transition-transform duration-500 ease-out" style={{ transform: `translateX(-${selected * 100}%)` }}>
+      {images.map((img, i) => (
+        <img key={i} src={img} alt={n > 1 ? `${nom} — image ${i + 1} sur ${n}` : nom} loading={i === 0 ? "eager" : "lazy"}
+          className="w-full h-full object-cover flex-shrink-0" draggable={false} aria-hidden={i !== selected} />
+      ))}
+    </div>
+  );
+}
+
+// Mise en page « Pleine largeur » : bannière plein écran, elle aussi en diaporama.
+function BanniereDiaporama({ images, nom, autoplay }: { images: string[]; nom: string; autoplay: boolean }) {
+  const { selected, aller, setPause, props } = useDiaporama(images.length, autoplay);
+  return (
+    <div className="relative w-full overflow-hidden group outline-none" style={{ height: "60vh", minHeight: 380 }}
+      {...props} aria-label={images.length > 1 ? `Images de ${nom}` : undefined}
+      onMouseEnter={() => setPause(true)} onMouseLeave={() => setPause(false)}>
+      <PisteImages images={images} nom={nom} selected={selected} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.6) 100%)" }} />
+      <FlechesDiaporama n={images.length} selected={selected} aller={aller} />
+    </div>
+  );
+}
+
+// ─── Image Gallery ────────────────────────────────────────────────────────────
+function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky = true, style = "vertical-thumbs", autoplay = false }: {
+  images: string[]; nom: string; accent: string; radius: string; zoomEnabled?: boolean; sticky?: boolean;
+  style?: "vertical-thumbs" | "horizontal-thumbs" | "dots"; // miniatures retirées : seul « dots » ajoute des points sous la photo
+  autoplay?: boolean; // diaporama automatique (toutes les 4 s, en pause au survol / au toucher)
+}) {
+  const n = images.length;
+  const { selected, setSelected, aller, setPause, props: diaporama } = useDiaporama(n, autoplay);
   const [zoomData, setZoomData] = useState<{ x: number; y: number; panelLeft: number; panelTop: number } | null>(null);
   const current = images[selected] ?? null;
-  const showVerticalThumbs = style === "vertical-thumbs" && images.length > 1;
-  const showHorizontalThumbs = style === "horizontal-thumbs" && images.length > 1;
   const showDots = style === "dots" && images.length > 1;
 
   function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
@@ -228,24 +292,16 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
   return (
     <>
       <div className={`flex gap-3 ${sticky ? "lg:sticky lg:top-6" : ""}`}>
-        {showVerticalThumbs && (
-          <div className="hidden sm:flex flex-col gap-2 w-[70px] flex-shrink-0">
-            {images.slice(0, 8).map((img, i) => (
-              <button key={i} onMouseEnter={() => setSelected(i)} onClick={() => setSelected(i)}
-                className="w-full overflow-hidden transition-all duration-150"
-                style={{ aspectRatio: "1", borderRadius: radius, border: `2px solid ${i === selected ? accent : "rgba(0,0,0,0.1)"}`, opacity: i === selected ? 1 : 0.55, boxShadow: i === selected ? `0 0 0 2px ${accent}30` : "none" }}>
-                <img src={img} alt={`${nom} ${i + 1}`} className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
         <div className="flex-1 group">
-          <div className="relative aspect-square overflow-hidden select-none"
+          <div className="relative aspect-square overflow-hidden select-none outline-none focus-visible:ring-2"
+            {...diaporama} aria-label={n > 1 ? `Images de ${nom}` : undefined}
+            onMouseEnter={() => setPause(true)}
             style={{ borderRadius: radius, background: "#F6F6F6", cursor: zoomData ? "crosshair" : zoomEnabled ? "zoom-in" : "default" }}
-            onMouseMove={handleMouseMove} onMouseLeave={() => setZoomData(null)}>
-            {current
-              ? <img src={current} alt={nom} className="w-full h-full object-cover" draggable={false} />
+            onMouseMove={handleMouseMove} onMouseLeave={() => { setZoomData(null); setPause(false); }}>
+            {n > 0
+              ? <PisteImages images={images} nom={nom} selected={selected} />
               : <div className="w-full h-full flex items-center justify-center"><Package size={64} className="opacity-20" /></div>}
+            <FlechesDiaporama n={n} selected={selected} aller={aller} />
             {zoomEnabled && !zoomData && current && (
               <div className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-lg pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 style={{ background: "rgba(0,0,0,0.55)", color: "#fff" }}>
@@ -253,28 +309,6 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
               </div>
             )}
           </div>
-          {/* Miniatures verticales : repli mobile en rangée horizontale sous l'image */}
-          {style === "vertical-thumbs" && images.length > 1 && (
-            <div className="sm:hidden flex gap-2 mt-2 overflow-x-auto pb-1">
-              {images.map((img, i) => (
-                <button key={i} onClick={() => setSelected(i)} className="flex-shrink-0 w-12 overflow-hidden"
-                  style={{ aspectRatio: "1", borderRadius: radius, border: `2px solid ${i === selected ? accent : "transparent"}` }}>
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-          {/* Miniatures horizontales : rangée sous l'image, mobile et desktop */}
-          {showHorizontalThumbs && (
-            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-              {images.map((img, i) => (
-                <button key={i} onClick={() => setSelected(i)} className="flex-shrink-0 w-14 sm:w-[70px] overflow-hidden transition-all duration-150"
-                  style={{ aspectRatio: "1", borderRadius: radius, border: `2px solid ${i === selected ? accent : "rgba(0,0,0,0.1)"}`, opacity: i === selected ? 1 : 0.55, boxShadow: i === selected ? `0 0 0 2px ${accent}30` : "none" }}>
-                  <img src={img} alt={`${nom} ${i + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
           {/* Points de pagination : présentation épurée, sans miniatures */}
           {showDots && (
             <div className="flex items-center justify-center gap-1.5 mt-3">
@@ -486,7 +520,9 @@ function VideoSection({ config, accent, radius }: { config: Record<string, any>;
 // ─── Social Section ───────────────────────────────────────────────────────────
 function SocialSection({ accent, nom }: { accent: string; nom: string }) {
   const [copied, setCopied] = useState(false);
-  const url = typeof window !== "undefined" ? window.location.href : "";
+  // Lue après le montage : le serveur ne connaît pas l'URL → même HTML des deux côtés (pas d'erreur d'hydratation).
+  const [url, setUrl] = useState("");
+  useEffect(() => setUrl(window.location.href), []);
   const msg = encodeURIComponent(`Découvrez ${nom} !`);
   const shares = [
     { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, bg: "#1877F2" },
@@ -531,7 +567,7 @@ function BannerSection({ config, accent, radius, slug }: { config: Record<string
 }
 
 // ─── Richtext Section ─────────────────────────────────────────────────────────
-function RichtextSection({ config, accent, radius, slug }: { config: Record<string, any>; accent: string; radius: string; slug: string }) {
+function RichtextSection({ config, accent, slug }: { config: Record<string, any>; accent: string; radius: string; slug: string }) {
   return (
     <div className="py-12 border-t max-w-3xl" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-4">{config.titre}</h3>}
@@ -545,7 +581,7 @@ function RichtextSection({ config, accent, radius, slug }: { config: Record<stri
 }
 
 // ─── Features Section ─────────────────────────────────────────────────────────
-function FeaturesSection({ config, accent, surface, radius }: { config: Record<string, any>; accent: string; surface: string; radius: string }) {
+function FeaturesSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string; radius: string }) {
   const items: { icone: string; titre: string; texte: string }[] = config.items || [];
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
@@ -773,7 +809,7 @@ function GuaranteeSection({ config, accent, surface }: { config: Record<string, 
 }
 
 // ─── Bundle Section ───────────────────────────────────────────────────────────
-function BundleSection({ config, accent, surface, radius, slug }: { config: Record<string, any>; accent: string; surface: string; radius: string; slug: string }) {
+function BundleSection({ config, accent, surface, slug }: { config: Record<string, any>; accent: string; surface: string; radius: string; slug: string }) {
   const items: { nom: string; imageUrl: string; prix: string }[] = config.items || [];
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
@@ -845,6 +881,71 @@ function ComparisonSection({ config, accent, surface }: { config: Record<string,
   );
 }
 
+// ─── Achat direct d'un produit digital ───────────────────────────────────────
+// Un clic → l'email du client (NotchPay exige un email ou un téléphone, et il
+// sert à envoyer le lien de téléchargement) → page de paiement NotchPay
+// (MTN MoMo, Orange Money, carte bancaire). Aucun montant n'est envoyé : le
+// serveur le recalcule depuis la base (commande puis paiement).
+function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, couleurTexte, radius, desactive }: {
+  produitId: string; tenantId: string; prix: number; devise: string; texte: string; fond: string; couleurTexte: string; radius: string; desactive: boolean;
+}) {
+  const { fmt, aPayer } = usePrix();
+  const [ouvert, setOuvert] = useState(false);
+  const [email, setEmail] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+  const emailValide = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
+  const payer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailValide || envoi) return;
+    setEnvoi(true);
+    try {
+      const adresse = email.trim().toLowerCase();
+      const cmd = await fetch("/api/commandes/digital-creer", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, client: { nom: adresse.split("@")[0], email: adresse }, items: [{ produitId, quantite: 1 }], codeAffiliation: (() => { try { return localStorage.getItem("axso_ref") || undefined; } catch { return undefined; } })() }),
+      });
+      const c = await cmd.json();
+      if (!cmd.ok) throw new Error(c.error || "Commande impossible");
+      const pay = await fetch("/api/paiements/notchpay/initier", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commandeId: c.commandeId }),
+      });
+      const p = await pay.json();
+      if (!pay.ok || !p.authorizationUrl) throw new Error(pay.status === 503 ? "Le paiement en ligne n'est pas encore activé sur cette boutique." : p.error || "Paiement indisponible");
+      window.location.assign(p.authorizationUrl);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Paiement indisponible");
+      setEnvoi(false);
+    }
+  };
+
+  if (!ouvert) {
+    return (
+      <button onClick={() => setOuvert(true)} disabled={desactive}
+        className="w-full py-4 font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all hover:opacity-90 active:scale-[0.99] disabled:opacity-35"
+        style={{ background: fond, color: couleurTexte, borderRadius: radius }}>
+        <Download size={18} /> {desactive ? "Indisponible" : `${texte} — ${fmt(prix, devise)}`}
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={payer} className="space-y-2.5 p-4 rounded-2xl border" style={{ borderColor: `${fond}40`, background: `${fond}08` }}>
+      <label className="block">
+        <span className="block text-[13px] font-semibold mb-1.5">Ton email — le lien de téléchargement y sera envoyé</span>
+        <input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemple.com" autoComplete="email"
+          className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
+      </label>
+      <button type="submit" disabled={!emailValide || envoi}
+        className="w-full py-3.5 font-bold text-[15px] flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40"
+        style={{ background: fond, color: couleurTexte, borderRadius: radius }}>
+        {envoi ? <><Loader2 size={17} className="animate-spin" /> Redirection vers le paiement…</> : <><Lock size={16} /> Payer {aPayer(prix, devise)}</>}
+      </button>
+      <p className="text-[12px] text-center opacity-60">Paiement sécurisé NotchPay · MTN MoMo, Orange Money, carte bancaire</p>
+    </form>
+  );
+}
+
 // ─── FAQ produit (questions spécifiques au produit, définies par le marchand) ──
 function ProduitFaqSection({ faq, accent, surface }: { faq: { question: string; reponse: string; image?: string }[]; accent: string; surface: string }) {
   const [open, setOpen] = React.useState<number | null>(null);
@@ -888,7 +989,7 @@ function embedVideoLecon(l: { videoType: string | null; videoUrl: string | null 
   return l.videoUrl;
 }
 
-function FormationCurriculumSection({ chapitres, accent, texte, surface }: {
+function FormationCurriculumSection({ chapitres, accent, surface }: {
   chapitres: NonNullable<ProductPageClientProps["produit"]["formationCurriculum"]>["chapitres"];
   accent: string; texte: string; surface: string;
 }) {
@@ -1018,6 +1119,7 @@ function AffiliateLinkButton({ tenantId, produitId, accent, surface }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPied }: ProductPageClientProps & { sansPied?: boolean }) {
+  const { fmt } = usePrix();
   const { slug, devise, accent, fond, texte, surface, radius, whatsapp, whatsappNumero, nomBoutique, certifie } = tenant;
 
   // ─── Layout + Boutons (config globale du builder, comme sur la page d'accueil) ──
@@ -1138,7 +1240,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
     isOn("gallery") && (
       <ImageGallery images={produit.images} nom={produit.nom} accent={accent} radius={radius}
         zoomEnabled={opts?.forceZoom ?? zoomEnabled} sticky={opts?.forceSticky ?? stickyGallery}
-        style={opts?.forceStyle ?? galleryStyle} />
+        style={opts?.forceStyle ?? galleryStyle} autoplay={galCfg.diaporamaAuto === true} />
     )
   );
 
@@ -1188,10 +1290,10 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             </div>
           )}
           <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-4xl font-black" style={{ color: accent }}>{formatMontant(prixEffectif, devise)}</span>
+            <span className="text-4xl font-black" style={{ color: accent }}>{fmt(prixEffectif, devise)}</span>
             {(variantePrix?.prixPromo || (produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche)) && (
               <span className="text-lg opacity-35 line-through">
-                {formatMontant(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
+                {fmt(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
               </span>
             )}
           </div>
@@ -1241,6 +1343,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   </div>
                 </div>
               )}
+              {/* Produit digital : achat direct — l'email du client puis la page de paiement NotchPay. */}
+              {estDigital ? (
+                <AchatDirectDigital produitId={produit.id} tenantId={tenant.id} prix={produit.prixAffiche} devise={tenant.devise}
+                  texte={cfg.texteBouton || produit.texteBoutonAchat || "Acheter"} fond={btnFond} couleurTexte={btnTexte} radius={btnRadiusPx} desactive={enRupture} />
+              ) : (
               <div className="space-y-2.5">
                 {/* Ajout au panier : jamais en boutique digitale, facultatif en boutique physique. */}
                 {!tenant.boutiqueDigitale && cfg.afficherAjoutPanier !== false && (
@@ -1275,6 +1382,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   </a>
                 )}
               </div>
+              )}
             </div>
           )}
           {sec.type === "trust" && (
@@ -1317,9 +1425,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
       {/* Pleine largeur : image en fond plein écran, infos en overlay */}
       {layoutMode === "fullwidth" && isOn("gallery") && produit.images[0] && (
-        <div className="relative w-full" style={{ height: "60vh", minHeight: 380, background: `url(${produit.images[0]}) center/cover` }}>
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.6) 100%)" }} />
-        </div>
+        <BanniereDiaporama images={produit.images} nom={produit.nom} autoplay={galCfg.diaporamaAuto === true} />
       )}
 
       {/* Breadcrumb */}
@@ -1456,7 +1562,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                         </div>
                         <div className="p-3">
                           <p className="text-sm font-medium line-clamp-2 leading-snug mb-1">{p.nom}</p>
-                          <p className="text-sm font-bold" style={{ color: accent }}>{formatMontant(p.prixAffiche, devise)}</p>
+                          <p className="text-sm font-bold" style={{ color: accent }}>{fmt(p.prixAffiche, devise)}</p>
                         </div>
                       </div>
                     </Link>

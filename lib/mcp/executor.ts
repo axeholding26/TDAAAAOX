@@ -4,10 +4,7 @@ import { posterFacebook, posterInstagram, creerCampagneAds, statsPageFacebook } 
 import { envoyerMessageWhatsApp, envoyerTemplateWhatsApp } from "./connectors/whatsapp";
 import { envoyerGmail, rafraichirTokenGoogle } from "./connectors/gmail";
 import { envoyerSMS, envoyerSMSMasse } from "./connectors/sms";
-import {
-  appellerOutilHiggsfield, genererVideoHiggsfield, genererImageHiggsfield,
-  listerOutilsHiggsfield, HIGGSFIELD_VIDEO_MODELS,
-} from "./connectors/higgsfield";
+import { appellerOutilHiggsfield, genererVideoHiggsfield, genererImageHiggsfield, listerOutilsHiggsfield } from "./connectors/higgsfield";
 import {
   genererTexte, genererEmailHtml, genererDescriptionProduit,
   genererPostSocial, traduire, analyserImageProduit,

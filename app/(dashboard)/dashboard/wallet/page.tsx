@@ -27,7 +27,7 @@ interface RetraitItem {
 }
 interface WalletData {
   solde: number; totalRecu: number; totalRetire: number;
-  totalCommission: number; soldeSequestre: number;
+  totalCommission: number;
   retraitsEnAttente: number; devise: string;
   transactions: Transaction[]; retraits: RetraitItem[];
 }
@@ -184,14 +184,6 @@ export default function WalletPage() {
                 <p className="text-[48px] font-black tracking-tight leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {fmt(wallet?.solde ?? 0, devise)}
                 </p>
-                {(wallet?.soldeSequestre ?? 0) > 0 && (
-                  <div className="mt-3.5 flex items-center gap-2 bg-white/10 rounded-2xl px-3.5 py-2 w-fit">
-                    <Clock size={12} className="opacity-70" />
-                    <p className="text-[12px] opacity-80">
-                      <strong>{fmt(wallet!.soldeSequestre, devise)}</strong> en séquestre (libération 48h)
-                    </p>
-                  </div>
-                )}
               </div>
               <div className="flex flex-col sm:items-end gap-2.5">
                 <button
@@ -238,7 +230,7 @@ export default function WalletPage() {
               { Icon: TrendingUp,      label: "Total reçu",       val: wallet?.totalRecu ?? 0,       iconBg: "#F0FDF4", iconColor: "#16A34A" },
               { Icon: ArrowUpFromLine, label: "Total retiré",      val: wallet?.totalRetire ?? 0,     iconBg: "#FFF8EC", iconColor: "#F5A623", accent: true },
               { Icon: ShieldCheck,     label: "Commissions Axso",  val: wallet?.totalCommission ?? 0, iconBg: "#FAF5FF", iconColor: "#7C3AED" },
-              { Icon: Clock,           label: "En séquestre",      val: wallet?.soldeSequestre ?? 0,  iconBg: "#FFF7ED", iconColor: "#D97706" },
+              { Icon: Clock,           label: "Retraits en attente", val: wallet?.retraitsEnAttente ?? 0, iconBg: "#FFF7ED", iconColor: "#D97706" },
             ].map((s, i) => {
               const Icon = s.Icon;
               return (

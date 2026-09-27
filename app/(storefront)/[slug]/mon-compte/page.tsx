@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Package, Download, LogOut, User, Eye } from "lucide-react";
 
@@ -44,7 +44,6 @@ const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
 export default function MonComptePage() {
   const params = useParams();
   const slug = params?.slug as string;
-  const router = useRouter();
 
   const [view, setView] = useState<"login" | "register" | "compte">("login");
   const [compte, setCompte] = useState<Compte | null>(null);
@@ -217,7 +216,6 @@ export default function MonComptePage() {
           <div className="space-y-3">
             {commandes.map((c) => {
               const sc = STATUT_CONFIG[c.statut] ?? { label: c.statut, color: "#888" };
-              const hasDigital = c.lignes.some((l) => l.produit.type === "digital" && l.produit.fichierUrl);
               return (
                 <div key={c.id} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">

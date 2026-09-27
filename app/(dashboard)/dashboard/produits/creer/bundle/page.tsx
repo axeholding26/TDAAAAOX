@@ -2,10 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, ArrowRight, Check, Loader2, Package, Plus, X,
-  Search, Sparkles, AlertCircle, ChevronRight, ImageIcon, Percent,
-} from "lucide-react";
+import { ArrowLeft, Check, Loader2, Package, Plus, X, Search, Sparkles, AlertCircle, ChevronRight, ImageIcon, Percent } from "lucide-react";
 import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 
@@ -31,10 +28,6 @@ const ETAT_INITIAL: EtatWizard = {
 };
 
 const ETAPES = ["Infos", "Produits", "Tarification", "Publication"];
-
-function formatTaille(n: number) {
-  return n.toLocaleString("fr-FR");
-}
 
 // ─── Étape 1 — Infos ─────────────────────────────────────────────────────────
 
@@ -106,7 +99,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
 // ─── Étape 2 — Sélection produits ────────────────────────────────────────────
 
 function EtapeProduits({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [recherche, setRecherche] = useState("");
   const [resultats, setResultats] = useState<ProduitOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -298,7 +291,7 @@ function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWiz
 // ─── Étape 4 — Publication ────────────────────────────────────────────────────
 
 function EtapePublication({ e }: { e: EtatWizard }) {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const valeurTotale = e.produitsSelectionnes.reduce((s, p) => s + p.prix, 0);
   const prixNum = parseFloat(e.prix) || 0;
   const checks = [

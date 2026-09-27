@@ -24,7 +24,6 @@ export async function GET(request: Request) {
           lignes: true,
           client: true,
           commission: true,
-          escrow: true,
         },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * limit,

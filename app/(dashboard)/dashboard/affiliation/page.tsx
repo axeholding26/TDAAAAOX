@@ -1,13 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  Users, TrendingUp, DollarSign, Link2, Copy, CheckCheck, Zap,
-  Share2, Eye, ShoppingBag, Plus, Globe, Settings, BarChart3,
-  ChevronRight, AlertCircle, CheckCircle, XCircle, Clock,
-  ArrowUpRight, Wallet, Send, Filter, Search, RefreshCw,
-  Award, Target, Percent, Edit3, Trash2, UserCheck, UserX, ExternalLink,
-} from "lucide-react";
+import { Users, TrendingUp, DollarSign, Link2, Copy, CheckCheck, Share2, Eye, ShoppingBag, Plus, Globe, Settings, BarChart3, CheckCircle, XCircle, Clock, Wallet, Search, Target, Edit3, UserCheck, UserX, ExternalLink } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { toast } from "sonner";
@@ -93,7 +87,7 @@ function Badge({ statut }: { statut: string }) {
 
 // ─── Vue d'ensemble ───────────────────────────────────────────────────────────
 function OngletStats() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [stats, setStats] = useState<Stats | null>(null);
   const [top, setTop] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -566,7 +560,7 @@ function OngletAffilies() {
 
 // ─── Paiements ────────────────────────────────────────────────────────────────
 function OngletPaiements() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
@@ -674,9 +668,8 @@ function OngletPaiements() {
 
 // ─── Mes liens (B2B sortants) ─────────────────────────────────────────────────
 function OngletLiens() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [liens, setLiens] = useState<any[]>([]);
-  const [commissions, setCommissions] = useState<any[]>([]);
   const [totaux, setTotaux] = useState({ total: 0, pending: 0, captured: 0 });
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -688,7 +681,6 @@ function OngletLiens() {
       fetch("/api/affiliation/commissions?role=affilieur").then(r => r.json()),
     ]).then(([liensData, comData]) => {
       setLiens(liensData.liens ?? []);
-      setCommissions(comData.commissions ?? []);
       setTotaux(comData.totaux ?? { total: 0, pending: 0, captured: 0 });
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -696,7 +688,6 @@ function OngletLiens() {
 
   const totalClics = liens.reduce((a, l) => a + l.clics, 0);
   const totalConversions = liens.reduce((a, l) => a + l.conversions, 0);
-  const getLienUrl = (l: any) => `${appUrl}/${l.tenant.slug}${l.produitId ? `/produits/${l.produitId}` : ""}?ref=${l.code}`;
 
   if (loading) return <div className="py-8 text-center text-sm text-gray-400">Chargement…</div>;
 
@@ -725,7 +716,6 @@ function OngletLiens() {
       ) : (
         <div className="space-y-3">
           {liens.map(lien => {
-            const url = getLienUrl(lien);
             const trackUrl = `${appUrl}/api/track/${lien.code}`;
             const taux = lien.produit?.tauxCommissionAff ? `${Math.round(lien.produit.tauxCommissionAff * 100)}%` : "—";
             return (
@@ -765,7 +755,7 @@ function OngletLiens() {
 const COULEURS_BANNIERE = ["#F5A623", "#111111", "#22c55e", "#3b82f6", "#ef4444"];
 
 function BannierePreview({ lien, couleur, texte, baseUrl }: { lien: any; couleur: string; texte: string; baseUrl: string }) {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const url = `${baseUrl}?ref=${lien.code}`;
   return (
     <div className="border border-[#E8E8E8] rounded-2xl overflow-hidden">
@@ -896,7 +886,7 @@ function OngletMateriel() {
 const ENTRANTE_EMPTY = { nom: "", marchand: "", url: "", categorie: "", commission: "10", devise: "XAF" };
 
 function OngletEntrante() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [programmes, setProgrammes] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ total: 0, actifs: 0, revenuTotal: 0, clicsTotal: 0 });
   const [form, setForm] = useState({ ...ENTRANTE_EMPTY });

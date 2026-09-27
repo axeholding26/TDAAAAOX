@@ -18,6 +18,10 @@ import { formatMontant, slugify } from "./utils";
 import { MANIFESTE_LIBRAIRIE } from "./axso-design-manifest";
 import { fichierDepuisSlugTheme } from "./axso-design-library";
 import { remplacerTokensCarte } from "./theme-import-clone";
+import { corrigerLiensDesign } from "./liens-design";
+import { convertirMontant } from "./devise-convert";
+import { deviseVisiteur } from "./devise-visiteur";
+import { tauxDuJour } from "./taux-change";
 
 function htmlEmbeds(node: BlockNode): string {
   if (node.actif === false) return "";
@@ -124,22 +128,27 @@ function remplirGrillesArbre(nodes: BlockNode[], cat: Catalogue): BlockNode[] {
 async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tenantId: string): Promise<ThemeConfig> {
   const tree = cfg.builderTree ?? [];
   if (!RE_GRILLE.test((cfg.builderHtml ?? "") + (cfg.builderHtmlProduits ?? "") + JSON.stringify(tree))) return cfg;
-  const [theme, tenant, produits] = await Promise.all([
+  const [theme, tenant, produits, ordreCategories] = await Promise.all([
     prisma.theme.findUnique({ where: { id: themeId }, select: { slug: true } }),
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, devise: true, commissionRate: true } }),
     prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, take: 24 }),
+    prisma.categorieProduit.findMany({ where: { tenantId }, orderBy: [{ ordre: "asc" }, { createdAt: "asc" }], select: { nom: true } }),
   ]);
   const fichier = theme ? fichierDepuisSlugTheme(theme.slug) : null;
   const carte = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
   // Sans produit, on garde les cartes de démonstration du design.
   if (!tenant || !carte || produits.length === 0) return cfg;
   const taux = tenant.commissionRate ?? 0.06;
+  const [devise, tauxChange] = await Promise.all([deviseVisiteur(tenant.devise), tauxDuJour()]); // prix des cartes dans la devise du visiteur, aux taux du jour
+  // Filtres : catégories qui ont des produits, dans l'ordre choisi sur la page Catalogue → Catégories.
+  const rang = (label: string) => { const i = ordreCategories.findIndex((c) => c.nom === label); return i < 0 ? Infinity : i; };
   const categories = [...new Map(produits.filter((p) => p.categorie?.trim()).map((p) => [slugify(p.categorie!), p.categorie!.trim()])).entries()]
-    .map(([slug, label]) => ({ slug, label }));
+    .map(([slug, label]) => ({ slug, label }))
+    .sort((a, b) => rang(a.label) - rang(b.label));
   // Catégorie sur chaque carte : de quoi filtrer dans le navigateur.
   const cartes = produits.map((p) => {
     const prix = prixClient(p.prix, taux);
-    const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(prix, tenant.devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
+    const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(convertirMontant(prix, tenant.devise, devise, tauxChange), devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
     return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}"`);
   }).join("");
   const cat: Catalogue = { cartes, nb: produits.length, categories };
@@ -154,5 +163,5 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
 /** À utiliser par toutes les pages de la vitrine à la place de resolveThemeConfigAsync. */
 export async function resolveConfigVitrine(themeId: string, tenantId: string, savedConfig: Record<string, any> = {}): Promise<ThemeConfig> {
   const cfg = await resolveThemeConfigAsync(themeId, tenantId, savedConfig);
-  return appliquerConstructeur(await rafraichirGrillesProduits(cfg, themeId, tenantId));
+  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId)));
 }

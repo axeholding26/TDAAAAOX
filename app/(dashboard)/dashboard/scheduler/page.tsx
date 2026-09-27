@@ -1,11 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Calendar, Plus, Clock,
-  Trash2, CheckCircle2, XCircle, Loader2, Sparkles,
-  X, Copy, Edit3, Film, Zap,
-  Camera, ThumbsUp, Music4, MessageCircle, Bird
-} from "lucide-react";
+import { Calendar, Plus, Clock, Trash2, CheckCircle2, XCircle, Loader2, Sparkles, X, Edit3, Zap, Camera, ThumbsUp, Music4, MessageCircle, Bird } from "lucide-react";
 import { toast } from "sonner";
 
 type Statut = "planifie" | "publie" | "annule";

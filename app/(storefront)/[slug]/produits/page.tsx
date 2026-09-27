@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
-import { formatMontant } from "@/lib/utils";
+import { Prix } from "@/components/storefront/DeviseVitrine";
 import { prixClient } from "@/lib/pricing";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import Link from "next/link";
@@ -128,6 +128,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
+        sansPanier={cfg.modeBoutique === "digital"}
       />
 
       <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-10`}>
@@ -326,11 +327,11 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                           )}
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm" style={{ color: c.accent }}>
-                              {formatMontant(prixAffiche, tenant.devise)}
+                              <Prix montant={prixAffiche} devise={tenant.devise} />
                             </span>
                             {remise > 0 && (
                               <span className="text-xs line-through" style={{ opacity: 0.35 }}>
-                                {formatMontant(prixCompareAffiche!, tenant.devise)}
+                                <Prix montant={prixCompareAffiche!} devise={tenant.devise} />
                               </span>
                             )}
                           </div>

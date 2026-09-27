@@ -16,7 +16,7 @@ async function tenantsDeLaSession(session: any): Promise<string[]> {
   return [...new Set([tenantId, ...proprietaire, ...membre])];
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   const tenantIds = await tenantsDeLaSession(session);
   if (!tenantIds.length) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

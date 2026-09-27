@@ -110,7 +110,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
               </tr>
             </thead>
             <tbody>
-              {commande.lignes.map((l: any, i: number) => (
+              {commande.lignes.map((l: any) => (
                 <tr key={l.id} style={{ borderBottom:"1px solid #F5F4F1" }}>
                   <td style={{ padding:"16px 0", verticalAlign:"middle" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:12 }}>

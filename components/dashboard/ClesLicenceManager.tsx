@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Key, Plus, Upload, Trash2, RefreshCw, Copy, CheckCircle, XCircle, Clock, AlertCircle } from "lucide-react";
+import { Key, Upload, Trash2, RefreshCw, Copy, CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface CleLicence {
   id: string;

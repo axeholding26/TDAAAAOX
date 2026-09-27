@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sparkles, ShoppingCart, Store, Users } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { BoutiqueSwitcher } from "@/components/dashboard/BoutiqueSwitcher";
 import { Header } from "@/components/dashboard/Header";
+import { initiales } from "@/lib/utils";
+import { RechercheDashboard } from "@/components/dashboard/RechercheDashboard";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
 import { CaisseKiosk } from "@/components/dashboard/CaisseKiosk";
@@ -101,12 +104,12 @@ export function DashboardShell({
         <div className="flex flex-col flex-1 overflow-hidden">
           {!estAccueilAxia && (
             <div className="md:hidden flex-shrink-0">
-              <MobileHeader boutiqueNom={boutique?.nomBoutique} />
+              <MobileHeader boutiqueNom={boutique?.nomBoutique} permissions={permissions} nom={session.user?.name ?? session.user?.email ?? ""} />
             </div>
           )}
           {!fullBleed && !estAccueilAxia && (
             <div className="hidden md:block flex-shrink-0">
-              <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique}/>
+              <Header session={session} boutiqueSlug={boutique?.slug} boutiqueNom={boutique?.nomBoutique} permissions={permissions}/>
             </div>
           )}
           <main className={fullBleed || estAccueilAxia ? "flex-1 overflow-hidden flex flex-col" : "flex-1 overflow-y-auto pb-32 md:pb-0"}>
@@ -129,7 +132,7 @@ export function DashboardShell({
 }
 
 /* ─── Header mobile ────────────────────────────────────────────── */
-function MobileHeader({ boutiqueNom }: { boutiqueNom?: string }) {
+function MobileHeader({ boutiqueNom, permissions, nom }: { boutiqueNom?: string; permissions?: Record<ModuleKey, Niveau>; nom: string }) {
   return (
     <header className="sticky top-0 z-40 bg-white/96 backdrop-blur-xl border-b border-gray-100"
       style={{ boxShadow: "0 1px 12px rgba(0,0,0,0.04)" }}>
@@ -141,8 +144,11 @@ function MobileHeader({ boutiqueNom }: { boutiqueNom?: string }) {
             <span className="text-xs font-semibold text-[#F5A623] truncate">{boutiqueNom}</span>
           </div>
         )}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f] flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">A</span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+        <RechercheDashboard permissions={permissions} mobile />
+        <Link href="/dashboard/profil" aria-label="Mon profil" className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f] flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-xs font-bold">{initiales(nom) || "?"}</span>
+        </Link>
         </div>
       </div>
       <div className="px-4 pb-2.5 empty:hidden"><BoutiqueSwitcher /></div>

@@ -8,6 +8,7 @@ import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, DEFAULT_PRODUCT
 import { DigitalBuilder } from "./digital/DigitalBuilder";
 import { BoutiqueBuilder } from "./boutique/BoutiqueBuilder";
 import { PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
+import { corrigerLiensDesign } from "@/lib/liens-design";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -108,6 +109,7 @@ export default function BuilderPage() {
     } else {
       resolved = resolveThemeConfig(data.themeId, tenantConfig);
     }
+    resolved = corrigerLiensDesign(resolved); // mêmes liens d'en-tête / pied que la vitrine
     setConfig(resolved);
     setOriginalConfig(resolved);
   }, []);

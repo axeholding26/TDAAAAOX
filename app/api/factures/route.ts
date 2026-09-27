@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
-function genNumero(tenantId: string, count: number) {
+function genNumero(_tenantId: string, count: number) {
   const year = new Date().getFullYear();
   const seq = String(count + 1).padStart(4, "0");
   return `FAC-${year}-${seq}`;

@@ -39,7 +39,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const produitId   = searchParams.get("produitId");
     const clientEmail = searchParams.get("clientEmail");
-    const commandeId  = searchParams.get("commandeId");
 
     if (!produitId || !clientEmail) {
       return NextResponse.json({ error: "produitId et clientEmail requis" }, { status: 400 });

@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     });
 
     // Créer le tenant et l'utilisateur en transaction
-    const { tenant, user } = await prisma.$transaction(async (tx) => {
+    const { tenant } = await prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
           slug: data.slug,
@@ -306,7 +306,7 @@ export async function PATCH(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const tenants = await prisma.tenant.findMany({
       select: {

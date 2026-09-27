@@ -47,7 +47,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
 
           <div className="flex items-center gap-2">
             <DisponibiliteToggle livreurId={livreur.id} disponible={livreur.disponible} />
-            <NotificationsPanel livreurId={livreur.id} />
+            <NotificationsPanel />
           </div>
         </div>
       </header>

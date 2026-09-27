@@ -455,8 +455,11 @@ main > section, main > div > section {
   from { opacity: 0; transform: translateY(12px) scale(0.99); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
+/* « backwards » et non « both » : une fois l'animation finie, aucun transform ne
+   reste sur la page — sinon il devenait le repère de tout élément position:fixed
+   qu'elle contient (modales, scanner…), qui ne couvraient plus l'écran. */
 .ax-page-enter {
-  animation: axFadeInUp 0.45s var(--ax-ease-decel) both;
+  animation: axFadeInUp 0.45s var(--ax-ease-decel) backwards;
 }
 
 /* ── Boutons boutique (storefront) — effet "glow" piloté par le builder ──

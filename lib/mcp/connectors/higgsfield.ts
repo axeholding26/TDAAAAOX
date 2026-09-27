@@ -125,14 +125,3 @@ export async function genererImageHiggsfield(params: {
 
   return { succes: true, imageUrl, resultat: res.resultat };
 }
-
-// ── Modèles disponibles (connus) ───────────────────────────────────────────
-
-export const HIGGSFIELD_VIDEO_MODELS = [
-  { id: "kling-3.0",     nom: "Kling 3.0",      type: "video", qualite: "ultra" },
-  { id: "veo-3.1",       nom: "Veo 3.1",        type: "video", qualite: "ultra" },
-  { id: "sora-2",        nom: "Sora 2",          type: "video", qualite: "cinematic" },
-  { id: "seedance-2.0",  nom: "Seedance 2.0",    type: "video", qualite: "high" },
-  { id: "minimax-02",    nom: "MiniMax Hailuo 02", type: "video", qualite: "high" },
-  { id: "cinema-3.5",    nom: "Cinema Studio 3.5", type: "video", qualite: "cinematic" },
-];

@@ -55,6 +55,7 @@ model Tenant {
 
   produits               Produit[]
   collections            Collection[]
+  categoriesProduits     CategorieProduit[]
   commandes              Commande[]
   clients                Client[]
   commissions            Commission[]
@@ -1811,4 +1812,25 @@ model ChargeExploitation {
 
   @@index([tenantId, dateEnregistrement])
   @@index([tenantId, statut])
+}
+
+// Catégories de produits propres à une boutique (Catalogue → Catégories).
+// Produit.categorie garde le NOM de la catégorie (filtres du catalogue,
+// recherche, AXIA) ; renommer / supprimer une catégorie met ses produits à jour.
+// `options` : options de variantes proposées pour cette catégorie,
+// ex. [{ "nom": "Taille", "valeurs": ["28", "30", "32"] }].
+model CategorieProduit {
+  id        String   @id @default(cuid())
+  tenantId  String
+  nom       String
+  slug      String
+  ordre     Int      @default(0)
+  options   Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, ordre])
 }

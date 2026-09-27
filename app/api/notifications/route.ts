@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 
@@ -20,7 +20,7 @@ export async function GET() {
   return NextResponse.json({ notifications, nonLues });
 }
 
-export async function PATCH(req: NextRequest) {
+export async function PATCH() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 

@@ -12,7 +12,6 @@ export default function DomainePage() {
   }, []);
   const [saving, setSaving] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [verified, setVerified] = useState(false);
 
   async function sauvegarder() {
     if (!domaine) return;
@@ -35,7 +34,6 @@ export default function DomainePage() {
   async function verifier() {
     setVerifying(true);
     await new Promise((r) => setTimeout(r, 2000));
-    setVerified(false);
     setVerifying(false);
     toast.error("DNS non configuré  suivez les instructions ci-dessous");
   }

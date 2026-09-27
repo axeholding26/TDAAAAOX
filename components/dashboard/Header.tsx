@@ -3,17 +3,16 @@ import { useState, useEffect, useRef } from "react";
 import { ecouterNotifications } from "@/components/dashboard/AlerteCommande";
 import Link from "next/link";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
-import {
-  Search, Bell, ChevronDown, LogOut, Settings,
-  User, ExternalLink, Store, X, ShoppingBag, DollarSign, Star,
-  Package, AlertTriangle, MessageCircle, Info,
-} from "lucide-react";
+import { Bell, ChevronDown, LogOut, Settings, User, ExternalLink, Store, ShoppingBag, DollarSign, Star, Package, AlertTriangle, MessageCircle, Info } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { initiales } from "@/lib/utils";
 import type { Session } from "next-auth";
+import type { ModuleKey, Niveau } from "@/lib/permissions";
+import { RechercheDashboard } from "@/components/dashboard/RechercheDashboard";
 
 interface HeaderProps {
   session:     Session;
+  permissions?: Record<ModuleKey, Niveau>;
   boutiqueSlug?: string;
   boutiqueNom?:  string;
 }
@@ -43,13 +42,11 @@ function tempsEcoule(iso: string) {
   return `Il y a ${Math.floor(h / 24)}j`;
 }
 
-export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
+export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: HeaderProps) {
   const [profileOpen,   setProfileOpen]   = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
   const [notifications, setNotifications] = useState<NotifMarchand[]>([]);
   const [nonLues, setNonLues] = useState(0);
-  const searchRef = useRef<HTMLInputElement>(null);
   const pillRef   = useRef<HTMLDivElement>(null);
 
   // Données fournies par AlerteCommande (une seule interrogation pour tout le dashboard).
@@ -127,47 +124,8 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
             transition: "box-shadow .35s ease",
           }}
         >
-          {/* ── Recherche ─────────────────────────────────────────────── */}
-          <div
-            onClick={() => searchRef.current?.focus()}
-            style={{
-              display: "flex", alignItems: "center", gap: "8px",
-              background:    searchFocused ? "#fff" : "rgba(0,0,0,.042)",
-              border:        `1px solid ${searchFocused ? "#F5A623" : "rgba(0,0,0,.09)"}`,
-              borderRadius:  "999px",
-              padding:       "7px 14px",
-              width:         searchFocused ? "240px" : "170px",
-              cursor:        "text",
-              transition:    "width .4s cubic-bezier(.34,1.56,.64,1), border-color .25s, background .25s, box-shadow .25s",
-              boxShadow:     searchFocused ? "0 0 0 3px rgba(245,166,35,.12)" : "none",
-              flexShrink:    0,
-            }}
-          >
-            <Search
-              size={13}
-              style={{ color: searchFocused ? "#F5A623" : "#bbb", flexShrink: 0, transition: "color .25s" }}
-            />
-            <input
-              ref={searchRef}
-              type="text"
-              placeholder="Rechercher…"
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() =>  setSearchFocused(false)}
-              style={{
-                background: "transparent", border: "none", outline: "none",
-                fontSize: "13px", color: "#333",
-                width: "100%", fontFamily: "inherit",
-              }}
-            />
-            {searchFocused && (
-              <button
-                onMouseDown={e => { e.preventDefault(); if (searchRef.current) searchRef.current.value = ""; }}
-                style={{ background:"none", border:"none", cursor:"pointer", color:"#bbb", padding:0, display:"flex", alignItems:"center" }}
-              >
-                <X size={12} />
-              </button>
-            )}
-          </div>
+          {/* ── Recherche (Ctrl+K) ────────────────────────────────────── */}
+          <RechercheDashboard permissions={permissions} />
 
           {/* ── Logo — centre absolu ───────────────────────────────────── */}
           <div style={{ position:"absolute", left:"50%", transform:"translateX(-50%)", pointerEvents:"auto" }}>
@@ -346,7 +304,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom }: HeaderProps) {
 
                   {/* Items */}
                   {([
-                    { Icon: User,         label: "Mon profil",        href: "#" },
+                    { Icon: User,         label: "Mon profil",        href: "/dashboard/profil" },
                     { Icon: Settings,     label: "Paramètres",        href: "/dashboard/parametres" },
                     ...(urlLocale ? [{ Icon: ExternalLink, label: "Voir la boutique", href: urlLocale, ext: true }] : []),
                   ] as any[]).map(({ Icon, label, href, ext }) => (

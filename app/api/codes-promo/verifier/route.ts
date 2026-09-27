@@ -37,6 +37,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     type: codePromo.type,
     valeur: codePromo.valeur,
-    reduction: codePromo.valeur,
+    minCommande: codePromo.minCommande,
   });
 }

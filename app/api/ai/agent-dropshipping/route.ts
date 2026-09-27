@@ -9,11 +9,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import {
-  completionWithToolsAuto,
-  type ToolDefinition,
-  type ToolCall,
-} from "@/lib/llm-client";
+import { completionWithToolsAuto, type ToolDefinition } from "@/lib/llm-client";
 import { z } from "zod";
 
 const schema = z.object({
@@ -132,7 +128,6 @@ async function executeOutil(
   name: string,
   args: Record<string, any>,
   tenantId: string,
-  suggestons: ProduitSuggere[]
 ): Promise<string> {
   switch (name) {
     case "rechercher_produits": {
@@ -305,7 +300,7 @@ async function runDropshippingAgent(
 
     // Exécute chaque outil
     for (const tc of result.toolCalls) {
-      const toolResult = await executeOutil(tc.name, tc.arguments, tenantId, produitsSuggeres);
+      const toolResult = await executeOutil(tc.name, tc.arguments, tenantId);
       actions.push(`${tc.name}(${JSON.stringify(tc.arguments).slice(0, 80)})`);
 
       conversation.push({

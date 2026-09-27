@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
+import { Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
 const CAMPAGNES_TUTORIAL_STEPS = [

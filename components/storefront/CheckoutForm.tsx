@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useCartStore } from "@/store/cartStore";
 import { formatMontant } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePrix } from "@/components/storefront/DeviseVitrine";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   Loader2, CreditCard, Shield, Lock,
@@ -62,6 +63,7 @@ function GpsStep({ label, steps }: { label: string; steps: string[] }) {
 
 // ─── Récapitulatif commande ───────────────────────────────────────────────────
 function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }: any) {
+  const { fmt, converti } = usePrix();
   return (
     <div className="rounded-2xl border p-5 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
       <h2 className="font-bold font-playfair text-base flex items-center gap-2"><Receipt size={16} /> {label || "Récapitulatif"}</h2>
@@ -77,7 +79,7 @@ function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }
               {item.variante && <p className="text-xs opacity-40">{item.variante}</p>}
               <p className="text-xs opacity-45">×{item.quantite}</p>
             </div>
-            <span className="text-sm font-semibold flex-shrink-0" style={{ color: theme.accent }}>{formatMontant(item.prix * item.quantite, devise)}</span>
+            <span className="text-sm font-semibold flex-shrink-0" style={{ color: theme.accent }}>{fmt(item.prix * item.quantite, devise)}</span>
           </div>
         ))}
       </div>
@@ -86,13 +88,18 @@ function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }
         {fraisLivraison !== null && fraisLivraison !== undefined && (
           <div className="flex justify-between mb-1 opacity-70">
             <span>Livraison</span>
-            <span>{fraisLivraison > 0 ? formatMontant(fraisLivraison, devise) : "Gratuite"}</span>
+            <span>{fraisLivraison > 0 ? fmt(fraisLivraison, devise) : "Gratuite"}</span>
           </div>
         )}
         <div className="flex justify-between font-bold text-base">
           <span>Total</span>
-          <span style={{ color: theme.accent }}>{formatMontant(total + (fraisLivraison || 0), devise)}</span>
+          <span style={{ color: theme.accent }}>{fmt(total + (fraisLivraison || 0), devise)}</span>
         </div>
+        {converti(devise) && (
+          <p className="mt-2 text-xs leading-relaxed opacity-60">
+            Montant réel de la commande : <strong>{formatMontant(total + (fraisLivraison || 0), devise)}</strong> — les prix dans votre devise sont une estimation au taux du jour.
+          </p>
+        )}
       </div>
     </div>
   );
@@ -112,7 +119,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // CHECKOUT PHYSIQUE — Paiement à la livraison → WhatsApp
 // ═══════════════════════════════════════════════════════════════════════════════
 function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique }: any) {
-  const router = useRouter();
+  const { fmt } = usePrix();
   const searchParams = useSearchParams();
   const cfg: ParametresCommande = parametresCommande || {};
   const demanderEmail = cfg.demanderEmail ?? true;
@@ -664,7 +671,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                 {zone && fraisLivraison !== null && (
                   <p className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: theme.accent }}>
                     <Package size={11} />
-                    {fraisLivraison > 0 ? `Frais de livraison : ${formatMontant(fraisLivraison, devise)}` : "Livraison gratuite pour cette zone"}
+                    {fraisLivraison > 0 ? `Frais de livraison : ${fmt(fraisLivraison, devise)}` : "Livraison gratuite pour cette zone"}
                   </p>
                 )}
               </div>
@@ -723,8 +730,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT DIGITAL — Paiement NotchPay · Wallet Axso · Livraison instantanée
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, paysBoutique }: any) {
-  const router = useRouter();
+function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, paysBoutique }: any) {
+  const { aPayer } = usePrix();
   const searchParams = useSearchParams();
 
   const [phase, setPhase] = useState<"form" | "paiement">("form");
@@ -774,24 +781,6 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
       setLoading(false);
     }
   }
-
-  function onPaiementSucces() {
-    try { localStorage.removeItem("axso_ref"); } catch {}
-    trackPixelEvent("Purchase", {
-      content_ids: items.map((i: any) => i.produitId),
-      contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
-      value: total,
-      currency: devise,
-      num_items: items.length,
-    });
-    trackTikTokEvent("CompletePayment", { value: total, currency: devise, content_type: "product", contents: items.map((i: any) => ({ content_id: i.produitId, quantity: i.quantite })) });
-    trackSnapchatEvent("PURCHASE", { price: total, currency: devise });
-    if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "purchase", value: total, currency: devise, num_items: items.length });
-    viderPanier();
-    router.push(`/${slug}/confirmation/${commandeId}`);
-  }
-
-  const inp2 = inp; // alias pour lisibilité dans le bloc paiement
 
   // ── Phase 2 : paiement NotchPay ──────────────────────────────────────────────
   if (phase === "paiement" && commandeId) {
@@ -917,7 +906,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
             style={{ backgroundColor: "#635BFF", color: "#fff", boxShadow: "0 4px 20px rgba(99,91,255,0.4)" }}>
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Shield size={16} />}
-            {loading ? "Préparation du paiement…" : `Payer ${formatMontant(total, devise)}`}
+            {loading ? "Préparation du paiement…" : `Payer ${aPayer(total, devise)}`}
           </button>
 
           <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
@@ -932,7 +921,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT MIXTE — Avertissement + deux sections
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande, paysBoutique }: any) {
+function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, parametresCommande, paysBoutique }: any) {
   const itemsPhysiques = items.filter((i: any) => i.type === "physique");
   const itemsDigitaux  = items.filter((i: any) => i.type === "digital" || i.type === "dropshipping");
   const totalPhysique  = itemsPhysiques.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);

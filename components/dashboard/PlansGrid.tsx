@@ -3,7 +3,7 @@
 import { Check, X, CreditCard, HelpCircle, Globe } from "lucide-react";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import AbonnementActions from "@/app/(dashboard)/dashboard/abonnement/AbonnementActions";
-import { PLANS_CATALOGUE, ABONNEMENT_FAQ, type PlanCatalogueId } from "@/lib/plans-catalogue";
+import { PLANS_CATALOGUE, ABONNEMENT_FAQ } from "@/lib/plans-catalogue";
 import { convertirDepuisXAF } from "@/lib/devise-convert";
 
 interface PlansGridProps {

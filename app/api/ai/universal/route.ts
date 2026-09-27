@@ -1411,10 +1411,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       case "analyser_avis": {
         const where: any = { tenantId, approuve: true };
         if (args.produitId) where.produitId = args.produitId;
-        const [avis, tenant] = await Promise.all([
-          prisma.avis.findMany({ where, select: { note: true, commentaire: true, createdAt: true }, take: 50, orderBy: { createdAt: "desc" } }),
-          prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
-        ]);
+        const avis = await prisma.avis.findMany({ where, select: { note: true, commentaire: true, createdAt: true }, take: 50, orderBy: { createdAt: "desc" } });
         if (!avis.length) return { succes: true, resultat: "Pas encore d'avis approuvés à analyser." };
         const moy = avis.reduce((s, a) => s + a.note, 0) / avis.length;
         const dist = [1, 2, 3, 4, 5].map(n => ({ note: n, count: avis.filter(a => a.note === n).length }));

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { FORMAT_PIXEL } from "@/lib/pixels";
 import {

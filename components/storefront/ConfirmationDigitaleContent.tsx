@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle, XCircle, Shield, TrendingDown, Download, Zap, Package, MessageCircle, Check, X, GraduationCap, KeyRound } from "lucide-react";
+import { CheckCircle, XCircle, Download, Zap, Package, MessageCircle, Check, X, GraduationCap, KeyRound } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { CopyableKey } from "@/components/storefront/CopyableKey";
@@ -16,7 +16,6 @@ interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
   slug: string;
   devise: string;
-  commissionRate: number;
   commande: {
     numero: string;
     createdAt: Date;
@@ -46,14 +45,11 @@ interface Props {
   accesFormations: readonly any[];
   clesLicence: readonly any[];
   nomProduit: Map<string, string>;
-  montantMarchand: number;
-  montantCommission: number;
 }
 
 export function ConfirmationDigitaleContent({
   theme, slug, devise, commande, paye, echoue, isCOD, isDigital,
   lignesDigitales, telechargements, accesFormations, clesLicence, nomProduit,
-  montantMarchand, montantCommission, commissionRate,
 }: Props) {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
@@ -299,44 +295,6 @@ export function ConfirmationDigitaleContent({
           ))}
         </div>
       </div>
-
-      {/* ── Escrow section (paiement en ligne uniquement) ─────────── */}
-      {paye && !isCOD && (
-        <div className="rounded-2xl border p-6 mb-6 space-y-4"
-          style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h3 className="font-semibold text-sm opacity-80 flex items-center gap-2">
-            <Shield size={14} style={{ color: theme.accent }} /> Sécurité paiement (Escrow)
-          </h3>
-
-          <div className="space-y-2.5">
-            <div className="flex justify-between text-sm">
-              <span className="opacity-60">Montant total</span>
-              <span className="font-semibold">{formatMontant(commande.montantTotal, devise)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="opacity-60 flex items-center gap-1">
-                <TrendingDown size={11} /> Commission Axso ({Math.round(commissionRate * 100)}%)
-              </span>
-              <span className="text-red-400">-{formatMontant(montantCommission, devise)}</span>
-            </div>
-            <div className="border-t pt-2.5 flex justify-between text-sm" style={{ borderColor: `${theme.accent}15` }}>
-              <span className="opacity-60 font-medium">Reversé au marchand</span>
-              <span className="font-bold" style={{ color: theme.accent }}>{formatMontant(montantMarchand, devise)}</span>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3 rounded-xl p-3 mt-2"
-            style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-            <Zap size={14} style={{ color: theme.accent }} className="mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold" style={{ color: theme.accent }}>Fonds libérés immédiatement</p>
-              <p className="opacity-50 text-xs mt-0.5">
-                Le marchand reçoit les fonds instantanément après confirmation du paiement.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Actions ──────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center">

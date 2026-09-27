@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
@@ -38,6 +39,7 @@ function Stars({ note, size = 13 }: { note: number; size?: number }) {
 export default async function AvisPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "clients");
 
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });

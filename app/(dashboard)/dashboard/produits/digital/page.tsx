@@ -1,13 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import {
-  Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package,
-  TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore,
-  ChevronDown, Search, X, Users, BarChart2, Send, Ban, ExternalLink,
-  RefreshCw, Loader2, AlertCircle, Check, Eye, Tag, Clock, Infinity,
-  FileDown, Key, ChevronRight, Sparkles,
-} from "lucide-react";
+import { Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package, TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore, ChevronDown, Search, X, Users, BarChart2, Send, Ban, RefreshCw, Loader2, AlertCircle, Check, Eye, Clock, Infinity, FileDown, Key, Sparkles } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
@@ -745,7 +739,7 @@ function ProductCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DigitalProduitsPage() {
-  const { devise, fmt } = useDevise();
+  const { devise } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);

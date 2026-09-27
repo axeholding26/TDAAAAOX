@@ -1,6 +1,6 @@
 // Webhook WhatsApp Business Cloud API v22.0
 // Conforme aux exigences Meta: vérification de signature, statuts, fenêtre 24h
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHmac } from "crypto";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Toujours retourner 200 rapidement à Meta (< 20s SLA)
-  const processPromise = traiterEvenements(body);
-  processPromise.catch(err => console.error("[webhook/whatsapp] Erreur traitement:", err));
+  // after() : la fonction reste en vie jusqu'à la fin du traitement (sur Vercel,
+  // une promesse lancée puis abandonnée est coupée dès la réponse envoyée).
+  after(() => traiterEvenements(body).catch(err => console.error("[webhook/whatsapp] Erreur traitement:", err)));
 
   return NextResponse.json({ received: true });
 }
@@ -97,7 +98,7 @@ async function traiterEvenements(body: any) {
               },
             }).catch(() => {});
 
-            await detecterEtConfirmerCommande(tenantId, de, corps, commandeLiee, phoneId).catch(() => {});
+            await detecterEtConfirmerCommande(tenantId, de, corps, commandeLiee).catch(() => {});
             autoRepondre(tenantId, de, corps, phoneId).catch(() => {});
           }
         }
@@ -111,7 +112,6 @@ async function traiterEvenements(body: any) {
         if (!tenantId || !status.id) continue;
 
         // Mettre à jour le statut dans la DB
-        const statutMap: Record<string, boolean> = { read: true, delivered: false };
         if (status.status === "read" || status.status === "delivered") {
           await prisma.messageRecu.updateMany({
             where: { waMessageId: status.id, tenantId },
@@ -144,7 +144,6 @@ async function detecterEtConfirmerCommande(
   de: string,
   message: string,
   commande: { id: string; numero: string; statut: string; trackingToken: string | null } | null,
-  phoneId: string
 ) {
   if (!commande || commande.statut !== "en_attente") return;
   const texte = message.toLowerCase().trim();

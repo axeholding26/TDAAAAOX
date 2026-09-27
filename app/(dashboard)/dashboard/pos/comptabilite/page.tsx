@@ -53,7 +53,7 @@ function CardResume({ label, value, Icon, color, sub }: { label: string; value: 
 }
 
 export default function ComptabilitePage() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [periode, setPeriode] = useState("mois");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

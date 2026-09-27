@@ -1,11 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Megaphone, Plus, Loader2, X, Sparkles, TrendingUp,
-  Eye, MousePointer, ShoppingCart, DollarSign, Pause,
-  Play, Trash2, ExternalLink, Zap, Target, BarChart2,
-  Users, Music, Search
-} from "lucide-react";
+import { Megaphone, Plus, Loader2, X, Sparkles, TrendingUp, Eye, MousePointer, ShoppingCart, DollarSign, Pause, Play, Trash2, Zap, Target, BarChart2, Users, Music, Search } from "lucide-react";
 import { toast } from "sonner";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";

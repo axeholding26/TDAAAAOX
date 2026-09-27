@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // GET — liens que j'ai générés (je suis affilieur)
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const affilieurId = (session.user as any)?.tenantId;

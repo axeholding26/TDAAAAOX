@@ -110,13 +110,10 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
         orderBy: { totalDepense: "desc" },
       });
 
-      const maintenant = new Date();
       const il_y_a_30j = new Date(Date.now() - 30 * 24 * 3600 * 1000);
       const il_y_a_60j = new Date(Date.now() - 60 * 24 * 3600 * 1000);
       const il_y_a_90j = new Date(Date.now() - 90 * 24 * 3600 * 1000);
 
-      const totalLTV = clients.reduce((s, c) => s + c.totalDepense, 0);
-      const seuilVIP = totalLTV > 0 ? clients.slice(0, Math.ceil(clients.length * 0.2)).reduce((s, c) => s + c.totalDepense, 0) : 50000;
 
       const vip = clients.filter((c) => c.totalDepense >= 50000);
       const reguliers = clients.filter((c) => c.totalCommandes >= 2 && c.totalDepense < 50000 && c.createdAt >= il_y_a_60j);

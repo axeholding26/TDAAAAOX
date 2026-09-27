@@ -3,6 +3,8 @@
 //        retrait    → débit wallet → virement NotchPay (Transfers)
 
 import { prisma } from "./prisma";
+import { versXAF } from "./devise-convert";
+import { tauxDuJour } from "./taux-change";
 import { initierTransfertNotchPay } from "./notchpay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -73,8 +75,15 @@ export async function getPlatformTenantId(): Promise<string> {
   return getOrCreatePlatformTenantId(prisma);
 }
 
-async function crediterPlateformeTx(tx: any, montant: number, devise: string, description: string, reference?: string) {
-  if (montant <= 0) return;
+// Le portefeuille plateforme est tenu en XAF : chaque montant d'une boutique
+// (NGN, GHS, XOF…) y est converti, jamais additionné tel quel.
+const enXAF = (montant: number, devise: string, description: string, taux: Record<string, number>) => devise === "XAF"
+  ? { montant, devise, description }
+  : { montant: versXAF(montant, devise, taux), devise: "XAF", description: `${description} (${montant} ${devise})` };
+
+async function crediterPlateformeTx(tx: any, taux: Record<string, number>, montantDevise: number, deviseOrigine: string, descriptionOrigine: string, reference?: string) {
+  if (montantDevise <= 0) return;
+  const { montant, devise, description } = enXAF(montantDevise, deviseOrigine, descriptionOrigine, taux);
   const tenantId = await getOrCreatePlatformTenantId(tx);
   const wallet = await tx.wallet.upsert({
     where: { tenantId },
@@ -86,8 +95,9 @@ async function crediterPlateformeTx(tx: any, montant: number, devise: string, de
   });
 }
 
-async function logFraisPasserelleTx(tx: any, frais: number, devise: string, description: string, reference?: string) {
-  if (frais <= 0) return;
+async function logFraisPasserelleTx(tx: any, taux: Record<string, number>, fraisDevise: number, deviseOrigine: string, descriptionOrigine: string, reference?: string) {
+  if (fraisDevise <= 0) return;
+  const { montant: frais, devise, description } = enXAF(fraisDevise, deviseOrigine, descriptionOrigine, taux);
   const platformTenantId = await getOrCreatePlatformTenantId(tx);
   const wallet = await tx.wallet.upsert({ where: { tenantId: platformTenantId }, create: { tenantId: platformTenantId, devise }, update: {} });
   // Ligne purement informative : le wallet n'a jamais été crédité du montant brut,
@@ -101,9 +111,10 @@ async function logFraisPasserelleTx(tx: any, frais: number, devise: string, desc
 // Revenu d'abonnement net des frais NotchPay réels sur cette transaction.
 export async function crediterPlateformeAvecFrais(montantBrut: number, frais: number, devise: string, description: string, reference?: string) {
   const net = Math.max(0, montantBrut - frais);
+  const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
   await prisma.$transaction(async (tx) => {
-    if (net > 0) await crediterPlateformeTx(tx, net, devise, description, reference);
-    await logFraisPasserelleTx(tx, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
+    if (net > 0) await crediterPlateformeTx(tx, taux, net, devise, description, reference);
+    await logFraisPasserelleTx(tx, taux, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
   });
 }
 
@@ -112,17 +123,19 @@ export async function crediterPlateformeAvecFrais(montantBrut: number, frais: nu
 // la plateforme (même débit atomique conditionnel que initierRetrait) pour ne
 // jamais promettre plus d'argent que ce qu'Axso a réellement en caisse.
 export async function crediterBonusWallet(tenantId: string, montant: number, devise: string, raison: string) {
+  const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
   await prisma.$transaction(async (tx) => {
     const platformTenantId = await getOrCreatePlatformTenantId(tx);
+    const debitXAF = enXAF(montant, devise, `Bonus marchand · ${raison}`, taux);
     const debit = await tx.wallet.updateMany({
-      where: { tenantId: platformTenantId, solde: { gte: montant } },
-      data: { solde: { decrement: montant }, totalRetire: { increment: montant } },
+      where: { tenantId: platformTenantId, solde: { gte: debitXAF.montant } },
+      data: { solde: { decrement: debitXAF.montant }, totalRetire: { increment: debitXAF.montant } },
     });
     if (debit.count === 0) throw new Error("Solde plateforme insuffisant pour ce bonus");
 
     const platformWallet = await tx.wallet.findUnique({ where: { tenantId: platformTenantId } });
     await tx.walletTransaction.create({
-      data: { walletId: platformWallet!.id, type: "RETRAIT", montant: -montant, devise, description: `Bonus marchand · ${raison}`, statut: "completed" },
+      data: { walletId: platformWallet!.id, type: "RETRAIT", montant: -debitXAF.montant, devise: debitXAF.devise, description: debitXAF.description, statut: "completed" },
     });
 
     const wallet = await tx.wallet.upsert({
@@ -150,6 +163,7 @@ export async function crediterWallet(
   const montantNet = Math.round((montantBrut / (1 + tauxCommission)) * 100) / 100;
   const montantCommission = Math.round((montantBrut - montantNet) * 100) / 100;
 
+  const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
   await prisma.$transaction(async (tx) => {
     const wallet = await tx.wallet.upsert({
       where: { tenantId },
@@ -225,9 +239,9 @@ export async function crediterWallet(
         const frais = Math.min(Math.max(0, fraisPasserelle ?? 0), montantCommission);
         const commissionNette = montantCommission - frais;
         if (commissionNette > 0) {
-          await crediterPlateformeTx(tx, commissionNette, devise, `Commission sur vente${reference ? ` · ${reference}` : ""}`, reference);
+          await crediterPlateformeTx(tx, taux, commissionNette, devise, `Commission sur vente${reference ? ` · ${reference}` : ""}`, reference);
         }
-        await logFraisPasserelleTx(tx, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
+        await logFraisPasserelleTx(tx, taux, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
       }
     }
   });
@@ -395,21 +409,8 @@ export async function getWalletResume(tenantId: string) {
 
   if (!wallet) return null;
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true } });
-  const tauxCommission = tenant?.commissionRate ?? 0.06;
-
-  // Solde en séquestre (commandes confirmées mais escrow non libéré)
-  const escrowsActifs = await prisma.escrow.aggregate({
-    where: { tenantId, statut: "held" },
-    _sum: { montant: true },
-  });
-
-  const soldeSequestre = escrowsActifs._sum.montant ?? 0;
-  const netSequestre = soldeSequestre / (1 + tauxCommission);
-
   return {
     ...wallet,
-    soldeSequestre: netSequestre,
     retraitsEnAttente: wallet.retraits.filter((r) => r.statut === "en_attente").reduce((s, r) => s + r.montant, 0),
   };
 }

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande } from "@/lib/utils";
+import { prixClient, reductionPromo } from "@/lib/pricing";
 
 export async function POST(req: NextRequest) {
   try {
-    const { tenantId, client, items, total, devise, codeAffiliation } = await req.json();
+    // Prix, total et devise NE viennent JAMAIS du navigateur : recalculés depuis la
+    // base (même formule que la vitrine) — sinon on pouvait payer le prix de son choix.
+    const { tenantId, client, items, codeAffiliation, codePromo: codeSaisi } = await req.json();
 
     if (!tenantId || !items?.length || !client?.nom || !client?.email) {
       return NextResponse.json({ error: "Nom et email obligatoires" }, { status: 400 });
@@ -19,13 +22,27 @@ export async function POST(req: NextRequest) {
     // livré — limite d'exemplaires atteinte (fichier) ou plus de clé disponible
     // (licence). Mieux vaut bloquer ici que faire payer un client pour rien.
     const produits = await prisma.produit.findMany({
-      where: { id: { in: items.map((i: any) => i.produitId) } },
+      where: { id: { in: items.map((i: any) => String(i.produitId)) }, tenantId, actif: true },
       select: {
-        id: true, nom: true, type: true,
+        id: true, nom: true, type: true, prix: true, images: true,
         produitFichier: { select: { limitAchats: true } },
         licenceProduit: { select: { id: true, cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 } } },
       },
     });
+    if (produits.length !== new Set(items.map((i: any) => String(i.produitId))).size) {
+      return NextResponse.json({ error: "Produit introuvable dans cette boutique" }, { status: 400 });
+    }
+    const taux = tenant.commissionRate ?? 0.06;
+    const lignes = items.map((item: any) => {
+      const p = produits.find((x) => x.id === String(item.produitId))!;
+      return { produitId: p.id, nom: p.nom, prix: prixClient(p.prix, taux), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: item.variante || null };
+    });
+    const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
+    const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
+    const reduction = reductionPromo(promo, sousTotal);
+    const total = sousTotal - reduction;
+    const devise = tenant.devise;
+
     for (const p of produits) {
       if (p.type === "fichier" && p.produitFichier?.limitAchats != null) {
         const ventes = await prisma.commande.count({
@@ -67,27 +84,20 @@ export async function POST(req: NextRequest) {
         adresseLivraison: "Digital",
         ville: "Digital",
         pays: client.pays || "—",
-        montantSousTotal: total,
+        montantSousTotal: sousTotal,
+        montantReduction: reduction,
+        codePromoId: promo && reduction > 0 ? promo.id : null,
         montantTotal: total,
         devise,
         statut: "en_attente",
         paiementStatut: "pending",
         methodePaiement: "en_attente",
         codeAffiliation: codeAffiliation || null,
-        lignes: {
-          create: items.map((item: any) => ({
-            produitId: item.produitId,
-            nom: item.nom,
-            prix: item.prix,
-            quantite: item.quantite,
-            imageUrl: item.imageUrl || null,
-            variante: item.variante || null,
-          })),
-        },
+        lignes: { create: lignes },
       },
     });
 
-    return NextResponse.json({ commandeId: commande.id, numero: commande.numero });
+    return NextResponse.json({ commandeId: commande.id, numero: commande.numero, total, devise });
   } catch (err) {
     console.error("[digital-creer]", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

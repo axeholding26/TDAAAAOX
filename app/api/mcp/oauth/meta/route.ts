@@ -1,5 +1,5 @@
 // Initie le flux OAuth Meta — redirige vers la fenêtre d'autorisation Facebook
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 const SCOPES = [
@@ -14,7 +14,7 @@ const SCOPES = [
   "whatsapp_business_messaging",
 ].join(",");
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) {

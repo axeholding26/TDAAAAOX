@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { dateRelative, formatMontant } from "@/lib/utils";
+import { dateRelative } from "@/lib/utils";
 import {
   Sparkles, TrendingUp, Radar, Rocket, Package, Heart, Megaphone,
   BarChart3, Users, ShoppingBag, Truck, Loader2, Filter, Zap,
@@ -49,7 +49,7 @@ function grouperParJour(decisions: Decision[]): Array<{ jour: string; items: Dec
 }
 
 export default function JournalAxiaPage() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [agents, setAgents] = useState<string[]>([]);
   const [filtre, setFiltre] = useState<string | null>(null);

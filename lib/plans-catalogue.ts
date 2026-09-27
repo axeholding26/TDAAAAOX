@@ -72,7 +72,6 @@ export const PLANS_CATALOGUE = [
   },
 ] as const;
 
-export type PlanCatalogueId = (typeof PLANS_CATALOGUE)[number]["id"];
 
 export const ABONNEMENT_FAQ = [
   {

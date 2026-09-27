@@ -1,10 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  MessageSquare, Plus, Loader2, X, Sparkles, Send,
-  Users, CheckCircle2, Zap, Smartphone, Hash,
-  Crown, Moon, ShoppingCart, UserPlus, Check
-} from "lucide-react";
+import { Plus, Loader2, X, Sparkles, Send, Users, CheckCircle2, Zap, Smartphone, Crown, Moon, ShoppingCart, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 const SEGMENTS = [
@@ -108,7 +104,6 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
     } finally { setSending(false); }
   }
 
-  const segment = SEGMENTS.find(s => s.id === form.segment);
   const charCount = form.message.length;
 
   return (

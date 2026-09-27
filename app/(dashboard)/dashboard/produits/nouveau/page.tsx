@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Plus, X, Sparkles, Loader2, Package, Image as ImageIcon,
@@ -11,14 +11,10 @@ import { toast } from "sonner";
 import { envoyerImagesCarrees, dimensions, estCarre, MESSAGE_REFUS } from "@/lib/images-carrees";
 import { slugify } from "@/lib/utils";
 import { BarcodeCaptureModal } from "@/components/dashboard/BarcodeCaptureModal";
+import { useCategoriesBoutique, optionsVariantes } from "@/components/dashboard/CategoriesProduit";
+import { GardeProduitPhysique } from "@/components/dashboard/GardeProduitPhysique";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
-const CATEGORIES = [
-  "Mode & Vêtements", "Beauté & Cosmétiques", "Alimentation & Épicerie",
-  "Artisanat & Art", "Électronique", "Maison & Décoration",
-  "Santé & Bien-être", "Sport & Loisirs", "Formation & Cours",
-  "Logiciel & App", "Musique & Audio", "Photo & Vidéo", "Autre",
-];
 
 const TYPES_PRODUIT = [
   {
@@ -50,8 +46,13 @@ function formatTaille(octets: number): string {
   return `${(octets / 1024 / 1024).toFixed(1)} Mo`;
 }
 
+// Boutique digitale : on propose d'abord une boutique physique (voir GardeProduitPhysique).
 export default function NouveauProduitPage() {
-  const { devise, fmt } = useDevise();
+  return <GardeProduitPhysique><FormulaireProduit /></GardeProduitPhysique>;
+}
+
+function FormulaireProduit() {
+  const { fmt } = useDevise();
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [genIA, setGenIA] = useState(false);
@@ -67,6 +68,8 @@ export default function NouveauProduitPage() {
 
   const [variantes, setVariantes] = useState<{ nom: string; valeur: string; sku: string; prix: string; stock: string; image: string }[]>([]);
   const [varianteForm, setVarianteForm] = useState({ nom: "Taille", valeur: "", sku: "", prix: "", stock: "0", image: "" });
+  // Catégories de la boutique (Catalogue → Catégories) et options de variantes de la catégorie choisie.
+  const categoriesBoutique = useCategoriesBoutique();
   const [scanBarcodeOuvert, setScanBarcodeOuvert] = useState(false);
 
   const [form, setForm] = useState({
@@ -99,6 +102,11 @@ export default function NouveauProduitPage() {
     urlFournisseur: "",
     nomFournisseur: "",
   });
+
+  const nomsOptions = optionsVariantes(categoriesBoutique, form.categorie).noms;
+  useEffect(() => {
+    if (!nomsOptions.includes(varianteForm.nom)) setVarianteForm(v => ({ ...v, nom: nomsOptions[0] }));
+  }, [nomsOptions.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field: string, value: any) {
     setForm(f => {
@@ -307,7 +315,7 @@ export default function NouveauProduitPage() {
       </div>
 
       {/* ─── Sélecteur de type ─── */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {TYPES_PRODUIT.map((t) => {
           const Icone = t.icon;
           const actif = form.type === t.id;
@@ -343,9 +351,9 @@ export default function NouveauProduitPage() {
         })}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)] xl:grid-cols-[minmax(0,1fr)_400px] gap-6">
         {/* Colonne principale */}
-        <div className="lg:col-span-2 space-y-5">
+        <div className="min-w-0 space-y-5">
 
           {/* Infos générales */}
           <div className="ax-card p-6 space-y-4">
@@ -360,8 +368,8 @@ export default function NouveauProduitPage() {
             <div>
               <label className="ax-label block mb-1.5">Slug URL</label>
               <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                <span className="text-gray-400 text-xs">/produits/</span>
-                <input value={form.slug} onChange={e => set("slug", e.target.value)} className="bg-transparent text-sm text-gray-600 outline-none flex-1" />
+                <span className="text-gray-400 text-xs flex-shrink-0">/produits/</span>
+                <input value={form.slug} onChange={e => set("slug", e.target.value)} className="bg-transparent text-sm text-gray-600 outline-none flex-1 min-w-0" />
               </div>
             </div>
             <div>
@@ -640,15 +648,17 @@ export default function NouveauProduitPage() {
             </div>
             <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
-              <option value="">Sélectionner...</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              <option value="">{categoriesBoutique?.length === 0 ? "Aucune catégorie — crée-les d'abord" : "Sélectionner..."}</option>
+              {(categoriesBoutique ?? []).map(c => <option key={c.id} value={c.nom}>{c.nom}</option>)}
+              {form.categorie && categoriesBoutique && !categoriesBoutique.some(c => c.nom === form.categorie) && <option value={form.categorie}>{form.categorie}</option>}
             </select>
+            <Link href="/dashboard/produits/categories" className="block -mt-2 text-[12px] font-medium text-[#B45309] hover:underline">Gérer les catégories et leurs options →</Link>
             <div className="flex gap-2">
               <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); const t = tagInput.trim().toLowerCase(); if (t && !form.tags.includes(t)) set("tags", [...form.tags, t]); setTagInput(""); }}}
-                placeholder="Ajouter un tag..." className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-xs focus:outline-none focus:border-[#F5A623]/50" />
+                placeholder="Ajouter un tag..." className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-xs focus:outline-none focus:border-[#F5A623]/50" />
               <button onClick={() => { const t = tagInput.trim().toLowerCase(); if (t && !form.tags.includes(t)) set("tags", [...form.tags, t]); setTagInput(""); }}
-                className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-gray-900 text-xs">+</button>
+                className="flex-shrink-0 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-gray-900 text-xs">+</button>
             </div>
             {form.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -664,42 +674,44 @@ export default function NouveauProduitPage() {
           {/* ─── Variantes ─── */}
           {form.type !== "digital" && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <h2 className="text-[13px] font-semibold text-[#111111]">Variantes (taille, couleur, matière…)</h2>
-                <span className="text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
+                <span className="flex-shrink-0 whitespace-nowrap text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
               </div>
 
               {/* Form ajout variante */}
               <div className="bg-[#FAFAFA] rounded-xl p-3 space-y-2">
+                <datalist id="valeurs-option">{optionsVariantes(categoriesBoutique, form.categorie).valeurs(varianteForm.nom).map(v => <option key={v} value={v} />)}</datalist>
                 <div className="grid grid-cols-2 gap-2">
                   <select
                     value={varianteForm.nom}
                     onChange={e => setVarianteForm(v => ({ ...v, nom: e.target.value }))}
-                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    className="w-full min-w-0 border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
                   >
-                    {["Taille","Couleur","Matière","Poids","Modèle","Style","Pack"].map(n => <option key={n}>{n}</option>)}
+                    {optionsVariantes(categoriesBoutique, form.categorie).noms.map(n => <option key={n}>{n}</option>)}
                   </select>
                   <input
-                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    className="w-full min-w-0 border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
                     placeholder="Valeur (ex: XL, Rouge)"
+                    list="valeurs-option"
                     value={varianteForm.valeur}
                     onChange={e => setVarianteForm(v => ({ ...v, valeur: e.target.value }))}
                   />
                   <input
-                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    className="w-full min-w-0 border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
                     placeholder="SKU (optionnel)"
                     value={varianteForm.sku}
                     onChange={e => setVarianteForm(v => ({ ...v, sku: e.target.value }))}
                   />
                   <input
-                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    className="w-full min-w-0 border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
                     placeholder={`Prix (défaut: ${form.prix || "0"})`}
                     type="number"
                     value={varianteForm.prix}
                     onChange={e => setVarianteForm(v => ({ ...v, prix: e.target.value }))}
                   />
                   <input
-                    className="border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
+                    className="w-full min-w-0 border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12px] outline-none bg-white"
                     placeholder="Stock"
                     type="number"
                     value={varianteForm.stock}

@@ -160,7 +160,6 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
     }
 
     if (name === "alertes_saisonnaliite_stock") {
-      const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
       const produits = await prisma.produit.findMany({ where: { tenantId, actif: true } });
 
       const evenements = [
@@ -213,8 +212,10 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
 
     if (name === "identifier_produits_dormants") {
       const seuil = args.seuil_jours_sans_vente || 30;
+      const depuis = new Date(Date.now() - seuil * 86400000);
+      // Dormant = en stock et aucune vente (hors commandes annulées) depuis `seuil` jours.
       const produits = await prisma.produit.findMany({
-        where: { tenantId, actif: true, ventes: 0, stock: { gt: 0 } },
+        where: { tenantId, actif: true, stock: { gt: 0 }, lignesCommande: { none: { commande: { createdAt: { gte: depuis }, statut: { not: "annulee" } } } } },
         orderBy: { stock: "desc" },
         take: 20,
       });

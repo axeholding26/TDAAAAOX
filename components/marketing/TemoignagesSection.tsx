@@ -34,7 +34,6 @@ function generateParticles(): Particle[] {
 
 export function TemoignagesSection() {
   const [actif, setActif] = useState(0);
-  const [prev, setPrev] = useState<number | null>(null);
   const [dir, setDir] = useState<"left" | "right">("right");
   const [visible, setVisible] = useState(false);
   const [particles, setParticles] = useState<Particle[]>([]);
@@ -64,13 +63,11 @@ export function TemoignagesSection() {
 
   const navigate = (direction: "left" | "right") => {
     setDir(direction);
-    setPrev(actif);
     setActif((p) =>
       direction === "right"
         ? (p + 1) % temoignages.length
         : (p - 1 + temoignages.length) % temoignages.length
     );
-    setTimeout(() => setPrev(null), 400);
   };
 
   const t = temoignages[actif];
@@ -206,7 +203,7 @@ export function TemoignagesSection() {
             {temoignages.map((_, i) => (
               <button
                 key={i}
-                onClick={() => { setDir(i > actif ? "right" : "left"); setPrev(actif); setActif(i); setTimeout(() => setPrev(null), 400); }}
+                onClick={() => { setDir(i > actif ? "right" : "left"); setActif(i); }}
                 className={`h-2 rounded-full transition-all duration-300 ${i === actif ? "w-8" : "w-2 hover:w-4"}`}
                 style={{ backgroundColor: i === actif ? t.couleur : "#e5e7eb" }}
               />

@@ -30,7 +30,6 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [thinkingMsg, setThinkingMsg] = useState(THINKING_MSGS[0]);
-  const [thinkingIdx, setThinkingIdx] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,11 +37,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
   useEffect(() => {
     if (!loading) return;
     const timer = setInterval(() => {
-      setThinkingIdx((i) => {
-        const next = (i + 1) % THINKING_MSGS.length;
-        setThinkingMsg(THINKING_MSGS[next]);
-        return next;
-      });
+      setThinkingMsg((m) => THINKING_MSGS[(THINKING_MSGS.indexOf(m) + 1) % THINKING_MSGS.length]);
     }, 2200);
     return () => clearInterval(timer);
   }, [loading]);

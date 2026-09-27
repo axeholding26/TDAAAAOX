@@ -1,7 +1,8 @@
 // Contenu panier — client component
 "use client";
 import { useCartStore } from "@/store/cartStore";
-import { formatMontant } from "@/lib/utils";
+import { usePrix } from "@/components/storefront/DeviseVitrine";
+import { reductionPromo } from "@/lib/pricing";
 import Link from "next/link";
 import { Trash2, Plus, Minus, ShoppingBag, Package } from "lucide-react";
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export function CartContent({ theme, slug, devise }: Props) {
+  const { fmt } = usePrix();
   const { items, modifierQuantite, retirerItem, sousTotal, totalAvecReduction, reductionMontant, codePromo, totalItems } = useCartStore();
 
   if (items.length === 0) {
@@ -40,7 +42,7 @@ export function CartContent({ theme, slug, devise }: Props) {
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-sm mb-1 truncate">{item.nom}</h3>
               {item.variante && <p className="text-xs opacity-50 mb-2">{item.variante}</p>}
-              <p className="font-bold" style={{ color: theme.accent }}>{formatMontant(item.prix, devise)}</p>
+              <p className="font-bold" style={{ color: theme.accent }}>{fmt(item.prix, devise)}</p>
             </div>
             <div className="flex flex-col items-end justify-between">
               <button onClick={() => retirerItem(item.produitId, item.variante)} className="text-red-400 hover:opacity-80 transition-opacity p-1">
@@ -67,12 +69,12 @@ export function CartContent({ theme, slug, devise }: Props) {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="opacity-60">Sous-total ({totalItems()} article{totalItems() > 1 ? "s" : ""})</span>
-              <span>{formatMontant(sousTotal(), devise)}</span>
+              <span>{fmt(sousTotal(), devise)}</span>
             </div>
             {reductionMontant > 0 && (
               <div className="flex justify-between text-green-500">
                 <span>Code promo ({codePromo})</span>
-                <span>-{formatMontant(reductionMontant, devise)}</span>
+                <span>-{fmt(reductionMontant, devise)}</span>
               </div>
             )}
             <div className="flex justify-between">
@@ -81,7 +83,7 @@ export function CartContent({ theme, slug, devise }: Props) {
             </div>
             <div className="border-t pt-2 flex justify-between font-bold text-base" style={{ borderColor: `${theme.accent}20` }}>
               <span>Total</span>
-              <span style={{ color: theme.accent }}>{formatMontant(totalAvecReduction(), devise)}</span>
+              <span style={{ color: theme.accent }}>{fmt(totalAvecReduction(), devise)}</span>
             </div>
           </div>
 
@@ -98,7 +100,8 @@ export function CartContent({ theme, slug, devise }: Props) {
 }
 
 function CodePromoInput({ theme, slug, devise }: Props) {
-  const { appliquerCodePromo, supprimerCodePromo, codePromo } = useCartStore();
+  const { fmt } = usePrix();
+  const { appliquerCodePromo, supprimerCodePromo, codePromo, sousTotal } = useCartStore();
 
   async function appliquer(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -106,10 +109,11 @@ function CodePromoInput({ theme, slug, devise }: Props) {
     const code = (form.elements.namedItem("code") as HTMLInputElement).value.trim();
     if (!code) return;
     try {
-      const res = await fetch(`/api/codes-promo/verifier?code=${code}&slug=${slug}`);
+      const res = await fetch(`/api/codes-promo/verifier?code=${encodeURIComponent(code)}&slug=${slug}`);
       if (!res.ok) throw new Error();
-      const { reduction, type, valeur } = await res.json();
-      appliquerCodePromo(code, reduction);
+      const promo = await res.json();
+      if (promo.minCommande && sousTotal() < promo.minCommande) { alert(`Ce code s'applique dès ${fmt(promo.minCommande, devise)} d'achat`); return; }
+      appliquerCodePromo(code, reductionPromo(promo, sousTotal()));
     } catch {
       alert("Code promo invalide ou expiré");
     }

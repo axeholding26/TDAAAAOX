@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { requireNiveau } from "@/lib/permissions-server";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 
@@ -19,6 +20,8 @@ export async function GET() {
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+  const refus = await requireNiveau(session, "clients", "lecture"); // livreurs : module Clients (voir Sidebar)
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const livreurs = await prisma.livreur.findMany({
     where: { tenantId },
@@ -37,10 +40,9 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const tenantId = (session.user as any)?.tenantId;
-  const role = (session.user as any)?.role;
-  if (!tenantId || role !== "owner") {
-    return NextResponse.json({ error: "Réservé au propriétaire" }, { status: 403 });
-  }
+  if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+  const refus = await requireNiveau(session, "clients", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   try {
     const body = await req.json();

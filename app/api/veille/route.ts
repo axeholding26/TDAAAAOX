@@ -12,7 +12,7 @@ const schemaVeille = z.object({
   descriptionNote: z.string().optional(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

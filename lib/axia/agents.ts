@@ -167,5 +167,3 @@ ${REGISTRE_COMMUN}`,
 export function getAxiaAgentById(id: string): AxiaAgentDefinition | undefined {
   return AXIA_AGENTS.find(a => a.id === id);
 }
-
-export const AXIA_AGENT_IDS = AXIA_AGENTS.map(a => a.id);

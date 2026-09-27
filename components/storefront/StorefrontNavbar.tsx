@@ -6,7 +6,7 @@ import { useWishlistStore } from "@/store/wishlistStore";
 import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
-import { formatMontant } from "@/lib/utils";
+import { usePrix, PastillePays } from "@/components/storefront/DeviseVitrine";
 
 interface Props {
   slug: string;
@@ -21,6 +21,7 @@ interface Props {
   navStyle?: ThemeNavigationCfg;
   showAbout?: boolean;
   showContact?: boolean;
+  sansPanier?: boolean; // boutique digitale : achat direct, jamais de panier
 }
 
 interface RechercheProduit {
@@ -32,7 +33,8 @@ interface RechercheProduit {
 
 const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
 
-export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact }: Props) {
+export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact, sansPanier }: Props) {
+  const { fmt } = usePrix();
   const totalItems = useCartStore((s) => s.totalItems());
   const wishlistCount = useWishlistStore((s) => s.produitIds.length);
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -248,7 +250,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[12.5px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
-                        <p className="text-[11.5px] font-semibold" style={{ color: accent }}>{formatMontant(p.prix, devise)}</p>
+                        <p className="text-[11.5px] font-semibold" style={{ color: accent }}>{fmt(p.prix, devise)}</p>
                       </div>
                     </Link>
                   ))}
@@ -284,7 +286,8 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         </Link>
       )}
 
-      <Link
+      <PastillePays couleur={txt} className="hidden sm:inline-flex" />
+      {!sansPanier && <Link
         href={`/${slug}/panier`}
         className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
         style={{ backgroundColor: accent, color: fond, borderRadius: radius }}
@@ -296,7 +299,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             {totalItems > 99 ? "99+" : totalItems}
           </span>
         )}
-      </Link>
+      </Link>}
 
       <button
         onClick={() => setMenuOuvert(!menuOuvert)}
@@ -339,7 +342,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-[12px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
-                      <p className="text-[11px] font-semibold" style={{ color: accent }}>{formatMontant(p.prix, devise)}</p>
+                      <p className="text-[11px] font-semibold" style={{ color: accent }}>{fmt(p.prix, devise)}</p>
                     </div>
                   </Link>
                 ))}
@@ -370,7 +373,10 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             {col.nom}
           </Link>
         ))}
-        <div className="pt-2">
+        <div className="flex items-center justify-between px-3 py-3 text-sm font-medium" style={{ color: texte }}>
+          Pays et devise <PastillePays couleur={texte} />
+        </div>
+        {!sansPanier && <div className="pt-2">
           <Link
             href={`/${slug}/panier`}
             onClick={() => setMenuOuvert(false)}
@@ -380,7 +386,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             <ShoppingBag size={16} />
             Voir mon panier{totalItems > 0 && ` (${totalItems})`}
           </Link>
-        </div>
+        </div>}
       </div>
     </div>
   );

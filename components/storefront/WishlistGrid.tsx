@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Heart, Package } from "lucide-react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { WishlistHeartButton } from "./WishlistHeartButton";
-import { formatMontant } from "@/lib/utils";
+import { usePrix } from "@/components/storefront/DeviseVitrine";
 
 interface Produit {
   id: string; nom: string; images: string[]; categorie: string | null;
@@ -13,12 +13,13 @@ interface Produit {
 }
 
 export function WishlistGrid({
-  slug, devise, accent, fond, texte, surface, radius,
+  slug, devise, accent, fond, surface, radius,
   container, gridProduits, carteClass, btnPrimaryStyle, btnPrimaryClass,
 }: {
   slug: string; devise: string; accent: string; fond: string; texte: string; surface: string; radius: string;
   container: string; gridProduits: string; carteClass: string; btnPrimaryStyle: React.CSSProperties; btnPrimaryClass: string;
 }) {
+  const { fmt } = usePrix();
   const produitIds = useWishlistStore((s) => s.produitIds);
   const [produits, setProduits] = useState<Produit[] | null>(null);
 
@@ -76,8 +77,8 @@ export function WishlistGrid({
                   <div className="p-3.5">
                     <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{p.nom}</p>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm" style={{ color: accent }}>{formatMontant(p.prixAffiche, devise)}</span>
-                      {remise > 0 && <span className="text-xs line-through" style={{ opacity: 0.35 }}>{formatMontant(p.prixCompareAffiche!, devise)}</span>}
+                      <span className="font-bold text-sm" style={{ color: accent }}>{fmt(p.prixAffiche, devise)}</span>
+                      {remise > 0 && <span className="text-xs line-through" style={{ opacity: 0.35 }}>{fmt(p.prixCompareAffiche!, devise)}</span>}
                     </div>
                   </div>
                 </div>

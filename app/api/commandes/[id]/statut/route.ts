@@ -17,7 +17,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const commande = await prisma.commande.findUnique({
     where: { id },
-    include: { escrow: true, commission: true, tenant: { select: { id: true, slug: true, nomBoutique: true, commissionRate: true } } },
+    include: { commission: true, tenant: { select: { id: true, slug: true, nomBoutique: true, commissionRate: true } } },
   });
 
   if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -68,13 +68,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     if (statut === "livree") {
-      // Libérer l'escrow si existant (produits digitaux avec retenue)
-      if (commande.escrow && commande.escrow.statut !== "released") {
-        await tx.escrow.update({
-          where: { commandeId: id },
-          data: { statut: "released", releasedAt: now },
-        });
-      }
       // Capturer la commission si existante
       if (commande.commission && commande.commission.statut !== "captured") {
         await tx.commission.update({

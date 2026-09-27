@@ -1,11 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Search, Globe, ShoppingBag, Package, ExternalLink,
-  Star, MapPin, TrendingUp, Clock, ChevronRight,
-  ShoppingCart, Factory, Link2, Moon, Zap, Lock, Sparkles,
-} from "lucide-react";
+import { Search, Globe, ShoppingBag, ExternalLink, MapPin, TrendingUp, Clock, ShoppingCart, Factory, Link2, Moon, Zap, Lock, Sparkles } from "lucide-react";
 import { aAcces, type Palier } from "@/lib/plans";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 

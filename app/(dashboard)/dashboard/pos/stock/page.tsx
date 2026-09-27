@@ -112,7 +112,7 @@ function MouvementModal({ produit, onClose, onDone }: { produit: Produit; onClos
 }
 
 export default function PosStockPage() {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [mouvements, setMouvements] = useState<Mouvement[]>([]);
   const [stats, setStats] = useState<any>(null);

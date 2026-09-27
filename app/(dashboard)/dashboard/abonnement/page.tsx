@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
@@ -10,6 +11,7 @@ import { PlansGrid } from "@/components/dashboard/PlansGrid";
 export default async function AbonnementPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "parametres");
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/inscription");

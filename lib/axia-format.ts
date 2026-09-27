@@ -3,7 +3,7 @@
 export function renderMarkdown(raw: string): string {
   let s = raw
     // Fenced code blocks
-    .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+    .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, _lang, code) =>
       `<pre class="axia-pre"><code class="axia-code">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;").trim()}</code></pre>`)
     // Inline code
     .replace(/`([^`\n]+)`/g, '<code class="axia-inline-code">$1</code>')

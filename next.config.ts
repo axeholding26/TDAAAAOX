@@ -26,7 +26,8 @@ const OWASP_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
+  // Erreurs TypeScript bloquantes : un déploiement avec une erreur de types échoue au lieu de partir en production.
+  typescript: { ignoreBuildErrors: false },
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
 
   async headers() {

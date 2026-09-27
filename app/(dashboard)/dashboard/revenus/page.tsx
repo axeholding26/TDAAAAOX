@@ -1,5 +1,6 @@
 // Dashboard Revenus et analytics financières
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
@@ -12,6 +13,7 @@ import { RevenusTutorial } from "@/components/dashboard/tutorials/RevenusTutoria
 export default async function RevenusPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "finance");
 
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });

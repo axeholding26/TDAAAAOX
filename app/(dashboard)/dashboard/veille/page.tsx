@@ -1,10 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Search, Plus, Loader2, X, Sparkles, TrendingDown,
-  TrendingUp, Globe, AlertTriangle, Zap, RefreshCw,
-  Trash2, Eye, BarChart2
-} from "lucide-react";
+import { Search, Plus, Loader2, X, Sparkles, Globe, Zap, Trash2, Eye, BarChart2 } from "lucide-react";
 import { toast } from "sonner";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 

@@ -1,6 +1,6 @@
 // Orchestrateur central Axso — coordonne tous les agents vers les objectifs revenus
 import { prisma } from "./prisma";
-import { publierTache, type AgentId } from "./agent-bus";
+import { publierTache } from "./agent-bus";
 import { logDecision } from "./agent-memory";
 
 export interface ObjectifRevenu {

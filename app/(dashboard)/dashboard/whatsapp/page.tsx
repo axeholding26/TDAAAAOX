@@ -1,12 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  MessageCircle, Send, Search, CheckCircle2,
-  Clock, Truck, Package, XCircle, Phone,
-  Settings, Wifi, WifiOff, Loader2, ShoppingBag, ArrowLeft,
-  CheckCheck, Check, Zap, MapPin, FileText, RefreshCw, Bell,
-  ChevronDown, Plus, Lightbulb, Lock
-} from "lucide-react";
+import { MessageCircle, Send, Search, CheckCircle2, Clock, Truck, Package, XCircle, Phone, Settings, Wifi, WifiOff, Loader2, ShoppingBag, ArrowLeft, CheckCheck, Check, Zap, MapPin, FileText, RefreshCw, Bell, Lightbulb, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UpgradeGate } from "@/components/dashboard/UpgradeGate";

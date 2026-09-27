@@ -1,11 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  Send, Loader2, Mic, MicOff, LayoutDashboard, History, Sparkles, PanelLeft, Plus,
-  Volume2, VolumeX, Phone, Paperclip, X, Copy, Check, RotateCcw, Square, Image as ImageIcon, Video,
-  MessageSquare, Bell,
-} from "lucide-react";
+import { Send, Mic, LayoutDashboard, History, Sparkles, PanelLeft, Plus, Volume2, VolumeX, Phone, Paperclip, X, Copy, Check, RotateCcw, Square, MessageSquare, Bell } from "lucide-react";
 import { renderMarkdown, parseContent } from "@/lib/axia-format";
 import { useAxiaConversations } from "@/hooks/useAxiaConversations";
 import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
@@ -203,7 +199,7 @@ export function AxiaHomeClient() {
   }, [speak]);
 
   // ── Envoi vers l'API (SSE) ─────────────────────────────────────────────────
-  const callAI = useCallback(async (text: string, historyBefore: Msg[], imgUrl?: string | null) => {
+  const callAI = useCallback(async (_text: string, historyBefore: Msg[], imgUrl?: string | null) => {
     if (loadingRef.current) return;
     setLoading(true);
     setInterimText("");

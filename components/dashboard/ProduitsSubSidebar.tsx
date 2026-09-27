@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Download, Plus, PackagePlus, type LucideIcon } from "lucide-react";
+import { Package, Download, Plus, PackagePlus, Tags, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SubNavItem {
@@ -10,7 +10,7 @@ interface SubNavItem {
   label: string;
   Icon: LucideIcon;
   exact?: boolean;
-  excludePrefix?: string;
+  excludePrefix?: string[]; // sous-pages qui ont leur propre entrée dans ce menu
 }
 
 // Sous-navigation du module Produits — pilote du pattern sidebar à deux
@@ -19,14 +19,15 @@ interface SubNavItem {
 // "Catégories" tant qu'il n'y a pas de CRUD dédié, pas de "Variantes de
 // prix" tant que ça reste une gestion par produit sans liste autonome).
 const SOUS_NAV: SubNavItem[] = [
-  { href: "/dashboard/produits", label: "Tous les produits", Icon: Package, excludePrefix: "/dashboard/produits/digital" },
+  { href: "/dashboard/produits", label: "Tous les produits", Icon: Package, excludePrefix: ["/dashboard/produits/digital", "/dashboard/produits/categories", "/dashboard/produits/nouveau", "/dashboard/produits/creer"] },
   { href: "/dashboard/produits/digital", label: "Produits digitaux", Icon: Download },
+  { href: "/dashboard/produits/categories", label: "Catégories", Icon: Tags },
   { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Plus },
   { href: "/dashboard/produits/creer", label: "Nouveau produit digital", Icon: PackagePlus },
 ];
 
 function isActive(item: SubNavItem, pathname: string) {
-  if (item.excludePrefix && pathname.startsWith(item.excludePrefix)) return false;
+  if (item.excludePrefix?.some((p) => pathname.startsWith(p))) return false;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 

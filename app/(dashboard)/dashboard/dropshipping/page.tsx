@@ -1,11 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import {
-  Plus, Trash2, Globe, Star, RefreshCw, ExternalLink,
-  Package, Upload, Zap, Send, TrendingUp, ShoppingBag,
-  ChevronRight, Sparkles, Search, BarChart2, DollarSign,
-  ArrowUpRight, CheckCircle2, Loader2, X, Info,
-} from "lucide-react";
+import { Plus, Trash2, Globe, Star, RefreshCw, ExternalLink, Package, Upload, Zap, Send, TrendingUp, ShoppingBag, ChevronRight, Sparkles, DollarSign, ArrowUpRight, CheckCircle2, Loader2, Info } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
@@ -362,13 +357,13 @@ function OngletAgentIA() {
 
 /* ── Carte produit extractée de la réponse IA ──────────────────────────────── */
 function ProductCard({
-  produitKey, nom, prixAchat, prixVente, marge, categorie, fournisseur, blockText, onImport, importing, imported,
+  nom, prixAchat, prixVente, marge, categorie, fournisseur, blockText, onImport, importing, imported,
 }: {
   produitKey: string; nom: string; prixAchat: number; prixVente: number;
   marge: number; categorie: string; fournisseur: string; blockText: string;
   onImport: () => void; importing: boolean; imported: boolean;
 }) {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const [expanded, setExpanded] = useState(false);
   const benefice = prixVente - prixAchat;
 

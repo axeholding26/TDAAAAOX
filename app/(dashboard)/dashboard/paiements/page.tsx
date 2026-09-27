@@ -1,12 +1,10 @@
-// Dashboard Paiements — wallet, escrow, transactions, commissions, retraits
+// Dashboard Paiements — wallet, transactions, commissions, retraits
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
-import {
-  CreditCard, TrendingUp, Clock, CheckCircle2,
-  Wallet, ArrowDownLeft, ArrowUpRight, Lock, AlertCircle
-} from "lucide-react";
+import { CreditCard, TrendingUp, Clock, CheckCircle2, Wallet, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { PaiementsTutorial } from "@/components/dashboard/tutorials/PaiementsTutorial";
 
@@ -37,11 +35,12 @@ function methodeLabel(m: string | null) {
 export default async function PaiementsPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "finance");
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) redirect("/inscription");
 
-  const [commandes, wallet, escrows, commissions, retraits] = await Promise.all([
+  const [commandes, wallet, commissions, retraits] = await Promise.all([
     prisma.commande.findMany({
       where: { tenantId },
       include: { client: { select: { nom: true } } },
@@ -49,12 +48,6 @@ export default async function PaiementsPage() {
       take: 50,
     }),
     prisma.wallet.findUnique({ where: { tenantId } }),
-    prisma.escrow.findMany({
-      where: { tenantId, statut: "held" },
-      include: { commande: { select: { numero: true, clientNom: true, montantTotal: true } } },
-      orderBy: { releaseAt: "asc" },
-      take: 10,
-    }),
     prisma.commission.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 8 }),
     prisma.retrait.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 8 }),
   ]);
@@ -62,7 +55,6 @@ export default async function PaiementsPage() {
   const completed  = commandes.filter(c => c.paiementStatut === "completed");
   const pending    = commandes.filter(c => c.paiementStatut === "pending");
   const totalPercu = completed.reduce((s, c) => s + c.montantTotal, 0);
-  const enEscrow   = escrows.reduce((s, e) => s + e.montant, 0);
   const totalComm  = commissions.reduce((s, c) => s + c.montantCommission, 0);
 
   const devise = tenant.devise;
@@ -75,14 +67,14 @@ export default async function PaiementsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Paiements & Finances</h1>
           <BoutonRevoirTutoriel moduleKey="paiements" />
         </div>
-        <p className="text-gray-400 text-sm mt-0.5">Wallet, escrow, transactions et retraits</p>
+        <p className="text-gray-400 text-sm mt-0.5">Wallet, transactions et retraits</p>
       </div>
 
       {/* ── KPIs ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Solde wallet", value: formatMontant(wallet?.solde ?? 0, devise), icon: Wallet, color: "#F5A623", bg: "#fffbeb" },
-          { label: "En séquestre (48h)", value: formatMontant(enEscrow, devise), icon: Lock, color: "#6366f1", bg: "#eef2ff" },
+          { label: "Paiements en attente", value: String(pending.length), icon: Clock, color: "#6366f1", bg: "#eef2ff" },
           { label: "Total perçu", value: formatMontant(totalPercu, devise), icon: CheckCircle2, color: "#059669", bg: "#ecfdf5" },
           { label: "Commissions Axso", value: formatMontant(totalComm, devise), icon: TrendingUp, color: "#dc2626", bg: "#fef2f2" },
         ].map((m) => (
@@ -98,8 +90,8 @@ export default async function PaiementsPage() {
         ))}
       </div>
 
-      {/* ── Wallet + Escrow ── */}
-      <div className="grid lg:grid-cols-2 gap-5">
+      {/* ── Wallet ── */}
+      <div>
 
         {/* Wallet */}
         <div className="bg-white border border-gray-100 rounded-2xl p-5">
@@ -126,46 +118,6 @@ export default async function PaiementsPage() {
           </div>
         </div>
 
-        {/* Escrow */}
-        <div className="bg-white border border-gray-100 rounded-2xl p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Lock size={16} className="text-indigo-500" />
-            <h2 className="font-bold text-gray-900">Séquestre (Escrow)</h2>
-            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">
-              Libération auto · 48h
-            </span>
-          </div>
-          {escrows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-gray-400">
-              <CheckCircle2 size={24} className="mb-2 text-green-400" />
-              <p className="text-sm">Aucun fonds en séquestre</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {escrows.map((e) => {
-                const releaseIn = Math.max(0, Math.ceil((new Date(e.releaseAt).getTime() - Date.now()) / 3600000));
-                return (
-                  <div key={e.id} className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/60 border border-indigo-100">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{e.commande.clientNom}</p>
-                      <p className="text-xs text-gray-400">#{e.commande.numero}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-indigo-700">{formatMontant(e.montant, devise)}</p>
-                      <p className="text-xs text-gray-400 flex items-center gap-1 justify-end">
-                        <Clock size={10} />
-                        {releaseIn > 0 ? `${releaseIn}h` : "Libération imminente"}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-              <p className="text-xs text-gray-400 text-center pt-1">
-                Total bloqué : <span className="font-bold text-indigo-600">{formatMontant(enEscrow, devise)}</span>
-              </p>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ── Transactions récentes ── */}

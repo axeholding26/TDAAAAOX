@@ -13,11 +13,7 @@ type Notif = {
   createdAt: string;
 };
 
-interface Props {
-  livreurId: string;
-}
-
-export function NotificationsPanel({ livreurId }: Props) {
+export function NotificationsPanel() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notif[]>([]);
   const [nonLues, setNonLues] = useState(0);

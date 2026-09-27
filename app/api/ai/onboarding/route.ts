@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
-import { analyserBusinessEtCreerPlan, deviseDuPays, type PlanBoutique } from "@/lib/ai-agent";
+import { analyserBusinessEtCreerPlan, deviseDuPays } from "@/lib/ai-agent";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";

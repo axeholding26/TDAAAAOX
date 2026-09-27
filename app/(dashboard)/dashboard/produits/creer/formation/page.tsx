@@ -103,7 +103,7 @@ export default function CreerFormationPage() {
 
   const ETAPES = ["Informations", "Paramètres", "Publication"];
 
-  const inputCls = "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#0ea5e9]/40 bg-white";
+  const inputCls = "w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40 bg-white";
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -112,8 +112,8 @@ export default function CreerFormationPage() {
       </Link>
 
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-[#0ea5e915] flex items-center justify-center">
-          <BookOpen size={18} className="text-[#0ea5e9]" />
+        <div className="w-9 h-9 rounded-xl bg-[#F5A62315] flex items-center justify-center">
+          <BookOpen size={18} className="text-[#F5A623]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900 font-poppins">Nouvelle formation</h1>
@@ -130,7 +130,7 @@ export default function CreerFormationPage() {
           return (
             <div key={n} className="flex items-center gap-2 flex-1">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
-                ${done ? "bg-[#0ea5e9] text-white" : active ? "bg-[#1B2A4A] text-white" : "bg-gray-100 text-gray-400"}`}>
+                ${done ? "bg-[#F5A623] text-white" : active ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
                 {done ? <Check size={12} /> : n}
               </div>
               <span className={`text-xs hidden sm:block ${active ? "text-gray-900 font-medium" : "text-gray-400"}`}>{label}</span>
@@ -184,9 +184,9 @@ export default function CreerFormationPage() {
                     key={id}
                     onClick={() => setConfig((p) => ({ ...p, niveau: id }))}
                     className={`flex flex-col p-3 rounded-xl border-2 text-left transition-all
-                      ${config.niveau === id ? "border-[#0ea5e9] bg-[#0ea5e908]" : "border-gray-200 hover:border-gray-300"}`}
+                      ${config.niveau === id ? "border-[#F5A623] bg-[#F5A62308]" : "border-gray-200 hover:border-gray-300"}`}
                   >
-                    <span className={`text-xs font-semibold ${config.niveau === id ? "text-[#0ea5e9]" : "text-gray-700"}`}>{label}</span>
+                    <span className={`text-xs font-semibold ${config.niveau === id ? "text-[#F5A623]" : "text-gray-700"}`}>{label}</span>
                     <span className="text-[10px] text-gray-400 mt-0.5">{desc}</span>
                   </button>
                 ))}
@@ -222,13 +222,13 @@ export default function CreerFormationPage() {
             {/* Certificat */}
             <button
               onClick={() => setConfig((p) => ({ ...p, certif: !p.certif }))}
-              className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${config.certif ? "border-[#16a34a] bg-[#f0fdf4]" : "border-gray-200 hover:border-gray-300"}`}
+              className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${config.certif ? "border-[#F5A623] bg-[#FFF7E8]" : "border-gray-200 hover:border-gray-300"}`}
             >
               <div className="text-left">
-                <p className={`text-sm font-semibold ${config.certif ? "text-[#16a34a]" : "text-gray-700"}`}>Certificat de complétion</p>
+                <p className={`text-sm font-semibold ${config.certif ? "text-[#F5A623]" : "text-gray-700"}`}>Certificat de complétion</p>
                 <p className="text-xs text-gray-400 mt-0.5">Généré automatiquement quand l'apprenant termine la formation</p>
               </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${config.certif ? "border-[#16a34a] bg-[#16a34a]" : "border-gray-300"}`}>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${config.certif ? "border-[#F5A623] bg-[#F5A623]" : "border-gray-300"}`}>
                 {config.certif && <Check size={11} className="text-white" />}
               </div>
             </button>
@@ -237,7 +237,7 @@ export default function CreerFormationPage() {
           <button
             onClick={creerProduit}
             disabled={!infos.nom || !infos.prix || saving}
-            className="w-full mt-2 py-3 rounded-xl bg-[#1B2A4A] text-white font-semibold text-sm hover:bg-[#243a60] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full mt-2 py-3 rounded-xl bg-[#F5A623] text-white font-semibold text-sm hover:bg-[#d4820a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {saving ? "Création…" : "Continuer"} {!saving && <ArrowRight size={16} />}
           </button>
@@ -247,13 +247,13 @@ export default function CreerFormationPage() {
       {/* ─── Étape 2 : Rappel + CTA vers le produit ──────────────────────── */}
       {etape === 2 && produitId && (
         <div className="space-y-5">
-          <div className="rounded-2xl border-2 border-dashed border-[#0ea5e9] bg-[#f0f9ff] p-6 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[#0ea5e9] flex items-center justify-center mx-auto mb-3">
+          <div className="rounded-2xl border-2 border-dashed border-[#F5A623] bg-[#FFF7E8] p-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#F5A623] flex items-center justify-center mx-auto mb-3">
               <BookOpen size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-gray-900 mb-1">{infos.nom}</h3>
             <p className="text-sm text-gray-500 mb-3">{infos.description || "Formation digitale"}</p>
-            <span className="text-2xl font-bold text-[#0ea5e9]">{fmt(parseInt(infos.prix))}</span>
+            <span className="text-2xl font-bold text-[#F5A623]">{fmt(parseInt(infos.prix))}</span>
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600 space-y-1.5">
@@ -270,7 +270,7 @@ export default function CreerFormationPage() {
             ))}
           </div>
 
-          <div className="rounded-xl border border-[#0ea5e9]/30 bg-[#f0f9ff] p-4 text-sm text-[#0369a1]">
+          <div className="rounded-xl border border-[#F5A623]/30 bg-[#FFF7E8] p-4 text-sm text-[#8A5300]">
             <p className="font-semibold mb-1">Prochaine étape : ajouter le contenu</p>
             <p className="text-xs">Après publication, vous pourrez créer vos chapitres et leçons depuis la page du produit.</p>
           </div>
@@ -281,7 +281,7 @@ export default function CreerFormationPage() {
             </button>
             <button
               onClick={publier} disabled={publishing}
-              className="flex-1 py-2.5 rounded-xl bg-[#0ea5e9] text-white font-bold text-sm hover:bg-[#0284c7] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[#F5A623] text-white font-bold text-sm hover:bg-[#d4820a] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {publishing ? "Publication…" : <><Check size={16} /> Publier et ajouter le contenu</>}
             </button>

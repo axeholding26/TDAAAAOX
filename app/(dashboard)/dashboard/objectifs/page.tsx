@@ -50,7 +50,7 @@ function formatValeur(v: number, type: TypeObjectif, devise: string) {
 }
 
 export default function ObjectifsPage() {
-  const { devise, fmt } = useDevise();
+  const { devise } = useDevise();
   const [objectifs, setObjectifs] = useState<Objectif[] | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);

@@ -27,6 +27,7 @@ import {
   Settings2, ExternalLink, UserCheck, LayoutGrid, Plug, Link2,
   Bell, ChevronDown, ChevronRight, RotateCcw, FileText, Lock,
   Target, FileBarChart, Sparkles, Boxes, Receipt, Calculator, Store,
+  Tags,
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
@@ -52,7 +53,7 @@ interface NavItem {
   /** Correspondance stricte sur le pathname (pas de startsWith). */
   exact?: boolean;
   /** Route préfixée par celle-ci mais rattachée à un autre lien (ex: produits/digital). */
-  excludePrefix?: string;
+  excludePrefix?: string[]; // sous-pages qui ont leur propre entrée
   /** Palier minimum requis — sinon l'item est cadenassé et ouvre l'upsell. */
   requiresPalier?: Palier;
   /** Ouvre l'overlay abonnement au lieu de naviguer. */
@@ -95,7 +96,7 @@ function filtreParPermission(
 // codé en dur pour le seul lien de la caisse.
 
 function estActif(item: NavItem, pathname: string, searchParams: URLSearchParams): boolean {
-  if (item.excludePrefix && pathname.startsWith(item.excludePrefix)) return false;
+  if (item.excludePrefix?.some((p) => pathname.startsWith(p))) return false;
 
   const [base, query] = item.href.split("?");
   if (query) {
@@ -158,8 +159,9 @@ const GROUPES: NavGroupe[] = [
   {
     id: "catalogue", label: "Catalogue", Icon: Package,
     items: [
-      { href: "/dashboard/produits",         label: "Produits",          Icon: Package,  excludePrefix: "/dashboard/produits/digital", moduleKey: "produits" },
+      { href: "/dashboard/produits",         label: "Produits",          Icon: Package,  excludePrefix: ["/dashboard/produits/digital", "/dashboard/produits/categories"], moduleKey: "produits" },
       { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download, moduleKey: "produits" },
+      { href: "/dashboard/produits/categories", label: "Catégories",     Icon: Tags,     moduleKey: "produits" },
       { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,      requiresPalier: "palier2", moduleKey: "produits" },
       { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box,      moduleKey: "produits" },
     ],
@@ -200,6 +202,14 @@ const GROUPES: NavGroupe[] = [
     ],
   },
 ];
+
+/** Pages proposées par la recherche du tableau de bord (Ctrl+K), filtrées comme le menu. */
+export function pagesDashboard(permissions?: Record<ModuleKey, Niveau>) {
+  return [
+    ...filtreParPermission(PRIMAIRES, permissions).map((it) => ({ ...it, groupe: "" })),
+    ...GROUPES.flatMap((g) => filtreParPermission(g.items, permissions).map((it) => ({ ...it, groupe: g.label }))),
+  ];
+}
 
 // ─── Lien de premier niveau (raccourci hors groupe) ───────────────────────────
 
@@ -499,10 +509,10 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
         )}
 
         <Link
-          href="/dashboard/parametres"
+          href="/dashboard/profil"
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group",
-            pathname.startsWith("/dashboard/parametres") ? "bg-[#FFF7ED]" : "hover:bg-[#FFF7ED]",
+            pathname.startsWith("/dashboard/profil") ? "bg-[#FFF7ED]" : "hover:bg-[#FFF7ED]",
           )}
         >
           <div
@@ -516,7 +526,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-[#111111] leading-tight">Mon compte</div>
-            <div className="text-[11px] text-[#999999] leading-none mt-1">Paramètres</div>
+            <div className="text-[11px] text-[#999999] leading-none mt-1">Profil et sécurité</div>
           </div>
           <Settings2 size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
         </Link>

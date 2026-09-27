@@ -45,13 +45,15 @@ export async function GET(req: NextRequest) {
     where: { id: { in: [...proprietaire, ...membre] } },
     orderBy: { createdAt: "asc" },
     select: {
-      id: true, slug: true, nomBoutique: true, logoUrl: true, planType: true,
+      id: true, slug: true, nomBoutique: true, logoUrl: true, planType: true, themeConfig: true,
       _count: { select: { produits: true, commandes: true, notificationsMarchand: { where: { lu: false } } } },
     },
   });
 
-  const boutiques = await Promise.all(tenants.map(async t => ({
+  const boutiques = await Promise.all(tenants.map(async ({ themeConfig, ...t }) => ({
     ...t,
+    // Type de boutique (choisi à la création) : la vitrine digitale ne sait pas vendre du physique.
+    modeBoutique: (themeConfig as any)?.modeBoutique === "digital" ? "digital" as const : "physique" as const,
     planType: (await planActif(t.id)).plan,
     active: t.id === tenantActif,
     proprietaire: proprietaire.includes(t.id),

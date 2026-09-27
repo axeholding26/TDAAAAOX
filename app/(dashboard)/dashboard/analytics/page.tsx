@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
@@ -26,6 +27,7 @@ import { AnalyticsTutorial } from "@/components/dashboard/tutorials/AnalyticsTut
 export default async function AnalyticsPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "produits");
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/dashboard");
@@ -117,8 +119,6 @@ export default async function AnalyticsPage() {
   const productViews   = getVal(analyticsParType, "product_view");
   const addToCart      = getVal(analyticsParType, "add_to_cart");
   const pageViewsPrev  = getVal(analyticsParTypePrecedent, "page_view");
-  const productViewsPrev = getVal(analyticsParTypePrecedent, "product_view");
-  const addToCartPrev  = getVal(analyticsParTypePrecedent, "add_to_cart");
 
   const revenuActuel       = commandesPeriode._sum.montantTotal || 0;
   const revenuPrecedent    = commandesPrecedente._sum.montantTotal || 0;

@@ -2,7 +2,7 @@
 export const dynamic = "force-dynamic";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { MapPin, Package, Phone, RefreshCw, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
+import { MapPin, Package, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
 import { MapTracking } from "@/components/storefront/MapTracking";
 
 const STATUT_STEP_ICONS: Record<string, React.ReactNode> = {

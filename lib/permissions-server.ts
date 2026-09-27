@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
+import { redirect } from "next/navigation";
 import { boutiquesDuCompte } from "./tenant";
-import { MODULES, ROLE_PRESETS, TOUT_ECRITURE, grillePourMembre, type ModuleKey, type GrillePermissions } from "./permissions";
+import { TOUT_ECRITURE, grillePourMembre, type ModuleKey, type GrillePermissions } from "./permissions";
 
 // Fonctions serveur du système de permissions équipe — jamais importées
 // depuis un composant client (voir le commentaire en tête de lib/permissions.ts).
@@ -58,4 +59,10 @@ export async function requireNiveau(session: any, module: ModuleKey, minimum: "l
   if (niveau === "aucun") return { status: 403, error: "Accès non autorisé à ce module" };
   if (minimum === "ecriture" && niveau !== "ecriture") return { status: 403, error: "Lecture seule — action non autorisée" };
   return null;
+}
+
+/** Page serveur du tableau de bord : même règle que le menu — sans accès au module, retour à l'accueil. */
+export async function exigerModule(session: any, module: ModuleKey): Promise<void> {
+  const grille = await permissionsSession(session);
+  if (grille[module] === "aucun") redirect("/dashboard/accueil");
 }

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Loader2, Camera } from "lucide-react";
 
 interface Props {
@@ -120,13 +121,15 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
 
   if (!open) return null;
 
-  return (
+  // Rendu dans <body> : couvre tout l'écran quel que soit le conteneur de la page,
+  // et la molette sur le fond ne fait plus défiler la page derrière.
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overscroll-contain"
       style={{ background: "rgba(6,10,20,0.85)", backdropFilter: "blur(6px)", animation: "axsFadeIn 0.25s ease" }}
     >
       <div
-        className="relative w-full max-w-md rounded-3xl overflow-hidden"
+        className="relative w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl"
         style={{
           background: "linear-gradient(160deg,#1a1a1a 0%,#111111 100%)",
           border: "1px solid rgba(255,255,255,0.1)",
@@ -142,7 +145,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
           </button>
         </div>
 
-        <div className="relative mx-5 rounded-2xl overflow-hidden bg-black" style={{ aspectRatio: "3/4" }}>
+        <div className="relative mx-5 rounded-2xl overflow-hidden bg-black max-h-[60dvh]" style={{ aspectRatio: "3/4" }}>
           <video ref={videoRef} className="w-full h-full object-cover" muted playsInline autoPlay />
 
           {!pret && !erreur && (
@@ -192,6 +195,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
         @keyframes axsPopIn { from { opacity:0; transform:scale(0.94) translateY(10px) } to { opacity:1; transform:scale(1) translateY(0) } }
         @keyframes axsScanLine { 0% { top: 4%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { top: 92%; opacity: 0; } }
       `}</style>
-    </div>
+    </div>,
+    document.body,
   );
 }

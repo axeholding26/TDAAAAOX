@@ -2,7 +2,6 @@
 // Dashboard  Codes Promo
 "use client";
 import { useState, useEffect } from "react";
-import { formatMontant } from "@/lib/utils";
 import { toast } from "sonner";
 import { Plus, Trash2 } from "lucide-react";
 

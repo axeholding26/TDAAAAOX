@@ -31,7 +31,6 @@ function ConnexionForm() {
   const [etape, setEtape] = useState<"identifiants" | "code">("identifiants");
   const [identifiants, setIdentifiants] = useState<{ email: string; password: string } | null>(null);
   const [code, setCode] = useState("");
-  const [envoiCode, setEnvoiCode] = useState(false);
   const [verifCode, setVerifCode] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormConnexion>({
@@ -51,7 +50,6 @@ function ConnexionForm() {
 
   const onSubmit = async (data: FormConnexion) => {
     setErreur("");
-    setEnvoiCode(true);
     try {
       const res = await fetch("/api/auth/2fa/demander", {
         method: "POST",
@@ -69,8 +67,6 @@ function ConnexionForm() {
       }
     } catch {
       setErreur("Erreur de connexion, réessaie");
-    } finally {
-      setEnvoiCode(false);
     }
   };
 

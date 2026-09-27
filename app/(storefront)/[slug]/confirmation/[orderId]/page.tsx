@@ -97,15 +97,12 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
   // commande.montantTotal est déjà majoré de la commission côté client (prix vendeur
   // × (1 + taux)) — le marchand reçoit son prix intégral, extrait par division.
-  const montantMarchand = commande.montantTotal / (1 + (tenant.commissionRate || 0.06));
-  const montantCommission = commande.montantTotal - montantMarchand;
 
   const contenuConfirmation = (
     <ConfirmationDigitaleContent
       theme={theme}
       slug={slug}
       devise={tenant.devise}
-      commissionRate={tenant.commissionRate || 0.06}
       commande={commande}
       paye={paye}
       echoue={echoue}
@@ -116,8 +113,6 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
       accesFormations={accesFormations}
       clesLicence={clesLicence}
       nomProduit={nomProduit}
-      montantMarchand={montantMarchand}
-      montantCommission={montantCommission}
     />
   );
 

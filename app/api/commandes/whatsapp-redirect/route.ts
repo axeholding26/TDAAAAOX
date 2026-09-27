@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     );
     if (typesInvalides.length > 0) {
       return NextResponse.json(
-        { message: "Cette commande contient des produits digitaux — utilisez le flux escrow." },
+        { message: "Cette commande contient des produits digitaux — elle doit être payée en ligne." },
         { status: 400 }
       );
     }

@@ -2,10 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

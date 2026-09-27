@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Key, Settings, RefreshCw, Check, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, Key, RefreshCw, Check, Upload } from "lucide-react";
 import Link from "next/link";
 import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
 
@@ -26,7 +26,7 @@ interface ConfigLicence {
 
 function SlugInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#1B2A4A]">
+    <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#F5A623]">
       <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-sm border-r border-gray-200 whitespace-nowrap select-none">
         boutique.com/produits/
       </span>
@@ -132,8 +132,8 @@ export default function CreerLicencePage() {
       </Link>
 
       <div className="flex items-center gap-2 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-[#16a34a15] flex items-center justify-center">
-          <Key size={18} className="text-[#16a34a]" />
+        <div className="w-9 h-9 rounded-xl bg-[#F5A62315] flex items-center justify-center">
+          <Key size={18} className="text-[#F5A623]" />
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900 font-poppins">Clé de licence</h1>
@@ -150,7 +150,7 @@ export default function CreerLicencePage() {
           return (
             <div key={n} className="flex items-center gap-2 flex-1">
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
-                ${done ? "bg-[#16a34a] text-white" : active ? "bg-[#1B2A4A] text-white" : "bg-gray-100 text-gray-400"}`}>
+                ${done ? "bg-[#F5A623] text-white" : active ? "bg-[#F5A623] text-white" : "bg-gray-100 text-gray-400"}`}>
                 {done ? <Check size={12} /> : n}
               </div>
               <span className={`text-xs hidden sm:block ${active ? "text-gray-900 font-medium" : "text-gray-400"}`}>{label}</span>
@@ -168,7 +168,7 @@ export default function CreerLicencePage() {
             <input
               value={infos.nom} onChange={(e) => setNom(e.target.value)}
               placeholder="Ex : Licence Pro TurboDesign"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] text-gray-900"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] text-gray-900"
             />
           </div>
           <div>
@@ -176,7 +176,7 @@ export default function CreerLicencePage() {
             <textarea
               value={infos.description} onChange={(e) => setInfos((p) => ({ ...p, description: e.target.value }))}
               rows={3} placeholder="Décrivez ce que le client reçoit…"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] resize-none text-gray-900"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] resize-none text-gray-900"
             />
           </div>
           <div>
@@ -185,7 +185,7 @@ export default function CreerLicencePage() {
               type="number" min={0} value={infos.prix}
               onChange={(e) => setInfos((p) => ({ ...p, prix: e.target.value }))}
               placeholder="5000"
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A] text-gray-900"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] text-gray-900"
             />
           </div>
           <div>
@@ -195,7 +195,7 @@ export default function CreerLicencePage() {
           <button
             onClick={creerProduit}
             disabled={!infos.nom || !infos.prix || saving}
-            className="w-full mt-2 py-3 rounded-xl bg-[#1B2A4A] text-white font-semibold text-sm hover:bg-[#243a60] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full mt-2 py-3 rounded-xl bg-[#F5A623] text-white font-semibold text-sm hover:bg-[#d4820a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {saving ? "Création…" : "Continuer"} {!saving && <ArrowRight size={16} />}
           </button>
@@ -216,10 +216,10 @@ export default function CreerLicencePage() {
                   key={val}
                   onClick={() => setConfig((p) => ({ ...p, modeDistrib: val }))}
                   className={`flex flex-col items-start p-4 rounded-xl border-2 text-left transition-all
-                    ${config.modeDistrib === val ? "border-[#16a34a] bg-green-50 dark:bg-green-900/10" : "border-gray-200 hover:border-gray-300"}`}
+                    ${config.modeDistrib === val ? "border-[#F5A623] bg-[#FFF7E8]" : "border-gray-200 hover:border-gray-300"}`}
                 >
-                  <Icon size={16} className={config.modeDistrib === val ? "text-[#16a34a]" : "text-gray-400"} />
-                  <span className={`text-sm font-semibold mt-1.5 ${config.modeDistrib === val ? "text-[#16a34a]" : "text-gray-700"}`}>{label}</span>
+                  <Icon size={16} className={config.modeDistrib === val ? "text-[#F5A623]" : "text-gray-400"} />
+                  <span className={`text-sm font-semibold mt-1.5 ${config.modeDistrib === val ? "text-[#F5A623]" : "text-gray-700"}`}>{label}</span>
                   <span className="text-xs text-gray-400 mt-0.5">{desc}</span>
                 </button>
               ))}
@@ -239,9 +239,9 @@ export default function CreerLicencePage() {
                       key={val}
                       onClick={() => setConfig((p) => ({ ...p, formatAuto: val }))}
                       className={`flex-1 p-3 rounded-xl border-2 text-left transition-all
-                        ${config.formatAuto === val ? "border-[#16a34a] bg-white" : "border-gray-200 hover:border-gray-300 bg-white"}`}
+                        ${config.formatAuto === val ? "border-[#F5A623] bg-white" : "border-gray-200 hover:border-gray-300 bg-white"}`}
                     >
-                      <span className={`text-xs font-semibold block ${config.formatAuto === val ? "text-[#16a34a]" : "text-gray-700"}`}>{label}</span>
+                      <span className={`text-xs font-semibold block ${config.formatAuto === val ? "text-[#F5A623]" : "text-gray-700"}`}>{label}</span>
                       <code className="text-[10px] text-gray-400">{ex}</code>
                     </button>
                   ))}
@@ -278,7 +278,7 @@ export default function CreerLicencePage() {
                 type="number" min={1} value={config.maxActivations}
                 onChange={(e) => setConfig((p) => ({ ...p, maxActivations: e.target.value }))}
                 placeholder="1"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
               />
               <p className="text-[11px] text-gray-400 mt-1">Nombre d'appareils autorisés</p>
             </div>
@@ -288,7 +288,7 @@ export default function CreerLicencePage() {
                 type="number" min={1} value={config.dureeJours}
                 onChange={(e) => setConfig((p) => ({ ...p, dureeJours: e.target.value }))}
                 placeholder="Illimitée"
-                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
               />
               <p className="text-[11px] text-gray-400 mt-1">Vide = pas d'expiration</p>
             </div>
@@ -300,7 +300,7 @@ export default function CreerLicencePage() {
             </button>
             <button
               onClick={sauvegarderConfig} disabled={saving}
-              className="flex-1 py-2.5 rounded-xl bg-[#1B2A4A] text-white font-semibold text-sm hover:bg-[#243a60] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[#F5A623] text-white font-semibold text-sm hover:bg-[#d4820a] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {saving ? "Enregistrement…" : "Continuer"} {!saving && <ArrowRight size={16} />}
             </button>
@@ -323,7 +323,7 @@ export default function CreerLicencePage() {
             </button>
             <button
               onClick={() => setEtape(4)}
-              className="flex-1 py-2.5 rounded-xl bg-[#1B2A4A] text-white font-semibold text-sm hover:bg-[#243a60] transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[#F5A623] text-white font-semibold text-sm hover:bg-[#d4820a] transition-colors flex items-center justify-center gap-2"
             >
               Continuer <ArrowRight size={16} />
             </button>
@@ -334,13 +334,13 @@ export default function CreerLicencePage() {
       {/* ─── Étape 4: Publication ─────────────────────────────────────────────── */}
       {etape === 4 && (
         <div className="space-y-6">
-          <div className="rounded-2xl border-2 border-dashed border-[#16a34a] bg-green-50 dark:bg-green-900/10 p-6 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-[#16a34a] flex items-center justify-center mx-auto mb-3">
+          <div className="rounded-2xl border-2 border-dashed border-[#F5A623] bg-[#FFF7E8] p-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#F5A623] flex items-center justify-center mx-auto mb-3">
               <Key size={24} className="text-white" />
             </div>
             <h3 className="font-bold text-gray-900 mb-1">{infos.nom}</h3>
             <p className="text-sm text-gray-500 mb-3">{infos.description || "Clé de licence"}</p>
-            <span className="text-2xl font-bold text-[#16a34a]">{fmt(parseInt(infos.prix))}</span>
+            <span className="text-2xl font-bold text-[#F5A623]">{fmt(parseInt(infos.prix))}</span>
           </div>
 
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-4 text-sm text-gray-600 space-y-1.5">
@@ -370,7 +370,7 @@ export default function CreerLicencePage() {
             </button>
             <button
               onClick={publier} disabled={publishing}
-              className="flex-1 py-2.5 rounded-xl bg-[#16a34a] text-white font-bold text-sm hover:bg-[#15803d] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-xl bg-[#F5A623] text-white font-bold text-sm hover:bg-[#d4820a] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
             >
               {publishing ? "Publication…" : <><Check size={16} /> Publier le produit</>}
             </button>

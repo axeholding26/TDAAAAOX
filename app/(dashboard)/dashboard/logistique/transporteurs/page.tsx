@@ -17,7 +17,7 @@ type Transporteur = {
 };
 
 export default function TransporteursPage() {
-  const { devise, fmt } = useDevise();
+  const { devise } = useDevise();
   const [liste, setListe] = useState<Transporteur[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<string | null>(null);

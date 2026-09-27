@@ -194,7 +194,7 @@ export async function enregistrerConversionAffiliation(params: {
 // Fait passer les commissions "pending" d'une commande à "approuvee" (donc
 // payables) — appelé au moment où la vente est définitivement acquise :
 // livraison confirmée pour le COD, immédiatement pour le digital/paiement en
-// ligne (même logique que la capture de Commission/Escrow existante).
+// ligne (même logique que la capture de Commission existante).
 export async function capturerCommissionAffiliation(commandeId: string): Promise<void> {
   await prisma.commissionAffilie.updateMany({
     where: { commandeId, statut: "pending" },

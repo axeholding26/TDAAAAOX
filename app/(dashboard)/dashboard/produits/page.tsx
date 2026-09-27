@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -36,6 +37,7 @@ export default async function ProduitsPage({
 }) {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "produits");
   const { q, filtre } = await searchParams;
 
   const tenantId = (session.user as any)?.tenantId;

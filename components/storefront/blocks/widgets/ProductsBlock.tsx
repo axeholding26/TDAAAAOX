@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Package } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { prixClient } from "@/lib/pricing";
-import { formatMontant } from "@/lib/utils";
+import { Prix } from "@/components/storefront/DeviseVitrine";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import type { BlockRenderProps } from "../types";
 
@@ -55,7 +55,7 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
                 </div>
                 <div className="p-4">
                   <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug" style={{ color: colors.texte }}>{p.nom}</h3>
-                  <span className="font-bold text-sm" style={{ color: colors.accent }}>{formatMontant(prixAffiche, tenant.devise)}</span>
+                  <span className="font-bold text-sm" style={{ color: colors.accent }}><Prix montant={prixAffiche} devise={tenant.devise} /></span>
                 </div>
               </div>
             </Link>

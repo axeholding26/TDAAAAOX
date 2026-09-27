@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { Wallet, Bike, Package } from "lucide-react";
@@ -8,6 +9,7 @@ import { formatMontant } from "@/lib/utils";
 export default async function EncaissementsPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "finance");
   const tenantId = (session.user as any)?.tenantId;
 
   const commandesNonRemises = await prisma.commande.findMany({

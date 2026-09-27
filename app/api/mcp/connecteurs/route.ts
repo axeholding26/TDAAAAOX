@@ -15,7 +15,7 @@ const saveSchema = z.object({
   statut: z.enum(["actif", "inactif"]).optional(),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

@@ -20,6 +20,10 @@ import { GoogleTagManager } from "@/components/storefront/GoogleTagManager";
 import { CustomTrackingScripts } from "@/components/storefront/CustomTrackingScripts";
 import { AffiliationRefCapture } from "@/components/storefront/AffiliationRefCapture";
 import { StorefrontPageView } from "@/components/storefront/StorefrontPageView";
+import { DeviseVitrineProvider, PastillePaysDesign } from "@/components/storefront/DeviseVitrine";
+import { deviseVisiteur, paysVisiteur } from "@/lib/devise-visiteur";
+import { tauxDuJour } from "@/lib/taux-change";
+import { ratioConversion } from "@/lib/devise-convert";
 
 interface Props {
   children: React.ReactNode;
@@ -32,7 +36,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
   const tenant = await prisma.tenant.findUnique({
     where: { slug },
     select: {
-      id: true, nomBoutique: true, themeId: true, themeConfig: true, statut: true,
+      id: true, nomBoutique: true, themeId: true, themeConfig: true, statut: true, devise: true,
       metaPixelId: true, tiktokPixelId: true, snapPixelId: true, gtmId: true, trackingScripts: true,
     },
   });
@@ -59,8 +63,9 @@ export default async function StorefrontLayout({ children, params }: Props) {
     ? await prisma.collection.findMany({ where: { tenantId: tenant.id, actif: true }, select: { slug: true, nom: true, imageUrl: true }, orderBy: { createdAt: "asc" }, take: 12 })
     : [];
 
+  const deviseAffichee = await deviseVisiteur(tenant.devise);
   return (
-    <>
+    <DeviseVitrineProvider devise={deviseAffichee} pays={await paysVisiteur()} deviseBoutique={tenant.devise} ratio={ratioConversion(tenant.devise, deviseAffichee, await tauxDuJour())}>
       <StorefrontTypography fonts={cfg.fonts} />
       <StorefrontCustomCss css={cfg.customCss} />
       <div className="axs-store" style={{ display: "contents" }}>
@@ -74,6 +79,7 @@ export default async function StorefrontLayout({ children, params }: Props) {
         <FiltresCatalogue />
       </Suspense>
       <RechercheDesign slug={slug} />
+      {cfg.builderCss && <PastillePaysDesign />}
       {navDesign && (
         <NavigationDesign slug={slug} type={navDesign.type} favoris={!!navDesign.showWishlist} collections={collectionsMega}
           fondEntete={navDesign.style === "dark" ? "#111111" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
@@ -91,6 +97,6 @@ export default async function StorefrontLayout({ children, params }: Props) {
           {tenant.trackingScripts && <CustomTrackingScripts html={tenant.trackingScripts} />}
         </>
       )}
-    </>
+    </DeviseVitrineProvider>
   );
 }

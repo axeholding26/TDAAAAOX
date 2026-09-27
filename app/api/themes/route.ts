@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MANIFESTE_LIBRAIRIE, designsOrigine, supprimerThemesDesignInactifs, estBoutiqueDigitale } from "@/lib/axso-design-library";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     const tenantId = (session?.user as any)?.tenantId;

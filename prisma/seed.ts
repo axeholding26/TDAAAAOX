@@ -81,7 +81,7 @@ async function main() {
   });
 
   // Utilisateur propriétaire
-  const userMode = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: "Aminata Diallo",
       email: "aminata@modeaminata.sn",
@@ -103,7 +103,7 @@ async function main() {
     },
   });
 
-  const collMode2 = await prisma.collection.create({
+  await prisma.collection.create({
     data: {
       tenantId: tenantMode.id,
       nom: "Accessoires",

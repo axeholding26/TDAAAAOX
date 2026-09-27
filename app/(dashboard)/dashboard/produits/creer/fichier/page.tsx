@@ -2,13 +2,9 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-  ArrowLeft, ArrowRight, Check, Upload, X, Loader2, ImageIcon,
-  FileDown, Lock, Droplets, Hash, Info, Eye, EyeOff, Sparkles,
-  AlertCircle, GripVertical, ChevronRight,
-} from "lucide-react";
+import { ArrowLeft, Check, Upload, X, Loader2, ImageIcon, FileDown, Lock, Droplets, Eye, EyeOff, Sparkles, AlertCircle, GripVertical, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import { slugify, formatMontant } from "@/lib/utils";
+import { slugify } from "@/lib/utils";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -60,7 +56,7 @@ function formatTaille(o: number) {
 // ─── Composant étape 1 ────────────────────────────────────────────────────────
 
 function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
-  const { devise, fmt } = useDevise();
+  const { devise } = useDevise();
   const [uploadImg, setUploadImg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -89,7 +85,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
             set({ nom, slug: slugify(nom) });
           }}
           placeholder="Ex : Guide complet SEO 2025"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
 
@@ -114,7 +110,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
           onChange={(ev) => set({ description: ev.target.value })}
           rows={4}
           placeholder="Décrivez votre produit, ce qu'il contient, à qui il s'adresse…"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
 
@@ -126,7 +122,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
             type="number" min="0" value={e.prix}
             onChange={(ev) => set({ prix: ev.target.value })}
             placeholder="5000"
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
         </div>
         <div>
@@ -135,7 +131,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
             type="number" min="0" value={e.prixCompare}
             onChange={(ev) => set({ prixCompare: ev.target.value })}
             placeholder="8000"
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
         </div>
       </div>
@@ -171,7 +167,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploadImg}
-            className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#1B2A4A] hover:text-[#1B2A4A] transition-colors"
+            className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#F5A623] hover:text-[#F5A623] transition-colors"
           >
             {uploadImg ? <Loader2 size={18} className="animate-spin" /> : <><ImageIcon size={18} /><span className="text-[10px]">Ajouter</span></>}
           </button>
@@ -198,7 +194,7 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
           type="number" min="1" value={e.limitAchats}
           onChange={(ev) => set({ limitAchats: ev.target.value })}
           placeholder="Ex : 100 (laisser vide = illimité)"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
 
@@ -214,7 +210,7 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
             value={e.motDePasse}
             onChange={(ev) => set({ motDePasse: ev.target.value })}
             placeholder="Laisser vide = pas de mot de passe"
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
           <button
             type="button"
@@ -231,7 +227,7 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
         <button
           onClick={() => set({ filigrane: !e.filigrane })}
           className={`mt-0.5 w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors ${
-            e.filigrane ? "bg-[#1B2A4A] border-[#1B2A4A]" : "border-gray-300"
+            e.filigrane ? "bg-[#F5A623] border-[#F5A623]" : "border-gray-300"
           }`}
         >
           {e.filigrane && <Check size={11} className="text-white" />}
@@ -256,7 +252,7 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
           onChange={(ev) => set({ instructionsAchat: ev.target.value })}
           rows={4}
           placeholder="Ex : Merci pour votre achat ! Vous pouvez télécharger votre fichier via le bouton ci-dessous…"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#1B2A4A]/20 focus:border-[#1B2A4A]"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
     </div>
@@ -320,18 +316,18 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
         onDrop={onDrop}
         onClick={() => !uploading && fileRef.current?.click()}
         className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
-          dragOver ? "border-[#1B2A4A] bg-[#1B2A4A]/5" : "border-gray-300 hover:border-[#1B2A4A]/50"
+          dragOver ? "border-[#F5A623] bg-[#F5A623]/5" : "border-gray-300 hover:border-[#F5A623]/50"
         }`}
       >
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
-            <Loader2 size={28} className="animate-spin text-[#1B2A4A]" />
+            <Loader2 size={28} className="animate-spin text-[#F5A623]" />
             <p className="text-sm text-gray-500">Upload en cours…</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-xl bg-[#1B2A4A]/10 flex items-center justify-center">
-              <Upload size={22} className="text-[#1B2A4A]" />
+            <div className="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center">
+              <Upload size={22} className="text-[#F5A623]" />
             </div>
             <p className="text-sm font-medium text-gray-700">Glissez vos fichiers ici ou cliquez pour parcourir</p>
             <p className="text-xs text-gray-400">PDF, ZIP, MP3, MP4, DOCX… — max 200 Mo par fichier</p>
@@ -347,8 +343,8 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
           {e.fichiers.map((f, i) => (
             <div key={i} className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-white">
               <GripVertical size={14} className="text-gray-300 flex-shrink-0" />
-              <div className="w-8 h-8 rounded-lg bg-[#1B2A4A]/10 flex items-center justify-center flex-shrink-0">
-                <FileDown size={14} className="text-[#1B2A4A]" />
+              <div className="w-8 h-8 rounded-lg bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
+                <FileDown size={14} className="text-[#F5A623]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800 truncate">{f.nom}</p>
@@ -375,7 +371,7 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
 // ─── Composant étape 4 (résumé) ───────────────────────────────────────────────
 
 function EtapePublication({ e }: { e: EtatWizard }) {
-  const { devise, fmt } = useDevise();
+  const { fmt } = useDevise();
   const prixNum = parseFloat(e.prix) || 0;
 
   const checks = [
@@ -564,8 +560,8 @@ export default function CreerFichierPage() {
       {/* En-tête */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
-          <div className="w-7 h-7 rounded-lg bg-[#1B2A4A]/10 flex items-center justify-center">
-            <FileDown size={14} className="text-[#1B2A4A]" />
+          <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center">
+            <FileDown size={14} className="text-[#F5A623]" />
           </div>
           <h1 className="text-xl font-bold text-gray-900 font-poppins">Fichier digital</h1>
         </div>
@@ -575,7 +571,7 @@ export default function CreerFichierPage() {
       {/* Barre de progression */}
       <div className="flex gap-1.5 mb-8">
         {ETAPES.map((_, i) => (
-          <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= etape ? "bg-[#1B2A4A]" : "bg-gray-200"}`} />
+          <div key={i} className={`h-1.5 flex-1 rounded-full transition-all ${i <= etape ? "bg-[#F5A623]" : "bg-gray-200"}`} />
         ))}
       </div>
 
@@ -602,7 +598,7 @@ export default function CreerFichierPage() {
           <button
             onClick={suivant}
             disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#1B2A4A] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#1B2A4A]/90 transition-all disabled:opacity-60"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#F5A623] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#F5A623]/90 transition-all disabled:opacity-60"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : null}
             {etape === 2 ? "Vérifier avant publication" : "Continuer"}

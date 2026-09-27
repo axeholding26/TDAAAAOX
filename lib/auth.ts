@@ -14,7 +14,7 @@ const loginSchema = z.object({
   code: z.string().optional(),
 });
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
@@ -69,12 +69,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.tenantId = (user as any).tenantId;
         token.role = (user as any).role;
       }
+      // « Mon profil » (/api/compte → unstable_update) : seul le nom, déjà
+      // enregistré en base, est repris — jamais la boutique ni le rôle. La photo
+      // reste hors du cookie (une image importée dépasserait sa taille maximale).
+      if (trigger === "update" && typeof session?.name === "string") token.name = session.name;
       // Changement de boutique active (multi-boutique Palier 2) : le cookie
       // de session est réécrit directement par /api/boutiques/switch (même
       // encode/decode qu'ici), pas via ce callback — voir ce fichier pour le

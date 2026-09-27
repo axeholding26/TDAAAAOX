@@ -81,7 +81,6 @@ const PLANS = [
 export function TarifsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
-  const [tilt, setTilt] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const obs = new IntersectionObserver(

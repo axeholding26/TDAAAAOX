@@ -12,14 +12,15 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { commandeId, montant, devise, clientEmail, clientNom, clientTelephone, description } = body;
-
-    if (!commandeId || !montant || !devise || !clientEmail) {
-      return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
-    }
+    const { commandeId, description } = body;
+    if (!commandeId) return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
 
     const commande = await prisma.commande.findUnique({ where: { id: commandeId }, include: { tenant: { select: { slug: true } } } });
     if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    if (commande.paiementStatut === "completed") return NextResponse.json({ error: "Commande déjà payée" }, { status: 409 });
+    // Montant, devise et client : ceux de la commande enregistrée, jamais ceux envoyés par le navigateur.
+    const clientEmail = commande.clientEmail || body.clientEmail;
+    if (!clientEmail && !commande.clientTelephone) return NextResponse.json({ error: "Email ou téléphone du client requis" }, { status: 400 });
 
     // Référence marchande envoyée à NotchPay (dispatch webhook par préfixe ORD-).
     // NotchPay attribue sa PROPRE référence ("trx.xxx") en retour — c'est elle
@@ -28,11 +29,11 @@ export async function POST(req: NextRequest) {
     const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
 
     const { transaction, authorizationUrl } = await initierPaiementNotchPay({
-      amount: montant,
-      currency: devise,
+      amount: commande.montantTotal,
+      currency: commande.devise,
       email: clientEmail,
-      name: clientNom ?? "Client",
-      phone: clientTelephone,
+      name: commande.clientNom || "Client",
+      phone: commande.clientTelephone || undefined,
       description: description ?? `Commande Axso #${commande.numero}`,
       reference: merchantRef,
       callback: `${origin}/${commande.tenant.slug}/confirmation/${commandeId}`,

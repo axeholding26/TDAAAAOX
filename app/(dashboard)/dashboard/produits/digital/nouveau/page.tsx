@@ -1,9 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import {
-  FileDown, Key, Package, BookOpen, ChevronRight, ArrowLeft,
-  FileText, Music, Video, Monitor, BookOpen as BookOpenAlt,
-} from "lucide-react";
+import { FileDown, Key, Package, BookOpen, ChevronRight, ArrowLeft, FileText, Music, Video, Monitor } from "lucide-react";
 import Link from "next/link";
 
 const TYPES = [
@@ -13,8 +10,8 @@ const TYPES = [
     icon: FileDown,
     label: "Fichier(s) numérique(s)",
     desc: "PDF, ZIP, MP3, vidéo — livraison automatique après paiement. Filigrane PDF inclus.",
-    color: "#1B2A4A",
-    bg: "#1B2A4A12",
+    color: "#F5A623",
+    bg: "#F5A62312",
     dispo: true,
     badge: null,
   },
@@ -24,8 +21,8 @@ const TYPES = [
     icon: Key,
     label: "Clé de licence",
     desc: "Licences logiciel — génération automatique ou stock importé, contrôle des activations.",
-    color: "#16a34a",
-    bg: "#16a34a12",
+    color: "#F5A623",
+    bg: "#F5A62312",
     dispo: true,
     badge: null,
   },
@@ -46,18 +43,18 @@ const TYPES = [
     icon: BookOpen,
     label: "Formation",
     desc: "Cours organisés en chapitres et leçons avec suivi de progression des apprenants.",
-    color: "#0ea5e9",
-    bg: "#0ea5e912",
+    color: "#F5A623",
+    bg: "#F5A62312",
     dispo: true,
     badge: null,
   },
 ];
 
 const LEGACY_TYPES = [
-  { icon: FileText, label: "Ebook / PDF",  color: "#1B2A4A" },
-  { icon: Video,    label: "Cours vidéo",  color: "#0ea5e9" },
-  { icon: Monitor,  label: "Logiciel",     color: "#16a34a" },
-  { icon: Music,    label: "Audio",        color: "#db2777" },
+  { icon: FileText, label: "Ebook / PDF",  color: "#8A5300" },
+  { icon: Video,    label: "Cours vidéo",  color: "#8A5300" },
+  { icon: Monitor,  label: "Logiciel",     color: "#8A5300" },
+  { icon: Music,    label: "Audio",        color: "#8A5300" },
 ];
 
 export default function NouveauProduitDigitalPage() {

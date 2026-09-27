@@ -45,10 +45,19 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   const tauxCommission = commande.tenant.commissionRate ?? 0.06;
   const fraisPasserelle = await fraisNotchPay(reference);
 
-  await prisma.commande.update({
-    where: { id: commandeId },
+  // Passage à « payé » ATOMIQUE : le webhook NotchPay et la page de confirmation
+  // peuvent appeler cette fonction en même temps — un seul des deux continue,
+  // sinon le wallet serait crédité deux fois.
+  const pris = await prisma.commande.updateMany({
+    where: { id: commandeId, paiementStatut: { not: "completed" } },
     data: { paiementStatut: "completed", paiementReference: reference },
   });
+  if (pris.count === 0) return;
+
+  // Code promo : compté quand le paiement est réellement reçu (un paiement abandonné ne consomme pas le code).
+  if (commande.codePromoId) {
+    await prisma.codePromo.update({ where: { id: commande.codePromoId }, data: { utilisations: { increment: 1 } } }).catch(() => {});
+  }
 
   await notifierMarchand({
     tenantId: commande.tenantId,

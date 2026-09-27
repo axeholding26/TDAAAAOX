@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Phone, Mail, Package, Clock, CheckCircle, Truck, XCircle, User, CreditCard, Lock, Unlock, FileText, Map, Share2 } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Package, Clock, CheckCircle, Truck, XCircle, User, CreditCard, FileText, Map, Share2 } from "lucide-react";
 import { formatMontant, dateRelative } from "@/lib/utils";
 import { StatutCommandeSelector } from "@/components/dashboard/StatutCommandeSelector";
 import { AssignerLivreur } from "@/components/dashboard/AssignerLivreur";
@@ -19,6 +20,7 @@ const STATUT_CONFIG: Record<string, { label: string; icon: any; color: string; b
 export default async function CommandeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "commandes");
 
   const tenantId = (session.user as any)?.tenantId;
   const { id } = await params;
@@ -31,7 +33,6 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
         client: true,
         livreur: { include: { user: { select: { email: true } } } },
         commission: true,
-        escrow: true,
         codePromo: true,
         tenant: { select: { slug: true, nomBoutique: true, logoUrl: true } },
       },
@@ -127,11 +128,11 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {/* Paiement & Escrow */}
+          {/* Paiement */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
             <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <CreditCard size={14} className="text-[#F5A623]" />
-              Paiement & Escrow
+              Paiement
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
@@ -156,33 +157,6 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 </div>
               )}
 
-              {commande.escrow && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-2 mb-2">
-                    {commande.escrow.statut === "released" ? (
-                      <Unlock size={13} className="text-green-400" />
-                    ) : (
-                      <Lock size={13} className="text-[#F5A623]" />
-                    )}
-                    <span className="text-[#111111] text-xs font-medium">
-                      Escrow : {commande.escrow.statut === "held" ? "Fonds retenus" :
-                                commande.escrow.statut === "released" ? "Fonds libérés" : commande.escrow.statut}
-                    </span>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Montant retenu</span>
-                      <span className="text-[#F5A623]">{formatMontant(commande.escrow.montant, commande.devise)}</span>
-                    </div>
-                    {commande.escrow.releaseAt && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Libération</span>
-                        <span className="text-[#111111]">{new Date(commande.escrow.releaseAt).toLocaleDateString("fr-FR")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {commande.commission && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5 text-xs">
@@ -339,7 +313,6 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 {(commande as any).livreurToken && (() => {
                   const slug = (commande as any).tenant?.slug ?? "";
                   const livreurUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${slug}/livreur/${(commande as any).livreurToken}`;
-                  const clientTel = commande.clientTelephone?.replace(/\D/g, "");
                   const msg = encodeURIComponent(`🚚 *Livraison — ${(commande as any).tenant?.nomBoutique}*\n\nBonjour ! Vous êtes assigné à la livraison de la commande #${commande.numero}.\n\n👤 Client : ${commande.clientNom}\n📞 Tél : ${commande.clientTelephone}\n📍 Adresse : ${(commande as any).adresseExacte || commande.adresseLivraison}, ${commande.ville}\n${(commande as any).mapsLienClient ? `\n🗺️ Google Maps : ${(commande as any).mapsLienClient}\n` : ""}\n📡 Activez votre tracking GPS :\n${livreurUrl}\n\nMerci !`);
                   return (
                     <a href={`https://wa.me/?text=${msg}`}

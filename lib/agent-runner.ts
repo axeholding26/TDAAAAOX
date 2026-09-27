@@ -142,7 +142,7 @@ export function runAgentStream(
               tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) }, signature: tc.signature })),
             });
             for (const tc of result.toolCalls) {
-              const { succes, resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
+              const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
               actionsEffectuees.push(resultat);
               toolResults.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });

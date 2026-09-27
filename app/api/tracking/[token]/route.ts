@@ -60,7 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 // PATCH — le livreur s'auto-enregistre (nom/téléphone) via son lien GPS.
 // Volontairement limité à ces deux champs : changer statut/livraisonStatut
 // doit toujours passer par /api/commandes/[id]/statut, seul endroit qui
-// applique TRANSITIONS_VALIDES et les effets de bord (escrow, commission,
+// applique TRANSITIONS_VALIDES et les effets de bord (commission,
 // analytics, notification WhatsApp).
 export async function PATCH(req: Request, { params }: { params: Promise<{ token: string }> }) {
   try {

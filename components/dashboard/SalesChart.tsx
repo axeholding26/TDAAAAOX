@@ -1,9 +1,6 @@
 "use client";
 import { useState } from "react";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine, BarChart, Bar,
-} from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { BarChart3 } from "lucide-react";
 
 interface DonneeVente { date: string; montant: number; commandes: number; }
@@ -51,7 +48,6 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
 
   const data    = donnees.slice(-period);
   const total   = data.reduce((s, d) => s + d.montant, 0);
-  const maxVal  = Math.max(...data.map(d => d.montant), 1);
   const avgLine = total / Math.max(data.length, 1);
   const bestDay = data.reduce((best, d) => d.montant > best.montant ? d : best, data[0] ?? { date: "", montant: 0, commandes: 0 });
   const totalCmds = data.reduce((s, d) => s + d.commandes, 0);

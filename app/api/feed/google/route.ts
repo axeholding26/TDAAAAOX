@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
       <g:identifier_exists>FALSE</g:identifier_exists>
       <g:target_country>${pays}</g:target_country>
       <g:content_language>${langue.split("-")[0]}</g:content_language>
-      ${p.images.slice(1, 11).map((img, i) => `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`).join("\n      ")}
+      ${p.images.slice(1, 11).map((img) => `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`).join("\n      ")}
     </item>`;
     }).join("\n");
 

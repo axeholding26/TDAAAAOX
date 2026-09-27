@@ -253,6 +253,18 @@ export default function BoutiquePage() {
                 className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-white bg-black/35 backdrop-blur-md border border-white/20 px-3 py-2 rounded-full hover:bg-black/50 transition-all">
                 <ExternalLink size={11} /> <span className="hidden sm:inline">Voir la boutique</span>
               </a>
+              {/* Nouvelle boutique : multi-boutique réservé au Palier 2 (même règle que l'onglet « Mes boutiques »). */}
+              {!loadingBoutiques && (peutCreerBoutique ? (
+                <button onClick={() => setModalNouvelleBoutique(true)} title="Créer une nouvelle boutique"
+                  className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-[#111111] bg-[#F5A623] border border-[#F5A623] px-3 h-8 rounded-full hover:bg-[#E8990F] transition-all">
+                  <Plus size={13} /> <span className="hidden sm:inline">Nouvelle boutique</span>
+                </button>
+              ) : (
+                <Link href="/dashboard/abonnement" title="Plusieurs boutiques : disponible au Palier 2"
+                  className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-white bg-black/35 backdrop-blur-md border border-white/20 px-3 h-8 rounded-full hover:bg-black/50 transition-all">
+                  <Lock size={11} /> <span className="hidden sm:inline">Nouvelle boutique · Palier 2</span>
+                </Link>
+              ))}
               <button onClick={partager}
                 className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-white bg-black/35 backdrop-blur-md border border-white/20 w-8 h-8 justify-center rounded-full hover:bg-black/50 transition-all">
                 {copied ? <Check size={12} className="text-[#4ade80]" /> : <Share2 size={12} />}

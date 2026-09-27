@@ -16,9 +16,11 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
+    let annule = false; // effet démonté avant la fin du chargement : ne pas créer une 2ᵉ carte (« Map container is already initialized »)
 
     // Charger Leaflet dynamiquement (SSR safe)
     import("leaflet").then((L) => {
+      if (annule || !mapRef.current) return;
       // Fix icônes Leaflet avec Next.js
       (L.Icon.Default.prototype as any)._getIconUrl = undefined;
       L.Icon.Default.mergeOptions({
@@ -89,6 +91,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
     });
 
     return () => {
+      annule = true;
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;

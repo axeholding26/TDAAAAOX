@@ -550,7 +550,7 @@ function remplacerImage(html: string, index: number, url: string): string {
   const el = doc.body.querySelectorAll<HTMLElement>("img, [style*='url(']")[index];
   if (!el) return html;
   if (el.tagName === "IMG") { el.setAttribute("src", url); el.removeAttribute("srcset"); }
-  else el.setAttribute("style", (el.getAttribute("style") || "").replace(RE_FOND, (m, q, ancien) => m.replace(ancien, url)));
+  else el.setAttribute("style", (el.getAttribute("style") || "").replace(RE_FOND, (m, _q, ancien) => m.replace(ancien, url)));
   return doc.body.innerHTML;
 }
 
@@ -891,7 +891,7 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
 }
 
 // ─── Panel Avancé ─────────────────────────────────────────────────────────────
-export function PanelAvance({ config, set, tenant, onReset }: any) {
+export function PanelAvance({ config, set, onReset }: any) {
   return (
     <div className="p-4 space-y-5">
       <div>
@@ -1114,9 +1114,10 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
   switch (section.type) {
     case "gallery": return (
       <Bloc>
-        <FSel label="Style de galerie" value={c.style} onChange={v => up({ style: v })} opts={[
-          { v: "vertical-thumbs", l: "Miniatures verticales (Amazon)" }, { v: "horizontal-thumbs", l: "Miniatures horizontales" }, { v: "dots", l: "Points" },
+        <FSel label="Style de galerie" value={c.style === "dots" ? "dots" : "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
+          { v: "vertical-thumbs", l: "Flèches et compteur" }, { v: "dots", l: "Flèches, compteur et points" },
         ]} />
+        <Bascule label="Diaporama automatique (toutes les 4 s)" value={c.diaporamaAuto === true} onChange={v => up({ diaporamaAuto: v })} />
         <Bascule label="Zoom au survol" value={c.zoom !== false} onChange={v => up({ zoom: v })} />
         <Bascule label="Panneau fixe au scroll" value={c.sticky !== false} onChange={v => up({ sticky: v })} />
       </Bloc>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, Navigation, MessageCircle, Zap } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, Navigation, MessageCircle } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
@@ -188,7 +188,7 @@ export default function CommandeLivreurPage() {
               <CheckCircle size={22} />
               {isPending ? "Confirmation..." : "Confirmer la livraison"}
             </button>
-            <p className="text-center text-gray-500 text-xs mt-2">Les fonds seront libérés automatiquement</p>
+            <p className="text-center text-gray-500 text-xs mt-2">La commande sera marquée comme livrée</p>
           </div>
         </div>
       )}

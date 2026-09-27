@@ -40,50 +40,8 @@ export interface PlanBoutique {
   sections?: PlanSection[];
 }
 
-// Carte devise par code pays ISO2 — couverture mondiale
-export const PAYS_DEVISES: Record<string, string> = {
-  // Afrique de l'Ouest CFA
-  SN: "XOF", CI: "XOF", TG: "XOF", BJ: "XOF", ML: "XOF", BF: "XOF", GN: "GNF", NE: "XOF", GW: "XOF",
-  // Afrique Centrale CFA
-  CM: "XAF", GA: "XAF", CG: "XAF", TD: "XAF", CF: "XAF", CD: "CDF", GQ: "XAF",
-  // Afrique subsaharienne
-  GH: "GHS", NG: "NGN", KE: "KES", ZA: "ZAR", ET: "ETB", TZ: "TZS",
-  UG: "UGX", RW: "RWF", MZ: "MZN", AO: "AOA", ZM: "ZMW", ZW: "USD",
-  SL: "SLE", LR: "LRD", GM: "GMD", CV: "CVE", MR: "MRU", KM: "KMF",
-  DJ: "DJF", ER: "ERN", SO: "SOS", SS: "SSP", SD: "SDG", BI: "BIF",
-  MW: "MWK", NA: "NAD", BW: "BWP", LS: "LSL", SZ: "SZL", MU: "MUR",
-  SC: "SCR", ST: "STN", MG: "MGA",
-  // Afrique du Nord
-  MA: "MAD", DZ: "DZD", TN: "TND", EG: "EGP", LY: "LYD",
-  // Europe
-  FR: "EUR", DE: "EUR", ES: "EUR", IT: "EUR", PT: "EUR", NL: "EUR", BE: "EUR",
-  GB: "GBP", CH: "CHF", SE: "SEK", NO: "NOK", DK: "DKK", PL: "PLN",
-  // Amérique du Nord
-  US: "USD", CA: "CAD", MX: "MXN",
-  // Amérique Latine
-  BR: "BRL", AR: "ARS", CO: "COP", CL: "CLP", PE: "PEN", VE: "USD",
-  // Asie
-  CN: "CNY", JP: "JPY", IN: "INR", ID: "IDR", PH: "PHP", TH: "THB",
-  VN: "VND", SG: "SGD", MY: "MYR", KR: "KRW", PK: "PKR", BD: "BDT",
-  // Moyen-Orient
-  AE: "AED", SA: "SAR", QA: "QAR", KW: "KWD", BH: "BHD", OM: "OMR",
-  TR: "TRY", IL: "ILS", LB: "USD",
-  // Océanie
-  AU: "AUD", NZ: "NZD",
-};
-
-/** Les 54 pays de l'Union africaine — seuls pays proposés à la création/modification d'une boutique. */
-export const PAYS_AFRICAINS = "DZ AO BJ BW BF BI CV CM CF KM CG CD CI DJ EG ER SZ ET GA GM GH GN GW GQ KE LS LR LY MG MW ML MA MR MU MZ NA NE NG UG RW ST SN SC SL SO SD SS TZ TD TG TN ZM ZW ZA".split(" ");
-
-/** Liste des pays proposés dans les formulaires (code ISO2 + nom français natif). */
-export const PAYS_OPTIONS = PAYS_AFRICAINS
-  .map((code) => ({ code, nom: new Intl.DisplayNames(["fr"], { type: "region" }).of(code) ?? code }))
-  .sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
-
-/** La devise d'une boutique découle TOUJOURS de son pays ; `repli` seulement pour un pays hors carte. */
-export function deviseDuPays(pays: string | null | undefined, repli: string): string {
-  return (pays && PAYS_DEVISES[pays]) || repli;
-}
+export { PAYS_DEVISES, PAYS_AFRICAINS, PAYS_OPTIONS, deviseDuPays } from "./devise-convert";
+import { PAYS_DEVISES } from "./devise-convert";
 
 const PROMPT_ANALYSTE = `Tu es AXIA, l'agent IA d'Axso — la plateforme e-commerce mondiale propulsée par l'IA.
 Tu aides les entrepreneurs du monde entier à lancer leur boutique en ligne.

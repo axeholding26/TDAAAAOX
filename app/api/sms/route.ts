@@ -13,7 +13,7 @@ const schemaSMS = z.object({
   segment: z.enum(["tous", "vip", "inactifs", "nouveaux"]).default("tous"),
 });
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

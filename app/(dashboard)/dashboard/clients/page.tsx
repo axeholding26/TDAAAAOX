@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate, formatMontant } from "@/lib/utils";
@@ -45,9 +46,11 @@ function SegmentBadge({ nbCommandes, total }: { nbCommandes: number; total: numb
   );
 }
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const q = ((await searchParams).q ?? "").trim();
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "clients");
 
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
@@ -65,7 +68,9 @@ export default async function ClientsPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const sorted = [...clients].sort((a, b) => {
+  // Filtre ?q= (résultat de la recherche du tableau de bord) : la liste seulement, pas les statistiques.
+  const qMin = q.toLowerCase();
+  const sorted = [...clients].filter((c) => !qMin || [c.nom, c.email, c.telephone].some((v) => v?.toLowerCase().includes(qMin))).sort((a, b) => {
     const ta = a.commandes.reduce((s, c) => s + c.montantTotal, 0);
     const tb = b.commandes.reduce((s, c) => s + c.montantTotal, 0);
     return tb - ta;
@@ -179,6 +184,12 @@ export default async function ClientsPage() {
           </div>
         </div>
 
+        {q && (
+          <div className="px-4 sm:px-5 py-2.5 border-b border-[#F3F3F3] flex items-center gap-2 text-[12.5px] text-[#666666]">
+            Filtré sur « <strong className="text-[#111111]">{q}</strong> » · {sorted.length} client{sorted.length > 1 ? "s" : ""}
+            <a href="/dashboard/clients" className="ml-auto font-semibold text-[#F5A623] hover:underline">Tout afficher</a>
+          </div>
+        )}
         {clients.length === 0 ? (
           <div className="p-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
@@ -40,6 +41,7 @@ function VariationBadge({ v }: { v: { pct: number; sens: "hausse" | "baisse" | "
 export default async function RapportsPage({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
   const session = await auth();
   if (!session) redirect("/connexion");
+  await exigerModule(session, "produits");
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/dashboard");
 

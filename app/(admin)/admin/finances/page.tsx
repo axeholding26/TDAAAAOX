@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
-import { DollarSign, Lock, Unlock, TrendingUp, AlertCircle, Receipt } from "lucide-react";
+import { DollarSign, TrendingUp, AlertCircle, Receipt } from "lucide-react";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { AdminWalletPanel } from "@/components/admin/AdminWalletPanel";
 import { getPlatformTenantId } from "@/lib/wallet";
@@ -13,11 +13,9 @@ export default async function AdminFinancesPage() {
   const platformTenantId = await getPlatformTenantId();
   const platformWallet = await prisma.wallet.findUnique({ where: { tenantId: platformTenantId } });
 
-  const [commissionsCapturees, commissionsPending, escrowsHeld, escrowsReleased, topBoutiques, fraisNotchPay] = await Promise.all([
+  const [commissionsCapturees, commissionsPending, topBoutiques, fraisNotchPay] = await Promise.all([
     prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "captured" } }),
     prisma.commission.aggregate({ _sum: { montantCommission: true }, where: { statut: "pending" } }),
-    prisma.escrow.aggregate({ _sum: { montant: true }, where: { statut: "held" } }),
-    prisma.escrow.aggregate({ _sum: { montant: true }, where: { statut: "released" } }),
     prisma.commission.groupBy({
       by: ["tenantId"],
       _sum: { montantCommission: true, montantMarchand: true },
@@ -46,8 +44,6 @@ export default async function AdminFinancesPage() {
 
   const revenuCapture = commissionsCapturees._sum.montantCommission || 0;
   const revenuPending = commissionsPending._sum.montantCommission || 0;
-  const escrowHeld = escrowsHeld._sum.montant || 0;
-  const escrowReleased = escrowsReleased._sum.montant || 0;
   const fraisTotal = Math.abs(fraisNotchPay._sum.montant || 0);
   const revenuNetReel = Math.max(0, revenuCapture - fraisTotal);
 
@@ -58,7 +54,7 @@ export default async function AdminFinancesPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>Finances Axso</h1>
-        <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>Revenus de commission (6%), abonnements et flux escrow</p>
+        <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>Revenus de commission, abonnements et frais de paiement</p>
       </div>
 
       {/* Wallet plateforme + retrait */}
@@ -92,8 +88,6 @@ export default async function AdminFinancesPage() {
         {[
           { label: "Revenus capturés", value: formatMontant(revenuCapture, "XOF"), icon: TrendingUp, color: "#16A34A", desc: "Commissions libérées" },
           { label: "En attente", value: formatMontant(revenuPending, "XOF"), icon: AlertCircle, color: "#D97706", desc: "Après livraison" },
-          { label: "Escrow bloqué", value: formatMontant(escrowHeld, "XOF"), icon: Lock, color: "#AAAAAA", desc: "Fonds en séquestre" },
-          { label: "Escrow libéré", value: formatMontant(escrowReleased, "XOF"), icon: Unlock, color: "#F5A623", desc: "Versé aux marchands" },
         ].map((k, i) => {
           const Icon = k.icon;
           return (

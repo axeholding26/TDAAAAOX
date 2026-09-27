@@ -340,7 +340,6 @@ function ChapitreRow({
 
 export default function FormationManager({ produitId }: { produitId: string }) {
   const [chapitres, setChapitres] = useState<Chapitre[]>([]);
-  const [formation, setFormation] = useState<any>(null);
   const [loading,   setLoading]   = useState(true);
   const [ajoutOpen, setAjoutOpen] = useState(false);
   const [newTitre,  setNewTitre]  = useState("");
@@ -349,7 +348,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
   const charger = useCallback(async () => {
     setLoading(true);
     const r = await fetch(`/api/formations/${produitId}/chapitres`);
-    if (r.ok) { const d = await r.json(); setChapitres(d.chapitres); setFormation(d.formation); }
+    if (r.ok) { const d = await r.json(); setChapitres(d.chapitres); }
     setLoading(false);
   }, [produitId]);
 

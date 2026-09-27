@@ -14,7 +14,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock, X } from "lucide-react";
-import { formatMontant } from "@/lib/utils";
+import { usePrix, useVisiteur, PastillePays, drapeau } from "@/components/storefront/DeviseVitrine";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 import { cssElements } from "@/lib/element-styles";
 import { StyleCss } from "../StyleCss";
@@ -102,10 +102,7 @@ const COMPARER: Partial<Record<ThemeDigitalConfig["tri"], (a: DigitalProductVM, 
 
 const sansAccents = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-// Pays de la boutique (code ISO enregistré à l'inscription) → drapeau + nom.
-function drapeau(code: string) {
-  return /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "";
-}
+// Code pays ISO → nom.
 function nomPays(code: string) {
   try { return new Intl.DisplayNames(["fr"], { type: "region" }).of(code) ?? code; } catch { return code; }
 }
@@ -121,6 +118,7 @@ export function DigitalStoreShell({
   slug, nomBoutique, logoUrl, description, pays, devise, colors, radius, templateId, digitalConfig, products, preview,
 }: DigitalStoreShellProps) {
   const v = VARIANT[templateId] || VARIANT.charriow;
+  const visiteur = useVisiteur(); // pastille pays/devise du visiteur (hors aperçu du Constructeur)
   const [q, setQ] = useState("");
   const [categorie, setCategorie] = useState("");
   const [type, setType] = useState("");
@@ -194,10 +192,14 @@ export function DigitalStoreShell({
               <ShoppingBag size={16} />
               <span>{t("lien-achats")}</span>
             </Link>
-            <div data-axs-el="pastille-pays" className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
-              {drapeau(pays) ? <span aria-hidden>{drapeau(pays)}</span> : <Globe2 size={13} />}
-              <span>{nomPays(pays)} ({devise})</span>
-            </div>
+            {preview || !visiteur ? (
+              <div data-axs-el="pastille-pays" className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
+                {drapeau(pays) ? <span aria-hidden>{drapeau(pays)}</span> : <Globe2 size={13} />}
+                <span>{nomPays(pays)} ({devise})</span>
+              </div>
+            ) : (
+              <span data-axs-el="pastille-pays" className="inline-flex"><PastillePays couleur={colors.texteMuted || colors.texte} /></span>
+            )}
           </div>
         </div>
       </header>
@@ -362,6 +364,7 @@ function FiltreSelect({ id, label, value, onChange, options, colors, radius }: {
 function ProductCard({ p, slug, colors, radius, cardStyle, preview, afficherBouton, texteBouton, devise }: {
   p: DigitalProductVM; slug: string; colors: ThemeColors; radius: string; cardStyle: "flat" | "shadow" | "border" | "soft"; preview?: boolean; afficherBouton: boolean; texteBouton: string; devise: string;
 }) {
+  const { fmt } = usePrix();
   const wrapStyle: React.CSSProperties = { borderRadius: radius, backgroundColor: colors.surface };
   const wrapClass =
     cardStyle === "flat" ? "border" :
@@ -380,7 +383,7 @@ function ProductCard({ p, slug, colors, radius, cardStyle, preview, afficherBout
       <div className="p-3.5">
         <h3 data-axs-el="carte-nom" className="text-sm font-medium line-clamp-2 mb-1.5" style={{ color: colors.texte }}>{p.nom}</h3>
         <div className="flex items-center justify-between gap-2">
-          <span data-axs-el="carte-prix" className="text-sm font-bold" style={{ color: colors.accent }}>{formatMontant(p.prixAffiche, devise)}</span>
+          <span data-axs-el="carte-prix" className="text-sm font-bold" style={{ color: colors.accent }}>{fmt(p.prixAffiche, devise)}</span>
           {afficherBouton && (
             <span data-axs-el="carte-bouton" className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.accent, color: colors.fond }}>{texteBouton}</span>
           )}

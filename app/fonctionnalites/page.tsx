@@ -1,11 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
-import {
-  ShoppingBag, CreditCard, Zap, Truck, TrendingUp, BarChart2,
-  Globe, Check, ArrowRight, Package, Users, MessageCircle,
-  Star, Shield, Clock, Layers, Cpu, MapPin,
-} from "lucide-react";
+import { ShoppingBag, CreditCard, Zap, Truck, TrendingUp, BarChart2, Globe, Check, ArrowRight, Package, Users, MessageCircle, Shield, Layers, Cpu, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

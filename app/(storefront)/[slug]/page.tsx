@@ -3,19 +3,17 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { boutiqueVisible } from "@/lib/tenant";
 import { notFound } from "next/navigation";
-import { formatMontant } from "@/lib/utils";
+import { Prix } from "@/components/storefront/DeviseVitrine";
 import { prixClient } from "@/lib/pricing";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
-import { SectionCountdown } from "@/components/storefront/SectionCountdown";
-import { SectionTabs } from "@/components/storefront/SectionTabs";
 import { SousBlocsRenderer } from "@/components/storefront/SousBlocsRenderer";
 import { ScrollReveal, type RevealType } from "@/components/storefront/ScrollReveal";
 import { HomeFaqSection } from "@/components/storefront/HomeFaqSection";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
-import { Package, Lock, RotateCcw, MessageCircle, Star } from "lucide-react";
+import { Package } from "lucide-react";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
 import { ordonnerParZone } from "@/lib/block-tree";
@@ -78,7 +76,7 @@ export default async function StorefrontPage({ params }: Props) {
     );
   }
 
-  const { colors: c, sections: sec, radius, fonts } = cfg;
+  const { colors: c, sections: sec, radius } = cfg;
 
   const vedettesOrderBy =
     sec.vedettes.triPar === "ventes" ? { ventes: "desc" as const } :
@@ -91,12 +89,6 @@ export default async function StorefrontPage({ params }: Props) {
     take: sec.vedettes.nombre || 8,
   });
 
-  // Determine if theme background is dark by checking luminance of fond color
-  const fondHex = cfg.colors.fond.replace("#", "");
-  const r = parseInt(fondHex.slice(0, 2), 16);
-  const g = parseInt(fondHex.slice(2, 4), 16);
-  const b = parseInt(fondHex.slice(4, 6), 16);
-  const isDark = (r * 299 + g * 587 + b * 114) / 1000 < 128;
   const socialLinks = tenant.socialLinks as Record<string, string> || {};
 
   // Dégradé de secours du socle par défaut (voir commentaire plus bas) —
@@ -174,14 +166,6 @@ export default async function StorefrontPage({ params }: Props) {
     xl: { padX: "48px", padY: "20px", text: "18px" },
   };
   const btnTaille = TAILLE_MAP[boutonsCfg.taille || "md"];
-  const HOVER_CLASS: Record<string, string> = {
-    lighten: "hover:brightness-110",
-    darken: "hover:brightness-90",
-    scale: "hover:scale-105 active:scale-95",
-    glow: "axs-btn-glow",
-    slide: "hover:translate-x-0.5",
-  };
-  const btnHoverClass = `transition-all ${HOVER_CLASS[boutonsCfg.hover || "scale"] ?? HOVER_CLASS.scale}`;
   // Bouton principal (accent plein, sauf style outlined/ghost) — utilisé pour tous les CTA de la page.
   const btnPrimaryStyle: React.CSSProperties = {
     backgroundColor: btnRempli ? c.accent : "transparent",
@@ -193,7 +177,6 @@ export default async function StorefrontPage({ params }: Props) {
     textDecoration: btnStyle === "ghost" ? "underline" : "none",
     ["--ax-accent-glow" as any]: `${c.accent}80`,
   };
-  const btnPrimaryClass = `inline-flex items-center justify-center gap-2 font-semibold ${btnHoverClass}`;
 
   // ─── HERO ────────────────────────────────────────────────────────────────
   const heroInner = sec.hero.actif ? (() => {
@@ -458,11 +441,11 @@ export default async function StorefrontPage({ params }: Props) {
                       <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug">{p.nom}</h3>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
-                          {formatMontant(prixAffiche, tenant.devise)}
+                          <Prix montant={prixAffiche} devise={tenant.devise} />
                         </span>
                         {remise > 0 && (
                           <span className="text-xs opacity-40 line-through">
-                            {formatMontant(prixCompareAffiche!, tenant.devise)}
+                            <Prix montant={prixCompareAffiche!} devise={tenant.devise} />
                           </span>
                         )}
                       </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { StyleCss } from "./StyleCss";
 import { Search, X, Package, ArrowRight } from "lucide-react";
-import { formatMontant } from "@/lib/utils";
+import { usePrix } from "@/components/storefront/DeviseVitrine";
 
 // Recherche des designs AXSO importés : leur en-tête n'a qu'un lien texte
 // « Recherche(r) » sans action. Monté une fois par le layout de la vitrine
@@ -19,6 +19,7 @@ const LOUPE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 interface Resultat { id: string; nom: string; prix: number; image: string | null }
 
 export function RechercheDesign({ slug }: { slug: string }) {
+  const { fmt } = usePrix();
   const [ouverte, setOuverte] = useState(false);
   const [q, setQ] = useState("");
   const [resultats, setResultats] = useState<Resultat[]>([]);
@@ -94,7 +95,7 @@ export function RechercheDesign({ slug }: { slug: string }) {
                   </span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-[14.5px] font-medium truncate">{p.nom}</span>
-                    <span className="block text-[13px] font-semibold text-[#666666]">{formatMontant(p.prix, devise)}</span>
+                    <span className="block text-[13px] font-semibold text-[#666666]">{fmt(p.prix, devise)}</span>
                   </span>
                 </Link>
               ))}
