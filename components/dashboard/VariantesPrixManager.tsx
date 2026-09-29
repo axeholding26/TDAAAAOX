@@ -5,6 +5,7 @@ import {
   Calendar, RefreshCw, Tag, Infinity, AlertCircle, X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 type Variante = {
   id: string; nom: string; slug: string; prix: number; prixPromo: number | null;
@@ -53,6 +54,7 @@ export function VariantesPrixManager({
 }: {
   produitId: string; boutiqueSlug?: string; produitSlug?: string; devise?: string;
 }) {
+  const t = useT();
   const [variantes, setVariantes] = useState<Variante[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormVariante>(FORM_VIDE);
@@ -79,7 +81,7 @@ export function VariantesPrixManager({
     const url = `${window.location.origin}${lienCheckout(v)}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(v.id);
-      toast.success("Lien copié !");
+      toast.success(t("Lien copié !"));
       setTimeout(() => setCopied(null), 2000);
     });
   }
@@ -106,7 +108,7 @@ export function VariantesPrixManager({
   }
 
   async function sauvegarder() {
-    if (!form.nom || !form.prix) { toast.error("Nom et prix requis"); return; }
+    if (!form.nom || !form.prix) { toast.error(t("Nom et prix requis")); return; }
     setSaving(true);
     try {
       const body = {
@@ -126,31 +128,31 @@ export function VariantesPrixManager({
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error((await res.json()).error);
-        toast.success("Variante modifiée");
+        toast.success(t("Variante modifiée"));
       } else {
         const res = await fetch("/api/variantesPrix", {
           method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error((await res.json()).error);
-        toast.success("Variante créée !");
+        toast.success(t("Variante créée !"));
       }
       annulerForm();
       charger();
     } catch (err: any) {
-      toast.error(err.message || "Erreur serveur");
+      toast.error(t(err.message) || t("Erreur serveur"));
     } finally {
       setSaving(false);
     }
   }
 
   async function supprimer(id: string) {
-    if (!confirm("Supprimer cette variante de prix ?")) return;
+    if (!confirm(t("Supprimer cette variante de prix ?"))) return;
     setDeleting(id);
     try {
       await fetch(`/api/variantesPrix/${id}`, { method: "DELETE" });
-      toast.success("Variante supprimée");
+      toast.success(t("Variante supprimée"));
       setVariantes((vs) => vs.filter((v) => v.id !== id));
-    } catch { toast.error("Erreur"); }
+    } catch { toast.error(t("Erreur")); }
     finally { setDeleting(null); }
   }
 
@@ -165,7 +167,7 @@ export function VariantesPrixManager({
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
-        <Loader2 size={14} className="animate-spin" /> Chargement…
+        <Loader2 size={14} className="animate-spin" />{" "}{t("Chargement…")}
       </div>
     );
   }
@@ -175,9 +177,9 @@ export function VariantesPrixManager({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">Variantes de prix</h3>
+          <h3 className="text-sm font-semibold text-gray-800">{t("Variantes de prix")}</h3>
           <p className="text-xs text-gray-400 mt-0.5">
-            Créez plusieurs offres (Standard, Pro, Lifetime…) avec des liens de paiement uniques.
+            {t("Créez plusieurs offres (Standard, Pro, Lifetime…) avec des liens de paiement uniques.")}
           </p>
         </div>
         {!showForm && (
@@ -185,7 +187,7 @@ export function VariantesPrixManager({
             onClick={() => { setEditId(null); setForm(FORM_VIDE); setShowForm(true); }}
             className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-[#F5A623] text-[#111111] rounded-lg hover:bg-[#F5A623]/90 transition-all"
           >
-            <Plus size={12} /> Ajouter
+            <Plus size={12} />{" "}{t("Ajouter")}
           </button>
         )}
       </div>
@@ -195,7 +197,7 @@ export function VariantesPrixManager({
         <div className="border border-[#F5A623]/30 rounded-2xl p-4 bg-[#F5A623]/5 space-y-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-semibold text-[#111111]">
-              {editId ? "Modifier la variante" : "Nouvelle variante"}
+              {editId ? t("Modifier la variante") : t("Nouvelle variante")}
             </span>
             <button onClick={annulerForm} className="text-gray-400 hover:text-gray-600">
               <X size={15} />
@@ -204,22 +206,22 @@ export function VariantesPrixManager({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="text-xs text-gray-500 mb-1 block">Nom de l'offre *</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Nom de l'offre *")}</label>
               <input
                 value={form.nom}
                 onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
-                placeholder="Ex : Accès Lifetime, Abonnement Pro…"
+                placeholder={t("Ex : Accès Lifetime, Abonnement Pro…")}
                 className={inputCls()}
               />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Prix ({devise}) *</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Prix (")}{t(devise)}) *</label>
               <input type="number" min="0" value={form.prix}
                 onChange={(e) => setForm((f) => ({ ...f, prix: e.target.value }))}
                 placeholder="5000" className={inputCls()} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Prix barré ({devise})</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Prix barré (")}{t(devise)})</label>
               <input type="number" min="0" value={form.prixPromo}
                 onChange={(e) => setForm((f) => ({ ...f, prixPromo: e.target.value }))}
                 placeholder="8000" className={inputCls()} />
@@ -227,22 +229,22 @@ export function VariantesPrixManager({
           </div>
 
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Période de validité de l'accès</label>
+            <label className="text-xs text-gray-500 mb-1 block">{t("Période de validité de l'accès")}</label>
             <select value={form.periodeValidite} onChange={(e) => setForm((f) => ({ ...f, periodeValidite: e.target.value }))}
               className={inputCls("bg-white")}>
-              {PERIODES.map((p) => <option key={p.val} value={p.val}>{p.label}</option>)}
+              {PERIODES.map((p) => <option key={p.val} value={p.val}>{t(p.label)}</option>)}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Disponible à partir du</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Disponible à partir du")}</label>
               <input type="date" value={form.dateDebut}
                 onChange={(e) => setForm((f) => ({ ...f, dateDebut: e.target.value }))}
                 className={inputCls()} />
             </div>
             <div>
-              <label className="text-xs text-gray-500 mb-1 block">Expire le</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Expire le")}</label>
               <input type="date" value={form.dateFin}
                 onChange={(e) => setForm((f) => ({ ...f, dateFin: e.target.value }))}
                 className={inputCls()} />
@@ -252,15 +254,15 @@ export function VariantesPrixManager({
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-700">Renouvellement auto</p>
-                <p className="text-xs text-gray-400">Recrée la fenêtre temporelle à l'expiration</p>
+                <p className="text-sm text-gray-700">{t("Renouvellement auto")}</p>
+                <p className="text-xs text-gray-400">{t("Recrée la fenêtre temporelle à l'expiration")}</p>
               </div>
               <Toggle val={form.renouvAuto} onChange={(v) => setForm((f) => ({ ...f, renouvAuto: v }))} />
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-700">Codes promo acceptés</p>
-                <p className="text-xs text-gray-400">Les codes de réduction s'appliquent à cette offre</p>
+                <p className="text-sm text-gray-700">{t("Codes promo acceptés")}</p>
+                <p className="text-xs text-gray-400">{t("Les codes de réduction s'appliquent à cette offre")}</p>
               </div>
               <Toggle val={form.autorisePromo} onChange={(v) => setForm((f) => ({ ...f, autorisePromo: v }))} />
             </div>
@@ -272,7 +274,7 @@ export function VariantesPrixManager({
             className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-[#111111] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/90 transition-all disabled:opacity-60"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            {editId ? "Enregistrer les modifications" : "Créer l'offre"}
+            {editId ? t("Enregistrer les modifications") : t("Créer l'offre")}
           </button>
         </div>
       )}
@@ -281,7 +283,7 @@ export function VariantesPrixManager({
       {variantes.length === 0 && !showForm && (
         <div className="flex items-center gap-2 text-xs text-gray-400 py-3">
           <AlertCircle size={13} />
-          Aucune variante. Ajoutez-en une pour créer des offres personnalisées avec des liens de paiement uniques.
+          {t("Aucune variante. Ajoutez-en une pour créer des offres personnalisées avec des liens de paiement uniques.")}
         </div>
       )}
 
@@ -292,38 +294,38 @@ export function VariantesPrixManager({
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-gray-800 text-sm">{v.nom}</span>
+                  <span className="font-semibold text-gray-800 text-sm">{t(v.nom)}</span>
                   {v.actif
-                    ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-600">Actif</span>
-                    : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">Inactif</span>
+                    ? <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-600">{t("Actif")}</span>
+                    : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("Inactif")}</span>
                   }
                   {v.renouvAuto && (
                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#F5A623]/12 text-[#111111] flex items-center gap-0.5">
-                      <RefreshCw size={8} /> Auto
+                      <RefreshCw size={8} />{" "}{t("Auto")}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-3 mt-1 flex-wrap">
-                  <span className="text-[#D4911A] font-bold text-sm">{v.prix.toLocaleString("fr-FR")} {devise}</span>
+                  <span className="text-[#D4911A] font-bold text-sm">{v.prix.toLocaleString(t.loc)} {t(devise)}</span>
                   {v.prixPromo && (
-                    <span className="text-gray-400 text-xs line-through">{v.prixPromo.toLocaleString("fr-FR")} {devise}</span>
+                    <span className="text-gray-400 text-xs line-through">{v.prixPromo.toLocaleString(t.loc)} {t(devise)}</span>
                   )}
                   <span className="text-xs text-gray-400 flex items-center gap-0.5">
-                    {v.periodeValidite ? <><Calendar size={10} /> {PERIODES.find((p) => p.val === v.periodeValidite)?.label}</> : <><Infinity size={10} /> Illimité</>}
+                    {v.periodeValidite ? <><Calendar size={10} /> {t(PERIODES.find((p) => p.val === v.periodeValidite)?.label)}</> : <><Infinity size={10} />{" "}{t("Illimité")}</>}
                   </span>
                   {!v.autorisePromo && (
                     <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
-                      <Tag size={9} /> Sans promo
+                      <Tag size={9} />{" "}{t("Sans promo")}
                     </span>
                   )}
                 </div>
 
                 {(v.dateDebut || v.dateFin) && (
                   <p className="text-[10px] text-gray-400 mt-0.5">
-                    {v.dateDebut && `Début : ${new Date(v.dateDebut).toLocaleDateString("fr-FR")}`}
+                    {v.dateDebut && t("Début : {0}", new Date(v.dateDebut).toLocaleDateString(t.loc))}
                     {v.dateDebut && v.dateFin && " · "}
-                    {v.dateFin && `Expire : ${new Date(v.dateFin).toLocaleDateString("fr-FR")}`}
+                    {v.dateFin && t("Expire : {0}", new Date(v.dateFin).toLocaleDateString(t.loc))}
                   </p>
                 )}
               </div>
@@ -333,7 +335,7 @@ export function VariantesPrixManager({
                 {boutiqueSlug && produitSlug && (
                   <button
                     onClick={() => copierLien(v)}
-                    title="Copier le lien de paiement"
+                    title={t("Copier le lien de paiement")}
                     className="w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#D4911A] transition-all"
                   >
                     {copied === v.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -346,7 +348,7 @@ export function VariantesPrixManager({
                     href={lienCheckout(v)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    title="Voir sur la boutique"
+                    title={t("Voir sur la boutique")}
                     className="w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#D4911A] transition-all"
                   >
                     <ExternalLink size={12} />
@@ -356,7 +358,7 @@ export function VariantesPrixManager({
                 {/* Activer/Désactiver */}
                 <button
                   onClick={() => toggleActif(v)}
-                  title={v.actif ? "Désactiver" : "Activer"}
+                  title={v.actif ? t("Désactiver") : t("Activer")}
                   className="w-7 h-7 rounded-lg flex items-center justify-center border border-gray-200 hover:border-[#F5A623]/40 text-gray-400 hover:text-[#D4911A] transition-all"
                 >
                   <div className={`w-2 h-2 rounded-full ${v.actif ? "bg-green-500" : "bg-gray-300"}`} />

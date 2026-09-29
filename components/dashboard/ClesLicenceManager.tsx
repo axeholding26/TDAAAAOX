@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Key, Upload, Trash2, RefreshCw, Copy, CheckCircle, XCircle, Clock } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface CleLicence {
   id: string;
@@ -43,6 +44,7 @@ const STATUT_LABELS: Record<string, string> = {
 };
 
 export default function ClesLicenceManager({ produitId }: { produitId: string }) {
+  const t = useT();
   const [cles, setCles] = useState<CleLicence[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [config, setConfig] = useState<Config | null>(null);
@@ -78,7 +80,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
     const d = await r.json();
     setSaving(false);
     if (r.ok) { setMode("list"); charger(); }
-    else alert(d.error ?? "Erreur lors de la génération");
+    else alert(t(d.error) ?? t("Erreur lors de la génération"));
   };
 
   const importer = async () => {
@@ -93,11 +95,11 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
     const d = await r.json();
     setSaving(false);
     if (r.ok) { setImportTexte(""); setMode("list"); charger(); }
-    else alert(d.error ?? "Erreur lors de l'import");
+    else alert(t(d.error) ?? t("Erreur lors de l'import"));
   };
 
   const revoquer = async (cleId: string) => {
-    if (!confirm("Révoquer cette clé ? Elle ne pourra plus être utilisée.")) return;
+    if (!confirm(t("Révoquer cette clé ? Elle ne pourra plus être utilisée."))) return;
     await fetch(`/api/licences/${produitId}/cles/${cleId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -107,7 +109,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
   };
 
   const supprimer = async (cleId: string) => {
-    if (!confirm("Supprimer définitivement cette clé disponible ?")) return;
+    if (!confirm(t("Supprimer définitivement cette clé disponible ?"))) return;
     await fetch(`/api/licences/${produitId}/cles/${cleId}`, { method: "DELETE" });
     charger();
   };
@@ -126,10 +128,10 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
       <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-2">
           <Key size={16} className="text-[#16a34a]" />
-          <span className="font-semibold text-sm text-gray-900 dark:text-white">Clés de licence</span>
+          <span className="font-semibold text-sm text-gray-900 dark:text-white">{t("Clés de licence")}</span>
           {stats && (
             <span className="text-xs text-gray-400 ml-1">
-              {stats.disponible}/{stats.total} disponibles
+              {t(stats.disponible)}/{stats.total} disponibles
             </span>
           )}
         </div>
@@ -138,13 +140,13 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
             onClick={() => setMode(mode === "generer" ? "list" : "generer")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#16a34a] text-white hover:bg-[#15803d] transition-colors"
           >
-            <RefreshCw size={12} /> Générer
+            <RefreshCw size={12} />{" "}{t("Générer")}
           </button>
           <button
             onClick={() => setMode(mode === "importer" ? "list" : "importer")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
-            <Upload size={12} /> Importer
+            <Upload size={12} />{" "}{t("Importer")}
           </button>
         </div>
       </div>
@@ -159,8 +161,8 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
               className={`flex items-center gap-1 transition-opacity ${filterStatut !== "tous" && filterStatut !== k ? "opacity-40" : ""}`}
             >
               <span className="w-2 h-2 rounded-full" style={{ background: STATUT_COLORS[k] ?? "#6b7280" }} />
-              <span className="font-semibold" style={{ color: STATUT_COLORS[k] ?? "#6b7280" }}>{v}</span>
-              <span className="text-gray-500">{STATUT_LABELS[k] ?? k}</span>
+              <span className="font-semibold" style={{ color: STATUT_COLORS[k] ?? "#6b7280" }}>{t(v)}</span>
+              <span className="text-gray-500">{t(STATUT_LABELS[k]) ?? k}</span>
             </button>
           ))}
         </div>
@@ -170,11 +172,11 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
       {mode === "generer" && (
         <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-green-50 dark:bg-green-900/10">
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Format : <strong>{config?.formatAuto === "uuid" ? "UUID" : `Alphanumérique ${config?.longueur ?? 16} chars`}</strong>
-            {config?.prefixe && <> — Préfixe : <strong>{config.prefixe}</strong></>}
+            {t("Format :")}{" "}<strong>{config?.formatAuto === "uuid" ? "UUID" : t("Alphanumérique {0} chars", config?.longueur ?? 16)}</strong>
+            {config?.prefixe && <>{" "}{t("— Préfixe :")}{" "}<strong>{t(config.prefixe)}</strong></>}
           </p>
           <div className="flex items-center gap-3">
-            <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Quantité :</label>
+            <label className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">{t("Quantité :")}</label>
             <input
               type="number" min={1} max={500} value={genQuantite}
               onChange={(e) => setGenQuantite(parseInt(e.target.value) || 1)}
@@ -184,9 +186,9 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
               onClick={generer} disabled={saving}
               className="px-4 py-1.5 rounded-lg bg-[#16a34a] text-white text-xs font-medium hover:bg-[#15803d] disabled:opacity-50 transition-colors"
             >
-              {saving ? "Génération…" : `Générer ${genQuantite} clé${genQuantite > 1 ? "s" : ""}`}
+              {saving ? t("Génération…") : t("Générer {0} clé{1}", genQuantite, genQuantite > 1 ? "s" : "")}
             </button>
-            <button onClick={() => setMode("list")} className="text-xs text-gray-400 hover:text-gray-600">Annuler</button>
+            <button onClick={() => setMode("list")} className="text-xs text-gray-400 hover:text-gray-600">{t("Annuler")}</button>
           </div>
         </div>
       )}
@@ -195,47 +197,47 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
       {mode === "importer" && (
         <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-[#F5A623]/8">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            Collez vos clés ci-dessous — une par ligne, ou séparées par virgule/point-virgule.
+            {t("Collez vos clés ci-dessous — une par ligne, ou séparées par virgule/point-virgule.")}
           </p>
           <textarea
             value={importTexte}
             onChange={(e) => setImportTexte(e.target.value)}
             rows={4}
-            placeholder={"XXXX-XXXX-XXXX\nYYYY-YYYY-YYYY\n…"}
+            placeholder={t("XXXX-XXXX-XXXX\nYYYY-YYYY-YYYY\n…")}
             className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-mono text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-[#F5A623]"
           />
           <div className="flex items-center gap-3 mt-2">
             <span className="text-xs text-gray-400">
-              {importTexte.split(/[\n,;]+/).filter((l) => l.trim()).length} clés détectées
+              {importTexte.split(/[\n,;]+/).filter((l) => l.trim()).length}{" "}{t("clés détectées")}
             </span>
             <button
               onClick={importer} disabled={saving || !importTexte.trim()}
               className="px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors ml-auto"
             >
-              {saving ? "Import…" : "Importer"}
+              {saving ? t("Import…") : t("Importer")}
             </button>
-            <button onClick={() => setMode("list")} className="text-xs text-gray-400 hover:text-gray-600">Annuler</button>
+            <button onClick={() => setMode("list")} className="text-xs text-gray-400 hover:text-gray-600">{t("Annuler")}</button>
           </div>
         </div>
       )}
 
       {/* Liste */}
       {loading ? (
-        <div className="py-10 text-center text-sm text-gray-400">Chargement…</div>
+        <div className="py-10 text-center text-sm text-gray-400">{t("Chargement…")}</div>
       ) : clesFiltered.length === 0 ? (
         <div className="py-10 text-center">
           <Key size={28} className="mx-auto text-gray-200 dark:text-gray-700 mb-2" />
-          <p className="text-sm text-gray-400">Aucune clé{filterStatut !== "tous" ? ` ${STATUT_LABELS[filterStatut]?.toLowerCase()}` : ""}. Générez ou importez des clés.</p>
+          <p className="text-sm text-gray-400">{t("Aucune clé")}{filterStatut !== "tous" ? ` ${STATUT_LABELS[filterStatut]?.toLowerCase()}` : ""}{t(". Générez ou importez des clés.")}</p>
         </div>
       ) : (
         <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {clesFiltered.map((c) => (
             <div key={c.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
               <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: STATUT_COLORS[c.statut] }} />
-              <code className="flex-1 text-xs font-mono text-gray-800 dark:text-gray-200 truncate">{c.cle}</code>
+              <code className="flex-1 text-xs font-mono text-gray-800 dark:text-gray-200 truncate">{t(c.cle)}</code>
               {c._count.activations > 0 && (
                 <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                  <CheckCircle size={10} className="text-[#F5A623]" /> {c._count.activations}
+                  <CheckCircle size={10} className="text-[#F5A623]" /> {t(c._count.activations)}
                 </span>
               )}
               {c.expireAt && (
@@ -246,7 +248,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
               <div className="flex items-center gap-1 flex-shrink-0">
                 <button
                   onClick={() => copier(c.cle, c.id)}
-                  title="Copier"
+                  title={t("Copier")}
                   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                 >
                   {copied === c.id ? <CheckCircle size={13} className="text-green-500" /> : <Copy size={13} />}
@@ -254,7 +256,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
                 {c.statut === "disponible" && (
                   <button
                     onClick={() => supprimer(c.id)}
-                    title="Supprimer"
+                    title={t("Supprimer")}
                     className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <Trash2 size={13} />
@@ -263,7 +265,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
                 {(c.statut === "disponible" || c.statut === "vendue") && (
                   <button
                     onClick={() => revoquer(c.id)}
-                    title="Révoquer"
+                    title={t("Révoquer")}
                     className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
                   >
                     <XCircle size={13} />
@@ -278,7 +280,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
       {cles.length > 0 && clesFiltered.length < cles.length && (
         <div className="px-4 py-2 text-center border-t border-gray-100 dark:border-gray-700">
           <button onClick={() => setFilterStatut("tous")} className="text-xs text-[#D4911A] hover:underline">
-            Afficher toutes les clés ({cles.length})
+            {t("Afficher toutes les clés (")}{cles.length})
           </button>
         </div>
       )}

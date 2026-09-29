@@ -9,6 +9,8 @@ import { initiales } from "@/lib/utils";
 import type { Session } from "next-auth";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
 import { RechercheDashboard } from "@/components/dashboard/RechercheDashboard";
+import { LangueSelecteur } from "@/components/ui/LangueSelecteur";
+import { useT } from "@/components/I18nProvider";
 
 interface HeaderProps {
   session:     Session;
@@ -43,6 +45,7 @@ function tempsEcoule(iso: string) {
 }
 
 export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: HeaderProps) {
+  const t = useT();
   const [profileOpen,   setProfileOpen]   = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [notifications, setNotifications] = useState<NotifMarchand[]>([]);
@@ -146,6 +149,8 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
           {/* ── Actions droite ─────────────────────────────────────────── */}
           <div style={{ display:"flex", alignItems:"center", gap:"6px", marginLeft:"auto" }}>
 
+            <LangueSelecteur />
+
             {/* Boutique */}
             {urlLocale && (
               <a
@@ -164,7 +169,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                 }}
               >
                 <Store size={12} />
-                {boutiqueNom ? boutiqueNom.slice(0, 14) : "Ma boutique"}
+                {boutiqueNom ? boutiqueNom.slice(0, 14) : t("Ma boutique")}
                 <ExternalLink size={10} />
               </a>
             )}
@@ -183,7 +188,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                   transition: "background .2s, box-shadow .3s",
                   animation: "hdrPulse 3s ease-in-out infinite",
                 }}
-                aria-label="Notifications"
+                aria-label={t("Notifications")}
               >
                 <Bell size={15} style={{ color: "#555" }} />
                 {nonLues > 0 && (
@@ -195,7 +200,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                     display: "flex", alignItems: "center", justifyContent: "center",
                     border: "2px solid #fff",
                     animation: "hdrBadge 2.5s ease-in-out infinite",
-                  }}>{nonLues > 9 ? "9+" : nonLues}</span>
+                  }}>{nonLues > 9 ? "9+" : t(nonLues)}</span>
                 )}
               </button>
 
@@ -210,15 +215,15 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                   overflow: "hidden", zIndex: 100,
                 }}>
                   <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f2f2f2", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontSize:"13px", fontWeight:700, color:"#111" }}>Notifications</span>
+                    <span style={{ fontSize:"13px", fontWeight:700, color:"#111" }}>{t("Notifications")}</span>
                     {nonLues > 0 && (
-                      <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>{nonLues} nouvelle{nonLues > 1 ? "s" : ""}</span>
+                      <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>{t(nonLues)} nouvelle{nonLues > 1 ? "s" : ""}</span>
                     )}
                   </div>
                   {notifications.length === 0 && (
                     <div style={{ padding: "28px 18px", textAlign: "center" }}>
                       <Bell size={20} style={{ color: "#ddd", margin: "0 auto 8px" }} />
-                      <p style={{ fontSize: "12px", color: "#aaa" }}>Aucune notification pour l'instant</p>
+                      <p style={{ fontSize: "12px", color: "#aaa" }}>{t("Aucune notification pour l'instant")}</p>
                     </div>
                   )}
                   {notifications.map((n, i) => {
@@ -233,20 +238,20 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                       }}>
                         <Icon size={16} style={{ color, flexShrink:0, marginTop:"2px" }} />
                         <div>
-                          <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4", fontWeight: n.lu ? 400 : 600 }}>{n.titre}</p>
-                          <p style={{ fontSize:"12px", color:"#999", margin:"2px 0 0", lineHeight:"1.4" }}>{n.message}</p>
+                          <p style={{ fontSize:"13px", color:"#333", margin:0, lineHeight:"1.4", fontWeight: n.lu ? 400 : 600 }}>{t(n.titre)}</p>
+                          <p style={{ fontSize:"12px", color:"#999", margin:"2px 0 0", lineHeight:"1.4" }}>{t(n.message)}</p>
                           <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0" }}>{tempsEcoule(n.createdAt)}{n.autreBoutique ? ` · ${n.nomBoutique}` : ""}</p>
                         </div>
                       </div>
                     );
                     // Notification d'une autre boutique : on bascule dessus avant d'ouvrir le lien.
-                    if (n.autreBoutique) return <div key={n.id} style={{ cursor:"pointer" }} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{content}</div>;
-                    return n.lien ? <Link key={n.id} href={n.lien} onClick={() => setNotifOpen(false)}>{content}</Link> : content;
+                    if (n.autreBoutique) return <div key={n.id} style={{ cursor:"pointer" }} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{t(content)}</div>;
+                    return n.lien ? <Link key={n.id} href={n.lien} onClick={() => setNotifOpen(false)}>{t(content)}</Link> : content;
                   })}
                   {notifications.length > 0 && (
                     <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2" }}>
                       <button onClick={marquerToutLu} style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#F5A623", cursor:"pointer", fontFamily:"inherit" }}>
-                        Tout marquer comme lu
+                        {t("Tout marquer comme lu")}
                       </button>
                     </div>
                   )}
@@ -280,7 +285,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                   {initiales(nom)}
                 </div>
                 <span className="hidden sm:block" style={{ fontSize:"12.5px", fontWeight:600, color:"#333", maxWidth:"80px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                  {nom.split(" ")[0]}
+                  {t(nom.split(" ")[0])}
                 </span>
                 <ChevronDown size={12} style={{ color:"#aaa", transform: profileOpen ? "rotate(180deg)" : "none", transition:"transform .25s cubic-bezier(.34,1.56,.64,1)" }} />
               </button>
@@ -298,7 +303,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                 }}>
                   {/* Header profil */}
                   <div style={{ padding:"10px 13px 12px", borderBottom:"1px solid #f2f2f2", marginBottom:"6px" }}>
-                    <p style={{ fontSize:"13px", fontWeight:700, color:"#111", margin:0 }}>{nom}</p>
+                    <p style={{ fontSize:"13px", fontWeight:700, color:"#111", margin:0 }}>{t(nom)}</p>
                     <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{email}</p>
                   </div>
 
@@ -314,7 +319,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                       className="hdr-item"
                       style={{ display:"flex", alignItems:"center", gap:"10px", padding:"9px 13px", borderRadius:"13px", fontSize:"13px", color:"#555", textDecoration:"none", transition:"background .15s, color .15s" }}
                     >
-                      <Icon size={14} style={{ flexShrink:0 }} /> {label}
+                      <Icon size={14} style={{ flexShrink:0 }} /> {t(label)}
                     </Link>
                   ))}
 
@@ -324,7 +329,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                       className="hdr-item-red"
                       style={{ display:"flex", alignItems:"center", gap:"10px", padding:"9px 13px", borderRadius:"13px", fontSize:"13px", color:"#ef4444", background:"none", border:"none", cursor:"pointer", width:"100%", fontFamily:"inherit", transition:"background .15s" }}
                     >
-                      <LogOut size={14} style={{ flexShrink:0 }} /> Déconnexion
+                      <LogOut size={14} style={{ flexShrink:0 }} />{" "}{t("Déconnexion")}
                     </button>
                   </div>
                 </div>

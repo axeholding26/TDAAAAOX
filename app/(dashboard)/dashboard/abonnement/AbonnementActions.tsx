@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface AbonnementActionsProps {
   planId: string;
@@ -22,6 +23,7 @@ export default function AbonnementActions({
   planActuel,
   couleur,
 }: AbonnementActionsProps) {
+  const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -40,7 +42,7 @@ export default function AbonnementActions({
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
-        toast.success("Plan Essentiel activé");
+        toast.success(t("Plan Essentiel activé"));
         router.refresh();
       } else {
         const res = await fetch("/api/abonnement/paiement", {
@@ -53,7 +55,7 @@ export default function AbonnementActions({
         window.location.href = data.authorizationUrl;
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Erreur lors du changement de plan");
+      toast.error(t(err.message) ?? t("Erreur lors du changement de plan"));
     } finally {
       setLoading(false);
     }
@@ -65,7 +67,7 @@ export default function AbonnementActions({
         disabled
         className="w-full py-2.5 rounded-xl text-sm font-semibold text-gray-400 bg-gray-100 border border-gray-200 cursor-default"
       >
-        Plan actuel
+        {t("Plan actuel")}
       </button>
     );
   }
@@ -91,10 +93,10 @@ export default function AbonnementActions({
     >
       {loading && <Loader2 size={14} className="animate-spin" />}
       {loading
-        ? "Changement..."
+        ? t("Changement...")
         : estSuperieur
-        ? "Choisir ce plan"
-        : "Rétrograder"}
+        ? t("Choisir ce plan")
+        : t("Rétrograder")}
     </button>
   );
 }

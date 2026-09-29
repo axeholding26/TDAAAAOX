@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { UserCheck, ChevronDown, Bike, Car, User, Check } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 type Livreur = { id: string; nom: string; vehicule: string; zone: string | null; disponible?: boolean };
 
@@ -18,6 +19,7 @@ const VEHICULE_ICON: Record<string, any> = {
 };
 
 export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom, livreurs, statut }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [livreurId, setLivreurId] = useState(livreurActuelId);
@@ -27,13 +29,13 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
   if (statut && ["livree", "annulee"].includes(statut)) {
     return livreurNom ? (
       <span className="text-green-400 text-xs flex items-center gap-1">
-        <UserCheck size={11} /> {livreurNom}
+        <UserCheck size={11} /> {t(livreurNom)}
       </span>
     ) : <span className="text-gray-600 text-xs">—</span>;
   }
 
   if (livreurs.length === 0) {
-    return <span className="text-gray-600 text-xs">Aucun livreur</span>;
+    return <span className="text-gray-600 text-xs">{t("Aucun livreur")}</span>;
   }
 
   async function assigner(id: string | null, nom?: string) {
@@ -48,9 +50,9 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
       if (!res.ok) throw new Error();
       setLivreurId(id);
       setLivreurNom(nom);
-      toast.success(id ? `Assigné à ${nom}` : "Livreur retiré");
+      toast.success(id ? t("Assigné à {0}", nom) : t("Livreur retiré"));
     } catch {
-      toast.error("Erreur lors de l'assignation");
+      toast.error(t("Erreur lors de l'assignation"));
     } finally {
       setLoading(false);
     }
@@ -66,10 +68,10 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
         {livreurId ? (
           <>
             <UserCheck size={11} className="text-green-400 flex-shrink-0" />
-            <span className="truncate">{livreurNom}</span>
+            <span className="truncate">{t(livreurNom)}</span>
           </>
         ) : (
-          <span className="text-gray-500">Assigner...</span>
+          <span className="text-gray-500">{t("Assigner...")}</span>
         )}
         <ChevronDown size={10} className="flex-shrink-0 ml-auto" />
       </button>
@@ -81,7 +83,7 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
               onClick={() => assigner(null)}
               className="w-full px-3 py-2 text-xs text-red-500 hover:bg-red-50 text-left border-b border-gray-100"
             >
-              Retirer le livreur
+              {t("Retirer le livreur")}
             </button>
           )}
           {livreurs.map((l) => (
@@ -92,13 +94,13 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
             >
               <p className="text-gray-800 text-xs font-medium flex items-center gap-1.5">
                 {(() => { const V = VEHICULE_ICON[l.vehicule] ?? User; return <V size={12} className="flex-shrink-0" />; })()}
-                {l.nom}
+                {t(l.nom)}
                 {l.disponible !== undefined && (
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${l.disponible ? "bg-green-400" : "bg-gray-500"}`} />
                 )}
                 {l.id === livreurId && <Check size={10} className="ml-auto text-[#F5A623]" />}
               </p>
-              {l.zone && <p className="text-gray-500 text-[10px] mt-0.5 ml-5">{l.zone}</p>}
+              {l.zone && <p className="text-gray-500 text-[10px] mt-0.5 ml-5">{t(l.zone)}</p>}
             </button>
           ))}
         </div>

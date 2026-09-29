@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Package, Download, Plus, PackagePlus, Tags, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/I18nProvider";
 
 interface SubNavItem {
   href: string;
@@ -32,6 +33,7 @@ function isActive(item: SubNavItem, pathname: string) {
 }
 
 export function ProduitsSubSidebar() {
+  const t = useT();
   const pathname = usePathname();
 
   return (
@@ -39,7 +41,7 @@ export function ProduitsSubSidebar() {
       className="flex-shrink-0 hidden lg:flex flex-col"
       style={{ width: "196px" }}
     >
-      <p className="text-[10.5px] font-bold tracking-[0.15em] uppercase text-gray-400 px-1 mb-3">Produits</p>
+      <p className="text-[10.5px] font-bold tracking-[0.15em] uppercase text-gray-400 px-1 mb-3">{t("Produits")}</p>
       <nav className="space-y-0.5">
         {SOUS_NAV.map(item => {
           const active = isActive(item, pathname);
@@ -53,7 +55,7 @@ export function ProduitsSubSidebar() {
               )}
             >
               <item.Icon size={15} style={{ color: active ? "#F5A623" : "#9CA3AF" }} />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{t(item.label)}</span>
             </Link>
           );
         })}

@@ -5,6 +5,7 @@ import { Search, Plus, Minus, Trash2, ShoppingCart, X, Check, Printer, Banknote,
 import { toast } from "sonner";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { BarcodeScanner } from "@/components/dashboard/logistique/BarcodeScanner";
+import { useT } from "@/components/I18nProvider";
 
 const POS_TUTORIAL_STEPS = [
   { Icon: Search,       titre: "Trouve un produit",     description: "Recherche par nom, SKU ou catégorie, puis clique sur une carte produit pour l'ajouter au panier." },
@@ -42,6 +43,7 @@ const METHODES = [
 ];
 
 export function POSPanel() {
+  const t = useT();
   const { fmt } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [recherche, setRecherche] = useState("");
@@ -109,7 +111,7 @@ export function POSPanel() {
         handleProduitClick(data.produit);
         setRecherche("");
       } else if (code.length >= 4) {
-        toast.error(data.error || "Aucun produit pour ce code");
+        toast.error(t(data.error) || t("Aucun produit pour ce code"));
       }
     } catch {
       /* pas de réseau — le filtre flou local reste affiché, pas d'erreur bruyante */
@@ -157,7 +159,7 @@ export function POSPanel() {
       setClientTel("");
       setReduction("");
     } catch (e: any) {
-      alert(e.message);
+      alert(t(e.message));
     } finally {
       setLoading(false);
     }
@@ -173,16 +175,16 @@ export function POSPanel() {
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Check size={28} className="text-green-600" />
         </div>
-        <h2 className="text-[20px] font-bold text-[#111] mb-1">Vente enregistrée</h2>
-        <p className="text-[13px] text-[#888] mb-1">Commande <strong>{derniereCommande}</strong></p>
+        <h2 className="text-[20px] font-bold text-[#111] mb-1">{t("Vente enregistrée")}</h2>
+        <p className="text-[13px] text-[#888] mb-1">{t("Commande")}{" "}<strong>{t(derniereCommande)}</strong></p>
         <p className="text-[22px] font-bold text-[#F5A623] my-3">{total.toLocaleString()} XAF</p>
-        <p className="text-[12px] text-[#AAA] mb-6">via {METHODES.find(m => m.id === methode)?.label}</p>
+        <p className="text-[12px] text-[#AAA] mb-6">via {t(METHODES.find(m => m.id === methode)?.label)}</p>
         <div className="flex gap-3">
           <button onClick={() => window.print()} className="flex-1 border border-[#E8E8E8] rounded-xl py-2.5 text-[13px] text-[#666] flex items-center justify-center gap-2">
-            <Printer size={14} /> Reçu
+            <Printer size={14} />{" "}{t("Reçu")}
           </button>
           <button onClick={nouvelleVente} className="flex-1 bg-[#F5A623] text-white rounded-xl py-2.5 text-[13px] font-semibold">
-            Nouvelle vente
+            {t("Nouvelle vente")}
           </button>
         </div>
       </div>
@@ -191,7 +193,7 @@ export function POSPanel() {
 
   return (
     <div className="grid md:grid-cols-[1fr_340px] gap-4 items-start">
-      <ModuleTutorial moduleKey="logistique-pos" titre="Caisse POS" sousTitre="Module Point de vente" steps={POS_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="logistique-pos" titre={t("Caisse POS")} sousTitre={t("Module Point de vente")} steps={POS_TUTORIAL_STEPS} />
       {/* ─── Catalogue ─── */}
       <div className="bg-white border border-[#F0F0F0] rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-[#F0F0F0]">
@@ -201,7 +203,7 @@ export function POSPanel() {
               <input
                 ref={searchRef}
                 className="w-full border border-[#E8E8E8] rounded-xl pl-9 pr-4 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60"
-                placeholder="Rechercher par nom, SKU, catégorie... ou scanner un code-barres"
+                placeholder={t("Rechercher par nom, SKU, catégorie... ou scanner un code-barres")}
                 value={recherche}
                 onChange={e => setRecherche(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); tenterScanDirect(); } }}
@@ -211,9 +213,9 @@ export function POSPanel() {
               onClick={() => setScannerOuvert(true)}
               className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-white font-semibold text-[12.5px] transition-all shrink-0 hover:opacity-90"
               style={{ background: "#F5A623" }}
-              title="Scanner un code-barres"
+              title={t("Scanner un code-barres")}
             >
-              <ScanLine size={14} /> Scanner
+              <ScanLine size={14} />{" "}{t("Scanner")}
             </button>
           </div>
         </div>
@@ -232,17 +234,17 @@ export function POSPanel() {
                 ) : (
                   <div className="w-full h-24 bg-[#F5F5F5] rounded-xl mb-2 flex items-center justify-center"><ShoppingBag size={28} className="text-gray-400" /></div>
                 )}
-                <p className="text-[12px] font-semibold text-[#111] leading-tight line-clamp-2">{p.nom}</p>
+                <p className="text-[12px] font-semibold text-[#111] leading-tight line-clamp-2">{t(p.nom)}</p>
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-[13px] font-bold text-[#F5A623]">{p.prix.toLocaleString()}</p>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${p.stock > 5 ? "bg-green-100 text-green-600" : p.stock > 0 ? "bg-orange-100 text-orange-600" : "bg-red-100 text-red-500"}`}>
-                    {p.variantes.length > 0 ? `${p.variantes.length} var.` : `S:${p.stock}`}
+                    {p.variantes.length > 0 ? `${p.variantes.length} var.` : t("S:{0}", p.stock)}
                   </span>
                 </div>
               </button>
             ))}
             {!produitsFiltres.length && (
-              <div className="col-span-full text-center py-12 text-[13px] text-[#AAA]">Aucun produit trouvé</div>
+              <div className="col-span-full text-center py-12 text-[13px] text-[#AAA]">{t("Aucun produit trouvé")}</div>
             )}
           </div>
         </div>
@@ -253,7 +255,7 @@ export function POSPanel() {
         <div className="px-4 py-4 border-b border-[#F0F0F0]">
           <div className="flex items-center gap-2">
             <ShoppingCart size={16} className="text-[#F5A623]" />
-            <span className="text-[14px] font-bold text-[#111]">Panier ({cart.reduce((s,l)=>s+l.quantite,0)})</span>
+            <span className="text-[14px] font-bold text-[#111]">{t("Panier (")}{cart.reduce((s,l)=>s+l.quantite,0)})</span>
           </div>
         </div>
 
@@ -262,7 +264,7 @@ export function POSPanel() {
           {cart.map((l, idx) => (
             <div key={idx} className="bg-[#FAFAFA] rounded-xl p-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#111] leading-tight truncate">{l.nom}</p>
+                <p className="text-[12px] font-semibold text-[#111] leading-tight truncate">{t(l.nom)}</p>
                 <p className="text-[12px] text-[#F5A623] font-bold mt-0.5">{(l.prix * l.quantite).toLocaleString()} XAF</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
@@ -280,17 +282,17 @@ export function POSPanel() {
             </div>
           ))}
           {!cart.length && (
-            <div className="text-center py-8 text-[13px] text-[#CCC]">Panier vide — clique sur un produit</div>
+            <div className="text-center py-8 text-[13px] text-[#CCC]">{t("Panier vide — clique sur un produit")}</div>
           )}
         </div>
 
         {/* Client + options */}
         <div className="p-4 border-t border-[#F0F0F0] space-y-3">
           <div className="grid grid-cols-2 gap-2">
-            <input className={inp} placeholder="Nom client" value={clientNom} onChange={e => setClientNom(e.target.value)} />
-            <input className={inp} placeholder="Téléphone" value={clientTel} onChange={e => setClientTel(e.target.value)} />
+            <input className={inp} placeholder={t("Nom client")} value={clientNom} onChange={e => setClientNom(e.target.value)} />
+            <input className={inp} placeholder={t("Téléphone")} value={clientTel} onChange={e => setClientTel(e.target.value)} />
           </div>
-          <input className={`${inp} w-full`} placeholder="Réduction (XAF)" type="number" value={reduction} onChange={e => setReduction(e.target.value)} />
+          <input className={`${inp} w-full`} placeholder={t("Réduction (XAF)")} type="number" value={reduction} onChange={e => setReduction(e.target.value)} />
 
           {/* Méthode de paiement */}
           <div className="grid grid-cols-2 gap-1.5">
@@ -300,7 +302,7 @@ export function POSPanel() {
                 onClick={() => setMethode(m.id)}
                 className={`py-2 px-2 rounded-xl border text-[11px] font-medium transition-all flex items-center justify-center gap-1 ${methode === m.id ? "bg-[#F5A623] text-white border-[#F5A623]" : "border-[#E8E8E8] text-[#666]"}`}
               >
-                <m.Icon size={12} /> {m.label}
+                <m.Icon size={12} /> {t(m.label)}
               </button>
             ))}
           </div>
@@ -308,15 +310,15 @@ export function POSPanel() {
           {/* Total */}
           <div className="bg-[#FAFAFA] rounded-xl p-3">
             <div className="flex justify-between text-[12px] text-[#888] mb-1">
-              <span>Sous-total</span><span>{sousTotal.toLocaleString()} XAF</span>
+              <span>{t("Sous-total")}</span><span>{sousTotal.toLocaleString()} XAF</span>
             </div>
             {remise > 0 && (
               <div className="flex justify-between text-[12px] text-red-500 mb-1">
-                <span>Réduction</span><span>−{remise.toLocaleString()} XAF</span>
+                <span>{t("Réduction")}</span><span>−{remise.toLocaleString()} XAF</span>
               </div>
             )}
             <div className="flex justify-between text-[15px] font-bold text-[#111] border-t border-[#E8E8E8] pt-2 mt-1">
-              <span>Total</span><span style={{ color: "#F5A623" }}>{total.toLocaleString()} XAF</span>
+              <span>{t("Total")}</span><span style={{ color: "#F5A623" }}>{total.toLocaleString()} XAF</span>
             </div>
           </div>
 
@@ -326,7 +328,7 @@ export function POSPanel() {
             className="w-full py-3 rounded-xl text-white font-bold text-[14px] disabled:opacity-40 transition-all"
             style={{ background: "#F5A623" }}
           >
-            {loading ? "Enregistrement..." : `Valider la vente — ${fmt(total)}`}
+            {loading ? t("Enregistrement...") : t("Valider la vente — {0}", fmt(total))}
           </button>
         </div>
       </div>
@@ -336,10 +338,10 @@ export function POSPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setVarianteModal(null)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-bold text-[#111]">{varianteModal.nom}</h3>
+              <h3 className="text-[15px] font-bold text-[#111]">{t(varianteModal.nom)}</h3>
               <button onClick={() => setVarianteModal(null)} className="p-1 rounded-lg hover:bg-[#F5F5F5]"><X size={15} className="text-[#888]" /></button>
             </div>
-            <p className="text-[12px] text-[#888] mb-3">Choisir une variante :</p>
+            <p className="text-[12px] text-[#888] mb-3">{t("Choisir une variante :")}</p>
             <div className="space-y-2">
               {varianteModal.variantes.map(v => (
                 <button
@@ -348,10 +350,10 @@ export function POSPanel() {
                   onClick={() => ajouterAuCart(varianteModal, v.id, `${v.nom}: ${v.valeur}`)}
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-[#E8E8E8] hover:border-[#F5A623]/50 hover:bg-[#FFF8EC] transition-all disabled:opacity-40"
                 >
-                  <span className="text-[13px] font-medium text-[#111]">{v.nom}: {v.valeur}</span>
+                  <span className="text-[13px] font-medium text-[#111]">{t(v.nom)}: {t(v.valeur)}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] font-bold text-[#F5A623]">{((v.prix ?? varianteModal.prix)).toLocaleString()} XAF</span>
-                    <span className="text-[10px] text-[#AAA]">S:{v.stock}</span>
+                    <span className="text-[10px] text-[#AAA]">{t("S:")}{v.stock}</span>
                   </div>
                 </button>
               ))}

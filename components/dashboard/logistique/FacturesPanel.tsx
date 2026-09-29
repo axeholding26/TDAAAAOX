@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { FileText, Download, Plus, Search } from "lucide-react";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const FACTURES_TUTORIAL_STEPS = [
   { Icon: Plus,     titre: "Génère une facture",  description: "Saisis l'ID d'une commande et clique sur Générer pour créer automatiquement la facture HT/TVA/TTC." },
@@ -33,6 +34,7 @@ const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 function FacturePDF({ facture }: { facture: Facture }) {
+  const t = useT();
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -53,7 +55,7 @@ function FacturePDF({ facture }: { facture: Facture }) {
 </head>
 <body>
 <div class="header">
-  <div><h1>FACTURE</h1><p>${facture.numero}</p><p class="label">${new Date(facture.emiseAt).toLocaleDateString("fr-FR")}</p></div>
+  <div><h1>FACTURE</h1><p>${facture.numero}</p><p class="label">${new Date(facture.emiseAt).toLocaleDateString(t.loc)}</p></div>
   <div class="total"><span class="badge">${STATUT_CONFIG[facture.statut]?.label ?? facture.statut}</span></div>
 </div>
 <p><strong>Client :</strong> ${facture.clientNom} (${facture.clientEmail})</p>
@@ -74,12 +76,13 @@ function FacturePDF({ facture }: { facture: Facture }) {
 
   return (
     <button onClick={download} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-[#666] border border-[#E5E5E5] hover:bg-[#F5F5F5] transition-colors">
-      <Download size={12} /> Télécharger
+      <Download size={12} />{" "}{t("Télécharger")}
     </button>
   );
 }
 
 export function FacturesPanel() {
+  const t = useT();
   const [factures, setFactures] = useState<Facture[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -126,11 +129,11 @@ export function FacturesPanel() {
 
   return (
     <div className="space-y-5">
-      <ModuleTutorial moduleKey="logistique-factures" titre="Factures" sousTitre="Suivi de facturation" steps={FACTURES_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="logistique-factures" titre={t("Factures")} sousTitre={t("Suivi de facturation")} steps={FACTURES_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end gap-2">
         <input
           className="border border-[#E5E5E5] rounded-lg px-3 py-2 text-[12px] w-48"
-          placeholder="ID commande..."
+          placeholder={t("ID commande...")}
           value={genId}
           onChange={(e) => setGenId(e.target.value)}
         />
@@ -140,22 +143,22 @@ export function FacturesPanel() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold disabled:opacity-50"
           style={{ background: "#F5A623" }}
         >
-          <Plus size={14} /> {generating ? "Génération..." : "Générer"}
+          <Plus size={14} /> {generating ? t("Génération...") : t("Générer")}
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Total factures</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Total factures")}</p>
           <p className="text-2xl font-bold text-[#111]">{factures.length}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Factures payées</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Factures payées")}</p>
           <p className="text-2xl font-bold" style={{ color: "#10b981" }}>{factures.filter((f) => f.statut === "payee").length}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Total facturé</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Total facturé")}</p>
           <p className="text-2xl font-bold" style={{ color: "#F5A623" }}>{totalTTC.toLocaleString()}</p>
         </div>
       </div>
@@ -165,7 +168,7 @@ export function FacturesPanel() {
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#AAA]" />
         <input
           className="w-full border border-[#E5E5E5] rounded-xl pl-9 pr-4 py-2.5 text-[13px]"
-          placeholder="Rechercher par client ou numéro..."
+          placeholder={t("Rechercher par client ou numéro...")}
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
@@ -175,18 +178,18 @@ export function FacturesPanel() {
       {filtered.length === 0 ? (
         <div className="bg-white border border-dashed border-[#E5E5E5] rounded-xl p-10 text-center">
           <FileText size={32} className="mx-auto mb-3 text-[#DDD]" />
-          <p className="text-[13px] text-[#888]">Aucune facture. Génère-en une à partir d'un ID de commande.</p>
+          <p className="text-[13px] text-[#888]">{t("Aucune facture. Génère-en une à partir d'un ID de commande.")}</p>
         </div>
       ) : (
         <div className="bg-white border border-[#F0F0F0] rounded-xl overflow-hidden">
           <table className="w-full text-[12.5px]">
             <thead>
               <tr className="border-b border-[#F0F0F0]">
-                <th className="text-left px-4 py-3 font-semibold text-[#888]">N° Facture</th>
-                <th className="text-left px-4 py-3 font-semibold text-[#888]">Client</th>
-                <th className="text-left px-4 py-3 font-semibold text-[#888]">Montant TTC</th>
-                <th className="text-left px-4 py-3 font-semibold text-[#888]">Statut</th>
-                <th className="text-left px-4 py-3 font-semibold text-[#888]">Date</th>
+                <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("N° Facture")}</th>
+                <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("Client")}</th>
+                <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("Montant TTC")}</th>
+                <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("Statut")}</th>
+                <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("Date")}</th>
                 <th className="text-left px-4 py-3 font-semibold text-[#888]"></th>
               </tr>
             </thead>
@@ -197,12 +200,12 @@ export function FacturesPanel() {
                   <tr key={f.id} className="border-b border-[#F8F8F8] hover:bg-[#FAFAFA]">
                     <td className="px-4 py-3 font-mono text-[#111] font-semibold">{f.numero}</td>
                     <td className="px-4 py-3 text-[#444]">
-                      <p>{f.clientNom}</p>
-                      <p className="text-[10px] text-[#AAA]">{f.clientEmail}</p>
+                      <p>{t(f.clientNom)}</p>
+                      <p className="text-[10px] text-[#AAA]">{t(f.clientEmail)}</p>
                     </td>
-                    <td className="px-4 py-3 font-bold text-[#111]">{f.montantTTC.toLocaleString()} {f.devise}</td>
+                    <td className="px-4 py-3 font-bold text-[#111]">{f.montantTTC.toLocaleString()} {t(f.devise)}</td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{sc.label}</span>
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
                     </td>
                     <td className="px-4 py-3 text-[#888]">{new Date(f.emiseAt).toLocaleDateString("fr")}</td>
                     <td className="px-4 py-3"><FacturePDF facture={f} /></td>

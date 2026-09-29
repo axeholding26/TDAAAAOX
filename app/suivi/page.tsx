@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { MapTracking } from "@/components/storefront/MapTracking";
+import { useT } from "@/components/I18nProvider";
 
 const ETAPES = [
   { statut: "en_attente",     label: "Reçue",       Icon: Clock       },
@@ -28,6 +29,7 @@ function formatMontant(val: number, devise = "FCFA") {
 }
 
 export default function SuiviPage() {
+  const t = useT();
   const [numero, setNumero]           = useState("");
   const [commande, setCommande]       = useState<any>(null);
   const [liveData, setLiveData]       = useState<any>(null); // polling /api/tracking/[token]
@@ -127,10 +129,10 @@ export default function SuiviPage() {
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-white/30 hover:text-white/60 transition-colors text-[13px]">
             <ArrowLeft size={14} />
-            Accueil
+            {t("Accueil")}
           </Link>
           <div className="flex items-center justify-center">
-            <Image src="/logo-dark.png" alt="Axso" width={85} height={30} style={{ objectFit: "contain" }} />
+            <Image src="/logo-dark.png" alt={t("Axso")} width={85} height={30} style={{ objectFit: "contain" }} />
           </div>
           <div className="w-20" />
         </div>
@@ -144,8 +146,8 @@ export default function SuiviPage() {
             style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.18)" }}>
             <Package size={22} style={{ color: "#F5A623" }} />
           </div>
-          <h1 className="text-[26px] font-bold mb-2 tracking-tight">Suivre ma commande</h1>
-          <p className="text-white/30 text-[13px]">Entrez votre numéro pour voir l'état en temps réel</p>
+          <h1 className="text-[26px] font-bold mb-2 tracking-tight">{t("Suivre ma commande")}</h1>
+          <p className="text-white/30 text-[13px]">{t("Entrez votre numéro pour voir l'état en temps réel")}</p>
         </div>
 
         {/* Search form */}
@@ -153,13 +155,13 @@ export default function SuiviPage() {
           className="rounded-2xl p-5 space-y-3"
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
           <label className="text-[10px] font-bold text-white/30 uppercase tracking-widest block">
-            Numéro de commande
+            {t("Numéro de commande")}
           </label>
           <div className="flex gap-2">
             <input
               value={numero}
               onChange={e => setNumero(e.target.value.toUpperCase())}
-              placeholder="AX-20240101-XXXX"
+              placeholder={t("AX-20240101-XXXX")}
               className="flex-1 rounded-xl px-4 py-3 text-white font-mono text-[13px] outline-none transition-all"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
               onFocus={e => (e.target.style.borderColor = "rgba(245,166,35,0.4)")}
@@ -173,10 +175,10 @@ export default function SuiviPage() {
               {recherche
                 ? <div className="w-4 h-4 border-2 border-black/20 border-t-black/70 rounded-full animate-spin" />
                 : <Search size={14} />}
-              {recherche ? "…" : "Suivre"}
+              {recherche ? "…" : t("Suivre")}
             </button>
           </div>
-          <p className="text-white/20 text-[11px]">Le numéro figure sur votre confirmation de commande.</p>
+          <p className="text-white/20 text-[11px]">{t("Le numéro figure sur votre confirmation de commande.")}</p>
         </form>
 
         {/* Error */}
@@ -184,7 +186,7 @@ export default function SuiviPage() {
           <div className="flex items-start gap-3 rounded-2xl p-4"
             style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.18)" }}>
             <AlertCircle size={15} className="text-red-400 shrink-0 mt-0.5" />
-            <p className="text-red-300 text-[13px]">{erreur}</p>
+            <p className="text-red-300 text-[13px]">{t(erreur)}</p>
           </div>
         )}
 
@@ -199,28 +201,28 @@ export default function SuiviPage() {
               {/* Top row */}
               <div className="flex items-start justify-between mb-5">
                 <div>
-                  <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-1">Commande</p>
+                  <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-1">{t("Commande")}</p>
                   <p className="font-mono font-bold text-[20px] text-white">{commande.numero}</p>
                   {commande.tenant?.nomBoutique && (
-                    <p className="text-[11px] text-white/30 mt-0.5">{commande.tenant.nomBoutique}</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">{t(commande.tenant.nomBoutique)}</p>
                   )}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   {annulee ? (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
                       style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)" }}>
-                      <X size={10} /> Annulée
+                      <X size={10} />{" "}{t("Annulée")}
                     </span>
                   ) : livree ? (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
                       style={{ background: "rgba(16,185,129,0.08)", color: "#34d399", border: "1px solid rgba(16,185,129,0.2)" }}>
-                      <Check size={10} /> Livrée
+                      <Check size={10} />{" "}{t("Livrée")}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
                       style={{ background: "rgba(245,166,35,0.09)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.22)" }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
-                      {ETAPES.find(e => e.statut === commande.statut)?.label ?? commande.statut}
+                      {t(ETAPES.find(e => e.statut === commande.statut)?.label) ?? t(commande.statut)}
                     </span>
                   )}
                   {/* Refresh */}
@@ -256,7 +258,7 @@ export default function SuiviPage() {
                               color: fait ? "rgba(245,166,35,0.65)" : courant ? "#F5A623" : "rgba(255,255,255,0.15)",
                               fontWeight: courant ? 700 : 400,
                             }}>
-                            {etape.label}
+                            {t(etape.label)}
                           </p>
                         </div>
                         {i < ETAPES.length - 1 && (
@@ -274,7 +276,7 @@ export default function SuiviPage() {
                 <div className="flex items-center gap-3 rounded-xl p-4 mt-2"
                   style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.13)" }}>
                   <X size={16} className="text-red-400 shrink-0" />
-                  <p className="text-red-300 text-[13px]">Cette commande a été annulée. Contactez la boutique pour plus d'informations.</p>
+                  <p className="text-red-300 text-[13px]">{t("Cette commande a été annulée. Contactez la boutique pour plus d'informations.")}</p>
                 </div>
               )}
             </div>
@@ -294,8 +296,8 @@ export default function SuiviPage() {
                   <div style={{ position:"absolute", bottom:10, left:10, right:10, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", borderRadius:10, padding:"7px 12px", display:"flex", alignItems:"center", gap:8, pointerEvents:"none" }}>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:"#22c55e", animation:"pulse 1.2s ease-in-out infinite", flexShrink:0 }} />
                     <span style={{ fontSize:12, color:"white" }}>
-                      {liveData?.livreurNom ? `${liveData.livreurNom} — ` : "Livreur — "}
-                      mis à jour {livePos?.updatedAt ? new Date(livePos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : "récemment"}
+                      {liveData?.livreurNom ? `${liveData.livreurNom} — ` : t("Livreur — ")}
+                      {t("mis à jour")}{" "}{livePos?.updatedAt ? new Date(livePos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : t("récemment")}
                     </span>
                   </div>
                 )}
@@ -314,8 +316,8 @@ export default function SuiviPage() {
                     <Navigation size={16} style={{ color: "#F5A623" }} />
                   </div>
                   <div>
-                    <p className="text-[13px] font-semibold text-white">Suivi GPS en temps réel</p>
-                    <p className="text-[11px] text-white/35 mt-0.5">La carte s'affichera dès que le livreur partagera sa position</p>
+                    <p className="text-[13px] font-semibold text-white">{t("Suivi GPS en temps réel")}</p>
+                    <p className="text-[11px] text-white/35 mt-0.5">{t("La carte s'affichera dès que le livreur partagera sa position")}</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-white/25 group-hover:text-[#F5A623] transition-colors" />
@@ -325,7 +327,7 @@ export default function SuiviPage() {
             {/* Delivery info */}
             <div className="rounded-2xl p-5 space-y-4"
               style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-              <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest">Livraison</p>
+              <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest">{t("Livraison")}</p>
               <div className="space-y-3">
                 {commande.adresseLivraison && (
                   <div className="flex items-start gap-3">
@@ -334,8 +336,8 @@ export default function SuiviPage() {
                       <MapPin size={11} style={{ color: "#F5A623" }} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-white/25 mb-0.5">Adresse</p>
-                      <p className="text-[13px] text-white">{commande.adresseLivraison}{commande.ville ? `, ${commande.ville}` : ""}</p>
+                      <p className="text-[10px] text-white/25 mb-0.5">{t("Adresse")}</p>
+                      <p className="text-[13px] text-white">{t(commande.adresseLivraison)}{commande.ville ? `, ${commande.ville}` : ""}</p>
                     </div>
                   </div>
                 )}
@@ -346,8 +348,8 @@ export default function SuiviPage() {
                       <Bike size={11} style={{ color: "#F5A623" }} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-[10px] text-white/25 mb-0.5">Livreur</p>
-                      <p className="text-[13px] text-white">{commande.livreur.nom}</p>
+                      <p className="text-[10px] text-white/25 mb-0.5">{t("Livreur")}</p>
+                      <p className="text-[13px] text-white">{t(commande.livreur.nom)}</p>
                       {commande.livreur.telephone && (
                         <a href={`tel:${commande.livreur.telephone}`}
                           className="flex items-center gap-1 text-[11px] mt-0.5 hover:underline"
@@ -365,10 +367,10 @@ export default function SuiviPage() {
                       <Package size={11} style={{ color: "#F5A623" }} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-white/25 mb-0.5">Numéro de suivi transporteur</p>
-                      <p className="text-[13px] text-white font-mono">{commande.numeroSuivi}</p>
+                      <p className="text-[10px] text-white/25 mb-0.5">{t("Numéro de suivi transporteur")}</p>
+                      <p className="text-[13px] text-white font-mono">{t(commande.numeroSuivi)}</p>
                       {commande.transporteur && (
-                        <p className="text-[11px] text-white/30 mt-0.5">{commande.transporteur}</p>
+                        <p className="text-[11px] text-white/30 mt-0.5">{t(commande.transporteur)}</p>
                       )}
                     </div>
                   </div>
@@ -380,7 +382,7 @@ export default function SuiviPage() {
                       <Clock size={11} style={{ color: "#F5A623" }} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-white/25 mb-0.5">Commandé le</p>
+                      <p className="text-[10px] text-white/25 mb-0.5">{t("Commandé le")}</p>
                       <p className="text-[13px] text-white">{formatDate(commande.createdAt)}</p>
                     </div>
                   </div>
@@ -392,7 +394,7 @@ export default function SuiviPage() {
                       <ShoppingBag size={11} style={{ color: "#F5A623" }} />
                     </div>
                     <div>
-                      <p className="text-[10px] text-white/25 mb-0.5">Montant total</p>
+                      <p className="text-[10px] text-white/25 mb-0.5">{t("Montant total")}</p>
                       <p className="text-[13px] font-bold text-white">{formatMontant(commande.montantTotal, commande.devise)}</p>
                     </div>
                   </div>
@@ -404,7 +406,7 @@ export default function SuiviPage() {
             {commande.lignes?.length > 0 && (
               <div className="rounded-2xl p-5"
                 style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-4">Articles ({commande.lignes.length})</p>
+                <p className="text-[10px] font-bold text-white/25 uppercase tracking-widest mb-4">{t("Articles (")}{commande.lignes.length})</p>
                 <div className="space-y-3">
                   {commande.lignes.map((ligne: any, i: number) => (
                     <div key={i} className="flex items-center gap-3">
@@ -417,11 +419,11 @@ export default function SuiviPage() {
                             </div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] text-white truncate">{ligne.nom}</p>
-                        {ligne.variante && <p className="text-[11px] text-white/30">{ligne.variante}</p>}
+                        <p className="text-[13px] text-white truncate">{t(ligne.nom)}</p>
+                        {ligne.variante && <p className="text-[11px] text-white/30">{t(ligne.variante)}</p>}
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[12px] font-semibold text-white/60">×{ligne.quantite}</p>
+                        <p className="text-[12px] font-semibold text-white/60">{t("×")}{ligne.quantite}</p>
                         {ligne.prix != null && (
                           <p className="text-[11px] text-white/30">{formatMontant(ligne.prix * ligne.quantite, commande.devise)}</p>
                         )}
@@ -437,8 +439,8 @@ export default function SuiviPage() {
               <div className="rounded-2xl p-5 flex items-center justify-between"
                 style={{ background: "rgba(37,211,102,0.04)", border: "1px solid rgba(37,211,102,0.13)" }}>
                 <div>
-                  <p className="text-[13px] font-semibold text-white">Besoin d'aide ?</p>
-                  <p className="text-[11px] text-white/30 mt-0.5">Contacter {commande.tenant.nomBoutique}</p>
+                  <p className="text-[13px] font-semibold text-white">{t("Besoin d'aide ?")}</p>
+                  <p className="text-[11px] text-white/30 mt-0.5">{t("Contacter")}{" "}{t(commande.tenant.nomBoutique)}</p>
                 </div>
                 <a href={`https://wa.me/${commande.tenant.whatsapp.replace(/\D/g, "")}?text=Bonjour, j'ai une question sur ma commande ${commande.numero}`}
                   target="_blank" rel="noopener noreferrer"
@@ -451,7 +453,7 @@ export default function SuiviPage() {
 
             {/* Auto-refresh notice */}
             <p className="text-center text-[10px] text-white/15 pb-4">
-              Actualisation automatique toutes les 20 secondes
+              {t("Actualisation automatique toutes les 20 secondes")}
             </p>
           </div>
         )}

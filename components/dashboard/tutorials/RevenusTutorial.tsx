@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { DollarSign, TrendingDown, Wallet, BarChart3 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const REVENUS_TUTORIAL_STEPS = [
   { Icon: DollarSign,  titre: "Chiffre d'affaires",        description: "Suivez votre revenu brut sur 30 jours et 7 jours, calculé sur les commandes complétées." },
@@ -10,5 +11,6 @@ const REVENUS_TUTORIAL_STEPS = [
 ];
 
 export function RevenusTutorial() {
-  return <ModuleTutorial moduleKey="revenus" titre="Revenus" sousTitre="Analyse financière de ta boutique" steps={REVENUS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="revenus" titre={t("Revenus")} sousTitre={t("Analyse financière de ta boutique")} steps={REVENUS_TUTORIAL_STEPS} />;
 }

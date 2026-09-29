@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface LivreurPosition {
   id: string;
@@ -12,6 +13,7 @@ interface LivreurPosition {
 }
 
 export function LiveFleetMapInner({ livreurs }: { livreurs: LivreurPosition[] }) {
+  const t = useT();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -71,7 +73,7 @@ export function LiveFleetMapInner({ livreurs }: { livreurs: LivreurPosition[] })
         });
         const marker = L.marker([l.latitude!, l.longitude!], { icon })
           .addTo(map)
-          .bindPopup(`<b>${l.nom}</b><br/>${l.disponible ? "Disponible" : "Hors service"}${l.positionAt ? `<br/><small>Mis à jour ${new Date(l.positionAt).toLocaleTimeString("fr")}</small>` : ""}`);
+          .bindPopup(`<b>${l.nom}</b><br/>${t(l.disponible ? "Disponible" : "Hors service")}${l.positionAt ? `<br/><small>${t("Mis à jour")} ${new Date(l.positionAt).toLocaleTimeString(t.loc)}</small>` : ""}`);
         markersRef.current.push(marker);
       });
 

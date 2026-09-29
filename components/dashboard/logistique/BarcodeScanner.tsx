@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, ScanLine, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Types partagés avec POSPanel ────────────────────────────────────────
 interface Produit {
@@ -48,6 +49,7 @@ function jouerBip() {
 }
 
 export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
+  const tr = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const zxingControlsRef = useRef<{ stop: () => void } | null>(null);
@@ -137,16 +139,16 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         const res = await fetch(`/api/pos/scan?code=${encodeURIComponent(propre)}`);
         const data = await res.json();
         if (!res.ok) {
-          toast.error(data.error || "Aucun produit pour ce code");
+          toast.error(tr(data.error) || tr("Aucun produit pour ce code"));
           return;
         }
         navigator.vibrate?.(60);
         jouerBip();
-        toast.success(`✓ ${data.produit.nom} ajouté`);
+        toast.success(tr("✓ {0} ajouté", data.produit.nom));
         onProduitScanne(data.produit);
         onClose(); // scan réussi — referme la fenêtre au lieu de rester ouverte en boucle
       } catch {
-        toast.error("Erreur réseau — nouvelle tentative possible");
+        toast.error(tr("Erreur réseau — nouvelle tentative possible"));
       } finally {
         enTraitement.current = false;
       }
@@ -184,7 +186,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
             <ScanLine size={16} style={{ color: "#F5A623" }} />
-            <span className="text-white font-bold text-[14px]">Scanner un code-barres</span>
+            <span className="text-white font-bold text-[14px]">{tr("Scanner un code-barres")}</span>
           </div>
           <button
             onClick={onClose}
@@ -201,14 +203,14 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
           {!pret && !erreur && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
               <Loader2 size={26} className="animate-spin" style={{ color: "#F5A623" }} />
-              <p className="text-white/50 text-[12px]">Ouverture de la caméra…</p>
+              <p className="text-white/50 text-[12px]">{tr("Ouverture de la caméra…")}</p>
             </div>
           )}
 
           {erreur && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
               <Camera size={26} className="text-white/30" />
-              <p className="text-white/60 text-[12px]">{erreur}</p>
+              <p className="text-white/60 text-[12px]">{tr(erreur)}</p>
             </div>
           )}
 
@@ -236,8 +238,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
         </div>
 
         <p className="text-center text-white/40 text-[11.5px] px-6 pt-3 pb-5 leading-relaxed">
-          Placez le code-barres du produit dans le cadre. Le scan est continu —
-          chaque produit reconnu est ajouté automatiquement au panier.
+          {tr("Placez le code-barres du produit dans le cadre. Le scan est continu — chaque produit reconnu est ajouté automatiquement au panier.")}
         </p>
       </div>
 

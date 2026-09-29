@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, ShieldCheck, ArrowLeft, Mail, KeyRound } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const ACCENT = "#F5A623";
 const ACCENT_DARK = "#d4880d";
 
 export default function MotDePasseOubliePage() {
+  const t = useT();
   const router = useRouter();
   const [etape, setEtape] = useState<"email" | "code" | "succes">("email");
   const [email, setEmail] = useState("");
@@ -80,13 +82,13 @@ export default function MotDePasseOubliePage() {
           style={{ background: "#ffffff", borderColor: "rgba(245,166,35,0.2)", boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)" }}
         >
           <Link href="/connexion" className="flex items-center gap-1.5 text-xs mb-4 hover:opacity-80 transition-opacity" style={{ color: "#808080" }}>
-            <ArrowLeft size={13} /> Retour à la connexion
+            <ArrowLeft size={13} />{" "}{t("Retour à la connexion")}
           </Link>
 
           {erreur && (
             <div className="rounded-xl p-3 text-sm text-center mb-5"
               style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-              {erreur}
+              {t(erreur)}
             </div>
           )}
 
@@ -96,15 +98,15 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <Mail size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">Mot de passe oublié</h2>
-              <p className="text-[#808080] text-sm mb-7">On t'envoie un code de vérification par email.</p>
+              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Mot de passe oublié")}</h2>
+              <p className="text-[#808080] text-sm mb-7">{t("On t'envoie un code de vérification par email.")}</p>
               <form onSubmit={demanderCode} className="space-y-4">
                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="aminata@example.com" className={inputCls} />
                 <button type="submit" disabled={loading}
                   className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
-                  {loading ? <><Loader2 size={16} className="animate-spin" /> Envoi...</> : "Envoyer le code →"}
+                  {loading ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Envoi...")}</> : t("Envoyer le code →")}
                 </button>
               </form>
             </>
@@ -116,8 +118,8 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <KeyRound size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">Nouveau mot de passe</h2>
-              <p className="text-[#808080] text-sm mb-7">Code envoyé à <strong>{email}</strong> — valable 10 minutes.</p>
+              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Nouveau mot de passe")}</h2>
+              <p className="text-[#808080] text-sm mb-7">{t("Code envoyé à")}{" "}<strong>{email}</strong>{" "}{t("— valable 10 minutes.")}</p>
               <form onSubmit={reinitialiser} className="space-y-4">
                 <input
                   type="text" inputMode="numeric" maxLength={6} autoFocus
@@ -128,7 +130,7 @@ export default function MotDePasseOubliePage() {
                 <div className="relative">
                   <input type={showPass ? "text" : "password"} required value={nouveauMotDePasse}
                     onChange={e => setNouveauMotDePasse(e.target.value)}
-                    placeholder="Nouveau mot de passe" className={inputCls + " pr-10"} />
+                    placeholder={t("Nouveau mot de passe")} className={inputCls + " pr-10"} />
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#444444] transition-colors">
                     {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -137,7 +139,7 @@ export default function MotDePasseOubliePage() {
                 <button type="submit" disabled={loading || code.length < 6 || nouveauMotDePasse.length < 6}
                   className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
-                  {loading ? <><Loader2 size={16} className="animate-spin" /> Réinitialisation...</> : "Réinitialiser →"}
+                  {loading ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Réinitialisation...")}</> : t("Réinitialiser →")}
                 </button>
               </form>
             </>
@@ -149,8 +151,8 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
                 <ShieldCheck size={24} style={{ color: "#22c55e" }} />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1">Mot de passe mis à jour</h2>
-              <p className="text-[#808080] text-sm">Redirection vers la connexion...</p>
+              <h2 className="text-xl font-bold text-[#111111] mb-1">{t("Mot de passe mis à jour")}</h2>
+              <p className="text-[#808080] text-sm">{t("Redirection vers la connexion...")}</p>
             </div>
           )}
         </div>

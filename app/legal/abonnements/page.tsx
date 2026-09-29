@@ -3,6 +3,7 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Conditions d'abonnement — AXSO",
@@ -41,7 +42,8 @@ const SECTIONS = [
   },
 ];
 
-export default function AbonnementsPage() {
+export default async function AbonnementsPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -49,10 +51,10 @@ export default function AbonnementsPage() {
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="max-w-4xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            <CreditCard size={14} className="inline-block mr-1.5" />Légal
+            <CreditCard size={14} className="inline-block mr-1.5" />{t("Légal")}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">Conditions d'abonnement</h1>
-          <p className="text-[#8C8C8C] text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">{t("Conditions d'abonnement")}</h1>
+          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 1er juillet 2026")}</p>
 
           {/* Plans recap */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">
@@ -61,11 +63,11 @@ export default function AbonnementsPage() {
                 style={{ background: p.popular ? `${p.accent}08` : "rgba(0,0,0,0.02)", borderColor: p.popular ? `${p.accent}25` : "rgba(0,0,0,0.07)" }}>
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${p.accent}15`, color: p.accent, border: `1px solid ${p.accent}25` }}>{p.nom}</span>
-                  {p.popular && <span className="text-xs text-[#999999]">⭐ Populaire</span>}
+                    style={{ background: `${p.accent}15`, color: p.accent, border: `1px solid ${p.accent}25` }}>{t(p.nom)}</span>
+                  {p.popular && <span className="text-xs text-[#999999]">{t("⭐ Populaire")}</span>}
                 </div>
                 <p className="text-xl font-black mb-1" style={{ color: p.accent }}>{p.prix}</p>
-                <p className="text-[#8C8C8C] text-xs mb-4">{p.engagement}</p>
+                <p className="text-[#8C8C8C] text-xs mb-4">{t(p.engagement)}</p>
                 <ul className="space-y-1.5">
                   {p.inclus.map(i => (
                     <li key={i} className="text-xs text-[#666666] flex items-center gap-2">
@@ -81,8 +83,8 @@ export default function AbonnementsPage() {
           <div className="space-y-10">
             {SECTIONS.map(s => (
               <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
-                <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{s.titre}</h2>
-                <p className="text-[#595959] leading-relaxed text-sm">{s.contenu}</p>
+                <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{t(s.titre)}</h2>
+                <p className="text-[#595959] leading-relaxed text-sm">{t(s.contenu)}</p>
               </div>
             ))}
           </div>
@@ -90,12 +92,12 @@ export default function AbonnementsPage() {
           <div className="mt-14 flex flex-col sm:flex-row gap-4">
             <div className="flex-1 rounded-2xl p-6 border"
               style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <p className="text-[#666666] text-sm">Questions sur votre abonnement ? <a href="mailto:facturation@axso.app" className="font-bold" style={{ color: "#F5A623" }}>facturation@axso.app</a></p>
+              <p className="text-[#666666] text-sm">{t("Questions sur votre abonnement ?")}{" "}<a href="mailto:facturation@axso.app" className="font-bold" style={{ color: "#F5A623" }}>facturation@axso.app</a></p>
             </div>
             <Link href="/#tarifs"
               className="flex-1 rounded-2xl p-6 flex items-center justify-center font-bold text-center transition-all hover:scale-[1.02]"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>
-              Voir les plans →
+              {t("Voir les plans →")}
             </Link>
           </div>
         </div>

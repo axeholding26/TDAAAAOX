@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { enregistrerAffiliationLocale, lireProfilAffilieLocal, type ProfilAffilie } from "@/lib/affiliation-local";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   programmeId: string;
@@ -18,6 +19,7 @@ interface Props {
 // une précédente candidature), le rejoint instantanément sans repasser par
 // le formulaire — sinon, comportement inchangé : renvoie vers /rejoindre.
 export function DevenirAffilieButton({ programmeId, nomBoutique, logoUrl, nomProgramme }: Props) {
+  const t = useT();
   const [profil, setProfil] = useState<ProfilAffilie | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +39,7 @@ export function DevenirAffilieButton({ programmeId, nomBoutique, logoUrl, nomPro
       enregistrerAffiliationLocale({ portalToken: data.affilie.portalToken, nomBoutique, logoUrl, nomProgramme });
       window.location.href = `/affilie/${data.affilie.portalToken}`;
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors de l'inscription");
+      toast.error(t(e.message) || t("Erreur lors de l'inscription"));
       setLoading(false);
     }
   }
@@ -47,7 +49,7 @@ export function DevenirAffilieButton({ programmeId, nomBoutique, logoUrl, nomPro
       <Link href={`/rejoindre/${programmeId}`}
         className="block text-center py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90"
         style={{ background: "#F5A623", color: "#080808" }}>
-        Devenir affilié
+        {t("Devenir affilié")}
       </Link>
     );
   }
@@ -56,7 +58,7 @@ export function DevenirAffilieButton({ programmeId, nomBoutique, logoUrl, nomPro
     <button onClick={rejoindreInstantanement} disabled={loading}
       className="w-full text-center py-2 rounded-xl text-xs font-bold transition-all hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-1.5"
       style={{ background: "#F5A623", color: "#080808" }}>
-      {loading ? <Loader2 size={12} className="animate-spin" /> : "Rejoindre en 1 clic"}
+      {loading ? <Loader2 size={12} className="animate-spin" /> : t("Rejoindre en 1 clic")}
     </button>
   );
 }

@@ -4,6 +4,7 @@ import { formatMontant, formatDate } from "@/lib/utils";
 import { CreditCard, Zap, Crown, AlertTriangle } from "lucide-react";
 import { getAdminSession } from "@/lib/admin-auth";
 import { PLATFORM_TENANT_SLUG, getPlatformTenantId } from "@/lib/wallet";
+import { getT } from "@/lib/i18n/serveur";
 
 const PALIERS = [
   { id: "palier0", nom: "Essentiel", prix: 0, icon: CreditCard, color: "#AAAAAA" },
@@ -12,6 +13,7 @@ const PALIERS = [
 ];
 
 export default async function AdminAbonnementsPage() {
+  const tx = await getT();
   const session = await getAdminSession();
   if (!session) redirect("/dashboard");
 
@@ -54,24 +56,24 @@ export default async function AdminAbonnementsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>Abonnements</h1>
-        <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>Répartition des paliers et revenus récurrents Axso</p>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{tx("Abonnements")}</h1>
+        <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{tx("Répartition des paliers et revenus récurrents Axso")}</p>
       </div>
 
       {/* Revenu abonnements */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="rounded-2xl p-5 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
           <p className="text-2xl font-bold" style={{ color: "#16A34A" }}>{formatMontant(revenuAbonnementsTotal._sum.montant || 0, "XAF")}</p>
-          <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Revenu abonnements total</p>
+          <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx("Revenu abonnements total")}</p>
         </div>
         <div className="rounded-2xl p-5 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
           <p className="text-2xl font-bold" style={{ color: "#F5A623" }}>{formatMontant(revenuAbonnementsMois._sum.montant || 0, "XAF")}</p>
-          <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Ce mois-ci</p>
+          <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx("Ce mois-ci")}</p>
         </div>
         <div className="rounded-2xl p-5 border" style={{ background: "#1A1A1A", borderColor: "rgba(220,38,38,0.2)" }}>
-          <p className="text-2xl font-bold" style={{ color: "#DC2626" }}>{abonnesExpires}</p>
+          <p className="text-2xl font-bold" style={{ color: "#DC2626" }}>{tx(abonnesExpires)}</p>
           <p className="text-xs mt-1 flex items-center gap-1" style={{ color: "#AAAAAA" }}>
-            <AlertTriangle size={11} /> Abonnements payants expirés
+            <AlertTriangle size={11} />{" "}{tx("Abonnements payants expirés")}
           </p>
         </div>
       </div>
@@ -88,10 +90,10 @@ export default async function AdminAbonnementsPage() {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${p.color}18`, border: `1px solid ${p.color}30` }}>
                   <Icon size={14} style={{ color: p.color }} />
                 </div>
-                <span className="text-sm font-semibold" style={{ color: "#ffffff" }}>{p.nom}</span>
+                <span className="text-sm font-semibold" style={{ color: "#ffffff" }}>{tx(p.nom)}</span>
               </div>
               <p className="text-2xl font-bold" style={{ color: p.color }}>{count}</p>
-              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{pct}% des boutiques · {p.prix > 0 ? `${p.prix.toLocaleString("fr-FR")} FCFA/mois` : "Gratuit"}</p>
+              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{pct}{tx("% des boutiques ·")}{" "}{p.prix > 0 ? tx("{0} FCFA/mois", p.prix.toLocaleString(tx.loc)) : tx("Gratuit")}</p>
             </div>
           );
         })}
@@ -100,14 +102,14 @@ export default async function AdminAbonnementsPage() {
       {/* Abonnés payants */}
       <div className="rounded-2xl overflow-hidden border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
         <div className="px-6 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-          <h2 className="font-semibold" style={{ color: "#ffffff" }}>Abonnés payants (Pro & Illimité)</h2>
+          <h2 className="font-semibold" style={{ color: "#ffffff" }}>{tx("Abonnés payants (Pro & Illimité)")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
                 {["Boutique", "Palier", "Expire le", "Statut"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left text-xs font-medium" style={{ color: "#AAAAAA" }}>{h}</th>
+                  <th key={h} className="px-5 py-3 text-left text-xs font-medium" style={{ color: "#AAAAAA" }}>{tx(h)}</th>
                 ))}
               </tr>
             </thead>
@@ -117,24 +119,24 @@ export default async function AdminAbonnementsPage() {
                 const palier = PALIERS.find(p => p.id === t.planType);
                 return (
                   <tr key={t.id} className="transition-colors hover:bg-white/[0.02]">
-                    <td className="px-5 py-3" style={{ color: "#ffffff" }}>{t.nomBoutique}</td>
+                    <td className="px-5 py-3" style={{ color: "#ffffff" }}>{tx(t.nomBoutique)}</td>
                     <td className="px-5 py-3">
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${palier?.color ?? "#AAAAAA"}18`, color: palier?.color ?? "#AAAAAA" }}>
-                        {palier?.nom ?? t.planType}
+                        {tx(palier?.nom) ?? tx(t.planType)}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-xs" style={{ color: "#AAAAAA" }}>{t.planExpiresAt ? formatDate(t.planExpiresAt) : "—"}</td>
                     <td className="px-5 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full"
                         style={expire ? { background: "rgba(220,38,38,0.15)", color: "#DC2626" } : { background: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
-                        {expire ? "Expiré" : "Actif"}
+                        {expire ? tx("Expiré") : tx("Actif")}
                       </span>
                     </td>
                   </tr>
                 );
               })}
               {abonnesPayants.length === 0 && (
-                <tr><td colSpan={4} className="px-5 py-8 text-center text-xs" style={{ color: "#666666" }}>Aucun abonné payant pour l'instant</td></tr>
+                <tr><td colSpan={4} className="px-5 py-8 text-center text-xs" style={{ color: "#666666" }}>{tx("Aucun abonné payant pour l'instant")}</td></tr>
               )}
             </tbody>
           </table>

@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { MapPin, Package, CheckCircle2, Truck, ClipboardList, Check, Map, Bike } from "lucide-react";
 import { MapTracking } from "@/components/storefront/MapTracking";
+import { useT } from "@/components/I18nProvider";
 
 const STATUT_STEP_ICONS: Record<string, React.ReactNode> = {
   en_attente:     <ClipboardList size={16} />,
@@ -22,6 +23,7 @@ const STATUT_STEPS = [
 ];
 
 export default function TrackingPage() {
+  const t = useT();
   const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,7 @@ export default function TrackingPage() {
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
       <div style={{ textAlign:"center" }}>
         <div style={{ width:40, height:40, border:"3px solid #F5A623", borderTopColor:"transparent", borderRadius:"50%", animation:"spin 1s linear infinite", margin:"0 auto 16px" }} />
-        <p style={{ color:"#666", fontSize:14 }}>Chargement du suivi…</p>
+        <p style={{ color:"#666", fontSize:14 }}>{t("Chargement du suivi…")}</p>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     </div>
@@ -54,7 +56,7 @@ export default function TrackingPage() {
 
   if (!data) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
-      <p style={{ color:"#666" }}>Commande introuvable</p>
+      <p style={{ color:"#666" }}>{t("Commande introuvable")}</p>
     </div>
   );
 
@@ -72,15 +74,15 @@ export default function TrackingPage() {
         <div style={{ maxWidth:500, margin:"0 auto" }}>
           {/* Axso logo top-center */}
           <div style={{ textAlign:"center", marginBottom:12 }}>
-            <img src="/logo-dark.png" alt="Axso" style={{ height:26, objectFit:"contain" }} />
+            <img src="/logo-dark.png" alt={t("Axso")} style={{ height:26, objectFit:"contain" }} />
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>
               <div style={{ fontSize:11, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
-                {data.tenant?.nomBoutique}
+                {t(data.tenant?.nomBoutique)}
               </div>
-              <div style={{ fontSize:20, fontWeight:700 }}>Suivi de livraison</div>
-              <div style={{ fontSize:12, color:"#555", marginTop:2 }}>Commande #{data.numero}</div>
+              <div style={{ fontSize:20, fontWeight:700 }}>{t("Suivi de livraison")}</div>
+              <div style={{ fontSize:12, color:"#555", marginTop:2 }}>{t("Commande #")}{data.numero}</div>
             </div>
             {data.tenant?.logoUrl && (
               <img src={data.tenant.logoUrl} alt="" style={{ height:40, objectFit:"contain", opacity:0.7 }} />
@@ -96,8 +98,8 @@ export default function TrackingPage() {
           <div style={{ background:"rgba(239,68,68,0.08)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:16, padding:"14px 18px", marginBottom:16, display:"flex", alignItems:"center", gap:10 }}>
             <span style={{ fontSize:18 }}>❌</span>
             <div>
-              <div style={{ fontSize:14, fontWeight:700, color:"#f87171" }}>Commande annulée</div>
-              <div style={{ fontSize:12, color:"#888", marginTop:2 }}>Cette commande a été annulée. Contactez la boutique pour plus d'informations.</div>
+              <div style={{ fontSize:14, fontWeight:700, color:"#f87171" }}>{t("Commande annulée")}</div>
+              <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{t("Cette commande a été annulée. Contactez la boutique pour plus d'informations.")}</div>
             </div>
           </div>
         )}
@@ -110,10 +112,10 @@ export default function TrackingPage() {
             return (
               <div key={step.key} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom: i < STATUT_STEPS.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
                 <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color: done ? "#22c55e" : active ? "#F5A623" : "#555", background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,166,35,0.15)" : "rgba(255,255,255,0.05)", border: done ? "1px solid rgba(34,197,94,0.3)" : active ? "1px solid rgba(245,166,35,0.4)" : "1px solid rgba(255,255,255,0.1)" }}>
-                  {done ? <Check size={16} /> : STATUT_STEP_ICONS[step.key]}
+                  {done ? <Check size={16} /> : t(STATUT_STEP_ICONS[step.key])}
                 </div>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight: active ? 600 : 400, color: done ? "#22c55e" : active ? "#F5A623" : "#555" }}>{step.label}</div>
+                  <div style={{ fontSize:13, fontWeight: active ? 600 : 400, color: done ? "#22c55e" : active ? "#F5A623" : "#555" }}>{t(step.label)}</div>
                 </div>
                 {active && <div style={{ width:8, height:8, borderRadius:"50%", background:"#F5A623", animation:"pulse 1.5s ease-in-out infinite" }} />}
               </div>
@@ -136,13 +138,13 @@ export default function TrackingPage() {
               <div style={{ position:"absolute", bottom:12, left:12, right:12, background:"rgba(0,0,0,0.75)", backdropFilter:"blur(8px)", borderRadius:12, padding:"8px 14px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:8, flexWrap:"wrap" }}>
                 <span style={{ fontSize:12, color:"white", display:"flex", alignItems:"center", gap:8 }}>
                   <span style={{ width:8, height:8, borderRadius:"50%", background:"#22c55e", animation:"pulse 1s ease-in-out infinite", flexShrink:0 }} />
-                  {data.livreurNom ? `${data.livreurNom} — ` : "Livreur — "}
-                  Mis à jour {pos.updatedAt ? new Date(pos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : "récemment"}
+                  {data.livreurNom ? `${data.livreurNom} — ` : t("Livreur — ")}
+                  {t("Mis à jour")}{" "}{pos.updatedAt ? new Date(pos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : t("récemment")}
                 </span>
                 {liveInfo.distanceKm != null && (
                   <span style={{ fontSize:12, fontWeight:700, color:"#F5A623", whiteSpace:"nowrap" }}>
                     {liveInfo.distanceKm < 1 ? `${Math.round(liveInfo.distanceKm * 1000)} m` : `${liveInfo.distanceKm} km`}
-                    {liveInfo.etaMin != null && ` · ≈ ${liveInfo.etaMin} min`}
+                    {liveInfo.etaMin != null && t(" · ≈ {0} min", liveInfo.etaMin)}
                   </span>
                 )}
               </div>
@@ -151,7 +153,7 @@ export default function TrackingPage() {
         ) : (
           <div style={{ borderRadius:20, border:"1px solid rgba(255,255,255,0.08)", padding:32, textAlign:"center", marginBottom:16, background:"rgba(255,255,255,0.02)" }}>
             <Map size={32} style={{ color:"#555", margin:"0 auto 8px" }} />
-            <p style={{ fontSize:13, color:"#555" }}>La carte s'affichera dès que le livreur partagera sa position</p>
+            <p style={{ fontSize:13, color:"#555" }}>{t("La carte s'affichera dès que le livreur partagera sa position")}</p>
           </div>
         )}
 
@@ -160,12 +162,12 @@ export default function TrackingPage() {
           <div style={{ background:"rgba(245,166,35,0.08)", border:"1px solid rgba(245,166,35,0.2)", borderRadius:16, padding:16, marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
             <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(245,166,35,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#F5A623" }}><Bike size={20} /></div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{data.livreurNom ?? "Livreur assigné"}</div>
-              {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{data.livreurTelephone}</div>}
+              <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{t(data.livreurNom) ?? t("Livreur assigné")}</div>
+              {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{t(data.livreurTelephone)}</div>}
             </div>
             {data.livreurTelephone && (
               <a href={`tel:${data.livreurTelephone}`} style={{ background:"#F5A623", color:"black", borderRadius:12, padding:"8px 14px", fontSize:12, fontWeight:600, textDecoration:"none" }}>
-                Appeler
+                {t("Appeler")}
               </a>
             )}
           </div>
@@ -174,13 +176,13 @@ export default function TrackingPage() {
         {/* Adresse client */}
         {(data.adresseExacte || data.adresseLivraison) && (
           <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:16, padding:16, marginBottom:16 }}>
-            <div style={{ fontSize:10, color:"#666", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>Adresse de livraison</div>
-            <div style={{ fontSize:14, color:"#DDD" }}>{data.adresseExacte || data.adresseLivraison}</div>
-            {data.ville && <div style={{ fontSize:12, color:"#666", marginTop:4 }}>{data.ville}</div>}
+            <div style={{ fontSize:10, color:"#666", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>{t("Adresse de livraison")}</div>
+            <div style={{ fontSize:14, color:"#DDD" }}>{t(data.adresseExacte) || t(data.adresseLivraison)}</div>
+            {data.ville && <div style={{ fontSize:12, color:"#666", marginTop:4 }}>{t(data.ville)}</div>}
             {data.mapsLienClient && (
               <a href={data.mapsLienClient} target="_blank" rel="noopener noreferrer"
                 style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, color:"#F5A623", fontSize:12, textDecoration:"none" }}>
-                <MapPin size={12} /> Voir sur Google Maps
+                <MapPin size={12} />{" "}{t("Voir sur Google Maps")}
               </a>
             )}
           </div>
@@ -189,8 +191,8 @@ export default function TrackingPage() {
         {/* Refresh info */}
         <div style={{ textAlign:"center", padding:"12px 0" }}>
           <p style={{ fontSize:11, color:"#444" }}>
-            Mise à jour automatique toutes les 15 secondes
-            {lastUpdate && ` · Dernière : ${lastUpdate.toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit", second:"2-digit" })}`}
+            {t("Mise à jour automatique toutes les 15 secondes")}
+            {lastUpdate && t(" · Dernière : {0}", lastUpdate.toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit", second:"2-digit" }))}
           </p>
         </div>
       </div>

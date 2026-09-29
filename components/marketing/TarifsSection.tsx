@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X, Zap, Star, Lock } from "lucide-react";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 const PLANS = [
   {
@@ -79,6 +80,7 @@ const PLANS = [
 ];
 
 export function TarifsSection() {
+  const t = useT();
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -115,16 +117,16 @@ export function TarifsSection() {
           }}
         >
           <span className="text-[#F5A623] text-sm font-bold uppercase tracking-[0.2em] mb-4 inline-flex items-center gap-1.5">
-            <Zap size={14} /> Paliers de puissance
+            <Zap size={14} />{" "}{t("Paliers de puissance")}
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-5"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-            Commence gratuit. Grandis quand tu es prêt.
+            {t("Commence gratuit. Grandis quand tu es prêt.")}
           </h2>
           <p className="text-gray-400 text-xl max-w-2xl mx-auto">
-            Pas de frais cachés. Pas de carte bancaire requise pour démarrer.
+            {t("Pas de frais cachés. Pas de carte bancaire requise pour démarrer.")}
             <br className="hidden sm:block" />
-            Tu peux annuler à tout moment. Et tu peux payer ton abonnement directement par Orange Money ou MTN.
+            {t("Tu peux annuler à tout moment. Et tu peux payer ton abonnement directement par Orange Money ou MTN.")}
           </p>
         </div>
 
@@ -147,13 +149,13 @@ export function TarifsSection() {
         >
           <h3 className="text-center text-2xl sm:text-3xl font-bold text-gray-900 mb-8"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-            Tout ce que Shopify ne fera jamais pour toi
+            {t("Tout ce que Shopify ne fera jamais pour toi")}
           </h3>
           <div className="rounded-2xl border border-gray-100 overflow-hidden">
             <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-100">
-              <div className="p-4 text-xs font-bold uppercase tracking-widest text-gray-400">Critère</div>
+              <div className="p-4 text-xs font-bold uppercase tracking-widest text-gray-400">{t("Critère")}</div>
               <div className="p-4 text-center text-sm font-bold" style={{ color: "#F5A623" }}>AXSO</div>
-              <div className="p-4 text-center text-sm font-bold text-gray-400">Shopify</div>
+              <div className="p-4 text-center text-sm font-bold text-gray-400">{t("Shopify")}</div>
               <div className="p-4 text-center text-sm font-bold text-gray-400">WooCommerce</div>
             </div>
             {[
@@ -164,14 +166,14 @@ export function TarifsSection() {
               { critere: "Payer l'abonnement en mobile money", axso: true, shopify: false, woo: "✗" },
             ].map((row, i) => (
               <div key={row.critere} className={`grid grid-cols-4 items-center ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
-                <div className="p-4 text-sm text-gray-700">{row.critere}</div>
+                <div className="p-4 text-sm text-gray-700">{t(row.critere)}</div>
                 <div className="p-4 flex justify-center" style={{ background: "rgba(245,166,35,0.06)" }}>
                   <Check size={16} strokeWidth={3} style={{ color: "#F5A623" }} />
                 </div>
                 <div className="p-4 flex justify-center">
                   <X size={16} strokeWidth={3} className="text-gray-300" />
                 </div>
-                <div className="p-4 text-center text-xs text-gray-400">{row.woo === "partiel" ? "Partiel" : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
+                <div className="p-4 text-center text-xs text-gray-400">{row.woo === "partiel" ? t("Partiel") : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
               </div>
             ))}
           </div>
@@ -183,7 +185,7 @@ export function TarifsSection() {
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 1s" }}
         >
           <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
-            <Lock size={13} /> Paiement par Orange Money ou MTN · Annulation à tout moment · 0 frais cachés · Support WhatsApp inclus
+            <Lock size={13} />{" "}{t("Paiement par Orange Money ou MTN · Annulation à tout moment · 0 frais cachés · Support WhatsApp inclus")}
           </p>
         </div>
       </div>
@@ -202,6 +204,7 @@ function PlanCard({
   visible: boolean;
   delay: number;
 }) {
+  const t = useT();
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const ref = useRef<HTMLDivElement>(null);
 
@@ -242,7 +245,7 @@ function PlanCard({
           }}
         >
           <Star size={11} fill="white" />
-          LE PLUS CHOISI
+          {t("LE PLUS CHOISI")}
           <Star size={11} fill="white" />
         </div>
       )}
@@ -287,11 +290,11 @@ function PlanCard({
                 className="text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider"
                 style={{ background: `${plan.couleur}15`, color: plan.couleur }}
               >
-                {plan.nom}
+                {t(plan.nom)}
               </span>
               {plan.recommande && <Zap size={14} style={{ color: plan.couleur }} />}
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">{plan.desc}</p>
+            <p className="text-sm text-gray-400 leading-relaxed">{t(plan.desc)}</p>
           </div>
 
           {/* Price */}
@@ -307,9 +310,9 @@ function PlanCard({
                     backgroundClip: "text",
                   }}
                 >
-                  Gratuit
+                  {t("Gratuit")}
                 </span>
-                <p className="text-xs text-gray-400 mt-1">Pour toujours · Pas de carte requise</p>
+                <p className="text-xs text-gray-400 mt-1">{t("Pour toujours · Pas de carte requise")}</p>
               </div>
             ) : (
               <div>
@@ -323,12 +326,12 @@ function PlanCard({
                       backgroundClip: "text",
                     }}
                   >
-                    {plan.prix.toLocaleString("fr-FR")}
+                    {plan.prix.toLocaleString(t.loc)}
                   </span>
-                  <span className="text-gray-400 text-sm mb-1.5">XOF / mois</span>
+                  <span className="text-gray-400 text-sm mb-1.5">{t("XOF / mois")}</span>
                 </div>
                 <p className="text-xs text-gray-400">
-                  ≈ {Math.round(plan.prix / 655).toLocaleString()} €/mois
+                  ≈ {Math.round(plan.prix / 655).toLocaleString()}{" "}{t("€/mois")}
                 </p>
               </div>
             )}
@@ -344,7 +347,7 @@ function PlanCard({
                 >
                   <Check size={11} strokeWidth={3} style={{ color: plan.couleur }} />
                 </div>
-                <span className="text-sm text-gray-600 leading-snug">{f}</span>
+                <span className="text-sm text-gray-600 leading-snug">{t(f)}</span>
               </div>
             ))}
             {plan.notIncluded.map((f, i) => (
@@ -352,7 +355,7 @@ function PlanCard({
                 <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-gray-100">
                   <X size={10} strokeWidth={3} className="text-gray-400" />
                 </div>
-                <span className="text-sm text-gray-400 leading-snug">{f}</span>
+                <span className="text-sm text-gray-400 leading-snug">{t(f)}</span>
               </div>
             ))}
           </div>
@@ -371,7 +374,7 @@ function PlanCard({
               border: `1px solid ${plan.couleur}30`,
             }}
           >
-            {plan.cta}
+            {t(plan.cta)}
           </Link>
         </div>
       </div>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Plus, MessageSquare, Trash2, Pencil, X } from "lucide-react";
 import type { ConversationSummary } from "@/hooks/useAxiaConversations";
+import { useT } from "@/components/I18nProvider";
 
 function grouperParPeriode(list: ConversationSummary[]) {
   const now = Date.now();
@@ -30,6 +31,7 @@ export function AxiaConversationSidebar({
   onRename: (id: string, titre: string) => void;
   onClose?: () => void;
 }) {
+  const t = useT();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -45,7 +47,7 @@ export function AxiaConversationSidebar({
         <button onClick={onNew}
           className="flex-1 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:bg-white/10"
           style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-          <Plus size={15} /> Nouvelle conversation
+          <Plus size={15} />{" "}{t("Nouvelle conversation")}
         </button>
         {onClose && (
           <button onClick={onClose}
@@ -57,15 +59,15 @@ export function AxiaConversationSidebar({
 
       <div className="flex-1 overflow-y-auto px-2 pb-3 space-y-4 min-h-0">
         {loading ? (
-          <p className="text-white/25 text-xs text-center px-4 py-6">Chargement…</p>
+          <p className="text-white/25 text-xs text-center px-4 py-6">{t("Chargement…")}</p>
         ) : conversations.length === 0 ? (
           <p className="text-white/25 text-xs text-center px-4 py-6 leading-relaxed">
-            Aucune conversation pour le moment — écris à AXIA pour en démarrer une.
+            {t("Aucune conversation pour le moment — écris à AXIA pour en démarrer une.")}
           </p>
         ) : (
           grouperParPeriode(conversations).map(([label, items]) => (
             <div key={label}>
-              <p className="text-[10px] font-bold text-white/25 uppercase tracking-wider px-2.5 mb-1.5">{label}</p>
+              <p className="text-[10px] font-bold text-white/25 uppercase tracking-wider px-2.5 mb-1.5">{t(label)}</p>
               <div className="space-y-0.5">
                 {items.map(c => {
                   const active = activeId === c.id;
@@ -90,19 +92,19 @@ export function AxiaConversationSidebar({
                         />
                       ) : (
                         <span className="flex-1 min-w-0 truncate text-[13px]" style={{ color: active ? "white" : "rgba(255,255,255,0.6)" }}>
-                          {c.titre}
+                          {t(c.titre)}
                         </span>
                       )}
                       {editingId !== c.id && (
                         <div className="hidden group-hover:flex items-center gap-1 flex-shrink-0">
                           <button
                             onClick={e => { e.stopPropagation(); setEditingId(c.id); setEditValue(c.titre); }}
-                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/10" title="Renommer">
+                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/10" title={t("Renommer")}>
                             <Pencil size={11} className="text-white/45" />
                           </button>
                           <button
                             onClick={e => { e.stopPropagation(); onDelete(c.id); }}
-                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/10" title="Supprimer">
+                            className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/10" title={t("Supprimer")}>
                             <Trash2 size={11} className="text-red-400/70" />
                           </button>
                         </div>

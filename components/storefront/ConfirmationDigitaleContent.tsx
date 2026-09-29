@@ -4,6 +4,7 @@ import { formatMontant, formatDate } from "@/lib/utils";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { CopyableKey } from "@/components/storefront/CopyableKey";
 import { LockedDownloads } from "@/components/storefront/LockedDownloads";
+import { getT } from "@/lib/i18n/serveur";
 
 // Contenu de la page de confirmation (paiement en ligne — digital/dropshipping/
 // mixte), extrait de app/(storefront)/[slug]/confirmation/[orderId]/page.tsx
@@ -47,10 +48,11 @@ interface Props {
   nomProduit: Map<string, string>;
 }
 
-export function ConfirmationDigitaleContent({
+export async function ConfirmationDigitaleContent({
   theme, slug, devise, commande, paye, echoue, isCOD, isDigital,
   lignesDigitales, telechargements, accesFormations, clesLicence, nomProduit,
 }: Props) {
+  const t = await getT();
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
 
@@ -61,12 +63,12 @@ export function ConfirmationDigitaleContent({
             style={{ backgroundColor: "rgba(239,68,68,0.15)", border: "2px solid rgba(239,68,68,0.4)" }}>
             <XCircle size={36} className="text-red-400" />
           </div>
-          <h1 className="text-2xl font-bold font-playfair mb-2 text-red-400">Paiement échoué</h1>
-          <p className="opacity-60 mb-6">Une erreur est survenue. Votre commande n'a pas été confirmée.</p>
+          <h1 className="text-2xl font-bold font-playfair mb-2 text-red-400">{t("Paiement échoué")}</h1>
+          <p className="opacity-60 mb-6">{t("Une erreur est survenue. Votre commande n'a pas été confirmée.")}</p>
           <Link href={`/${slug}/panier`}
             className="px-8 py-3 rounded-xl font-semibold text-sm inline-block"
             style={{ backgroundColor: theme.accent, color: theme.fond }}>
-            Réessayer
+            {t("Réessayer")}
           </Link>
         </div>
       ) : isCOD ? (
@@ -75,9 +77,9 @@ export function ConfirmationDigitaleContent({
             style={{ backgroundColor: "rgba(16,185,129,0.15)", border: "2px solid rgba(16,185,129,0.4)" }}>
             <Package size={36} className="text-green-400" />
           </div>
-          <h1 className="text-3xl font-bold font-playfair mb-2 text-green-400">Commande enregistrée !</h1>
-          <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom}</p>
-          <p className="opacity-40 text-sm">Le vendeur va vous contacter pour organiser la livraison.</p>
+          <h1 className="text-3xl font-bold font-playfair mb-2 text-green-400">{t("Commande enregistrée !")}</h1>
+          <p className="opacity-70 text-lg mb-1">{t("Merci")}{" "}{t(commande.clientNom)}</p>
+          <p className="opacity-40 text-sm">{t("Le vendeur va vous contacter pour organiser la livraison.")}</p>
         </div>
       ) : isDigital ? (
         <div className="text-center mb-10">
@@ -86,10 +88,10 @@ export function ConfirmationDigitaleContent({
             <Zap size={36} style={{ color: theme.accent }} />
           </div>
           <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>
-            {paye ? "Achat confirmé !" : "Commande reçue !"}
+            {paye ? t("Achat confirmé !") : t("Commande reçue !")}
           </h1>
-          <p className="opacity-70 text-lg mb-1">Merci {commande.clientNom} — votre fichier est prêt !</p>
-          <p className="opacity-40 text-sm">Un lien de téléchargement a été envoyé à votre email.</p>
+          <p className="opacity-70 text-lg mb-1">{t("Merci")}{" "}{t(commande.clientNom)}{" "}{t("— votre fichier est prêt !")}</p>
+          <p className="opacity-40 text-sm">{t("Un lien de téléchargement a été envoyé à votre email.")}</p>
         </div>
       ) : (
         <div className="text-center mb-10">
@@ -98,10 +100,10 @@ export function ConfirmationDigitaleContent({
             <CheckCircle size={36} style={{ color: theme.accent }} />
           </div>
           <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>
-            {paye ? "Commande confirmée !" : "Commande reçue !"}
+            {paye ? t("Commande confirmée !") : t("Commande reçue !")}
           </h1>
-          <p className="opacity-70 text-lg mb-1">Merci pour votre commande, {commande.clientNom}</p>
-          <p className="opacity-40 text-sm">Un email de confirmation vous a été envoyé.</p>
+          <p className="opacity-70 text-lg mb-1">{t("Merci pour votre commande,")}{" "}{t(commande.clientNom)}</p>
+          <p className="opacity-40 text-sm">{t("Un email de confirmation vous a été envoyé.")}</p>
         </div>
       )}
 
@@ -110,15 +112,15 @@ export function ConfirmationDigitaleContent({
         <div className="rounded-2xl border p-6 mb-4 space-y-4"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
-            <Download size={16} /> Vos téléchargements
+            <Download size={16} />{" "}{t("Vos téléchargements")}
           </h3>
           <div className="space-y-3">
             {lignesDigitales.map((ligne) => (
               <div key={ligne.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
                 style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{ligne.nom}</p>
-                  <p className="text-xs opacity-50 mt-0.5">{ligne.produit?.fichierNom || "Fichier digital"}</p>
+                  <p className="text-sm font-semibold truncate">{t(ligne.nom)}</p>
+                  <p className="text-xs opacity-50 mt-0.5">{t(ligne.produit?.fichierNom) || t("Fichier digital")}</p>
                 </div>
                 <a
                   href={ligne.produit!.fichierUrl!}
@@ -127,14 +129,14 @@ export function ConfirmationDigitaleContent({
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 transition-all hover:opacity-90"
                   style={{ backgroundColor: theme.accent, color: theme.fond }}>
-                  <Download size={14} /> Télécharger
+                  <Download size={14} />{" "}{t("Télécharger")}
                 </a>
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2 text-xs opacity-50">
             <Zap size={11} style={{ color: theme.accent }} />
-            Liens valides 7 jours · Accès depuis votre email également
+            {t("Liens valides 7 jours · Accès depuis votre email également")}
           </div>
         </div>
       )}
@@ -144,7 +146,7 @@ export function ConfirmationDigitaleContent({
         <div className="rounded-2xl border p-6 mb-4 space-y-4"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
-            <Download size={16} /> Vos fichiers
+            <Download size={16} />{" "}{t("Vos fichiers")}
           </h3>
           <div className="space-y-3">
             {telechargements.map((dl) => {
@@ -156,15 +158,15 @@ export function ConfirmationDigitaleContent({
               }
               return (
                 <div key={dl.id} className="p-3 rounded-xl" style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-                  <p className="text-sm font-semibold mb-2">{nom}</p>
+                  <p className="text-sm font-semibold mb-2">{t(nom)}</p>
                   <div className="space-y-2">
                     {fichiers.map((f: any) => (
                       <div key={f.id} className="flex items-center justify-between gap-3">
-                        <span className="text-xs opacity-60 truncate">{f.nom}</span>
+                        <span className="text-xs opacity-60 truncate">{t(f.nom)}</span>
                         <a href={`/api/telechargements/${dl.token}?fichier=${f.id}`}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 transition-all hover:opacity-90"
                           style={{ backgroundColor: theme.accent, color: theme.fond }}>
-                          <Download size={12} /> Télécharger
+                          <Download size={12} />{" "}{t("Télécharger")}
                         </a>
                       </div>
                     ))}
@@ -175,7 +177,7 @@ export function ConfirmationDigitaleContent({
           </div>
           <div className="flex items-center gap-2 text-xs opacity-50">
             <Zap size={11} style={{ color: theme.accent }} />
-            Accès valide 1 an · Retrouvez ce lien dans votre email de confirmation
+            {t("Accès valide 1 an · Retrouvez ce lien dans votre email de confirmation")}
           </div>
         </div>
       )}
@@ -185,22 +187,22 @@ export function ConfirmationDigitaleContent({
         <div className="rounded-2xl border p-6 mb-4 space-y-3"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
-            <GraduationCap size={16} /> Vos formations
+            <GraduationCap size={16} />{" "}{t("Vos formations")}
           </h3>
           <div className="space-y-3">
             {accesFormations.map((acces) => (
               <div key={acces.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
                 style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-                <p className="text-sm font-semibold truncate">{nomProduit.get(acces.produitId) ?? "Formation"}</p>
+                <p className="text-sm font-semibold truncate">{nomProduit.get(acces.produitId) ?? t("Formation")}</p>
                 <a href={`/${slug}/formation/${acces.token}`}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 transition-all hover:opacity-90"
                   style={{ backgroundColor: theme.accent, color: theme.fond }}>
-                  Accéder <GraduationCap size={14} />
+                  {t("Accéder")}{" "}<GraduationCap size={14} />
                 </a>
               </div>
             ))}
           </div>
-          <p className="text-xs opacity-50">Accès à vie · Retrouvez ce lien dans votre email de confirmation</p>
+          <p className="text-xs opacity-50">{t("Accès à vie · Retrouvez ce lien dans votre email de confirmation")}</p>
         </div>
       )}
 
@@ -209,18 +211,18 @@ export function ConfirmationDigitaleContent({
         <div className="rounded-2xl border p-6 mb-4 space-y-3"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
-            <KeyRound size={16} /> Vos clés de licence
+            <KeyRound size={16} />{" "}{t("Vos clés de licence")}
           </h3>
           <div className="space-y-3">
             {clesLicence.map((cle) => (
               <div key={cle.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
                 style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-                <p className="text-sm font-semibold truncate">{nomProduit.get(cle.licenceProduit.produitId) ?? "Licence"}</p>
+                <p className="text-sm font-semibold truncate">{nomProduit.get(cle.licenceProduit.produitId) ?? t("Licence")}</p>
                 <CopyableKey value={cle.cle} accent={theme.accent} fond={theme.fond} />
               </div>
             ))}
           </div>
-          <p className="text-xs opacity-50">Conservez précieusement vos clés — elles ne sont affichées qu'une fois.</p>
+          <p className="text-xs opacity-50">{t("Conservez précieusement vos clés — elles ne sont affichées qu'une fois.")}</p>
         </div>
       )}
 
@@ -232,8 +234,8 @@ export function ConfirmationDigitaleContent({
             <MessageCircle size={20} className="text-white" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-bold text-green-500">Paiement à la livraison</p>
-            <p className="text-xs opacity-60 mt-0.5">Vous paierez en espèces ou mobile money à la réception du colis.</p>
+            <p className="text-sm font-bold text-green-500">{t("Paiement à la livraison")}</p>
+            <p className="text-xs opacity-60 mt-0.5">{t("Vous paierez en espèces ou mobile money à la réception du colis.")}</p>
           </div>
         </div>
       )}
@@ -241,33 +243,33 @@ export function ConfirmationDigitaleContent({
       {/* ── Récapitulatif ─────────────────────────────────────────── */}
       <div className="rounded-2xl border p-6 mb-4 space-y-3"
         style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-        <h3 className="font-semibold text-sm opacity-80 mb-4">Récapitulatif</h3>
+        <h3 className="font-semibold text-sm opacity-80 mb-4">{t("Récapitulatif")}</h3>
         <div className="flex justify-between text-sm">
-          <span className="opacity-60">N° commande</span>
+          <span className="opacity-60">{t("N° commande")}</span>
           <span className="font-mono font-bold" style={{ color: theme.accent }}>{commande.numero}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="opacity-60">Date</span>
+          <span className="opacity-60">{t("Date")}</span>
           <span>{formatDate(commande.createdAt)}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="opacity-60">Statut paiement</span>
+          <span className="opacity-60">{t("Statut paiement")}</span>
           {isCOD ? (
-            <span className="text-green-400 font-medium flex items-center gap-1"><Check size={12} /> Paiement à la livraison</span>
+            <span className="text-green-400 font-medium flex items-center gap-1"><Check size={12} />{" "}{t("Paiement à la livraison")}</span>
           ) : (
             <span className={`flex items-center gap-1 ${paye ? "text-green-400 font-medium" : echoue ? "text-red-400 font-medium" : "text-amber-400 font-medium"}`}>
-              {paye ? <><Check size={12} /> Payé</> : echoue ? <><X size={12} /> Échoué</> : "En attente"}
+              {paye ? <><Check size={12} />{" "}{t("Payé")}</> : echoue ? <><X size={12} />{" "}{t("Échoué")}</> : t("En attente")}
             </span>
           )}
         </div>
         <div className="flex justify-between">
-          <span className="opacity-60 text-sm">Total</span>
+          <span className="opacity-60 text-sm">{t("Total")}</span>
           <span className="font-bold text-lg" style={{ color: theme.accent }}>{formatMontant(commande.montantTotal, devise)}</span>
         </div>
         {commande.adresseLivraison && commande.adresseLivraison !== "À préciser" && !isDigital && (
           <div className="flex justify-between text-sm">
-            <span className="opacity-60">Livraison</span>
-            <span className="text-right max-w-xs opacity-80">{commande.adresseLivraison}, {commande.ville}</span>
+            <span className="opacity-60">{t("Livraison")}</span>
+            <span className="text-right max-w-xs opacity-80">{t(commande.adresseLivraison)}, {t(commande.ville)}</span>
           </div>
         )}
       </div>
@@ -275,7 +277,7 @@ export function ConfirmationDigitaleContent({
       {/* ── Articles ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border p-6 mb-4"
         style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-        <h3 className="font-semibold text-sm opacity-80 mb-4">Articles commandés</h3>
+        <h3 className="font-semibold text-sm opacity-80 mb-4">{t("Articles commandés")}</h3>
         <div className="space-y-3">
           {commande.lignes.map((ligne) => (
             <div key={ligne.id} className="flex items-center justify-between text-sm gap-3">
@@ -285,7 +287,7 @@ export function ConfirmationDigitaleContent({
                   : <Package size={12} className="opacity-40 flex-shrink-0" />
                 }
                 <span className="opacity-80 truncate">
-                  {ligne.nom}{ligne.variante ? ` (${ligne.variante})` : ""} × {ligne.quantite}
+                  {t(ligne.nom)}{ligne.variante ? ` (${ligne.variante})` : ""}{" "}{t("×")}{" "}{ligne.quantite}
                 </span>
               </div>
               <span style={{ color: theme.accent }} className="flex-shrink-0">
@@ -302,13 +304,13 @@ export function ConfirmationDigitaleContent({
           <Link href={`/${slug}/tracking/${commande.trackingToken}`}
             className="flex-1 text-center px-6 py-3 rounded-xl font-semibold text-sm transition-all border"
             style={{ borderColor: `${theme.accent}40`, color: theme.accent }}>
-            Suivre ma commande
+            {t("Suivre ma commande")}
           </Link>
         )}
         <Link href={`/${slug}/produits`}
           className="flex-1 text-center px-6 py-3 rounded-xl font-semibold text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: theme.accent, color: theme.fond }}>
-          Continuer les achats
+          {t("Continuer les achats")}
         </Link>
       </div>
     </div>

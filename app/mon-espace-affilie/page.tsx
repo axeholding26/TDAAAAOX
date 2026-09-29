@@ -14,6 +14,7 @@ import {
   listerAffiliationsLocales, retirerAffiliationLocale, enregistrerAffiliationLocale,
   extraireTokenPortail, type AffiliationLocale,
 } from "@/lib/affiliation-local";
+import { useT } from "@/components/I18nProvider";
 
 interface Jour { date: string; clics: number; conversions: number; commissions: number; }
 
@@ -34,6 +35,7 @@ const inp = "w-full px-4 py-3 text-sm rounded-xl border outline-none";
 const inpStyle = { borderColor: "rgba(0,0,0,0.1)" };
 
 export default function MonEspaceAffiliePage() {
+  const t = useT();
   const [comptes, setComptes] = useState<Compte[]>([]);
   const [chargementInitial, setChargementInitial] = useState(true);
   const [periode, setPeriode] = useState<7 | 30 | 90>(30);
@@ -77,7 +79,7 @@ export default function MonEspaceAffiliePage() {
       nomProgramme: data.programme?.nom ?? "Programme affilié",
     });
     setNouveauLien("");
-    toast.success("Compte ajouté !");
+    toast.success(t("Compte ajouté !"));
     chargerTout(periode);
   }
 
@@ -135,15 +137,15 @@ export default function MonEspaceAffiliePage() {
       <section className="pt-32 pb-6 px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="max-w-4xl mx-auto flex items-end justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black mb-2">Mon espace affilié</h1>
-            <p className="text-[#808080]">Vue agrégée de tous les marchands que vous promouvez sur AXSO.</p>
+            <h1 className="text-3xl sm:text-4xl font-black mb-2">{t("Mon espace affilié")}</h1>
+            <p className="text-[#808080]">{t("Vue agrégée de tous les marchands que vous promouvez sur AXSO.")}</p>
           </div>
           {comptes.length > 0 && (
             <div className="flex bg-gray-100 rounded-xl p-1">
               {PERIODES.map((pv) => (
                 <button key={pv} onClick={() => setPeriode(pv)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${periode === pv ? "bg-white shadow-sm text-[#111]" : "text-gray-400"}`}>
-                  {pv}j
+                  {t(pv)}j
                 </button>
               ))}
             </div>
@@ -159,13 +161,13 @@ export default function MonEspaceAffiliePage() {
               <input
                 value={nouveauLien}
                 onChange={(e) => setNouveauLien(e.target.value)}
-                placeholder="Coller un lien de portail (ex: https://axso.vercel.app/affilie/xxxx)"
+                placeholder={t("Coller un lien de portail (ex: https://axso.vercel.app/affilie/xxxx)")}
                 className={inp} style={inpStyle}
               />
-              {ajoutErreur && <p className="text-xs text-red-500 mt-1.5">{ajoutErreur}</p>}
+              {ajoutErreur && <p className="text-xs text-red-500 mt-1.5">{t(ajoutErreur)}</p>}
             </div>
             <button type="submit" className="px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2" style={{ background: "#111111" }}>
-              <Plus size={14} /> Ajouter
+              <Plus size={14} />{" "}{t("Ajouter")}
             </button>
           </form>
         </div>
@@ -179,13 +181,13 @@ export default function MonEspaceAffiliePage() {
         <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
           <div className="max-w-4xl mx-auto text-center py-20 rounded-3xl border-2 border-dashed" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
             <Inbox size={40} className="mx-auto mb-4" style={{ color: "#D9D9D9" }} />
-            <p className="font-bold text-[#111111] mb-2">Aucune affiliation pour l'instant</p>
+            <p className="font-bold text-[#111111] mb-2">{t("Aucune affiliation pour l'instant")}</p>
             <p className="text-sm text-[#999999] max-w-sm mx-auto mb-6">
-              Rejoignez un programme depuis le marketplace, ou collez ci-dessus le lien de portail que vous avez reçu par email.
+              {t("Rejoignez un programme depuis le marketplace, ou collez ci-dessus le lien de portail que vous avez reçu par email.")}
             </p>
             <Link href="/affiliation" className="inline-flex items-center gap-2 font-bold px-6 py-3 rounded-xl"
               style={{ background: "#F5A623", color: "#080808" }}>
-              Parcourir le marketplace <ArrowRight size={15} />
+              {t("Parcourir le marketplace")}{" "}<ArrowRight size={15} />
             </Link>
           </div>
         </section>
@@ -203,7 +205,7 @@ export default function MonEspaceAffiliePage() {
                 <div key={label} className="rounded-2xl p-4 text-center border" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
                   <Icon size={16} className="mx-auto mb-2" style={{ color: "#F5A623" }} />
                   <p className="text-xl font-black">{n}</p>
-                  <p className="text-[10px] text-[#999999] mt-0.5">{label}</p>
+                  <p className="text-[10px] text-[#999999] mt-0.5">{t(label)}</p>
                 </div>
               ))}
             </div>
@@ -218,7 +220,7 @@ export default function MonEspaceAffiliePage() {
               ))}
               {Object.keys(commissionsParDevise).length > 1 && (
                 <p className="text-[11px] text-[#AAAAAA] text-center">
-                  Un graphique par devise — les commissions ne sont jamais additionnées entre monnaies différentes.
+                  {t("Un graphique par devise — les commissions ne sont jamais additionnées entre monnaies différentes.")}
                 </p>
               )}
             </div>
@@ -227,7 +229,7 @@ export default function MonEspaceAffiliePage() {
           {/* Liste des comptes */}
           <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
             <div className="max-w-4xl mx-auto space-y-3">
-              <p className="text-sm font-bold text-[#111111] mb-1">Détail par marchand</p>
+              <p className="text-sm font-bold text-[#111111] mb-1">{t("Détail par marchand")}</p>
               {comptes.map((c) => (
                 <div key={c.entry.portalToken} className="rounded-2xl border p-4 flex items-center gap-3" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
                   {c.entry.logoUrl ? (
@@ -238,14 +240,14 @@ export default function MonEspaceAffiliePage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm truncate">{c.entry.nomBoutique}</p>
+                    <p className="font-bold text-sm truncate">{t(c.entry.nomBoutique)}</p>
                     {c.loading ? (
-                      <p className="text-xs text-[#AAAAAA]">Chargement…</p>
+                      <p className="text-xs text-[#AAAAAA]">{t("Chargement…")}</p>
                     ) : c.erreur ? (
-                      <p className="text-xs text-red-400">Compte introuvable — a peut-être été supprimé</p>
+                      <p className="text-xs text-red-400">{t("Compte introuvable — a peut-être été supprimé")}</p>
                     ) : (
                       <p className="text-xs text-[#999999]">
-                        {c.data!.affilie.clics} clics · {c.data!.affilie.conversions} ventes · <span className="font-bold" style={{ color: "#F5A623" }}>{c.data!.affilie.commissionTotal.toLocaleString()} {c.data!.tenant.devise}</span>
+                        {t(c.data!.affilie.clics)}{" "}{t("clics ·")}{" "}{t(c.data!.affilie.conversions)}{" "}{t("ventes ·")}{" "}<span className="font-bold" style={{ color: "#F5A623" }}>{c.data!.affilie.commissionTotal.toLocaleString()} {t(c.data!.tenant.devise)}</span>
                       </p>
                     )}
                   </div>
@@ -255,14 +257,14 @@ export default function MonEspaceAffiliePage() {
                       <ExternalLink size={14} style={{ color: "#666666" }} />
                     </a>
                   )}
-                  <button onClick={() => retirer(c.entry.portalToken)} className="flex-shrink-0 p-2 rounded-xl transition-colors hover:bg-gray-50" style={{ border: "1px solid rgba(0,0,0,0.08)" }} aria-label="Retirer">
+                  <button onClick={() => retirer(c.entry.portalToken)} className="flex-shrink-0 p-2 rounded-xl transition-colors hover:bg-gray-50" style={{ border: "1px solid rgba(0,0,0,0.08)" }} aria-label={t("Retirer")}>
                     <X size={14} style={{ color: "#CCCCCC" }} />
                   </button>
                 </div>
               ))}
               <Link href="/affiliation" className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed text-sm font-semibold transition-colors hover:bg-gray-50"
                 style={{ borderColor: "rgba(0,0,0,0.1)", color: "#666666" }}>
-                <Plus size={14} /> Trouver de nouveaux produits à promouvoir
+                <Plus size={14} />{" "}{t("Trouver de nouveaux produits à promouvoir")}
               </Link>
             </div>
           </section>

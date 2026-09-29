@@ -11,6 +11,7 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, Search } from "lucide-react";
 import { ImportedLiteralProductListPage } from "@/components/storefront/templates/ImportedLiteralProductListPage";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default async function ProduitsPage({ params, searchParams }: Props) {
+  const t = await getT();
   const { slug } = await params;
   const { q, min, max, tri, collection } = await searchParams;
 
@@ -137,10 +139,10 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
           <div className="flex items-end justify-between mb-6">
             <div>
               <span className="text-xs font-semibold uppercase tracking-widest mb-1 block" style={{ color: c.accent }}>
-                {tenant.nomBoutique}
+                {t(tenant.nomBoutique)}
               </span>
               <h1 className="text-3xl sm:text-4xl font-bold font-playfair">
-                {q ? `Résultats pour "${q}"` : collection ? `Collection` : "Tous les produits"}
+                {q ? t("Résultats pour \"{0}\"", q) : collection ? t("Collection") : t("Tous les produits")}
               </h1>
             </div>
             <span className="text-sm" style={{ opacity: 0.4 }}>{produits.length} produit{produits.length !== 1 ? "s" : ""}</span>
@@ -153,7 +155,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
               <input
                 name="q"
                 defaultValue={q}
-                placeholder="Rechercher un produit…"
+                placeholder={t("Rechercher un produit…")}
                 className="w-full pl-10 pr-4 py-2.5 text-sm border focus:outline-none"
                 style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
               />
@@ -164,18 +166,18 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
               className="px-4 py-2.5 text-sm border focus:outline-none"
               style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
             >
-              <option value="">Plus récents</option>
-              <option value="populaire">Best-sellers</option>
-              <option value="prix-asc">Prix croissant</option>
-              <option value="prix-desc">Prix décroissant</option>
-              <option value="avis">Mieux notés</option>
+              <option value="">{t("Plus récents")}</option>
+              <option value="populaire">{t("Best-sellers")}</option>
+              <option value="prix-asc">{t("Prix croissant")}</option>
+              <option value="prix-desc">{t("Prix décroissant")}</option>
+              <option value="avis">{t("Mieux notés")}</option>
             </select>
             <button
               type="submit"
               className={`text-sm inline-flex items-center gap-2 ${btnPrimaryClass}`}
               style={btnPrimaryStyle}
             >
-              <Search size={14} /> Filtrer
+              <Search size={14} />{" "}{t("Filtrer")}
             </button>
             {hasFilters && (
               <Link
@@ -183,7 +185,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                 className="px-4 py-2.5 text-sm border transition-all hover:opacity-80"
                 style={{ borderColor: `${c.accent}30`, color: c.texte, borderRadius: radius }}
               >
-                ✕ Effacer
+                {t("✕ Effacer")}
               </Link>
             )}
           </form>
@@ -196,7 +198,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
               {tenant.collections.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: c.accent }}>
-                    Collections
+                    {t("Collections")}
                   </p>
                   <div className="space-y-1">
                     <Link
@@ -209,7 +211,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                         borderRadius: "8px",
                       }}
                     >
-                      Tous les produits
+                      {t("Tous les produits")}
                     </Link>
                     {tenant.collections.map((col) => (
                       <Link
@@ -223,7 +225,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                           borderRadius: "8px",
                         }}
                       >
-                        {col.nom}
+                        {t(col.nom)}
                       </Link>
                     ))}
                   </div>
@@ -233,7 +235,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
               {categories.length > 0 && (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: c.accent }}>
-                    Catégories
+                    {t("Catégories")}
                   </p>
                   <div className="space-y-1">
                     {categories.map((cat) => (
@@ -243,7 +245,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                         className="block px-3 py-2 text-sm rounded-lg transition-all"
                         style={{ color: c.texte, opacity: q === cat ? 1 : 0.6, borderRadius: "8px" }}
                       >
-                        {cat}
+                        {t(cat)}
                       </Link>
                     ))}
                   </div>
@@ -257,16 +259,16 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
             {produits.length === 0 ? (
               <div className="text-center py-24">
                 <Search size={48} className="mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-semibold mb-2">Aucun produit trouvé</p>
+                <p className="text-lg font-semibold mb-2">{t("Aucun produit trouvé")}</p>
                 <p className="text-sm mb-6" style={{ opacity: 0.5 }}>
-                  {q ? `Aucun résultat pour "${q}"` : "Cette collection est vide pour l'instant"}
+                  {q ? t("Aucun résultat pour \"{0}\"", q) : t("Cette collection est vide pour l'instant")}
                 </p>
                 <Link
                   href={`/${slug}/produits`}
                   className={`text-sm ${btnPrimaryClass}`}
                   style={btnPrimaryStyle}
                 >
-                  Voir tous les produits
+                  {t("Voir tous les produits")}
                 </Link>
               </div>
             ) : (
@@ -302,12 +304,12 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                             )}
                             {remise > 0 && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
-                                -{remise}%
+                                -{t(remise)}%
                               </span>
                             )}
                             {p.stock === 0 && (
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/60 text-white">
-                                Épuisé
+                                {t("Épuisé")}
                               </span>
                             )}
                           </div>
@@ -316,14 +318,14 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                             style={{ background: `linear-gradient(to top, ${c.fond}cc 0%, transparent 60%)` }}
                           >
                             <span className="w-full text-center text-xs font-bold py-2 rounded-xl" style={{ backgroundColor: c.accent, color: c.fond }}>
-                              Voir le produit
+                              {t("Voir le produit")}
                             </span>
                           </div>
                         </div>
                         <div className="p-3.5">
-                          <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{p.nom}</p>
+                          <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{t(p.nom)}</p>
                           {p.categorie && (
-                            <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{p.categorie}</p>
+                            <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{t(p.categorie)}</p>
                           )}
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-sm" style={{ color: c.accent }}>
@@ -336,7 +338,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                             )}
                           </div>
                           {p.ventes > 5 && (
-                            <p className="text-[10px] mt-1" style={{ opacity: 0.35 }}>{p.ventes} ventes</p>
+                            <p className="text-[10px] mt-1" style={{ opacity: 0.35 }}>{t(p.ventes)} ventes</p>
                           )}
                         </div>
                       </div>
@@ -350,7 +352,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
       </div>
 
       <footer className="border-t mt-16 py-8 text-center text-xs" style={{ borderColor: `${c.accent}10`, opacity: 0.4 }}>
-        <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
+        <p>{t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: c.accent, opacity: 1 }}>{t("Axso")}</span></p>
       </footer>
     </div>
   );

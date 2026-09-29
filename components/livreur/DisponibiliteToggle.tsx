@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   livreurId: string;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function DisponibiliteToggle({ livreurId, disponible: initial }: Props) {
+  const t = useT();
   const [disponible, setDisponible] = useState(initial);
   const [loading, setLoading] = useState(false);
 
@@ -18,10 +20,10 @@ export function DisponibiliteToggle({ livreurId, disponible: initial }: Props) {
       if (res.ok) {
         const data = await res.json();
         setDisponible(data.disponible);
-        toast.success(data.disponible ? "Vous êtes disponible" : "Vous êtes hors service");
+        toast.success(data.disponible ? t("Vous êtes disponible") : t("Vous êtes hors service"));
       }
     } catch {
-      toast.error("Erreur");
+      toast.error(t("Erreur"));
     } finally {
       setLoading(false);
     }
@@ -38,7 +40,7 @@ export function DisponibiliteToggle({ livreurId, disponible: initial }: Props) {
       } disabled:opacity-50`}
     >
       <div className={`w-2 h-2 rounded-full ${disponible ? "bg-green-400 animate-pulse" : "bg-red-400"}`} />
-      {disponible ? "Disponible" : "Hors service"}
+      {disponible ? t("Disponible") : t("Hors service")}
     </button>
   );
 }

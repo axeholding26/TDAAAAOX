@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 // ─── Brand ────────────────────────────────────────────────────────────────────
 const C = {
   orange:     "#F5A623",
@@ -90,6 +91,7 @@ function Avatar({ url, nom, size = 36, ring = false, online = false }: { url?: s
 
 // ─── Story Viewer Modal ───────────────────────────────────────────────────────
 function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; startIndex: number; onClose: () => void }) {
+  const tr = useT();
   const [idx, setIdx] = useState(startIndex);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -125,7 +127,7 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; 
         <div style={{ position: "absolute", top: 24, left: 12, right: 12, display: "flex", alignItems: "center", gap: 10, zIndex: 10 }}>
           <Avatar url={story.tenant.logoUrl} nom={story.tenant.nomBoutique} size={36} ring />
           <div>
-            <div style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{story.tenant.nomBoutique}</div>
+            <div style={{ color: "#fff", fontWeight: 800, fontSize: 13 }}>{tr(story.tenant.nomBoutique)}</div>
             <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{timeAgo(story.createdAt)}</div>
           </div>
           <button onClick={onClose} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#fff", opacity: 0.8 }}><X size={18} /></button>
@@ -134,7 +136,7 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; 
         <div style={{ minHeight: 520, display: "flex", alignItems: "center", justifyContent: "center", padding: "80px 20px 80px" }}>
           {story.mediaUrls[0]
             ? <img src={story.mediaUrls[0]} alt="" style={{ width: "100%", borderRadius: 16, objectFit: "cover", maxHeight: 400 }} />
-            : <p style={{ color: "#fff", fontSize: 20, fontWeight: 700, textAlign: "center", lineHeight: 1.5 }}>{story.contenu}</p>
+            : <p style={{ color: "#fff", fontSize: 20, fontWeight: 700, textAlign: "center", lineHeight: 1.5 }}>{tr(story.contenu)}</p>
           }
         </div>
         {/* Nav arrows */}
@@ -143,7 +145,7 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; 
         {/* Footer */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)", display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ flex: 1, display: "flex", background: "rgba(255,255,255,0.15)", borderRadius: 999, padding: "8px 14px", alignItems: "center", gap: 6 }}>
-            <input placeholder="Répondre..." style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#fff", fontSize: 13 }} />
+            <input placeholder={tr("Répondre...")} style={{ flex: 1, background: "none", border: "none", outline: "none", color: "#fff", fontSize: 13 }} />
           </div>
           <button style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}><Heart size={22} /></button>
           <button style={{ background: "none", border: "none", cursor: "pointer", color: "#fff" }}><Share2 size={20} /></button>
@@ -156,12 +158,13 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; 
 // ─── Emoji Picker ─────────────────────────────────────────────────────────────
 const EMOJIS = ["❤️", "🔥", "👏", "😍", "🚀", "💯", "🤩", "💪"];
 function EmojiPicker({ onPick }: { onPick: (e: string) => void }) {
+  const tr = useT();
   return (
     <div style={{ position: "absolute", bottom: "100%", left: 0, background: C.white, borderRadius: 16, padding: "8px 10px", display: "flex", gap: 6, boxShadow: "0 4px 24px rgba(0,0,0,0.14)", border: `1px solid ${C.gray200}`, zIndex: 50, marginBottom: 6 }}>
       {EMOJIS.map(e => (
         <button key={e} onClick={() => onPick(e)} style={{ fontSize: 20, background: "none", border: "none", cursor: "pointer", borderRadius: 8, padding: "4px 6px", transition: "background .1s" }}
           onMouseEnter={ev => (ev.currentTarget.style.background = C.gray100)} onMouseLeave={ev => (ev.currentTarget.style.background = "none")}>
-          {e}
+          {tr(e)}
         </button>
       ))}
     </div>
@@ -170,6 +173,7 @@ function EmojiPicker({ onPick }: { onPick: (e: string) => void }) {
 
 // ─── Share Modal ──────────────────────────────────────────────────────────────
 function ShareModal({ post, onClose }: { post: PostSocial; onClose: () => void }) {
+  const tr = useT();
   const url = typeof window !== "undefined" ? window.location.href : "";
   const [copied, setCopied] = useState(false);
   const copy = () => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
@@ -177,7 +181,7 @@ function ShareModal({ post, onClose }: { post: PostSocial; onClose: () => void }
     <div style={{ position: "fixed", inset: 0, zIndex: 9000, background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "flex-end", justifyContent: "center" }} onClick={onClose}>
       <div style={{ width: "100%", maxWidth: 480, background: C.white, borderRadius: "24px 24px 0 0", padding: "24px 20px 32px" }} onClick={e => e.stopPropagation()}>
         <div style={{ width: 40, height: 4, background: C.gray200, borderRadius: 99, margin: "0 auto 20px" }} />
-        <p style={{ fontWeight: 800, fontSize: 16, margin: "0 0 16px", color: C.gray900 }}>Partager ce post</p>
+        <p style={{ fontWeight: 800, fontSize: 16, margin: "0 0 16px", color: C.gray900 }}>{tr("Partager ce post")}</p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {[
             { label: "WhatsApp",  color: "#25D366", Icon: MessageCircle },
@@ -187,14 +191,14 @@ function ShareModal({ post, onClose }: { post: PostSocial; onClose: () => void }
           ].map(s => (
             <button key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", minWidth: 64 }}>
               <div style={{ width: 52, height: 52, borderRadius: 16, background: s.color, display: "flex", alignItems: "center", justifyContent: "center" }}><s.Icon size={22} color="#fff" /></div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: C.gray600 }}>{s.label}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.gray600 }}>{tr(s.label)}</span>
             </button>
           ))}
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 20, background: C.gray50, borderRadius: 14, padding: "10px 14px", alignItems: "center" }}>
           <span style={{ flex: 1, fontSize: 12, color: C.gray500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url}</span>
           <button onClick={copy} style={{ background: copied ? C.green : C.orange, color: "#fff", border: "none", borderRadius: 10, padding: "6px 14px", fontSize: 12, fontWeight: 800, cursor: "pointer" }}>
-            {copied ? "Copié ✓" : "Copier"}
+            {copied ? tr("Copié ✓") : tr("Copier")}
           </button>
         </div>
       </div>
@@ -204,6 +208,7 @@ function ShareModal({ post, onClose }: { post: PostSocial; onClose: () => void }
 
 // ─── Comment thread ───────────────────────────────────────────────────────────
 function CommentThread({ postId, initial, myNom, myLogo, count }: { postId: string; initial: Commentaire[]; myNom: string; myLogo?: string | null; count: number }) {
+  const tr = useT();
   const [comments, setComments] = useState<Commentaire[]>(initial);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -246,20 +251,20 @@ function CommentThread({ postId, initial, myNom, myLogo, count }: { postId: stri
             <Avatar nom={c.auteur} size={28} />
             <div style={{ flex: 1 }}>
               <div style={{ background: C.gray50, borderRadius: "4px 14px 14px 14px", padding: "8px 12px" }}>
-                <span style={{ fontWeight: 800, fontSize: 11.5, color: C.gray900 }}>{c.auteur}</span>
-                <p style={{ margin: "2px 0 0", fontSize: 13, color: C.gray700, lineHeight: 1.5 }}>{c.contenu}</p>
+                <span style={{ fontWeight: 800, fontSize: 11.5, color: C.gray900 }}>{tr(c.auteur)}</span>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: C.gray700, lineHeight: 1.5 }}>{tr(c.contenu)}</p>
               </div>
               <div style={{ display: "flex", gap: 12, marginTop: 3, paddingLeft: 4 }}>
                 <span style={{ fontSize: 10, color: C.gray400 }}>{timeAgo(c.createdAt)}</span>
-                <button style={{ fontSize: 10, fontWeight: 700, color: C.gray400, background: "none", border: "none", cursor: "pointer" }}>J'aime</button>
-                <button style={{ fontSize: 10, fontWeight: 700, color: C.gray400, background: "none", border: "none", cursor: "pointer" }}>Répondre</button>
+                <button style={{ fontSize: 10, fontWeight: 700, color: C.gray400, background: "none", border: "none", cursor: "pointer" }}>{tr("J'aime")}</button>
+                <button style={{ fontSize: 10, fontWeight: 700, color: C.gray400, background: "none", border: "none", cursor: "pointer" }}>{tr("Répondre")}</button>
               </div>
             </div>
           </div>
         ))}
         {comments.length < total && (
           <button onClick={loadMore} disabled={loadingMore} style={{ fontSize: 12, fontWeight: 700, color: C.orange, background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}>
-            {loadingMore ? "..." : `Voir les ${total - comments.length} autres commentaires`}
+            {loadingMore ? "..." : tr("Voir les {0} autres commentaires", total - comments.length)}
           </button>
         )}
       </div>
@@ -270,7 +275,7 @@ function CommentThread({ postId, initial, myNom, myLogo, count }: { postId: stri
           onFocusCapture={e => (e.currentTarget.style.borderColor = C.orange)} onBlurCapture={e => (e.currentTarget.style.borderColor = C.gray200)}>
           <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && submit()}
-            placeholder="Écrire un commentaire..." style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: C.gray700 }} />
+            placeholder={tr("Écrire un commentaire...")} style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: C.gray700 }} />
           <button onClick={submit} disabled={loading || !text.trim()} style={{ background: "none", border: "none", cursor: "pointer", color: text.trim() ? C.orange : C.gray300, transition: "color .15s" }}>
             {loading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={14} />}
           </button>
@@ -294,6 +299,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
   post: PostSocial; myTenantId: string; myNom: string; myLogo?: string | null;
   onDelete: (id: string) => void; onRepost: (p: PostSocial) => void;
 }) {
+  const tr = useT();
   const { devise, fmt } = useDevise();
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked]               = useState(post.reactions.some(r => r.tenantId === myTenantId));
@@ -338,14 +344,14 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-              <span style={{ fontWeight: 900, fontSize: 13.5, color: C.gray900 }}>{post.tenant.nomBoutique}</span>
+              <span style={{ fontWeight: 900, fontSize: 13.5, color: C.gray900 }}>{tr(post.tenant.nomBoutique)}</span>
               <span style={{ fontSize: 10, fontWeight: 700, color: C.gray400 }}>·</span>
               <span style={{ fontSize: 11, color: C.gray400 }}>{timeAgo(post.createdAt)}</span>
               <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 9, fontWeight: 700, color: meta.color, background: meta.bg, borderRadius: 999, padding: "2px 8px", marginLeft: 2, textTransform: "uppercase" as const, letterSpacing: "0.4px" }}>
-                {meta.label}
+                {tr(meta.label)}
               </span>
             </div>
-            {post.tenant.pays && <div style={{ fontSize: 10, color: C.gray400, marginTop: 1 }}>📍 {post.tenant.pays} · {post.tenant._count.commandes} commandes</div>}
+            {post.tenant.pays && <div style={{ fontSize: 10, color: C.gray400, marginTop: 1 }}>📍 {tr(post.tenant.pays)} · {tr(post.tenant._count.commandes)} commandes</div>}
           </div>
           <div style={{ position: "relative" }}>
             <button onClick={() => setShowMenu(m => !m)} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray400, padding: 6, borderRadius: 8 }}>
@@ -353,29 +359,29 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
             </button>
             {showMenu && (
               <div style={{ position: "absolute", top: "100%", right: 0, background: C.white, borderRadius: 14, boxShadow: "0 4px 24px rgba(0,0,0,0.12)", border: `1px solid ${C.gray100}`, minWidth: 160, zIndex: 100, overflow: "hidden" }}>
-                {isMe && <button onClick={() => { onDelete(post.id); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.red, gap: 8, alignItems: "center" }}><X size={13} />Supprimer</button>}
-                <button onClick={() => { setShowShare(true); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Share2 size={13} />Partager</button>
-                <button style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Bookmark size={13} />Sauvegarder</button>
-                <button onClick={() => { onRepost(post); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Repeat2 size={13} />Reposter</button>
+                {isMe && <button onClick={() => { onDelete(post.id); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.red, gap: 8, alignItems: "center" }}><X size={13} />{tr("Supprimer")}</button>}
+                <button onClick={() => { setShowShare(true); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Share2 size={13} />{tr("Partager")}</button>
+                <button style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Bookmark size={13} />{tr("Sauvegarder")}</button>
+                <button onClick={() => { onRepost(post); setShowMenu(false); }} style={{ display: "flex", width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, color: C.gray700, gap: 8, alignItems: "center" }}><Repeat2 size={13} />{tr("Reposter")}</button>
               </div>
             )}
           </div>
         </div>
 
         {/* Text */}
-        {post.contenu && <div style={{ padding: "0 16px 12px", fontSize: 14.5, color: C.gray800, lineHeight: 1.65, fontWeight: 400 }}>{post.contenu}</div>}
+        {post.contenu && <div style={{ padding: "0 16px 12px", fontSize: 14.5, color: C.gray800, lineHeight: 1.65, fontWeight: 400 }}>{tr(post.contenu)}</div>}
 
         {/* Milestone */}
         {post.type === "milestone" && post.scoreLabel && (
           <div style={{ margin: "0 16px 14px", background: `linear-gradient(135deg, ${C.orangePale}, ${C.orangeSoft})`, borderRadius: 18, padding: "18px 20px", display: "flex", alignItems: "center", gap: 16, border: `1px solid ${C.orangeLight}` }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><Trophy size={36} color={C.orangeDark} /></div>
             <div>
-              <div style={{ fontWeight: 900, fontSize: 28, color: C.orangeDark, letterSpacing: "-1.5px" }}>{post.scoreValeur?.toLocaleString("fr-FR")}</div>
-              <div style={{ fontSize: 13, color: C.orangeDark, fontWeight: 700, opacity: 0.85 }}>{post.scoreLabel}</div>
+              <div style={{ fontWeight: 900, fontSize: 28, color: C.orangeDark, letterSpacing: "-1.5px" }}>{post.scoreValeur?.toLocaleString(tr.loc)}</div>
+              <div style={{ fontSize: 13, color: C.orangeDark, fontWeight: 700, opacity: 0.85 }}>{tr(post.scoreLabel)}</div>
             </div>
             <div style={{ marginLeft: "auto", textAlign: "right" }}>
-              <div style={{ fontSize: 10, color: C.orangeDark, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.7 }}>Axsocial</div>
-              <div style={{ fontSize: 10, color: C.orangeDark, opacity: 0.6 }}>Milestone</div>
+              <div style={{ fontSize: 10, color: C.orangeDark, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.7 }}>{tr("Axsocial")}</div>
+              <div style={{ fontSize: 10, color: C.orangeDark, opacity: 0.6 }}>{tr("Milestone")}</div>
             </div>
           </div>
         )}
@@ -387,9 +393,9 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
               {post.produitImg ? <img src={post.produitImg} alt={post.produitNom} style={{ width: "100%", height: 96, objectFit: "cover" }} /> : <ShoppingBag size={28} color={C.gray300} />}
             </div>
             <div style={{ padding: "14px 16px", flex: 1 }}>
-              <div style={{ fontWeight: 800, fontSize: 14, color: C.gray900 }}>{post.produitNom}</div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: C.gray900 }}>{tr(post.produitNom)}</div>
               {post.produitPrix && <div style={{ fontWeight: 900, fontSize: 18, color: C.orange, marginTop: 4, letterSpacing: "-0.5px" }}>{fmt(post.produitPrix)}</div>}
-              <button style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: C.white, background: C.orange, border: "none", borderRadius: 999, padding: "6px 18px", cursor: "pointer", boxShadow: `0 2px 8px rgba(245,166,35,0.35)` }}>Voir le produit →</button>
+              <button style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: C.white, background: C.orange, border: "none", borderRadius: 999, padding: "6px 18px", cursor: "pointer", boxShadow: `0 2px 8px rgba(245,166,35,0.35)` }}>{tr("Voir le produit →")}</button>
             </div>
           </div>
         )}
@@ -405,14 +411,14 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
                   <button key={i} onClick={() => handleVote(i)} disabled={votedIdx !== null} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: `1.5px solid ${votedIdx === i ? C.orange : C.gray200}`, cursor: votedIdx !== null ? "default" : "pointer", textAlign: "left", background: "none", transition: "border-color .2s" }}>
                     <div style={{ position: "absolute", inset: 0, width: `${pct}%`, background: votedIdx === i ? C.orangeSoft : C.gray50, transition: "width .6s cubic-bezier(.4,0,.2,1)" }} />
                     <div style={{ position: "relative", padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: 13, fontWeight: votedIdx === i ? 800 : 600, color: C.gray800 }}>{opt}</span>
+                      <span style={{ fontSize: 13, fontWeight: votedIdx === i ? 800 : 600, color: C.gray800 }}>{tr(opt)}</span>
                       {votedIdx !== null && <span style={{ fontSize: 12, fontWeight: 800, color: votedIdx === i ? C.orange : C.gray500 }}>{pct}%</span>}
                     </div>
                   </button>
                 );
               })}
             </div>
-            <div style={{ fontSize: 11, color: C.gray400, marginTop: 6, fontWeight: 600 }}>{totalVotes} votes</div>
+            <div style={{ fontSize: 11, color: C.gray400, marginTop: 6, fontWeight: 600 }}>{tr(totalVotes)} votes</div>
           </div>
         )}
 
@@ -440,9 +446,9 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
 
         {/* Stats row */}
         <div style={{ padding: "8px 16px 2px", display: "flex", gap: 16, fontSize: 11, color: C.gray400, borderTop: post.mediaUrls.length > 0 ? `1px solid ${C.gray100}` : undefined }}>
-          {likeCount > 0 && <span>{likeCount} réaction{likeCount > 1 ? "s" : ""}</span>}
+          {likeCount > 0 && <span>{likeCount}{" "}{tr("réaction")}{likeCount > 1 ? "s" : ""}</span>}
           {commentCount > 0 && <span>{commentCount} commentaire{commentCount > 1 ? "s" : ""}</span>}
-          {post.vues > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Eye size={10} />{post.vues}</span>}
+          {post.vues > 0 && <span style={{ display: "flex", alignItems: "center", gap: 3 }}><Eye size={10} />{tr(post.vues)}</span>}
         </div>
 
         {/* Action bar */}
@@ -454,8 +460,8 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
               onClick={() => handleLike()}
               onContextMenu={e => { e.preventDefault(); setShowEmoji(s => !s); }}
               style={{ display: "flex", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", padding: "8px 10px", borderRadius: 12, fontSize: 13, fontWeight: 700, color: liked ? C.red : C.gray500, transition: "all .15s" }}
-              title="Clic droit pour choisir un emoji">
-              <span style={{ fontSize: activeEmoji ? 16 : undefined }}>{activeEmoji || <Heart size={18} fill={liked ? C.red : "none"} color={liked ? C.red : undefined} />}</span>
+              title={tr("Clic droit pour choisir un emoji")}>
+              <span style={{ fontSize: activeEmoji ? 16 : undefined }}>{tr(activeEmoji) || <Heart size={18} fill={liked ? C.red : "none"} color={liked ? C.red : undefined} />}</span>
             </button>
           </div>
 
@@ -499,6 +505,7 @@ const TABS: { key: PostType; label: string; Icon: any }[] = [
 ];
 
 function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string | null; onPost: (p: PostSocial) => void }) {
+  const tr = useT();
   const [tab, setTab]             = useState<PostType>("post");
   const [contenu, setContenu]     = useState("");
   const [scoreValeur, setScoreValeur] = useState("");
@@ -543,7 +550,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
       <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 14, scrollbarWidth: "none" }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 999, padding: "5px 13px", fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer", flexShrink: 0, transition: "all .15s", background: tab === t.key ? C.orange : C.gray50, color: tab === t.key ? "#fff" : C.gray500, boxShadow: tab === t.key ? `0 2px 10px rgba(245,166,35,0.38)` : "none" }}>
-            <t.Icon size={13} />{t.label}
+            <t.Icon size={13} />{tr(t.label)}
           </button>
         ))}
       </div>
@@ -555,19 +562,19 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
             onChange={e => { setContenu(e.target.value); setCharCount(e.target.value.length); }}
             onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
             placeholder={
-              tab === "milestone" ? "Décris ton milestone (ex: J'ai atteint 100 commandes ce mois! 🚀)..."
-              : tab === "sondage" ? "Pose ta question à la communauté..."
-              : tab === "story" ? "Ta story disparaîtra dans 24h ⚡..."
-              : tab === "produit" ? "Présente ton produit à la communauté..."
-              : `Partage avec la communauté Axsocial...`
+              tab === "milestone" ? tr("Décris ton milestone (ex: J'ai atteint 100 commandes ce mois! 🚀)...")
+              : tab === "sondage" ? tr("Pose ta question à la communauté...")
+              : tab === "story" ? tr("Ta story disparaîtra dans 24h ⚡...")
+              : tab === "produit" ? tr("Présente ton produit à la communauté...")
+              : tr("Partage avec la communauté Axsocial...")
             }
             style={{ width: "100%", border: "none", outline: "none", resize: "none", fontSize: 15, color: C.gray800, lineHeight: 1.65, minHeight: 80, background: "transparent", fontFamily: "inherit" }}
           />
 
           {tab === "milestone" && (
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input value={scoreValeur} onChange={e => setScoreValeur(e.target.value)} placeholder="Valeur" type="number" style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
-              <input value={scoreLabel} onChange={e => setScoreLabel(e.target.value)} placeholder="Label (ex: commandes ce mois)" style={{ flex: 3, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+              <input value={scoreValeur} onChange={e => setScoreValeur(e.target.value)} placeholder={tr("Valeur")} type="number" style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+              <input value={scoreLabel} onChange={e => setScoreLabel(e.target.value)} placeholder={tr("Label (ex: commandes ce mois)")} style={{ flex: 3, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
             </div>
           )}
 
@@ -576,12 +583,12 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
               {sondageOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", gap: 6 }}>
                   <input value={opt} onChange={e => { const o = [...sondageOptions]; o[i] = e.target.value; setSondageOptions(o); }}
-                    placeholder={`Option ${i + 1}`} style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+                    placeholder={tr("Option {0}", i + 1)} style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
                   {sondageOptions.length > 2 && <button onClick={() => setSondageOptions(sondageOptions.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray300, padding: 6 }}><X size={14} /></button>}
                 </div>
               ))}
               {sondageOptions.length < 4 && (
-                <button onClick={() => setSondageOptions([...sondageOptions, ""])} style={{ fontSize: 12, color: C.orange, background: C.orangePale, border: `1.5px dashed ${C.orangeLight}`, borderRadius: 12, padding: "9px", cursor: "pointer", fontWeight: 700 }}>+ Ajouter une option</button>
+                <button onClick={() => setSondageOptions([...sondageOptions, ""])} style={{ fontSize: 12, color: C.orange, background: C.orangePale, border: `1.5px dashed ${C.orangeLight}`, borderRadius: 12, padding: "9px", cursor: "pointer", fontWeight: 700 }}>{tr("+ Ajouter une option")}</button>
               )}
             </div>
           )}
@@ -608,7 +615,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
           {axiaLoading ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Zap size={12} />} AXIA
         </button>
         <button onClick={handleSubmit} disabled={submitting || charCount > MAX} style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 999, padding: "8px 22px", fontSize: 13, fontWeight: 900, border: "none", background: C.orange, color: C.white, cursor: "pointer", boxShadow: `0 3px 12px rgba(245,166,35,0.42)`, letterSpacing: "0.2px" }}>
-          {submitting ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={13} />} Publier
+          {submitting ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={13} />}{" "}{tr("Publier")}
         </button>
       </div>
     </div>
@@ -617,6 +624,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
+  const tr = useT();
   const medals = ["1st", "2nd", "3rd"];
   return (
     <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, overflow: "hidden" }}>
@@ -625,19 +633,19 @@ function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
           <Flame size={14} color="#fff" />
         </div>
         <div>
-          <div style={{ fontWeight: 900, fontSize: 13, color: C.gray900 }}>Top Vendeurs</div>
-          <div style={{ fontSize: 10, color: C.gray400 }}>Classement Axsocial</div>
+          <div style={{ fontWeight: 900, fontSize: 13, color: C.gray900 }}>{tr("Top Vendeurs")}</div>
+          <div style={{ fontSize: 10, color: C.gray400 }}>{tr("Classement Axsocial")}</div>
         </div>
       </div>
       <div>
         {entries.map((e, i) => (
           <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 16px", cursor: "pointer", transition: "background .12s" }}
             onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
-            <span style={{ fontSize: i < 3 ? 9 : 11, minWidth: 24, textAlign: "center", fontWeight: 800, color: i >= 3 ? C.gray300 : C.orange, background: i < 3 ? C.orangeSoft : undefined, borderRadius: i < 3 ? 999 : undefined, padding: i < 3 ? "1px 4px" : undefined }}>{i < 3 ? medals[i] : i + 1}</span>
+            <span style={{ fontSize: i < 3 ? 9 : 11, minWidth: 24, textAlign: "center", fontWeight: 800, color: i >= 3 ? C.gray300 : C.orange, background: i < 3 ? C.orangeSoft : undefined, borderRadius: i < 3 ? 999 : undefined, padding: i < 3 ? "1px 4px" : undefined }}>{i < 3 ? tr(medals[i]) : i + 1}</span>
             <Avatar url={e.logoUrl} nom={e.nomBoutique} size={32} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 800, fontSize: 12, color: C.gray900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.nomBoutique}</div>
-              <div style={{ fontSize: 10, color: C.gray400 }}>{e._count.commandes} commandes · {e._count.produits} produits</div>
+              <div style={{ fontWeight: 800, fontSize: 12, color: C.gray900, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tr(e.nomBoutique)}</div>
+              <div style={{ fontSize: 10, color: C.gray400 }}>{tr(e._count.commandes)}{" "}{tr("commandes ·")}{" "}{tr(e._count.produits)} produits</div>
             </div>
             {i < 3 && <div style={{ fontSize: 10, fontWeight: 800, color: C.orange, background: C.orangeSoft, borderRadius: 999, padding: "2px 8px" }}>#{i + 1}</div>}
           </div>
@@ -649,6 +657,7 @@ function Leaderboard({ entries }: { entries: LeaderEntry[] }) {
 
 // ─── Trending widget ──────────────────────────────────────────────────────────
 function TrendingWidget() {
+  const tr = useT();
   const trends = [
     { tag: "#Dropshipping", posts: "2.4k posts" },
     { tag: "#ProduitsMCI",  posts: "1.8k posts" },
@@ -660,16 +669,16 @@ function TrendingWidget() {
     <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, overflow: "hidden", marginBottom: 12 }}>
       <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "center", gap: 8 }}>
         <TrendingUp size={14} color={C.orange} />
-        <span style={{ fontWeight: 900, fontSize: 13, color: C.gray900 }}>Tendances</span>
+        <span style={{ fontWeight: 900, fontSize: 13, color: C.gray900 }}>{tr("Tendances")}</span>
       </div>
       {trends.map((t, i) => (
         <div key={i} style={{ padding: "8px 16px", cursor: "pointer", transition: "background .12s" }}
           onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <div style={{ fontSize: 9, color: C.gray400, fontWeight: 600 }}>Tendance</div>
-              <div style={{ fontSize: 13, fontWeight: 800, color: C.orange, marginTop: 1 }}>{t.tag}</div>
-              <div style={{ fontSize: 10, color: C.gray400, marginTop: 1 }}>{t.posts}</div>
+              <div style={{ fontSize: 9, color: C.gray400, fontWeight: 600 }}>{tr("Tendance")}</div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: C.orange, marginTop: 1 }}>{tr(t.tag)}</div>
+              <div style={{ fontSize: 10, color: C.gray400, marginTop: 1 }}>{tr(t.posts)}</div>
             </div>
             <MoreHorizontal size={14} color={C.gray300} />
           </div>
@@ -681,6 +690,7 @@ function TrendingWidget() {
 
 // ─── AXIA Boost ───────────────────────────────────────────────────────────────
 function AxiaPanel({ myNom }: { myNom: string }) {
+  const tr = useT();
   const tips = [
     { text: "Coulisses de ta boutique" },
     { text: "Partage ton meilleur score" },
@@ -693,14 +703,14 @@ function AxiaPanel({ myNom }: { myNom: string }) {
         <div style={{ width: 26, height: 26, borderRadius: 8, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Sparkles size={13} color="#fff" />
         </div>
-        <span style={{ fontWeight: 900, fontSize: 13, color: "#fff" }}>AXIA Boost</span>
+        <span style={{ fontWeight: 900, fontSize: 13, color: "#fff" }}>{tr("AXIA Boost")}</span>
       </div>
-      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", marginBottom: 10, lineHeight: 1.5 }}>Idées pour {myNom}</p>
+      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", marginBottom: 10, lineHeight: 1.5 }}>{tr("Idées pour")}{" "}{tr(myNom)}</p>
       <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
         {tips.map((t, i) => (
           <button key={i} style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.14)", border: "none", borderRadius: 12, padding: "9px 11px", cursor: "pointer", textAlign: "left", transition: "background .15s" }}
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")} onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.14)")}>
-            <span style={{ fontSize: 11.5, color: "#fff", fontWeight: 600 }}>{t.text}</span>
+            <span style={{ fontSize: 11.5, color: "#fff", fontWeight: 600 }}>{tr(t.text)}</span>
           </button>
         ))}
       </div>
@@ -710,6 +720,7 @@ function AxiaPanel({ myNom }: { myNom: string }) {
 
 // ─── Search bar ───────────────────────────────────────────────────────────────
 function SearchBar({ onResults }: { onResults: (r: any) => void }) {
+  const tr = useT();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -732,31 +743,31 @@ function SearchBar({ onResults }: { onResults: (r: any) => void }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, background: C.white, border: `1.5px solid ${open ? C.orange : C.gray200}`, borderRadius: 999, padding: "9px 16px", boxShadow: open ? `0 0 0 3px ${C.orangeSoft}` : "0 1px 3px rgba(0,0,0,0.04)", transition: "all .2s" }}>
         {loading ? <Loader2 size={15} color={C.orange} style={{ animation: "spin 1s linear infinite" }} /> : <Search size={15} color={open ? C.orange : C.gray400} />}
         <input value={q} onChange={e => setQ(e.target.value)} onFocus={() => setOpen(true)} onBlur={() => setTimeout(() => setOpen(false), 200)}
-          placeholder="Rechercher sur Axsocial..." style={{ flex: 1, border: "none", outline: "none", fontSize: 13, color: C.gray700, background: "transparent" }} />
+          placeholder={tr("Rechercher sur Axsocial...")} style={{ flex: 1, border: "none", outline: "none", fontSize: 13, color: C.gray700, background: "transparent" }} />
         {q && <button onClick={() => setQ("")} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray300 }}><X size={13} /></button>}
       </div>
       {open && (results.posts.length > 0 || results.boutiques.length > 0) && (
         <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: C.white, borderRadius: 18, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", border: `1px solid ${C.gray100}`, zIndex: 200, overflow: "hidden", maxHeight: 360, overflowY: "auto" }}>
           {results.boutiques.length > 0 && (
             <div>
-              <div style={{ padding: "10px 14px 6px", fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase", letterSpacing: "0.5px" }}>Boutiques</div>
+              <div style={{ padding: "10px 14px 6px", fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase", letterSpacing: "0.5px" }}>{tr("Boutiques")}</div>
               {results.boutiques.map((b: any) => (
                 <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", cursor: "pointer" }}
                   onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
                   <Avatar url={b.logoUrl} nom={b.nomBoutique} size={30} />
-                  <div><div style={{ fontWeight: 700, fontSize: 13 }}>{b.nomBoutique}</div><div style={{ fontSize: 10, color: C.gray400 }}>{b._count.commandes} commandes</div></div>
+                  <div><div style={{ fontWeight: 700, fontSize: 13 }}>{tr(b.nomBoutique)}</div><div style={{ fontSize: 10, color: C.gray400 }}>{tr(b._count.commandes)} commandes</div></div>
                 </div>
               ))}
             </div>
           )}
           {results.posts.length > 0 && (
             <div>
-              <div style={{ padding: "10px 14px 6px", fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase", letterSpacing: "0.5px" }}>Posts</div>
+              <div style={{ padding: "10px 14px 6px", fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase", letterSpacing: "0.5px" }}>{tr("Posts")}</div>
               {results.posts.map((p: any) => (
                 <div key={p.id} style={{ display: "flex", gap: 10, padding: "8px 14px", cursor: "pointer", alignItems: "flex-start" }}
                   onMouseEnter={ev => (ev.currentTarget.style.background = C.gray50)} onMouseLeave={ev => (ev.currentTarget.style.background = "transparent")}>
                   <Avatar url={p.tenant?.logoUrl} nom={p.tenant?.nomBoutique || "?"} size={28} />
-                  <div><div style={{ fontWeight: 700, fontSize: 12 }}>{p.tenant?.nomBoutique}</div><div style={{ fontSize: 12, color: C.gray600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>{p.contenu}</div></div>
+                  <div><div style={{ fontWeight: 700, fontSize: 12 }}>{tr(p.tenant?.nomBoutique)}</div><div style={{ fontSize: 12, color: C.gray600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>{tr(p.contenu)}</div></div>
                 </div>
               ))}
             </div>
@@ -769,6 +780,7 @@ function SearchBar({ onResults }: { onResults: (r: any) => void }) {
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 export default function AxsocialPage() {
+  const tr = useT();
   const [posts, setPosts]               = useState<PostSocial[]>([]);
   const [stories, setStories]           = useState<PostSocial[]>([]);
   const [leaderboard, setLeaderboard]   = useState<LeaderEntry[]>([]);
@@ -851,9 +863,9 @@ export default function AxsocialPage() {
       <div style={{ padding: `${fullscreen ? 18 : 22}px 0 14px`, display: "flex", alignItems: "center", gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: C.gray900, letterSpacing: "-0.8px" }}>
-            <span style={{ color: C.orange }}>Ax</span>social
+            <span style={{ color: C.orange }}>{tr("Ax")}</span>social
           </h1>
-          <p style={{ margin: 0, fontSize: 11, color: C.gray400, fontWeight: 600 }}>Le réseau des vendeurs · {leaderboard.length} boutiques actives</p>
+          <p style={{ margin: 0, fontSize: 11, color: C.gray400, fontWeight: 600 }}>{tr("Le réseau des vendeurs ·")}{" "}{leaderboard.length}{" "}{tr("boutiques actives")}</p>
         </div>
         <div style={{ flex: 1 }} />
         <button style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: C.gray500, padding: 8 }}>
@@ -865,7 +877,7 @@ export default function AxsocialPage() {
         </button>
         <button onClick={() => setFullscreen(f => !f)} style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 999, padding: "8px 14px", fontSize: 12, fontWeight: 700, border: `1px solid ${C.gray200}`, background: fullscreen ? C.gray900 : C.white, color: fullscreen ? C.white : C.gray700, cursor: "pointer" }}>
           {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          {fullscreen ? "Réduire" : "Plein écran"}
+          {fullscreen ? tr("Réduire") : tr("Plein écran")}
         </button>
       </div>
 
@@ -879,22 +891,22 @@ export default function AxsocialPage() {
             <div style={{ height: 60, background: `linear-gradient(135deg, ${C.orange}, ${C.orangeDark})` }} />
             <div style={{ padding: "0 16px 16px", marginTop: -28 }}>
               <Avatar url={myLogo} nom={myNom} size={56} ring />
-              <div style={{ marginTop: 8, fontWeight: 900, fontSize: 14, color: C.gray900 }}>{myNom}</div>
+              <div style={{ marginTop: 8, fontWeight: 900, fontSize: 14, color: C.gray900 }}>{tr(myNom)}</div>
               <div style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: C.orange, background: C.orangeSoft, borderRadius: 999, padding: "3px 9px", marginTop: 4 }}>
-                <Star size={8} fill={C.orange} color={C.orange} /> Vendeur Axsocial
+                <Star size={8} fill={C.orange} color={C.orange} />{" "}{tr("Vendeur Axsocial")}
               </div>
               <div style={{ display: "flex", gap: 16, marginTop: 12, fontSize: 12 }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{myStats.posts}</div>
-                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>Posts</div>
+                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{tr(myStats.posts)}</div>
+                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>{tr("Posts")}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{myStats.commandes}</div>
-                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>Commandes</div>
+                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{tr(myStats.commandes)}</div>
+                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>{tr("Commandes")}</div>
                 </div>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{myStats.produits}</div>
-                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>Produits</div>
+                  <div style={{ fontWeight: 900, color: C.gray900, fontSize: 15 }}>{tr(myStats.produits)}</div>
+                  <div style={{ color: C.gray400, fontSize: 10, fontWeight: 600 }}>{tr("Produits")}</div>
                 </div>
               </div>
             </div>
@@ -913,7 +925,7 @@ export default function AxsocialPage() {
               <button key={i} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "10px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 700, color: C.gray700, textAlign: "left", transition: "all .12s" }}
                 onMouseEnter={e => { e.currentTarget.style.background = C.orangePale; e.currentTarget.style.color = C.orange; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.gray700; }}>
-                <span style={{ color: item.color }}>{item.icon}</span>{item.label}
+                <span style={{ color: item.color }}>{item.icon}</span>{tr(item.label)}
               </button>
             ))}
           </div>
@@ -924,13 +936,13 @@ export default function AxsocialPage() {
           {/* Stories */}
           {stories.length > 0 && (
             <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, padding: "14px 16px", marginBottom: 10 }}>
-              <div style={{ fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase" as const, letterSpacing: "0.6px", marginBottom: 12 }}>Stories actives · {stories.length}</div>
+              <div style={{ fontSize: 10, fontWeight: 800, color: C.gray400, textTransform: "uppercase" as const, letterSpacing: "0.6px", marginBottom: 12 }}>{tr("Stories actives ·")}{" "}{stories.length}</div>
               <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 2, scrollbarWidth: "none" }}>
                 <div onClick={() => {}} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer", flexShrink: 0, width: 64 }}>
                   <div style={{ width: 56, height: 56, borderRadius: "50%", border: `2.5px dashed ${C.orangeLight}`, display: "flex", alignItems: "center", justifyContent: "center", background: C.orangePale }}>
                     <Plus size={20} color={C.orange} />
                   </div>
-                  <span style={{ fontSize: 10, color: C.orange, fontWeight: 700 }}>Ajouter</span>
+                  <span style={{ fontSize: 10, color: C.orange, fontWeight: 700 }}>{tr("Ajouter")}</span>
                 </div>
                 {stories.map((s, i) => (
                   <div key={s.id} onClick={() => setStoryViewer(i)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer", flexShrink: 0, width: 64 }}>
@@ -939,7 +951,7 @@ export default function AxsocialPage() {
                         <Avatar url={s.tenant.logoUrl} nom={s.tenant.nomBoutique} size={50} />
                       </div>
                     </div>
-                    <span style={{ fontSize: 10, color: C.gray500, width: "100%", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>{s.tenantId === myTenantId ? "Ma story" : s.tenant.nomBoutique}</span>
+                    <span style={{ fontSize: 10, color: C.gray500, width: "100%", textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: 600 }}>{s.tenantId === myTenantId ? tr("Ma story") : tr(s.tenant.nomBoutique)}</span>
                   </div>
                 ))}
               </div>
@@ -953,7 +965,7 @@ export default function AxsocialPage() {
           <div style={{ display: "flex", gap: 6, marginBottom: 10, overflowX: "auto", scrollbarWidth: "none" }}>
             {FILTERS.map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)} style={{ display: "flex", alignItems: "center", gap: 4, borderRadius: 999, padding: "6px 14px", fontSize: 11, fontWeight: 700, flexShrink: 0, border: "none", cursor: "pointer", transition: "all .2s", background: filter === f.key ? C.gray900 : C.white, color: filter === f.key ? C.white : C.gray500, boxShadow: filter === f.key ? "0 2px 10px rgba(0,0,0,0.14)" : "0 1px 3px rgba(0,0,0,0.05)" }}>
-                <f.Icon size={11} />{f.label}
+                <f.Icon size={11} />{tr(f.label)}
               </button>
             ))}
           </div>
@@ -962,7 +974,7 @@ export default function AxsocialPage() {
           {repostTarget && (
             <div style={{ background: C.orange, borderRadius: 16, padding: "10px 14px", marginBottom: 10, display: "flex", alignItems: "center", gap: 10 }}>
               <Repeat2 size={15} color="#fff" />
-              <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: "#fff" }}>Reposter le post de {repostTarget.tenant.nomBoutique}</span>
+              <span style={{ flex: 1, fontSize: 12, fontWeight: 700, color: "#fff" }}>{tr("Reposter le post de")}{" "}{tr(repostTarget.tenant.nomBoutique)}</span>
               <button onClick={() => setRepostTarget(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.8)" }}><X size={14} /></button>
             </div>
           )}
@@ -976,13 +988,13 @@ export default function AxsocialPage() {
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: `linear-gradient(135deg, ${C.orange}, ${C.orangeLight})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Loader2 size={22} color="#fff" style={{ animation: "spin 1s linear infinite" }} />
               </div>
-              <span style={{ fontSize: 13, color: C.gray400, fontWeight: 700 }}>Chargement du feed Axsocial...</span>
+              <span style={{ fontSize: 13, color: C.gray400, fontWeight: 700 }}>{tr("Chargement du feed Axsocial...")}</span>
             </div>
           ) : posts.length === 0 ? (
             <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, padding: "64px 24px", textAlign: "center" }}>
               <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}><Globe size={52} color={C.gray300} /></div>
-              <p style={{ fontWeight: 900, color: C.gray700, margin: 0, fontSize: 18 }}>Sois le premier !</p>
-              <p style={{ fontSize: 13, color: C.gray400, marginTop: 8, lineHeight: 1.6 }}>Aucun post pour l'instant.<br />Lance la conversation sur Axsocial.</p>
+              <p style={{ fontWeight: 900, color: C.gray700, margin: 0, fontSize: 18 }}>{tr("Sois le premier !")}</p>
+              <p style={{ fontSize: 13, color: C.gray400, marginTop: 8, lineHeight: 1.6 }}>{tr("Aucun post pour l'instant.")}<br />{tr("Lance la conversation sur Axsocial.")}</p>
             </div>
           ) : (
             <>
@@ -991,7 +1003,7 @@ export default function AxsocialPage() {
               ))}
               {nextCursor && (
                 <button onClick={async () => { setLoadingMore(true); await loadFeed(nextCursor!); setLoadingMore(false); }} disabled={loadingMore} style={{ display: "flex", alignItems: "center", gap: 6, margin: "6px auto 24px", borderRadius: 999, padding: "10px 28px", fontSize: 13, fontWeight: 700, border: `1px solid ${C.gray200}`, background: C.white, color: C.gray500, cursor: "pointer", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-                  {loadingMore ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <ChevronDown size={13} />} Voir plus
+                  {loadingMore ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <ChevronDown size={13} />}{" "}{tr("Voir plus")}
                 </button>
               )}
             </>
@@ -1004,10 +1016,10 @@ export default function AxsocialPage() {
           <div style={{ background: C.navy, borderRadius: 20, padding: "12px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 10, height: 10, borderRadius: "50%", background: C.green, boxShadow: `0 0 0 3px rgba(16,185,129,0.25), 0 0 0 6px rgba(16,185,129,0.1)` }} />
             <div>
-              <div style={{ fontSize: 12, fontWeight: 800, color: C.white }}>Axsocial Live</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{leaderboard.length} boutiques connectées</div>
+              <div style={{ fontSize: 12, fontWeight: 800, color: C.white }}>{tr("Axsocial Live")}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>{leaderboard.length}{" "}{tr("boutiques connectées")}</div>
             </div>
-            <span style={{ marginLeft: "auto", fontSize: 11, color: C.orange, fontWeight: 900 }}>EN DIRECT</span>
+            <span style={{ marginLeft: "auto", fontSize: 11, color: C.orange, fontWeight: 900 }}>{tr("EN DIRECT")}</span>
           </div>
 
           <TrendingWidget />

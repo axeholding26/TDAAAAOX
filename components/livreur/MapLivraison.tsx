@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface MapLivraisonProps {
   adresse: string;
@@ -11,6 +12,7 @@ interface MapLivraisonProps {
 }
 
 export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, livreurLng }: MapLivraisonProps) {
+  const t = useT();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
 
@@ -75,7 +77,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
 
         L.marker([livreurLat, livreurLng], { icon: iconLivreur })
           .addTo(map)
-          .bindPopup("<b>Vous êtes ici</b>");
+          .bindPopup(`<b>${t("Vous êtes ici")}</b>`);
 
         // Tracer la ligne entre les deux points
         L.polyline([[livreurLat, livreurLng], [destLat, destLng]], {

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { SelectPays } from "@/components/ui/SelectPays";
+import { useT } from "@/components/I18nProvider";
 
 const CATEGORIES = [
   { label: "Mode", Icon: Shirt },
@@ -21,6 +22,7 @@ const CATEGORIES = [
 type StatutSlug = "idle" | "verification" | "disponible" | "pris" | "invalide";
 
 export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void; onCree: (tenantId: string) => void }) {
+  const t = useT();
   const [nom, setNom] = useState("");
   const [slug, setSlug] = useState("");
   const [pays, setPays] = useState("CM");
@@ -54,8 +56,8 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
   }
 
   async function creer() {
-    if (!nom.trim() || !slug.trim() || !whatsapp.trim()) { toast.error("Remplissez tous les champs"); return; }
-    if (statutSlug === "pris") { toast.error("Cette URL est déjà prise"); return; }
+    if (!nom.trim() || !slug.trim() || !whatsapp.trim()) { toast.error(t("Remplissez tous les champs")); return; }
+    if (statutSlug === "pris") { toast.error(t("Cette URL est déjà prise")); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/boutiques", {
@@ -64,9 +66,9 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      toast.success(`✅ Boutique "${nom}" créée !`);
+      toast.success(t("✅ Boutique \"{0}\" créée !", nom));
       onCree(data.tenantId);
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(t(e.message)); }
     finally { setLoading(false); }
   }
 
@@ -103,8 +105,8 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
                 <Store size={18} className="text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-white text-base leading-tight">Nouvelle boutique</h2>
-                <p className="text-white/50 text-xs mt-0.5">Palier 2 · multi-boutique</p>
+                <h2 className="font-bold text-white text-base leading-tight">{t("Nouvelle boutique")}</h2>
+                <p className="text-white/50 text-xs mt-0.5">{t("Palier 2 · multi-boutique")}</p>
               </div>
             </div>
             <button onClick={fermer} className="text-white/50 hover:text-white transition-colors">
@@ -115,8 +117,8 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
 
         <div className="px-6 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
           <div>
-            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Nom de la boutique</label>
-            <input value={nom} onChange={e => changerNom(e.target.value)} placeholder="Ma deuxième boutique" autoFocus
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Nom de la boutique")}</label>
+            <input value={nom} onChange={e => changerNom(e.target.value)} placeholder={t("Ma deuxième boutique")} autoFocus
               className="w-full rounded-xl px-3.5 py-2.5 text-sm border border-gray-200 focus:outline-none transition-colors"
               style={{ borderColor: nom ? "rgba(17,17,17,.25)" : undefined }}
               onFocus={e => (e.target.style.borderColor = "#F5A623")}
@@ -124,7 +126,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Adresse de la boutique</label>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Adresse de la boutique")}</label>
             <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5 border transition-colors"
               style={{ borderColor: statutSlug === "pris" ? "#f87171" : statutSlug === "disponible" ? "#34d399" : "#e5e7eb", background: "#fafafa" }}>
               <span className="text-gray-400 text-sm whitespace-nowrap">axso.vercel.app/</span>
@@ -136,11 +138,11 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
                 {statutSlug === "pris" && <AlertCircle size={14} className="text-red-400" />}
               </div>
             </div>
-            {statutSlug === "pris" && <p className="text-[11px] text-red-500 mt-1">Cette adresse est déjà prise</p>}
+            {statutSlug === "pris" && <p className="text-[11px] text-red-500 mt-1">{t("Cette adresse est déjà prise")}</p>}
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Catégorie</label>
+            <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Catégorie")}</label>
             <div className="flex flex-wrap gap-1.5">
               {CATEGORIES.map(({ label, Icon }) => (
                 <button key={label} type="button" onClick={() => setCategorie(label)}
@@ -148,7 +150,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
                   style={categorie === label
                     ? { background: "#111111", color: "white" }
                     : { background: "#f4f4f6", color: "#6b7280" }}>
-                  <Icon size={12} /> {label}
+                  <Icon size={12} /> {t(label)}
                 </button>
               ))}
             </div>
@@ -156,12 +158,12 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Pays</label>
+              <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Pays")}</label>
               <SelectPays value={pays} onChange={setPays} />
             </div>
             <div>
               <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">WhatsApp</label>
-              <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+237 6XX XXX XXX"
+              <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t("+237 6XX XXX XXX")}
                 className="w-full rounded-xl px-3.5 py-2.5 text-sm border border-gray-200 focus:outline-none focus:border-[#F5A623]" />
             </div>
           </div>
@@ -170,7 +172,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
             className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(135deg,#111111,#333333)", boxShadow: pretAEnvoyer ? "0 6px 20px rgba(17,17,17,.35)" : "none" }}>
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Store size={14} />}
-            Créer la boutique
+            {t("Créer la boutique")}
           </button>
         </div>
       </div>

@@ -10,6 +10,7 @@ import { CommandesExport } from "@/components/dashboard/CommandesExport";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { CommandesTutorial } from "@/components/dashboard/tutorials/CommandesTutorial";
 import { formatMontant, dateRelative } from "@/lib/utils";
+import { getT } from "@/lib/i18n/serveur";
 
 const STATUTS: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
   en_attente:     { label: "En attente",     bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B", border: "#FDE68A" },
@@ -25,25 +26,27 @@ const AVATAR_COLORS = [
   ["#FAF5FF","#7C3AED"],["#FFF1F2","#E11D48"],["#ECFEFF","#0891B2"],
 ];
 
-function StatutBadge({ statut }: { statut: string }) {
+async function StatutBadge({ statut }: { statut: string }) {
+  const t = await getT();
   const s = STATUTS[statut] ?? { label: statut, bg: "#F9FAFB", text: "#6B7280", dot: "#D1D5DB", border: "#E5E7EB" };
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap"
       style={{ background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
       <span className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: s.dot }} />
-      {s.label}
+      {t(s.label)}
     </span>
   );
 }
 
-function Avatar({ nom }: { nom: string }) {
+async function Avatar({ nom }: { nom: string }) {
+  const t = await getT();
   const hash = (nom ?? "?").split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const [bg, text] = AVATAR_COLORS[hash % AVATAR_COLORS.length];
   const initiales = (nom ?? "?").split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0"
       style={{ background: bg, color: text, border: `1px solid ${text}20` }}>
-      {initiales}
+      {t(initiales)}
     </div>
   );
 }
@@ -63,6 +66,7 @@ export default async function CommandesPage({
 }: {
   searchParams: Promise<{ statut?: string }>;
 }) {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "commandes");
@@ -132,18 +136,18 @@ export default async function CommandesPage({
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Commandes</h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Commandes")}</h1>
             <BoutonRevoirTutoriel moduleKey="commandes" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {toutes.length}
             </span>
             {stats.enAttente > 0 && (
               <span className="text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] px-2.5 py-0.5 rounded-full">
-                {stats.enAttente} en attente
+                {t(stats.enAttente)}{" "}{t("en attente")}
               </span>
             )}
           </div>
-          <p className="text-[12.5px] text-[#AAAAAA]">Gérez et suivez toutes les commandes de votre boutique</p>
+          <p className="text-[12.5px] text-[#AAAAAA]">{t("Gérez et suivez toutes les commandes de votre boutique")}</p>
         </div>
         <CommandesExport total={toutes.length} />
       </div>
@@ -159,14 +163,14 @@ export default async function CommandesPage({
                   style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
               )}
               <div className="flex items-start justify-between gap-2 mb-4">
-                <span className="ax-label">{s.label}</span>
+                <span className="ax-label">{t(s.label)}</span>
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
                   style={{ background: s.iconBg, border: `1px solid ${s.iconColor}20` }}>
                   <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                 </div>
               </div>
               <p className="text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
-                {s.value}
+                {t(s.value)}
               </p>
             </div>
           );
@@ -195,7 +199,7 @@ export default async function CommandesPage({
                 border: "1px solid #E8E8E8",
               }}
             >
-              {tab.label}
+              {t(tab.label)}
               {count > 0 && (
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                   style={isActive
@@ -215,15 +219,15 @@ export default async function CommandesPage({
           <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
             <Package size={24} className="text-[#CCCCCC]" />
           </div>
-          <p className="text-[14px] font-semibold text-[#111111] mb-1">Aucune commande{filtreStatut ? " dans ce statut" : ""}</p>
+          <p className="text-[14px] font-semibold text-[#111111] mb-1">{t("Aucune commande")}{filtreStatut ? t(" dans ce statut") : ""}</p>
           <p className="text-[12px] text-[#AAAAAA] mb-6">
             {filtreStatut
-              ? "Essayez un autre filtre ou attendez de nouvelles commandes"
-              : "Les commandes passées par vos clients apparaîtront ici en temps réel"}
+              ? t("Essayez un autre filtre ou attendez de nouvelles commandes")
+              : t("Les commandes passées par vos clients apparaîtront ici en temps réel")}
           </p>
           <Link href="/dashboard/boutique"
             className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#111111] text-white hover:bg-[#2a2a2a] transition-colors">
-            Voir ma boutique <ArrowUpRight size={13} />
+            {t("Voir ma boutique")}{" "}<ArrowUpRight size={13} />
           </Link>
         </div>
       ) : (
@@ -232,10 +236,10 @@ export default async function CommandesPage({
             <p className="text-[13px] font-semibold text-[#111111]">
               {commandes.length} commande{commandes.length > 1 ? "s" : ""}
               {filtreStatut && filtreStatut !== "all" && (
-                <span className="ml-2 text-[#AAAAAA] font-normal">— filtrées</span>
+                <span className="ml-2 text-[#AAAAAA] font-normal">{t("— filtrées")}</span>
               )}
             </p>
-            <p className="text-[11.5px] text-[#AAAAAA]">Triées par date décroissante</p>
+            <p className="text-[11.5px] text-[#AAAAAA]">{t("Triées par date décroissante")}</p>
           </div>
 
           {/* Desktop table */}
@@ -252,7 +256,7 @@ export default async function CommandesPage({
                     { label: "Date",        w: "w-[120px]" },
                     { label: "",            w: "w-[50px]"  },
                   ].map(({ label, w }) => (
-                    <th key={label} className={`px-5 py-3 text-left ax-label ${w}`}>{label}</th>
+                    <th key={label} className={`px-5 py-3 text-left ax-label ${w}`}>{t(label)}</th>
                   ))}
                 </tr>
               </thead>
@@ -270,7 +274,7 @@ export default async function CommandesPage({
                       <div className="flex items-center gap-2.5">
                         <Avatar nom={c.clientNom ?? "?"} />
                         <div>
-                          <p className="text-[13px] font-semibold text-[#222] leading-tight">{c.clientNom}</p>
+                          <p className="text-[13px] font-semibold text-[#222] leading-tight">{t(c.clientNom)}</p>
                           {(c.ville || c.pays) && (
                             <p className="text-[11px] text-[#AAAAAA] mt-0.5">
                               {[c.ville, c.pays].filter(Boolean).join(", ")}
@@ -321,7 +325,7 @@ export default async function CommandesPage({
                     </span>
                     <StatutBadge statut={c.statut} />
                   </div>
-                  <p className="text-[13px] font-semibold text-[#222] truncate">{c.clientNom}</p>
+                  <p className="text-[13px] font-semibold text-[#222] truncate">{t(c.clientNom)}</p>
                   <p className="text-[11px] text-[#BBBBBB] mt-0.5">{dateRelative(c.createdAt)}</p>
                 </div>
                 <div className="text-right flex-shrink-0">

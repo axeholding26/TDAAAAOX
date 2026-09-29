@@ -3,6 +3,7 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { Rocket, CreditCard, Package, Bot, Truck, Smartphone, BarChart3, Plug, Globe, Clapperboard } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Tutoriels vidéo — AXSO",
@@ -23,7 +24,8 @@ const VIDEOS: { Icon: LucideIcon; titre: string; duree: string; niveau: string; 
 
 const NIVEAUX = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
 
-export default function TutorialsPage() {
+export default async function TutorialsPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -33,15 +35,15 @@ export default function TutorialsPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-5xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            <Clapperboard size={14} className="inline-block mr-1.5" />Tutoriels vidéo
+            <Clapperboard size={14} className="inline-block mr-1.5" />{t("Tutoriels vidéo")}
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-            Apprenez à votre rythme,<br />
+            {t("Apprenez à votre rythme,")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              maîtrisez AXSO
+              {t("maîtrisez AXSO")}
             </span>
           </h1>
-          <p className="text-[#737373] text-xl mb-10 max-w-2xl">{VIDEOS.length} tutoriels pour passer de zéro à expert.</p>
+          <p className="text-[#737373] text-xl mb-10 max-w-2xl">{VIDEOS.length}{" "}{t("tutoriels pour passer de zéro à expert.")}</p>
 
           {/* Filtres */}
           <div className="flex flex-wrap gap-2 mb-12">
@@ -70,15 +72,15 @@ export default function TutorialsPage() {
                       style={{ background: "rgba(245,166,35,0.9)" }}>▶</div>
                   </div>
                   <span className="absolute bottom-2 right-2 text-xs font-bold px-2 py-0.5 rounded"
-                    style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}>{v.duree}</span>
+                    style={{ background: "rgba(0,0,0,0.7)", color: "#fff" }}>{t(v.duree)}</span>
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-                      style={{ background: `${v.tag}12`, color: v.tag, border: `1px solid ${v.tag}25` }}>{v.niveau}</span>
-                    <span className="text-xs text-[#A6A6A6]">{v.views} vues</span>
+                      style={{ background: `${v.tag}12`, color: v.tag, border: `1px solid ${v.tag}25` }}>{t(v.niveau)}</span>
+                    <span className="text-xs text-[#A6A6A6]">{t(v.views)} vues</span>
                   </div>
-                  <h3 className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#F5A623] transition-colors">{v.titre}</h3>
+                  <h3 className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#F5A623] transition-colors">{t(v.titre)}</h3>
                 </div>
               </div>
             ))}

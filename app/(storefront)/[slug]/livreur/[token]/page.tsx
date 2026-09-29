@@ -2,8 +2,10 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Bike, MapPin, Navigation, Radio, Square, XCircle, CheckCircle } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 export default function LivreurPage() {
+  const t = useT();
   const params = useParams<{ token: string }>();
   const [commande, setCommande] = useState<any>(null);
   const [status, setStatus] = useState<"idle"|"tracking"|"error"|"done">("idle");
@@ -94,49 +96,49 @@ export default function LivreurPage() {
       <div style={{ textAlign:"center", marginBottom:32 }}>
         {/* Axso logo */}
         <div style={{ marginBottom:16 }}>
-          <img src="/logo-dark.png" alt="Axso" style={{ height:28, objectFit:"contain", display:"inline-block" }} />
+          <img src="/logo-dark.png" alt={t("Axso")} style={{ height:28, objectFit:"contain", display:"inline-block" }} />
         </div>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:64, height:64, borderRadius:"50%", background:"rgba(245,166,35,0.12)", border:"2px solid rgba(245,166,35,0.25)", margin:"0 auto 8px" }}>
           <Bike size={32} color="#F5A623" />
         </div>
         <div style={{ fontSize:13, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
-          {commande?.tenant?.nomBoutique ?? "Livraison"}
+          {t(commande?.tenant?.nomBoutique) ?? t("Livraison")}
         </div>
-        <div style={{ fontSize:20, fontWeight:700 }}>Mode livreur</div>
-        {commande && <div style={{ fontSize:12, color:"#555", marginTop:4 }}>Commande #{commande.numero} · {commande.clientNom}</div>}
+        <div style={{ fontSize:20, fontWeight:700 }}>{t("Mode livreur")}</div>
+        {commande && <div style={{ fontSize:12, color:"#555", marginTop:4 }}>{t("Commande #")}{commande.numero} · {t(commande.clientNom)}</div>}
       </div>
 
       {/* Formulaire nom si pas encore tracking */}
       {status === "idle" && (
         <div style={{ width:"100%", maxWidth:360 }}>
           <div style={{ marginBottom:12 }}>
-            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>Votre nom (optionnel)</label>
-            <input value={nom} onChange={e => setNom(e.target.value)} placeholder="Ex: Moussa"
+            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Votre nom (optionnel)")}</label>
+            <input value={nom} onChange={e => setNom(e.target.value)} placeholder={t("Ex: Moussa")}
               style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
           </div>
           <div style={{ marginBottom:20 }}>
-            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>Téléphone (optionnel)</label>
-            <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder="+237 6XX XX XX XX" type="tel"
+            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Téléphone (optionnel)")}</label>
+            <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder={t("+237 6XX XX XX XX")} type="tel"
               style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
           </div>
 
           {/* Adresse client */}
           {commande && (
             <div style={{ background:"rgba(245,166,35,0.08)", border:"1px solid rgba(245,166,35,0.2)", borderRadius:16, padding:14, marginBottom:20 }}>
-              <div style={{ fontSize:10, color:"#F5A623", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>Adresse de livraison</div>
-              <div style={{ fontSize:14, color:"#DDD" }}>{commande.adresseExacte || commande.adresseLivraison || "À préciser"}</div>
-              {commande.ville && <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{commande.ville}</div>}
+              <div style={{ fontSize:10, color:"#F5A623", fontWeight:600, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>{t("Adresse de livraison")}</div>
+              <div style={{ fontSize:14, color:"#DDD" }}>{t(commande.adresseExacte) || t(commande.adresseLivraison) || t("À préciser")}</div>
+              {commande.ville && <div style={{ fontSize:12, color:"#888", marginTop:2 }}>{t(commande.ville)}</div>}
               {commande.mapsLienClient && (
                 <a href={commande.mapsLienClient} target="_blank" rel="noopener noreferrer"
                   style={{ display:"inline-flex", alignItems:"center", gap:6, marginTop:10, color:"#F5A623", fontSize:12, textDecoration:"none", fontWeight:600 }}>
-                  <MapPin size={13} /> Ouvrir dans Google Maps
+                  <MapPin size={13} />{" "}{t("Ouvrir dans Google Maps")}
                 </a>
               )}
               {commande.latitudeClient && commande.longitudeClient && (
                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${commande.latitudeClient},${commande.longitudeClient}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ display:"flex", alignItems:"center", gap:6, marginTop:8, color:"#22c55e", fontSize:12, textDecoration:"none", fontWeight:600 }}>
-                  <Navigation size={13} /> Itinéraire GPS
+                  <Navigation size={13} />{" "}{t("Itinéraire GPS")}
                 </a>
               )}
             </div>
@@ -144,7 +146,7 @@ export default function LivreurPage() {
 
           <button onClick={startTracking}
             style={{ width:"100%", padding:"16px", borderRadius:16, background:"linear-gradient(135deg,#F5A623,#e09520)", color:"black", border:"none", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <Radio size={18} /> Démarrer le partage de position
+            <Radio size={18} />{" "}{t("Démarrer le partage de position")}
           </button>
         </div>
       )}
@@ -155,14 +157,14 @@ export default function LivreurPage() {
           <div style={{ width:100, height:100, borderRadius:"50%", background:"rgba(34,197,94,0.1)", border:"3px solid rgba(34,197,94,0.3)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px", animation:"pulse 1.5s ease-in-out infinite" }}>
             <Radio size={40} color="#22c55e" />
           </div>
-          <div style={{ fontSize:18, fontWeight:700, color:"#22c55e", marginBottom:8 }}>Position partagée</div>
-          <div style={{ fontSize:13, color:"#555", marginBottom:20 }}>Votre position est envoyée automatiquement</div>
+          <div style={{ fontSize:18, fontWeight:700, color:"#22c55e", marginBottom:8 }}>{t("Position partagée")}</div>
+          <div style={{ fontSize:13, color:"#555", marginBottom:20 }}>{t("Votre position est envoyée automatiquement")}</div>
 
           {lastPos && (
             <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:14, marginBottom:20, fontSize:12 }}>
-              <div style={{ color:"#888", marginBottom:4 }}>Dernière position</div>
+              <div style={{ color:"#888", marginBottom:4 }}>{t("Dernière position")}</div>
               <div style={{ color:"#DDD", fontFamily:"monospace" }}>{lastPos.lat.toFixed(5)}, {lastPos.lng.toFixed(5)}</div>
-              <div style={{ color:"#555", marginTop:4 }}>{updateCount} mise(s) à jour envoyée(s)</div>
+              <div style={{ color:"#555", marginTop:4 }}>{updateCount}{" "}{t("mise(s) à jour envoyée(s)")}</div>
             </div>
           )}
 
@@ -170,13 +172,13 @@ export default function LivreurPage() {
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${commande.latitudeClient},${commande.longitudeClient}`}
               target="_blank" rel="noopener noreferrer"
               style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, padding:"12px 20px", borderRadius:14, background:"rgba(34,197,94,0.12)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:13, fontWeight:600, textDecoration:"none", marginBottom:16 }}>
-              <Navigation size={16} /> Itinéraire vers le client
+              <Navigation size={16} />{" "}{t("Itinéraire vers le client")}
             </a>
           )}
 
           <button onClick={stopTracking}
             style={{ width:"100%", padding:"13px", borderRadius:14, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", color:"#ef4444", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <Square size={14} /> Arrêter le partage
+            <Square size={14} />{" "}{t("Arrêter le partage")}
           </button>
         </div>
       )}
@@ -184,16 +186,16 @@ export default function LivreurPage() {
       {status === "error" && (
         <div style={{ textAlign:"center" }}>
           <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><XCircle size={48} color="#ef4444" /></div>
-          <div style={{ fontSize:16, fontWeight:600, marginBottom:8, color:"#ef4444" }}>Géolocalisation refusée</div>
-          <p style={{ fontSize:13, color:"#666" }}>Autorisez l'accès à votre position dans les paramètres de votre navigateur puis rechargez la page.</p>
+          <div style={{ fontSize:16, fontWeight:600, marginBottom:8, color:"#ef4444" }}>{t("Géolocalisation refusée")}</div>
+          <p style={{ fontSize:13, color:"#666" }}>{t("Autorisez l'accès à votre position dans les paramètres de votre navigateur puis rechargez la page.")}</p>
         </div>
       )}
 
       {status === "done" && (
         <div style={{ textAlign:"center" }}>
           <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><CheckCircle size={48} color="#22c55e" /></div>
-          <div style={{ fontSize:16, fontWeight:600, color:"#22c55e" }}>Partage terminé</div>
-          <p style={{ fontSize:13, color:"#666", marginTop:8 }}>{updateCount} position(s) envoyée(s)</p>
+          <div style={{ fontSize:16, fontWeight:600, color:"#22c55e" }}>{t("Partage terminé")}</div>
+          <p style={{ fontSize:13, color:"#666", marginTop:8 }}>{updateCount}{" "}{t("position(s) envoyée(s)")}</p>
         </div>
       )}
     </div>

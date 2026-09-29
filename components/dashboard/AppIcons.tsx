@@ -1,4 +1,5 @@
-/**
+
+import { useT } from "@/components/I18nProvider";/**
  * App icons — style macOS/iOS squircle
  * Chaque icône = fond gradient + glyphe SVG blanc précis
  */
@@ -13,6 +14,7 @@ interface IconProps {
 
 // ─── AXIA ──────────────────────────────────────────────────────────────────────
 export function IconAxia({ size = 32 }: IconProps) {
+  const t = useT();
   return (
     <div
       style={{
@@ -21,7 +23,7 @@ export function IconAxia({ size = 32 }: IconProps) {
         flexShrink: 0,
       }}
     >
-      <img src="/axia-icon.png" alt="Axia" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src="/axia-icon.png" alt={t("Axia")} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
     </div>
   );
 }

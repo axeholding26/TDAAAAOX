@@ -5,6 +5,7 @@ import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import AbonnementActions from "@/app/(dashboard)/dashboard/abonnement/AbonnementActions";
 import { PLANS_CATALOGUE, ABONNEMENT_FAQ } from "@/lib/plans-catalogue";
 import { convertirDepuisXAF } from "@/lib/devise-convert";
+import { useT } from "@/components/I18nProvider";
 
 interface PlansGridProps {
   planActuel: string;
@@ -14,6 +15,7 @@ interface PlansGridProps {
 }
 
 export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridProps) {
+  const t = useT();
   const afficherXAF = devise === "XAF" || devise === "XOF";
 
   return (
@@ -25,14 +27,14 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
           <div className="flex items-center gap-2 mb-1">
             <CreditCard size={18} className="text-[#F5A623]" />
             <h1 className="text-2xl font-bold text-gray-900">
-              Abonnement · <span style={{ color: "#F5A623" }}>{nomPlan}</span>
+              {t("Abonnement ·")}{" "}<span style={{ color: "#F5A623" }}>{t(nomPlan)}</span>
             </h1>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-gray-400 text-sm">Choisissez votre palier Axso</p>
+            <p className="text-gray-400 text-sm">{t("Choisissez votre palier Axso")}</p>
             {devise !== "XAF" && devise !== "XOF" && (
               <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#111111] border border-[#F5A623]/25">
-                <Globe size={9} /> Prix en {devise}
+                <Globe size={9} />{" "}{t("Prix en")}{" "}{t(devise)}
               </span>
             )}
           </div>
@@ -61,13 +63,13 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
               {plan.recommande && (
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap"
                   style={{ background: `linear-gradient(135deg, ${plan.couleur}, #c97a10)` }}>
-                  ⚡ Recommandé
+                  {t("⚡ Recommandé")}
                 </div>
               )}
               {estActuel && !plan.recommande && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap"
                   style={{ background: plan.couleur }}>
-                  Plan actuel
+                  {t("Plan actuel")}
                 </div>
               )}
 
@@ -76,7 +78,7 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-full"
                     style={{ background: plan.bg, color: plan.couleur, border: `1px solid ${plan.border}` }}>
-                    {plan.palier}
+                    {t(plan.palier)}
                   </span>
                   <div className="w-8 h-8 rounded-xl flex items-center justify-center"
                     style={{ background: plan.bg, border: `1px solid ${plan.border}` }}>
@@ -85,30 +87,30 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
                 </div>
 
                 {/* Nom + description */}
-                <h3 className="text-xl font-black text-gray-900 mb-0.5">{plan.nom}</h3>
-                <p className="text-gray-400 text-xs mb-4 leading-snug">{plan.description}</p>
+                <h3 className="text-xl font-black text-gray-900 mb-0.5">{t(plan.nom)}</h3>
+                <p className="text-gray-400 text-xs mb-4 leading-snug">{t(plan.description)}</p>
 
                 {/* Prix */}
                 <div className="mb-5">
                   {plan.prixXAF === 0 ? (
                     <div className="flex items-baseline gap-1">
-                      <p className="text-4xl font-black" style={{ color: plan.couleur }}>Gratuit</p>
+                      <p className="text-4xl font-black" style={{ color: plan.couleur }}>{t("Gratuit")}</p>
                     </div>
                   ) : (
                     <div className="flex items-baseline gap-1">
                       <p className="text-4xl font-black" style={{ color: plan.couleur }}>
                         {afficherXAF
-                          ? plan.prixXAF.toLocaleString("fr-FR")
-                          : prixLocal.toLocaleString("fr-FR")}
+                          ? plan.prixXAF.toLocaleString(t.loc)
+                          : prixLocal.toLocaleString(t.loc)}
                       </p>
                       <span className="text-gray-400 text-sm font-semibold">
-                        {afficherXAF ? "FCFA" : devise}/mois
+                        {afficherXAF ? "FCFA" : t(devise)}/mois
                       </span>
                     </div>
                   )}
                   {plan.prixXAF !== 0 && !afficherXAF && (
                     <p className="text-[10px] text-gray-400 mt-0.5">
-                      ≈ {plan.prixXAF.toLocaleString("fr-FR")} FCFA/mois
+                      ≈ {plan.prixXAF.toLocaleString(t.loc)}{" "}{t("FCFA/mois")}
                     </p>
                   )}
                 </div>
@@ -128,7 +130,7 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
                         </div>
                       )}
                       <span className={`text-xs leading-tight ${f.ok ? "text-gray-700 font-medium" : "text-gray-400"}`}>
-                        {f.label}
+                        {t(f.label)}
                       </span>
                     </li>
                   ))}
@@ -145,13 +147,13 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center gap-2 mb-5">
           <HelpCircle size={16} className="text-[#F5A623]" />
-          <h2 className="font-bold text-gray-900">Questions fréquentes</h2>
+          <h2 className="font-bold text-gray-900">{t("Questions fréquentes")}</h2>
         </div>
         <div className="space-y-4">
           {ABONNEMENT_FAQ.map((item, i) => (
             <div key={i} className="border-b border-gray-100 last:border-0 pb-4 last:pb-0">
-              <p className="font-semibold text-gray-800 text-sm mb-1">{item.q}</p>
-              <p className="text-gray-500 text-sm leading-relaxed">{item.r}</p>
+              <p className="font-semibold text-gray-800 text-sm mb-1">{t(item.q)}</p>
+              <p className="text-gray-500 text-sm leading-relaxed">{t(item.r)}</p>
             </div>
           ))}
         </div>

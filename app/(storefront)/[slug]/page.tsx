@@ -19,6 +19,7 @@ import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRende
 import { ordonnerParZone } from "@/lib/block-tree";
 import { cssSectionsDesign } from "@/lib/scope-css";
 import { DigitalCatalogPage } from "@/components/storefront/digital/DigitalCatalogPage";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: Props) {
 const DEFAULT_SECTION_ORDER = ["hero", "confiance", "vedettes", "collections", "about", "promo", "faq", "avis", "newsletter"];
 
 export default async function StorefrontPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
 
   const tenant = await prisma.tenant.findUnique({
@@ -199,15 +201,15 @@ export default async function StorefrontPage({ params }: Props) {
           />
           <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
             <h1 className="text-5xl sm:text-7xl font-bold font-playfair leading-tight mb-6 text-white">
-              {h.titre}
+              {t(h.titre)}
             </h1>
-            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">{h.sousTitre}</p>
+            <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">{t(h.sousTitre)}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href={ctaHref} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={btnPrimaryStyle}>
-                {h.ctaTexte}
+                {t(h.ctaTexte)}
               </Link>
               <Link href={`/${slug}/produits`} className="px-10 py-4 rounded-2xl font-semibold text-base transition-all border-2 text-white border-white/40 hover:bg-white/10" style={{ borderRadius: radius }}>
-                Voir tout
+                {t("Voir tout")}
               </Link>
             </div>
           </div>
@@ -226,24 +228,24 @@ export default async function StorefrontPage({ params }: Props) {
               <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${h.overlay / 100})` }} />
               <div className="absolute bottom-8 left-8 right-8">
                 <span className="text-sm font-semibold uppercase tracking-widest mb-3 block" style={{ color: c.accent }}>
-                  {tenant.categorie}
+                  {t(tenant.categorie)}
                 </span>
               </div>
             </div>
             <div className="flex flex-col justify-center py-8 lg:py-0 lg:pl-8">
               <span className="text-sm font-semibold uppercase tracking-widest mb-4 inline-block" style={{ color: c.accent }}>
-                Bienvenue
+                {t("Bienvenue")}
               </span>
               <h1 className="text-4xl sm:text-5xl font-bold font-playfair leading-tight mb-6" style={{ color: c.texte }}>
-                {h.titre}
+                {t(h.titre)}
               </h1>
-              <p className="text-lg mb-8 leading-relaxed" style={{ color: c.texte, opacity: 0.7 }}>{h.sousTitre}</p>
+              <p className="text-lg mb-8 leading-relaxed" style={{ color: c.texte, opacity: 0.7 }}>{t(h.sousTitre)}</p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link href={ctaHref} className="px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95 text-center" style={btnPrimaryStyle}>
-                  {h.ctaTexte}
+                  {t(h.ctaTexte)}
                 </Link>
                 <Link href={`/${slug}/produits`} className="px-8 py-4 font-semibold text-sm transition-all border text-center" style={{ borderColor: `${c.accent}40`, color: c.texte, borderRadius: radius }}>
-                  Voir tous les produits
+                  {t("Voir tous les produits")}
                 </Link>
               </div>
             </div>
@@ -257,12 +259,12 @@ export default async function StorefrontPage({ params }: Props) {
         <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24`}>
           <div className="max-w-3xl">
             <span className="text-sm font-semibold uppercase tracking-widest mb-4 block" style={{ color: c.accent }}>
-              {tenant.categorie}
+              {t(tenant.categorie)}
             </span>
-            <h1 className="text-5xl sm:text-6xl font-bold font-playfair leading-tight mb-6">{h.titre}</h1>
-            <p className="text-xl mb-8 leading-relaxed" style={{ opacity: 0.7 }}>{h.sousTitre}</p>
+            <h1 className="text-5xl sm:text-6xl font-bold font-playfair leading-tight mb-6">{t(h.titre)}</h1>
+            <p className="text-xl mb-8 leading-relaxed" style={{ opacity: 0.7 }}>{t(h.sousTitre)}</p>
             <Link href={ctaHref} className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90" style={btnPrimaryStyle}>
-              {h.ctaTexte} →
+              {t(h.ctaTexte)} →
             </Link>
           </div>
         </section>
@@ -280,20 +282,20 @@ export default async function StorefrontPage({ params }: Props) {
         )}
         <div className="relative z-10 text-center max-w-3xl mx-auto">
           <span className="text-sm font-semibold uppercase tracking-widest mb-5 block" style={{ color: tenant.bannerUrl ? "#fff" : c.accent }}>
-            {tenant.categorie} · {tenant.pays}
+            {t(tenant.categorie)} · {t(tenant.pays)}
           </span>
           <h1 className="text-4xl sm:text-6xl font-bold font-playfair leading-tight mb-6" style={{ color: tenant.bannerUrl ? "#fff" : c.texte }}>
-            {h.titre}
+            {t(h.titre)}
           </h1>
           <p className="text-lg sm:text-xl mb-10 leading-relaxed max-w-2xl mx-auto" style={{ color: tenant.bannerUrl ? "rgba(255,255,255,0.8)" : c.texte, opacity: tenant.bannerUrl ? 1 : 0.7 }}>
-            {h.sousTitre}
+            {t(h.sousTitre)}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href={ctaHref} className="px-10 py-4 font-semibold text-base transition-all hover:opacity-90 hover:scale-105 active:scale-95" style={btnPrimaryStyle}>
-              {h.ctaTexte}
+              {t(h.ctaTexte)}
             </Link>
             <Link href={`/${slug}/produits`} className="px-10 py-4 font-semibold text-base transition-all border-2" style={{ borderColor: `${c.accent}50`, color: tenant.bannerUrl ? "#fff" : c.texte, borderRadius: radius }}>
-              Tous les produits
+              {t("Tous les produits")}
             </Link>
           </div>
         </div>
@@ -304,7 +306,7 @@ export default async function StorefrontPage({ params }: Props) {
   const heroNode = sec.hero.actif ? (
     <>
       <ScrollReveal type={revealType("hero")} vitesse={vitesseGlobale} delay={staggerDelay()}>
-        {heroInner}
+        {t(heroInner)}
       </ScrollReveal>
       <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.hero} accent={c.accent} texte={c.texte} />
     </>
@@ -324,10 +326,10 @@ export default async function StorefrontPage({ params }: Props) {
               <div className="ax-confiance-marquee-track">
                 {[...confianceItems, ...confianceItems].map((b, i) => (
                   <div key={i} className="flex items-center gap-2.5 flex-shrink-0 px-6 sm:px-8">
-                    <span className="text-xl">{b.icone}</span>
+                    <span className="text-xl">{t(b.icone)}</span>
                     <div>
-                      <p className="font-semibold text-sm whitespace-nowrap" style={{ color: c.texte }}>{b.titre}</p>
-                      <p className="text-xs whitespace-nowrap" style={{ color: c.texte, opacity: 0.5 }}>{b.texte}</p>
+                      <p className="font-semibold text-sm whitespace-nowrap" style={{ color: c.texte }}>{t(b.titre)}</p>
+                      <p className="text-xs whitespace-nowrap" style={{ color: c.texte, opacity: 0.5 }}>{t(b.texte)}</p>
                     </div>
                   </div>
                 ))}
@@ -343,9 +345,9 @@ export default async function StorefrontPage({ params }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {confianceItems.map((b, i) => (
                 <div key={i} className="flex flex-col items-center gap-2 text-center p-5 rounded-2xl" style={{ background: c.fond, border: `1px solid ${c.accent}15` }}>
-                  <span className="text-2xl">{b.icone}</span>
-                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{b.titre}</p>
-                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{b.texte}</p>
+                  <span className="text-2xl">{t(b.icone)}</span>
+                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{t(b.titre)}</p>
+                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{t(b.texte)}</p>
                 </div>
               ))}
             </div>
@@ -353,8 +355,8 @@ export default async function StorefrontPage({ params }: Props) {
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
               {confianceItems.map((b, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <span className="text-lg">{b.icone}</span>
-                  <span className="text-sm font-medium" style={{ color: c.texte }}>{b.titre}</span>
+                  <span className="text-lg">{t(b.icone)}</span>
+                  <span className="text-sm font-medium" style={{ color: c.texte }}>{t(b.titre)}</span>
                 </div>
               ))}
             </div>
@@ -362,9 +364,9 @@ export default async function StorefrontPage({ params }: Props) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
               {confianceItems.map((b, i) => (
                 <div key={i} className="flex flex-col items-center gap-2">
-                  <span className="text-2xl">{b.icone}</span>
-                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{b.titre}</p>
-                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{b.texte}</p>
+                  <span className="text-2xl">{t(b.icone)}</span>
+                  <p className="font-semibold text-sm" style={{ color: c.texte }}>{t(b.titre)}</p>
+                  <p className="text-xs" style={{ color: c.texte, opacity: 0.5 }}>{t(b.texte)}</p>
                 </div>
               ))}
             </div>
@@ -381,11 +383,11 @@ export default async function StorefrontPage({ params }: Props) {
         <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_PY}`}>
           <div className="flex items-end justify-between mb-10">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Sélection</span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{sec.vedettes.titre}</h2>
+              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>{t("Sélection")}</span>
+              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{t(sec.vedettes.titre)}</h2>
             </div>
             <Link href={`/${slug}/produits`} className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: c.accent }}>
-              Voir tout →
+              {t("Voir tout →")}
             </Link>
           </div>
           <div className={`grid ${GRID_PRODUITS} gap-4 sm:gap-6`}>
@@ -421,24 +423,24 @@ export default async function StorefrontPage({ params }: Props) {
                         )}
                         {remise > 0 && (
                           <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-red-500 text-white">
-                            -{remise}%
+                            -{t(remise)}%
                           </span>
                         )}
                         {p.stock === 0 && (
                           <span className="text-[10px] font-bold px-2 py-1 rounded-lg bg-gray-500/80 text-white">
-                            Épuisé
+                            {t("Épuisé")}
                           </span>
                         )}
                       </div>
                       {/* Hover overlay */}
                       <div className="absolute inset-0 flex items-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-300" style={{ background: `linear-gradient(to top, ${c.fond}cc 0%, transparent 60%)` }}>
                         <span className="w-full text-center text-xs font-bold py-2 rounded-xl" style={{ backgroundColor: c.accent, color: c.fond }}>
-                          Voir le produit
+                          {t("Voir le produit")}
                         </span>
                       </div>
                     </div>
                     <div className="p-4">
-                      <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug">{p.nom}</h3>
+                      <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug">{t(p.nom)}</h3>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
                           <Prix montant={prixAffiche} devise={tenant.devise} />
@@ -450,7 +452,7 @@ export default async function StorefrontPage({ params }: Props) {
                         )}
                       </div>
                       {p.ventes > 0 && (
-                        <p className="text-[10px] mt-1" style={{ opacity: 0.4 }}>{p.ventes} ventes</p>
+                        <p className="text-[10px] mt-1" style={{ opacity: 0.4 }}>{t(p.ventes)} ventes</p>
                       )}
                     </div>
                   </div>
@@ -471,8 +473,8 @@ export default async function StorefrontPage({ params }: Props) {
         <section className={SECTION_PY} style={{ backgroundColor: c.surface }}>
           <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
             <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Univers</span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{sec.collections.titre}</h2>
+              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>{t("Univers")}</span>
+              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{t(sec.collections.titre)}</h2>
             </div>
             <div className={`grid gap-4 ${tenant.collections.length === 1 ? "grid-cols-1 max-w-2xl mx-auto" : tenant.collections.length === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}`}>
               {tenant.collections.slice(0, 6).map((col, i) => (
@@ -492,10 +494,10 @@ export default async function StorefrontPage({ params }: Props) {
                       className="absolute inset-0 flex flex-col justify-end p-6"
                       style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }}
                     >
-                      <h3 className="text-white font-bold text-xl font-playfair mb-1">{col.nom}</h3>
-                      {col.description && <p className="text-white/70 text-sm line-clamp-2 mb-3">{col.description}</p>}
+                      <h3 className="text-white font-bold text-xl font-playfair mb-1">{t(col.nom)}</h3>
+                      {col.description && <p className="text-white/70 text-sm line-clamp-2 mb-3">{t(col.description)}</p>}
                       <span className="text-sm font-semibold inline-flex items-center gap-1" style={{ color: c.accent }}>
-                        Explorer →
+                        {t("Explorer →")}
                       </span>
                     </div>
                   </div>
@@ -518,16 +520,16 @@ export default async function StorefrontPage({ params }: Props) {
           {aboutCfg.layout === "centered" ? (
             <div className="max-w-2xl mx-auto text-center">
               {aboutCfg.badgeTexte && (
-                <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{aboutCfg.badgeTexte}</span>
+                <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{t(aboutCfg.badgeTexte)}</span>
               )}
-              <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{aboutCfg.titre}</h2>
-              <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{aboutCfg.texte}</p>
+              <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{t(aboutCfg.titre)}</h2>
+              <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{t(aboutCfg.texte)}</p>
               {!!aboutCfg.stats?.length && (
                 <div className="flex flex-wrap justify-center gap-8">
                   {aboutCfg.stats.map((s, i) => (
                     <div key={i}>
-                      <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{s.valeur}</p>
-                      <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{s.label}</p>
+                      <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{t(s.valeur)}</p>
+                      <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{t(s.label)}</p>
                     </div>
                   ))}
                 </div>
@@ -538,9 +540,9 @@ export default async function StorefrontPage({ params }: Props) {
               {aboutCfg.imageUrl && <img src={aboutCfg.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.25) 100%)" }} />
               <div className="relative z-10 max-w-3xl mx-auto text-center px-6 py-24 text-white">
-                {aboutCfg.badgeTexte && <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block">{aboutCfg.badgeTexte}</span>}
-                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5">{aboutCfg.titre}</h2>
-                <p className="text-base leading-relaxed opacity-85">{aboutCfg.texte}</p>
+                {aboutCfg.badgeTexte && <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block">{t(aboutCfg.badgeTexte)}</span>}
+                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5">{t(aboutCfg.titre)}</h2>
+                <p className="text-base leading-relaxed opacity-85">{t(aboutCfg.texte)}</p>
               </div>
             </div>
           ) : (
@@ -556,16 +558,16 @@ export default async function StorefrontPage({ params }: Props) {
               </div>
               <div className={aboutCfg.layout === "image-left" ? "lg:order-2" : "lg:order-1"}>
                 {aboutCfg.badgeTexte && (
-                  <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{aboutCfg.badgeTexte}</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest mb-3 inline-block px-3 py-1 rounded-full" style={{ color: c.accent, background: `${c.accent}12` }}>{t(aboutCfg.badgeTexte)}</span>
                 )}
-                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{aboutCfg.titre}</h2>
-                <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{aboutCfg.texte}</p>
+                <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-5" style={{ color: c.texte }}>{t(aboutCfg.titre)}</h2>
+                <p className="text-base leading-relaxed mb-8" style={{ color: c.texte, opacity: 0.7 }}>{t(aboutCfg.texte)}</p>
                 {!!aboutCfg.stats?.length && (
                   <div className="flex flex-wrap gap-8">
                     {aboutCfg.stats.map((s, i) => (
                       <div key={i}>
-                        <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{s.valeur}</p>
-                        <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{s.label}</p>
+                        <p className="text-3xl font-bold font-playfair" style={{ color: c.accent }}>{t(s.valeur)}</p>
+                        <p className="text-xs mt-1" style={{ color: c.texte, opacity: 0.55 }}>{t(s.label)}</p>
                       </div>
                     ))}
                   </div>
@@ -594,15 +596,15 @@ export default async function StorefrontPage({ params }: Props) {
             >
               <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse at center, ${c.accent}08 0%, transparent 70%)` }} />
               <h2 className="relative text-3xl sm:text-4xl font-bold font-playfair mb-4" style={{ color: c.accent }}>
-                {sec.promo.titre}
+                {t(sec.promo.titre)}
               </h2>
-              <p className="relative text-lg mb-8 max-w-xl mx-auto" style={{ opacity: 0.7 }}>{sec.promo.texte}</p>
+              <p className="relative text-lg mb-8 max-w-xl mx-auto" style={{ opacity: 0.7 }}>{t(sec.promo.texte)}</p>
               <Link
                 href={`/${slug}/produits`}
                 className="inline-flex items-center gap-2 px-8 py-4 font-semibold text-sm transition-all hover:opacity-90 hover:scale-105 active:scale-95"
                 style={btnPrimaryStyle}
               >
-                {sec.promo.ctaTexte} →
+                {t(sec.promo.ctaTexte)} →
               </Link>
             </div>
           </div>
@@ -627,8 +629,8 @@ export default async function StorefrontPage({ params }: Props) {
         <section className={SECTION_PY} style={{ backgroundColor: c.surface }}>
           <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8`}>
             <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>Témoignages</span>
-              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{sec.avis.titre}</h2>
+              <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>{t("Témoignages")}</span>
+              <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{t(sec.avis.titre)}</h2>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {tenant.avis.slice(0, 6).map((avis) => (
@@ -642,15 +644,15 @@ export default async function StorefrontPage({ params }: Props) {
                       <span key={i} className="text-base" style={{ color: i <= avis.note ? c.accent : `${c.texte}20` }}>★</span>
                     ))}
                     {avis.verifie && (
-                      <span className="ml-2 text-[10px] font-semibold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">Vérifié</span>
+                      <span className="ml-2 text-[10px] font-semibold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">{t("Vérifié")}</span>
                     )}
                   </div>
-                  {avis.titre && <p className="font-semibold text-sm mb-2">{avis.titre}</p>}
-                  {avis.commentaire && <p className="text-sm leading-relaxed mb-4" style={{ opacity: 0.65 }}>{avis.commentaire}</p>}
+                  {avis.titre && <p className="font-semibold text-sm mb-2">{t(avis.titre)}</p>}
+                  {avis.commentaire && <p className="text-sm leading-relaxed mb-4" style={{ opacity: 0.65 }}>{t(avis.commentaire)}</p>}
                   <div className="flex items-center justify-between border-t pt-3" style={{ borderColor: `${c.accent}10` }}>
                     <div>
-                      <p className="text-xs font-semibold">{avis.client?.nom || "Client"}</p>
-                      <p className="text-[10px] opacity-40 mt-0.5">à propos de {(avis as any).produit?.nom}</p>
+                      <p className="text-xs font-semibold">{t(avis.client?.nom) || t("Client")}</p>
+                      <p className="text-[10px] opacity-40 mt-0.5">{t("à propos de")}{" "}{t((avis as any).produit?.nom)}</p>
                     </div>
                   </div>
                 </div>
@@ -669,8 +671,8 @@ export default async function StorefrontPage({ params }: Props) {
       <ScrollReveal type={revealType("newsletter")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className={SECTION_PY} style={{ background: `linear-gradient(135deg, ${c.accent}15 0%, ${c.accent}05 100%)` }}>
           <div className="max-w-2xl mx-auto px-4 text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-3">{sec.newsletter.titre}</h2>
-            <p className="mb-8 text-lg" style={{ opacity: 0.65 }}>{sec.newsletter.texte}</p>
+            <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-3">{t(sec.newsletter.titre)}</h2>
+            <p className="mb-8 text-lg" style={{ opacity: 0.65 }}>{t(sec.newsletter.texte)}</p>
             <form className="flex flex-col sm:flex-row gap-3 justify-center" method="post" action="/api/newsletter">
               <input
                 type="email"
@@ -683,7 +685,7 @@ export default async function StorefrontPage({ params }: Props) {
                 className="px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90"
                 style={btnPrimaryStyle}
               >
-                {sec.newsletter.ctaTexte}
+                {t(sec.newsletter.ctaTexte)}
               </button>
             </form>
           </div>
@@ -719,7 +721,7 @@ export default async function StorefrontPage({ params }: Props) {
           className="py-2.5 text-center text-xs font-semibold tracking-wide overflow-hidden"
           style={{ backgroundColor: sec.annonce.couleurFond, color: sec.annonce.couleurTexte }}
         >
-          <div className={`${CONTAINER} mx-auto px-4 truncate`}>{sec.annonce.texte}</div>
+          <div className={`${CONTAINER} mx-auto px-4 truncate`}>{t(sec.annonce.texte)}</div>
         </div>
       )}
       <SousBlocsRenderer blocs={cfg.sectionSousBlocs?.annonce} accent={c.accent} texte={c.texte} />
@@ -740,7 +742,7 @@ export default async function StorefrontPage({ params }: Props) {
         showContact={cfg.contactPage?.actif}
       />
 
-      {ordre.map((id) => SECTION_NODES[id] ? <div key={id} data-axs-id={id}>{SECTION_NODES[id]}</div> : null)}
+      {ordre.map((id) => SECTION_NODES[id] ? <div key={id} data-axs-id={id}>{t(SECTION_NODES[id])}</div> : null)}
 
       {/* ─── SECTIONS CUSTOM (générées par l'IA ou builder) ─── */}
       <CustomSectionsRenderer sections={cfg.customSections ?? []} slug={slug} colors={c} container={CONTAINER} sectionPy={SECTION_PY} />
@@ -754,10 +756,10 @@ export default async function StorefrontPage({ params }: Props) {
               {tenant.logoUrl ? (
                 <img src={tenant.logoUrl} alt={tenant.nomBoutique} className="h-10 mb-4 object-contain" />
               ) : (
-                <p className="text-2xl font-bold font-playfair mb-4" style={{ color: c.accent }}>{tenant.nomBoutique}</p>
+                <p className="text-2xl font-bold font-playfair mb-4" style={{ color: c.accent }}>{t(tenant.nomBoutique)}</p>
               )}
               {tenant.description && (
-                <p className="text-sm leading-relaxed mb-5" style={{ opacity: 0.55, maxWidth: "320px" }}>{tenant.description}</p>
+                <p className="text-sm leading-relaxed mb-5" style={{ opacity: 0.55, maxWidth: "320px" }}>{t(tenant.description)}</p>
               )}
               {/* Réseaux sociaux */}
               <div className="flex gap-3">
@@ -794,7 +796,7 @@ export default async function StorefrontPage({ params }: Props) {
 
             {/* Navigation */}
             <div>
-              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>Navigation</p>
+              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>{t("Navigation")}</p>
               <div className="space-y-3">
                 {[
                   { label: "Accueil", href: `/${slug}` },
@@ -805,7 +807,7 @@ export default async function StorefrontPage({ params }: Props) {
                   { label: "Suivi commande", href: `/suivi` },
                 ].map((l) => (
                   <Link key={l.href} href={l.href} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>
-                    {l.label}
+                    {t(l.label)}
                   </Link>
                 ))}
               </div>
@@ -813,7 +815,7 @@ export default async function StorefrontPage({ params }: Props) {
 
             {/* Contact */}
             <div>
-              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>Contact</p>
+              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>{t("Contact")}</p>
               <div className="space-y-3">
                 {tenant.email && (
                   <a href={`mailto:${tenant.email}`} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>
@@ -822,14 +824,14 @@ export default async function StorefrontPage({ params }: Props) {
                 )}
                 {tenant.whatsapp && (
                   <a href={`https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>
-                    {tenant.whatsapp}
+                    {t(tenant.whatsapp)}
                   </a>
                 )}
                 {tenant.adresse && (
-                  <p className="text-sm" style={{ opacity: 0.55 }}>{tenant.adresse}</p>
+                  <p className="text-sm" style={{ opacity: 0.55 }}>{t(tenant.adresse)}</p>
                 )}
                 {tenant.pays && (
-                  <p className="text-sm" style={{ opacity: 0.55 }}>{tenant.pays}</p>
+                  <p className="text-sm" style={{ opacity: 0.55 }}>{t(tenant.pays)}</p>
                 )}
               </div>
             </div>
@@ -839,8 +841,8 @@ export default async function StorefrontPage({ params }: Props) {
         {/* Copyright */}
         <div className="border-t py-5" style={{ borderColor: `${c.accent}10` }}>
           <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs`} style={{ opacity: 0.4 }}>
-            <p>© {new Date().getFullYear()} {tenant.nomBoutique}. Tous droits réservés.</p>
-            <p>Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
+            <p>© {new Date().getFullYear()} {t(tenant.nomBoutique)}{t(". Tous droits réservés.")}</p>
+            <p>{t("Propulsé par")}{" "}<span style={{ color: c.accent, opacity: 1 }}>{t("Axso")}</span></p>
           </div>
         </div>
       </footer>

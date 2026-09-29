@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Plus, Trash2, Save, GripVertical, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 export interface ChampCommande {
   label: string;
@@ -23,6 +24,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export default function ChampsCommandeManager({ produitId, initial }: Props) {
+  const t = useT();
   const [champs, setChamps] = useState<ChampCommande[]>(initial);
   const [open, setOpen] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -37,9 +39,9 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
         body: JSON.stringify({ champsCommande: toSave }),
       });
       if (!r.ok) throw new Error("Erreur");
-      toast.success("Champs sauvegardés");
+      toast.success(t("Champs sauvegardés"));
     } catch {
-      toast.error("Erreur lors de la sauvegarde");
+      toast.error(t("Erreur lors de la sauvegarde"));
     } finally {
       setSaving(false);
     }
@@ -73,21 +75,21 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
     <div className="p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">Champs à la commande</h3>
-          <p className="text-xs text-gray-400 mt-0.5">Informations collectées lors du passage de commande</p>
+          <h3 className="text-sm font-semibold text-gray-900">{t("Champs à la commande")}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{t("Informations collectées lors du passage de commande")}</p>
         </div>
         <button
           type="button"
           onClick={ajouter}
           className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
         >
-          <Plus size={12} /> Ajouter
+          <Plus size={12} />{" "}{t("Ajouter")}
         </button>
       </div>
 
       {champs.length === 0 ? (
         <div className="text-center py-8 text-gray-300 text-sm border-2 border-dashed border-gray-100 rounded-xl">
-          Aucun champ. Ajoutez ce que vous voulez collecter auprès de vos acheteurs.
+          {t("Aucun champ. Ajoutez ce que vous voulez collecter auprès de vos acheteurs.")}
         </div>
       ) : (
         <div className="space-y-2">
@@ -101,10 +103,10 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                 <GripVertical size={13} className="text-gray-300 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm font-medium text-gray-800 truncate block">
-                    {champ.label || <span className="text-gray-400 italic font-normal">Nouveau champ…</span>}
+                    {t(champ.label) || <span className="text-gray-400 italic font-normal">{t("Nouveau champ…")}</span>}
                   </span>
                   <span className="text-[10px] text-gray-400">
-                    {TYPE_LABELS[champ.type]} · {champ.requis ? "Obligatoire" : "Optionnel"}
+                    {t(TYPE_LABELS[champ.type])} · {champ.requis ? t("Obligatoire") : t("Optionnel")}
                   </span>
                 </div>
                 {open === idx
@@ -116,23 +118,23 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                 <div className="border-t border-gray-100 p-3.5 space-y-3 bg-gray-50/50">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">Libellé *</label>
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t("Libellé *")}</label>
                       <input
                         value={champ.label}
                         onChange={e => update(idx, { label: e.target.value })}
-                        placeholder="Ex: Votre numéro WhatsApp"
+                        placeholder={t("Ex: Votre numéro WhatsApp")}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">Type</label>
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t("Type")}</label>
                       <select
                         value={champ.type}
                         onChange={e => update(idx, { type: e.target.value as ChampCommande["type"] })}
                         className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
                       >
                         {Object.entries(TYPE_LABELS).map(([id, label]) => (
-                          <option key={id} value={id}>{label}</option>
+                          <option key={id} value={id}>{t(label)}</option>
                         ))}
                       </select>
                     </div>
@@ -140,13 +142,13 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
 
                   {champ.type === "choix" && (
                     <div>
-                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">Options disponibles</label>
+                      <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t("Options disponibles")}</label>
                       <div className="flex gap-2 mb-2">
                         <input
                           value={optInput}
                           onChange={e => setOptInput(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addOption(idx); }}}
-                          placeholder="Ajouter une option…"
+                          placeholder={t("Ajouter une option…")}
                           className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
                         />
                         <button
@@ -160,7 +162,7 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                       <div className="flex flex-wrap gap-1.5">
                         {(champ.options ?? []).map((opt, oi) => (
                           <span key={oi} className="flex items-center gap-1 bg-white border border-gray-200 text-gray-700 text-xs px-2 py-1 rounded-lg">
-                            {opt}
+                            {t(opt)}
                             <button
                               type="button"
                               onClick={() => update(idx, { options: champ.options?.filter((_, j) => j !== oi) })}
@@ -185,14 +187,14 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                             : "border-gray-200 text-gray-400"
                         }`}
                       >
-                        {champ.requis ? "✓ Obligatoire" : "Optionnel"}
+                        {champ.requis ? t("✓ Obligatoire") : t("Optionnel")}
                       </button>
                       <button
                         type="button"
                         onClick={() => supprimer(idx)}
                         className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 transition-colors"
                       >
-                        <Trash2 size={12} /> Supprimer
+                        <Trash2 size={12} />{" "}{t("Supprimer")}
                       </button>
                     </div>
                     <button
@@ -201,7 +203,7 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                       disabled={saving}
                       className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#F5A623] text-white hover:bg-[#d4820a] disabled:opacity-50 transition-colors"
                     >
-                      <Save size={11} /> {saving ? "…" : "Sauvegarder"}
+                      <Save size={11} /> {saving ? "…" : t("Sauvegarder")}
                     </button>
                   </div>
                 </div>
@@ -218,7 +220,7 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
           disabled={saving}
           className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-xs hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
         >
-          <Save size={12} /> {saving ? "Sauvegarde…" : "Sauvegarder les champs"}
+          <Save size={12} /> {saving ? t("Sauvegarde…") : t("Sauvegarder les champs")}
         </button>
       )}
     </div>

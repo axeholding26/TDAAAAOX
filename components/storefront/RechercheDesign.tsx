@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { StyleCss } from "./StyleCss";
 import { Search, X, Package, ArrowRight } from "lucide-react";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
+import { useT } from "@/components/I18nProvider";
 
 // Recherche des designs AXSO importés : leur en-tête n'a qu'un lien texte
 // « Recherche(r) » sans action. Monté une fois par le layout de la vitrine
@@ -19,6 +20,7 @@ const LOUPE = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'
 interface Resultat { id: string; nom: string; prix: number; image: string | null }
 
 export function RechercheDesign({ slug }: { slug: string }) {
+  const tr = useT();
   const { fmt } = usePrix();
   const [ouverte, setOuverte] = useState(false);
   const [q, setQ] = useState("");
@@ -75,18 +77,18 @@ export function RechercheDesign({ slug }: { slug: string }) {
       {ouverte && (
         <div className="fixed inset-0 z-[200] flex items-start justify-center px-4 pt-[12vh]" style={{ background: "rgba(10,10,10,0.55)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setOuverte(false); }}>
-          <div role="dialog" aria-modal="true" aria-label="Rechercher un produit" className="w-full max-w-xl rounded-2xl overflow-hidden bg-white text-[#111111] shadow-2xl"
+          <div role="dialog" aria-modal="true" aria-label={tr("Rechercher un produit")} className="w-full max-w-xl rounded-2xl overflow-hidden bg-white text-[#111111] shadow-2xl"
             style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
             <form onSubmit={(e) => { e.preventDefault(); voirTout(); }} className="flex items-center gap-3 px-5 h-16 border-b border-[#EEEEEE]">
               <Search size={20} className="text-[#999999] flex-shrink-0" />
-              <input ref={champ} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un produit…" autoComplete="off"
+              <input ref={champ} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tr("Rechercher un produit…")} autoComplete="off"
                 className="flex-1 min-w-0 h-full bg-transparent outline-none text-[16px] placeholder:text-[#AAAAAA]" />
-              {q && <button type="button" onClick={() => setQ("")} aria-label="Effacer" className="w-8 h-8 rounded-full flex items-center justify-center text-[#999999] hover:bg-[#F3F3F3]"><X size={16} /></button>}
-              <kbd className="hidden sm:inline text-[11px] text-[#999999] border border-[#E5E5E5] rounded-md px-1.5 py-0.5">Échap</kbd>
+              {q && <button type="button" onClick={() => setQ("")} aria-label={tr("Effacer")} className="w-8 h-8 rounded-full flex items-center justify-center text-[#999999] hover:bg-[#F3F3F3]"><X size={16} /></button>}
+              <kbd className="hidden sm:inline text-[11px] text-[#999999] border border-[#E5E5E5] rounded-md px-1.5 py-0.5">{tr("Échap")}</kbd>
             </form>
             <div className="max-h-[55vh] overflow-y-auto">
-              {!q.trim() && <p className="px-5 py-8 text-center text-[14px] text-[#888888]">Tape le nom d'un produit, une catégorie…</p>}
-              {q.trim() && !chargement && !resultats.length && <p className="px-5 py-8 text-center text-[14px] text-[#888888]">Aucun produit pour « {q.trim()} »</p>}
+              {!q.trim() && <p className="px-5 py-8 text-center text-[14px] text-[#888888]">{tr("Tape le nom d'un produit, une catégorie…")}</p>}
+              {q.trim() && !chargement && !resultats.length && <p className="px-5 py-8 text-center text-[14px] text-[#888888]">{tr("Aucun produit pour «")}{" "}{q.trim()} »</p>}
               {resultats.map((p) => (
                 <Link key={p.id} href={`/${slug}/produits/${p.id}`} onClick={() => setOuverte(false)}
                   className="flex items-center gap-4 px-5 py-3 hover:bg-[#F7F7F7] transition-colors">
@@ -94,7 +96,7 @@ export function RechercheDesign({ slug }: { slug: string }) {
                     {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <Package size={18} className="text-[#BBBBBB]" />}
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[14.5px] font-medium truncate">{p.nom}</span>
+                    <span className="block text-[14.5px] font-medium truncate">{tr(p.nom)}</span>
                     <span className="block text-[13px] font-semibold text-[#666666]">{fmt(p.prix, devise)}</span>
                   </span>
                 </Link>
@@ -102,7 +104,7 @@ export function RechercheDesign({ slug }: { slug: string }) {
             </div>
             {q.trim() && (
               <button onClick={voirTout} className="w-full flex items-center justify-center gap-2 h-12 border-t border-[#EEEEEE] text-[14px] font-semibold hover:bg-[#F7F7F7]">
-                Voir tous les résultats <ArrowRight size={15} />
+                {tr("Voir tous les résultats")}{" "}<ArrowRight size={15} />
               </button>
             )}
           </div>

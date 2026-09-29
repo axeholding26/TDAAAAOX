@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Plus, Minus } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const faqs = [
   { q: "Est-ce vraiment gratuit ?", r: "Oui, 100% gratuit pour créer et gérer votre boutique. Axso ne prend que 3% sur chaque vente réussie. Aucun abonnement, aucune mensualité." },
@@ -16,6 +17,7 @@ const faqs = [
 ];
 
 export function FaqSection() {
+  const t = useT();
   const [ouvert, setOuvert] = useState<number | null>(0);
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -45,7 +47,7 @@ export function FaqSection() {
           }}
         >
           <span className="text-[#111111] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">Questions fréquentes</h2>
+          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">{t("Questions fréquentes")}</h2>
         </div>
 
         <div className="space-y-3">
@@ -67,7 +69,7 @@ export function FaqSection() {
                 className="w-full flex items-center justify-between p-6 text-left"
               >
                 <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#111111]" : "text-gray-800"}`}>
-                  {faq.q}
+                  {t(faq.q)}
                 </span>
                 <div
                   className={`flex-shrink-0 ml-4 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
@@ -91,7 +93,7 @@ export function FaqSection() {
                 }}
               >
                 <div className="px-6 pb-6">
-                  <p className="text-gray-500 leading-relaxed">{faq.r}</p>
+                  <p className="text-gray-500 leading-relaxed">{t(faq.r)}</p>
                 </div>
               </div>
             </div>

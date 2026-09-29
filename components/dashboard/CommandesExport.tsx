@@ -1,12 +1,14 @@
 "use client";
 import { useState } from "react";
 import { Download, Loader2, FileSpreadsheet } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   total?: number;
 }
 
 export function CommandesExport({ total }: Props) {
+  const t = useT();
   const [loading, setLoading] = useState(false);
 
   const exporter = async (filtre?: "mois" | "tout") => {
@@ -42,7 +44,7 @@ export function CommandesExport({ total }: Props) {
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border border-green-200 bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-50"
       >
         {loading ? <Loader2 size={13} className="animate-spin" /> : <FileSpreadsheet size={13} />}
-        Ce mois
+        {t("Ce mois")}
       </button>
       <button
         onClick={() => exporter("tout")}
@@ -50,7 +52,7 @@ export function CommandesExport({ total }: Props) {
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50"
       >
         {loading ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-        Tout ({total ?? "—"})
+        {t("Tout (")}{total ?? "—"})
       </button>
     </div>
   );

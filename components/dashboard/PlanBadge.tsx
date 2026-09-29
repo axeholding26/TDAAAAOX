@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { NOMS_PALIERS, type Palier } from "@/lib/plans";
+import { useT } from "@/components/I18nProvider";
 
 const PLAN_CONFIG: Record<Palier, { label: string; couleur: string; bg: string; border: string }> = {
   palier0: { label: NOMS_PALIERS.palier0, couleur: "#6b7280", bg: "#6b728015", border: "#6b728030" },
@@ -14,6 +15,7 @@ interface PlanBadgeProps {
 }
 
 export function PlanBadge({ plan, className, size = "md" }: PlanBadgeProps) {
+  const t = useT();
   const key = (plan?.toLowerCase() ?? "palier0") as Palier;
   const config = PLAN_CONFIG[key] ?? PLAN_CONFIG.palier0;
 
@@ -30,7 +32,7 @@ export function PlanBadge({ plan, className, size = "md" }: PlanBadgeProps) {
         border: `1px solid ${config.border}`,
       }}
     >
-      {config.label}
+      {t(config.label)}
     </span>
   );
 }

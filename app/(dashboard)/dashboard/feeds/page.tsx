@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Copy, Check, ExternalLink, Package, RefreshCw, Info, Zap, Search, Globe, Music4, CheckCircle, ClipboardList, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const FEEDS_TUTORIAL_STEPS = [
   { Icon: Search,       titre: "Google Shopping gratuit", description: "Soumettez votre flux XML dans Google Merchant Center pour apparaître gratuitement dans Google Shopping et Google Images." },
@@ -69,22 +70,24 @@ const PLATEFORMES_FEED = [
 ];
 
 function CopyButton({ text }: { text: string }) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   function copier() {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-    toast.success("URL copiée !");
+    toast.success(t("URL copiée !"));
   }
   return (
     <button onClick={copier}
       className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 text-xs font-medium hover:bg-gray-50 transition-all flex-shrink-0">
-      {copied ? <><Check size={12} className="text-green-500" /> Copiée</> : <><Copy size={12} /> Copier</>}
+      {copied ? <><Check size={12} className="text-green-500" />{" "}{t("Copiée")}</> : <><Copy size={12} />{" "}{t("Copier")}</>}
     </button>
   );
 }
 
 export default function FeedsPage() {
+  const t = useT();
   const [slug, setSlug] = useState("");
   const [nbProduits, setNbProduits] = useState(0);
   // Origine lue après le montage : même HTML côté serveur et navigateur (sinon erreur d'hydratation).
@@ -102,7 +105,7 @@ export default function FeedsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <ModuleTutorial moduleKey="feeds" titre="Flux produits" sousTitre="Diffuse ton catalogue ailleurs" steps={FEEDS_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="feeds" titre={t("Flux produits")} sousTitre={t("Diffuse ton catalogue ailleurs")} steps={FEEDS_TUTORIAL_STEPS} />
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
@@ -110,10 +113,10 @@ export default function FeedsPage() {
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900 font-poppins">Flux Produits (Feeds)</h1>
+            <h1 className="text-2xl font-bold text-gray-900 font-poppins">{t("Flux Produits (Feeds)")}</h1>
             <BoutonRevoirTutoriel moduleKey="feeds" />
           </div>
-          <p className="text-gray-400 text-sm">Synchronisez votre catalogue sur Google, Meta et TikTok automatiquement</p>
+          <p className="text-gray-400 text-sm">{t("Synchronisez votre catalogue sur Google, Meta et TikTok automatiquement")}</p>
         </div>
       </div>
 
@@ -122,11 +125,10 @@ export default function FeedsPage() {
         <div className="flex items-start gap-3">
           <Info size={18} className="text-indigo-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-indigo-800">Comment Shopify fait ses Ads</p>
+            <p className="text-sm font-semibold text-indigo-800">{t("Comment Shopify fait ses Ads")}</p>
             <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
-              Shopify ne lance pas les pubs lui-même. Il génère des <strong>flux produits XML/CSV</strong> que Google, Meta et TikTok consomment automatiquement.
-              Les plateformes créent ensuite des <strong>Dynamic Ads</strong> — elles montrent automatiquement le bon produit à la bonne personne en retargeting.
-              <br /><strong>AXSO fait exactement la même chose.</strong>
+              {t("Shopify ne lance pas les pubs lui-même. Il génère des")}{" "}<strong>{t("flux produits XML/CSV")}</strong>{" "}{t("que Google, Meta et TikTok consomment automatiquement. Les plateformes créent ensuite des")}{" "}<strong>{t("Dynamic Ads")}</strong>{" "}{t("— elles montrent automatiquement le bon produit à la bonne personne en retargeting.")}
+              <br /><strong>{t("AXSO fait exactement la même chose.")}</strong>
             </p>
           </div>
         </div>
@@ -139,12 +141,12 @@ export default function FeedsPage() {
             <Package size={18} className="text-[#F5A623]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-gray-800">{nbProduits} produits dans votre catalogue</p>
-            <p className="text-xs text-gray-400">Boutique : <strong>{slug}</strong> · Tous synchronisés dans les feeds ci-dessous</p>
+            <p className="text-sm font-semibold text-gray-800">{t(nbProduits)}{" "}{t("produits dans votre catalogue")}</p>
+            <p className="text-xs text-gray-400">{t("Boutique :")}{" "}<strong>{slug}</strong>{" "}{t("· Tous synchronisés dans les feeds ci-dessous")}</p>
           </div>
           <a href={`/api/feed/google?slug=${slug}`} target="_blank" rel="noopener noreferrer"
             className="ml-auto flex items-center gap-1.5 text-xs text-[#F5A623] bg-[#F5A623]/10 px-3 py-1.5 rounded-lg border border-[#F5A623]/20 hover:bg-[#F5A623]/20 transition-all">
-            <RefreshCw size={11} /> Tester le feed
+            <RefreshCw size={11} />{" "}{t("Tester le feed")}
           </a>
         </div>
       )}
@@ -163,21 +165,21 @@ export default function FeedsPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-bold text-gray-900">{plat.nom}</p>
+                      <p className="font-bold text-gray-900">{t(plat.nom)}</p>
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: plat.badgeColor }}>
-                        {plat.badge}
+                        {t(plat.badge)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400">{plat.description}</p>
+                    <p className="text-xs text-gray-400">{t(plat.description)}</p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">{plat.format}</span>
+                <span className="text-xs text-gray-400 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">{t(plat.format)}</span>
               </div>
 
               <div className="p-5 space-y-4">
                 {/* URL du feed */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 block mb-2">URL du flux à coller dans {plat.nom}</label>
+                  <label className="text-xs font-semibold text-gray-600 block mb-2">{t("URL du flux à coller dans")}{" "}{t(plat.nom)}</label>
                   <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3">
                     <code className="text-xs text-gray-700 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
                       {feedUrl}
@@ -185,7 +187,7 @@ export default function FeedsPage() {
                     <CopyButton text={feedUrl} />
                     <a href={feedUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-1 px-3 py-2 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 text-xs hover:bg-gray-200 transition-all flex-shrink-0">
-                      <ExternalLink size={11} /> Voir
+                      <ExternalLink size={11} />{" "}{t("Voir")}
                     </a>
                   </div>
                 </div>
@@ -193,11 +195,11 @@ export default function FeedsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Avantages */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><CheckCircle size={12} className="text-green-500" /> Avantages</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><CheckCircle size={12} className="text-green-500" />{" "}{t("Avantages")}</p>
                     <ul className="space-y-1.5">
                       {plat.avantages.map((a) => (
                         <li key={a} className="flex items-start gap-2 text-xs text-gray-600">
-                          <Zap size={10} className="text-[#F5A623] mt-0.5 flex-shrink-0" /> {a}
+                          <Zap size={10} className="text-[#F5A623] mt-0.5 flex-shrink-0" /> {t(a)}
                         </li>
                       ))}
                     </ul>
@@ -205,7 +207,7 @@ export default function FeedsPage() {
 
                   {/* Étapes */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><ClipboardList size={12} className="text-gray-500" /> Comment faire</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><ClipboardList size={12} className="text-gray-500" />{" "}{t("Comment faire")}</p>
                     <ol className="space-y-1.5">
                       {plat.etapes.map((e, i) => (
                         <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
@@ -213,7 +215,7 @@ export default function FeedsPage() {
                             style={{ background: plat.color + "20", color: plat.color }}>
                             {i + 1}
                           </span>
-                          {e}
+                          {t(e)}
                         </li>
                       ))}
                     </ol>
@@ -230,15 +232,14 @@ export default function FeedsPage() {
         <div className="flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center flex-shrink-0"><Gift size={22} className="text-green-600" /></div>
           <div>
-            <p className="font-bold text-green-800 text-base">Google Shopping GRATUIT — À faire en priorité</p>
+            <p className="font-bold text-green-800 text-base">{t("Google Shopping GRATUIT — À faire en priorité")}</p>
             <p className="text-green-700 text-sm mt-1 leading-relaxed">
-              Depuis 2020, Google permet à tous les marchands d'apparaître dans Google Shopping GRATUITEMENT.
-              Soumets ton feed Google maintenant → tes produits apparaissent dans les résultats de recherche en 24-72h sans payer un centime.
+              {t("Depuis 2020, Google permet à tous les marchands d'apparaître dans Google Shopping GRATUITEMENT. Soumets ton feed Google maintenant → tes produits apparaissent dans les résultats de recherche en 24-72h sans payer un centime.")}
             </p>
             <a href="https://merchants.google.com" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
               style={{ background: "linear-gradient(135deg, #4285F4, #34a853)" }}>
-              <ExternalLink size={14} /> Ouvrir Google Merchant Center
+              <ExternalLink size={14} />{" "}{t("Ouvrir Google Merchant Center")}
             </a>
           </div>
         </div>

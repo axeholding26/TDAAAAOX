@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { schemaConnexion } from "@/lib/validations";
 import type { z } from "zod";
 import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Star, Mail, ArrowLeft } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
@@ -21,6 +22,7 @@ const ACCENT = "#F5A623";
 const ACCENT_DARK = "#d4880d";
 
 function ConnexionForm() {
+  const t = useT();
   const router       = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl  = searchParams.get("callbackUrl") || "/dashboard";
@@ -98,20 +100,20 @@ function ConnexionForm() {
       >
         <button onClick={() => { setEtape("identifiants"); setErreur(""); setCode(""); }}
           className="flex items-center gap-1.5 text-xs mb-4 hover:opacity-80 transition-opacity" style={{ color: "#808080" }}>
-          <ArrowLeft size={13} /> Retour
+          <ArrowLeft size={13} />{" "}{t("Retour")}
         </button>
 
         <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
           style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
           <Mail size={18} style={{ color: ACCENT }} />
         </div>
-        <h2 className="text-2xl font-bold text-[#111111] mb-1">Vérifie ton email</h2>
-        <p className="text-[#808080] text-sm mb-7">Code envoyé à <strong>{identifiants.email}</strong> — valable 10 minutes.</p>
+        <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Vérifie ton email")}</h2>
+        <p className="text-[#808080] text-sm mb-7">{t("Code envoyé à")}{" "}<strong>{identifiants.email}</strong>{" "}{t("— valable 10 minutes.")}</p>
 
         {erreur && (
           <div className="rounded-xl p-3 text-sm text-center mb-5"
             style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-            {erreur}
+            {t(erreur)}
           </div>
         )}
 
@@ -125,7 +127,7 @@ function ConnexionForm() {
           <button type="submit" disabled={verifCode || code.length < 6}
             className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
             style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
-            {verifCode ? <><Loader2 size={16} className="animate-spin" /> Vérification...</> : "Confirmer →"}
+            {verifCode ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Vérification...")}</> : t("Confirmer →")}
           </button>
         </form>
       </div>
@@ -141,32 +143,32 @@ function ConnexionForm() {
         boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)",
       }}
     >
-      <h2 className="text-2xl font-bold text-[#111111] mb-1">Bon retour</h2>
-      <p className="text-[#808080] text-sm mb-7">Connectez-vous à votre espace marchand</p>
+      <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Bon retour")}</h2>
+      <p className="text-[#808080] text-sm mb-7">{t("Connectez-vous à votre espace marchand")}</p>
 
       {inscriptionReussie && (
         <div className="rounded-xl p-3 text-sm text-center mb-5 flex items-center justify-center gap-2"
           style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)", color: "#22c55e" }}>
-          <ShieldCheck size={15} /> Boutique créée avec succès !
+          <ShieldCheck size={15} />{" "}{t("Boutique créée avec succès !")}
         </div>
       )}
 
       {erreur && (
         <div className="rounded-xl p-3 text-sm text-center mb-5"
           style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-          {erreur}
+          {t(erreur)}
         </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-[#595959] text-sm font-medium mb-1.5">Email</label>
+          <label className="block text-[#595959] text-sm font-medium mb-1.5">{t("Email")}</label>
           <input type="email" {...register("email")} placeholder="aminata@example.com" className={inputCls} />
-          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+          {errors.email && <p className="text-red-400 text-xs mt-1">{t(errors.email.message)}</p>}
         </div>
 
         <div>
-          <label className="block text-[#595959] text-sm font-medium mb-1.5">Mot de passe</label>
+          <label className="block text-[#595959] text-sm font-medium mb-1.5">{t("Mot de passe")}</label>
           <div className="relative">
             <input type={showPass ? "text" : "password"} {...register("password")}
               placeholder="••••••••" className={inputCls + " pr-10"} />
@@ -175,13 +177,13 @@ function ConnexionForm() {
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
           </div>
-          {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+          {errors.password && <p className="text-red-400 text-xs mt-1">{t(errors.password.message)}</p>}
         </div>
 
         <div className="flex justify-end">
           <Link href="/mot-de-passe-oublie" className="text-xs font-medium transition-colors hover:opacity-80"
             style={{ color: ACCENT }}>
-            Mot de passe oublié ?
+            {t("Mot de passe oublié ?")}
           </Link>
         </div>
 
@@ -193,22 +195,22 @@ function ConnexionForm() {
             boxShadow: `0 8px 30px rgba(245,166,35,0.35)`,
           }}>
           {isSubmitting
-            ? <><Loader2 size={16} className="animate-spin" /> Connexion...</>
-            : "Se connecter →"}
+            ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Connexion...")}</>
+            : t("Se connecter →")}
         </button>
       </form>
 
       <div className="mt-5 p-4 rounded-xl border"
         style={{ background: "rgba(245,166,35,0.06)", borderColor: "rgba(245,166,35,0.15)" }}>
-        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: ACCENT }}>Comptes de démo</p>
+        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: ACCENT }}>{t("Comptes de démo")}</p>
         <p className="text-[#666666] text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
         <p className="text-[#666666] text-xs font-mono">grace@beautegrace.ci / axso2024</p>
       </div>
 
       <p className="text-center text-[#808080] text-sm mt-6">
-        Pas encore de boutique ?{" "}
+        {t("Pas encore de boutique ?")}{" "}
         <Link href="/inscription" className="font-semibold hover:opacity-80 transition-opacity" style={{ color: ACCENT }}>
-          Créer gratuitement
+          {t("Créer gratuitement")}
         </Link>
       </p>
     </div>
@@ -216,6 +218,7 @@ function ConnexionForm() {
 }
 
 export default function ConnexionPage() {
+  const t = useT();
   return (
     <div className="min-h-screen flex overflow-hidden" style={{ background: "#ffffff", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       {/* Ambient gradients */}
@@ -239,21 +242,21 @@ export default function ConnexionPage() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-7"
             style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT }} />
-            +1 247 boutiques actives en Afrique
+            {t("+1 247 boutiques actives en Afrique")}
           </div>
 
           <h1 className="text-4xl font-bold text-[#111111] leading-tight mb-4">
-            Gérez votre boutique<br />
+            {t("Gérez votre boutique")}<br />
             <span style={{
               background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             }}>
-              comme un empire
+              {t("comme un empire")}
             </span>
           </h1>
 
           <p className="text-[#666666] text-base leading-relaxed mb-8">
-            La plateforme e-commerce pensée pour les entrepreneurs africains. Simple, puissante, et adaptée à vos besoins.
+            {t("La plateforme e-commerce pensée pour les entrepreneurs africains. Simple, puissante, et adaptée à vos besoins.")}
           </p>
 
           <div className="space-y-4 mb-10">
@@ -263,7 +266,7 @@ export default function ConnexionPage() {
                   style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.2)" }}>
                   <Icon size={15} style={{ color: ACCENT }} />
                 </div>
-                <span className="text-[#4D4D4D] text-sm">{text}</span>
+                <span className="text-[#4D4D4D] text-sm">{t(text)}</span>
               </div>
             ))}
           </div>
@@ -275,20 +278,20 @@ export default function ConnexionPage() {
               {[1,2,3,4,5].map(i => <Star key={i} size={13} fill={ACCENT} style={{ color: ACCENT }} />)}
             </div>
             <p className="text-[#4D4D4D] text-sm leading-relaxed mb-3">
-              "Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement."
+              {t("\"Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement.\"")}
             </p>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                 style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808" }}>A</div>
               <div>
-                <p className="text-[#333333] text-xs font-semibold">Aminata Kouyaté</p>
-                <p className="text-[#8C8C8C] text-xs">Mode Aminata, Dakar</p>
+                <p className="text-[#333333] text-xs font-semibold">{t("Aminata Kouyaté")}</p>
+                <p className="text-[#8C8C8C] text-xs">{t("Mode Aminata, Dakar")}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <p className="text-[#B3B3B3] text-xs">© 2026 Axso · Made for Africa</p>
+        <p className="text-[#B3B3B3] text-xs">{t("© 2026 Axso · Made for Africa")}</p>
       </div>
 
       {/* ── Right panel — form ── */}
@@ -301,7 +304,7 @@ export default function ConnexionPage() {
           <Suspense fallback={
             <div className="rounded-3xl p-8 text-center text-[#999999] text-sm"
               style={{ background: "#ffffff", border: "1px solid rgba(245,166,35,0.15)", boxShadow: "0 20px 60px rgba(0,0,0,0.08)" }}>
-              Chargement...
+              {t("Chargement...")}
             </div>
           }>
             <ConnexionForm />

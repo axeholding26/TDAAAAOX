@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import JsBarcode from "jsbarcode";
 import { Printer } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   value: string;
@@ -16,6 +17,7 @@ interface Props {
 // CODE128 si la valeur n'est pas un EAN-13 valide (SKU libre, code scanné
 // dans un autre format...) — CODE128 accepte n'importe quelle chaîne.
 export function BarcodeLabelPreview({ value, nom, prix }: Props) {
+  const t = useT();
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function BarcodeLabelPreview({ value, nom, prix }: Props) {
     if (!svgRef.current) return;
     const svgMarkup = svgRef.current.outerHTML;
     const fenetre = window.open("", "_blank", "width=420,height=340");
-    if (!fenetre) { alert("Autorise les pop-ups pour imprimer l'étiquette"); return; }
+    if (!fenetre) { alert(t("Autorise les pop-ups pour imprimer l'étiquette")); return; }
     fenetre.document.write(`<!DOCTYPE html><html><head><title>Étiquette produit</title>
       <style>
         @page { size: 60mm 40mm; margin: 2mm; }
@@ -59,7 +61,7 @@ export function BarcodeLabelPreview({ value, nom, prix }: Props) {
         onClick={imprimer}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11.5px] font-semibold text-gray-600 border border-gray-200 hover:bg-white transition-all"
       >
-        <Printer size={12} /> Imprimer l'étiquette
+        <Printer size={12} />{" "}{t("Imprimer l'étiquette")}
       </button>
     </div>
   );

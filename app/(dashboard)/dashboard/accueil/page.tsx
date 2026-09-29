@@ -13,6 +13,7 @@ import {
   ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, Zap,
   ChevronRight, Truck, Target, Wallet, BarChart3, Sparkles, CheckCircle,
 } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 const STATUT_CFG: Record<string, { label: string; color: string }> = {
   en_attente:     { label: "En attente",     color: "#6B7280" },
@@ -174,6 +175,7 @@ function ProgressRing({ pct, size = 68, color = "#F5A623" }: { pct: number; size
 }
 
 export default async function DashboardPage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   const tenantId = (session.user as any)?.tenantId;
@@ -263,29 +265,29 @@ export default async function DashboardPage() {
         <div className="relative flex items-start justify-between gap-4 flex-wrap">
           <div>
             <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#F5C55E] bg-[#EDA900]/15 border border-[#EDA900]/30 rounded-full px-2.5 py-1 mb-3">
-              <Sparkles size={11} /> Axso
+              <Sparkles size={11} />{" "}{t("Axso")}
             </span>
             <div className="flex items-center gap-2">
               <h1 className="text-[26px] sm:text-[30px] font-extrabold text-white tracking-tight leading-tight">
-                {greeting}, {prenom}
+                {t(greeting)}, {t(prenom)}
               </h1>
               <BoutonRevoirTutoriel moduleKey="accueil" dark />
             </div>
             <p className="text-[13px] text-white/60 mt-1 capitalize">
-              {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+              {new Date().toLocaleDateString(t.loc, { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {d.slug && (
               <a href={`/${d.slug}`} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-[12px] font-medium border border-white/20 rounded-2xl px-3.5 py-2 bg-white/10 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/30 transition-all">
-                <Globe size={13} /> Boutique <ArrowUpRight size={11} />
+                <Globe size={13} />{" "}{t("Boutique")}{" "}<ArrowUpRight size={11} />
               </a>
             )}
             <a href="/dashboard/produits/nouveau"
               className="flex items-center gap-1.5 text-[12px] font-semibold rounded-2xl px-4 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"
               style={{ background: "linear-gradient(135deg,#EDA900,#FFD75E)", color: "#111111" }}>
-              <Plus size={13} /> Nouveau produit
+              <Plus size={13} />{" "}{t("Nouveau produit")}
             </a>
           </div>
         </div>
@@ -298,7 +300,7 @@ export default async function DashboardPage() {
       <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-[#F0F0F0] bg-white flex-wrap">
         <div className="flex items-center gap-1.5 text-[11.5px]">
           <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
-          <span className="font-semibold text-[#111]">Aujourd'hui :</span>
+          <span className="font-semibold text-[#111]">{t("Aujourd'hui :")}</span>
           <span className="font-bold text-[#F5A623]">{formatMontant(d.today, d.devise)}</span>
         </div>
         {vsHierPct !== null && (
@@ -308,19 +310,19 @@ export default async function DashboardPage() {
               : "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]"
           }`}>
             {vsHierPct >= 0 ? <ArrowUpRight size={9} /> : <ArrowDownRight size={9} />}
-            {vsHierPct > 0 ? "+" : ""}{vsHierPct}% vs hier
+            {vsHierPct > 0 ? "+" : ""}{t(vsHierPct)}{t("% vs hier")}
           </span>
         )}
         <span className="text-[#E8E8E8] hidden sm:inline">·</span>
-        <span className="text-[11.5px] text-[#AAAAAA]">{d.todayOrders} commande{d.todayOrders !== 1 ? "s" : ""}</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{t(d.todayOrders)} commande{d.todayOrders !== 1 ? "s" : ""}</span>
         <span className="text-[#E8E8E8] hidden sm:inline">·</span>
-        <span className="text-[11.5px] text-[#AAAAAA]">{d.newClients} nouveau{d.newClients !== 1 ? "x" : ""} client{d.newClients !== 1 ? "s" : ""} ce mois</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{t(d.newClients)} nouveau{d.newClients !== 1 ? "x" : ""} client{d.newClients !== 1 ? "s" : ""}{" "}{t("ce mois")}</span>
         {d.pending > 0 && (
           <>
             <span className="text-[#E8E8E8] hidden sm:inline">·</span>
             <a href="/dashboard/commandes?statut=en_attente"
               className="flex items-center gap-1 text-[11.5px] font-semibold text-[#D97706] hover:underline">
-              <Zap size={11} /> {d.pending} en attente
+              <Zap size={11} /> {t(d.pending)}{" "}{t("en attente")}
             </a>
           </>
         )}
@@ -329,7 +331,7 @@ export default async function DashboardPage() {
       {/* ── KPI Grid ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
-          label="CA ce mois"
+          label={t("CA ce mois")}
           value={formatMontant(d.month, d.devise)}
           sub={d.evol !== null ? `${d.evol > 0 ? "+" : ""}${d.evol}% vs mois dernier` : `${d.monthCount} commandes`}
           trend={d.evol}
@@ -338,7 +340,7 @@ export default async function DashboardPage() {
           spark={d.spark7}
         />
         <KpiCard
-          label="Cette semaine"
+          label={t("Cette semaine")}
           value={formatMontant(d.semaine, d.devise)}
           sub={`${d.todayCount} commande${d.todayCount !== 1 ? "s" : ""} aujourd'hui`}
           Icon={ShoppingBag}
@@ -346,8 +348,8 @@ export default async function DashboardPage() {
           sparkColor="#7C3AED"
         />
         <KpiCard
-          label="Clients"
-          value={d.totalClients.toLocaleString("fr-FR")}
+          label={t("Clients")}
+          value={d.totalClients.toLocaleString(t.loc)}
           sub={d.evolClients !== null
             ? `+${d.newClients} ce mois (${d.evolClients > 0 ? "+" : ""}${d.evolClients}%)`
             : `+${d.newClients} nouveaux ce mois`}
@@ -357,7 +359,7 @@ export default async function DashboardPage() {
           sparkColor="#0891B2"
         />
         <KpiCard
-          label="Conversion"
+          label={t("Conversion")}
           value={`${conversion}%`}
           sub={`Panier moy. ${formatMontant(panier, d.devise)}`}
           Icon={Eye}
@@ -377,9 +379,9 @@ export default async function DashboardPage() {
                 <ins.Icon size={14} style={{ color: ins.color }} strokeWidth={1.8} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[#AAAAAA] mb-0.5">{ins.title}</p>
-                <p className="text-[15px] font-bold text-[#111111] leading-tight truncate">{ins.value}</p>
-                <p className="text-[11px] text-[#AAAAAA] mt-0.5 leading-tight">{ins.sub}</p>
+                <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[#AAAAAA] mb-0.5">{t(ins.title)}</p>
+                <p className="text-[15px] font-bold text-[#111111] leading-tight truncate">{t(ins.value)}</p>
+                <p className="text-[11px] text-[#AAAAAA] mt-0.5 leading-tight">{t(ins.sub)}</p>
               </div>
             </div>
           ))}
@@ -396,7 +398,7 @@ export default async function DashboardPage() {
 
           {/* Objectif mensuel + projection */}
           <div className="ax-card p-5">
-            <p className="ax-label mb-3">Objectif mensuel</p>
+            <p className="ax-label mb-3">{t("Objectif mensuel")}</p>
             <div className="flex items-center gap-4 mb-4">
               <div className="relative flex-shrink-0">
                 <ProgressRing pct={d.goalPct} color={d.goalPct >= 100 ? "#16A34A" : "#F5A623"} />
@@ -406,11 +408,11 @@ export default async function DashboardPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-bold text-[#111111]">
-                  {d.goalPct >= 100 ? <span className="flex items-center gap-1"><Sparkles size={13} />Objectif atteint !</span> : "En progression"}
+                  {d.goalPct >= 100 ? <span className="flex items-center gap-1"><Sparkles size={13} />{t("Objectif atteint !")}</span> : t("En progression")}
                 </p>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{formatMontant(d.month, d.devise)}</p>
                 {d.prevCA > 0 && (
-                  <p className="text-[11px] text-[#CCCCCC] mt-0.5">Objectif : {formatMontant(d.prevCA, d.devise)}</p>
+                  <p className="text-[11px] text-[#CCCCCC] mt-0.5">{t("Objectif :")}{" "}{formatMontant(d.prevCA, d.devise)}</p>
                 )}
               </div>
             </div>
@@ -418,7 +420,7 @@ export default async function DashboardPage() {
               <div className="pt-3 border-t border-[#F5F5F7] flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <BarChart3 size={12} className="text-[#CCCCCC]" />
-                  <span className="text-[11px] text-[#AAAAAA]">Projection fin de mois</span>
+                  <span className="text-[11px] text-[#AAAAAA]">{t("Projection fin de mois")}</span>
                 </div>
                 <span className={`text-[12px] font-bold ${onTrack ? "text-[#16A34A]" : "text-[#F5A623]"}`}>
                   {formatMontant(d.projection, d.devise)}
@@ -434,13 +436,13 @@ export default async function DashboardPage() {
                   <ShoppingBag size={16} className="text-[#D97706]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-[#111111]">{d.pending} commande{d.pending > 1 ? "s" : ""} en attente</p>
-                  <p className="text-[11.5px] text-[#AAAAAA]">À traiter en priorité</p>
+                  <p className="text-[13px] font-semibold text-[#111111]">{t(d.pending)} commande{d.pending > 1 ? "s" : ""}{" "}{t("en attente")}</p>
+                  <p className="text-[11.5px] text-[#AAAAAA]">{t("À traiter en priorité")}</p>
                 </div>
               </div>
               <a href="/dashboard/commandes?statut=en_attente"
                 className="flex-shrink-0 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:bg-[#F5F5F5] transition-all whitespace-nowrap">
-                Traiter →
+                {t("Traiter →")}
               </a>
             </div>
           )}
@@ -451,7 +453,7 @@ export default async function DashboardPage() {
                 <div className="w-7 h-7 rounded-xl bg-[#FEF2F2] border border-[#FECACA]/60 flex items-center justify-center">
                   <AlertTriangle size={13} className="text-[#DC2626]" />
                 </div>
-                <p className="text-[13px] font-semibold text-[#111111]">Stock critique</p>
+                <p className="text-[13px] font-semibold text-[#111111]">{t("Stock critique")}</p>
                 <span className="ml-auto text-[10.5px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2 py-0.5 rounded-full">
                   {d.lowStock.length}
                 </span>
@@ -459,7 +461,7 @@ export default async function DashboardPage() {
               <div className="space-y-2">
                 {d.lowStock.map(p => (
                   <div key={p.id} className="flex items-center justify-between gap-3">
-                    <span className="text-[12.5px] text-[#444] truncate">{p.nom}</span>
+                    <span className="text-[12.5px] text-[#444] truncate">{t(p.nom)}</span>
                     <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border ${
                       p.stock <= 2 ? "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]" : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
                     }`}>{p.stock} restant{p.stock > 1 ? "s" : ""}</span>
@@ -468,13 +470,13 @@ export default async function DashboardPage() {
               </div>
               <a href="/dashboard/produits?stock=critique"
                 className="flex items-center gap-1 text-[12px] text-[#666] mt-3 hover:text-[#111] transition-colors group">
-                Gérer les stocks <ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                {t("Gérer les stocks")}{" "}<ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </a>
             </div>
           )}
 
           <div className="ax-card p-4">
-            <p className="ax-label mb-3">Accès rapides</p>
+            <p className="ax-label mb-3">{t("Accès rapides")}</p>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Package,     color: "#7C3AED", bg: "#EEF1F6" },
@@ -488,7 +490,7 @@ export default async function DashboardPage() {
                     style={{ background: bg, border: `1px solid ${color}20` }}>
                     <Icon size={14} style={{ color }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-[11px] font-semibold text-[#666] group-hover:text-[#111] transition-colors text-center leading-tight">{label}</span>
+                  <span className="text-[11px] font-semibold text-[#666] group-hover:text-[#111] transition-colors text-center leading-tight">{t(label)}</span>
                 </a>
               ))}
             </div>
@@ -501,18 +503,18 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 ax-card p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Top produits</h3>
-              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Par chiffre d'affaires ce mois</p>
+              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Top produits")}</h3>
+              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Par chiffre d'affaires ce mois")}</p>
             </div>
             <a href="/dashboard/produits"
               className="text-[11.5px] font-semibold text-[#666] hover:text-[#111] transition-colors flex items-center gap-1">
-              Voir tout <ArrowUpRight size={11} />
+              {t("Voir tout")}{" "}<ArrowUpRight size={11} />
             </a>
           </div>
           {d.topProduits.length === 0 ? (
             <div className="py-10 flex flex-col items-center gap-3 text-center">
               <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center"><Package size={22} className="text-gray-400" /></div>
-              <p className="text-[13px] text-[#AAAAAA]">Aucune vente ce mois</p>
+              <p className="text-[13px] text-[#AAAAAA]">{t("Aucune vente ce mois")}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -531,12 +533,12 @@ export default async function DashboardPage() {
                           {i + 1}
                         </div>
                       )}
-                      <span className="text-[13px] font-medium text-[#222] truncate flex-1">{p.nom}</span>
+                      <span className="text-[13px] font-medium text-[#222] truncate flex-1">{t(p.nom)}</span>
                       <div className="text-right flex-shrink-0">
                         <p className="text-[13px] font-bold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>
                           {formatMontant(p.revenue, d.devise)}
                         </p>
-                        <p className="text-[10.5px] text-[#AAAAAA]">{p.qte} vente{p.qte > 1 ? "s" : ""}</p>
+                        <p className="text-[10.5px] text-[#AAAAAA]">{t(p.qte)} vente{p.qte > 1 ? "s" : ""}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -555,10 +557,10 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <div className="ax-card p-5 flex-1">
-            <h3 className="text-[13px] font-semibold text-[#111111] mb-1">Statuts ce mois</h3>
-            <p className="text-[11.5px] text-[#AAAAAA] mb-4">{totalCmdsMonth} commandes</p>
+            <h3 className="text-[13px] font-semibold text-[#111111] mb-1">{t("Statuts ce mois")}</h3>
+            <p className="text-[11.5px] text-[#AAAAAA] mb-4">{t(totalCmdsMonth)} commandes</p>
             {totalCmdsMonth === 0 ? (
-              <div className="py-6 text-center text-[12px] text-[#AAAAAA]">Aucune commande</div>
+              <div className="py-6 text-center text-[12px] text-[#AAAAAA]">{t("Aucune commande")}</div>
             ) : (
               <>
                 <div className="flex h-2.5 rounded-full overflow-hidden gap-0.5 mb-4">
@@ -578,7 +580,7 @@ export default async function DashboardPage() {
                       <div key={key} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
-                          <span className="text-[11.5px] text-[#555] truncate">{cfg.label}</span>
+                          <span className="text-[11.5px] text-[#555] truncate">{t(cfg.label)}</span>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <span className="text-[10.5px] text-[#CCCCCC]">{pct}%</span>
@@ -596,7 +598,7 @@ export default async function DashboardPage() {
             <div className="ax-card p-5">
               <div className="flex items-center gap-2 mb-4">
                 <MapPin size={13} className="text-[#AAAAAA]" />
-                <h3 className="text-[13px] font-semibold text-[#111111]">Top villes</h3>
+                <h3 className="text-[13px] font-semibold text-[#111111]">{t("Top villes")}</h3>
               </div>
               <div className="space-y-3">
                 {d.topVilles.map((v, i) => {
@@ -604,7 +606,7 @@ export default async function DashboardPage() {
                   return (
                     <div key={v.ville}>
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[12px] font-medium text-[#333] truncate">{v.ville || "Inconnue"}</span>
+                        <span className="text-[12px] font-medium text-[#333] truncate">{t(v.ville) || t("Inconnue")}</span>
                         <span className="text-[12px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>{v._count.id}</span>
                       </div>
                       <div className="h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
@@ -624,11 +626,11 @@ export default async function DashboardPage() {
         <div className="ax-card p-5 overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Entonnoir de conversion</h3>
-              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Ce mois · de la visite à la livraison</p>
+              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Entonnoir de conversion")}</h3>
+              <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Ce mois · de la visite à la livraison")}</p>
             </div>
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]">
-              {conversion}% global
+              {t(conversion)}{t("% global")}
             </span>
           </div>
 
@@ -648,9 +650,9 @@ export default async function DashboardPage() {
                     style={{ background: step.bg, borderColor: `${step.color}20` }}>
                     <div className="flex justify-center mb-1"><step.Icon size={20} style={{ color: step.color }} /></div>
                     <p className="text-[24px] font-black text-[#111111] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
-                      {step.value.toLocaleString("fr-FR")}
+                      {step.value.toLocaleString(t.loc)}
                     </p>
-                    <p className="text-[11px] font-semibold mt-1.5" style={{ color: step.color }}>{step.label}</p>
+                    <p className="text-[11px] font-semibold mt-1.5" style={{ color: step.color }}>{t(step.label)}</p>
                     {/* fill bar */}
                     <div className="mt-3 h-1 bg-white/60 rounded-full overflow-hidden">
                       <div className="h-full rounded-full" style={{
@@ -665,12 +667,12 @@ export default async function DashboardPage() {
                   {!isLast && (
                     <div className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
                       <span className={`text-[10px] font-bold leading-none ${good ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                        {continueRate}%
+                        {t(continueRate)}%
                       </span>
                       <ChevronRight size={16} className="text-[#CCCCCC]" />
                       {dropout > 0 && (
                         <span className="text-[9.5px] text-[#CCCCCC] leading-none">
-                          -{dropout.toLocaleString("fr-FR")}
+                          -{dropout.toLocaleString(t.loc)}
                         </span>
                       )}
                     </div>
@@ -685,8 +687,8 @@ export default async function DashboardPage() {
             <div className="mt-4 pt-3 border-t border-[#F5F5F7] flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#DC2626] flex-shrink-0" />
               <p className="text-[11.5px] text-[#AAAAAA]">
-                <span className="font-semibold text-[#DC2626]">{annulees} annulation{annulees > 1 ? "s" : ""}</span> ce mois
-                {totalCmdsMonth > 0 && ` · ${Math.round((annulees / totalCmdsMonth) * 100)}% du total`}
+                <span className="font-semibold text-[#DC2626]">{t(annulees)} annulation{annulees > 1 ? "s" : ""}</span>{" "}{t("ce mois")}
+                {totalCmdsMonth > 0 && t(" · {0}% du total", Math.round((annulees / totalCmdsMonth) * 100))}
               </p>
             </div>
           )}
@@ -700,13 +702,14 @@ export default async function DashboardPage() {
 }
 
 /* ── KPI Card ─────────────────────────────────────────────────────────── */
-function KpiCard({
+async function KpiCard({
   label, value, sub, trend, Icon, accent, spark, sparkColor = "#F5A623",
 }: {
   label: string; value: string; sub: string;
   trend?: number | null; Icon: any; accent?: boolean;
   spark?: number[]; sparkColor?: string;
 }) {
+  const t = await getT();
   const up = trend !== null && trend !== undefined && trend > 0;
   const dn = trend !== null && trend !== undefined && trend < 0;
   return (
@@ -716,27 +719,27 @@ function KpiCard({
           style={{ background: "linear-gradient(90deg,#F5A623,#FFD280,#F5A623)" }} />
       )}
       <div className="flex items-start justify-between gap-2 mb-3">
-        <span className="ax-label">{label}</span>
+        <span className="ax-label">{t(label)}</span>
         <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all group-hover:scale-110 ${
           accent ? "bg-[#FFF8EC] border border-[#F5A623]/20" : "bg-[#F5F5F7] border border-[#EBEBEB]"
         }`}>
           <Icon size={14} className={accent ? "text-[#F5A623]" : "text-[#888]"} strokeWidth={1.8} />
         </div>
       </div>
-      <p className="text-[27px] font-extrabold text-[#111111] leading-none tabular-nums tracking-tight mb-2.5">{value}</p>
+      <p className="text-[27px] font-extrabold text-[#111111] leading-none tabular-nums tracking-tight mb-2.5">{t(value)}</p>
       <div className="flex items-end justify-between gap-2">
         <div>
           {up && (
             <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#16A34A] bg-[#ECFDF5] border border-[#BBF7D0] px-2 py-0.5 rounded-full">
-              <ArrowUpRight size={10} /> {sub}
+              <ArrowUpRight size={10} /> {t(sub)}
             </span>
           )}
           {dn && (
             <span className="flex items-center gap-0.5 text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] border border-[#FECACA] px-2 py-0.5 rounded-full">
-              <ArrowDownRight size={10} /> {sub}
+              <ArrowDownRight size={10} /> {t(sub)}
             </span>
           )}
-          {!up && !dn && <span className="text-[11.5px] text-[#AAAAAA] leading-tight block">{sub}</span>}
+          {!up && !dn && <span className="text-[11.5px] text-[#AAAAAA] leading-tight block">{t(sub)}</span>}
         </div>
         {spark && spark.filter(v => v > 0).length > 1 && (
           <div className="flex-shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">

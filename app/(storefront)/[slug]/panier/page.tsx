@@ -8,12 +8,14 @@ import Link from "next/link";
 import { CartContent } from "@/components/storefront/CartContent";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export default async function PanierPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || !(await boutiqueVisible(tenant))) notFound();
@@ -27,7 +29,7 @@ export default async function PanierPage({ params }: Props) {
     return (
       <Habillage>
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-8">Mon panier</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-8">{t("Mon panier")}</h1>
           <CartContent theme={theme} slug={slug} devise={tenant.devise} />
         </div>
       </Habillage>
@@ -40,19 +42,19 @@ export default async function PanierPage({ params }: Props) {
       <nav style={{ borderBottomColor: `${theme.accent}20` }} className="sticky top-0 z-50 backdrop-blur-lg border-b">
         <div style={{ backgroundColor: `${theme.fond}cc` }} className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href={`/${slug}`}>
-            <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>{tenant.nomBoutique}</span>
+            <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>{t(tenant.nomBoutique)}</span>
           </Link>
-          <Link href={`/${slug}/produits`} className="text-sm hover:opacity-80 transition-opacity">← Continuer les achats</Link>
+          <Link href={`/${slug}/produits`} className="text-sm hover:opacity-80 transition-opacity">{t("← Continuer les achats")}</Link>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold font-playfair mb-8" style={{ color: theme.accent }}>Mon Panier</h1>
+        <h1 className="text-3xl font-bold font-playfair mb-8" style={{ color: theme.accent }}>{t("Mon Panier")}</h1>
         <CartContent theme={theme} slug={slug} devise={tenant.devise} />
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>
-        <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: theme.accent }}>Axso</span></p>
+        <p>{t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: theme.accent }}>{t("Axso")}</span></p>
       </footer>
     </div>
   );

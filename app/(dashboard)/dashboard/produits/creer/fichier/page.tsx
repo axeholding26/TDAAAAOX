@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Fichier = { id?: string; nom: string; url: string; taille: number; mimeType: string; ordre: number };
@@ -57,12 +58,13 @@ function formatTaille(o: number) {
 // ─── Composant étape 1 ────────────────────────────────────────────────────────
 
 function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const tr = useT();
   const { devise } = useDevise();
   const [uploadImg, setUploadImg] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function uploadImage(file: File) {
-    if (!file.type.startsWith("image/")) { toast.error("Fichier image requis"); return; }
+    if (!file.type.startsWith("image/")) { toast.error(tr("Fichier image requis")); return; }
     setUploadImg(true);
     try {
       const fd = new FormData(); fd.append("file", file);
@@ -70,7 +72,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       set({ images: [...e.images, data.url] });
-    } catch (err: any) { toast.error(err.message || "Erreur upload"); }
+    } catch (err: any) { toast.error(tr(err.message) || tr("Erreur upload")); }
     finally { setUploadImg(false); }
   }
 
@@ -78,21 +80,21 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
     <div className="space-y-5">
       {/* Nom */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Nom du produit *</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Nom du produit *")}</label>
         <input
           value={e.nom}
           onChange={(ev) => {
             const nom = ev.target.value;
             set({ nom, slug: slugify(nom) });
           }}
-          placeholder="Ex : Guide complet SEO 2025"
+          placeholder={tr("Ex : Guide complet SEO 2025")}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
 
       {/* Slug */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug URL</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Slug URL")}</label>
         <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
           <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-xs border-r border-gray-200">boutique.com/p/</span>
           <input
@@ -105,12 +107,12 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Description")}</label>
         <textarea
           value={e.description}
           onChange={(ev) => set({ description: ev.target.value })}
           rows={4}
-          placeholder="Décrivez votre produit, ce qu'il contient, à qui il s'adresse…"
+          placeholder={tr("Décrivez votre produit, ce qu'il contient, à qui il s'adresse…")}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
@@ -118,7 +120,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
       {/* Prix */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix de vente ({devise}) *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Prix de vente (")}{tr(devise)}) *</label>
           <input
             type="number" min="0" value={e.prix}
             onChange={(ev) => set({ prix: ev.target.value })}
@@ -127,7 +129,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Prix barré (optionnel)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Prix barré (optionnel)")}</label>
           <input
             type="number" min="0" value={e.prixCompare}
             onChange={(ev) => set({ prixCompare: ev.target.value })}
@@ -139,20 +141,20 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
 
       {/* Catégorie */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Catégorie</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Catégorie")}</label>
         <select
           value={e.categorie}
           onChange={(ev) => set({ categorie: ev.target.value })}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white"
         >
-          <option value="">— Sélectionner —</option>
-          {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          <option value="">{tr("— Sélectionner —")}</option>
+          {CATEGORIES.map((c) => <option key={c}>{tr(c)}</option>)}
         </select>
       </div>
 
       {/* Images */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">Visuels produit</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Visuels produit")}</label>
         <div className="flex flex-wrap gap-2">
           {e.images.map((url, i) => (
             <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
@@ -170,7 +172,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
             disabled={uploadImg}
             className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-[#F5A623] hover:text-[#F5A623] transition-colors"
           >
-            {uploadImg ? <Loader2 size={18} className="animate-spin" /> : <><ImageIcon size={18} /><span className="text-[10px]">Ajouter</span></>}
+            {uploadImg ? <Loader2 size={18} className="animate-spin" /> : <><ImageIcon size={18} /><span className="text-[10px]">{tr("Ajouter")}</span></>}
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden"
             onChange={(ev) => { const f = ev.target.files?.[0]; if (f) uploadImage(f); ev.target.value = ""; }} />
@@ -183,18 +185,19 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
 // ─── Composant étape 2 ────────────────────────────────────────────────────────
 
 function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const tr = useT();
   return (
     <div className="space-y-5">
       {/* Limite d'achats */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Limite d'achats globale
+          {tr("Limite d'achats globale")}
         </label>
-        <p className="text-xs text-gray-400 mb-2">Laissez vide pour illimité. La vente se bloque automatiquement quand le stock atteint 0.</p>
+        <p className="text-xs text-gray-400 mb-2">{tr("Laissez vide pour illimité. La vente se bloque automatiquement quand le stock atteint 0.")}</p>
         <input
           type="number" min="1" value={e.limitAchats}
           onChange={(ev) => set({ limitAchats: ev.target.value })}
-          placeholder="Ex : 100 (laisser vide = illimité)"
+          placeholder={tr("Ex : 100 (laisser vide = illimité)")}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
@@ -202,15 +205,15 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
       {/* Mot de passe */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5">
-          <Lock size={14} /> Mot de passe de téléchargement
+          <Lock size={14} />{" "}{tr("Mot de passe de téléchargement")}
         </label>
-        <p className="text-xs text-gray-400 mb-2">L'acheteur devra saisir ce mot de passe pour accéder au fichier.</p>
+        <p className="text-xs text-gray-400 mb-2">{tr("L'acheteur devra saisir ce mot de passe pour accéder au fichier.")}</p>
         <div className="relative">
           <input
             type={e.montrerMDP ? "text" : "password"}
             value={e.motDePasse}
             onChange={(ev) => set({ motDePasse: ev.target.value })}
-            placeholder="Laisser vide = pas de mot de passe"
+            placeholder={tr("Laisser vide = pas de mot de passe")}
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
           <button
@@ -235,24 +238,23 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
         </button>
         <div>
           <div className="flex items-center gap-1.5 text-sm font-medium text-gray-800">
-            <Droplets size={14} /> Filigrane automatique
+            <Droplets size={14} />{" "}{tr("Filigrane automatique")}
           </div>
           <p className="text-xs text-gray-400 mt-0.5">
-            Pour les PDF : injecte le nom, l'email et la date d'achat de l'acheteur dans chaque page livrée.
-            Les autres formats ne sont pas supportés pour l'instant.
+            {tr("Pour les PDF : injecte le nom, l'email et la date d'achat de l'acheteur dans chaque page livrée. Les autres formats ne sont pas supportés pour l'instant.")}
           </p>
         </div>
       </div>
 
       {/* Instructions post-achat */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Instructions post-achat</label>
-        <p className="text-xs text-gray-400 mb-2">Texte affiché à l'acheteur après paiement (email de confirmation + page de confirmation).</p>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{tr("Instructions post-achat")}</label>
+        <p className="text-xs text-gray-400 mb-2">{tr("Texte affiché à l'acheteur après paiement (email de confirmation + page de confirmation).")}</p>
         <textarea
           value={e.instructionsAchat}
           onChange={(ev) => set({ instructionsAchat: ev.target.value })}
           rows={4}
-          placeholder="Ex : Merci pour votre achat ! Vous pouvez télécharger votre fichier via le bouton ci-dessous…"
+          placeholder={tr("Ex : Merci pour votre achat ! Vous pouvez télécharger votre fichier via le bouton ci-dessous…")}
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
         />
       </div>
@@ -263,6 +265,7 @@ function EtapeConfig({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) 
 // ─── Composant étape 3 ────────────────────────────────────────────────────────
 
 function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) => void }) {
+  const tr = useT();
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -288,9 +291,9 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
         })
       );
       set({ fichiers: [...e.fichiers, ...results] });
-      toast.success(`${results.length} fichier${results.length > 1 ? "s" : ""} ajouté${results.length > 1 ? "s" : ""}`);
+      toast.success(tr("{0} fichier{1} ajouté{2}", results.length, results.length > 1 ? "s" : "", results.length > 1 ? "s" : ""));
     } catch (err: any) {
-      toast.error(err.message || "Erreur upload");
+      toast.error(tr(err.message) || tr("Erreur upload"));
     } finally {
       setUploading(false);
     }
@@ -323,15 +326,15 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
             <Loader2 size={28} className="animate-spin text-[#F5A623]" />
-            <p className="text-sm text-gray-500">Upload en cours…</p>
+            <p className="text-sm text-gray-500">{tr("Upload en cours…")}</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-2">
             <div className="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center">
               <Upload size={22} className="text-[#F5A623]" />
             </div>
-            <p className="text-sm font-medium text-gray-700">Glissez vos fichiers ici ou cliquez pour parcourir</p>
-            <p className="text-xs text-gray-400">PDF, ZIP, MP3, MP4, DOCX… — max 200 Mo par fichier</p>
+            <p className="text-sm font-medium text-gray-700">{tr("Glissez vos fichiers ici ou cliquez pour parcourir")}</p>
+            <p className="text-xs text-gray-400">{tr("PDF, ZIP, MP3, MP4, DOCX… — max 200 Mo par fichier")}</p>
           </div>
         )}
       </div>
@@ -348,8 +351,8 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
                 <FileDown size={14} className="text-[#F5A623]" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{f.nom}</p>
-                <p className="text-xs text-gray-400">{formatTaille(f.taille)} • {f.mimeType}</p>
+                <p className="text-sm font-medium text-gray-800 truncate">{tr(f.nom)}</p>
+                <p className="text-xs text-gray-400">{formatTaille(f.taille)} • {tr(f.mimeType)}</p>
               </div>
               <button onClick={() => supprimer(i)} className="text-gray-400 hover:text-red-500 transition-colors">
                 <X size={16} />
@@ -362,7 +365,7 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
       {e.fichiers.length === 0 && (
         <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-xl p-3">
           <AlertCircle size={14} className="flex-shrink-0 mt-0.5" />
-          <span>Ajoutez au moins un fichier pour pouvoir publier le produit.</span>
+          <span>{tr("Ajoutez au moins un fichier pour pouvoir publier le produit.")}</span>
         </div>
       )}
     </div>
@@ -372,6 +375,7 @@ function EtapeFichiers({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>
 // ─── Composant étape 4 (résumé) ───────────────────────────────────────────────
 
 function EtapePublication({ e }: { e: EtatWizard }) {
+  const tr = useT();
   const { fmt } = useDevise();
   const prixNum = parseFloat(e.prix) || 0;
 
@@ -386,20 +390,20 @@ function EtapePublication({ e }: { e: EtatWizard }) {
   return (
     <div className="space-y-5">
       <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200">
-        <h3 className="font-semibold text-gray-800 mb-3">Récapitulatif</h3>
+        <h3 className="font-semibold text-gray-800 mb-3">{tr("Récapitulatif")}</h3>
         <div className="space-y-1.5 text-sm">
-          <Row label="Nom"       val={e.nom || "—"} />
-          <Row label="Prix"      val={prixNum > 0 ? `${fmt(prixNum)}` : "—"} />
-          <Row label="Fichiers"  val={`${e.fichiers.length} fichier${e.fichiers.length > 1 ? "s" : ""}`} />
-          <Row label="Filigrane" val={e.filigrane ? "Oui (PDF)" : "Non"} />
-          <Row label="Mot de passe" val={e.motDePasse ? "Oui" : "Non"} />
-          <Row label="Limite achats" val={e.limitAchats ? `${e.limitAchats} exemplaires` : "Illimité"} />
+          <Row label={tr("Nom")}       val={e.nom || "—"} />
+          <Row label={tr("Prix")}      val={prixNum > 0 ? `${fmt(prixNum)}` : "—"} />
+          <Row label={tr("Fichiers")}  val={`${e.fichiers.length} fichier${e.fichiers.length > 1 ? "s" : ""}`} />
+          <Row label={tr("Filigrane")} val={e.filigrane ? "Oui (PDF)" : "Non"} />
+          <Row label={tr("Mot de passe")} val={e.motDePasse ? "Oui" : "Non"} />
+          <Row label={tr("Limite achats")} val={e.limitAchats ? `${e.limitAchats} exemplaires` : "Illimité"} />
         </div>
       </div>
 
       <div className="p-4 rounded-2xl border border-gray-200">
         <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-1.5">
-          <Sparkles size={15} className="text-[#F5A623]" /> Prêt à publier ?
+          <Sparkles size={15} className="text-[#F5A623]" />{" "}{tr("Prêt à publier ?")}
         </h3>
         <div className="space-y-2">
           {checks.map((c, i) => (
@@ -408,24 +412,25 @@ function EtapePublication({ e }: { e: EtatWizard }) {
                 ? <Check size={14} className="flex-shrink-0" />
                 : <AlertCircle size={14} className="flex-shrink-0" />
               }
-              {c.label}
+              {tr(c.label)}
             </div>
           ))}
         </div>
       </div>
 
       <p className="text-xs text-gray-400">
-        Le produit sera publié et immédiatement visible sur votre boutique. Vous pourrez le modifier à tout moment.
+        {tr("Le produit sera publié et immédiatement visible sur votre boutique. Vous pourrez le modifier à tout moment.")}
       </p>
     </div>
   );
 }
 
 function Row({ label, val }: { label: string; val: string }) {
+  const tr = useT();
   return (
     <div className="flex justify-between gap-2">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-gray-800 font-medium text-right">{val}</span>
+      <span className="text-gray-500">{tr(label)}</span>
+      <span className="text-gray-800 font-medium text-right">{tr(val)}</span>
     </div>
   );
 }
@@ -433,6 +438,7 @@ function Row({ label, val }: { label: string; val: string }) {
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 export default function CreerFichierPage() {
+  const tr = useT();
   const router = useRouter();
   const [etape, setEtape] = useState(0);
   const [etat, setEtatRaw] = useState<EtatWizard>(ETAT_INITIAL);
@@ -454,7 +460,7 @@ export default function CreerFichierPage() {
 
   async function suivant() {
     const err = validerEtape();
-    if (err) { toast.error(err); return; }
+    if (err) { toast.error(tr(err)); return; }
 
     if (etape === 2 && !produitId) {
       // Créer le produit en DB avant la publication
@@ -519,13 +525,13 @@ export default function CreerFichierPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
-        toast.success("Produit publié avec succès !");
+        toast.success(tr("Produit publié avec succès !"));
         router.push(`/dashboard/produits/${id}`);
       } else {
         setEtape(3);
       }
     } catch (err: any) {
-      toast.error(err.message || "Erreur serveur");
+      toast.error(tr(err.message) || tr("Erreur serveur"));
     } finally {
       setSaving(false);
     }
@@ -541,9 +547,9 @@ export default function CreerFichierPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
-        toast.success("Produit publié !");
+        toast.success(tr("Produit publié !"));
         router.push(`/dashboard/produits/${produitId}`);
-      } catch { toast.error("Erreur lors de la publication"); }
+      } catch { toast.error(tr("Erreur lors de la publication")); }
       finally { setSaving(false); }
     } else {
       await creerProduit(true);
@@ -555,7 +561,7 @@ export default function CreerFichierPage() {
   return (
     <div className="max-w-xl mx-auto py-8 px-4">
       <Link href="/dashboard/produits/digital/nouveau" className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 mb-6 transition-colors">
-        <ArrowLeft size={14} /> Changer de type
+        <ArrowLeft size={14} />{" "}{tr("Changer de type")}
       </Link>
 
       {/* En-tête */}
@@ -564,9 +570,9 @@ export default function CreerFichierPage() {
           <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center">
             <FileDown size={14} className="text-[#F5A623]" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 font-poppins">Fichier digital</h1>
+          <h1 className="text-xl font-bold text-gray-900 font-poppins">{tr("Fichier digital")}</h1>
         </div>
-        <p className="text-sm text-gray-500">Étape {etape + 1} sur {ETAPES.length} — {ETAPES[etape]}</p>
+        <p className="text-sm text-gray-500">{tr("Étape")}{" "}{tr(etape) + 1} sur {ETAPES.length} — {tr(ETAPES[etape])}</p>
       </div>
 
       {/* Barre de progression */}
@@ -591,7 +597,7 @@ export default function CreerFichierPage() {
             onClick={precedent}
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 transition-all"
           >
-            <ArrowLeft size={14} /> Précédent
+            <ArrowLeft size={14} />{" "}{tr("Précédent")}
           </button>
         )}
 
@@ -602,7 +608,7 @@ export default function CreerFichierPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-[#F5A623] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#F5A623]/90 transition-all disabled:opacity-60"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : null}
-            {etape === 2 ? "Vérifier avant publication" : "Continuer"}
+            {etape === 2 ? tr("Vérifier avant publication") : tr("Continuer")}
             {!saving && <ChevronRight size={15} />}
           </button>
         ) : (
@@ -612,7 +618,7 @@ export default function CreerFichierPage() {
             className="flex-1 flex items-center justify-center gap-2 bg-[#F5A623] text-white py-2.5 rounded-xl font-semibold text-sm hover:bg-[#d4820a] transition-all disabled:opacity-60 shadow-lg shadow-[#F5A623]/25"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={15} />}
-            Publier le produit
+            {tr("Publier le produit")}
           </button>
         )}
       </div>

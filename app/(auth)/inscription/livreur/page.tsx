@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Truck, Loader2, CheckCircle, Bike, Car, PersonStanding, type LucideIcon } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const VEHICULES: { value: string; label: string; desc: string; Icon: LucideIcon }[] = [
   { value: "moto", label: "Moto", desc: "Idéal pour la ville", Icon: Bike },
@@ -14,6 +15,7 @@ const VEHICULES: { value: string; label: string; desc: string; Icon: LucideIcon 
 const inputCls = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm placeholder:text-gray-400 focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/10 focus:outline-none transition-all";
 
 export default function InscriptionLivreurPage() {
+  const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -50,15 +52,15 @@ export default function InscriptionLivreurPage() {
           <div className="w-20 h-20 rounded-full bg-green-100 border border-green-200 flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} className="text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-playfair mb-3">Compte créé !</h1>
+          <h1 className="text-2xl font-bold text-gray-900 font-playfair mb-3">{t("Compte créé !")}</h1>
           <p className="text-gray-400 text-sm mb-6">
-            Votre compte livreur a été créé avec succès. Vous pouvez maintenant vous connecter et accéder à votre espace dédié.
+            {t("Votre compte livreur a été créé avec succès. Vous pouvez maintenant vous connecter et accéder à votre espace dédié.")}
           </p>
           <button
             onClick={() => router.push("/connexion")}
             className="w-full bg-[#F5A623] text-white font-bold py-3 rounded-xl hover:bg-[#D4911A] transition-all shadow-lg shadow-[#F5A623]/25"
           >
-            Se connecter
+            {t("Se connecter")}
           </button>
         </div>
       </div>
@@ -82,43 +84,43 @@ export default function InscriptionLivreurPage() {
               <Truck size={22} className="text-[#D4911A]" />
             </div>
           </div>
-          <h1 className="text-xl font-bold text-gray-900 mt-3">Rejoindre comme livreur</h1>
-          <p className="text-gray-400 text-sm mt-1">Recevez des commandes et gérez vos livraisons</p>
+          <h1 className="text-xl font-bold text-gray-900 mt-3">{t("Rejoindre comme livreur")}</h1>
+          <p className="text-gray-400 text-sm mt-1">{t("Recevez des commandes et gérez vos livraisons")}</p>
         </div>
 
         <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl shadow-[#F5A623]/8">
           {erreur && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm mb-5">
-              {erreur}
+              {t(erreur)}
             </div>
           )}
 
           <form onSubmit={soumettre} className="space-y-4">
             <div>
-              <label className="block text-gray-600 text-sm font-medium mb-1.5">Nom complet *</label>
+              <label className="block text-gray-600 text-sm font-medium mb-1.5">{t("Nom complet *")}</label>
               <input required value={form.nom} onChange={e => setForm({ ...form, nom: e.target.value })}
-                placeholder="Mamadou Koné" className={inputCls} />
+                placeholder={t("Mamadou Koné")} className={inputCls} />
             </div>
             <div>
-              <label className="block text-gray-600 text-sm font-medium mb-1.5">Email *</label>
+              <label className="block text-gray-600 text-sm font-medium mb-1.5">{t("Email *")}</label>
               <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                 placeholder="mamadou@exemple.com" className={inputCls} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-gray-600 text-sm font-medium mb-1.5">Téléphone *</label>
+                <label className="block text-gray-600 text-sm font-medium mb-1.5">{t("Téléphone *")}</label>
                 <input required value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })}
                   placeholder="+221 77 000 00 00" className={inputCls} />
               </div>
               <div>
-                <label className="block text-gray-600 text-sm font-medium mb-1.5">Mot de passe *</label>
+                <label className="block text-gray-600 text-sm font-medium mb-1.5">{t("Mot de passe *")}</label>
                 <input required type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="Min. 6 caractères" className={inputCls} />
+                  placeholder={t("Min. 6 caractères")} className={inputCls} />
               </div>
             </div>
 
             <div>
-              <label className="block text-gray-600 text-sm font-medium mb-2">Votre véhicule *</label>
+              <label className="block text-gray-600 text-sm font-medium mb-2">{t("Votre véhicule *")}</label>
               <div className="grid grid-cols-2 gap-2">
                 {VEHICULES.map(v => (
                   <button
@@ -132,21 +134,21 @@ export default function InscriptionLivreurPage() {
                     }`}
                   >
                     <v.Icon size={16} />
-                    <span className="truncate">{v.label}</span>
+                    <span className="truncate">{t(v.label)}</span>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <label className="block text-gray-600 text-sm font-medium mb-1.5">Ville / Zone de couverture</label>
+              <label className="block text-gray-600 text-sm font-medium mb-1.5">{t("Ville / Zone de couverture")}</label>
               <input value={form.zone} onChange={e => setForm({ ...form, zone: e.target.value })}
-                placeholder="Ex: Dakar, Abidjan Plateau..." className={inputCls} />
+                placeholder={t("Ex: Dakar, Abidjan Plateau...")} className={inputCls} />
             </div>
 
             <div className="bg-[#F5A623]/8 border border-[#F5A623]/25 rounded-xl p-3">
               <p className="text-amber-700 text-xs leading-relaxed">
-                En créant un compte, vous rejoignez la plateforme Axso en tant que livreur indépendant. Les marchands pourront vous assigner des commandes.
+                {t("En créant un compte, vous rejoignez la plateforme Axso en tant que livreur indépendant. Les marchands pourront vous assigner des commandes.")}
               </p>
             </div>
 
@@ -154,19 +156,19 @@ export default function InscriptionLivreurPage() {
               type="submit" disabled={loading}
               className="w-full bg-[#F5A623] text-[#111111] font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95"
             >
-              {loading ? <><Loader2 size={16} className="animate-spin" /> Création du compte...</> : "Créer mon compte livreur"}
+              {loading ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Création du compte...")}</> : t("Créer mon compte livreur")}
             </button>
           </form>
         </div>
 
         <div className="text-center mt-6 space-y-2">
           <Link href="/connexion" className="text-[#F5A623] hover:underline text-sm flex items-center justify-center gap-1">
-            <ArrowLeft size={13} /> Retour à la connexion
+            <ArrowLeft size={13} />{" "}{t("Retour à la connexion")}
           </Link>
           <p className="text-gray-400 text-xs">
-            Vous voulez ouvrir une boutique ?{" "}
+            {t("Vous voulez ouvrir une boutique ?")}{" "}
             <Link href="/inscription" className="text-gray-400 hover:text-[#F5A623] transition-colors underline">
-              Créer un compte vendeur
+              {t("Créer un compte vendeur")}
             </Link>
           </p>
         </div>

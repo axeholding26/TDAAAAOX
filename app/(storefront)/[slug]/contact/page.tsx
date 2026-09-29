@@ -10,6 +10,7 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { ContactForm } from "@/components/storefront/ContactForm";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -27,6 +28,7 @@ export async function generateMetadata({ params }: Props) {
 // (téléphone/whatsapp/email/adresse) affichées ici pour la première fois de
 // façon dédiée, + formulaire de contact réel (POST /api/storefront/[slug]/contact).
 export default async function ContactPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
 
   const tenant = await prisma.tenant.findUnique({
@@ -55,12 +57,12 @@ export default async function ContactPage({ params }: Props) {
   const contenu = (
     <>
         <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4`}>
-          <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>Contact</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold font-playfair" style={{ color: c.texte }}>{t("Contact")}</h1>
           <p className="text-sm mt-2" style={{ opacity: 0.5 }}>
-            <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tenant.nomBoutique}</Link> · Contact
+            <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{t(tenant.nomBoutique)}</Link>{" "}{t("· Contact")}
           </p>
           {contactPage?.intro && (
-            <p className="text-base mt-4 max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{contactPage.intro}</p>
+            <p className="text-base mt-4 max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{t(contactPage.intro)}</p>
           )}
         </div>
   
@@ -69,7 +71,7 @@ export default async function ContactPage({ params }: Props) {
             {/* Coordonnées */}
             <div className="space-y-3">
               {coordonnees.length === 0 && (
-                <p className="text-sm" style={{ opacity: 0.5 }}>Aucune coordonnée renseignée pour l'instant.</p>
+                <p className="text-sm" style={{ opacity: 0.5 }}>{t("Aucune coordonnée renseignée pour l'instant.")}</p>
               )}
               {coordonnees.map((item, i) => {
                 const content = (
@@ -78,15 +80,15 @@ export default async function ContactPage({ params }: Props) {
                       <item.Icon size={16} style={{ color: c.accent }} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: c.accent }}>{item.label}</p>
-                      <p className="text-sm truncate" style={{ color: c.texte }}>{item.value}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: c.accent }}>{t(item.label)}</p>
+                      <p className="text-sm truncate" style={{ color: c.texte }}>{t(item.value)}</p>
                     </div>
                   </div>
                 );
                 return item.href ? (
-                  <a key={i} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{content}</a>
+                  <a key={i} href={item.href} target={item.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="block hover:opacity-90 transition-opacity">{t(content)}</a>
                 ) : (
-                  <div key={i}>{content}</div>
+                  <div key={i}>{t(content)}</div>
                 );
               })}
             </div>
@@ -109,7 +111,7 @@ export default async function ContactPage({ params }: Props) {
 
   // Boutique à design : même en-tête / pied de page que le reste de la boutique.
   const Habillage = habillageDesign(cfg);
-  if (Habillage) return <Habillage>{contenu}</Habillage>;
+  if (Habillage) return <Habillage>{t(contenu)}</Habillage>;
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
@@ -129,7 +131,7 @@ export default async function ContactPage({ params }: Props) {
         sansPanier={cfg.modeBoutique === "digital"}
       />
 
-      {contenu}
+      {t(contenu)}
 
       {/* ─── FOOTER (identique aux autres pages storefront) ─── */}
       <footer className="border-t mt-0" style={{ backgroundColor: c.fond, borderColor: `${c.accent}15` }}>
@@ -139,14 +141,14 @@ export default async function ContactPage({ params }: Props) {
               {tenant.logoUrl ? (
                 <img src={tenant.logoUrl} alt={tenant.nomBoutique} className="h-10 mb-4 object-contain" />
               ) : (
-                <p className="text-2xl font-bold font-playfair mb-4" style={{ color: c.accent }}>{tenant.nomBoutique}</p>
+                <p className="text-2xl font-bold font-playfair mb-4" style={{ color: c.accent }}>{t(tenant.nomBoutique)}</p>
               )}
               {tenant.description && (
-                <p className="text-sm leading-relaxed mb-5" style={{ opacity: 0.55, maxWidth: "320px" }}>{tenant.description}</p>
+                <p className="text-sm leading-relaxed mb-5" style={{ opacity: 0.55, maxWidth: "320px" }}>{t(tenant.description)}</p>
               )}
             </div>
             <div>
-              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>Navigation</p>
+              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>{t("Navigation")}</p>
               <div className="space-y-3">
                 {[
                   { label: "Accueil", href: `/${slug}` },
@@ -155,24 +157,24 @@ export default async function ContactPage({ params }: Props) {
                   { label: "Suivi commande", href: `/suivi` },
                 ].map((l) => (
                   <Link key={l.href} href={l.href} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>
-                    {l.label}
+                    {t(l.label)}
                   </Link>
                 ))}
               </div>
             </div>
             <div>
-              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>Contact</p>
+              <p className="font-semibold text-sm mb-4 uppercase tracking-wider" style={{ color: c.accent }}>{t("Contact")}</p>
               <div className="space-y-3">
                 {tenant.email && <a href={`mailto:${tenant.email}`} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>{tenant.email}</a>}
-                {tenant.adresse && <p className="text-sm" style={{ opacity: 0.55 }}>{tenant.adresse}</p>}
+                {tenant.adresse && <p className="text-sm" style={{ opacity: 0.55 }}>{t(tenant.adresse)}</p>}
               </div>
             </div>
           </div>
         </div>
         <div className="border-t py-5" style={{ borderColor: `${c.accent}10` }}>
           <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs`} style={{ opacity: 0.4 }}>
-            <p>© {new Date().getFullYear()} {tenant.nomBoutique}. Tous droits réservés.</p>
-            <p>Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
+            <p>© {new Date().getFullYear()} {t(tenant.nomBoutique)}{t(". Tous droits réservés.")}</p>
+            <p>{t("Propulsé par")}{" "}<span style={{ color: c.accent, opacity: 1 }}>{t("Axso")}</span></p>
           </div>
         </div>
       </footer>

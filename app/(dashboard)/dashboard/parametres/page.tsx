@@ -9,6 +9,7 @@ import Link from "next/link";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { SelectPays } from "@/components/ui/SelectPays";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const PARAMETRES_TUTORIAL_STEPS = [
   { Icon: Settings,      titre: "Vos informations générales", description: "Nom, description, catégorie, pays et devise — la base de votre identité sur Axso." },
@@ -23,6 +24,7 @@ const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 
 const labelCls = "block mb-1.5 ax-label";
 
 export default function ParametresPage() {
+  const t = useT();
   const [tenant, setTenant] = useState<any>(null);
   const [form, setForm] = useState({
     nomBoutique: "", description: "", whatsapp: "", telephone: "", adresse: "", email: "",
@@ -73,15 +75,15 @@ export default function ParametresPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Formulaire de commande mis à jour !");
-    } catch { toast.error("Erreur lors de la sauvegarde"); }
+      toast.success(t("Formulaire de commande mis à jour !"));
+    } catch { toast.error(t("Erreur lors de la sauvegarde")); }
     finally { setSavingCommande(false); }
   }
 
   async function sauvegarderWhatsapp(e: React.FormEvent) {
     e.preventDefault();
     if (!whatsappNumero.startsWith("+") || !/^\+\d+$/.test(whatsappNumero)) {
-      toast.error("Le numéro doit commencer par + suivi de chiffres (ex: +22507XXXXXXXX)");
+      toast.error(t("Le numéro doit commencer par + suivi de chiffres (ex: +22507XXXXXXXX)"));
       return;
     }
     setSavingWhatsapp(true);
@@ -92,15 +94,15 @@ export default function ParametresPage() {
         body: JSON.stringify({ whatsappNumero }),
       });
       if (!res.ok) throw new Error();
-      toast.success("Numéro WhatsApp Business enregistré !");
-    } catch { toast.error("Erreur lors de la sauvegarde du numéro WhatsApp"); }
+      toast.success(t("Numéro WhatsApp Business enregistré !"));
+    } catch { toast.error(t("Erreur lors de la sauvegarde du numéro WhatsApp")); }
     finally { setSavingWhatsapp(false); }
   }
 
   async function sauvegarder(e: React.FormEvent) {
     e.preventDefault();
     const changeDevise = !!tenant?.devise && form.devise !== tenant.devise;
-    if (changeDevise && !confirm(`Votre devise va passer de ${tenant.devise} à ${form.devise}.\n\nTous les montants de la boutique seront convertis au taux du jour : prix des produits et variantes, frais de livraison, codes promo, commandes, commissions et solde du wallet (les factures déjà émises restent inchangées).\n\nContinuer ?`)) return;
+    if (changeDevise && !confirm(t("Votre devise va passer de {0} à {1}.\n\nTous les montants de la boutique seront convertis au taux du jour : prix des produits et variantes, frais de livraison, codes promo, commandes, commissions et solde du wallet (les factures déjà émises restent inchangées).\n\nContinuer ?", tenant.devise, form.devise))) return;
     setSaving(true);
     try {
       const res = await fetch("/api/tenants", {
@@ -109,9 +111,9 @@ export default function ParametresPage() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error();
-      toast.success(changeDevise ? `Devise changée : tous vos montants sont maintenant en ${form.devise}` : "Informations mises à jour !");
+      toast.success(changeDevise ? t("Devise changée : tous vos montants sont maintenant en {0}", form.devise) : t("Informations mises à jour !"));
       if (changeDevise) setTimeout(() => window.location.reload(), 900); // tout le dashboard passe dans la nouvelle devise
-    } catch { toast.error("Erreur lors de la sauvegarde"); }
+    } catch { toast.error(t("Erreur lors de la sauvegarde")); }
     finally { setSaving(false); }
   }
 
@@ -128,16 +130,16 @@ export default function ParametresPage() {
   return (
     <div className="space-y-5 max-w-2xl"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="parametres" titre="Réglages" sousTitre="Configuration de ton compte" steps={PARAMETRES_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="parametres" titre={t("Réglages")} sousTitre={t("Configuration de ton compte")} steps={PARAMETRES_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="pt-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Paramètres</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Paramètres")}</h1>
           <BoutonRevoirTutoriel moduleKey="parametres" />
         </div>
         <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">
-          Gérez votre boutique {tenant?.nomBoutique || ""}
+          {t("Gérez votre boutique")}{" "}{t(tenant?.nomBoutique) || ""}
         </p>
       </div>
 
@@ -148,7 +150,7 @@ export default function ParametresPage() {
             <Globe size={15} className="text-[#F5A623]" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="ax-label mb-0.5">Votre boutique en ligne</p>
+            <p className="ax-label mb-0.5">{t("Votre boutique en ligne")}</p>
             <p className="text-[13px] font-mono font-semibold text-[#111111] truncate">{boutiquUrl}</p>
           </div>
           <div className="flex items-center gap-1.5">
@@ -180,8 +182,8 @@ export default function ParametresPage() {
                 <Icon size={15} style={{ color: s.iconColor }} />
               </div>
               <div className="flex-1">
-                <p className="text-[13px] font-semibold text-[#111111] group-hover:text-[#F5A623] transition-colors">{s.label}</p>
-                <p className="text-[11.5px] text-[#AAAAAA]">{s.desc}</p>
+                <p className="text-[13px] font-semibold text-[#111111] group-hover:text-[#F5A623] transition-colors">{t(s.label)}</p>
+                <p className="text-[11.5px] text-[#AAAAAA]">{t(s.desc)}</p>
               </div>
               <ChevronRight size={14} className="text-[#CCCCCC] group-hover:text-[#888] transition-colors" />
             </Link>
@@ -193,29 +195,29 @@ export default function ParametresPage() {
       <form onSubmit={sauvegarder} className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <Settings size={14} className="text-[#F5A623]" />
-          <h2 className="text-[13px] font-semibold text-[#111111]">Informations générales</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("Informations générales")}</h2>
         </div>
 
         <div>
-          <label className={labelCls}>Nom de la boutique *</label>
+          <label className={labelCls}>{t("Nom de la boutique *")}</label>
           <input value={form.nomBoutique} onChange={e => setForm({ ...form, nomBoutique: e.target.value })}
             required className={inputCls} />
         </div>
 
         <div>
-          <label className={labelCls}>Description</label>
+          <label className={labelCls}>{t("Description")}</label>
           <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-            rows={3} placeholder="Décrivez votre boutique en quelques mots…"
+            rows={3} placeholder={t("Décrivez votre boutique en quelques mots…")}
             className={`${inputCls} resize-none`} />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Email de contact</label>
+            <label className={labelCls}>{t("Email de contact")}</label>
             <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>WhatsApp *</label>
+            <label className={labelCls}>{t("WhatsApp *")}</label>
             <input value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })}
               placeholder="+221700000000" className={inputCls} />
           </div>
@@ -223,34 +225,34 @@ export default function ParametresPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className={labelCls}>Téléphone</label>
+            <label className={labelCls}>{t("Téléphone")}</label>
             <input value={form.telephone} onChange={e => setForm({ ...form, telephone: e.target.value })} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Adresse physique</label>
+            <label className={labelCls}>{t("Adresse physique")}</label>
             <input value={form.adresse} onChange={e => setForm({ ...form, adresse: e.target.value })} className={inputCls} />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <label className={labelCls}>Catégorie</label>
+            <label className={labelCls}>{t("Catégorie")}</label>
             <select value={form.categorie} onChange={e => setForm({ ...form, categorie: e.target.value })}
               className={inputCls}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map(c => <option key={c} value={c}>{t(c)}</option>)}
             </select>
           </div>
           <div>
-            <label className={labelCls}>Pays</label>
+            <label className={labelCls}>{t("Pays")}</label>
             <SelectPays value={form.pays} onChange={code => setForm({ ...form, pays: code, devise: PAYS_DEVISES[code] ?? form.devise })} />
           </div>
           <div>
-            <label className={labelCls}>Devise</label>
+            <label className={labelCls}>{t("Devise")}</label>
             {/* Dérivée du pays (imposé aussi côté serveur, PATCH /api/tenants). */}
             <input value={form.devise} readOnly className={inputCls + " bg-[#FAFAFA] text-[#777777] cursor-not-allowed"} />
             {tenant?.devise && form.devise !== tenant.devise
-              ? <p className="text-[11px] text-[#B45309] mt-1">Vos montants seront convertis de {tenant.devise} en {form.devise} au taux du jour à l'enregistrement.</p>
-              : <p className="text-[11px] text-[#999999] mt-1">Définie automatiquement par le pays.</p>}
+              ? <p className="text-[11px] text-[#B45309] mt-1">{t("Vos montants seront convertis de")}{" "}{t(tenant.devise)} en {t(form.devise)}{" "}{t("au taux du jour à l'enregistrement.")}</p>
+              : <p className="text-[11px] text-[#999999] mt-1">{t("Définie automatiquement par le pays.")}</p>}
           </div>
         </div>
 
@@ -258,7 +260,7 @@ export default function ParametresPage() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-[13px] text-white transition-all hover:scale-[1.01] disabled:opacity-50"
           style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 16px rgba(245,166,35,0.25)" }}>
           <Save size={14} />
-          {saving ? "Enregistrement…" : "Enregistrer"}
+          {saving ? t("Enregistrement…") : t("Enregistrer")}
         </button>
       </form>
 
@@ -266,29 +268,29 @@ export default function ParametresPage() {
       <form onSubmit={sauvegarderWhatsapp} className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <MessageCircle size={14} className="text-[#25D366]" />
-          <h2 className="text-[13px] font-semibold text-[#111111]">WhatsApp Business</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("WhatsApp Business")}</h2>
         </div>
         <p className="text-[12px] text-[#AAAAAA]">
-          Ce numéro recevra les confirmations de commandes pour vos produits physiques et dropshipping.
+          {t("Ce numéro recevra les confirmations de commandes pour vos produits physiques et dropshipping.")}
         </p>
         <div>
-          <label className={labelCls}>Numéro WhatsApp Business</label>
+          <label className={labelCls}>{t("Numéro WhatsApp Business")}</label>
           <input
             type="tel"
             value={whatsappNumero}
             onChange={e => setWhatsappNumero(e.target.value)}
-            placeholder="+22507XXXXXXXX"
+            placeholder={t("+22507XXXXXXXX")}
             className={`${inputCls} font-mono`}
           />
           <p className="text-[11px] text-[#CCCCCC] mt-1.5">
-            Format international : +[indicatif pays][numéro]. Ex : +22507XXXXXXXX
+            {t("Format international : +[indicatif pays][numéro]. Ex : +22507XXXXXXXX")}
           </p>
         </div>
         <button type="submit" disabled={savingWhatsapp}
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-[13px] text-white transition-all hover:scale-[1.01] disabled:opacity-50"
           style={{ background: "linear-gradient(135deg, #25D366, #128C7E)", boxShadow: "0 4px 16px rgba(37,211,102,0.20)" }}>
           <Save size={14} />
-          {savingWhatsapp ? "Enregistrement…" : "Enregistrer le numéro"}
+          {savingWhatsapp ? t("Enregistrement…") : t("Enregistrer le numéro")}
         </button>
       </form>
 
@@ -296,35 +298,35 @@ export default function ParametresPage() {
       <div className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <ClipboardList size={14} className="text-[#F5A623]" />
-          <h2 className="text-[13px] font-semibold text-[#111111]">Formulaire de commande</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("Formulaire de commande")}</h2>
         </div>
         <p className="text-[12px] text-[#AAAAAA]">
-          Personnalisez les informations demandées à l'acheteur qui choisit "Commander maintenant" (sans passer par WhatsApp).
+          {t("Personnalisez les informations demandées à l'acheteur qui choisit \"Commander maintenant\" (sans passer par WhatsApp).")}
         </p>
 
         <label className="flex items-center justify-between py-2 cursor-pointer">
-          <span className="text-[13px] text-[#333333]">Demander l'adresse email</span>
+          <span className="text-[13px] text-[#333333]">{t("Demander l'adresse email")}</span>
           <input type="checkbox" checked={formCommande.demanderEmail}
             onChange={e => setFormCommande(f => ({ ...f, demanderEmail: e.target.checked }))}
             className="w-4 h-4 accent-[#F5A623]" />
         </label>
         <label className="flex items-center justify-between py-2 cursor-pointer border-t border-[#F5F5F5]">
-          <span className="text-[13px] text-[#333333]">Proposer le partage de la position GPS</span>
+          <span className="text-[13px] text-[#333333]">{t("Proposer le partage de la position GPS")}</span>
           <input type="checkbox" checked={formCommande.demanderGps}
             onChange={e => setFormCommande(f => ({ ...f, demanderGps: e.target.checked }))}
             className="w-4 h-4 accent-[#F5A623]" />
         </label>
         <label className="flex items-center justify-between py-2 cursor-pointer border-t border-[#F5F5F5]">
-          <span className="text-[13px] text-[#333333]">Ajouter un champ personnalisé</span>
+          <span className="text-[13px] text-[#333333]">{t("Ajouter un champ personnalisé")}</span>
           <input type="checkbox" checked={formCommande.champActif}
             onChange={e => setFormCommande(f => ({ ...f, champActif: e.target.checked }))}
             className="w-4 h-4 accent-[#F5A623]" />
         </label>
         {formCommande.champActif && (
           <div>
-            <label className={labelCls}>Libellé du champ</label>
+            <label className={labelCls}>{t("Libellé du champ")}</label>
             <input value={formCommande.champLabel} onChange={e => setFormCommande(f => ({ ...f, champLabel: e.target.value }))}
-              placeholder="Ex : Précisions sur la commande, Code postal…" className={inputCls} />
+              placeholder={t("Ex : Précisions sur la commande, Code postal…")} className={inputCls} />
           </div>
         )}
 
@@ -332,7 +334,7 @@ export default function ParametresPage() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-[13px] text-white transition-all hover:scale-[1.01] disabled:opacity-50"
           style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 16px rgba(245,166,35,0.25)" }}>
           <Save size={14} />
-          {savingCommande ? "Enregistrement…" : "Enregistrer"}
+          {savingCommande ? t("Enregistrement…") : t("Enregistrer")}
         </button>
       </div>
 
@@ -340,7 +342,7 @@ export default function ParametresPage() {
       {tenant && (
         <div className="ax-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-[#111111]">Plan actuel</h3>
+            <h3 className="text-[13px] font-semibold text-[#111111]">{t("Plan actuel")}</h3>
             <span className="text-[11px] font-bold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-0.5 rounded-full">
               {tenant.planType?.toUpperCase()}
             </span>
@@ -348,11 +350,11 @@ export default function ParametresPage() {
           <div className="space-y-2.5">
             {[
               { label: "Commission Axso", value: `${((tenant.commissionRate || 0.06) * 100).toFixed(0)}% ajouté au prix client` },
-              { label: "Actif depuis",   value: new Date(tenant.createdAt).toLocaleDateString("fr-FR") },
+              { label: "Actif depuis",   value: new Date(tenant.createdAt).toLocaleDateString(t.loc) },
             ].map(row => (
               <div key={row.label} className="flex justify-between text-[12.5px]">
-                <span className="text-[#AAAAAA]">{row.label}</span>
-                <span className="font-semibold text-[#444444]">{row.value}</span>
+                <span className="text-[#AAAAAA]">{t(row.label)}</span>
+                <span className="font-semibold text-[#444444]">{t(row.value)}</span>
               </div>
             ))}
           </div>

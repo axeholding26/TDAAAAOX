@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 interface Decision {
   id: string;
   agentId: string;
@@ -49,6 +50,7 @@ function grouperParJour(decisions: Decision[]): Array<{ jour: string; items: Dec
 }
 
 export default function JournalAxiaPage() {
+  const t = useT();
   const { fmt } = useDevise();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [agents, setAgents] = useState<string[]>([]);
@@ -83,18 +85,18 @@ export default function JournalAxiaPage() {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#1B2A4A,#2c4270)" }}>
             <Sparkles size={15} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Journal d'activité AXIA</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("Journal d'activité AXIA")}</h1>
         </div>
-        <p className="text-gray-400 text-sm">Chaque action prise par AXIA et les agents spécialisés, en un coup d'œil.</p>
+        <p className="text-gray-400 text-sm">{t("Chaque action prise par AXIA et les agents spécialisés, en un coup d'œil.")}</p>
       </div>
 
       {/* Filtres */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 uppercase tracking-wide"><Filter size={11} /> Filtrer</span>
+        <span className="flex items-center gap-1 text-[11px] font-bold text-gray-400 uppercase tracking-wide"><Filter size={11} />{" "}{t("Filtrer")}</span>
         <button onClick={() => setFiltre(null)}
           className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
           style={filtre === null ? { background: "#1B2A4A", color: "white" } : { background: "#F3F4F6", color: "#6b7280" }}>
-          Tout
+          {t("Tout")}
         </button>
         {agents.map(a => {
           const meta = metaPour(a);
@@ -103,7 +105,7 @@ export default function JournalAxiaPage() {
             <button key={a} onClick={() => setFiltre(a)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
               style={active ? { background: meta.couleur, color: "white" } : { background: "#F3F4F6", color: "#6b7280" }}>
-              <meta.Icon size={11} /> {meta.label}
+              <meta.Icon size={11} /> {t(meta.label)}
             </button>
           );
         })}
@@ -115,13 +117,13 @@ export default function JournalAxiaPage() {
       ) : groupes.length === 0 ? (
         <div className="ax-card p-10 text-center">
           <Sparkles size={32} className="mx-auto mb-3 text-gray-200" />
-          <p className="text-sm text-gray-400">Aucune action enregistrée pour le moment — AXIA journalisera ici chaque décision prise pour votre boutique.</p>
+          <p className="text-sm text-gray-400">{t("Aucune action enregistrée pour le moment — AXIA journalisera ici chaque décision prise pour votre boutique.")}</p>
         </div>
       ) : (
         <div className="space-y-8">
           {groupes.map(({ jour, items }) => (
             <div key={jour}>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.12em] mb-3 capitalize">{jour}</p>
+              <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.12em] mb-3 capitalize">{t(jour)}</p>
               <div className="relative pl-6 space-y-4 before:content-[''] before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-px before:bg-gray-100">
                 {items.map(d => {
                   const meta = metaPour(d.agentId);
@@ -134,20 +136,20 @@ export default function JournalAxiaPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="text-[11px] font-bold" style={{ color: meta.couleur }}>{meta.label}</span>
+                            <span className="text-[11px] font-bold" style={{ color: meta.couleur }}>{t(meta.label)}</span>
                             <span className="text-[10.5px] text-gray-300">{dateRelative(d.createdAt)}</span>
                           </div>
-                          <p className="text-sm text-gray-800 mt-1 leading-relaxed">{d.description}</p>
+                          <p className="text-sm text-gray-800 mt-1 leading-relaxed">{t(d.description)}</p>
                           {(d.impactEstime != null || d.impactReel != null) && (
                             <div className="flex items-center gap-2 mt-2">
                               {d.impactEstime != null && (
                                 <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                  Impact estimé : {fmt(d.impactEstime)}
+                                  {t("Impact estimé :")}{" "}{fmt(d.impactEstime)}
                                 </span>
                               )}
                               {d.impactReel != null && (
                                 <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#111111] border border-[#F5A623]/25">
-                                  Impact réel : {fmt(d.impactReel)}
+                                  {t("Impact réel :")}{" "}{fmt(d.impactReel)}
                                 </span>
                               )}
                             </div>
@@ -166,7 +168,7 @@ export default function JournalAxiaPage() {
               <button onClick={() => charger(filtre, cursor, true)} disabled={loadingPlus}
                 className="px-5 py-2.5 rounded-xl text-xs font-bold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all flex items-center gap-2 disabled:opacity-60">
                 {loadingPlus && <Loader2 size={12} className="animate-spin" />}
-                Charger plus
+                {t("Charger plus")}
               </button>
             </div>
           )}

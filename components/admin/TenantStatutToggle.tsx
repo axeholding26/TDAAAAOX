@@ -3,15 +3,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Ban, CheckCircle2, Loader2 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 export function TenantStatutToggle({ tenantId, statutActuel }: { tenantId: string; statutActuel: string }) {
+  const t = useT();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const suspendu = statutActuel === "suspendu";
 
   async function toggle() {
     const nouveauStatut = suspendu ? "active" : "suspendu";
-    if (!confirm(`Confirmer : passer cette boutique en statut "${nouveauStatut}" ?`)) return;
+    if (!confirm(t("Confirmer : passer cette boutique en statut \"{0}\" ?", nouveauStatut))) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/tenants/${tenantId}/statut`, {
@@ -21,10 +23,10 @@ export function TenantStatutToggle({ tenantId, statutActuel }: { tenantId: strin
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(nouveauStatut === "suspendu" ? "Boutique suspendue" : "Boutique réactivée");
+      toast.success(nouveauStatut === "suspendu" ? t("Boutique suspendue") : t("Boutique réactivée"));
       router.refresh();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur");
+      toast.error(t(e.message) ?? t("Erreur"));
     } finally {
       setLoading(false);
     }
@@ -42,7 +44,7 @@ export function TenantStatutToggle({ tenantId, statutActuel }: { tenantId: strin
       }
     >
       {loading ? <Loader2 size={12} className="animate-spin" /> : suspendu ? <CheckCircle2 size={12} /> : <Ban size={12} />}
-      {suspendu ? "Réactiver" : "Suspendre"}
+      {suspendu ? t("Réactiver") : t("Suspendre")}
     </button>
   );
 }

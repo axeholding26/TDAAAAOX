@@ -5,6 +5,7 @@ import { prixClient } from "@/lib/pricing";
 import { Prix } from "@/components/storefront/DeviseVitrine";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import type { BlockRenderProps } from "../types";
+import { getT } from "@/lib/i18n/serveur";
 
 const COLONNES_MAP: Record<number, string> = {
   2: "grid-cols-2", 3: "grid-cols-2 @min-[640px]:grid-cols-3", 4: "grid-cols-2 @min-[640px]:grid-cols-3 @min-[1024px]:grid-cols-4",
@@ -16,6 +17,7 @@ const COLONNES_MAP: Record<number, string> = {
 // Le canevas du constructeur (client, sans Prisma) affiche un aperçu
 // statique à la place — voir BuilderCanvas/CanvasNode.
 export async function ProductsBlock({ config, colors, slug, container, tenantId }: BlockRenderProps) {
+  const t = await getT();
   if (!tenantId) return null;
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true, devise: true } });
@@ -38,7 +40,7 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
 
   return (
     <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8`}>
-      {config.titre && <h2 className="text-2xl @min-[640px]:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{config.titre}</h2>}
+      {config.titre && <h2 className="text-2xl @min-[640px]:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{t(config.titre)}</h2>}
       <div className={`grid ${colonnes} gap-4 @min-[640px]:gap-6`}>
         {produits.map((p) => {
           const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06);
@@ -54,7 +56,7 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
                   <WishlistHeartButton produitId={p.id} accent={colors.accent} fond={colors.fond} className="absolute top-3 right-3 w-8 h-8 rounded-full" />
                 </div>
                 <div className="p-4">
-                  <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug" style={{ color: colors.texte }}>{p.nom}</h3>
+                  <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug" style={{ color: colors.texte }}>{t(p.nom)}</h3>
                   <span className="font-bold text-sm" style={{ color: colors.accent }}><Prix montant={prixAffiche} devise={tenant.devise} /></span>
                 </div>
               </div>

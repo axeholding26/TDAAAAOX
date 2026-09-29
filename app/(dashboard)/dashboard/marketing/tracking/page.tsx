@@ -7,6 +7,7 @@ import {
   Code2, Info, Target, Music2, Ghost, Blocks, Eye, EyeOff, Zap,
   type LucideIcon,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface TenantTracking {
   metaPixelId: string | null;
@@ -114,6 +115,7 @@ const PLATFORMS: Platform[] = [
 
 // ─── Event badge ─────────────────────────────────────────────────────────────
 function EventBadge({ label, color, active }: { label: string; color: string; active: boolean }) {
+  const tr = useT();
   return (
     <span
       className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide"
@@ -123,7 +125,7 @@ function EventBadge({ label, color, active }: { label: string; color: string; ac
         border: `1px solid ${active ? color + "30" : "#E8E8E8"}`,
       }}
     >
-      {label}
+      {tr(label)}
     </span>
   );
 }
@@ -138,6 +140,7 @@ function PlatformCard({
   valeurInitiale: string | null;
   onSaved: (v: string | null) => void;
 }) {
+  const tr = useT();
   const { key, nom, sousTitre, couleur, couleurDark, bg, border, Icone, placeholder, guide, events } = platform;
 
   const [valeur, setValeur]   = useState(valeurInitiale ?? "");
@@ -164,16 +167,16 @@ function PlatformCard({
     try {
       const v = valeur.trim() || null;
       if (v && !FORMAT_PIXEL[key].test(v)) {
-        toast.error(`Un seul ${nom} par boutique : colle un seul identifiant (ex. ${placeholder}).`);
+        toast.error(tr("Un seul {0} par boutique : colle un seul identifiant (ex. {1}).", nom, placeholder));
         return;
       }
       await patchTenant({ [key]: v });
       setSaved(v);
       setOpen(false);
       onSaved(v);
-      toast.success(v ? `${nom} activé avec succès !` : `${nom} retiré`);
+      toast.success(v ? tr("{0} activé avec succès !", nom) : tr("{0} retiré", nom));
     } catch {
-      toast.error("Erreur de sauvegarde");
+      toast.error(tr("Erreur de sauvegarde"));
     } finally {
       setSaving(false);
     }
@@ -186,9 +189,9 @@ function PlatformCard({
       setSaved(null);
       setOpen(false);
       onSaved(null);
-      toast.success(`${nom} désactivé`);
+      toast.success(tr("{0} désactivé", nom));
     } catch {
-      toast.error("Erreur");
+      toast.error(tr("Erreur"));
     }
   }
 
@@ -229,7 +232,7 @@ function PlatformCard({
           {/* Name + subtitle + badge */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-[#111111] text-sm">{nom}</span>
+              <span className="font-bold text-[#111111] text-sm">{tr(nom)}</span>
               {isActif ? (
                 <span
                   className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
@@ -243,15 +246,15 @@ function PlatformCard({
                     className="w-1.5 h-1.5 rounded-full animate-pulse"
                     style={{ background: couleur }}
                   />
-                  Actif
+                  {tr("Actif")}
                 </span>
               ) : (
                 <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-full">
-                  Non configuré
+                  {tr("Non configuré")}
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5">{sousTitre}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{tr(sousTitre)}</p>
           </div>
 
           {/* Action buttons */}
@@ -259,7 +262,7 @@ function PlatformCard({
             {isActif && (
               <button
                 onClick={retirer}
-                title="Désactiver"
+                title={tr("Désactiver")}
                 className="p-2 rounded-xl text-gray-300 hover:text-red-400 hover:bg-red-50 transition-all"
               >
                 <LogOut size={13} />
@@ -274,7 +277,7 @@ function PlatformCard({
                   : { background: "#F5F5F5", borderColor: "#E0E0E0", color: "#555" }
               }
             >
-              {open ? "Fermer" : isActif ? "Modifier" : "Configurer"}
+              {open ? tr("Fermer") : isActif ? tr("Modifier") : tr("Configurer")}
               {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
             </button>
           </div>
@@ -283,7 +286,7 @@ function PlatformCard({
         {/* Events tracked */}
         <div className="flex items-center gap-1.5 mt-3.5 flex-wrap">
           <span className="text-[10px] text-gray-400 font-semibold mr-0.5 uppercase tracking-wide">
-            Événements :
+            {tr("Événements :")}
           </span>
           {events.map(e => (
             <EventBadge key={e} label={e} color={couleur} active={isActif} />
@@ -300,7 +303,7 @@ function PlatformCard({
               className="text-xs font-mono flex-1 truncate"
               style={{ color: couleur }}
             >
-              {visible ? saved : maskedId}
+              {visible ? tr(saved) : tr(maskedId)}
             </code>
             <button
               onClick={() => setVisible(v => !v)}
@@ -324,7 +327,7 @@ function PlatformCard({
           {/* Step-by-step guide */}
           <div>
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-3">
-              Guide de configuration
+              {tr("Guide de configuration")}
             </p>
             <ol className="space-y-2.5">
               {guide.map((step, i) => (
@@ -339,7 +342,7 @@ function PlatformCard({
                   >
                     {i + 1}
                   </span>
-                  <span className="text-xs text-gray-600 leading-relaxed">{step}</span>
+                  <span className="text-xs text-gray-600 leading-relaxed">{tr(step)}</span>
                 </li>
               ))}
             </ol>
@@ -348,7 +351,7 @@ function PlatformCard({
           {/* Input */}
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2 block">
-              Identifiant du pixel
+              {tr("Identifiant du pixel")}
             </label>
             <div className="relative">
               <input
@@ -386,15 +389,15 @@ function PlatformCard({
               }}
             >
               {saving
-                ? <><Loader2 size={13} className="animate-spin" /> Activation…</>
-                : <><Zap size={13} /> Activer le pixel</>}
+                ? <><Loader2 size={13} className="animate-spin" />{" "}{tr("Activation…")}</>
+                : <><Zap size={13} />{" "}{tr("Activer le pixel")}</>}
             </button>
             {saved && (
               <button
                 onClick={retirer}
                 className="px-4 py-2.5 rounded-xl text-xs font-bold border border-red-200 text-red-400 hover:bg-red-50 transition-all"
               >
-                Retirer
+                {tr("Retirer")}
               </button>
             )}
           </div>
@@ -406,6 +409,7 @@ function PlatformCard({
 
 // ─── Custom scripts card ──────────────────────────────────────────────────────
 function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }) {
+  const tr = useT();
   const [script, setScript] = useState(valeurInitiale ?? "");
   const [saved, setSaved]   = useState<string | null>(valeurInitiale);
   const [saving, setSaving] = useState(false);
@@ -422,9 +426,9 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
       const v = script.trim() || null;
       await patchTenant({ trackingScripts: v });
       setSaved(v);
-      toast.success("Scripts personnalisés enregistrés !");
+      toast.success(tr("Scripts personnalisés enregistrés !"));
     } catch {
-      toast.error("Erreur de sauvegarde");
+      toast.error(tr("Erreur de sauvegarde"));
     } finally {
       setSaving(false);
     }
@@ -465,26 +469,26 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#111111] text-sm">Scripts personnalisés</span>
+              <span className="font-bold text-[#111111] text-sm">{tr("Scripts personnalisés")}</span>
               {isActif ? (
                 <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gray-900/5 text-gray-700 border border-gray-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-pulse" />
-                  Actif
+                  {tr("Actif")}
                 </span>
               ) : (
                 <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2.5 py-0.5 rounded-full">
-                  Non configuré
+                  {tr("Non configuré")}
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-0.5">Hotjar, Clarity, Pinterest Tag, ou tout autre script tiers</p>
+            <p className="text-xs text-gray-400 mt-0.5">{tr("Hotjar, Clarity, Pinterest Tag, ou tout autre script tiers")}</p>
           </div>
 
           <button
             onClick={() => setOpen(o => !o)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#E0E0E0] bg-[#F5F5F5] text-[#555] hover:bg-gray-100 transition-all flex-shrink-0"
           >
-            {open ? "Fermer" : isActif ? "Modifier" : "Configurer"}
+            {open ? tr("Fermer") : isActif ? tr("Modifier") : tr("Configurer")}
             {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           </button>
         </div>
@@ -497,13 +501,13 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
         >
           <div>
             <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.15em] mb-2 block">
-              Code de suivi (balises &lt;script&gt;)
+              {tr("Code de suivi (balises <script>)")}
             </label>
             <textarea
               value={script}
               onChange={e => setScript(e.target.value)}
               rows={7}
-              placeholder={"<script>\n  // Collez ici le code fourni par votre outil de suivi\n</script>"}
+              placeholder={tr("<script>\n  // Collez ici le code fourni par votre outil de suivi\n</script>")}
               className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none resize-none transition-all"
             />
           </div>
@@ -511,7 +515,7 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
           <div className="rounded-xl bg-amber-50 border border-amber-100 p-3 flex gap-2.5">
             <Info size={13} className="text-amber-500 flex-shrink-0 mt-0.5" />
             <p className="text-[11px] text-amber-700 leading-relaxed">
-              Ce code s'exécute sur votre boutique publique. Vérifiez toujours la source avant de coller un script fourni par un tiers.
+              {tr("Ce code s'exécute sur votre boutique publique. Vérifiez toujours la source avant de coller un script fourni par un tiers.")}
             </p>
           </div>
 
@@ -522,8 +526,8 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
             style={{ background: "linear-gradient(135deg, #1B2A4A 0%, #2D4472 100%)" }}
           >
             {saving
-              ? <><Loader2 size={13} className="animate-spin" /> Sauvegarde…</>
-              : <><Zap size={13} /> Enregistrer</>}
+              ? <><Loader2 size={13} className="animate-spin" />{" "}{tr("Sauvegarde…")}</>
+              : <><Zap size={13} />{" "}{tr("Enregistrer")}</>}
           </button>
         </div>
       )}
@@ -533,6 +537,7 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function TrackingPage() {
+  const tr = useT();
   const [tenant, setTenant] = useState<TenantTracking | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -578,13 +583,13 @@ export default function TrackingPage() {
         <div className="relative flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-black text-[#F5A623] uppercase tracking-[0.25em] mb-1.5">
-              Module marketing
+              {tr("Module marketing")}
             </p>
             <h1 className="text-xl font-black text-white" style={{ fontFamily: "Poppins, sans-serif" }}>
-              Tracking & Pixels
+              {tr("Tracking & Pixels")}
             </h1>
             <p className="text-sm text-gray-400 mt-1 leading-relaxed">
-              Vos pixels se chargent automatiquement sur votre boutique à chaque visite.
+              {tr("Vos pixels se chargent automatiquement sur votre boutique à chaque visite.")}
             </p>
           </div>
 
@@ -601,10 +606,10 @@ export default function TrackingPage() {
                 color: actifs > 0 ? undefined : "#4B4B4B",
               }}
             >
-              {actifs}<span className="text-2xl text-gray-600 font-medium">/4</span>
+              {tr(actifs)}<span className="text-2xl text-gray-600 font-medium">/4</span>
             </div>
             <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
-              {actifs === 0 ? "Aucun pixel actif" : actifs === 4 ? "Tous actifs" : `pixel${actifs > 1 ? "s" : ""} actif${actifs > 1 ? "s" : ""}`}
+              {actifs === 0 ? tr("Aucun pixel actif") : actifs === 4 ? tr("Tous actifs") : tr("pixel{0} actif{1}", actifs > 1 ? "s" : "", actifs > 1 ? "s" : "")}
             </p>
           </div>
         </div>
@@ -647,8 +652,8 @@ export default function TrackingPage() {
       <div className="rounded-xl bg-[#F5A623]/8 border border-[#F5A623]/25 p-4 flex gap-3">
         <Info size={14} className="text-[#D4911A] flex-shrink-0 mt-0.5" />
         <p className="text-xs text-[#666666] leading-relaxed">
-          Chaque pixel activé est injecté automatiquement sur votre boutique publique et transmet les événements{" "}
-          <strong>PageView</strong>, <strong>InitiateCheckout</strong> et <strong>Purchase</strong> à chaque commande — sans aucune configuration supplémentaire côté Axso.
+          {tr("Chaque pixel activé est injecté automatiquement sur votre boutique publique et transmet les événements")}{" "}
+          <strong>PageView</strong>, <strong>InitiateCheckout</strong> et <strong>{tr("Purchase")}</strong>{" "}{tr("à chaque commande — sans aucune configuration supplémentaire côté Axso.")}
         </p>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { ProductPageClient, type ProductPageClientProps } from "@/components/sto
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
 import { ficheDuProduit } from "@/lib/fiche-produit";
 import { create } from "zustand";
+import { useT } from "@/components/I18nProvider";
 
 // Fiche en cours d'édition (null = template global) — partagée entre le
 // panneau « Fiche produit » et cet aperçu.
@@ -37,6 +38,7 @@ const EXEMPLE: Produit = {
 // Aperçu en direct de la fiche produit dans le Constructeur — même composant
 // que la boutique en ligne, alimenté par la config en cours d'édition.
 export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; tenant: any; device: Device }) {
+  const t = useT();
   const [produit, setProduit] = useState<Produit>(EXEMPLE);
   const produitId = useFicheCible(s => s.produitId);
 
@@ -67,7 +69,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
         onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }}
         onSubmitCapture={(e) => { e.preventDefault(); e.stopPropagation(); }}>
         <p className="px-4 py-2 text-[12px] text-[#8A6D1F] bg-[#FFF8E6] border-b border-[#F5E6BF]">
-          Aperçu avec {produit.id === "exemple" ? "un produit d'exemple" : `« ${produit.nom} »`} — les avis{produit.id === "exemple" ? " et variantes" : ""} affichés sont des exemples pour visualiser le style.
+          {t("Aperçu avec")}{" "}{produit.id === "exemple" ? t("un produit d'exemple") : `« ${produit.nom} »`}{" "}{t("— les avis")}{produit.id === "exemple" ? t(" et variantes") : ""}{" "}{t("affichés sont des exemples pour visualiser le style.")}
         </p>
         <StorefrontTypography fonts={config.fonts} />
         <div className="axs-store pointer-events-auto">

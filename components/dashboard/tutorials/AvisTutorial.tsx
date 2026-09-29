@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Star, Clock, ShieldCheck, MessageSquare } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const AVIS_TUTORIAL_STEPS = [
   { Icon: Star,         titre: "Note moyenne & répartition", description: "Visualise ta note moyenne sur 5 et la répartition détaillée des avis, de 5 à 1 étoile." },
@@ -10,5 +11,6 @@ const AVIS_TUTORIAL_STEPS = [
 ];
 
 export function AvisTutorial() {
-  return <ModuleTutorial moduleKey="avis" titre="Avis clients" sousTitre="Réputation & satisfaction" steps={AVIS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="avis" titre={t("Avis clients")} sousTitre={t("Réputation & satisfaction")} steps={AVIS_TUTORIAL_STEPS} />;
 }

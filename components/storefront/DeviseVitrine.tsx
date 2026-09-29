@@ -9,6 +9,7 @@ import { Globe2, ChevronDown } from "lucide-react";
 import { convertirMontant, PAYS_OPTIONS } from "@/lib/devise-convert";
 import { formatMontant } from "@/lib/utils";
 import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
+import { useT } from "@/components/I18nProvider";
 
 // ratio = multiplicateur devise de la boutique → devise du visiteur, aux taux du jour (lib/taux-change.ts).
 type Contexte = { devise: string; pays: string | null; deviseBoutique: string; ratio: number };
@@ -44,6 +45,7 @@ export function Prix({ montant, devise }: { montant: number; devise: string }) {
 /** Pastille « drapeau NGN ▾ » : pays et devise du visiteur, modifiables. Rien hors vitrine.
  *  Le choix est gardé un an (cookie lu par lib/devise-visiteur.ts). */
 export function PastillePays({ couleur, className = "" }: { couleur?: string; className?: string }) {
+  const t = useT();
   const v = useVisiteur();
   if (!v) return null;
   const options = v.pays && !PAYS_OPTIONS.some((p) => p.code === v.pays) ? [{ code: v.pays, nom: v.pays }, ...PAYS_OPTIONS] : PAYS_OPTIONS;
@@ -54,7 +56,7 @@ export function PastillePays({ couleur, className = "" }: { couleur?: string; cl
       className={`inline-flex items-center gap-1.5 text-xs font-semibold pl-1.5 pr-2.5 py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80 ${className}`}
       style={{ color: couleur ?? "currentColor", borderColor: "color-mix(in srgb, currentColor 22%, transparent)" }}>
       {v.pays ? <Drapeau code={v.pays} taille={18} /> : <Globe2 size={14} aria-hidden />}
-      <span>{v.devise}</span>
+      <span>{t(v.devise)}</span>
       <ChevronDown size={12} aria-hidden className="opacity-60" />
     </SelectPays>
   );

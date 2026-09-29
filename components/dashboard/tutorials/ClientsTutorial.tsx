@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Users, Star, TrendingUp, ChevronRight } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const CLIENTS_TUTORIAL_STEPS = [
   { Icon: Users,       titre: "Ta base clients complète", description: "Chaque client ayant commandé chez toi apparaît ici : coordonnées, nombre de commandes et dépenses totales." },
@@ -10,5 +11,6 @@ const CLIENTS_TUTORIAL_STEPS = [
 ];
 
 export function ClientsTutorial() {
-  return <ModuleTutorial moduleKey="clients" titre="Clients" sousTitre="Ta base clients" steps={CLIENTS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="clients" titre={t("Clients")} sousTitre={t("Ta base clients")} steps={CLIENTS_TUTORIAL_STEPS} />;
 }

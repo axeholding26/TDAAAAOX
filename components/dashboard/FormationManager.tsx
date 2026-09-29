@@ -5,6 +5,7 @@ import {
   Video, FileText, Music, Eye, EyeOff, GripVertical, Check, X,
   Loader2, Clock, Globe,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,7 @@ function LeconForm({
   onSave: (l: Lecon) => void;
   onCancel: () => void;
 }) {
+  const tr = useT();
   const [titre,     setTitre]     = useState(initial.titre ?? "");
   const [type,      setType]      = useState<"texte"|"video"|"audio">(initial.type ?? "texte");
   const [videoType, setVideoType] = useState(initial.videoType ?? "youtube");
@@ -92,7 +94,7 @@ function LeconForm({
     const d = await r.json();
     setSaving(false);
     if (r.ok) onSave(d.lecon);
-    else alert(d.error ?? "Erreur");
+    else alert(tr(d.error) ?? tr("Erreur"));
   };
 
   const inputCls = "w-full px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40";
@@ -101,7 +103,7 @@ function LeconForm({
     <div className="bg-[#F5A623]/8 border border-[#F5A623]/25 rounded-xl p-4 space-y-3">
       <input
         value={titre} onChange={(e) => setTitre(e.target.value)}
-        placeholder="Titre de la leçon *"
+        placeholder={tr("Titre de la leçon *")}
         className={inputCls}
       />
 
@@ -116,7 +118,7 @@ function LeconForm({
               ? { borderColor: color + "60", background: color + "12", color }
               : { borderColor: "#e5e7eb", background: "white", color: "#6b7280" }}
           >
-            <Ic size={12} /> {label}
+            <Ic size={12} /> {tr(label)}
           </button>
         ))}
       </div>
@@ -125,7 +127,7 @@ function LeconForm({
       {type === "texte" && (
         <textarea
           value={contenu} onChange={(e) => setContenu(e.target.value)}
-          rows={4} placeholder="Contenu de la leçon (HTML ou texte brut)…"
+          rows={4} placeholder={tr("Contenu de la leçon (HTML ou texte brut)…")}
           className={`${inputCls} resize-none font-mono text-xs`}
         />
       )}
@@ -141,13 +143,13 @@ function LeconForm({
                   ? { borderColor: "#F5A62360", background: "#F5A62312", color: "#D4911A" }
                   : { borderColor: "#e5e7eb", background: "white", color: "#6b7280" }}
               >
-                {label}
+                {tr(label)}
               </button>
             ))}
           </div>
           <input
             value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)}
-            placeholder={videoType === "youtube" ? "https://youtube.com/watch?v=..." : videoType === "vimeo" ? "https://vimeo.com/..." : "URL directe ou src iframe"}
+            placeholder={videoType === "youtube" ? "https://youtube.com/watch?v=..." : videoType === "vimeo" ? "https://vimeo.com/..." : tr("URL directe ou src iframe")}
             className={inputCls}
           />
         </div>
@@ -155,7 +157,7 @@ function LeconForm({
       {type === "audio" && (
         <input
           value={audioUrl} onChange={(e) => setAudioUrl(e.target.value)}
-          placeholder="URL du fichier audio (.mp3, .ogg…)"
+          placeholder={tr("URL du fichier audio (.mp3, .ogg…)")}
           className={inputCls}
         />
       )}
@@ -167,7 +169,7 @@ function LeconForm({
           <input
             type="number" min={0} value={duree}
             onChange={(e) => setDuree(e.target.value)}
-            placeholder="Durée (sec)"
+            placeholder={tr("Durée (sec)")}
             className="w-28 px-2 py-1.5 rounded-lg border border-gray-200 text-xs text-gray-900 bg-white focus:outline-none"
           />
         </div>
@@ -177,7 +179,7 @@ function LeconForm({
           style={{ color: gratuite ? "#16a34a" : "#9ca3af" }}
         >
           <Globe size={13} />
-          {gratuite ? "Aperçu libre" : "Accès payant"}
+          {gratuite ? tr("Aperçu libre") : tr("Accès payant")}
         </button>
       </div>
 
@@ -187,10 +189,10 @@ function LeconForm({
           className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors"
         >
           {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-          {leconId ? "Enregistrer" : "Ajouter la leçon"}
+          {leconId ? tr("Enregistrer") : tr("Ajouter la leçon")}
         </button>
         <button onClick={onCancel} className="px-3 py-1.5 rounded-lg text-xs text-gray-500 hover:text-gray-700 border border-gray-200 bg-white transition-colors">
-          Annuler
+          {tr("Annuler")}
         </button>
       </div>
     </div>
@@ -210,6 +212,7 @@ function ChapitreRow({
   onUpdate: (c: Chapitre) => void;
   onDelete: (id: string) => void;
 }) {
+  const tr = useT();
   const [open,       setOpen]       = useState(false);
   const [editTitre,  setEditTitre]  = useState(false);
   const [titre,      setTitre]      = useState(chapitre.titre);
@@ -231,7 +234,7 @@ function ChapitreRow({
   };
 
   const deleteLecon = async (leconId: string) => {
-    if (!confirm("Supprimer cette leçon ?")) return;
+    if (!confirm(tr("Supprimer cette leçon ?"))) return;
     const r = await fetch(`${base}/lecons/${leconId}`, { method: "DELETE" });
     if (r.ok) setLecons((prev) => prev.filter((l) => l.id !== leconId));
   };
@@ -264,9 +267,9 @@ function ChapitreRow({
               autoFocus
             />
           ) : (
-            <span className="text-sm font-semibold text-gray-900 truncate">{chapitre.titre}</span>
+            <span className="text-sm font-semibold text-gray-900 truncate">{tr(chapitre.titre)}</span>
           )}
-          <span className="text-[10px] text-gray-400 flex-shrink-0">{lecons.length} leçon{lecons.length !== 1 ? "s" : ""}</span>
+          <span className="text-[10px] text-gray-400 flex-shrink-0">{lecons.length}{" "}{tr("leçon")}{lecons.length !== 1 ? "s" : ""}</span>
         </button>
 
         {/* Actions */}
@@ -282,7 +285,7 @@ function ChapitreRow({
           <button onClick={toggleActif} className="p-1 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100">
             {chapitre.actif ? <Eye size={13} /> : <EyeOff size={13} />}
           </button>
-          <button onClick={() => { if (confirm("Supprimer ce chapitre et ses leçons ?")) onDelete(chapitre.id); }} className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50">
+          <button onClick={() => { if (confirm(tr("Supprimer ce chapitre et ses leçons ?"))) onDelete(chapitre.id); }} className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50">
             <Trash2 size={13} />
           </button>
         </div>
@@ -303,9 +306,9 @@ function ChapitreRow({
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${l.actif ? "border-gray-100 bg-gray-50 dark:bg-gray-800/30" : "border-gray-100 bg-gray-50 opacity-50"} group`}>
                   <GripVertical size={12} className="text-gray-300 cursor-grab" />
                   {typeIcon(l.type)}
-                  <span className="flex-1 text-xs text-gray-700 truncate">{l.titre}</span>
-                  {l.gratuite && <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium flex-shrink-0">Aperçu</span>}
-                  {l.duree && <span className="text-[10px] text-gray-400 flex-shrink-0">{dureeLabel(l.duree)}</span>}
+                  <span className="flex-1 text-xs text-gray-700 truncate">{tr(l.titre)}</span>
+                  {l.gratuite && <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium flex-shrink-0">{tr("Aperçu")}</span>}
+                  {l.duree && <span className="text-[10px] text-gray-400 flex-shrink-0">{tr(dureeLabel(l.duree))}</span>}
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button onClick={() => setEditLecon(l.id)} className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700"><Edit2 size={11} /></button>
                     <button onClick={() => toggleLeconActif(l)} className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700">{l.actif ? <Eye size={11} /> : <EyeOff size={11} />}</button>
@@ -327,7 +330,7 @@ function ChapitreRow({
               onClick={() => setAjoutLecon(true)}
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-gray-200 text-xs text-gray-400 hover:text-[#D4911A] hover:border-[#F5A623]/40 transition-colors"
             >
-              <Plus size={12} /> Ajouter une leçon
+              <Plus size={12} />{" "}{tr("Ajouter une leçon")}
             </button>
           )}
         </div>
@@ -339,6 +342,7 @@ function ChapitreRow({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function FormationManager({ produitId }: { produitId: string }) {
+  const tr = useT();
   const [chapitres, setChapitres] = useState<Chapitre[]>([]);
   const [loading,   setLoading]   = useState(true);
   const [ajoutOpen, setAjoutOpen] = useState(false);
@@ -365,7 +369,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
     const d = await r.json();
     setSaving(false);
     if (r.ok) { setChapitres((prev) => [...prev, { ...d.chapitre, lecons: [] }]); setNewTitre(""); setAjoutOpen(false); }
-    else alert(d.error ?? "Erreur");
+    else alert(tr(d.error) ?? tr("Erreur"));
   };
 
   const deleteChapitre = async (id: string) => {
@@ -381,10 +385,10 @@ export default function FormationManager({ produitId }: { produitId: string }) {
       <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-2">
           <BookOpen size={16} className="text-[#F5A623]" />
-          <span className="font-semibold text-sm text-gray-900 dark:text-white">Contenu de la formation</span>
+          <span className="font-semibold text-sm text-gray-900 dark:text-white">{tr("Contenu de la formation")}</span>
           {!loading && (
             <span className="text-xs text-gray-400">
-              {chapitres.length} chapitre{chapitres.length !== 1 ? "s" : ""} · {totalLecons} leçon{totalLecons !== 1 ? "s" : ""}
+              {chapitres.length} chapitre{chapitres.length !== 1 ? "s" : ""} · {tr(totalLecons)}{" "}{tr("leçon")}{totalLecons !== 1 ? "s" : ""}
             </span>
           )}
         </div>
@@ -392,7 +396,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
           onClick={() => setAjoutOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F5A623] text-[#111111] hover:bg-[#D4911A] transition-colors"
         >
-          <Plus size={12} /> Chapitre
+          <Plus size={12} />{" "}{tr("Chapitre")}
         </button>
       </div>
 
@@ -402,15 +406,15 @@ export default function FormationManager({ produitId }: { produitId: string }) {
           <input
             value={newTitre} onChange={(e) => setNewTitre(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && ajouterChapitre()}
-            placeholder="Titre du chapitre…"
+            placeholder={tr("Titre du chapitre…")}
             autoFocus
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40"
           />
           <button onClick={ajouterChapitre} disabled={saving || !newTitre.trim()} className="px-3 py-2 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium disabled:opacity-50 hover:bg-[#D4911A] transition-colors">
-            {saving ? <Loader2 size={13} className="animate-spin" /> : "Ajouter"}
+            {saving ? <Loader2 size={13} className="animate-spin" /> : tr("Ajouter")}
           </button>
           <button onClick={() => { setAjoutOpen(false); setNewTitre(""); }} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-500 hover:text-gray-700 transition-colors">
-            Annuler
+            {tr("Annuler")}
           </button>
         </div>
       )}
@@ -419,13 +423,13 @@ export default function FormationManager({ produitId }: { produitId: string }) {
       {loading ? (
         <div className="py-10 text-center text-sm text-gray-400">
           <Loader2 size={20} className="animate-spin mx-auto mb-2 text-gray-300" />
-          Chargement…
+          {tr("Chargement…")}
         </div>
       ) : chapitres.length === 0 ? (
         <div className="py-12 text-center">
           <BookOpen size={32} className="mx-auto text-gray-200 dark:text-gray-700 mb-3" />
-          <p className="text-sm text-gray-400 mb-1">Aucun chapitre encore</p>
-          <p className="text-xs text-gray-300">Cliquez sur "Chapitre" pour commencer à structurer votre formation.</p>
+          <p className="text-sm text-gray-400 mb-1">{tr("Aucun chapitre encore")}</p>
+          <p className="text-xs text-gray-300">{tr("Cliquez sur \"Chapitre\" pour commencer à structurer votre formation.")}</p>
         </div>
       ) : (
         <div className="p-4 space-y-2">

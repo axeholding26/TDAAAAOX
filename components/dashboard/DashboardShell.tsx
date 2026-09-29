@@ -14,6 +14,7 @@ import { CaisseKiosk } from "@/components/dashboard/CaisseKiosk";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import type { Palier } from "@/lib/plans";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
+import { useT } from "@/components/I18nProvider";
 
 const FULLBLEED_PREFIXES: string[] = ["/dashboard/builder", "/dashboard/themes"];
 
@@ -52,6 +53,7 @@ export function DashboardShell({
   // du dashboard, pas seulement /dashboard/logistique?tab=pos.
   modeCaisse?: boolean;
 }) {
+  const t = useT();
   const pathname = usePathname();
   const estAccueilAxia = pathname === "/dashboard";
   const fullBleed = estAccueilAxia || FULLBLEED_PREFIXES.some(r => pathname.startsWith(r));
@@ -69,8 +71,8 @@ export function DashboardShell({
         moduleKey="bienvenue"
         storageKey={`bienvenue:${session?.user?.tenantId ?? "defaut"}`}
         autoOpen
-        titre="Bienvenue sur AXSO"
-        sousTitre="Un tour rapide pour démarrer"
+        titre={t("Bienvenue sur AXSO")}
+        sousTitre={t("Un tour rapide pour démarrer")}
         steps={BIENVENUE_STEPS}
       />
 
@@ -133,6 +135,7 @@ export function DashboardShell({
 
 /* ─── Header mobile ────────────────────────────────────────────── */
 function MobileHeader({ boutiqueNom, permissions, nom }: { boutiqueNom?: string; permissions?: Record<ModuleKey, Niveau>; nom: string }) {
+  const t = useT();
   return (
     <header className="sticky top-0 z-40 bg-white/96 backdrop-blur-xl border-b border-gray-100"
       style={{ boxShadow: "0 1px 12px rgba(0,0,0,0.04)" }}>
@@ -141,12 +144,12 @@ function MobileHeader({ boutiqueNom, permissions, nom }: { boutiqueNom?: string;
         {boutiqueNom && (
           <div className="flex items-center gap-1.5 bg-[#F5A623]/8 border border-[#F5A623]/20 rounded-full px-3 py-1 max-w-[150px]">
             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-shrink-0"/>
-            <span className="text-xs font-semibold text-[#F5A623] truncate">{boutiqueNom}</span>
+            <span className="text-xs font-semibold text-[#F5A623] truncate">{t(boutiqueNom)}</span>
           </div>
         )}
         <div className="flex items-center gap-2 flex-shrink-0">
         <RechercheDashboard permissions={permissions} mobile />
-        <Link href="/dashboard/profil" aria-label="Mon profil" className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f] flex items-center justify-center flex-shrink-0">
+        <Link href="/dashboard/profil" aria-label={t("Mon profil")} className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f] flex items-center justify-center flex-shrink-0">
           <span className="text-white text-xs font-bold">{initiales(nom) || "?"}</span>
         </Link>
         </div>

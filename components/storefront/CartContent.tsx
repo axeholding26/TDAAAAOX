@@ -5,6 +5,7 @@ import { usePrix } from "@/components/storefront/DeviseVitrine";
 import { reductionPromo } from "@/lib/pricing";
 import Link from "next/link";
 import { Trash2, Plus, Minus, ShoppingBag, Package } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   theme: { fond: string; accent: string; texte: string; surface: string };
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function CartContent({ theme, slug, devise }: Props) {
+  const t = useT();
   const { fmt } = usePrix();
   const { items, modifierQuantite, retirerItem, sousTotal, totalAvecReduction, reductionMontant, codePromo, totalItems } = useCartStore();
 
@@ -20,9 +22,9 @@ export function CartContent({ theme, slug, devise }: Props) {
     return (
       <div className="text-center py-20">
         <ShoppingBag size={48} className="mx-auto mb-4 opacity-20" />
-        <p className="text-xl font-playfair opacity-60 mb-4">Votre panier est vide</p>
+        <p className="text-xl font-playfair opacity-60 mb-4">{t("Votre panier est vide")}</p>
         <Link href={`/${slug}/produits`} className="inline-block px-8 py-3 rounded-xl font-semibold transition-all hover:opacity-90" style={{ backgroundColor: theme.accent, color: theme.fond }}>
-          Découvrir nos produits
+          {t("Découvrir nos produits")}
         </Link>
       </div>
     );
@@ -40,8 +42,8 @@ export function CartContent({ theme, slug, devise }: Props) {
               <div className="w-20 h-20 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: theme.fond }}><Package size={28} className="opacity-30" /></div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm mb-1 truncate">{item.nom}</h3>
-              {item.variante && <p className="text-xs opacity-50 mb-2">{item.variante}</p>}
+              <h3 className="font-semibold text-sm mb-1 truncate">{t(item.nom)}</h3>
+              {item.variante && <p className="text-xs opacity-50 mb-2">{t(item.variante)}</p>}
               <p className="font-bold" style={{ color: theme.accent }}>{fmt(item.prix, devise)}</p>
             </div>
             <div className="flex flex-col items-end justify-between">
@@ -65,30 +67,30 @@ export function CartContent({ theme, slug, devise }: Props) {
       {/* Résumé commande */}
       <div className="space-y-4">
         <div className="rounded-2xl border p-6 space-y-4" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
-          <h2 className="font-bold font-playfair">Résumé</h2>
+          <h2 className="font-bold font-playfair">{t("Résumé")}</h2>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="opacity-60">Sous-total ({totalItems()} article{totalItems() > 1 ? "s" : ""})</span>
+              <span className="opacity-60">{t("Sous-total (")}{totalItems()} article{totalItems() > 1 ? "s" : ""})</span>
               <span>{fmt(sousTotal(), devise)}</span>
             </div>
             {reductionMontant > 0 && (
               <div className="flex justify-between text-green-500">
-                <span>Code promo ({codePromo})</span>
+                <span>{t("Code promo (")}{t(codePromo)})</span>
                 <span>-{fmt(reductionMontant, devise)}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="opacity-60">Livraison</span>
-              <span className="text-green-500">Calculée au checkout</span>
+              <span className="opacity-60">{t("Livraison")}</span>
+              <span className="text-green-500">{t("Calculée au checkout")}</span>
             </div>
             <div className="border-t pt-2 flex justify-between font-bold text-base" style={{ borderColor: `${theme.accent}20` }}>
-              <span>Total</span>
+              <span>{t("Total")}</span>
               <span style={{ color: theme.accent }}>{fmt(totalAvecReduction(), devise)}</span>
             </div>
           </div>
 
           <Link href={`/${slug}/checkout`} className="block w-full text-center py-4 rounded-xl font-semibold text-sm transition-all hover:opacity-90" style={{ backgroundColor: theme.accent, color: theme.fond }}>
-            Passer la commande
+            {t("Passer la commande")}
           </Link>
         </div>
 
@@ -100,6 +102,7 @@ export function CartContent({ theme, slug, devise }: Props) {
 }
 
 function CodePromoInput({ theme, slug, devise }: Props) {
+  const t = useT();
   const { fmt } = usePrix();
   const { appliquerCodePromo, supprimerCodePromo, codePromo, sousTotal } = useCartStore();
 
@@ -112,10 +115,10 @@ function CodePromoInput({ theme, slug, devise }: Props) {
       const res = await fetch(`/api/codes-promo/verifier?code=${encodeURIComponent(code)}&slug=${slug}`);
       if (!res.ok) throw new Error();
       const promo = await res.json();
-      if (promo.minCommande && sousTotal() < promo.minCommande) { alert(`Ce code s'applique dès ${fmt(promo.minCommande, devise)} d'achat`); return; }
+      if (promo.minCommande && sousTotal() < promo.minCommande) { alert(t("Ce code s'applique dès {0} d'achat", fmt(promo.minCommande, devise))); return; }
       appliquerCodePromo(code, reductionPromo(promo, sousTotal()));
     } catch {
-      alert("Code promo invalide ou expiré");
+      alert(t("Code promo invalide ou expiré"));
     }
   }
 
@@ -123,17 +126,17 @@ function CodePromoInput({ theme, slug, devise }: Props) {
     return (
       <div className="rounded-2xl border p-4 flex items-center justify-between" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
         <div>
-          <p className="text-sm font-semibold">Code : <span style={{ color: theme.accent }}>{codePromo}</span></p>
-          <p className="text-xs opacity-50">Réduction appliquée</p>
+          <p className="text-sm font-semibold">{t("Code :")}{" "}<span style={{ color: theme.accent }}>{t(codePromo)}</span></p>
+          <p className="text-xs opacity-50">{t("Réduction appliquée")}</p>
         </div>
-        <button onClick={supprimerCodePromo} className="text-xs text-red-400 hover:opacity-80">Retirer</button>
+        <button onClick={supprimerCodePromo} className="text-xs text-red-400 hover:opacity-80">{t("Retirer")}</button>
       </div>
     );
   }
 
   return (
     <form onSubmit={appliquer} className="flex gap-2">
-      <input name="code" placeholder="Code promo" className="flex-1 px-4 py-3 rounded-xl text-sm border focus:outline-none" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte }} />
+      <input name="code" placeholder={t("Code promo")} className="flex-1 px-4 py-3 rounded-xl text-sm border focus:outline-none" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte }} />
       <button type="submit" className="px-4 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ backgroundColor: `${theme.accent}20`, color: theme.accent, border: `1px solid ${theme.accent}40` }}>
         OK
       </button>

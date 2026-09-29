@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Zap, Trash2, Mail, MessageSquare, Phone, ShoppingCart, Hand, Package, Gift, Clock } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Workflow {
   id: string;
@@ -32,6 +33,7 @@ const CANAL_ICONS: Record<string, any> = {
 };
 
 export default function AutomationPage() {
+  const t = useT();
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -93,38 +95,38 @@ export default function AutomationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Automation</h1>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Séquences marketing automatiques</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Automation")}</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Séquences marketing automatiques")}</p>
         </div>
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold"
           style={{ background: "#F5A623" }}
         >
-          <Plus size={14} /> Nouveau workflow
+          <Plus size={14} />{" "}{t("Nouveau workflow")}
         </button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Workflows actifs</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Workflows actifs")}</p>
           <p className="text-2xl font-bold text-[#111]">{activeCount}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Déclenchements</p>
-          <p className="text-2xl font-bold text-[#111]">{totalDeclenchements}</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Déclenchements")}</p>
+          <p className="text-2xl font-bold text-[#111]">{t(totalDeclenchements)}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-          <p className="text-[11px] text-[#888] mb-1">Conversions</p>
-          <p className="text-2xl font-bold" style={{ color: "#10b981" }}>{totalConversions}</p>
+          <p className="text-[11px] text-[#888] mb-1">{t("Conversions")}</p>
+          <p className="text-2xl font-bold" style={{ color: "#10b981" }}>{t(totalConversions)}</p>
         </div>
       </div>
 
       {/* Templates disponibles */}
       {!showForm && workflows.length === 0 && (
         <div>
-          <p className="text-[13px] font-semibold text-[#111] mb-3">Workflows disponibles</p>
+          <p className="text-[13px] font-semibold text-[#111] mb-3">{t("Workflows disponibles")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Object.entries(TYPE_CONFIG).map(([type, config]) => (
               <div
@@ -135,8 +137,8 @@ export default function AutomationPage() {
                 <div className="flex items-start gap-3">
                   <config.Icon size={24} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[13px] font-semibold text-[#111]">{config.label}</p>
-                    <p className="text-[11px] text-[#888] mt-0.5">{config.description}</p>
+                    <p className="text-[13px] font-semibold text-[#111]">{t(config.label)}</p>
+                    <p className="text-[11px] text-[#888] mt-0.5">{t(config.description)}</p>
                   </div>
                 </div>
               </div>
@@ -148,47 +150,47 @@ export default function AutomationPage() {
       {/* Formulaire */}
       {showForm && (
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-          <h3 className="text-[14px] font-semibold text-[#111] mb-4">Nouveau workflow</h3>
+          <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau workflow")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Nom *</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Nom *")}</label>
               <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Type</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Type")}</label>
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
-                {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{t(v.label)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Canal</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Canal")}</label>
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.canal} onChange={(e) => setForm((f) => ({ ...f, canal: e.target.value }))}>
-                <option value="email">Email</option>
+                <option value="email">{t("Email")}</option>
                 <option value="sms">SMS</option>
                 <option value="whatsapp">WhatsApp</option>
               </select>
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Délai de déclenchement (heures)</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Délai de déclenchement (heures)")}</label>
               <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.delaiHeures} min={0.5} step={0.5} onChange={(e) => setForm((f) => ({ ...f, delaiHeures: Number(e.target.value) }))} />
             </div>
             {form.canal === "email" && (
               <div>
-                <label className="block text-[11px] text-[#888] mb-1">Sujet de l'email</label>
+                <label className="block text-[11px] text-[#888] mb-1">{t("Sujet de l'email")}</label>
                 <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.sujet} onChange={(e) => setForm((f) => ({ ...f, sujet: e.target.value }))} />
               </div>
             )}
             <div className="sm:col-span-2">
-              <label className="block text-[11px] text-[#888] mb-1">Message *</label>
-              <textarea className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" rows={3} placeholder="Bonjour {{nom}}, tu as oublié quelque chose..." value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
-              <p className="text-[10px] text-[#AAA] mt-1">Variables: {"{{nom}}"}, {"{{email}}"}, {"{{montant}}"}, {"{{boutique}}"}</p>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Message *")}</label>
+              <textarea className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" rows={3} placeholder={t("Bonjour {{nom}}, tu as oublié quelque chose...")} value={form.message} onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))} />
+              <p className="text-[10px] text-[#AAA] mt-1">{t("Variables:")}{" "}{t("{{nom}}")}, {t("{{email}}")}, {t("{{montant}}")}, {t("{{boutique}}")}</p>
             </div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={saveWorkflow} disabled={saving || !form.nom || !form.message} className="px-4 py-2 rounded-lg text-white text-[13px] font-semibold disabled:opacity-50" style={{ background: "#F5A623" }}>
-              {saving ? "Enregistrement..." : "Créer"}
+              {saving ? t("Enregistrement...") : t("Créer")}
             </button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">Annuler</button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">{t("Annuler")}</button>
           </div>
         </div>
       )}
@@ -205,10 +207,10 @@ export default function AutomationPage() {
                 <tc.Icon size={24} className="shrink-0 text-[#F5A623]" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-semibold text-[#111] truncate">{w.nom}</p>
+                    <p className="text-[13px] font-semibold text-[#111] truncate">{t(w.nom)}</p>
                     <CanalIcon size={11} className="text-[#888] shrink-0" />
                   </div>
-                  <p className="text-[11px] text-[#888]">{tc.label} · {w.delaiHeures}h · {w.declenchements} décl. · {cvr}% conv.</p>
+                  <p className="text-[11px] text-[#888]">{t(tc.label)} · {t(w.delaiHeures)}{t("h ·")}{" "}{t(w.declenchements)}{" "}{t("décl. ·")}{" "}{t(cvr)}% conv.</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button

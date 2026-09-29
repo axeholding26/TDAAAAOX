@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Popup {
   id: string;
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
+  const t = useT();
   const [popups, setPopups] = useState<Popup[]>([]);
   const [visible, setVisible] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -116,10 +118,10 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
     return (
       <div className="fixed top-0 left-0 right-0 z-[100] px-4 py-3 text-white text-center text-[13px] flex items-center justify-between gap-4" style={{ background: accentColor }}>
         <div className="flex-1 text-center">
-          <strong>{current.titre}</strong> — {current.message}
-          {current.codePromo && <span className="ml-2 bg-white/20 px-2 py-0.5 rounded font-mono text-xs">{current.codePromo}</span>}
+          <strong>{t(current.titre)}</strong> — {t(current.message)}
+          {current.codePromo && <span className="ml-2 bg-white/20 px-2 py-0.5 rounded font-mono text-xs">{t(current.codePromo)}</span>}
           {current.ctaTexte && current.ctaUrl && (
-            <button onClick={handleCta} className="ml-3 underline font-semibold">{current.ctaTexte}</button>
+            <button onClick={handleCta} className="ml-3 underline font-semibold">{t(current.ctaTexte)}</button>
           )}
         </div>
         <button onClick={dismiss} className="shrink-0 hover:bg-white/10 p-1 rounded"><X size={14} /></button>
@@ -140,12 +142,12 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
         {current.imageUrl && (
           <img src={current.imageUrl} alt={current.titre} className="w-full h-36 object-cover rounded-xl mb-4" />
         )}
-        <h3 className="text-[17px] font-bold text-[#111] mb-2">{current.titre}</h3>
-        <p className="text-[13px] text-[#666] mb-3">{current.message}</p>
+        <h3 className="text-[17px] font-bold text-[#111] mb-2">{t(current.titre)}</h3>
+        <p className="text-[13px] text-[#666] mb-3">{t(current.message)}</p>
         {current.codePromo && (
           <div className="bg-[#FFF8EC] border border-[#F5A623]/30 rounded-xl px-4 py-2.5 text-center mb-3">
-            <p className="text-[11px] text-[#888]">Code promo</p>
-            <p className="text-[18px] font-bold tracking-widest" style={{ color: accentColor }}>{current.codePromo}</p>
+            <p className="text-[11px] text-[#888]">{t("Code promo")}</p>
+            <p className="text-[18px] font-bold tracking-widest" style={{ color: accentColor }}>{t(current.codePromo)}</p>
           </div>
         )}
         {current.ctaTexte && (
@@ -154,7 +156,7 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
             className="w-full py-3 rounded-xl text-white font-semibold text-[14px]"
             style={{ background: accentColor }}
           >
-            {current.ctaTexte}
+            {t(current.ctaTexte)}
           </button>
         )}
       </div>

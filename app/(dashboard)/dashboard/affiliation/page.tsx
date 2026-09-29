@@ -7,6 +7,7 @@ import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/Mod
 import { toast } from "sonner";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 const AFFILIATION_TUTORIAL_STEPS = [
   { Icon: Settings, titre: "Configure ton programme",       description: "Définis ton taux de commission, la durée du cookie d'attribution et des paliers pour récompenser tes meilleurs affiliés." },
   { Icon: Users,    titre: "Recrute et valide tes affiliés", description: "Approuve les demandes, suis les clics et conversions de chacun, et repère tes ambassadeurs les plus performants." },
@@ -56,6 +57,7 @@ function copier(texte: string, cb: (v: boolean) => void) {
 function StatCard({ label, value, sub, color = "#F5A623", Icon: Ic }: {
   label: string; value: string; sub?: string; color?: string; Icon: any;
 }) {
+  const tr = useT();
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-3">
@@ -64,14 +66,15 @@ function StatCard({ label, value, sub, color = "#F5A623", Icon: Ic }: {
           <Ic size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-[22px] font-bold text-[#111] leading-none">{value}</p>
-      <p className="text-[11px] text-gray-400 mt-1">{label}</p>
-      {sub && <p className="text-[10px] mt-0.5" style={{ color }}>{sub}</p>}
+      <p className="text-[22px] font-bold text-[#111] leading-none">{tr(value)}</p>
+      <p className="text-[11px] text-gray-400 mt-1">{tr(label)}</p>
+      {sub && <p className="text-[10px] mt-0.5" style={{ color }}>{tr(sub)}</p>}
     </div>
   );
 }
 
 function Badge({ statut }: { statut: string }) {
+  const tr = useT();
   const map: Record<string, { label: string; cls: string }> = {
     actif:       { label: "Actif",       cls: "bg-green-100 text-green-700" },
     en_attente:  { label: "En attente",  cls: "bg-amber-100 text-amber-700" },
@@ -82,11 +85,12 @@ function Badge({ statut }: { statut: string }) {
     rejetee:     { label: "Rejetée",     cls: "bg-red-100 text-red-600"     },
   };
   const m = map[statut] ?? { label: statut, cls: "bg-gray-100 text-gray-500" };
-  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.cls}`}>{m.label}</span>;
+  return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${m.cls}`}>{tr(m.label)}</span>;
 }
 
 // ─── Vue d'ensemble ───────────────────────────────────────────────────────────
 function OngletStats() {
+  const tr = useT();
   const { fmt } = useDevise();
   const [stats, setStats] = useState<Stats | null>(null);
   const [top, setTop] = useState<any[]>([]);
@@ -99,7 +103,7 @@ function OngletStats() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="py-12 text-center text-sm text-gray-400">Chargement…</div>;
+  if (loading) return <div className="py-12 text-center text-sm text-gray-400">{tr("Chargement…")}</div>;
   if (!stats) return null;
 
   const conv = stats.clics > 0 ? ((stats.conversions / stats.clics) * 100).toFixed(1) : "0";
@@ -107,15 +111,15 @@ function OngletStats() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard label="Affiliés actifs"      value={String(stats.affiliesActifs)}                         Icon={Users}       color="#111111" sub={`/ ${stats.totalAffilies} total`} />
-        <StatCard label="Commissions versées"  value={`${fmt(stats.commissionsPaid)}`}      Icon={DollarSign}  color="#10b981" />
-        <StatCard label="En attente de paiement" value={`${fmt(stats.commissionsPending)}`} Icon={Clock}       color="#F5A623" />
-        <StatCard label="GMV généré"           value={`${fmt(stats.gmvAffilies)}`}          Icon={TrendingUp}  color="#0ea5e9" sub="via affiliés" />
+        <StatCard label={tr("Affiliés actifs")}      value={String(stats.affiliesActifs)}                         Icon={Users}       color="#111111" sub={`/ ${stats.totalAffilies} total`} />
+        <StatCard label={tr("Commissions versées")}  value={`${fmt(stats.commissionsPaid)}`}      Icon={DollarSign}  color="#10b981" />
+        <StatCard label={tr("En attente de paiement")} value={`${fmt(stats.commissionsPending)}`} Icon={Clock}       color="#F5A623" />
+        <StatCard label={tr("GMV généré")}           value={`${fmt(stats.gmvAffilies)}`}          Icon={TrendingUp}  color="#0ea5e9" sub="via affiliés" />
       </div>
 
       {/* Funnel */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-[12px] font-bold text-[#111] mb-4">Funnel de conversion</p>
+        <p className="text-[12px] font-bold text-[#111] mb-4">{tr("Funnel de conversion")}</p>
         <div className="flex items-end gap-2">
           {[
             { label: "Clics", value: stats.funnel.clics,      color: "#0ea5e9" },
@@ -130,19 +134,19 @@ function OngletStats() {
                   <div className="w-full rounded-t-xl transition-all" style={{ height: `${Math.max(pct, 8)}%`, background: f.color }} />
                 </div>
                 <p className="text-[18px] font-bold text-[#111]">{f.value.toLocaleString()}</p>
-                <p className="text-[10px] text-gray-400">{f.label}</p>
+                <p className="text-[10px] text-gray-400">{tr(f.label)}</p>
                 {i > 0 && <p className="text-[10px] text-gray-300">{pct}%</p>}
               </div>
             );
           })}
         </div>
-        <p className="text-[11px] text-gray-400 mt-3 text-center">Taux de conversion global : <strong className="text-[#F5A623]">{conv}%</strong></p>
+        <p className="text-[11px] text-gray-400 mt-3 text-center">{tr("Taux de conversion global :")}{" "}<strong className="text-[#F5A623]">{tr(conv)}%</strong></p>
       </div>
 
       {/* Top affiliés */}
       {top.length > 0 && (
         <div className="bg-white border border-gray-100 rounded-2xl p-5">
-          <p className="text-[12px] font-bold text-[#111] mb-4">Top affiliés</p>
+          <p className="text-[12px] font-bold text-[#111] mb-4">{tr("Top affiliés")}</p>
           <div className="space-y-2">
             {top.map((a, i) => (
               <div key={a.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
@@ -152,8 +156,8 @@ function OngletStats() {
                   {a.nom.slice(0,1).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#111] truncate">{a.nom}</p>
-                  <p className="text-[10px] text-gray-400">{a.clics} clics · {a.conversions} ventes</p>
+                  <p className="text-[12px] font-semibold text-[#111] truncate">{tr(a.nom)}</p>
+                  <p className="text-[10px] text-gray-400">{tr(a.clics)}{" "}{tr("clics ·")}{" "}{tr(a.conversions)} ventes</p>
                 </div>
                 <p className="text-[13px] font-bold text-[#F5A623]">{fmt((a.commissionTotal ?? 0))}</p>
               </div>
@@ -167,6 +171,7 @@ function OngletStats() {
 
 // ─── Mon programme ────────────────────────────────────────────────────────────
 function OngletProgramme() {
+  const tr = useT();
   const { devise, fmt } = useDevise();
   const [prog, setProg] = useState<Programme | null>(null);
   const [loading, setLoading] = useState(true);
@@ -212,7 +217,7 @@ function OngletProgramme() {
     await charger(); setEditing(false); setSaving(false);
   }
 
-  if (loading) return <div className="py-12 text-center text-sm text-gray-400">Chargement…</div>;
+  if (loading) return <div className="py-12 text-center text-sm text-gray-400">{tr("Chargement…")}</div>;
 
   if (!prog && !editing) {
     return (
@@ -220,11 +225,11 @@ function OngletProgramme() {
         <div className="w-16 h-16 rounded-2xl bg-[#F5A623]/10 flex items-center justify-center mx-auto">
           <Target size={28} className="text-[#F5A623]" />
         </div>
-        <p className="text-[14px] font-bold text-[#111]">Aucun programme d'affiliation</p>
-        <p className="text-[12px] text-gray-400 max-w-xs mx-auto">Créez votre programme pour permettre à des influenceurs et ambassadeurs de promouvoir vos produits.</p>
+        <p className="text-[14px] font-bold text-[#111]">{tr("Aucun programme d'affiliation")}</p>
+        <p className="text-[12px] text-gray-400 max-w-xs mx-auto">{tr("Créez votre programme pour permettre à des influenceurs et ambassadeurs de promouvoir vos produits.")}</p>
         <button onClick={() => setEditing(true)}
           className="px-5 py-2.5 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold">
-          + Créer mon programme
+          {tr("+ Créer mon programme")}
         </button>
       </div>
     );
@@ -234,46 +239,46 @@ function OngletProgramme() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <p className="text-[14px] font-bold text-[#111]">{prog ? "Modifier le programme" : "Créer un programme"}</p>
-          {prog && <button onClick={() => setEditing(false)} className="text-[11px] text-gray-400 hover:text-gray-600">Annuler</button>}
+          <p className="text-[14px] font-bold text-[#111]">{prog ? tr("Modifier le programme") : tr("Créer un programme")}</p>
+          {prog && <button onClick={() => setEditing(false)} className="text-[11px] text-gray-400 hover:text-gray-600">{tr("Annuler")}</button>}
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Nom du programme *</label>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Nom du programme *")}</label>
             <input value={form.nom} onChange={e => setForm(v => ({ ...v, nom: e.target.value }))}
-              placeholder="Programme Ambassadeurs 2026"
+              placeholder={tr("Programme Ambassadeurs 2026")}
               className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
           </div>
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Description</label>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Description")}</label>
             <textarea value={form.description} onChange={e => setForm(v => ({ ...v, description: e.target.value }))}
-              placeholder="Rejoignez notre programme et gagnez des commissions sur chaque vente..."
+              placeholder={tr("Rejoignez notre programme et gagnez des commissions sur chaque vente...")}
               rows={2}
               className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60 resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Type de commission</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Type de commission")}</label>
               <select value={form.typeCommission} onChange={e => setForm(v => ({ ...v, typeCommission: e.target.value }))}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60 bg-white">
-                <option value="pourcentage">Pourcentage (%)</option>
-                <option value="fixe">Montant fixe (XAF)</option>
+                <option value="pourcentage">{tr("Pourcentage (%)")}</option>
+                <option value="fixe">{tr("Montant fixe (XAF)")}</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
-                Valeur ({form.typeCommission === "pourcentage" ? "%" : devise})
+                {tr("Valeur (")}{form.typeCommission === "pourcentage" ? "%" : tr(devise)})
               </label>
               <input type="number" value={form.valeurCommission} onChange={e => setForm(v => ({ ...v, valeurCommission: +e.target.value }))}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Fenêtre cookie (jours)</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Fenêtre cookie (jours)")}</label>
               <input type="number" value={form.dureeCookie} onChange={e => setForm(v => ({ ...v, dureeCookie: +e.target.value }))}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Seuil paiement (XAF)</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Seuil paiement (XAF)")}</label>
               <input type="number" value={form.seuilPaiement} onChange={e => setForm(v => ({ ...v, seuilPaiement: +e.target.value }))}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60" />
             </div>
@@ -284,44 +289,44 @@ function OngletProgramme() {
                 className={`w-9 h-5 rounded-full transition-colors relative ${form.actif ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.actif ? "left-4" : "left-0.5"}`} />
               </div>
-              <span className="text-[12px] text-gray-600">Programme actif</span>
+              <span className="text-[12px] text-gray-600">{tr("Programme actif")}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <div onClick={() => setForm(v => ({ ...v, autoApprobation: !v.autoApprobation }))}
                 className={`w-9 h-5 rounded-full transition-colors relative ${form.autoApprobation ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.autoApprobation ? "left-4" : "left-0.5"}`} />
               </div>
-              <span className="text-[12px] text-gray-600">Approbation automatique des candidatures</span>
+              <span className="text-[12px] text-gray-600">{tr("Approbation automatique des candidatures")}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <div onClick={() => setForm(v => ({ ...v, tiersActifs: !v.tiersActifs }))}
                 className={`w-9 h-5 rounded-full transition-colors relative ${form.tiersActifs ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                 <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 transition-all ${form.tiersActifs ? "left-4" : "left-0.5"}`} />
               </div>
-              <span className="text-[12px] text-gray-600">Paliers de commission</span>
+              <span className="text-[12px] text-gray-600">{tr("Paliers de commission")}</span>
             </label>
           </div>
 
           {form.tiersActifs && (
             <div className="border-t border-gray-100 pt-4 space-y-3">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Paliers — plus l'affilié vend, plus il gagne</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{tr("Paliers — plus l'affilié vend, plus il gagne")}</p>
               {([
                 ["tier1Nom", "tier1Max", "tier1Commission", "Palier 1"],
                 ["tier2Nom", "tier2Max", "tier2Commission", "Palier 2"],
               ] as const).map(([nomKey, maxKey, commKey, label]) => (
                 <div key={label} className="grid grid-cols-3 gap-2 items-end">
                   <div>
-                    <label className="text-[9.5px] text-gray-400">{label} — nom</label>
+                    <label className="text-[9.5px] text-gray-400">{tr(label)}{" "}{tr("— nom")}</label>
                     <input value={form[nomKey]} onChange={e => setForm(v => ({ ...v, [nomKey]: e.target.value }))}
                       className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
                   </div>
                   <div>
-                    <label className="text-[9.5px] text-gray-400">Jusqu'à (ventes)</label>
+                    <label className="text-[9.5px] text-gray-400">{tr("Jusqu'à (ventes)")}</label>
                     <input type="number" value={form[maxKey]} onChange={e => setForm(v => ({ ...v, [maxKey]: +e.target.value }))}
                       className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
                   </div>
                   <div>
-                    <label className="text-[9.5px] text-gray-400">Commission (%)</label>
+                    <label className="text-[9.5px] text-gray-400">{tr("Commission (%)")}</label>
                     <input type="number" value={form[commKey]} onChange={e => setForm(v => ({ ...v, [commKey]: +e.target.value }))}
                       className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
                   </div>
@@ -329,13 +334,13 @@ function OngletProgramme() {
               ))}
               <div className="grid grid-cols-3 gap-2 items-end">
                 <div>
-                  <label className="text-[9.5px] text-gray-400">Palier 3 — nom</label>
+                  <label className="text-[9.5px] text-gray-400">{tr("Palier 3 — nom")}</label>
                   <input value={form.tier3Nom} onChange={e => setForm(v => ({ ...v, tier3Nom: e.target.value }))}
                     className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
                 </div>
-                <div className="text-[10px] text-gray-300 italic pb-2.5">Au-delà du palier 2</div>
+                <div className="text-[10px] text-gray-300 italic pb-2.5">{tr("Au-delà du palier 2")}</div>
                 <div>
-                  <label className="text-[9.5px] text-gray-400">Commission (%)</label>
+                  <label className="text-[9.5px] text-gray-400">{tr("Commission (%)")}</label>
                   <input type="number" value={form.tier3Commission} onChange={e => setForm(v => ({ ...v, tier3Commission: +e.target.value }))}
                     className="mt-1 w-full border border-gray-200 rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[#F5A623]/60" />
                 </div>
@@ -345,7 +350,7 @@ function OngletProgramme() {
         </div>
         <button onClick={sauver} disabled={!form.nom || saving}
           className="w-full py-3 bg-[#F5A623] text-white rounded-2xl text-[13px] font-bold disabled:opacity-50 hover:bg-[#d4880d] transition-colors">
-          {saving ? "Sauvegarde…" : prog ? "Mettre à jour" : "Créer le programme"}
+          {saving ? tr("Sauvegarde…") : prog ? tr("Mettre à jour") : tr("Créer le programme")}
         </button>
       </div>
     );
@@ -356,8 +361,8 @@ function OngletProgramme() {
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <p className="text-[15px] font-bold text-[#111]">{prog.nom}</p>
-            {prog.description && <p className="text-[12px] text-gray-400 mt-1">{prog.description}</p>}
+            <p className="text-[15px] font-bold text-[#111]">{tr(prog.nom)}</p>
+            {prog.description && <p className="text-[12px] text-gray-400 mt-1">{tr(prog.description)}</p>}
           </div>
           <div className="flex items-center gap-2">
             <Badge statut={prog.actif ? "actif" : "suspendu"} />
@@ -375,8 +380,8 @@ function OngletProgramme() {
             { label: "Affiliés",           value: String(prog._count?.affilies ?? 0) },
           ].map(({ label, value }) => (
             <div key={label} className="bg-gray-50 rounded-xl p-3">
-              <p className="text-[10px] text-gray-400">{label}</p>
-              <p className="text-[14px] font-bold text-[#111] mt-0.5">{value}</p>
+              <p className="text-[10px] text-gray-400">{tr(label)}</p>
+              <p className="text-[14px] font-bold text-[#111] mt-0.5">{tr(value)}</p>
             </div>
           ))}
         </div>
@@ -384,11 +389,11 @@ function OngletProgramme() {
 
       {/* Lien de signup public */}
       <div className="bg-[#FFF8EC] border border-[#F5A623]/30 rounded-2xl p-4">
-        <p className="text-[11px] font-bold text-[#d4880d] mb-2">Lien d'inscription affilié</p>
-        <p className="text-[11px] text-gray-500 mb-2">Partagez ce lien pour que les affiliés puissent s'inscrire à votre programme.</p>
+        <p className="text-[11px] font-bold text-[#d4880d] mb-2">{tr("Lien d'inscription affilié")}</p>
+        <p className="text-[11px] text-gray-500 mb-2">{tr("Partagez ce lien pour que les affiliés puissent s'inscrire à votre programme.")}</p>
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-white border border-[#F5A623]/20 rounded-xl px-3 py-2 text-[11px] font-mono text-gray-500 truncate">
-            {process.env.NEXT_PUBLIC_APP_URL ?? ""}/rejoindre/{prog.id}
+            {tr(process.env.NEXT_PUBLIC_APP_URL) ?? ""}/rejoindre/{prog.id}
           </div>
           <CopyButton text={`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/rejoindre/${prog.id}`} />
         </div>
@@ -409,6 +414,7 @@ function CopyButton({ text }: { text: string }) {
 
 // ─── Gestion des affiliés ─────────────────────────────────────────────────────
 function OngletAffilies() {
+  const tr = useT();
   const { fmt } = useDevise();
   const [affilies, setAffilies] = useState<Affilie[]>([]);
   const [loading, setLoading] = useState(true);
@@ -450,26 +456,26 @@ function OngletAffilies() {
         <div className="relative flex-1">
           <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
           <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Rechercher un affilié…"
+            placeholder={tr("Rechercher un affilié…")}
             className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-[12px] outline-none focus:border-[#F5A623]/50" />
         </div>
         <select value={filtre} onChange={e => setFiltre(e.target.value)}
           className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50 bg-white">
-          <option value="all">Tous</option>
-          <option value="en_attente">En attente</option>
-          <option value="actif">Actifs</option>
-          <option value="suspendu">Suspendus</option>
+          <option value="all">{tr("Tous")}</option>
+          <option value="en_attente">{tr("En attente")}</option>
+          <option value="actif">{tr("Actifs")}</option>
+          <option value="suspendu">{tr("Suspendus")}</option>
         </select>
         <button onClick={() => setShowForm(!showForm)}
           className="px-3 py-2 bg-[#F5A623] text-white rounded-xl text-[11px] font-bold flex items-center gap-1">
-          <Plus size={12}/> Ajouter
+          <Plus size={12}/>{" "}{tr("Ajouter")}
         </button>
       </div>
 
       {/* Formulaire ajout */}
       {showForm && (
         <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
-          <p className="text-[12px] font-bold text-[#111]">Ajouter un affilié</p>
+          <p className="text-[12px] font-bold text-[#111]">{tr("Ajouter un affilié")}</p>
           <div className="grid grid-cols-3 gap-2">
             {[
               { key: "nom", ph: "Nom complet *" },
@@ -484,22 +490,22 @@ function OngletAffilies() {
           <div className="flex gap-2">
             <button onClick={creer} disabled={!form.nom || !form.email || saving}
               className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold disabled:opacity-50">
-              {saving ? "…" : "Créer"}
+              {saving ? "…" : tr("Créer")}
             </button>
             <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-gray-200 rounded-xl text-[12px] text-gray-600">
-              Annuler
+              {tr("Annuler")}
             </button>
           </div>
         </div>
       )}
 
       {loading ? (
-        <div className="py-8 text-center text-sm text-gray-400">Chargement…</div>
+        <div className="py-8 text-center text-sm text-gray-400">{tr("Chargement…")}</div>
       ) : affilies.length === 0 ? (
         <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
           <Users size={28} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-[13px] font-semibold text-[#111]">Aucun affilié</p>
-          <p className="text-[11px] text-gray-400 mt-1">Partagez votre lien d'inscription pour recruter des affiliés.</p>
+          <p className="text-[13px] font-semibold text-[#111]">{tr("Aucun affilié")}</p>
+          <p className="text-[11px] text-gray-400 mt-1">{tr("Partagez votre lien d'inscription pour recruter des affiliés.")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -511,14 +517,14 @@ function OngletAffilies() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[13px] font-semibold text-[#111]">{a.nom}</p>
+                    <p className="text-[13px] font-semibold text-[#111]">{tr(a.nom)}</p>
                     <Badge statut={a.statut} />
                   </div>
                   <p className="text-[11px] text-gray-400">{a.email}{a.telephone ? ` · ${a.telephone}` : ""}</p>
-                  <p className="text-[10px] font-mono text-[#F5A623] mt-0.5">Code: {a.codeParrainage}</p>
+                  <p className="text-[10px] font-mono text-[#F5A623] mt-0.5">{tr("Code:")}{" "}{tr(a.codeParrainage)}</p>
                   <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-400">
-                    <span><Eye size={10} className="inline mr-1"/>{a.clics} clics</span>
-                    <span><ShoppingBag size={10} className="inline mr-1"/>{a.conversions} ventes</span>
+                    <span><Eye size={10} className="inline mr-1"/>{tr(a.clics)} clics</span>
+                    <span><ShoppingBag size={10} className="inline mr-1"/>{tr(a.conversions)} ventes</span>
                     <span className="text-[#F5A623] font-bold">{fmt(a.commissionTotal)}</span>
                     {a.commissionPending > 0 && (
                       <span className="text-amber-600">({a.commissionPending.toLocaleString()} en att.)</span>
@@ -532,21 +538,21 @@ function OngletAffilies() {
                   <button onClick={() => changerStatut(a.id, "actif")}
                     disabled={actioning === a.id}
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold hover:bg-green-200 transition-colors">
-                    <UserCheck size={10}/> Approuver
+                    <UserCheck size={10}/>{" "}{tr("Approuver")}
                   </button>
                 )}
                 {a.statut === "actif" && (
                   <button onClick={() => changerStatut(a.id, "suspendu")}
                     disabled={actioning === a.id}
                     className="flex items-center gap-1 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-[10px] font-bold hover:bg-red-200 transition-colors">
-                    <UserX size={10}/> Suspendre
+                    <UserX size={10}/>{" "}{tr("Suspendre")}
                   </button>
                 )}
                 {a.statut === "suspendu" && (
                   <button onClick={() => changerStatut(a.id, "actif")}
                     disabled={actioning === a.id}
                     className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-[10px] font-bold hover:bg-green-200 transition-colors">
-                    <UserCheck size={10}/> Réactiver
+                    <UserCheck size={10}/>{" "}{tr("Réactiver")}
                   </button>
                 )}
               </div>
@@ -560,6 +566,7 @@ function OngletAffilies() {
 
 // ─── Paiements ────────────────────────────────────────────────────────────────
 function OngletPaiements() {
+  const tr = useT();
   const { fmt } = useDevise();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -580,15 +587,15 @@ function OngletPaiements() {
       const res = await fetch("/api/affiliation/paiements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ affilieId }) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
-      toast.success(`Paiement de ${fmt(d.montant)} envoyé`);
+      toast.success(tr("Paiement de {0} envoyé", fmt(d.montant)));
     } catch (e: any) {
-      toast.error(e.message || "Erreur lors du paiement");
+      toast.error(tr(e.message) || tr("Erreur lors du paiement"));
     } finally {
       setPaying(null); charger();
     }
   }
 
-  if (loading) return <div className="py-12 text-center text-sm text-gray-400">Chargement…</div>;
+  if (loading) return <div className="py-12 text-center text-sm text-gray-400">{tr("Chargement…")}</div>;
 
   const paiements = data?.paiements ?? [];
   const commissionsDues = data?.commissionsDues ?? [];
@@ -598,20 +605,20 @@ function OngletPaiements() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white border border-gray-100 rounded-2xl p-4">
-          <p className="text-[10px] text-gray-400">Total payé</p>
+          <p className="text-[10px] text-gray-400">{tr("Total payé")}</p>
           <p className="text-[18px] font-bold text-[#10b981]">{fmt(stats.totalPaye)}</p>
         </div>
         <div className="bg-white border border-gray-100 rounded-2xl p-4">
-          <p className="text-[10px] text-gray-400">Dû aux affiliés</p>
+          <p className="text-[10px] text-gray-400">{tr("Dû aux affiliés")}</p>
           <p className="text-[18px] font-bold text-[#F5A623]">{fmt(stats.totalDu)}</p>
         </div>
       </div>
 
       {/* Commissions dues — paiement réel en un clic */}
       <div>
-        <p className="text-[12px] font-bold text-[#111] mb-2">À payer</p>
+        <p className="text-[12px] font-bold text-[#111] mb-2">{tr("À payer")}</p>
         {commissionsDues.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-6 bg-white border border-dashed border-gray-200 rounded-2xl">Aucune commission approuvée en attente de paiement</p>
+          <p className="text-center text-sm text-gray-400 py-6 bg-white border border-dashed border-gray-200 rounded-2xl">{tr("Aucune commission approuvée en attente de paiement")}</p>
         ) : (
           <div className="space-y-2">
             {commissionsDues.map((g: any) => (
@@ -620,15 +627,15 @@ function OngletPaiements() {
                   <Clock size={16} className="text-[#F5A623]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#111] truncate">{g.affilie?.nom ?? "Affilié"}</p>
-                  <p className="text-[11px] text-gray-400">{g.nombreCommissions} commission{g.nombreCommissions > 1 ? "s" : ""} · {g.affilie?.telephone ?? "pas de téléphone"}</p>
+                  <p className="text-[12px] font-semibold text-[#111] truncate">{tr(g.affilie?.nom) ?? tr("Affilié")}</p>
+                  <p className="text-[11px] text-gray-400">{tr(g.nombreCommissions)} commission{g.nombreCommissions > 1 ? "s" : ""} · {g.affilie?.telephone ?? tr("pas de téléphone")}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-[14px] font-bold text-[#F5A623]">{fmt(g.montant)}</p>
                 </div>
                 <button onClick={() => payer(g.affilieId)} disabled={paying === g.affilieId || !g.affilie?.telephone}
                   className="px-3 py-1.5 bg-green-500 text-white rounded-xl text-[10px] font-bold hover:bg-green-600 disabled:opacity-50 flex-shrink-0">
-                  {paying === g.affilieId ? "…" : "Payer"}
+                  {paying === g.affilieId ? "…" : tr("Payer")}
                 </button>
               </div>
             ))}
@@ -638,9 +645,9 @@ function OngletPaiements() {
 
       {/* Historique */}
       <div>
-        <p className="text-[12px] font-bold text-[#111] mb-2">Historique</p>
+        <p className="text-[12px] font-bold text-[#111] mb-2">{tr("Historique")}</p>
         {paiements.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-6">Aucun paiement enregistré</p>
+          <p className="text-center text-sm text-gray-400 py-6">{tr("Aucun paiement enregistré")}</p>
         ) : (
           <div className="space-y-2">
             {paiements.map((p: any) => (
@@ -650,8 +657,8 @@ function OngletPaiements() {
                   {p.statut === "traite" ? <CheckCircle size={16} className="text-green-500"/> : p.statut === "echec" ? <XCircle size={16} className="text-red-500" /> : <Clock size={16} className="text-[#F5A623]"/>}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#111]">{p.affilie?.nom ?? p.affilieurId.slice(-8)}</p>
-                  <p className="text-[11px] text-gray-400">{p.methode} · {p.telephone ?? "—"} · {new Date(p.createdAt).toLocaleDateString("fr-FR")}</p>
+                  <p className="text-[12px] font-semibold text-[#111]">{tr(p.affilie?.nom) ?? p.affilieurId.slice(-8)}</p>
+                  <p className="text-[11px] text-gray-400">{tr(p.methode)} · {p.telephone ?? "—"} · {new Date(p.createdAt).toLocaleDateString(tr.loc)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[14px] font-bold text-[#F5A623]">{fmt(p.montant)}</p>
@@ -668,6 +675,7 @@ function OngletPaiements() {
 
 // ─── Mes liens (B2B sortants) ─────────────────────────────────────────────────
 function OngletLiens() {
+  const tr = useT();
   const { fmt } = useDevise();
   const [liens, setLiens] = useState<any[]>([]);
   const [totaux, setTotaux] = useState({ total: 0, pending: 0, captured: 0 });
@@ -689,7 +697,7 @@ function OngletLiens() {
   const totalClics = liens.reduce((a, l) => a + l.clics, 0);
   const totalConversions = liens.reduce((a, l) => a + l.conversions, 0);
 
-  if (loading) return <div className="py-8 text-center text-sm text-gray-400">Chargement…</div>;
+  if (loading) return <div className="py-8 text-center text-sm text-gray-400">{tr("Chargement…")}</div>;
 
   return (
     <div className="space-y-4">
@@ -701,8 +709,8 @@ function OngletLiens() {
           { label: "Conversions",    value: totalConversions.toLocaleString(),          color: "#111111" },
         ].map(s => (
           <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{s.label}</p>
+            <p className="text-[20px] font-bold" style={{ color: s.color }}>{tr(s.value)}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{tr(s.label)}</p>
           </div>
         ))}
       </div>
@@ -710,8 +718,8 @@ function OngletLiens() {
       {liens.length === 0 ? (
         <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center">
           <Share2 size={28} className="text-gray-200 mx-auto mb-3"/>
-          <p className="text-[13px] font-semibold text-[#111]">Aucun lien encore</p>
-          <p className="text-[12px] text-gray-400 mt-1">Allez sur la page d'un produit et cliquez "Obtenir mon lien d'affiliation"</p>
+          <p className="text-[13px] font-semibold text-[#111]">{tr("Aucun lien encore")}</p>
+          <p className="text-[12px] text-gray-400 mt-1">{tr("Allez sur la page d'un produit et cliquez \"Obtenir mon lien d'affiliation\"")}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -724,10 +732,10 @@ function OngletLiens() {
                   {lien.produit?.images?.[0] && <img src={lien.produit.images[0]} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0"/>}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-[13px] font-semibold text-[#111] truncate">{lien.produit?.nom ?? lien.tenant.nomBoutique}</p>
-                      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold shrink-0">{taux}</span>
+                      <p className="text-[13px] font-semibold text-[#111] truncate">{tr(lien.produit?.nom) ?? tr(lien.tenant.nomBoutique)}</p>
+                      <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold shrink-0">{tr(taux)}</span>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{lien.tenant.nomBoutique} · <span className="font-mono font-bold text-[#F5A623]">{lien.code}</span></p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{tr(lien.tenant.nomBoutique)} · <span className="font-mono font-bold text-[#F5A623]">{lien.code}</span></p>
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex-1 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] text-gray-400 font-mono truncate">{trackUrl}</div>
                       <button onClick={() => copier(trackUrl, v => { if (v) setCopiedId(lien.id); })}
@@ -736,8 +744,8 @@ function OngletLiens() {
                       </button>
                     </div>
                     <div className="mt-2 flex gap-4 text-[11px] text-gray-400">
-                      <span><Eye size={10} className="inline mr-1"/>{lien.clics} clics</span>
-                      <span><ShoppingBag size={10} className="inline mr-1"/>{lien.conversions} ventes</span>
+                      <span><Eye size={10} className="inline mr-1"/>{tr(lien.clics)} clics</span>
+                      <span><ShoppingBag size={10} className="inline mr-1"/>{tr(lien.conversions)} ventes</span>
                       <span className="text-green-600 font-bold">+{fmt((lien.montantGenere ?? 0))}</span>
                     </div>
                   </div>
@@ -755,26 +763,27 @@ function OngletLiens() {
 const COULEURS_BANNIERE = ["#F5A623", "#111111", "#22c55e", "#3b82f6", "#ef4444"];
 
 function BannierePreview({ lien, couleur, texte, baseUrl }: { lien: any; couleur: string; texte: string; baseUrl: string }) {
+  const tr = useT();
   const { fmt } = useDevise();
   const url = `${baseUrl}?ref=${lien.code}`;
   return (
     <div className="border border-[#E8E8E8] rounded-2xl overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 text-white" style={{ background: `linear-gradient(135deg, ${couleur}, ${couleur}dd)`, minHeight: 80 }}>
         <div>
-          <p className="font-bold text-[15px]">{texte || "Découvrez nos produits"}</p>
-          <p className="text-[11px] opacity-80 mt-0.5">{lien.produit ? `${lien.produit.nom} — ${fmt(lien.produit.prix)}` : "Boutique complète"}</p>
+          <p className="font-bold text-[15px]">{tr(texte) || tr("Découvrez nos produits")}</p>
+          <p className="text-[11px] opacity-80 mt-0.5">{lien.produit ? `${lien.produit.nom} — ${fmt(lien.produit.prix)}` : tr("Boutique complète")}</p>
         </div>
-        <div className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-[12px] font-bold">Voir →</div>
+        <div className="bg-white/20 border border-white/30 rounded-xl px-4 py-2 text-[12px] font-bold">{tr("Voir →")}</div>
       </div>
       <div className="bg-[#FAFAFA] p-3 flex items-center justify-between">
         <p className="text-[11px] text-[#888] font-mono truncate max-w-[60%]">{url}</p>
         <div className="flex gap-2">
-          <button onClick={() => { navigator.clipboard.writeText(url); toast.success("Lien copié !"); }}
+          <button onClick={() => { navigator.clipboard.writeText(url); toast.success(tr("Lien copié !")); }}
             className="flex items-center gap-1 text-[11px] border border-[#E8E8E8] px-2.5 py-1 rounded-lg text-[#666]">
-            <Copy size={10} /> Copier
+            <Copy size={10} />{" "}{tr("Copier")}
           </button>
           <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] border border-[#E8E8E8] px-2.5 py-1 rounded-lg text-[#666]">
-            <ExternalLink size={10} /> Tester
+            <ExternalLink size={10} />{" "}{tr("Tester")}
           </a>
         </div>
       </div>
@@ -783,6 +792,7 @@ function BannierePreview({ lien, couleur, texte, baseUrl }: { lien: any; couleur
 }
 
 function OngletMateriel() {
+  const tr = useT();
   const [liens, setLiens] = useState<any[]>([]);
   const [lienChoisi, setLienChoisi] = useState<any>(null);
   const [couleur, setCouleur] = useState(COULEURS_BANNIERE[0]);
@@ -808,7 +818,7 @@ function OngletMateriel() {
     const url = `${baseUrl}?ref=${lien.code}`;
     const html = `<a href="${url}" style="display:inline-block;background:${couleur};color:white;padding:12px 28px;border-radius:12px;font-family:sans-serif;font-weight:bold;font-size:14px;text-decoration:none;">${texte || "Découvrez notre boutique"}</a>`;
     navigator.clipboard.writeText(html);
-    toast.success("Code HTML copié !");
+    toast.success(tr("Code HTML copié !"));
   }
 
   const inp = "border border-[#E8E8E8] rounded-xl px-3 py-2 text-[13px] outline-none focus:border-[#F5A623]/60 bg-white";
@@ -816,31 +826,31 @@ function OngletMateriel() {
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <h2 className="text-[13px] font-bold text-[#111] mb-1">Attribution — fenêtre cookie</h2>
-        <p className="text-[11px] text-[#888] mb-3">Détermine combien de jours après le clic un affilié perçoit sa commission.</p>
+        <h2 className="text-[13px] font-bold text-[#111] mb-1">{tr("Attribution — fenêtre cookie")}</h2>
+        <p className="text-[11px] text-[#888] mb-3">{tr("Détermine combien de jours après le clic un affilié perçoit sa commission.")}</p>
         <div className="space-y-2">
           {liens.map(l => (
             <div key={l.id} className="flex items-center gap-3 p-3 bg-[#FAFAFA] rounded-xl">
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#111]">Code : <span className="font-mono text-[#F5A623]">{l.code}</span></p>
-                <p className="text-[10.5px] text-[#888]">{l.produit?.nom ?? "Boutique entière"} · {l.clics} clics · {l.conversions} conv.</p>
+                <p className="text-[12px] font-semibold text-[#111]">{tr("Code :")}{" "}<span className="font-mono text-[#F5A623]">{l.code}</span></p>
+                <p className="text-[10.5px] text-[#888]">{tr(l.produit?.nom) ?? tr("Boutique entière")} · {tr(l.clics)}{" "}{tr("clics ·")}{" "}{tr(l.conversions)} conv.</p>
               </div>
               <select className={inp} value={l.cookieJours} onChange={e => updateCookieJours(l.id, parseInt(e.target.value))}>
                 {[1, 7, 14, 30, 60, 90].map(j => <option key={j} value={j}>{j} jours</option>)}
               </select>
             </div>
           ))}
-          {!liens.length && <p className="text-[12px] text-[#AAA] text-center py-4">Aucun lien d'affiliation — voir l'onglet "Mes liens".</p>}
+          {!liens.length && <p className="text-[12px] text-[#AAA] text-center py-4">{tr("Aucun lien d'affiliation — voir l'onglet \"Mes liens\".")}</p>}
         </div>
       </div>
 
       <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-        <h2 className="text-[13px] font-bold text-[#111]">Générateur de bannières</h2>
+        <h2 className="text-[13px] font-bold text-[#111]">{tr("Générateur de bannières")}</h2>
         <div className="grid grid-cols-2 gap-2">
           <select className={`w-full ${inp}`} value={lienChoisi?.id ?? ""} onChange={e => setLienChoisi(liens.find(l => l.id === e.target.value) ?? null)}>
-            {liens.map(l => <option key={l.id} value={l.id}>{l.code} — {l.produit?.nom ?? "Boutique"}</option>)}
+            {liens.map(l => <option key={l.id} value={l.id}>{l.code} — {tr(l.produit?.nom) ?? tr("Boutique")}</option>)}
           </select>
-          <input className={`w-full ${inp}`} placeholder="Texte du bouton" value={texte} onChange={e => setTexte(e.target.value)} />
+          <input className={`w-full ${inp}`} placeholder={tr("Texte du bouton")} value={texte} onChange={e => setTexte(e.target.value)} />
         </div>
         <div className="flex gap-2">
           {COULEURS_BANNIERE.map(c => (
@@ -851,8 +861,8 @@ function OngletMateriel() {
           <div className="space-y-2">
             <BannierePreview lien={lienChoisi} couleur={couleur} texte={texte} baseUrl={baseUrl} />
             <div className="flex gap-2">
-              <button onClick={() => genererHTML(lienChoisi)} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} /> Code HTML</button>
-              <button onClick={() => { navigator.clipboard.writeText(`${baseUrl}?ref=${lienChoisi.code}`); toast.success("URL copiée !"); }} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} /> URL simple</button>
+              <button onClick={() => genererHTML(lienChoisi)} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} />{" "}{tr("Code HTML")}</button>
+              <button onClick={() => { navigator.clipboard.writeText(`${baseUrl}?ref=${lienChoisi.code}`); toast.success(tr("URL copiée !")); }} className="flex items-center gap-1.5 border border-[#E8E8E8] px-3 py-1.5 rounded-xl text-[11px] text-[#666]"><Copy size={11} />{" "}{tr("URL simple")}</button>
             </div>
           </div>
         )}
@@ -860,7 +870,7 @@ function OngletMateriel() {
 
       {lienChoisi && (
         <div className="bg-white border border-gray-100 rounded-2xl p-5">
-          <h2 className="text-[13px] font-bold text-[#111] mb-3">Textes clé-en-main</h2>
+          <h2 className="text-[13px] font-bold text-[#111] mb-3">{tr("Textes clé-en-main")}</h2>
           <div className="space-y-2">
             {[
               { label: "WhatsApp / SMS", texte: `🛍️ Je te recommande cette boutique ! Commande ici : ${baseUrl}?ref=${lienChoisi.code}` },
@@ -869,10 +879,10 @@ function OngletMateriel() {
             ].map(t => (
               <div key={t.label} className="bg-[#FAFAFA] rounded-xl p-3">
                 <div className="flex items-center justify-between mb-1.5">
-                  <p className="text-[10.5px] font-bold text-[#666]">{t.label}</p>
-                  <button onClick={() => { navigator.clipboard.writeText(t.texte); toast.success("Copié !"); }} className="flex items-center gap-1 text-[10px] border border-[#E8E8E8] px-2 py-0.5 rounded-lg text-[#666]"><Copy size={9} /> Copier</button>
+                  <p className="text-[10.5px] font-bold text-[#666]">{tr(t.label)}</p>
+                  <button onClick={() => { navigator.clipboard.writeText(t.texte); toast.success(tr("Copié !")); }} className="flex items-center gap-1 text-[10px] border border-[#E8E8E8] px-2 py-0.5 rounded-lg text-[#666]"><Copy size={9} />{" "}{tr("Copier")}</button>
                 </div>
-                <p className="text-[11px] text-[#666] leading-relaxed whitespace-pre-line">{t.texte}</p>
+                <p className="text-[11px] text-[#666] leading-relaxed whitespace-pre-line">{tr(t.texte)}</p>
               </div>
             ))}
           </div>
@@ -886,6 +896,7 @@ function OngletMateriel() {
 const ENTRANTE_EMPTY = { nom: "", marchand: "", url: "", categorie: "", commission: "10", devise: "XAF" };
 
 function OngletEntrante() {
+  const tr = useT();
   const { fmt } = useDevise();
   const [programmes, setProgrammes] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({ total: 0, actifs: 0, revenuTotal: 0, clicsTotal: 0 });
@@ -914,7 +925,7 @@ function OngletEntrante() {
   }
 
   async function del(id: string) {
-    if (!confirm("Supprimer ce programme ?")) return;
+    if (!confirm(tr("Supprimer ce programme ?"))) return;
     await fetch(`/api/affiliation/entrante?id=${id}`, { method: "DELETE" });
     load();
   }
@@ -924,7 +935,7 @@ function OngletEntrante() {
   return (
     <div className="space-y-4">
       <div className="bg-[#FFF8EC] border border-[#F5A623]/20 rounded-2xl p-4 text-[12.5px] text-[#7a5a00]">
-        <strong>Comment ça marche :</strong> Ajoutez un programme d'affiliation où <em>vous</em> êtes affilié d'un autre marchand (Jumia Affiliate, Amazon Associates, un partenaire local...). Partagez votre lien, percevez une commission sur chaque vente.
+        <strong>{tr("Comment ça marche :")}</strong>{" "}{tr("Ajoutez un programme d'affiliation où")}{" "}<em>vous</em>{" "}{tr("êtes affilié d'un autre marchand (Jumia Affiliate, Amazon Associates, un partenaire local...). Partagez votre lien, percevez une commission sur chaque vente.")}
       </div>
 
       <div className="grid grid-cols-4 gap-2">
@@ -935,21 +946,21 @@ function OngletEntrante() {
           { label: "Revenus", v: `${fmt((stats.revenuTotal ?? 0))}`, color: "#F5A623" },
         ].map(s => (
           <div key={s.label} className="bg-white border border-gray-100 rounded-2xl p-3 text-center">
-            <p className="text-[16px] font-bold" style={{ color: s.color ?? "#111" }}>{s.v}</p>
-            <p className="text-[10px] text-[#AAA] mt-0.5">{s.label}</p>
+            <p className="text-[16px] font-bold" style={{ color: s.color ?? "#111" }}>{tr(s.v)}</p>
+            <p className="text-[10px] text-[#AAA] mt-0.5">{tr(s.label)}</p>
           </div>
         ))}
       </div>
 
       <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-        <h2 className="text-[13px] font-bold text-[#111]">Ajouter un programme</h2>
+        <h2 className="text-[13px] font-bold text-[#111]">{tr("Ajouter un programme")}</h2>
         <div className="grid grid-cols-2 gap-2">
-          <input className={inp} placeholder="Nom (ex: Jumia Affiliate)" value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
-          <input className={inp} placeholder="Marchand / Plateforme" value={form.marchand} onChange={e => setForm(f => ({ ...f, marchand: e.target.value }))} />
-          <input className={inp} placeholder="Lien d'affiliation" value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
-          <input className={inp} placeholder="Catégorie (optionnel)" value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie: e.target.value }))} />
+          <input className={inp} placeholder={tr("Nom (ex: Jumia Affiliate)")} value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
+          <input className={inp} placeholder={tr("Marchand / Plateforme")} value={form.marchand} onChange={e => setForm(f => ({ ...f, marchand: e.target.value }))} />
+          <input className={inp} placeholder={tr("Lien d'affiliation")} value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
+          <input className={inp} placeholder={tr("Catégorie (optionnel)")} value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie: e.target.value }))} />
           <div className="flex gap-2">
-            <input className={inp} placeholder="Commission %" type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
+            <input className={inp} placeholder={tr("Commission %")} type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
             <select className={inp} value={form.devise} onChange={e => setForm(f => ({ ...f, devise: e.target.value }))}>
               <option>XAF</option><option>EUR</option><option>USD</option>
             </select>
@@ -957,7 +968,7 @@ function OngletEntrante() {
         </div>
         <button onClick={save} disabled={!form.nom || !form.url || loading}
           className="px-5 py-2 rounded-xl text-white text-[12px] font-semibold disabled:opacity-40" style={{ background: "#F5A623" }}>
-          {loading ? "…" : "Ajouter le programme"}
+          {loading ? "…" : tr("Ajouter le programme")}
         </button>
       </div>
 
@@ -967,27 +978,27 @@ function OngletEntrante() {
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="text-[13px] font-semibold text-[#111]">{p.nom}</p>
-                  {p.categorie && <span className="text-[9.5px] bg-[#F0F0F0] text-[#666] px-2 py-0.5 rounded-full">{p.categorie}</span>}
-                  {!p.actif && <span className="text-[9.5px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">Inactif</span>}
+                  <p className="text-[13px] font-semibold text-[#111]">{tr(p.nom)}</p>
+                  {p.categorie && <span className="text-[9.5px] bg-[#F0F0F0] text-[#666] px-2 py-0.5 rounded-full">{tr(p.categorie)}</span>}
+                  {!p.actif && <span className="text-[9.5px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">{tr("Inactif")}</span>}
                 </div>
-                <p className="text-[11px] text-[#888] mt-0.5">{p.marchand} · Commission : {Math.round(p.commission * 100)}%</p>
+                <p className="text-[11px] text-[#888] mt-0.5">{tr(p.marchand)}{" "}{tr("· Commission :")}{" "}{Math.round(p.commission * 100)}%</p>
                 <p className="text-[10.5px] text-[#3b82f6] mt-1 truncate max-w-sm">{p.url}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-[12.5px] font-bold text-[#F5A623]">{p.revenus.toLocaleString()} {p.devise}</p>
-                <p className="text-[10.5px] text-[#AAA]">{p.clics} clics · {p.conversions} conv.</p>
+                <p className="text-[12.5px] font-bold text-[#F5A623]">{p.revenus.toLocaleString()} {tr(p.devise)}</p>
+                <p className="text-[10.5px] text-[#AAA]">{tr(p.clics)}{" "}{tr("clics ·")}{" "}{tr(p.conversions)} conv.</p>
               </div>
             </div>
             <div className="flex gap-2 mt-3">
-              <button onClick={() => { navigator.clipboard.writeText(p.url); toast.success("Lien copié !"); }} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">Copier le lien</button>
-              <button onClick={() => toggle(p)} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">{p.actif ? "Désactiver" : "Activer"}</button>
-              <button onClick={() => del(p.id)} className="text-[10.5px] border border-red-100 px-3 py-1 rounded-lg text-red-500">Supprimer</button>
+              <button onClick={() => { navigator.clipboard.writeText(p.url); toast.success(tr("Lien copié !")); }} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">{tr("Copier le lien")}</button>
+              <button onClick={() => toggle(p)} className="text-[10.5px] border border-[#E8E8E8] px-3 py-1 rounded-lg text-[#666]">{p.actif ? tr("Désactiver") : tr("Activer")}</button>
+              <button onClick={() => del(p.id)} className="text-[10.5px] border border-red-100 px-3 py-1 rounded-lg text-red-500">{tr("Supprimer")}</button>
             </div>
           </div>
         ))}
         {!programmes.length && (
-          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center text-[12px] text-[#AAA]">Aucun programme — ajoutez-en un pour générer des revenus passifs.</div>
+          <div className="bg-[#FAFAFA] rounded-2xl p-8 text-center text-[12px] text-[#AAA]">{tr("Aucun programme — ajoutez-en un pour générer des revenus passifs.")}</div>
         )}
       </div>
     </div>
@@ -996,18 +1007,19 @@ function OngletEntrante() {
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function AffiliationPage() {
+  const tr = useT();
   const searchParams = useSearchParams();
   const [onglet, setOnglet] = useState(searchParams?.get("tab") || "stats");
 
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="affiliation" titre="Affiliation" sousTitre="Ton programme d'ambassadeurs" steps={AFFILIATION_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="affiliation" titre={tr("Affiliation")} sousTitre={tr("Ton programme d'ambassadeurs")} steps={AFFILIATION_TUTORIAL_STEPS} />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Affiliation <AgentActiveIndicator label="Agent Growth actif" /></h1>
+          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">{tr("Affiliation")}{" "}<AgentActiveIndicator label={tr("Agent Growth actif")} /></h1>
           <BoutonRevoirTutoriel moduleKey="affiliation" />
         </div>
-        <p className="text-[12px] text-gray-500">Programme d'affiliation, affiliés et commissions</p>
+        <p className="text-[12px] text-gray-500">{tr("Programme d'affiliation, affiliés et commissions")}</p>
       </div>
 
       <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 overflow-x-auto">
@@ -1015,7 +1027,7 @@ export default function AffiliationPage() {
           <button key={id} onClick={() => setOnglet(id)}
             className={`flex-1 py-2 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}>
             <Icon size={11}/>
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>

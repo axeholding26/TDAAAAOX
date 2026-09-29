@@ -3,6 +3,7 @@
 import { LogOut, Monitor } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { POSPanel } from "@/components/dashboard/logistique/POSPanel";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Mode Caisse ────────────────────────────────────────────────────────────
 // Écran plein écran dédié pour un caissier "pur" (voir estCaissierPur() dans
@@ -20,6 +21,7 @@ import { POSPanel } from "@/components/dashboard/logistique/POSPanel";
 // bouton de déconnexion discret) — voir consigne de la tâche : ne pas
 // modifier POSPanel.tsx (édité en parallèle par une autre tâche).
 export function CaisseKiosk({ boutiqueNom }: { boutiqueNom?: string }) {
+  const t = useT();
   return (
     <div
       className="h-dvh w-screen flex flex-col overflow-hidden bg-[#f0f2f8] text-gray-900"
@@ -42,10 +44,10 @@ export function CaisseKiosk({ boutiqueNom }: { boutiqueNom?: string }) {
           </div>
           <div className="min-w-0">
             <div className="text-[15px] sm:text-[16px] font-bold text-white leading-tight truncate">
-              Mode Caisse
+              {t("Mode Caisse")}
             </div>
             <div className="text-[11.5px] text-white/70 leading-none mt-1 truncate">
-              {boutiqueNom || "Ma boutique"}
+              {t(boutiqueNom) || t("Ma boutique")}
             </div>
           </div>
         </div>
@@ -56,7 +58,7 @@ export function CaisseKiosk({ boutiqueNom }: { boutiqueNom?: string }) {
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-[12.5px] font-semibold text-white/80 hover:text-white hover:bg-white/10 transition-all flex-shrink-0"
         >
           <LogOut size={14} />
-          <span className="hidden sm:inline">Se déconnecter</span>
+          <span className="hidden sm:inline">{t("Se déconnecter")}</span>
         </button>
       </header>
 

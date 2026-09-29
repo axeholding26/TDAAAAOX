@@ -6,6 +6,7 @@ import { LayoutDashboard, Package, ShoppingCart, X, BarChart3, TrendingUp, Megap
 import {
   IconAccueil, IconProduits, IconAxia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
+import { useT } from "@/components/I18nProvider";
 
 const GROUPS = [
   {
@@ -76,6 +77,7 @@ const MAIN_TABS = [
 ];
 
 export function MobileBottomNav() {
+  const t = useT();
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -138,7 +140,7 @@ export function MobileBottomNav() {
                     className="text-[9.5px] font-bold leading-none"
                     style={{ color: active ? "#F5A623" : "#BBBBBB" }}
                   >
-                    {tab.label}
+                    {t(tab.label)}
                   </span>
                   {active && (
                     <div className="w-1 h-1 rounded-full bg-[#F5A623] mt-0.5" />
@@ -153,7 +155,7 @@ export function MobileBottomNav() {
                 className="text-[9.5px] font-bold leading-none"
                 style={{ color: axiaActive ? "#111111" : "#CCCCCC" }}
               >
-                Axia
+                {t("Axia")}
               </span>
               {axiaActive && (
                 <div className="w-1 h-1 rounded-full bg-[#111111] mt-0.5" />
@@ -177,7 +179,7 @@ export function MobileBottomNav() {
                     className="text-[9.5px] font-bold leading-none"
                     style={{ color: active ? "#F5A623" : "#BBBBBB" }}
                   >
-                    {tab.label}
+                    {t(tab.label)}
                   </span>
                   {active && (
                     <div className="w-1 h-1 rounded-full bg-[#F5A623] mt-0.5" />
@@ -209,7 +211,7 @@ export function MobileBottomNav() {
                 className="text-[9.5px] font-bold leading-none"
                 style={{ color: drawerOpen ? "#F5A623" : "#BBBBBB" }}
               >
-                Plus
+                {t("Plus")}
               </span>
             </button>
           </div>
@@ -232,8 +234,8 @@ export function MobileBottomNav() {
               <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-[15px] font-bold text-[#111111]">Tous les modules</h2>
-                  <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Accédez à toutes les fonctionnalités</p>
+                  <h2 className="text-[15px] font-bold text-[#111111]">{t("Tous les modules")}</h2>
+                  <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Accédez à toutes les fonctionnalités")}</p>
                 </div>
                 <button
                   onClick={() => setDrawerOpen(false)}
@@ -251,7 +253,7 @@ export function MobileBottomNav() {
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-3 rounded-full" style={{ background: group.color }} />
                     <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#AAAAAA]">
-                      {group.label}
+                      {t(group.label)}
                     </p>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
@@ -284,7 +286,7 @@ export function MobileBottomNav() {
                             className="text-[10px] font-semibold text-center leading-tight"
                             style={{ color: active ? group.color : "#777" }}
                           >
-                            {item.label}
+                            {t(item.label)}
                           </span>
                           {active && (
                             <div className="w-1 h-1 rounded-full" style={{ background: group.color }} />

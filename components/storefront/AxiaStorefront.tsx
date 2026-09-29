@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { X, Send, Minus } from "lucide-react";
 import { IconAxia } from "@/components/dashboard/AppIcons";
+import { useT } from "@/components/I18nProvider";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,6 +25,7 @@ const THINKING_MSGS = [
 ];
 
 export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: Props) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -89,7 +91,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
         onClick={() => setOpen(true)}
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
         style={{ background: accentColor }}
-        aria-label="Ouvrir AXIA"
+        aria-label={t("Ouvrir AXIA")}
       >
         <IconAxia size={48} />
       </button>
@@ -107,7 +109,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
           <IconAxia size={20} />
           <div>
             <p className="text-[13px] font-semibold leading-tight">AXIA</p>
-            <p className="text-[10px] text-white/70 leading-tight">{nomBoutique}</p>
+            <p className="text-[10px] text-white/70 leading-tight">{t(nomBoutique)}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -134,7 +136,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
                       : { background: "#F5F5F5", color: "#111", borderBottomLeftRadius: 4 }
                   }
                 >
-                  {msg.content}
+                  {t(msg.content)}
                 </div>
               </div>
             ))}
@@ -147,7 +149,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
                         <span key={j} className="w-1.5 h-1.5 rounded-full" style={{ background: accentColor, animation: `bounce 1s ${j * 0.15}s infinite` }} />
                       ))}
                     </span>
-                    <span className="text-[11px] text-[#888]">{thinkingMsg}</span>
+                    <span className="text-[11px] text-[#888]">{t(thinkingMsg)}</span>
                   </div>
                 </div>
               </div>
@@ -160,7 +162,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
             <textarea
               ref={inputRef}
               className="flex-1 resize-none text-[13px] border-0 outline-none bg-transparent max-h-24 leading-relaxed"
-              placeholder="Pose ta question…"
+              placeholder={t("Pose ta question…")}
               rows={1}
               value={input}
               onChange={(e) => setInput(e.target.value)}

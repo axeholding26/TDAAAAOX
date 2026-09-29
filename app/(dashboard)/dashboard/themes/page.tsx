@@ -9,6 +9,7 @@ import {
   Plus, Palette, Trash2, Edit2, ExternalLink,
   Sparkles, ArrowLeft,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const THEMES_TUTORIAL_STEPS = [
   { Icon: Palette,  titre: "Choisissez un design AXSO", description: "15 designs prêts à l'emploi, pensés pour différents univers : mode, artisanat, beauté... En choisir un branche directement vos vrais produits." },
@@ -27,6 +28,7 @@ interface ThemeColors {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function ThemesPage() {
+  const tr = useT();
   const router = useRouter();
   const [themes, setThemes] = useState<any[]>([]);
   const [tenant, setTenant] = useState<any>(null);
@@ -60,9 +62,9 @@ export default function ThemesPage() {
         body: JSON.stringify({ themeId: id }),
       });
       setTenant((t: any) => ({ ...t, themeId: id }));
-      toast.success("Thème activé !");
+      toast.success(tr("Thème activé !"));
     } catch {
-      toast.error("Erreur lors de l'activation");
+      toast.error(tr("Erreur lors de l'activation"));
     } finally {
       setActivating(null);
     }
@@ -88,9 +90,9 @@ export default function ThemesPage() {
       // pour que isLibrairieActive() le détecte.
       const td = await fetch("/api/themes").then((r) => r.json());
       setThemes(td.themes || []);
-      toast.success(`Design "${nom}" activé !`);
+      toast.success(tr("Design \"{0}\" activé !", nom));
     } catch {
-      toast.error("Erreur lors de l'activation");
+      toast.error(tr("Erreur lors de l'activation"));
     } finally {
       setActivating(null);
     }
@@ -103,14 +105,14 @@ export default function ThemesPage() {
   }
 
   async function supprimer(id: string) {
-    if (!confirm("Supprimer ce thème ?")) return;
+    if (!confirm(tr("Supprimer ce thème ?"))) return;
     setDeleting(id);
     try {
       await fetch(`/api/themes/${id}`, { method: "DELETE" });
       setThemes((ts) => ts.filter((t) => t.id !== id));
-      toast.success("Thème supprimé");
+      toast.success(tr("Thème supprimé"));
     } catch {
-      toast.error("Erreur");
+      toast.error(tr("Erreur"));
     } finally {
       setDeleting(null);
     }
@@ -132,8 +134,8 @@ export default function ThemesPage() {
       className="h-screen flex flex-col bg-[#F5F7FA] overflow-hidden"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}
     >
-      <ModuleTutorial moduleKey="themes" titre="Thèmes" sousTitre="Personnalise l'apparence de ta boutique" steps={THEMES_TUTORIAL_STEPS} />
-      <PCOnlyGate label="Theme Studio" />
+      <ModuleTutorial moduleKey="themes" titre={tr("Thèmes")} sousTitre={tr("Personnalise l'apparence de ta boutique")} steps={THEMES_TUTORIAL_STEPS} />
+      <PCOnlyGate label={tr("Theme Studio")} />
 
       {/* ── Header ── */}
       <header className="h-14 flex items-center gap-4 px-6 bg-white border-b border-gray-200 flex-shrink-0">
@@ -142,12 +144,12 @@ export default function ThemesPage() {
           className="flex items-center gap-2 text-gray-400 hover:text-gray-700 transition-colors"
         >
           <ArrowLeft size={15} />
-          <span className="text-sm font-medium">Boutique</span>
+          <span className="text-sm font-medium">{tr("Boutique")}</span>
         </button>
         <div className="h-5 w-px bg-gray-200" />
         <div className="flex items-center gap-2">
           <Palette size={16} className="text-[#F5A623]" />
-          <h1 className="text-sm font-bold text-gray-800">Theme Studio</h1>
+          <h1 className="text-sm font-bold text-gray-800">{tr("Theme Studio")}</h1>
           <BoutonRevoirTutoriel moduleKey="themes" />
         </div>
 
@@ -156,7 +158,7 @@ export default function ThemesPage() {
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#FFF7ED] border border-[#F5A623]/20 rounded-lg">
               <div className="w-2 h-2 rounded-full bg-[#F5A623]" />
               <span className="text-xs font-medium text-[#92400E]">
-                {themes.find((t) => t.id === tenant.themeId || t.slug === tenant.themeId)?.nom || tenant.themeId}
+                {tr(themes.find((t) => t.id === tenant.themeId || t.slug === tenant.themeId)?.nom) || tr(tenant.themeId)}
               </span>
             </div>
             {tenant.slug && (
@@ -166,14 +168,14 @@ export default function ThemesPage() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:border-gray-400 hover:text-gray-700 transition-all"
               >
-                <ExternalLink size={11} /> Voir la boutique
+                <ExternalLink size={11} />{" "}{tr("Voir la boutique")}
               </a>
             )}
             <button
               onClick={() => router.push("/dashboard/themes/creer")}
               className="flex items-center gap-2 bg-[#F5A623] text-white px-4 py-1.5 rounded-lg font-semibold text-xs hover:bg-[#d4820a] transition-all"
             >
-              <Plus size={14} /> Créer un thème
+              <Plus size={14} />{" "}{tr("Créer un thème")}
             </button>
           </div>
         )}
@@ -186,7 +188,7 @@ export default function ThemesPage() {
         <section className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles size={14} className="text-[#F5A623]" />
-            <h2 className="text-sm font-bold text-gray-700">Bibliothèque AXSO Design</h2>
+            <h2 className="text-sm font-bold text-gray-700">{tr("Bibliothèque AXSO Design")}</h2>
             <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-semibold">{librairie.length} designs</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -209,7 +211,7 @@ export default function ThemesPage() {
           <section className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles size={14} className="text-[#F5A623]" />
-              <h2 className="text-sm font-bold text-gray-700">Mes thèmes</h2>
+              <h2 className="text-sm font-bold text-gray-700">{tr("Mes thèmes")}</h2>
               <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-semibold">{custom.length}</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -282,6 +284,7 @@ function SimpleThemeCard({
   onDelete?: () => void;
   fichier?: string | null; params?: string; // design AXSO : vrai aperçu au lieu de la vignette schématique
 }) {
+  const tr = useT();
   const colors: ThemeColors = {
     fond:    theme.config?.colors?.fond    || "#fff8f0",
     accent:  theme.config?.colors?.accent  || "#F5A623",
@@ -294,18 +297,18 @@ function SimpleThemeCard({
       {fichier ? <ApercuDesign fichier={fichier} fond={colors.fond} params={params} /> : <ThemePreview colors={colors} radius={theme.config?.radius || "12px"} />}
       <div className="bg-white p-3.5">
         <div className="flex items-center justify-between mb-1">
-          <p className="text-sm font-semibold text-gray-800">{theme.nom}</p>
+          <p className="text-sm font-semibold text-gray-800">{tr(theme.nom)}</p>
           <div className="flex gap-1">
             {[colors.fond, colors.accent, colors.texte].map((c, i) => (
               <div key={i} className="w-3.5 h-3.5 rounded-full border border-gray-200" style={{ backgroundColor: c }} />
             ))}
           </div>
         </div>
-        {theme.description && <p className="text-gray-400 text-[11px] mb-3 leading-snug">{theme.description}</p>}
+        {theme.description && <p className="text-gray-400 text-[11px] mb-3 leading-snug">{tr(theme.description)}</p>}
         <div className="flex gap-2">
           {actif ? (
             <div className="flex-1 text-center py-2 rounded-xl text-[11px] font-semibold text-[#F5A623] bg-[#FFF7ED] border border-[#F5A623]/20">
-              Thème actif
+              {tr("Thème actif")}
             </div>
           ) : (
             <button
@@ -314,7 +317,7 @@ function SimpleThemeCard({
               className="flex-1 py-2 rounded-xl text-[11px] font-bold text-white disabled:opacity-50 hover:opacity-90 transition-all"
               style={{ backgroundColor: colors.accent }}
             >
-              {activating ? "..." : "Activer"}
+              {activating ? "..." : tr("Activer")}
             </button>
           )}
           {onEdit && (

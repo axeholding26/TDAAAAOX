@@ -4,6 +4,7 @@ import { Truck, ToggleRight, KeyRound, Settings } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 const TRANSPORTEURS_TUTORIAL_STEPS = [
   { Icon: Truck,        titre: "Tes partenaires de livraison", description: "Chaque transporteur est listé avec ses zones de couverture et son logo." },
   { Icon: ToggleRight,  titre: "Active un transporteur",       description: "Bascule l'interrupteur pour le rendre disponible lors de la création d'une livraison." },
@@ -17,6 +18,7 @@ type Transporteur = {
 };
 
 export default function TransporteursPage() {
+  const tr = useT();
   const { devise } = useDevise();
   const [liste, setListe] = useState<Transporteur[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,35 +46,35 @@ export default function TransporteursPage() {
     setListe(d.transporteurs ?? []);
   }
 
-  if (loading) return <div className="p-8 text-center text-sm text-gray-400">Chargement…</div>;
+  if (loading) return <div className="p-8 text-center text-sm text-gray-400">{tr("Chargement…")}</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="transporteurs" titre="Transporteurs" sousTitre="Partenaires de livraison" steps={TRANSPORTEURS_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="transporteurs" titre={tr("Transporteurs")} sousTitre={tr("Partenaires de livraison")} steps={TRANSPORTEURS_TUTORIAL_STEPS} />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[18px] font-bold text-[#111]">Transporteurs</h1>
+          <h1 className="text-[18px] font-bold text-[#111]">{tr("Transporteurs")}</h1>
           <BoutonRevoirTutoriel moduleKey="transporteurs" />
         </div>
-        <p className="text-[12px] text-gray-500">Activez et configurez vos partenaires de livraison</p>
+        <p className="text-[12px] text-gray-500">{tr("Activez et configurez vos partenaires de livraison")}</p>
       </div>
 
       <div className="space-y-3">
         {liste.map(t => (
           <div key={t.code} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">{t.logo}</span>
+              <span className="text-2xl">{tr(t.logo)}</span>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-[#111]">{t.nom}</span>
+                  <span className="text-[13px] font-semibold text-[#111]">{tr(t.nom)}</span>
                   <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t.zones.join(", ")}</span>
                 </div>
-                {t.tarif && <p className="text-[11px] text-gray-400">Tarif fixe: {t.tarif} XAF</p>}
+                {t.tarif && <p className="text-[11px] text-gray-400">{tr("Tarif fixe:")}{" "}{tr(t.tarif)} XAF</p>}
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => { setEditing(t.code); setApiKey(""); setTarif(t.tarif?.toString() ?? ""); }}
                   className="text-[11px] text-gray-400 hover:text-[#F5A623] px-2 py-1 rounded-lg border border-gray-100 hover:border-[#F5A623]/30 transition-all">
-                  Config
+                  {tr("Config")}
                 </button>
                 <button onClick={() => toggle(t.code, t.actif)} disabled={saving}
                   className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${t.actif ? "bg-[#F5A623]" : "bg-gray-200"}`}>
@@ -84,19 +86,19 @@ export default function TransporteursPage() {
             {editing === t.code && (
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50"
-                  placeholder="Clé API (laisser vide pour ne pas changer)"
+                  placeholder={tr("Clé API (laisser vide pour ne pas changer)")}
                   value={apiKey} onChange={e => setApiKey(e.target.value)} type="password" />
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50"
-                  placeholder={`Tarif fixe ${devise} (optionnel)`} type="number"
+                  placeholder={tr("Tarif fixe {0} (optionnel)", devise)} type="number"
                   value={tarif} onChange={e => setTarif(e.target.value)} />
                 <div className="flex gap-2">
                   <button onClick={() => saveConfig(t.code)} disabled={saving}
                     className="flex-1 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-semibold hover:bg-[#e09520] transition-all disabled:opacity-50">
-                    Enregistrer
+                    {tr("Enregistrer")}
                   </button>
                   <button onClick={() => setEditing(null)}
                     className="px-4 py-2 border border-gray-200 rounded-xl text-[12px] text-gray-500 hover:bg-gray-50">
-                    Annuler
+                    {tr("Annuler")}
                   </button>
                 </div>
               </div>

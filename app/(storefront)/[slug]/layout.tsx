@@ -24,13 +24,23 @@ import { DeviseVitrineProvider, PastillePaysDesign } from "@/components/storefro
 import { deviseVisiteur, paysVisiteur } from "@/lib/devise-visiteur";
 import { tauxDuJour } from "@/lib/taux-change";
 import { ratioConversion } from "@/lib/devise-convert";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLangue, dico } from "@/lib/i18n/serveur";
 
 interface Props {
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
 }
 
-export default async function StorefrontLayout({ children, params }: Props) {
+export default async function StorefrontLayout(props: Props) {
+  return (
+    <I18nProvider langue={await getLangue()} dico={await dico("boutique")}>
+      <ContenuVitrine {...props} />
+    </I18nProvider>
+  );
+}
+
+async function ContenuVitrine({ children, params }: Props) {
   const { slug } = await params;
 
   const tenant = await prisma.tenant.findUnique({

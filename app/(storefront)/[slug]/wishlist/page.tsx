@@ -7,12 +7,14 @@ import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { WishlistGrid } from "@/components/storefront/WishlistGrid";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export default async function WishlistPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
 
   const tenant = await prisma.tenant.findUnique({
@@ -90,7 +92,7 @@ export default async function WishlistPage({ params }: Props) {
 
   // Boutique à design : en-tête et pied de page du design, comme À propos / Contact.
   const Habillage = habillageDesign(cfg);
-  if (Habillage) return <Habillage>{grille}</Habillage>;
+  if (Habillage) return <Habillage>{t(grille)}</Habillage>;
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
@@ -110,10 +112,10 @@ export default async function WishlistPage({ params }: Props) {
         sansPanier={cfg.modeBoutique === "digital"}
       />
 
-      {grille}
+      {t(grille)}
 
       <footer className="border-t mt-16 py-8 text-center text-xs" style={{ borderColor: `${c.accent}10`, opacity: 0.4 }}>
-        <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
+        <p>{t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: c.accent, opacity: 1 }}>{t("Axso")}</span></p>
       </footer>
     </div>
   );

@@ -2,8 +2,10 @@ export const dynamic = "force-dynamic";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Check, Package, Printer } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function FacturePage({ params }: { params: Promise<{ slug: string; token: string }> }) {
+  const t = await getT();
   const { token } = await params;
 
   const commande = await prisma.commande.findFirst({
@@ -16,12 +18,12 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
   if (!commande) notFound();
 
   const tenant = commande.tenant;
-  const date = new Date(commande.createdAt).toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" });
+  const date = new Date(commande.createdAt).toLocaleDateString(t.loc, { year: "numeric", month: "long", day: "numeric" });
   const total = commande.montantTotal;
   const devise = commande.devise || "XAF";
 
   function fmt(n: number) {
-    return n.toLocaleString("fr-FR") + " " + devise;
+    return n.toLocaleString(t.loc) + " " + devise;
   }
 
   return (
@@ -52,23 +54,23 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
                 <img src={tenant.logoUrl} alt={tenant.nomBoutique} style={{ height:56, objectFit:"contain", marginBottom:16, filter:"brightness(0) invert(1)" }} />
               ) : (
                 <div style={{ fontFamily:"'Playfair Display',serif", fontSize:28, fontWeight:700, color:"white", marginBottom:16, letterSpacing:"-0.5px" }}>
-                  {tenant.nomBoutique}
+                  {t(tenant.nomBoutique)}
                 </div>
               )}
               <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, lineHeight:1.8 }}>
-                {tenant.adresse && <div>{tenant.adresse}</div>}
-                {tenant.pays && <div>{tenant.pays}</div>}
+                {tenant.adresse && <div>{t(tenant.adresse)}</div>}
+                {tenant.pays && <div>{t(tenant.pays)}</div>}
                 {tenant.telephone && <div>{tenant.telephone}</div>}
                 {tenant.email && <div>{tenant.email}</div>}
               </div>
             </div>
             <div style={{ textAlign:"right" }}>
-              <div style={{ color:"rgba(245,166,35,0.7)", fontSize:11, fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:8 }}>Facture</div>
+              <div style={{ color:"rgba(245,166,35,0.7)", fontSize:11, fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:8 }}>{t("Facture")}</div>
               <div style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:"white", letterSpacing:"-1px" }}>#{commande.numero}</div>
               <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:8 }}>{date}</div>
               <div style={{ marginTop:16, display:"inline-block", background:"rgba(245,166,35,0.15)", border:"1px solid rgba(245,166,35,0.3)", borderRadius:100, padding:"6px 16px" }}>
                 <span style={{ color:"#F5A623", fontSize:11, fontWeight:600, display:"inline-flex", alignItems:"center", gap:4 }}>
-                  {commande.paiementStatut === "completed" ? <><Check size={10} /> Payée</> : "En attente"}
+                  {commande.paiementStatut === "completed" ? <><Check size={10} />{" "}{t("Payée")}</> : t("En attente")}
                 </span>
               </div>
             </div>
@@ -81,20 +83,20 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         {/* Client info */}
         <div style={{ padding:"36px 48px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, background:"#FAFAF8" }}>
           <div>
-            <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>Facturé à</div>
-            <div style={{ fontSize:17, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{commande.clientNom}</div>
-            {commande.clientEmail && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{commande.clientEmail}</div>}
-            {commande.clientTelephone && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{commande.clientTelephone}</div>}
+            <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>{t("Facturé à")}</div>
+            <div style={{ fontSize:17, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{t(commande.clientNom)}</div>
+            {commande.clientEmail && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{t(commande.clientEmail)}</div>}
+            {commande.clientTelephone && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{t(commande.clientTelephone)}</div>}
             {(commande.adresseExacte || commande.adresseLivraison) && (
-              <div style={{ fontSize:13, color:"#666", marginTop:4 }}>{commande.adresseExacte || commande.adresseLivraison}</div>
+              <div style={{ fontSize:13, color:"#666", marginTop:4 }}>{t(commande.adresseExacte) || t(commande.adresseLivraison)}</div>
             )}
-            {commande.ville && <div style={{ fontSize:13, color:"#666" }}>{commande.ville}{commande.pays ? `, ${commande.pays}` : ""}</div>}
+            {commande.ville && <div style={{ fontSize:13, color:"#666" }}>{t(commande.ville)}{commande.pays ? `, ${commande.pays}` : ""}</div>}
           </div>
           <div style={{ textAlign:"right" }}>
-            <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>Détails</div>
-            <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>Date : <strong style={{ color:"#1A1A1A" }}>{date}</strong></div>
-            <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>Commande : <strong style={{ color:"#1A1A1A" }}>#{commande.numero}</strong></div>
-            <div style={{ fontSize:13, color:"#666" }}>Paiement : <strong style={{ color:"#1A1A1A" }}>{commande.methodePaiement === "notchpay" ? "En ligne (NotchPay)" : "À la livraison"}</strong></div>
+            <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>{t("Détails")}</div>
+            <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>{t("Date :")}{" "}<strong style={{ color:"#1A1A1A" }}>{date}</strong></div>
+            <div style={{ fontSize:13, color:"#666", marginBottom:4 }}>{t("Commande :")}{" "}<strong style={{ color:"#1A1A1A" }}>#{commande.numero}</strong></div>
+            <div style={{ fontSize:13, color:"#666" }}>{t("Paiement :")}{" "}<strong style={{ color:"#1A1A1A" }}>{commande.methodePaiement === "notchpay" ? t("En ligne (NotchPay)") : t("À la livraison")}</strong></div>
           </div>
         </div>
 
@@ -103,10 +105,10 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
           <table style={{ width:"100%", borderCollapse:"collapse" }}>
             <thead>
               <tr style={{ borderBottom:"2px solid #F0EDE8" }}>
-                <th style={{ textAlign:"left", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase", width:"50%" }}>Produit</th>
-                <th style={{ textAlign:"center", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>Qté</th>
-                <th style={{ textAlign:"right", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>P.U.</th>
-                <th style={{ textAlign:"right", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>Total</th>
+                <th style={{ textAlign:"left", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase", width:"50%" }}>{t("Produit")}</th>
+                <th style={{ textAlign:"center", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>{t("Qté")}</th>
+                <th style={{ textAlign:"right", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>{t("P.U.")}</th>
+                <th style={{ textAlign:"right", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase" }}>{t("Total")}</th>
               </tr>
             </thead>
             <tbody>
@@ -120,8 +122,8 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
                         <div style={{ width:44, height:44, borderRadius:10, background:"#F5F4F1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#9CA3AF" }}><Package size={20} /></div>
                       )}
                       <div>
-                        <div style={{ fontSize:14, fontWeight:500, color:"#1A1A1A" }}>{l.nom}</div>
-                        {l.variante && <div style={{ fontSize:11, color:"#999", marginTop:2 }}>{l.variante}</div>}
+                        <div style={{ fontSize:14, fontWeight:500, color:"#1A1A1A" }}>{t(l.nom)}</div>
+                        {l.variante && <div style={{ fontSize:11, color:"#999", marginTop:2 }}>{t(l.variante)}</div>}
                       </div>
                     </div>
                   </td>
@@ -138,21 +140,21 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
             <div style={{ width:280 }}>
               {commande.montantLivraison > 0 && (
                 <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", fontSize:13, color:"#666", borderBottom:"1px solid #F0EDE8" }}>
-                  <span>Sous-total</span><span>{fmt(commande.montantSousTotal)}</span>
+                  <span>{t("Sous-total")}</span><span>{fmt(commande.montantSousTotal)}</span>
                 </div>
               )}
               {commande.montantLivraison > 0 && (
                 <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", fontSize:13, color:"#666", borderBottom:"1px solid #F0EDE8" }}>
-                  <span>Livraison</span><span>{fmt(commande.montantLivraison)}</span>
+                  <span>{t("Livraison")}</span><span>{fmt(commande.montantLivraison)}</span>
                 </div>
               )}
               {commande.montantReduction > 0 && (
                 <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", fontSize:13, color:"#22c55e", borderBottom:"1px solid #F0EDE8" }}>
-                  <span>Réduction</span><span>−{fmt(commande.montantReduction)}</span>
+                  <span>{t("Réduction")}</span><span>−{fmt(commande.montantReduction)}</span>
                 </div>
               )}
               <div style={{ display:"flex", justifyContent:"space-between", padding:"16px 20px", marginTop:8, background:"linear-gradient(135deg, #1A1A1A, #2D2D2D)", borderRadius:14 }}>
-                <span style={{ fontSize:14, fontWeight:600, color:"rgba(255,255,255,0.7)" }}>Total à payer</span>
+                <span style={{ fontSize:14, fontWeight:600, color:"rgba(255,255,255,0.7)" }}>{t("Total à payer")}</span>
                 <span style={{ fontSize:20, fontWeight:700, color:"#F5A623", fontFamily:"'Playfair Display',serif" }}>{fmt(total)}</span>
               </div>
             </div>
@@ -162,16 +164,16 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         {/* Footer */}
         <div style={{ padding:"28px 48px", background:"#F8F7F4", borderTop:"1px solid #EDEAE4", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
-            <div style={{ fontSize:11, color:"#999", marginBottom:4 }}>Généré par</div>
-            <div style={{ fontSize:13, fontWeight:600, color:"#1A1A1A" }}>{tenant.nomBoutique}</div>
+            <div style={{ fontSize:11, color:"#999", marginBottom:4 }}>{t("Généré par")}</div>
+            <div style={{ fontSize:13, fontWeight:600, color:"#1A1A1A" }}>{t(tenant.nomBoutique)}</div>
           </div>
           <div style={{ textAlign:"center" }}>
             <div style={{ width:32, height:2, background:"#F5A623", margin:"0 auto 8px", borderRadius:4 }} />
-            <div style={{ fontSize:10, color:"#BBB", letterSpacing:"0.1em" }}>MERCI POUR VOTRE CONFIANCE</div>
+            <div style={{ fontSize:10, color:"#BBB", letterSpacing:"0.1em" }}>{t("MERCI POUR VOTRE CONFIANCE")}</div>
           </div>
           <div style={{ textAlign:"right" }}>
-            <div style={{ fontSize:11, color:"#999", marginBottom:4 }}>Powered by</div>
-            <div style={{ fontSize:13, fontWeight:700, color:"#F5A623" }}>Axso</div>
+            <div style={{ fontSize:11, color:"#999", marginBottom:4 }}>{t("Powered by")}</div>
+            <div style={{ fontSize:13, fontWeight:700, color:"#F5A623" }}>{t("Axso")}</div>
           </div>
         </div>
       </div>
@@ -182,7 +184,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
       <div className="no-print" style={{ textAlign:"center", padding:"24px", position:"sticky", bottom:0, background:"rgba(248,247,244,0.9)", backdropFilter:"blur(8px)" }}>
         <button id="ax-btn-print"
           style={{ background:"linear-gradient(135deg,#1A1A1A,#333)", color:"white", border:"none", padding:"14px 36px", borderRadius:100, fontSize:14, fontWeight:600, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8, boxShadow:"0 4px 20px rgba(0,0,0,0.2)" }}>
-          <Printer size={16} /> Télécharger / Imprimer la facture
+          <Printer size={16} />{" "}{t("Télécharger / Imprimer la facture")}
         </button>
       </div>
       <script dangerouslySetInnerHTML={{ __html: `

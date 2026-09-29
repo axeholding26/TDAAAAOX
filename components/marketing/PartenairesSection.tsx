@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 // En attendant les vrais logos partenaires (Orange Money, MTN, Wave, Visa, Mastercard…),
 // chaque entrée affiche son nom en attendant `logoUrl`. Il suffira de renseigner
@@ -18,6 +19,7 @@ const PARTENAIRES: { nom: string; logoUrl?: string }[] = [
 const TRACK = [...PARTENAIRES, ...PARTENAIRES];
 
 export function PartenairesSection() {
+  const t = useT();
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -31,7 +33,7 @@ export function PartenairesSection() {
     <section ref={sectionRef} className="py-14 bg-white border-y border-gray-100 overflow-hidden"
       style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(16px)", transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)" }}>
       <p className="text-center text-[12px] font-bold uppercase tracking-widest text-gray-400 mb-8">
-        Ils font confiance à nos partenaires de paiement
+        {t("Ils font confiance à nos partenaires de paiement")}
       </p>
 
       <div className="relative">
@@ -45,7 +47,7 @@ export function PartenairesSection() {
                 <img src={p.logoUrl} alt={p.nom} className="h-8 sm:h-9 w-auto object-contain opacity-70 hover:opacity-100 transition-opacity" />
               ) : (
                 <span className="text-lg sm:text-xl font-bold text-gray-300 whitespace-nowrap hover:text-[#F5A623] transition-colors">
-                  {p.nom}
+                  {t(p.nom)}
                 </span>
               )}
             </div>

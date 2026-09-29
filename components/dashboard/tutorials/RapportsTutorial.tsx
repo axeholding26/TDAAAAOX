@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { FileBarChart, Wallet, ShoppingCart, TrendingUp } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const RAPPORTS_TUTORIAL_STEPS = [
   { Icon: FileBarChart, titre: "Rapport de productivité",  description: "Revenus, commandes traitées, panier moyen et nouveaux clients, comparés à la période précédente." },
@@ -10,5 +11,6 @@ const RAPPORTS_TUTORIAL_STEPS = [
 ];
 
 export function RapportsTutorial() {
-  return <ModuleTutorial moduleKey="rapports" titre="Rapports" sousTitre="Exports & synthèses" steps={RAPPORTS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="rapports" titre={t("Rapports")} sousTitre={t("Exports & synthèses")} steps={RAPPORTS_TUTORIAL_STEPS} />;
 }

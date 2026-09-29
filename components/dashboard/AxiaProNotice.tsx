@@ -4,11 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Crown } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 // Affiché quand un marchand palier Essentiel est redirigé automatiquement
 // depuis AXIA (voir app/(dashboard)/dashboard/page.tsx) — explique pourquoi,
 // une seule fois, puis nettoie l'URL pour ne pas re-déclencher au rafraîchissement.
 export function AxiaProNotice() {
+  const t = useT();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -20,9 +22,9 @@ export function AxiaProNotice() {
           <Crown size={15} className="text-[#F5A623]" />
         </div>
         <div className="min-w-0">
-          <p className="text-[13px] font-bold text-[#111]">AXIA plein écran est une fonctionnalité Pro</p>
+          <p className="text-[13px] font-bold text-[#111]">{t("AXIA plein écran est une fonctionnalité Pro")}</p>
           <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-            Tu retrouves ici le tableau de bord classique. <Link href="/dashboard/abonnement" className="text-[#F5A623] font-semibold underline">Passer au palier Pro</Link> pour débloquer AXIA en écran d'accueil.
+            {t("Tu retrouves ici le tableau de bord classique.")}{" "}<Link href="/dashboard/abonnement" className="text-[#F5A623] font-semibold underline">{t("Passer au palier Pro")}</Link>{" "}{t("pour débloquer AXIA en écran d'accueil.")}
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { BarChart3 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface DonneeVente { date: string; montant: number; commandes: number; }
 interface SalesChartProps { donnees: DonneeVente[]; devise?: string; }
@@ -13,6 +14,7 @@ const PERIODS = [
 ] as const;
 
 function TooltipCustom({ active, payload, label, devise }: any) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   return (
     <div style={{
@@ -24,18 +26,18 @@ function TooltipCustom({ active, payload, label, devise }: any) {
       fontFamily: "'Poppins',system-ui,sans-serif",
       minWidth: "150px",
     }}>
-      <p style={{ fontSize: "11px", color: "#AAA", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</p>
+      <p style={{ fontSize: "11px", color: "#AAA", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t(label)}</p>
       {payload[0]?.value > 0 && (
         <p style={{ fontSize: "17px", fontWeight: 800, color: "#111", marginBottom: "3px", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
-          {payload[0].value.toLocaleString("fr-FR")}
-          <span style={{ fontSize: "11px", color: "#AAA", fontWeight: 500, marginLeft: "3px" }}>{devise}</span>
+          {payload[0].value.toLocaleString(t.loc)}
+          <span style={{ fontSize: "11px", color: "#AAA", fontWeight: 500, marginLeft: "3px" }}>{t(devise)}</span>
         </p>
       )}
       {payload[1]?.value > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
           <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#111111" }} />
           <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, margin: 0 }}>
-            {payload[1].value} commande{payload[1].value > 1 ? "s" : ""}
+            {t(payload[1].value)} commande{payload[1].value > 1 ? "s" : ""}
           </p>
         </div>
       )}
@@ -44,6 +46,7 @@ function TooltipCustom({ active, payload, label, devise }: any) {
 }
 
 export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
+  const t = useT();
   const [period, setPeriod] = useState<7 | 14 | 30>(30);
 
   const data    = donnees.slice(-period);
@@ -58,8 +61,8 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
         <div className="w-12 h-12 rounded-2xl bg-[#F5F5F7] flex items-center justify-center">
           <BarChart3 size={22} className="text-[#AAAAAA]" />
         </div>
-        <p className="text-[13px] text-[#AAAAAA] font-medium">Aucune donnée disponible</p>
-        <p className="text-[11.5px] text-[#CCCCCC]">Les ventes apparaîtront ici</p>
+        <p className="text-[13px] text-[#AAAAAA] font-medium">{t("Aucune donnée disponible")}</p>
+        <p className="text-[11.5px] text-[#CCCCCC]">{t("Les ventes apparaîtront ici")}</p>
       </div>
     );
   }
@@ -69,8 +72,8 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4 gap-4">
         <div>
-          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Évolution des ventes</h3>
-          <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">Chiffre d'affaires journalier</p>
+          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Évolution des ventes")}</h3>
+          <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Chiffre d'affaires journalier")}</p>
         </div>
         {/* Period tabs */}
         <div className="flex items-center gap-1 bg-[#F5F5F7] rounded-xl p-1 flex-shrink-0">
@@ -83,7 +86,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
                 color: period === p.key ? "#111111" : "#AAAAAA",
                 boxShadow: period === p.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
               }}>
-              {p.label}
+              {t(p.label)}
             </button>
           ))}
         </div>
@@ -92,26 +95,26 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
       {/* Stats row */}
       <div className="flex items-center gap-5 mb-5 pb-4 border-b border-[#F5F5F7]">
         <div>
-          <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">Total période</p>
+          <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">{t("Total période")}</p>
           <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
-            {total.toLocaleString("fr-FR")}
-            <span className="text-[13px] text-[#AAAAAA] font-normal ml-1">{devise}</span>
+            {total.toLocaleString(t.loc)}
+            <span className="text-[13px] text-[#AAAAAA] font-normal ml-1">{t(devise)}</span>
           </p>
         </div>
         <div className="w-px h-8 bg-[#F0F0F0]" />
         <div>
-          <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">Commandes</p>
-          <p className="text-[20px] font-bold text-[#111111] tabular-nums">{totalCmds}</p>
+          <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">{t("Commandes")}</p>
+          <p className="text-[20px] font-bold text-[#111111] tabular-nums">{t(totalCmds)}</p>
         </div>
         {bestDay.montant > 0 && (
           <>
             <div className="w-px h-8 bg-[#F0F0F0]" />
             <div>
-              <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">Meilleur jour</p>
+              <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">{t("Meilleur jour")}</p>
               <p className="text-[13px] font-bold text-[#F5A623]">
                 {bestDay.date}
                 <span className="text-[11px] text-[#AAAAAA] font-normal ml-1.5">
-                  {bestDay.montant.toLocaleString("fr-FR")} {devise}
+                  {bestDay.montant.toLocaleString(t.loc)} {t(devise)}
                 </span>
               </p>
             </div>
@@ -177,15 +180,15 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
       <div className="flex items-center gap-5 mt-3 pt-3 border-t border-[#F5F5F7]">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-1.5 rounded-full" style={{ background: "#F5A623" }} />
-          <span className="text-[11px] text-[#AAAAAA] font-medium">CA ({devise})</span>
+          <span className="text-[11px] text-[#AAAAAA] font-medium">{t("CA (")}{t(devise)})</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-1.5 rounded-full" style={{ background: "#111111", opacity: 0.6 }} />
-          <span className="text-[11px] text-[#AAAAAA] font-medium">Commandes</span>
+          <span className="text-[11px] text-[#AAAAAA] font-medium">{t("Commandes")}</span>
         </div>
         <div className="flex items-center gap-1.5 ml-auto">
           <div className="w-3 h-px" style={{ borderTop: "1.5px dashed #EBEBEB" }} />
-          <span className="text-[11px] text-[#CCCCCC]">Moyenne</span>
+          <span className="text-[11px] text-[#CCCCCC]">{t("Moyenne")}</span>
         </div>
       </div>
     </div>

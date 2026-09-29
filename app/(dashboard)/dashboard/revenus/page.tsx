@@ -9,8 +9,10 @@ import { TrendingUp, TrendingDown, DollarSign, BarChart3, ArrowRight, Wallet } f
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { RevenusTutorial } from "@/components/dashboard/tutorials/RevenusTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function RevenusPage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "finance");
@@ -90,10 +92,10 @@ export default async function RevenusPage() {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Revenus <AgentActiveIndicator label="Agent Revenue actif" /></h1>
+          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">{t("Revenus")}{" "}<AgentActiveIndicator label={t("Agent Revenue actif")} /></h1>
           <BoutonRevoirTutoriel moduleKey="revenus" />
         </div>
-        <p className="text-[#717171] text-sm mt-1">Analyse financière de votre boutique</p>
+        <p className="text-[#717171] text-sm mt-1">{t("Analyse financière de votre boutique")}</p>
       </div>
 
       {/* Hero card */}
@@ -103,14 +105,14 @@ export default async function RevenusPage() {
             <DollarSign size={20} className="text-[#F5A623]" />
           </div>
           <p className="text-[#717171] text-xs uppercase tracking-wider font-semibold">
-            Chiffre d'affaires · 30 jours
+            {t("Chiffre d'affaires · 30 jours")}
           </p>
         </div>
         <p className="text-5xl font-bold text-[#111111] font-poppins mb-2">
           {formatMontant(revenu30j, tenant.devise)}
         </p>
         <p className="text-[#717171] text-sm">
-          Revenu net après commissions :{" "}
+          {t("Revenu net après commissions :")}{" "}
           <span className="font-semibold text-[#16A34A]">
             {formatMontant(Math.max(0, revenuNet), tenant.devise)}
           </span>
@@ -126,9 +128,9 @@ export default async function RevenusPage() {
               <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#F4F4F4] mb-4">
                 <Icone size={16} style={{ color: m.accent }} />
               </div>
-              <p className="text-[#111111] text-xl font-bold font-poppins">{m.value}</p>
-              <p className="text-[#717171] text-xs mt-1">{m.label}</p>
-              <p className="text-[#717171] text-[10px] mt-0.5">{m.description}</p>
+              <p className="text-[#111111] text-xl font-bold font-poppins">{t(m.value)}</p>
+              <p className="text-[#717171] text-xs mt-1">{t(m.label)}</p>
+              <p className="text-[#717171] text-[10px] mt-0.5">{t(m.description)}</p>
             </div>
           );
         })}
@@ -138,15 +140,15 @@ export default async function RevenusPage() {
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h2 className="text-sm font-semibold text-[#111111]">Revenus journaliers</h2>
-            <p className="text-[#717171] text-xs mt-0.5">14 derniers jours</p>
+            <h2 className="text-sm font-semibold text-[#111111]">{t("Revenus journaliers")}</h2>
+            <p className="text-[#717171] text-xs mt-0.5">{t("14 derniers jours")}</p>
           </div>
           {jours.length > 0 && (
             <div className="text-right">
               <p className="text-[#111111] font-bold font-poppins text-lg">
                 {formatMontant(jours.reduce((s, [, v]) => s + v, 0), tenant.devise)}
               </p>
-              <p className="text-[#717171] text-xs">sur la période</p>
+              <p className="text-[#717171] text-xs">{t("sur la période")}</p>
             </div>
           )}
         </div>
@@ -155,13 +157,13 @@ export default async function RevenusPage() {
             <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
               <BarChart3 size={20} className="text-[#717171]" />
             </div>
-            <p className="text-[#717171] text-sm">Pas encore de données</p>
+            <p className="text-[#717171] text-sm">{t("Pas encore de données")}</p>
           </div>
         ) : (
           <div className="flex items-end gap-2 h-48">
             {jours.map(([date, revenu]) => {
               const hauteur = Math.max((revenu / maxRevenu) * 100, 3);
-              const jour = new Date(date).toLocaleDateString("fr-FR", {
+              const jour = new Date(date).toLocaleDateString(t.loc, {
                 day: "numeric",
                 month: "short",
               });
@@ -176,7 +178,7 @@ export default async function RevenusPage() {
                       {formatMontant(revenu, tenant.devise)}
                     </div>
                   </div>
-                  <span className="text-[#717171] text-[10px] text-center leading-tight">{jour}</span>
+                  <span className="text-[#717171] text-[10px] text-center leading-tight">{t(jour)}</span>
                 </div>
               );
             })}
@@ -186,7 +188,7 @@ export default async function RevenusPage() {
 
       {/* Répartition des revenus */}
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-[#111111] mb-5">Répartition des revenus</h2>
+        <h2 className="text-sm font-semibold text-[#111111] mb-5">{t("Répartition des revenus")}</h2>
         <div className="space-y-1">
           {[
             {
@@ -223,11 +225,11 @@ export default async function RevenusPage() {
             >
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border ${ligne.signClass}`}>
-                  {ligne.sign}
+                  {t(ligne.sign)}
                 </div>
                 <div>
-                  <p className="text-[#111111] text-sm font-medium">{ligne.label}</p>
-                  <p className="text-[#717171] text-xs">{ligne.description}</p>
+                  <p className="text-[#111111] text-sm font-medium">{t(ligne.label)}</p>
+                  <p className="text-[#717171] text-xs">{t(ligne.description)}</p>
                 </div>
               </div>
               <span className="font-bold text-base font-poppins" style={{ color: ligne.amountClass }}>
@@ -248,14 +250,14 @@ export default async function RevenusPage() {
                   <BarChart3 size={18} className="text-[#7C3AED]" />
                 </div>
                 <div>
-                  <p className="text-[#111111] font-semibold text-sm">Commissions</p>
-                  <p className="text-[#717171] text-sm mt-0.5">Détail des frais Axso prélevés</p>
+                  <p className="text-[#111111] font-semibold text-sm">{t("Commissions")}</p>
+                  <p className="text-[#717171] text-sm mt-0.5">{t("Détail des frais Axso prélevés")}</p>
                 </div>
               </div>
               <ArrowRight size={16} className="text-[#717171] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200" />
             </div>
             <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
-              <span className="text-[#717171] text-xs">Total prélevé</span>
+              <span className="text-[#717171] text-xs">{t("Total prélevé")}</span>
               <span className="font-bold text-sm font-poppins text-[#7C3AED]">
                 {formatMontant(totalCommissions, tenant.devise)}
               </span>
@@ -271,15 +273,15 @@ export default async function RevenusPage() {
                   <TrendingUp size={18} className="text-[#F5A623]" />
                 </div>
                 <div>
-                  <p className="text-[#111111] font-semibold text-sm">Analytics complètes</p>
-                  <p className="text-[#717171] text-sm mt-0.5">Visites, conversions, entonnoir</p>
+                  <p className="text-[#111111] font-semibold text-sm">{t("Analytics complètes")}</p>
+                  <p className="text-[#717171] text-sm mt-0.5">{t("Visites, conversions, entonnoir")}</p>
                 </div>
               </div>
               <ArrowRight size={16} className="text-[#717171] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200" />
             </div>
             <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
-              <span className="text-[#717171] text-xs">Période analysée</span>
-              <span className="font-bold text-sm font-poppins text-[#111111]">30 jours</span>
+              <span className="text-[#717171] text-xs">{t("Période analysée")}</span>
+              <span className="font-bold text-sm font-poppins text-[#111111]">{t("30 jours")}</span>
             </div>
           </div>
         </Link>

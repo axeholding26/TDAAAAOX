@@ -4,6 +4,7 @@ import {
   Film, Image, Plus, Loader2, Trash2, Download, Copy,
   RefreshCw, Wand2, Play, CheckCircle2, XCircle, Clock, Sparkles, X
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Media {
   id: string; prompt: string; style: string;
@@ -27,12 +28,14 @@ const STYLES_VIDEO = ["product", "ugc", "ad", "cinematic", "demo"];
 const STYLES_IMAGE = ["product_photo", "lifestyle", "advertisement", "minimal", "artistic"];
 
 function StatutBadge({ statut }: { statut: string }) {
-  if (statut === "pret") return <span className="flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium"><CheckCircle2 size={10}/> Prêt</span>;
-  if (statut === "en_cours") return <span className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium"><Loader2 size={10} className="animate-spin"/> En cours</span>;
-  return <span className="flex items-center gap-1 text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full font-medium"><XCircle size={10}/> Erreur</span>;
+  const tr = useT();
+  if (statut === "pret") return <span className="flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium"><CheckCircle2 size={10}/>{" "}{tr("Prêt")}</span>;
+  if (statut === "en_cours") return <span className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-medium"><Loader2 size={10} className="animate-spin"/>{" "}{tr("En cours")}</span>;
+  return <span className="flex items-center gap-1 text-xs bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full font-medium"><XCircle size={10}/>{" "}{tr("Erreur")}</span>;
 }
 
 function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: string) => void; onCopy: (url: string) => void }) {
+  const tr = useT();
   const url = media.videoUrl ?? media.thumbnailUrl;
   const estVideo = !!media.videoUrl;
 
@@ -43,12 +46,12 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
         {media.statut === "en_cours" ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <Loader2 size={28} className="text-[#F5A623] animate-spin"/>
-            <p className="text-xs text-gray-400">Génération en cours…</p>
+            <p className="text-xs text-gray-400">{tr("Génération en cours…")}</p>
           </div>
         ) : media.statut === "erreur" ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4">
             <XCircle size={24} className="text-red-400"/>
-            <p className="text-xs text-red-500 text-center line-clamp-2">{media.erreur ?? "Erreur de génération"}</p>
+            <p className="text-xs text-red-500 text-center line-clamp-2">{tr(media.erreur) ?? tr("Erreur de génération")}</p>
           </div>
         ) : url && estVideo ? (
           <video src={url} className="w-full h-full object-cover" muted loop/>
@@ -81,7 +84,7 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
         <div className="absolute top-2 left-2">
           <span className="text-xs bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-sm flex items-center gap-1">
             {estVideo ? <Film size={10}/> : <Image size={10}/>}
-            {estVideo ? "Vidéo" : "Image"}
+            {estVideo ? tr("Vidéo") : tr("Image")}
           </span>
         </div>
       </div>
@@ -89,7 +92,7 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
       {/* Infos */}
       <div className="p-3">
         <div className="flex items-start justify-between gap-2 mb-1.5">
-          <p className="text-xs text-gray-700 line-clamp-2 flex-1 leading-relaxed">{media.prompt}</p>
+          <p className="text-xs text-gray-700 line-clamp-2 flex-1 leading-relaxed">{tr(media.prompt)}</p>
           <button onClick={() => onDelete(media.id)} className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0">
             <Trash2 size={12}/>
           </button>
@@ -97,7 +100,7 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
         <div className="flex items-center justify-between">
           <StatutBadge statut={media.statut}/>
           <span className="text-[10px] text-gray-400">
-            {new Date(media.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+            {new Date(media.createdAt).toLocaleDateString(tr.loc, { day: "numeric", month: "short" })}
           </span>
         </div>
       </div>
@@ -106,6 +109,7 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
 }
 
 export default function MediasPage() {
+  const tr = useT();
   const [medias, setMedias] = useState<Media[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pretes: 0, enCours: 0, erreurs: 0 });
   const [loading, setLoading] = useState(true);
@@ -178,8 +182,8 @@ export default function MediasPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Médiathèque IA</h1>
-          <p className="text-gray-400 text-sm mt-0.5">Vidéos et images générées par IA</p>
+          <h1 className="text-2xl font-bold text-gray-900">{tr("Médiathèque IA")}</h1>
+          <p className="text-gray-400 text-sm mt-0.5">{tr("Vidéos et images générées par IA")}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={charger} className="p-2.5 rounded-xl border border-gray-200 text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition-all">
@@ -190,7 +194,7 @@ export default function MediasPage() {
             className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm text-white transition-all"
             style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", boxShadow: "0 4px 16px rgba(245,166,35,0.3)" }}
           >
-            <Wand2 size={14}/> Générer
+            <Wand2 size={14}/>{" "}{tr("Générer")}
           </button>
         </div>
       </div>
@@ -208,8 +212,8 @@ export default function MediasPage() {
               <s.icon size={16} style={{ color: s.color }}/>
             </div>
             <div>
-              <p className="text-xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-400">{s.label}</p>
+              <p className="text-xl font-bold text-gray-900">{tr(s.value)}</p>
+              <p className="text-xs text-gray-400">{tr(s.label)}</p>
             </div>
           </div>
         ))}
@@ -225,7 +229,7 @@ export default function MediasPage() {
           >
             {f === "video" && <Film size={13}/>}
             {f === "image" && <Image size={13}/>}
-            {f === "tous" ? "Tous les médias" : f === "video" ? "Vidéos" : "Images"}
+            {f === "tous" ? tr("Tous les médias") : f === "video" ? tr("Vidéos") : tr("Images")}
           </button>
         ))}
       </div>
@@ -236,10 +240,10 @@ export default function MediasPage() {
       ) : medias.length === 0 ? (
         <div className="bg-white border-2 border-dashed border-gray-200 rounded-3xl p-16 text-center">
           <Wand2 size={40} className="mx-auto text-gray-300 mb-4"/>
-          <h3 className="text-lg font-bold text-gray-700 mb-2">Médiathèque vide</h3>
-          <p className="text-gray-400 text-sm mb-6">Générez des vidéos et images IA pour vos produits et campagnes</p>
+          <h3 className="text-lg font-bold text-gray-700 mb-2">{tr("Médiathèque vide")}</h3>
+          <p className="text-gray-400 text-sm mb-6">{tr("Générez des vidéos et images IA pour vos produits et campagnes")}</p>
           <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm text-white mx-auto" style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)" }}>
-            <Sparkles size={14}/> Générer mon premier média
+            <Sparkles size={14}/>{" "}{tr("Générer mon premier média")}
           </button>
         </div>
       ) : (
@@ -253,7 +257,7 @@ export default function MediasPage() {
       {/* Toast copié */}
       {copied && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 z-50">
-          <CheckCircle2 size={14} className="text-green-400"/> URL copiée !
+          <CheckCircle2 size={14} className="text-green-400"/>{" "}{tr("URL copiée !")}
         </div>
       )}
 
@@ -263,8 +267,8 @@ export default function MediasPage() {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div>
-                <h2 className="font-bold text-gray-900 text-lg">Générer un média IA</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Higgsfield · Kling 3.0 · Recraft 4.1 · Veo 3.1</p>
+                <h2 className="font-bold text-gray-900 text-lg">{tr("Générer un média IA")}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{tr("Higgsfield · Kling 3.0 · Recraft 4.1 · Veo 3.1")}</p>
               </div>
               <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-gray-100 text-gray-400 transition-all">
                 <X size={18}/>
@@ -281,20 +285,20 @@ export default function MediasPage() {
                     className={`flex items-center justify-center gap-2 py-3 rounded-2xl border-2 font-semibold text-sm transition-all ${type === t ? "border-[#F5A623] bg-amber-50 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}
                   >
                     {t === "image" ? <Image size={16}/> : <Film size={16}/>}
-                    {t === "image" ? "Image" : "Vidéo"}
+                    {t === "image" ? tr("Image") : tr("Vidéo")}
                   </button>
                 ))}
               </div>
 
               {/* Prompt */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Décrivez ce que vous voulez générer *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">{tr("Décrivez ce que vous voulez générer *")}</label>
                 <textarea
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
                   placeholder={type === "video"
-                    ? "Ex: Sac à main en cuir marron, fond blanc, rotation 360°, lumière studio professionnelle…"
-                    : "Ex: Photo produit robe wax premium sur fond blanc, ultra HD, éclairage professionnel…"}
+                    ? tr("Ex: Sac à main en cuir marron, fond blanc, rotation 360°, lumière studio professionnelle…")
+                    : tr("Ex: Photo produit robe wax premium sur fond blanc, ultra HD, éclairage professionnel…")}
                   rows={3}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#F5A623]/60 resize-none"
                 />
@@ -302,7 +306,7 @@ export default function MediasPage() {
 
               {/* Modèle */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Modèle</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">{tr("Modèle")}</label>
                 <div className="space-y-1.5">
                   {(type === "video" ? MODELES_VIDEO : MODELES_IMAGE).map(m => (
                     <button
@@ -310,8 +314,8 @@ export default function MediasPage() {
                       onClick={() => setModel(m.id)}
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl border transition-all text-sm ${model === m.id ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
                     >
-                      <span className={`font-semibold ${model === m.id ? "text-[#e8950f]" : "text-gray-700"}`}>{m.label}</span>
-                      <span className="text-xs text-gray-400">{m.desc}</span>
+                      <span className={`font-semibold ${model === m.id ? "text-[#e8950f]" : "text-gray-700"}`}>{tr(m.label)}</span>
+                      <span className="text-xs text-gray-400">{tr(m.desc)}</span>
                     </button>
                   ))}
                 </div>
@@ -319,7 +323,7 @@ export default function MediasPage() {
 
               {/* Style */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">Style</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">{tr("Style")}</label>
                 <div className="flex flex-wrap gap-2">
                   {(type === "video" ? STYLES_VIDEO : STYLES_IMAGE).map(s => (
                     <button
@@ -336,7 +340,7 @@ export default function MediasPage() {
               {/* Info Higgsfield requis */}
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 flex items-start gap-2">
                 <Sparkles size={13} className="flex-shrink-0 mt-0.5"/>
-                <span>Nécessite Higgsfield connecté dans <a href="/dashboard/connecteurs" className="font-bold underline">Connecteurs</a>. Sans connexion, une image placeholder sera générée.</span>
+                <span>{tr("Nécessite Higgsfield connecté dans")}{" "}<a href="/dashboard/connecteurs" className="font-bold underline">{tr("Connecteurs")}</a>{tr(". Sans connexion, une image placeholder sera générée.")}</span>
               </div>
 
               <button
@@ -345,7 +349,7 @@ export default function MediasPage() {
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)" }}
               >
-                {generating ? <><Loader2 size={14} className="animate-spin"/> Lancement…</> : <><Wand2 size={14}/> Générer {type === "video" ? "la vidéo" : "l'image"}</>}
+                {generating ? <><Loader2 size={14} className="animate-spin"/>{" "}{tr("Lancement…")}</> : <><Wand2 size={14}/>{" "}{tr("Générer")}{" "}{type === "video" ? tr("la vidéo") : "l'image"}</>}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Trash2, ChevronDown, ChevronUp, GripVertical, Save, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { MediaUpload } from "@/components/ui/MediaUpload";
+import { useT } from "@/components/I18nProvider";
 
 export interface FaqItem {
   question: string;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function FaqManager({ produitId, initial, nom = "", description = "" }: Props) {
+  const t = useT();
   const [items, setItems] = useState<FaqItem[]>(initial);
   const [open, setOpen] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -32,16 +34,16 @@ export default function FaqManager({ produitId, initial, nom = "", description =
         body: JSON.stringify({ faq: toSave }),
       });
       if (!r.ok) throw new Error("Erreur");
-      toast.success("FAQ sauvegardée");
+      toast.success(t("FAQ sauvegardée"));
     } catch {
-      toast.error("Erreur lors de la sauvegarde");
+      toast.error(t("Erreur lors de la sauvegarde"));
     } finally {
       setSaving(false);
     }
   };
 
   const generer = async () => {
-    if (!nom) { toast.error("Entrez d'abord le nom du produit"); return; }
+    if (!nom) { toast.error(t("Entrez d'abord le nom du produit")); return; }
     setGenIA(true);
     try {
       const r = await fetch("/api/ai/faq", {
@@ -55,7 +57,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
       setItems(merged);
       await save(merged);
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur IA");
+      toast.error(t(e.message) ?? t("Erreur IA"));
     } finally {
       setGenIA(false);
     }
@@ -82,8 +84,8 @@ export default function FaqManager({ produitId, initial, nom = "", description =
     <div className="p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-gray-900">FAQ du produit</h3>
-          <p className="text-xs text-gray-400 mt-0.5">Questions fréquentes affichées sur votre page boutique</p>
+          <h3 className="text-sm font-semibold text-gray-900">{t("FAQ du produit")}</h3>
+          <p className="text-xs text-gray-400 mt-0.5">{t("Questions fréquentes affichées sur votre page boutique")}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -92,20 +94,20 @@ export default function FaqManager({ produitId, initial, nom = "", description =
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/20 hover:bg-[#F5A623]/20 disabled:opacity-50 transition-colors"
           >
             {genIA ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-            Générer avec l'IA
+            {t("Générer avec l'IA")}
           </button>
           <button
             onClick={ajouter}
             className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
           >
-            <Plus size={12} /> Ajouter
+            <Plus size={12} />{" "}{t("Ajouter")}
           </button>
         </div>
       </div>
 
       {items.length === 0 ? (
         <div className="text-center py-8 text-gray-300 text-sm border-2 border-dashed border-gray-100 rounded-xl">
-          Aucune question pour l'instant
+          {t("Aucune question pour l'instant")}
         </div>
       ) : (
         <div className="space-y-2">
@@ -118,7 +120,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
               >
                 <GripVertical size={13} className="text-gray-300 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-800 flex-1 truncate">
-                  {item.question || <span className="text-gray-400 italic font-normal">Nouvelle question…</span>}
+                  {t(item.question) || <span className="text-gray-400 italic font-normal">{t("Nouvelle question…")}</span>}
                 </span>
                 {open === idx
                   ? <ChevronUp size={14} className="text-gray-400 flex-shrink-0" />
@@ -128,26 +130,26 @@ export default function FaqManager({ produitId, initial, nom = "", description =
               {open === idx && (
                 <div className="border-t border-gray-100 p-3.5 space-y-3 bg-gray-50/50">
                   <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Question</label>
+                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t("Question")}</label>
                     <input
                       value={item.question}
                       onChange={e => updateItem(idx, "question", e.target.value)}
-                      placeholder="Ex: Comment accéder au contenu après achat ?"
+                      placeholder={t("Ex: Comment accéder au contenu après achat ?")}
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">Réponse</label>
+                    <label className="text-xs font-medium text-gray-500 mb-1.5 block">{t("Réponse")}</label>
                     <textarea
                       value={item.reponse}
                       onChange={e => updateItem(idx, "reponse", e.target.value)}
                       rows={3}
-                      placeholder="La réponse complète…"
+                      placeholder={t("La réponse complète…")}
                       className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 resize-none bg-white"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-500 block">Image (optionnelle)</label>
+                    <label className="text-xs font-medium text-gray-500 block">{t("Image (optionnelle)")}</label>
                     <input
                       value={item.image ?? ""}
                       onChange={e => updateItem(idx, "image", e.target.value)}
@@ -158,7 +160,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
                     {item.image && (
                       <div className="relative">
                         <img src={item.image} alt="" className="w-full max-h-40 object-cover rounded-lg border border-gray-200" />
-                        <button type="button" onClick={() => updateItem(idx, "image", "")} className="absolute top-1.5 right-1.5 text-[11px] px-2 py-1 rounded-md bg-white/90 text-red-500 shadow-sm hover:bg-white">Retirer</button>
+                        <button type="button" onClick={() => updateItem(idx, "image", "")} className="absolute top-1.5 right-1.5 text-[11px] px-2 py-1 rounded-md bg-white/90 text-red-500 shadow-sm hover:bg-white">{t("Retirer")}</button>
                       </div>
                     )}
                   </div>
@@ -168,7 +170,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
                       onClick={() => supprimer(idx)}
                       className="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-600 transition-colors"
                     >
-                      <Trash2 size={12} /> Supprimer
+                      <Trash2 size={12} />{" "}{t("Supprimer")}
                     </button>
                     <button
                       type="button"
@@ -176,7 +178,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
                       disabled={saving}
                       className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-[#F5A623] text-white hover:bg-[#d4820a] disabled:opacity-50 transition-colors"
                     >
-                      <Save size={11} /> {saving ? "…" : "Sauvegarder"}
+                      <Save size={11} /> {saving ? "…" : t("Sauvegarder")}
                     </button>
                   </div>
                 </div>
@@ -193,7 +195,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
           disabled={saving}
           className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-500 text-xs hover:bg-gray-50 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
         >
-          <Save size={12} /> {saving ? "Sauvegarde…" : "Sauvegarder la FAQ"}
+          <Save size={12} /> {saving ? t("Sauvegarde…") : t("Sauvegarder la FAQ")}
         </button>
       )}
     </div>

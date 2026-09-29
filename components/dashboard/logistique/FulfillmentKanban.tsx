@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { GripVertical, Clock, CheckCircle, Package, Truck, AlertTriangle, PackageCheck } from "lucide-react";
 import { TRANSITIONS_VALIDES } from "@/lib/commandes";
 import { formatMontant } from "@/lib/utils";
+import { useT } from "@/components/I18nProvider";
 
 interface CommandeKanban {
   id: string;
@@ -25,6 +26,7 @@ const COLONNES: { statut: string; label: string; color: string; Icon: any }[] = 
 ];
 
 export function FulfillmentKanban() {
+  const t = useT();
   const [commandes, setCommandes] = useState<CommandeKanban[]>([]);
   const [loading, setLoading] = useState(true);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function FulfillmentKanban() {
 
     const transitionsValides = TRANSITIONS_VALIDES[commande.statut] || [];
     if (!transitionsValides.includes(nouveauStatut)) {
-      toast.error(`Transition impossible : ${commande.statut} → ${nouveauStatut}`);
+      toast.error(t("Transition impossible : {0} → {1}", commande.statut, nouveauStatut));
       return;
     }
 
@@ -61,10 +63,10 @@ export function FulfillmentKanban() {
 
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      toast.error(d.error || "Erreur lors du changement de statut");
+      toast.error(t(d.error) || t("Erreur lors du changement de statut"));
       charger(); // rollback en rechargeant l'état réel
     } else {
-      toast.success(`Commande #${commande.numero} → ${COLONNES.find((c) => c.statut === nouveauStatut)?.label}`);
+      toast.success(t("Commande #{0} → {1}", commande.numero, COLONNES.find((c) => c.statut === nouveauStatut)?.label));
     }
   }
 
@@ -97,13 +99,13 @@ export function FulfillmentKanban() {
           >
             <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "#F0F0F0" }}>
               <col.Icon size={14} style={{ color: col.color }} />
-              <span className="text-[12.5px] font-bold text-[#111111]">{col.label}</span>
+              <span className="text-[12.5px] font-bold text-[#111111]">{t(col.label)}</span>
               <span className="ml-auto text-[11px] font-semibold text-gray-400">{cartes.length}</span>
             </div>
 
             <div className="p-2.5 space-y-2 min-h-[80px]">
               {cartes.length === 0 && (
-                <p className="text-center text-[11px] text-gray-300 py-6">Aucune commande</p>
+                <p className="text-center text-[11px] text-gray-300 py-6">{t("Aucune commande")}</p>
               )}
               {cartes.map((c) => (
                 <div
@@ -117,7 +119,7 @@ export function FulfillmentKanban() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[12px] font-mono font-bold text-[#F5A623]">{c.numero}</p>
-                      <p className="text-[11.5px] text-[#444] truncate mt-0.5">{c.clientNom}</p>
+                      <p className="text-[11.5px] text-[#444] truncate mt-0.5">{t(c.clientNom)}</p>
                     </div>
                     <GripVertical size={13} className="text-gray-300 flex-shrink-0 mt-0.5" />
                   </div>

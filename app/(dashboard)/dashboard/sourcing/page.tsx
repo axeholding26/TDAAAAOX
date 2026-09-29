@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Search, Globe, ShoppingBag, ExternalLink, MapPin, TrendingUp, Clock, ShoppingCart, Factory, Link2, Moon, Zap, Lock, Sparkles } from "lucide-react";
 import { aAcces, type Palier } from "@/lib/plans";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const SOURCING_TUTORIAL_STEPS = [
   { Icon: Globe,        titre: "Fournisseurs vérifiés",     description: "AliExpress, Alibaba, CJ Dropshipping, Jumia, Spocket... une sélection de fournisseurs dropshipping vérifiés par l'équipe Axso." },
@@ -131,6 +132,7 @@ const CATEGORIES = ["Toutes", "Mode", "Tech", "Maison", "Beauté", "Alimentation
 
 
 function StarRating({ note }: { note: number }) {
+  const tr = useT();
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map(n => (
@@ -138,12 +140,13 @@ function StarRating({ note }: { note: number }) {
           <polygon points="5,1 6.2,4 9.5,4 7,6.2 8,9.5 5,7.5 2,9.5 3,6.2 0.5,4 3.8,4" />
         </svg>
       ))}
-      <span className="text-[11px] font-semibold text-[#666666] ml-0.5">{note}</span>
+      <span className="text-[11px] font-semibold text-[#666666] ml-0.5">{tr(note)}</span>
     </div>
   );
 }
 
 export default function SourcingPage() {
+  const tr = useT();
   const [search, setSearch]       = useState("");
   const [categorie, setCategorie] = useState("Toutes");
   const [plan, setPlan] = useState<Palier>("palier2"); // optimiste — évite de flasher un verrou avant le chargement
@@ -164,7 +167,7 @@ export default function SourcingPage() {
 
   return (
     <div className="space-y-5" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="sourcing" titre="Sourcing" sousTitre="Trouve tes fournisseurs" steps={SOURCING_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="sourcing" titre={tr("Sourcing")} sousTitre={tr("Trouve tes fournisseurs")} steps={SOURCING_TUTORIAL_STEPS} />
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <div className="relative bg-white rounded-2xl border border-[#E8E8E8] shadow-sm overflow-hidden">
@@ -176,16 +179,16 @@ export default function SourcingPage() {
               <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-bold mb-3 tracking-wide"
                 style={{ background: "#FFF7ED", color: "#D4911A", border: "1px solid #FDE68A" }}>
                 <Globe size={10} strokeWidth={2.5} />
-                SOURCING MONDIAL
+                {tr("SOURCING MONDIAL")}
               </div>
               <div className="flex items-center gap-2">
                 <h1 className="text-[22px] font-bold text-[#111111] leading-tight tracking-tight">
-                  Sourcing & Fournisseurs
+                  {tr("Sourcing & Fournisseurs")}
                 </h1>
                 <BoutonRevoirTutoriel moduleKey="sourcing" />
               </div>
               <p className="text-[#AAAAAA] text-sm mt-1.5 max-w-md leading-relaxed">
-                Les meilleurs fournisseurs dropshipping mondiaux, vérifiés par l'équipe Axso.
+                {tr("Les meilleurs fournisseurs dropshipping mondiaux, vérifiés par l'équipe Axso.")}
               </p>
             </div>
           </div>
@@ -205,8 +208,8 @@ export default function SourcingPage() {
                     <Ic size={15} style={{ color: "#F5A623" }} />
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-[#111111] leading-none">{s.val}</p>
-                    <p className="text-[#666666] text-[11px] mt-0.5">{s.label}</p>
+                    <p className="text-lg font-bold text-[#111111] leading-none">{tr(s.val)}</p>
+                    <p className="text-[#666666] text-[11px] mt-0.5">{tr(s.label)}</p>
                   </div>
                 </div>
               );
@@ -227,7 +230,7 @@ export default function SourcingPage() {
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher un fournisseur, pays, catégorie…"
+                placeholder={tr("Rechercher un fournisseur, pays, catégorie…")}
                 className="flex-1 bg-transparent text-sm text-[#111111] placeholder-[#AAAAAA] outline-none"
               />
               {search && (
@@ -241,7 +244,7 @@ export default function SourcingPage() {
                   style={categorie === c
                     ? { background: "#F5A623", color: "#111111", boxShadow: "0 2px 8px rgba(245,166,35,0.25)" }
                     : { background: "#F5F5F5", color: "#666666" }}>
-                  {c}
+                  {tr(c)}
                 </button>
               ))}
             </div>
@@ -251,7 +254,7 @@ export default function SourcingPage() {
           <div className="flex items-center justify-between px-1">
             <p className="text-xs text-[#AAAAAA] font-medium">
               {filtres.length} fournisseur{filtres.length !== 1 ? "s" : ""}
-              {search && ` pour "${search}"`}
+              {search && tr(" pour \"{0}\"", search)}
             </p>
           </div>
 
@@ -284,10 +287,10 @@ export default function SourcingPage() {
                       <f.Logo size={22} style={{ color: f.couleur }} />
                     </div>
                     <div>
-                      <p className="font-bold text-[#111111] text-sm leading-tight">{f.nom}</p>
+                      <p className="font-bold text-[#111111] text-sm leading-tight">{tr(f.nom)}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <MapPin size={9} className="text-[#CCCCCC]" />
-                        <p className="text-[#AAAAAA] text-[11px]">{f.pays}</p>
+                        <p className="text-[#AAAAAA] text-[11px]">{tr(f.pays)}</p>
                       </div>
                     </div>
                   </div>
@@ -295,14 +298,14 @@ export default function SourcingPage() {
                 </div>
 
                 {/* Description */}
-                <p className="text-[#666666] text-xs leading-relaxed mb-3.5 line-clamp-2">{f.description}</p>
+                <p className="text-[#666666] text-xs leading-relaxed mb-3.5 line-clamp-2">{tr(f.description)}</p>
 
                 {/* Catégories */}
                 <div className="flex flex-wrap gap-1 mb-4">
                   {f.categories.slice(0, 3).map(c => (
                     <span key={c} className="text-[10px] px-2 py-0.5 rounded-full font-medium"
                       style={{ background: "#F5F5F5", color: "#666666", border: "1px solid #E8E8E8" }}>
-                      {c}
+                      {tr(c)}
                     </span>
                   ))}
                   {f.categories.length > 3 && (
@@ -317,14 +320,14 @@ export default function SourcingPage() {
                 <div className="flex items-center justify-between pt-3 border-t border-[#E8E8E8]">
                   <div className="flex items-center gap-1.5">
                     <Clock size={11} className="text-[#CCCCCC]" />
-                    <span className="text-[11px] text-[#AAAAAA] font-medium">{f.delai}</span>
+                    <span className="text-[11px] text-[#AAAAAA] font-medium">{tr(f.delai)}</span>
                   </div>
                   <a href={f.url} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
                     style={{ color: "#F5A623", background: "#FFF7ED" }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,166,35,0.15)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "#FFF7ED")}>
-                    Visiter <ExternalLink size={10} />
+                    {tr("Visiter")}{" "}<ExternalLink size={10} />
                   </a>
                 </div>
                 </div>
@@ -335,9 +338,9 @@ export default function SourcingPage() {
                       className="flex flex-col items-center gap-2 text-center px-4 py-3 rounded-xl transition-all hover:opacity-90"
                       style={{ background: "white", border: "1px solid #FDE68A", boxShadow: "0 4px 16px rgba(245,166,35,0.15)" }}>
                       <Lock size={16} className="text-[#F5A623]" />
-                      <span className="text-xs font-bold text-[#111111]">Sourcing mondial — Palier 2</span>
+                      <span className="text-xs font-bold text-[#111111]">{tr("Sourcing mondial — Palier 2")}</span>
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#111111] px-3 py-1.5 rounded-full" style={{ background: "#F5A623" }}>
-                        <Sparkles size={10} /> Débloquer
+                        <Sparkles size={10} />{" "}{tr("Débloquer")}
                       </span>
                     </Link>
                   </div>
@@ -352,8 +355,8 @@ export default function SourcingPage() {
                   style={{ background: "#FFF7ED" }}>
                   <ShoppingBag size={22} style={{ color: "#FDE68A" }} />
                 </div>
-                <p className="text-[#666666] font-semibold text-sm">Aucun fournisseur trouvé</p>
-                <p className="text-[#AAAAAA] text-xs mt-1">Modifiez votre recherche ou vos filtres</p>
+                <p className="text-[#666666] font-semibold text-sm">{tr("Aucun fournisseur trouvé")}</p>
+                <p className="text-[#AAAAAA] text-xs mt-1">{tr("Modifiez votre recherche ou vos filtres")}</p>
               </div>
             )}
           </div>

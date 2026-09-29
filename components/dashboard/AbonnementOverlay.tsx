@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Loader2, Lock } from "lucide-react";
 import { PlansGrid } from "@/components/dashboard/PlansGrid";
 import { NOMS_PALIERS, type Palier } from "@/lib/plans";
+import { useT } from "@/components/I18nProvider";
 
 interface Etat {
   planActuel: Palier;
@@ -17,6 +18,7 @@ interface Etat {
 // c'est le point d'entrée unique déclenché par chaque cadenas de fonctionnalité
 // hors plan, ainsi que par le lien "Abonnement" de la sidebar.
 export function AbonnementOverlay({ palierRequis, onClose }: { palierRequis?: Palier; onClose: () => void }) {
+  const t = useT();
   const [etat, setEtat] = useState<Etat | null>(null);
   const [erreur, setErreur] = useState(false);
 
@@ -46,13 +48,13 @@ export function AbonnementOverlay({ palierRequis, onClose }: { palierRequis?: Pa
         <div className="flex items-center gap-2">
           {palierRequis && (
             <span className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/25">
-              <Lock size={10} /> Réservé au Palier {NOMS_PALIERS[palierRequis]}
+              <Lock size={10} />{" "}{t("Réservé au Palier")}{" "}{t(NOMS_PALIERS[palierRequis])}
             </span>
           )}
         </div>
         <button onClick={onClose}
           className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-          aria-label="Fermer">
+          aria-label={t("Fermer")}>
           <X size={18} />
         </button>
       </div>
@@ -61,7 +63,7 @@ export function AbonnementOverlay({ palierRequis, onClose }: { palierRequis?: Pa
       <div className="flex-1 overflow-y-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
           {erreur && (
-            <p className="text-center text-sm text-red-500 py-20">Impossible de charger votre abonnement. Réessayez.</p>
+            <p className="text-center text-sm text-red-500 py-20">{t("Impossible de charger votre abonnement. Réessayez.")}</p>
           )}
           {!erreur && !etat && (
             <div className="flex items-center justify-center py-20">

@@ -9,6 +9,7 @@ import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveSty
 import type { TreeRenderCtx } from "@/components/storefront/blocks/context";
 import { DropIndicator } from "./DropIndicator";
 import { ColumnResizeHandle } from "./ColumnResizeHandle";
+import { useT } from "@/components/I18nProvider";
 
 export const LABELS: Record<string, string> = {
   section: "Section", row: "Ligne", column: "Colonne",
@@ -24,11 +25,12 @@ export const LABELS: Record<string, string> = {
 // ce qui n'est possible que côté SSR storefront. Un aperçu statique
 // représentatif (piloté par nombre/colonnes) le remplace ici.
 export function ProductsCanvasPreview({ config }: { config: Record<string, any> }) {
+  const t = useT();
   const nombre = Math.min(Math.max(Number(config.nombre) || 8, 1), 8);
   const colonnes = Number(config.colonnes) || 4;
   return (
     <div className="py-2">
-      {config.titre && <h2 className="text-2xl font-bold font-playfair mb-4">{config.titre}</h2>}
+      {config.titre && <h2 className="text-2xl font-bold font-playfair mb-4">{t(config.titre)}</h2>}
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${colonnes}, minmax(0, 1fr))` }}>
         {Array.from({ length: nombre }).map((_, i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
@@ -40,7 +42,7 @@ export function ProductsCanvasPreview({ config }: { config: Record<string, any> 
           </div>
         ))}
       </div>
-      <p className="text-[12px] text-gray-400 mt-2">Aperçu — les vrais produits s'affichent sur la boutique en ligne.</p>
+      <p className="text-[12px] text-gray-400 mt-2">{t("Aperçu — les vrais produits s'affichent sur la boutique en ligne.")}</p>
     </div>
   );
 }
@@ -67,6 +69,7 @@ interface CanvasNodeProps {
 // extension des conteneurs partagés : ceux-ci restent de purs composants
 // serveur, sans hooks, réutilisables tels quels par le SSR storefront.
 export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDuplicate, onDelete, onToggleActif, onChangeConfig, onResizeColumns }: CanvasNodeProps) {
+  const t = useT();
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `node:${node.id}`,
     data: { kind: "node", nodeId: node.id, currentParentId: parentId, type: node.type },
@@ -83,16 +86,16 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
       }`}
       onClick={(e) => e.stopPropagation()}
     >
-      <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title="Déplacer">
+      <span {...attributes} {...listeners} style={{ touchAction: "none" }} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700 cursor-grab active:cursor-grabbing" title={t("Déplacer")}>
         <GripVertical size={14} />
       </span>
-      <button onClick={() => onToggleActif(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? "Afficher" : "Masquer"}>
+      <button onClick={() => onToggleActif(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title={desactive ? t("Afficher") : t("Masquer")}>
         {desactive ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
-      <button onClick={() => onDuplicate(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title="Dupliquer">
+      <button onClick={() => onDuplicate(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-700" title={t("Dupliquer")}>
         <Copy size={14} />
       </button>
-      <button onClick={() => onDelete(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500" title="Supprimer">
+      <button onClick={() => onDelete(node.id)} className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500" title={t("Supprimer")}>
         <Trash2 size={14} />
       </button>
     </div>
@@ -102,7 +105,7 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
     <span className={`absolute -top-3 left-1.5 z-20 text-[12px] font-bold uppercase tracking-wide px-2 py-1 rounded transition-opacity ${
       selectionne ? "bg-[#F5A623] text-black opacity-100" : "bg-gray-700 text-white opacity-0 group-hover/node:opacity-100"
     }`}>
-      {LABELS[node.type] || node.type}
+      {t(LABELS[node.type]) || t(node.type)}
     </span>
   );
 
@@ -122,8 +125,8 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
     return (
       <Tag ref={setNodeRef as any} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${flexClass} ${node.style?.customClass || ""} ${children.length === 0 ? "min-h-[64px] p-2" : ""}`}>
         <ResponsiveStyleTag nodeId={node.id} style={node.style} />
-        {label}
-        {toolbar}
+        {t(label)}
+        {t(toolbar)}
         {children.length === 0 ? (
           <DropIndicator parentId={node.id} index={0} empty />
         ) : (
@@ -150,8 +153,8 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
     return (
       <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
         <ResponsiveStyleTag nodeId={node.id} style={node.style} />
-        {label}
-        {toolbar}
+        {t(label)}
+        {t(toolbar)}
         <ProductsCanvasPreview config={node.config ?? {}} />
       </div>
     );
@@ -163,8 +166,8 @@ export function CanvasNode({ node, parentId, ctx, selectedNodeId, onSelect, onDu
   return (
     <div ref={setNodeRef} data-axs-id={node.id} onClick={handleClick} style={blockStyleToCss(node.style)} className={`${baseClass} ${node.style?.customClass || ""}`}>
       <ResponsiveStyleTag nodeId={node.id} style={node.style} />
-      {label}
-      {toolbar}
+      {t(label)}
+      {t(toolbar)}
       <div className={editableInline ? "" : "pointer-events-none"}>
         <Widget
           id={node.id}

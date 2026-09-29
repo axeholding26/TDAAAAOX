@@ -13,6 +13,7 @@ import {
   Search, TrendingUp, Users, Percent, ArrowRight, Zap, ShieldCheck,
   Wallet, Package, BadgeCheck, Link2, Rocket, LayoutGrid,
 } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Devenez affilié — gagnez de l'argent avec AXSO",
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export default async function AffiliationMarketplacePage({ searchParams }: Props) {
+  const t = await getT();
   const { q, cat, tri } = await searchParams;
 
   const programmes = await prisma.programmeAffiliation.findMany({
@@ -92,16 +94,16 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
           <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 rounded-full"
             style={{ background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
             <Rocket size={13} style={{ color: "#F5A623" }} />
-            <span className="text-xs font-bold" style={{ color: "#F5A623" }}>Le marketplace d'affiliation d'AXSO</span>
+            <span className="text-xs font-bold" style={{ color: "#F5A623" }}>{t("Le marketplace d'affiliation d'AXSO")}</span>
           </div>
           <h1 className="text-4xl sm:text-6xl font-black mb-6 leading-[1.08]">
-            Gagnez de l'argent en<br />
+            {t("Gagnez de l'argent en")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              recommandant des produits
+              {t("recommandant des produits")}
             </span>
           </h1>
           <p className="text-[#666666] text-xl leading-relaxed max-w-2xl mx-auto mb-8">
-            Parcourez les produits de {nbMarchands}+ marchands africains, obtenez votre lien unique en un clic — sans compte à créer — et touchez jusqu'à {Math.round(commissionMax)}% de commission sur chaque vente.
+            {t("Parcourez les produits de")}{" "}{t(nbMarchands)}{t("+ marchands africains, obtenez votre lien unique en un clic — sans compte à créer — et touchez jusqu'à")}{" "}{Math.round(commissionMax)}% de commission sur chaque vente.
           </p>
           <div className="flex justify-center mb-4">
             <AffiliateAccountPanel />
@@ -110,12 +112,12 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
             <a href="#marketplace"
               className="inline-flex items-center gap-2 font-bold px-8 py-4 rounded-2xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>
-              Parcourir les produits <ArrowRight size={18} />
+              {t("Parcourir les produits")}{" "}<ArrowRight size={18} />
             </a>
             <Link href="/mon-espace-affilie"
               className="font-semibold px-8 py-4 rounded-2xl transition-all hover:bg-gray-50"
               style={{ border: "1px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.65)" }}>
-              J'ai déjà des liens — voir mes gains
+              {t("J'ai déjà des liens — voir mes gains")}
             </Link>
           </div>
         </div>
@@ -137,7 +139,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                 <Icon size={18} style={{ color: "#F5A623" }} />
               </div>
               <p className="text-3xl font-black mb-1" style={{ color: "#F5A623" }}>{n}</p>
-              <p className="text-[#808080] text-xs">{label}</p>
+              <p className="text-[#808080] text-xs">{t(label)}</p>
             </div>
           ))}
         </div>
@@ -147,8 +149,8 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-24">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black mb-3">Comment ça marche</h2>
-            <p className="text-[#808080]">Aucun compte marchand requis — devenez affilié en moins de 2 minutes</p>
+            <h2 className="text-3xl sm:text-4xl font-black mb-3">{t("Comment ça marche")}</h2>
+            <p className="text-[#808080]">{t("Aucun compte marchand requis — devenez affilié en moins de 2 minutes")}</p>
           </div>
           <div className="grid sm:grid-cols-3 gap-5">
             {[
@@ -160,8 +162,8 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.1)" }}>
                   <Icon size={20} style={{ color: "#F5A623" }} />
                 </div>
-                <p className="font-bold text-[#111111] mb-2">{titre}</p>
-                <p className="text-[#666666] text-sm leading-relaxed">{texte}</p>
+                <p className="font-bold text-[#111111] mb-2">{t(titre)}</p>
+                <p className="text-[#666666] text-sm leading-relaxed">{t(texte)}</p>
               </div>
             ))}
           </div>
@@ -172,8 +174,8 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
       <section id="marketplace" className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28 scroll-mt-24">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-black mb-3">Le catalogue</h2>
-            <p className="text-[#808080]">{nbProduits} produits éligibles à l'affiliation, tous marchands confondus</p>
+            <h2 className="text-3xl sm:text-4xl font-black mb-3">{t("Le catalogue")}</h2>
+            <p className="text-[#808080]">{t(nbProduits)}{" "}{t("produits éligibles à l'affiliation, tous marchands confondus")}</p>
           </div>
 
           {/* Filtres */}
@@ -181,31 +183,31 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
             <div className="relative flex-1 min-w-48">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#B3B3B3" }} />
               <input
-                name="q" defaultValue={q} placeholder="Rechercher un produit ou un marchand…"
+                name="q" defaultValue={q} placeholder={t("Rechercher un produit ou un marchand…")}
                 className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border outline-none"
                 style={{ borderColor: "rgba(0,0,0,0.1)" }}
               />
             </div>
             {categories.length > 0 && (
               <select name="cat" defaultValue={cat || ""} className="px-4 py-3 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-                <option value="">Toutes catégories</option>
-                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                <option value="">{t("Toutes catégories")}</option>
+                {categories.map((c) => <option key={c} value={c}>{t(c)}</option>)}
               </select>
             )}
             <select name="tri" defaultValue={tri || "commission"} className="px-4 py-3 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
-              <option value="commission">Commission la plus élevée</option>
-              <option value="populaire">Best-sellers</option>
+              <option value="commission">{t("Commission la plus élevée")}</option>
+              <option value="populaire">{t("Best-sellers")}</option>
             </select>
             <button type="submit" className="px-6 py-3 text-sm font-bold rounded-xl text-white" style={{ background: "#111111" }}>
-              Filtrer
+              {t("Filtrer")}
             </button>
           </form>
 
           {listings.length === 0 ? (
             <div className="text-center py-20 rounded-2xl border-2 border-dashed" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
               <Package size={40} className="mx-auto mb-4" style={{ color: "#D9D9D9" }} />
-              <p className="font-bold text-[#111111] mb-1">Aucun produit trouvé</p>
-              <p className="text-sm text-[#999999]">Essayez une autre recherche ou catégorie.</p>
+              <p className="font-bold text-[#111111] mb-1">{t("Aucun produit trouvé")}</p>
+              <p className="text-sm text-[#999999]">{t("Essayez une autre recherche ou catégorie.")}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -224,15 +226,15 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                     </span>
                     {TYPES_PRODUIT_DIGITAL.has(l.type) && (
                       <span className="absolute top-2.5 right-2.5 text-[9px] font-bold px-2 py-0.5 rounded-lg text-white" style={{ background: "rgba(0,0,0,0.6)" }}>
-                        Digital
+                        {t("Digital")}
                       </span>
                     )}
                   </div>
                   <div className="p-3.5">
-                    <p className="font-medium text-sm leading-snug line-clamp-2 mb-1.5">{l.nom}</p>
+                    <p className="font-medium text-sm leading-snug line-clamp-2 mb-1.5">{t(l.nom)}</p>
                     <div className="flex items-center gap-1 mb-2">
                       {l.logoUrl && <img src={l.logoUrl} alt="" className="w-3.5 h-3.5 rounded-full object-cover" />}
-                      <p className="text-[11px] truncate" style={{ color: "#999999" }}>{l.nomBoutique}</p>
+                      <p className="text-[11px] truncate" style={{ color: "#999999" }}>{t(l.nomBoutique)}</p>
                       {l.certifie && <BadgeCheck size={11} style={{ color: "#F5A623" }} />}
                     </div>
                     <p className="font-bold text-sm mb-3" style={{ color: "#111111" }}>{formatMontant(l.prix, l.devise)}</p>
@@ -258,8 +260,8 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.12)" }}>
                 <Icon size={20} style={{ color: "#F5A623" }} />
               </div>
-              <p className="font-bold text-[#111111] mb-2">{titre}</p>
-              <p className="text-[#666666] text-sm leading-relaxed">{texte}</p>
+              <p className="font-bold text-[#111111] mb-2">{t(titre)}</p>
+              <p className="text-[#666666] text-sm leading-relaxed">{t(texte)}</p>
             </div>
           ))}
         </div>

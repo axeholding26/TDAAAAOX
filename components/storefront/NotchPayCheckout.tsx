@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Loader2, Lock, AlertCircle, Smartphone } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 export function NotchPayCheckout({
   commandeId,
@@ -19,6 +20,7 @@ export function NotchPayCheckout({
   clientTelephone?: string;
   onError?: (msg: string) => void;
 }) {
+  const t = useT();
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
 
@@ -55,7 +57,7 @@ export function NotchPayCheckout({
       {erreur && (
         <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm">
           <AlertCircle size={15} className="flex-shrink-0" />
-          {erreur}
+          {t(erreur)}
         </div>
       )}
       <button
@@ -65,16 +67,16 @@ export function NotchPayCheckout({
         className="w-full bg-[#111111] hover:bg-[#333333] text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
       >
         {loading ? (
-          <><Loader2 size={16} className="animate-spin" /> Redirection en cours...</>
+          <><Loader2 size={16} className="animate-spin" />{" "}{t("Redirection en cours...")}</>
         ) : (
           <>
             <Lock size={15} />
-            Payer {montant.toLocaleString()} {devise}
+            {t("Payer")}{" "}{montant.toLocaleString()} {t(devise)}
           </>
         )}
       </button>
       <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400">
-        <Smartphone size={12} /> Orange Money, MTN MoMo & carte bancaire · Paiement sécurisé NotchPay
+        <Smartphone size={12} />{" "}{t("Orange Money, MTN MoMo & carte bancaire · Paiement sécurisé NotchPay")}
       </p>
     </div>
   );

@@ -2,6 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { MessageCircle, Mail, Phone, Clock, MapPin, ArrowRight, Shield } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Contact — AXSO",
@@ -42,7 +43,8 @@ const FAQ = [
   { q: "Puis-je migrer depuis une autre plateforme ?", r: "Notre équipe vous accompagne gratuitement pour migrer vos produits, clients et commandes depuis Shopify, WooCommerce ou votre boutique actuelle." },
 ];
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -54,16 +56,16 @@ export default function ContactPage() {
         <div className="max-w-2xl mx-auto text-center relative">
           <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] mb-6 px-3 py-1.5 rounded-full"
             style={{ color: "#F5A623", background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
-            <Mail size={11} /> Contactez-nous
+            <Mail size={11} />{" "}{t("Contactez-nous")}
           </span>
           <h1 className="text-4xl sm:text-5xl font-black mb-5 leading-tight">
-            Une question ?<br />
+            {t("Une question ?")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              Nous sommes là.
+              {t("Nous sommes là.")}
             </span>
           </h1>
           <p className="text-[#666666] text-lg leading-relaxed">
-            Notre équipe répond en moins de 24h ouvrées. Pour les urgences, le chat en direct est disponible dès 8h.
+            {t("Notre équipe répond en moins de 24h ouvrées. Pour les urgences, le chat en direct est disponible dès 8h.")}
           </p>
         </div>
       </section>
@@ -80,11 +82,11 @@ export default function ContactPage() {
                 style={{ background: `${accent}12`, border: `1px solid ${accent}25` }}>
                 <Icon size={22} style={{ color: accent }} />
               </div>
-              <h3 className="font-bold text-[#111111] mb-1.5">{titre}</h3>
-              <p className="text-[#808080] text-sm mb-5 leading-relaxed">{desc}</p>
+              <h3 className="font-bold text-[#111111] mb-1.5">{t(titre)}</h3>
+              <p className="text-[#808080] text-sm mb-5 leading-relaxed">{t(desc)}</p>
               <span className="text-xs font-bold px-4 py-2 rounded-full inline-flex items-center gap-1.5 transition-all group-hover:scale-105"
                 style={{ background: `${accent}12`, color: accent, border: `1px solid ${accent}25` }}>
-                {label} <ArrowRight size={11} />
+                {t(label)} <ArrowRight size={11} />
               </span>
             </a>
           ))}
@@ -100,12 +102,12 @@ export default function ContactPage() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(245,166,35,0.1)" }}>
                   <Clock size={16} style={{ color: "#F5A623" }} />
                 </div>
-                <h3 className="font-bold text-[#111111] text-sm">Horaires d'assistance</h3>
+                <h3 className="font-bold text-[#111111] text-sm">{t("Horaires d'assistance")}</h3>
               </div>
               <div className="space-y-2 text-sm text-[#666666]">
-                <div className="flex justify-between"><span>Lun – Ven</span><span className="text-[#444444]">08h00 – 20h00</span></div>
-                <div className="flex justify-between"><span>Samedi</span><span className="text-[#444444]">09h00 – 17h00</span></div>
-                <div className="flex justify-between"><span>Dimanche</span><span className="text-[#8C8C8C]">Fermé</span></div>
+                <div className="flex justify-between"><span>{t("Lun – Ven")}</span><span className="text-[#444444]">{t("08h00 – 20h00")}</span></div>
+                <div className="flex justify-between"><span>{t("Samedi")}</span><span className="text-[#444444]">{t("09h00 – 17h00")}</span></div>
+                <div className="flex justify-between"><span>{t("Dimanche")}</span><span className="text-[#8C8C8C]">{t("Fermé")}</span></div>
               </div>
             </div>
 
@@ -114,15 +116,15 @@ export default function ContactPage() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)" }}>
                   <MapPin size={16} style={{ color: "#7c3aed" }} />
                 </div>
-                <h3 className="font-bold text-[#111111] text-sm">Localisation</h3>
+                <h3 className="font-bold text-[#111111] text-sm">{t("Localisation")}</h3>
               </div>
-              <p className="text-[#666666] text-sm leading-relaxed">Dakar, Sénégal<br />Équipe distribuée sur 12 pays</p>
+              <p className="text-[#666666] text-sm leading-relaxed">{t("Dakar, Sénégal")}<br />{t("Équipe distribuée sur 12 pays")}</p>
             </div>
 
             <div className="rounded-2xl p-6 border" style={{ background: "rgba(37,211,102,0.04)", borderColor: "rgba(37,211,102,0.15)" }}>
-              <h3 className="font-bold text-[#111111] text-sm mb-2">Partenariats & Presse</h3>
-              <p className="text-[#737373] text-xs leading-relaxed mb-3">Pour les demandes médias, partenariats ou investisseurs :</p>
-              <a href="mailto:hello@axso.app" className="text-xs font-bold" style={{ color: "#F5A623" }}>hello@axso.app →</a>
+              <h3 className="font-bold text-[#111111] text-sm mb-2">{t("Partenariats & Presse")}</h3>
+              <p className="text-[#737373] text-xs leading-relaxed mb-3">{t("Pour les demandes médias, partenariats ou investisseurs :")}</p>
+              <a href="mailto:hello@axso.app" className="text-xs font-bold" style={{ color: "#F5A623" }}>{t("hello@axso.app →")}</a>
             </div>
           </div>
 
@@ -130,8 +132,8 @@ export default function ContactPage() {
           <div className="lg:col-span-3">
             <div className="rounded-3xl p-8 border"
               style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <h2 className="text-2xl font-black mb-1 text-[#111111]">Envoyer un message</h2>
-              <p className="text-[#808080] text-sm mb-7">Nous répondons sous 24h en jours ouvrés.</p>
+              <h2 className="text-2xl font-black mb-1 text-[#111111]">{t("Envoyer un message")}</h2>
+              <p className="text-[#808080] text-sm mb-7">{t("Nous répondons sous 24h en jours ouvrés.")}</p>
 
               <style>{`
                 .axso-input { background:#fff; border:1px solid rgba(0,0,0,0.1); color:#111111; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; font-family:inherit; }
@@ -142,34 +144,34 @@ export default function ContactPage() {
               <form className="space-y-4" action="mailto:support@axso.app" method="get">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">Prénom</label>
-                    <input type="text" name="fname" placeholder="Aminata" className="axso-input" />
+                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Prénom")}</label>
+                    <input type="text" name="fname" placeholder={t("Aminata")} className="axso-input" />
                   </div>
                   <div>
-                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">Nom</label>
-                    <input type="text" name="lname" placeholder="Diallo" className="axso-input" />
+                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Nom")}</label>
+                    <input type="text" name="lname" placeholder={t("Diallo")} className="axso-input" />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">Email</label>
+                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Email")}</label>
                   <input type="email" name="email" placeholder="aminata@example.com" className="axso-input" />
                 </div>
                 <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">Sujet</label>
-                  <input type="text" name="subject" placeholder="Support technique, partenariat, presse..." className="axso-input" />
+                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Sujet")}</label>
+                  <input type="text" name="subject" placeholder={t("Support technique, partenariat, presse...")} className="axso-input" />
                 </div>
                 <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">Message</label>
-                  <textarea rows={5} name="body" placeholder="Décrivez votre demande en détail..." className="axso-input" style={{ resize: "none" }} />
+                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Message")}</label>
+                  <textarea rows={5} name="body" placeholder={t("Décrivez votre demande en détail...")} className="axso-input" style={{ resize: "none" }} />
                 </div>
                 <button type="submit"
                   className="w-full font-bold py-4 rounded-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"
                   style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.25)" }}>
-                  Envoyer le message <ArrowRight size={17} />
+                  {t("Envoyer le message")}{" "}<ArrowRight size={17} />
                 </button>
                 <p className="text-center text-[#B3B3B3] text-xs flex items-center justify-center gap-1.5">
                   <Shield size={10} />
-                  Vos données sont protégées et ne sont jamais partagées.
+                  {t("Vos données sont protégées et ne sont jamais partagées.")}
                 </p>
               </form>
             </div>
@@ -180,13 +182,13 @@ export default function ContactPage() {
       {/* ── FAQ ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-black text-[#111111] text-center mb-10">Questions fréquentes</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#111111] text-center mb-10">{t("Questions fréquentes")}</h2>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
               <div key={i} className="rounded-2xl p-6 border"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
-                <h3 className="font-bold text-[#111111] mb-2 text-sm">{item.q}</h3>
-                <p className="text-[#666666] text-sm leading-relaxed">{item.r}</p>
+                <h3 className="font-bold text-[#111111] mb-2 text-sm">{t(item.q)}</h3>
+                <p className="text-[#666666] text-sm leading-relaxed">{t(item.r)}</p>
               </div>
             ))}
           </div>

@@ -3,6 +3,7 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { MessageCircle, Users2, Target, Video, Globe, Calendar } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Communauté — AXSO",
@@ -22,7 +23,8 @@ const TEMOIGNAGES = [
   { nom: "Marie-Claire N.", ville: "Douala, Cameroun", texte: "Les live hebdomadaires sont une mine d'or. J'en apprends à chaque session.", emoji: "M" },
 ];
 
-export default function CommunityPage() {
+export default async function CommunityPage() {
+  const tr = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -33,16 +35,16 @@ export default function CommunityPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              <Globe size={14} className="inline-block mr-1.5" />Communauté
+              <Globe size={14} className="inline-block mr-1.5" />{tr("Communauté")}
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
-              20 000+ bâtisseurs<br />
+              {tr("20 000+ bâtisseurs")}<br />
               <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                qui grandissent ensemble
+                {tr("qui grandissent ensemble")}
               </span>
             </h1>
             <p className="text-[#737373] text-xl max-w-2xl mx-auto">
-              Rejoignez la plus grande communauté e-commerce d'Afrique. Entraide, stratégies, success stories — tous les jours.
+              {tr("Rejoignez la plus grande communauté e-commerce d'Afrique. Entraide, stratégies, success stories — tous les jours.")}
             </p>
           </div>
 
@@ -55,11 +57,11 @@ export default function CommunityPage() {
                 <span className="flex-shrink-0" style={{ color: c.color }}><c.Icon size={30} /></span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-[#111111] group-hover:text-[#F5A623] transition-colors">{c.nom}</h3>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: `${c.color}15`, color: c.color }}>{c.membres}</span>
+                    <h3 className="font-bold text-[#111111] group-hover:text-[#F5A623] transition-colors">{tr(c.nom)}</h3>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: `${c.color}15`, color: c.color }}>{tr(c.membres)}</span>
                   </div>
-                  <p className="text-[#737373] text-sm">{c.desc}</p>
-                  <span className="inline-block mt-3 text-xs font-bold" style={{ color: c.color }}>Rejoindre →</span>
+                  <p className="text-[#737373] text-sm">{tr(c.desc)}</p>
+                  <span className="inline-block mt-3 text-xs font-bold" style={{ color: c.color }}>{tr("Rejoindre →")}</span>
                 </div>
               </a>
             ))}
@@ -68,8 +70,8 @@ export default function CommunityPage() {
           {/* Événements */}
           <div className="rounded-3xl border p-8 mb-16"
             style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02))", borderColor: "rgba(245,166,35,0.2)" }}>
-            <h2 className="text-2xl font-bold mb-2"><Calendar size={22} className="inline-block mr-2" />Événements communauté</h2>
-            <p className="text-[#737373] mb-6">Chaque semaine, des sessions live pour apprendre et grandir.</p>
+            <h2 className="text-2xl font-bold mb-2"><Calendar size={22} className="inline-block mr-2" />{tr("Événements communauté")}</h2>
+            <p className="text-[#737373] mb-6">{tr("Chaque semaine, des sessions live pour apprendre et grandir.")}</p>
             <div className="space-y-3">
               {[
                 { jour: "Lundi 19h", titre: "Live Q&A stratégie e-commerce", tag: "Hebdo" },
@@ -79,12 +81,12 @@ export default function CommunityPage() {
                 <div key={ev.titre} className="flex items-center justify-between rounded-xl px-5 py-3.5"
                   style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(0,0,0,0.06)" }}>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs font-bold w-28" style={{ color: "#F5A623" }}>{ev.jour}</span>
-                    <span className="text-sm text-[#444444]">{ev.titre}</span>
+                    <span className="text-xs font-bold w-28" style={{ color: "#F5A623" }}>{tr(ev.jour)}</span>
+                    <span className="text-sm text-[#444444]">{tr(ev.titre)}</span>
                   </div>
                   <span className="text-xs px-2 py-0.5 rounded-full"
                     style={{ background: "rgba(245,166,35,0.1)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.2)" }}>
-                    {ev.tag}
+                    {tr(ev.tag)}
                   </span>
                 </div>
               ))}
@@ -96,13 +98,13 @@ export default function CommunityPage() {
             {TEMOIGNAGES.map(t => (
               <div key={t.nom} className="rounded-2xl border p-6"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
-                <p className="text-[#4D4D4D] text-sm leading-relaxed mb-4">"{t.texte}"</p>
+                <p className="text-[#4D4D4D] text-sm leading-relaxed mb-4">"{tr(t.texte)}"</p>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                    style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>{t.emoji}</div>
+                    style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>{tr(t.emoji)}</div>
                   <div>
-                    <p className="text-[#111111] text-xs font-bold">{t.nom}</p>
-                    <p className="text-[#8C8C8C] text-xs">{t.ville}</p>
+                    <p className="text-[#111111] text-xs font-bold">{tr(t.nom)}</p>
+                    <p className="text-[#8C8C8C] text-xs">{tr(t.ville)}</p>
                   </div>
                 </div>
               </div>

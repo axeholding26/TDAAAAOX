@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { RefreshCw, CheckCircle, XCircle, Clock, Plus, ChevronDown } from "lucide-react";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const RETOURS_TUTORIAL_STEPS = [
   { Icon: Plus,         titre: "Crée un retour",       description: "Renseigne l'ID commande, la raison et le type de résolution (remboursement, échange, avoir)." },
@@ -56,6 +57,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 export function RetoursPanel() {
+  const t = useT();
   const [retours, setRetours] = useState<Retour[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, ouverts: 0, enCours: 0, acceptes: 0 });
   const [loading, setLoading] = useState(true);
@@ -107,14 +109,14 @@ export function RetoursPanel() {
 
   return (
     <div className="space-y-5">
-      <ModuleTutorial moduleKey="logistique-retours" titre="Retours" sousTitre="Gestion des retours & RMA" steps={RETOURS_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="logistique-retours" titre={t("Retours")} sousTitre={t("Gestion des retours & RMA")} steps={RETOURS_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end">
         <button
           onClick={() => setShowForm(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold"
           style={{ background: "#F5A623" }}
         >
-          <Plus size={14} /> Créer un retour
+          <Plus size={14} />{" "}{t("Créer un retour")}
         </button>
       </div>
 
@@ -127,8 +129,8 @@ export function RetoursPanel() {
           { label: "Acceptés", value: stats.acceptes, color: "#10b981" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
-            <p className="text-[11px] text-[#888] mb-1">{label}</p>
-            <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+            <p className="text-[11px] text-[#888] mb-1">{t(label)}</p>
+            <p className="text-2xl font-bold" style={{ color }}>{t(value)}</p>
           </div>
         ))}
       </div>
@@ -136,46 +138,46 @@ export function RetoursPanel() {
       {/* Formulaire création */}
       {showForm && (
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-          <h3 className="text-[14px] font-semibold text-[#111] mb-4">Nouveau retour</h3>
+          <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau retour")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">ID Commande</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("ID Commande")}</label>
               <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="cuid..." value={form.commandeId} onChange={(e) => setForm((f) => ({ ...f, commandeId: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Nom client</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Nom client")}</label>
               <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.clientNom} onChange={(e) => setForm((f) => ({ ...f, clientNom: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Email client</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Email client")}</label>
               <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.clientEmail} onChange={(e) => setForm((f) => ({ ...f, clientEmail: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Raison</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Raison")}</label>
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.raison} onChange={(e) => setForm((f) => ({ ...f, raison: e.target.value }))}>
-                {Object.entries(RAISON_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(RAISON_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Type de résolution</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Type de résolution")}</label>
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
-                {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Montant à rembourser (optionnel)</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Montant à rembourser (optionnel)")}</label>
               <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.montant} onChange={(e) => setForm((f) => ({ ...f, montant: e.target.value }))} />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-[11px] text-[#888] mb-1">Description (optionnel)</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Description (optionnel)")}</label>
               <textarea className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" rows={2} value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={createRetour} disabled={saving} className="px-4 py-2 rounded-lg text-white text-[13px] font-semibold" style={{ background: "#F5A623" }}>
-              {saving ? "Enregistrement..." : "Créer le retour"}
+              {saving ? t("Enregistrement...") : t("Créer le retour")}
             </button>
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">Annuler</button>
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">{t("Annuler")}</button>
           </div>
         </div>
       )}
@@ -184,7 +186,7 @@ export function RetoursPanel() {
       {retours.length === 0 ? (
         <div className="bg-white border border-dashed border-[#E5E5E5] rounded-xl p-10 text-center">
           <RefreshCw size={32} className="mx-auto mb-3 text-[#DDD]" />
-          <p className="text-[13px] text-[#888]">Aucun retour pour l'instant. C'est bon signe !</p>
+          <p className="text-[13px] text-[#888]">{t("Aucun retour pour l'instant. C'est bon signe !")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -199,16 +201,16 @@ export function RetoursPanel() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[13px] font-semibold text-[#111]">{r.clientNom}</p>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold text-white" style={{ background: sc.color }}>{sc.label}</span>
-                      <span className="text-[10px] text-[#AAA]">{TYPE_LABELS[r.type] ?? r.type}</span>
+                      <p className="text-[13px] font-semibold text-[#111]">{t(r.clientNom)}</p>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
+                      <span className="text-[10px] text-[#AAA]">{t(TYPE_LABELS[r.type]) ?? t(r.type)}</span>
                     </div>
                     <p className="text-[11px] text-[#888] mt-0.5">
-                      Cmd {r.commande.numero} · {RAISON_LABELS[r.raison] ?? r.raison}
+                      {t("Cmd")}{" "}{r.commande.numero} · {t(RAISON_LABELS[r.raison]) ?? t(r.raison)}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    {r.montant && <p className="text-[13px] font-bold text-[#111]">{r.montant.toLocaleString()} {r.commande.devise}</p>}
+                    {r.montant && <p className="text-[13px] font-bold text-[#111]">{r.montant.toLocaleString()} {t(r.commande.devise)}</p>}
                     <p className="text-[10px] text-[#AAA]">{new Date(r.createdAt).toLocaleDateString("fr")}</p>
                   </div>
                   <ChevronDown size={14} className="text-[#CCC] shrink-0" style={{ transform: isExpanded ? "rotate(180deg)" : "none" }} />
@@ -216,28 +218,28 @@ export function RetoursPanel() {
 
                 {isExpanded && (
                   <div className="border-t border-[#F0F0F0] p-4 bg-[#FAFAFA]">
-                    {r.description && <p className="text-[12px] text-[#555] mb-3">{r.description}</p>}
-                    <p className="text-[11px] text-[#888] mb-3">Email client : {r.clientEmail}</p>
-                    {r.notes && <p className="text-[11px] text-[#666] mb-3 italic">Note : {r.notes}</p>}
+                    {r.description && <p className="text-[12px] text-[#555] mb-3">{t(r.description)}</p>}
+                    <p className="text-[11px] text-[#888] mb-3">{t("Email client :")}{" "}{t(r.clientEmail)}</p>
+                    {r.notes && <p className="text-[11px] text-[#666] mb-3 italic">{t("Note :")}{" "}{t(r.notes)}</p>}
                     <div className="flex gap-2 flex-wrap">
                       {r.statut !== "accepte" && (
                         <button onClick={() => updateStatut(r.id, "accepte")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#10b981" }}>
-                          <CheckCircle size={12} /> Accepter
+                          <CheckCircle size={12} />{" "}{t("Accepter")}
                         </button>
                       )}
                       {r.statut !== "en_cours" && r.statut !== "clos" && (
                         <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#111111" }}>
-                          <Clock size={12} /> En cours
+                          <Clock size={12} />{" "}{t("En cours")}
                         </button>
                       )}
                       {r.statut !== "rejete" && (
                         <button onClick={() => updateStatut(r.id, "rejete")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#ef4444" }}>
-                          <XCircle size={12} /> Rejeter
+                          <XCircle size={12} />{" "}{t("Rejeter")}
                         </button>
                       )}
                       {r.statut !== "clos" && (
                         <button onClick={() => updateStatut(r.id, "clos")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] text-[#666] border border-[#E5E5E5]">
-                          Clore
+                          {t("Clore")}
                         </button>
                       )}
                     </div>

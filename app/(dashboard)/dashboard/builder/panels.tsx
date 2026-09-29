@@ -19,6 +19,7 @@ import { MediaUpload } from "@/components/ui/MediaUpload";
 import { FONTS } from "@/lib/theme-fonts";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { CONFIRMER_CHANGEMENT, parametresApercu } from "@/components/dashboard/ApercuDesign";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Section library types ────────────────────────────────────────────────────
 const CUSTOM_SECTION_TYPES = [
@@ -58,36 +59,38 @@ const sansAccents = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g
 const correspond = (q: string, ...textes: (string | undefined)[]) => !q.trim() || sansAccents(textes.join(" ")).includes(sansAccents(q.trim()));
 
 function ChampRecherche({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const tr = useT();
   return (
     <div className="relative">
       <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-      <input autoFocus value={value} onChange={e => onChange(e.target.value)} placeholder="Rechercher une section…"
+      <input autoFocus value={value} onChange={e => onChange(e.target.value)} placeholder={tr("Rechercher une section…")}
         className="w-full h-10 pl-9 pr-8 rounded-xl border border-gray-200 bg-white text-sm text-gray-800 placeholder:text-gray-400 outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20" />
-      {value && <button onClick={() => onChange("")} aria-label="Effacer" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"><X size={14} /></button>}
+      {value && <button onClick={() => onChange("")} aria-label={tr("Effacer")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"><X size={14} /></button>}
     </div>
   );
 }
 
 function SectionLibrary({ onAdd, onClose, avecFaq }: { onAdd: (t: CustomSection["type"]) => void; onClose: () => void; avecFaq: boolean }) {
+  const tr = useT();
   const [q, setQ] = useState("");
   // FAQ : page À propos uniquement.
   const types = CUSTOM_SECTION_TYPES.filter(t => (avecFaq || t.type !== "faq") && correspond(q, t.label, t.desc));
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm font-semibold text-gray-700">Bibliothèque de sections</p>
+        <p className="text-sm font-semibold text-gray-700">{tr("Bibliothèque de sections")}</p>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-300"><X size={13} /></button>
       </div>
       <div className="mb-3"><ChampRecherche value={q} onChange={setQ} /></div>
       <div className="space-y-1.5">
-        {!types.length && <p className="text-[13px] text-gray-500 text-center py-6">Aucune section pour « {q.trim()} »</p>}
+        {!types.length && <p className="text-[13px] text-gray-500 text-center py-6">{tr("Aucune section pour «")}{" "}{q.trim()} »</p>}
         {types.map(t => (
           <button key={t.type} onClick={() => onAdd(t.type as CustomSection["type"])}
             className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 hover:border-[#F5A623]/30 hover:bg-[#F5A623]/5 transition-all group">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(245,166,35,0.08)" }}><t.Icon size={15} style={{ color: "#F5A623" }} /></div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-gray-800 group-hover:text-[#F5A623] transition-colors">{t.label}</p>
-              <p className="text-[12px] text-gray-600 mt-0.5 leading-relaxed">{t.desc}</p>
+              <p className="text-sm font-semibold text-gray-800 group-hover:text-[#F5A623] transition-colors">{tr(t.label)}</p>
+              <p className="text-[12px] text-gray-600 mt-0.5 leading-relaxed">{tr(t.desc)}</p>
             </div>
             <Plus size={12} className="flex-shrink-0 text-gray-700 group-hover:text-[#F5A623] mt-0.5 transition-colors" />
           </button>
@@ -99,41 +102,42 @@ function SectionLibrary({ onAdd, onClose, avecFaq }: { onAdd: (t: CustomSection[
 
 // ─── Custom Section Controls ──────────────────────────────────────────────────
 function CustomSectionControls({ section, update }: { section: CustomSection; update: (id: string, patch: any) => void }) {
+  const tr = useT();
   const c = section.config;
   const up = (patch: any) => update(section.id, patch);
 
   if (section.type === "faq") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <ListeItems titre="Questions" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici.", image: "" })}
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <ListeItems titre={tr("Questions")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici.", image: "" })}
         champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
     </>
   );
 
   if (section.type === "features") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FSel label="Colonnes" value={String(c.colonnes||3)} onChange={v=>up({colonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FSel label={tr("Colonnes")} value={String(c.colonnes||3)} onChange={v=>up({colonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
       {(c.items||[]).map((item: any, i: number) => (
         <div key={i} className="bg-gray-50 rounded-xl p-2.5 space-y-1.5">
           <div className="flex gap-2">
-            <FInp label="Emoji" value={item.icone} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],icone:v}; up({items:it}); }} />
-            <FInp label="Titre" value={item.titre} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],titre:v}; up({items:it}); }} />
+            <FInp label={tr("Emoji")} value={item.icone} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],icone:v}; up({items:it}); }} />
+            <FInp label={tr("Titre")} value={item.titre} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],titre:v}; up({items:it}); }} />
           </div>
-          <FInp label="Description" value={item.texte} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],texte:v}; up({items:it}); }} multiline />
+          <FInp label={tr("Description")} value={item.texte} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],texte:v}; up({items:it}); }} multiline />
         </div>
       ))}
-      <button onClick={()=>up({items:[...(c.items||[]),{icone:"★",titre:"Avantage",texte:"Description"}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter</button>
+      <button onClick={()=>up({items:[...(c.items||[]),{icone:"★",titre:"Avantage",texte:"Description"}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter")}</button>
     </>
   );
 
   if (section.type === "stats") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
       {(c.items||[]).map((item: any, i: number) => (
         <div key={i} className="bg-gray-50 rounded-xl p-2.5 flex gap-2">
-          <FInp label="Valeur (ex: 10K+)" value={item.valeur} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],valeur:v}; up({items:it}); }} />
-          <FInp label="Label" value={item.label} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],label:v}; up({items:it}); }} />
+          <FInp label={tr("Valeur (ex: 10K+)")} value={item.valeur} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],valeur:v}; up({items:it}); }} />
+          <FInp label={tr("Label")} value={item.label} onChange={v=>{ const it=[...c.items]; it[i]={...it[i],label:v}; up({items:it}); }} />
         </div>
       ))}
     </>
@@ -141,118 +145,118 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
 
   if (section.type === "countdown") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FInp label="Description" value={c.texte||""} onChange={v=>up({texte:v})} multiline />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("Description")} value={c.texte||""} onChange={v=>up({texte:v})} multiline />
       <div>
-        <label className="text-[12px] text-gray-500 block mb-1.5">Date de fin</label>
+        <label className="text-[12px] text-gray-500 block mb-1.5">{tr("Date de fin")}</label>
         <input type="datetime-local" value={c.dateFin||""} onChange={e=>up({dateFin:e.target.value})} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
       </div>
-      <FInp label="Texte du bouton CTA" value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
+      <FInp label={tr("Texte du bouton CTA")} value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
     </>
   );
 
   if (section.type === "brands") return (
     <>
-      <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FSel label="Style" value={c.style||"carousel"} onChange={v=>up({style:v})} opts={[{v:"carousel",l:"Carrousel défilant"},{v:"grid",l:"Grille fixe"}]} />
+      <FInp label={tr("Titre (optionnel)")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FSel label={tr("Style")} value={c.style||"carousel"} onChange={v=>up({style:v})} opts={[{v:"carousel",l:"Carrousel défilant"},{v:"grid",l:"Grille fixe"}]} />
       <div>
-        <p className="text-[12px] text-gray-500 mb-2">URLs des logos</p>
+        <p className="text-[12px] text-gray-500 mb-2">{tr("URLs des logos")}</p>
         {(c.logos||[]).map((url: string, i: number) => (
           <div key={i} className="flex gap-1 mb-1.5">
             <FInp label="" value={url} onChange={v=>{ const l=[...c.logos]; l[i]=v; up({logos:l}); }} />
             <button onClick={()=>up({logos:c.logos.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
           </div>
         ))}
-        <button onClick={()=>up({logos:[...(c.logos||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un logo</button>
+        <button onClick={()=>up({logos:[...(c.logos||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter un logo")}</button>
       </div>
     </>
   );
 
   if (section.type === "video") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={c.videoUrl||""} onChange={v=>up({videoUrl:v})} media="video" />
-      <FSel label="Style" value={c.style||"centered"} onChange={v=>up({style:v})} opts={[{v:"centered",l:"Centré (16:9)"},{v:"fullwidth",l:"Pleine largeur"},{v:"split",l:"Divisé (texte + vidéo)"}]} />
-      <FCheck label="Lecture automatique" checked={c.autoplay||false} onChange={v=>up({autoplay:v})} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("URL vidéo (YouTube, Vimeo ou .mp4)")} value={c.videoUrl||""} onChange={v=>up({videoUrl:v})} media="video" />
+      <FSel label={tr("Style")} value={c.style||"centered"} onChange={v=>up({style:v})} opts={[{v:"centered",l:"Centré (16:9)"},{v:"fullwidth",l:"Pleine largeur"},{v:"split",l:"Divisé (texte + vidéo)"}]} />
+      <FCheck label={tr("Lecture automatique")} checked={c.autoplay||false} onChange={v=>up({autoplay:v})} />
     </>
   );
 
   if (section.type === "gallery") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FSel label="Disposition" value={c.layout||"masonry"} onChange={v=>up({layout:v})} opts={[{v:"masonry",l:"Mosaïque"},{v:"grid",l:"Grille régulière"},{v:"carousel",l:"Carrousel"}]} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FSel label={tr("Disposition")} value={c.layout||"masonry"} onChange={v=>up({layout:v})} opts={[{v:"masonry",l:"Mosaïque"},{v:"grid",l:"Grille régulière"},{v:"carousel",l:"Carrousel"}]} />
       <div>
-        <p className="text-[12px] text-gray-500 mb-2">URLs des photos</p>
+        <p className="text-[12px] text-gray-500 mb-2">{tr("URLs des photos")}</p>
         {(c.images||[]).map((url: string, i: number) => (
           <div key={i} className="flex gap-1 mb-1.5">
             <FInp label="" value={url} onChange={v=>{ const imgs=[...c.images]; imgs[i]=v; up({images:imgs}); }} media="image" />
             <button onClick={()=>up({images:c.images.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
           </div>
         ))}
-        <button onClick={()=>up({images:[...(c.images||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une photo</button>
+        <button onClick={()=>up({images:[...(c.images||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter une photo")}</button>
       </div>
     </>
   );
 
   if (section.type === "social-proof") return (
     <>
-      <FInp label="Note moyenne (ex: 4.9/5)" value={c.note||""} onChange={v=>up({note:v})} />
-      <FInp label="Nb clients (ex: 12 000+)" value={c.nbClients||""} onChange={v=>up({nbClients:v})} />
-      <FInp label="Nb commandes (ex: 30 000+)" value={c.nbCommandes||""} onChange={v=>up({nbCommandes:v})} />
+      <FInp label={tr("Note moyenne (ex: 4.9/5)")} value={c.note||""} onChange={v=>up({note:v})} />
+      <FInp label={tr("Nb clients (ex: 12 000+)")} value={c.nbClients||""} onChange={v=>up({nbClients:v})} />
+      <FInp label={tr("Nb commandes (ex: 30 000+)")} value={c.nbCommandes||""} onChange={v=>up({nbCommandes:v})} />
     </>
   );
 
   if (section.type === "cta-band") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FInp label="Texte" value={c.texte||""} onChange={v=>up({texte:v})} multiline />
-      <FInp label="Texte du bouton" value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
-      <FSel label="Style" value={c.style||"gradient"} onChange={v=>up({style:v})} opts={[{v:"gradient",l:"Dégradé"},{v:"dark",l:"Sombre"},{v:"accent",l:"Couleur accent"}]} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("Texte")} value={c.texte||""} onChange={v=>up({texte:v})} multiline />
+      <FInp label={tr("Texte du bouton")} value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
+      <FSel label={tr("Style")} value={c.style||"gradient"} onChange={v=>up({style:v})} opts={[{v:"gradient",l:"Dégradé"},{v:"dark",l:"Sombre"},{v:"accent",l:"Couleur accent"}]} />
     </>
   );
 
   if (section.type === "richtext") return (
     <>
-      <FInp label="Titre" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FInp label="Texte" value={c.texte||""} onChange={v=>up({texte:v})} multiline />
-      <FInp label="Bouton (laisser vide si aucun)" value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
+      <FInp label={tr("Titre")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("Texte")} value={c.texte||""} onChange={v=>up({texte:v})} multiline />
+      <FInp label={tr("Bouton (laisser vide si aucun)")} value={c.ctaTexte||""} onChange={v=>up({ctaTexte:v})} />
     </>
   );
 
   if (section.type === "spacer") return (
-    <FSel label="Hauteur" value={c.hauteur||"80px"} onChange={v=>up({hauteur:v})} opts={[{v:"40px",l:"Petit (40px)"},{v:"80px",l:"Moyen (80px)"},{v:"120px",l:"Grand (120px)"},{v:"160px",l:"XL (160px)"}]} />
+    <FSel label={tr("Hauteur")} value={c.hauteur||"80px"} onChange={v=>up({hauteur:v})} opts={[{v:"40px",l:"Petit (40px)"},{v:"80px",l:"Moyen (80px)"},{v:"120px",l:"Grand (120px)"},{v:"160px",l:"XL (160px)"}]} />
   );
 
   if (section.type === "tabs") return (
     <>
-      <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FInp label={tr("Titre (optionnel)")} value={c.titre||""} onChange={v=>up({titre:v})} />
       {(c.onglets||[]).map((tab: any, i: number) => (
         <div key={tab.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
           <div className="flex gap-2 items-center">
-            <div className="flex-1"><FInp label="Nom de l'onglet" value={tab.label} onChange={v=>{ const t=[...c.onglets]; t[i]={...t[i],label:v}; up({onglets:t}); }} /></div>
+            <div className="flex-1"><FInp label={tr("Nom de l'onglet")} value={tab.label} onChange={v=>{ const t=[...c.onglets]; t[i]={...t[i],label:v}; up({onglets:t}); }} /></div>
             <button onClick={()=>up({onglets:c.onglets.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-4"><Trash2 size={13}/></button>
           </div>
           <SousBlocsEditor blocs={tab.blocs||[]} onChange={(blocs: any[])=>{ const t=[...c.onglets]; t[i]={...t[i],blocs}; up({onglets:t}); }} />
         </div>
       ))}
-      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:uid("tab"),label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter un onglet</button>
+      <button onClick={()=>up({onglets:[...(c.onglets||[]),{id:uid("tab"),label:"Nouvel onglet",blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter un onglet")}</button>
     </>
   );
 
   if (section.type === "columns") return (
     <>
-      <FInp label="Titre (optionnel)" value={c.titre||""} onChange={v=>up({titre:v})} />
-      <FSel label="Nombre de colonnes" value={String(c.nombreColonnes||3)} onChange={v=>up({nombreColonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
+      <FInp label={tr("Titre (optionnel)")} value={c.titre||""} onChange={v=>up({titre:v})} />
+      <FSel label={tr("Nombre de colonnes")} value={String(c.nombreColonnes||3)} onChange={v=>up({nombreColonnes:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4 colonnes"}]} />
       {(c.colonnes||[]).map((col: any, i: number) => (
         <div key={col.id} className="bg-gray-50 rounded-xl p-3 space-y-2.5 border border-gray-200">
           <div className="flex items-center justify-between">
-            <p className="text-[12px] text-gray-500 font-semibold">Colonne {i+1}</p>
+            <p className="text-[12px] text-gray-500 font-semibold">{tr("Colonne")}{" "}{i+1}</p>
             <button onClick={()=>up({colonnes:c.colonnes.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400"><Trash2 size={13}/></button>
           </div>
           <SousBlocsEditor blocs={col.blocs||[]} onChange={(blocs: any[])=>{ const cols=[...c.colonnes]; cols[i]={...cols[i],blocs}; up({colonnes:cols}); }} />
         </div>
       ))}
-      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:uid("col"),blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">+ Ajouter une colonne</button>
+      <button onClick={()=>up({colonnes:[...(c.colonnes||[]),{id:uid("col"),blocs:[]}]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter une colonne")}</button>
     </>
   );
 
@@ -261,6 +265,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
 
 // ─── Éditeur de sous-blocs (utilisé par les sections Onglets & Colonnes) ──────
 function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[]) => void }) {
+  const tr = useT();
   const addBloc = (type: string) => {
     const defaults: Record<string, any> = {
       photos: { images: [""] },
@@ -291,7 +296,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
           <div key={b.id} className="bg-gray-200/50 rounded-lg p-2 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                {meta && <meta.Icon size={10} />} {meta?.label}
+                {meta && <meta.Icon size={10} />} {tr(meta?.label)}
               </span>
               <button onClick={() => removeBloc(i)} className="text-red-500/40 hover:text-red-400"><Trash2 size={10} /></button>
             </div>
@@ -300,24 +305,24 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
                 {(b.config.images || [""]).map((url: string, j: number) => (
                   <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const imgs = [...(b.config.images || [""])]; imgs[j] = v; updateBloc(i, { images: imgs }); }} media="image" /></div>
                 ))}
-                <button onClick={() => updateBloc(i, { images: [...(b.config.images || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ photo</button>
+                <button onClick={() => updateBloc(i, { images: [...(b.config.images || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ photo")}</button>
               </div>
             )}
             {b.type === "temoignage" && (<>
-              <FInp label="Nom" value={b.config.nom || ""} onChange={v => updateBloc(i, { nom: v })} />
-              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+              <FInp label={tr("Nom")} value={b.config.nom || ""} onChange={v => updateBloc(i, { nom: v })} />
+              <FInp label={tr("Texte")} value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
             </>)}
             {b.type === "promo" && (<>
-              <FInp label="Titre" value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
-              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
-              <FInp label="Bouton" value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
+              <FInp label={tr("Titre")} value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
+              <FInp label={tr("Texte")} value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+              <FInp label={tr("Bouton")} value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
             </>)}
             {b.type === "texte" && (<>
-              <FInp label="Titre" value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
-              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
+              <FInp label={tr("Titre")} value={b.config.titre || ""} onChange={v => updateBloc(i, { titre: v })} />
+              <FInp label={tr("Texte")} value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} multiline />
             </>)}
             {b.type === "video" && (
-              <FInp label="URL vidéo (YouTube, Vimeo ou .mp4)" value={b.config.videoUrl || ""} onChange={v => updateBloc(i, { videoUrl: v })} media="video" />
+              <FInp label={tr("URL vidéo (YouTube, Vimeo ou .mp4)")} value={b.config.videoUrl || ""} onChange={v => updateBloc(i, { videoUrl: v })} media="video" />
             )}
             {b.type === "stats" && (
               <div>
@@ -327,49 +332,49 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
                     <FInp label="" value={it.label || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], label: v }; updateBloc(i, { items }); }} />
                   </div>
                 ))}
-                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { valeur: "", label: "" }] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ statistique</button>
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { valeur: "", label: "" }] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ statistique")}</button>
               </div>
             )}
             {b.type === "features" && (
               <div>
                 {(b.config.items || []).map((it: any, j: number) => (
                   <div key={j} className="space-y-1 mb-2 pb-2 border-b border-gray-200 last:border-0">
-                    <FInp label="Icône (emoji)" value={it.icone || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], icone: v }; updateBloc(i, { items }); }} />
-                    <FInp label="Titre" value={it.titre || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], titre: v }; updateBloc(i, { items }); }} />
-                    <FInp label="Texte" value={it.texte || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], texte: v }; updateBloc(i, { items }); }} />
+                    <FInp label={tr("Icône (emoji)")} value={it.icone || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], icone: v }; updateBloc(i, { items }); }} />
+                    <FInp label={tr("Titre")} value={it.titre || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], titre: v }; updateBloc(i, { items }); }} />
+                    <FInp label={tr("Texte")} value={it.texte || ""} onChange={v => { const items = [...(b.config.items || [])]; items[j] = { ...items[j], texte: v }; updateBloc(i, { items }); }} />
                   </div>
                 ))}
-                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { icone: "★", titre: "", texte: "" }] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ avantage</button>
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), { icone: "★", titre: "", texte: "" }] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ avantage")}</button>
               </div>
             )}
             {b.type === "countdown" && (<>
-              <FInp label="Texte" value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} />
-              <label className="block text-[13px] text-gray-500 mb-0.5 mt-1">Date de fin</label>
+              <FInp label={tr("Texte")} value={b.config.texte || ""} onChange={v => updateBloc(i, { texte: v })} />
+              <label className="block text-[13px] text-gray-500 mb-0.5 mt-1">{tr("Date de fin")}</label>
               <input type="datetime-local" value={b.config.dateFin || ""} onChange={e => updateBloc(i, { dateFin: e.target.value })} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] text-gray-800 mb-1.5" />
-              <FInp label="Bouton" value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
+              <FInp label={tr("Bouton")} value={b.config.ctaTexte || ""} onChange={v => updateBloc(i, { ctaTexte: v })} />
             </>)}
             {b.type === "logos" && (
               <div>
                 {(b.config.logos || [""]).map((url: string, j: number) => (
                   <div key={j} className="mb-1"><FInp label="" value={url} onChange={v => { const logos = [...(b.config.logos || [""])]; logos[j] = v; updateBloc(i, { logos }); }} /></div>
                 ))}
-                <button onClick={() => updateBloc(i, { logos: [...(b.config.logos || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ logo</button>
+                <button onClick={() => updateBloc(i, { logos: [...(b.config.logos || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ logo")}</button>
               </div>
             )}
             {b.type === "confiance" && (<>
-              <FInp label="Note" value={b.config.note || ""} onChange={v => updateBloc(i, { note: v })} />
-              <FInp label="Nb clients" value={b.config.nbClients || ""} onChange={v => updateBloc(i, { nbClients: v })} />
+              <FInp label={tr("Note")} value={b.config.note || ""} onChange={v => updateBloc(i, { note: v })} />
+              <FInp label={tr("Nb clients")} value={b.config.nbClients || ""} onChange={v => updateBloc(i, { nbClients: v })} />
               {(b.config.certifications || []).map((cert: string, j: number) => (
                 <div key={j} className="mb-1"><FInp label="" value={cert} onChange={v => { const certs = [...(b.config.certifications || [])]; certs[j] = v; updateBloc(i, { certifications: certs }); }} /></div>
               ))}
-              <button onClick={() => updateBloc(i, { certifications: [...(b.config.certifications || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ certification</button>
+              <button onClick={() => updateBloc(i, { certifications: [...(b.config.certifications || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ certification")}</button>
             </>)}
             {b.type === "liste" && (
               <div>
                 {(b.config.items || [""]).map((it: string, j: number) => (
                   <div key={j} className="mb-1"><FInp label="" value={it} onChange={v => { const items = [...(b.config.items || [""])]; items[j] = v; updateBloc(i, { items }); }} /></div>
                 ))}
-                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">+ élément</button>
+                <button onClick={() => updateBloc(i, { items: [...(b.config.items || []), ""] })} className="text-[13px] text-gray-500 hover:text-gray-300">{tr("+ élément")}</button>
               </div>
             )}
             {b.type === "spacer" && (
@@ -382,7 +387,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
         {SOUS_BLOC_TYPES.map(t => (
           <button key={t.type} onClick={() => addBloc(t.type)}
             className="text-[13px] px-2 py-1 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-300 flex items-center gap-1">
-            <Plus size={9} /> {t.label}
+            <Plus size={9} /> {tr(t.label)}
           </button>
         ))}
       </div>
@@ -392,6 +397,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
 
 // ─── Panel Couleurs ───────────────────────────────────────────────────────────
 export function PanelCouleurs({ config, setColors }: any) {
+  const tr = useT();
   const FIELDS = [
     {k:"accent",            l:"Couleur principale (accent)"},
     {k:"accentSecondaire",  l:"Couleur secondaire"},
@@ -422,7 +428,7 @@ export function PanelCouleurs({ config, setColors }: any) {
         <FCol key={f.k} label={f.l} value={(config.colors as any)[f.k]||"#888888"} onChange={v=>setColors({[f.k]:v})} />
       ))}</div>
       <div>
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Palettes prêtes à l'emploi</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Palettes prêtes à l'emploi")}</p>
         <div className="grid grid-cols-4 gap-2">
           {PRESETS.map(p=>(
             <button key={p.l} onClick={()=>setColors(p.c)} className="group flex flex-col items-center gap-1.5">
@@ -431,7 +437,7 @@ export function PanelCouleurs({ config, setColors }: any) {
                 <div className="flex-1" style={{backgroundColor:p.c.accent}} />
                 <div className="flex-1" style={{backgroundColor:p.c.surface}} />
               </div>
-              <span className="text-[13px] text-gray-500 group-hover:text-[#F5A623] transition-colors">{p.l}</span>
+              <span className="text-[13px] text-gray-500 group-hover:text-[#F5A623] transition-colors">{tr(p.l)}</span>
             </button>
           ))}
         </div>
@@ -442,17 +448,18 @@ export function PanelCouleurs({ config, setColors }: any) {
 
 // ─── Panel Typographie ────────────────────────────────────────────────────────
 export function PanelTypo({ config, setFonts }: any) {
+  const tr = useT();
   const cats = [...new Set(FONTS.map(f=>f.cat))];
   return (
     <div className="p-4 space-y-5">
       <div>
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Police des titres</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Police des titres")}</p>
         {cats.map(cat=>(
           <div key={cat}>
-            <p className="text-[13px] text-gray-600 uppercase tracking-wider px-1 py-1">{cat}</p>
+            <p className="text-[13px] text-gray-600 uppercase tracking-wider px-1 py-1">{tr(cat)}</p>
             {FONTS.filter(f=>f.cat===cat).map(f=>(
               <button key={f.v} onClick={()=>setFonts({titre:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${config.fonts.titre===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100 hover:text-gray-300"}`}>
-                <span>{f.label}</span>
+                <span>{tr(f.label)}</span>
                 {config.fonts.titre===f.v && <Check size={10}/>}
               </button>
             ))}
@@ -460,20 +467,20 @@ export function PanelTypo({ config, setFonts }: any) {
         ))}
       </div>
       <div className="border-t border-gray-200 pt-4">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Police du corps</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Police du corps")}</p>
         {FONTS.filter(f=>f.cat==="Sans-serif").map(f=>(
           <button key={f.v} onClick={()=>setFonts({corps:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${config.fonts.corps===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
-            <span>{f.label}</span>{config.fonts.corps===f.v && <Check size={10}/>}
+            <span>{tr(f.label)}</span>{config.fonts.corps===f.v && <Check size={10}/>}
           </button>
         ))}
       </div>
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Paramètres</p>
-        <FSel label="Poids titre" value={config.fonts.poidsTitre||"700"} onChange={v=>setFonts({poidsTitre:v})} opts={[{v:"400",l:"Normal"},{v:"500",l:"Medium"},{v:"600",l:"SemiBold"},{v:"700",l:"Bold"},{v:"800",l:"ExtraBold"},{v:"900",l:"Black"}]} />
-        <FSel label="Taille de base" value={config.fonts.tailleBase||"16px"} onChange={v=>setFonts({tailleBase:v})} opts={[{v:"13px",l:"13px"},{v:"14px",l:"14px"},{v:"15px",l:"15px"},{v:"16px",l:"16px (défaut)"},{v:"17px",l:"17px"},{v:"18px",l:"18px"}]} />
-        <FSel label="Espacement lettres" value={config.fonts.lettreEspacement||"normal"} onChange={v=>setFonts({lettreEspacement:v})} opts={[{v:"tight",l:"Resserré"},{v:"normal",l:"Normal"},{v:"wide",l:"Élargi"},{v:"ultra",l:"Ultra large"}]} />
-        <FSel label="Hauteur de ligne" value={config.fonts.hauteurLigne||"normal"} onChange={v=>setFonts({hauteurLigne:v})} opts={[{v:"compact",l:"Compact (1.2)"},{v:"normal",l:"Normal (1.5)"},{v:"relaxed",l:"Aéré (1.8)"}]} />
-        <FSel label="Casse des titres" value={config.fonts.transformTitre||"none"} onChange={v=>setFonts({transformTitre:v})} opts={[{v:"none",l:"Normal"},{v:"uppercase",l:"MAJUSCULES"},{v:"capitalize",l:"Chaque Mot"}]} />
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Paramètres")}</p>
+        <FSel label={tr("Poids titre")} value={config.fonts.poidsTitre||"700"} onChange={v=>setFonts({poidsTitre:v})} opts={[{v:"400",l:"Normal"},{v:"500",l:"Medium"},{v:"600",l:"SemiBold"},{v:"700",l:"Bold"},{v:"800",l:"ExtraBold"},{v:"900",l:"Black"}]} />
+        <FSel label={tr("Taille de base")} value={config.fonts.tailleBase||"16px"} onChange={v=>setFonts({tailleBase:v})} opts={[{v:"13px",l:"13px"},{v:"14px",l:"14px"},{v:"15px",l:"15px"},{v:"16px",l:"16px (défaut)"},{v:"17px",l:"17px"},{v:"18px",l:"18px"}]} />
+        <FSel label={tr("Espacement lettres")} value={config.fonts.lettreEspacement||"normal"} onChange={v=>setFonts({lettreEspacement:v})} opts={[{v:"tight",l:"Resserré"},{v:"normal",l:"Normal"},{v:"wide",l:"Élargi"},{v:"ultra",l:"Ultra large"}]} />
+        <FSel label={tr("Hauteur de ligne")} value={config.fonts.hauteurLigne||"normal"} onChange={v=>setFonts({hauteurLigne:v})} opts={[{v:"compact",l:"Compact (1.2)"},{v:"normal",l:"Normal (1.5)"},{v:"relaxed",l:"Aéré (1.8)"}]} />
+        <FSel label={tr("Casse des titres")} value={config.fonts.transformTitre||"none"} onChange={v=>setFonts({transformTitre:v})} opts={[{v:"none",l:"Normal"},{v:"uppercase",l:"MAJUSCULES"},{v:"capitalize",l:"Chaque Mot"}]} />
       </div>
     </div>
   );
@@ -481,41 +488,42 @@ export function PanelTypo({ config, setFonts }: any) {
 
 // ─── Panel Mise en page ───────────────────────────────────────────────────────
 export function PanelLayout({ config, setLayout, set }: any) {
+  const tr = useT();
   const lay = config.layout || {};
   const RADII = [{v:"0px",l:"Aucun"},{v:"4px",l:"Légèrement"},{v:"8px",l:"Doux"},{v:"12px",l:"Standard"},{v:"16px",l:"Arrondi"},{v:"24px",l:"Pilule"},{v:"9999px",l:"Cercle"}];
   return (
     <div className="p-4 space-y-5">
       <div className="space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Conteneur</p>
-        <FSel label="Largeur max" value={lay.largeurContainer||"1280px"} onChange={v=>setLayout({largeurContainer:v})} opts={[{v:"1024px",l:"1024px"},{v:"1280px",l:"1280px"},{v:"1440px",l:"1440px"},{v:"1600px",l:"1600px"},{v:"100%",l:"Pleine largeur"}]} />
-        <FSel label="Padding sections" value={lay.paddingSection||"lg"} onChange={v=>setLayout({paddingSection:v})} opts={[{v:"sm",l:"Compact (2rem)"},{v:"md",l:"Normal (4rem)"},{v:"lg",l:"Large (6rem)"},{v:"xl",l:"XL (8rem)"}]} />
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Conteneur")}</p>
+        <FSel label={tr("Largeur max")} value={lay.largeurContainer||"1280px"} onChange={v=>setLayout({largeurContainer:v})} opts={[{v:"1024px",l:"1024px"},{v:"1280px",l:"1280px"},{v:"1440px",l:"1440px"},{v:"1600px",l:"1600px"},{v:"100%",l:"Pleine largeur"}]} />
+        <FSel label={tr("Padding sections")} value={lay.paddingSection||"lg"} onChange={v=>setLayout({paddingSection:v})} opts={[{v:"sm",l:"Compact (2rem)"},{v:"md",l:"Normal (4rem)"},{v:"lg",l:"Large (6rem)"},{v:"xl",l:"XL (8rem)"}]} />
       </div>
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Produits</p>
-        <FSel label="Colonnes desktop" value={String(lay.colonnesProduits||4)} onChange={v=>setLayout({colonnesProduits:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4"},{v:"5",l:"5"}]} />
-        <FSel label="Colonnes mobile" value={String(lay.colonnesMobile||2)} onChange={v=>setLayout({colonnesMobile:Number(v)})} opts={[{v:"1",l:"1"},{v:"2",l:"2"}]} />
-        <FSel label="Style des cartes" value={lay.styleCarte||"shadow"} onChange={v=>setLayout({styleCarte:v})} opts={[{v:"shadow",l:"Ombre portée"},{v:"bordered",l:"Bordure"},{v:"flat",l:"Flat (sans relief)"},{v:"lifted",l:"Surélevé au survol"}]} />
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Produits")}</p>
+        <FSel label={tr("Colonnes desktop")} value={String(lay.colonnesProduits||4)} onChange={v=>setLayout({colonnesProduits:Number(v)})} opts={[{v:"2",l:"2"},{v:"3",l:"3"},{v:"4",l:"4"},{v:"5",l:"5"}]} />
+        <FSel label={tr("Colonnes mobile")} value={String(lay.colonnesMobile||2)} onChange={v=>setLayout({colonnesMobile:Number(v)})} opts={[{v:"1",l:"1"},{v:"2",l:"2"}]} />
+        <FSel label={tr("Style des cartes")} value={lay.styleCarte||"shadow"} onChange={v=>setLayout({styleCarte:v})} opts={[{v:"shadow",l:"Ombre portée"},{v:"bordered",l:"Bordure"},{v:"flat",l:"Flat (sans relief)"},{v:"lifted",l:"Surélevé au survol"}]} />
       </div>
       <div className="border-t border-gray-200 pt-4">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Coins arrondis</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Coins arrondis")}</p>
         <div className="grid grid-cols-4 gap-1.5 mb-3">
           {RADII.map(r=>(
             <button key={r.v} onClick={()=>set((p: ThemeConfig)=>({...p,radius:r.v}))} className={`flex flex-col items-center gap-1 p-2 border transition-all ${config.radius===r.v?"border-[#F5A623] bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`} style={{borderRadius:r.v==="0px"?"4px":r.v==="9999px"?"50%":r.v}}>
               <div className="w-4 h-4 border-2 border-current opacity-60" style={{borderRadius:r.v==="9999px"?"50%":r.v}} />
-              <span className="text-[12px] text-gray-500">{r.l}</span>
+              <span className="text-[12px] text-gray-500">{tr(r.l)}</span>
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <input type="number" min={0} max={999} value={parseInt(config.radius)||0} onChange={e=>set((p: ThemeConfig)=>({...p,radius:`${e.target.value}px`}))} className="w-16 bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
-          <span className="text-sm text-gray-600">px (custom)</span>
+          <span className="text-sm text-gray-600">{tr("px (custom)")}</span>
         </div>
       </div>
       <div className="border-t border-gray-200 pt-4 space-y-1.5">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-2">Ombres</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-2">{tr("Ombres")}</p>
         {[{v:"none",l:"Aucune"},{v:"sm",l:"Légère"},{v:"md",l:"Moyenne"},{v:"lg",l:"Forte"},{v:"xl",l:"Très forte"}].map(o=>(
           <button key={o.v} onClick={()=>setLayout({ombre:o.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex justify-between ${(lay.ombre||"md")===o.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
-            <span>{o.l}</span>{(lay.ombre||"md")===o.v&&<Check size={10}/>}
+            <span>{tr(o.l)}</span>{(lay.ombre||"md")===o.v&&<Check size={10}/>}
           </button>
         ))}
       </div>
@@ -557,6 +565,7 @@ function remplacerImage(html: string, index: number, url: string): string {
 }
 
 function MediasDesign({ config, set }: { config: ThemeConfig; set: (u: (p: ThemeConfig) => ThemeConfig) => void }) {
+  const tr = useT();
   const tree = config.builderTree ?? [];
   const images = useMemo(() => imagesDuDesign(tree), [tree]);
   // Une ligne par section du design (bloc embed-html unique) : image de fond de sa racine.
@@ -585,16 +594,16 @@ function MediasDesign({ config, set }: { config: ThemeConfig; set: (u: (p: Theme
 
   return (
     <div className="p-4 space-y-4">
-      <p className="text-[12.5px] text-gray-600 leading-relaxed">Ajoute une image de fond à chaque section de ton design, et remplace ses photos. Colle un lien ou importe depuis ton appareil.</p>
+      <p className="text-[12.5px] text-gray-600 leading-relaxed">{tr("Ajoute une image de fond à chaque section de ton design, et remplace ses photos. Colle un lien ou importe depuis ton appareil.")}</p>
       {sections.map((sec) => (
         <div key={sec.id} className="rounded-xl border border-gray-200 bg-white p-3 space-y-2">
-          <p className="text-[13px] font-semibold text-gray-800">{sec.nom}</p>
-          <FInp label="Image de fond" value={sec.fond} onChange={(v) => majFond(sec.embedId, v.trim())} media="image" />
-          {sec.fond && <button onClick={() => majFond(sec.embedId, "")} className="text-[12px] text-red-500 hover:underline">Retirer l'image de fond</button>}
+          <p className="text-[13px] font-semibold text-gray-800">{tr(sec.nom)}</p>
+          <FInp label={tr("Image de fond")} value={sec.fond} onChange={(v) => majFond(sec.embedId, v.trim())} media="image" />
+          {sec.fond && <button onClick={() => majFond(sec.embedId, "")} className="text-[12px] text-red-500 hover:underline">{tr("Retirer l'image de fond")}</button>}
           {images.filter((img) => img.sectionId === sec.id).map((img) => (
             <div key={`${img.embedId}-${img.index}`} className="flex gap-3 items-start pt-2 border-t border-gray-100">
               <img src={img.src} alt="" className="w-14 h-14 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
-              <div className="flex-1 min-w-0"><FInp label="Photo" value={img.src.startsWith("data:") ? "" : img.src} onChange={(v) => v.trim() && remplacer(img, v.trim())} media="image" /></div>
+              <div className="flex-1 min-w-0"><FInp label={tr("Photo")} value={img.src.startsWith("data:") ? "" : img.src} onChange={(v) => v.trim() && remplacer(img, v.trim())} media="image" /></div>
             </div>
           ))}
         </div>
@@ -604,29 +613,30 @@ function MediasDesign({ config, set }: { config: ThemeConfig; set: (u: (p: Theme
 }
 
 export function PanelMedias({ config, set, setSection, updateCustomSection }: any) {
+  const tr = useT();
   // Design importé : ses images réelles (les sections hero/promo/à propos ci-dessous sont celles des anciens modèles).
   if (config.builderCss && set) return <MediasDesign config={config} set={set} />;
   const sec = config.sections as any;
   return (
     <div className="p-4 space-y-5">
       <div>
-        <p className="text-[12px] text-gray-600 mb-4 leading-relaxed">Gérez les images et vidéos de chaque section. Utilisez des URLs directes (CDN, Cloudinary, Unsplash, etc.).</p>
+        <p className="text-[12px] text-gray-600 mb-4 leading-relaxed">{tr("Gérez les images et vidéos de chaque section. Utilisez des URLs directes (CDN, Cloudinary, Unsplash, etc.).")}</p>
 
         <div className="space-y-4">
           {/* Hero */}
           <div className="bg-gray-50 rounded-xl p-3 space-y-2.5">
-            <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ImageIcon size={12} /> Hero — Image de fond</p>
-            <p className="text-[13px] text-gray-600">L'image de fond principale (bannière boutique) se configure dans <Link href="/dashboard/boutique" className="text-[#F5A623] underline">Ma boutique → Médias</Link></p>
+            <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ImageIcon size={12} />{" "}{tr("Hero — Image de fond")}</p>
+            <p className="text-[13px] text-gray-600">{tr("L'image de fond principale (bannière boutique) se configure dans")}{" "}<Link href="/dashboard/boutique" className="text-[#F5A623] underline">{tr("Ma boutique → Médias")}</Link></p>
             {sec.hero?.style === "slideshow" && (
               <div>
-                <p className="text-[12px] text-gray-500 mb-2">Images du diaporama</p>
+                <p className="text-[12px] text-gray-500 mb-2">{tr("Images du diaporama")}</p>
                 {(sec.hero.slideshowImages||[""]).map((url: string, i: number) => (
                   <div key={i} className="flex gap-1 mb-1.5 items-center">
                     <FInp label="" value={url} onChange={v=>{ const imgs=[...(sec.hero.slideshowImages||[""])]; imgs[i]=v; setSection("hero",{slideshowImages:imgs}); }} media="image" />
                     {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                   </div>
                 ))}
-                <button onClick={()=>setSection("hero",{slideshowImages:[...(sec.hero.slideshowImages||[""]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">+ Ajouter</button>
+                <button onClick={()=>setSection("hero",{slideshowImages:[...(sec.hero.slideshowImages||[""]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">{tr("+ Ajouter")}</button>
               </div>
             )}
           </div>
@@ -634,7 +644,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
           {/* À propos */}
           {sec.about?.actif && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={12} /> Notre histoire — Image</p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={12} />{" "}{tr("Notre histoire — Image")}</p>
               <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} media="image" />
             </div>
           )}
@@ -642,7 +652,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
           {/* Bannière promo */}
           {sec.promo?.actif && sec.promo?.style === "image" && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Target size={12} /> Bannière promo — Image</p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Target size={12} />{" "}{tr("Bannière promo — Image")}</p>
               <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} media="image" />
             </div>
           )}
@@ -650,9 +660,9 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
           {/* Custom sections with images/video */}
           {(config.customSections||[]).filter((s: any) => ["gallery","video","brands"].includes(s.type)).map((s: any) => (
             <div key={s.id} className="bg-gray-50 rounded-xl p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-700">{s.label}</p>
+              <p className="text-sm font-semibold text-gray-700">{tr(s.label)}</p>
               {s.type === "video" && (
-                <FInp label="URL vidéo" value={s.config.videoUrl||""} onChange={v=>updateCustomSection(s.id,{videoUrl:v})} media="video" />
+                <FInp label={tr("URL vidéo")} value={s.config.videoUrl||""} onChange={v=>updateCustomSection(s.id,{videoUrl:v})} media="video" />
               )}
               {s.type === "gallery" && (
                 <div>
@@ -662,7 +672,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
                       {url && <img src={url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0 border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
                     </div>
                   ))}
-                  <button onClick={()=>updateCustomSection(s.id,{images:[...(s.config.images||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">+ Ajouter</button>
+                  <button onClick={()=>updateCustomSection(s.id,{images:[...(s.config.images||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1 hover:border-gray-300">{tr("+ Ajouter")}</button>
                 </div>
               )}
             </div>
@@ -675,6 +685,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
 
 // ─── Panel Animations ─────────────────────────────────────────────────────────
 export function PanelAnimations({ config, setAnim }: any) {
+  const tr = useT();
   const anim = config.animations || {};
 
   const PRESETS = [
@@ -696,40 +707,40 @@ export function PanelAnimations({ config, setAnim }: any) {
   return (
     <div className="p-4 space-y-5">
       <div>
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Présets d'animation</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Présets d'animation")}</p>
         <div className="space-y-1.5">
           {PRESETS.map(p => (
             <button key={p.v} onClick={() => { setAnim({ preset: p.v, ...PRESETS_SETTINGS[p.v] }); }}
               className={`w-full text-left p-3 rounded-xl border transition-all ${(anim.preset||"elegant")===p.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">{p.l}</span>
+                <span className="text-sm font-semibold text-gray-700">{tr(p.l)}</span>
                 {(anim.preset||"elegant")===p.v && <Check size={11} className="text-[#F5A623]" />}
               </div>
-              <p className="text-[12px] text-gray-500 mt-0.5">{p.desc}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{tr(p.desc)}</p>
             </button>
           ))}
         </div>
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Personnalisation</p>
-        <FSel label="Animation globale" value={anim.global||"slide-up"} onChange={v=>setAnim({global:v})} opts={[
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Personnalisation")}</p>
+        <FSel label={tr("Animation globale")} value={anim.global||"slide-up"} onChange={v=>setAnim({global:v})} opts={[
           {v:"none",l:"Aucune"},{v:"fade-in",l:"Fondu"},{v:"slide-up",l:"Glissement vers le haut"},
           {v:"slide-left",l:"Glissement depuis la gauche"},{v:"zoom-in",l:"Zoom entrant"},
           {v:"flip",l:"Retournement 3D"},{v:"blur-in",l:"Apparition floue"},
         ]} />
-        <FSel label="Vitesse" value={anim.vitesse||"normal"} onChange={v=>setAnim({vitesse:v})} opts={[{v:"fast",l:"Rapide (0.4s)"},{v:"normal",l:"Normal (0.6s)"},{v:"slow",l:"Lent (0.9s)"}]} />
+        <FSel label={tr("Vitesse")} value={anim.vitesse||"normal"} onChange={v=>setAnim({vitesse:v})} opts={[{v:"fast",l:"Rapide (0.4s)"},{v:"normal",l:"Normal (0.6s)"},{v:"slow",l:"Lent (0.9s)"}]} />
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Effets avancés</p>
-        <FCheck label="Décalage entre sections (stagger)" checked={anim.stagger!==false} onChange={v=>setAnim({stagger:v})} />
-        <FCheck label="Effet parallaxe sur le hero" checked={anim.parallax||false} onChange={v=>setAnim({parallax:v})} />
-        <FCheck label="Défilement fluide (smooth scroll)" checked={anim.smoothScroll!==false} onChange={v=>setAnim({smoothScroll:v})} />
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Effets avancés")}</p>
+        <FCheck label={tr("Décalage entre sections (stagger)")} checked={anim.stagger!==false} onChange={v=>setAnim({stagger:v})} />
+        <FCheck label={tr("Effet parallaxe sur le hero")} checked={anim.parallax||false} onChange={v=>setAnim({parallax:v})} />
+        <FCheck label={tr("Défilement fluide (smooth scroll)")} checked={anim.smoothScroll!==false} onChange={v=>setAnim({smoothScroll:v})} />
       </div>
 
       <div className="border-t border-gray-200 pt-4">
-        <p className="text-[13px] text-gray-600 leading-relaxed">Les animations sont appliquées via CSS injecté dans votre boutique. Sauvegardez pour voir le résultat en prévisualisation.</p>
+        <p className="text-[13px] text-gray-600 leading-relaxed">{tr("Les animations sont appliquées via CSS injecté dans votre boutique. Sauvegardez pour voir le résultat en prévisualisation.")}</p>
       </div>
     </div>
   );
@@ -737,6 +748,7 @@ export function PanelAnimations({ config, setAnim }: any) {
 
 // ─── Panel Boutons & Nav ──────────────────────────────────────────────────────
 export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
+  const tr = useT();
   const b = config.boutons || {};
   const nav = config.navigationStyle || {};
 
@@ -750,14 +762,14 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
   return (
     <div className="p-4 space-y-5">
       <div>
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Style des boutons</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Style des boutons")}</p>
         <div className="space-y-1.5">
           {[{v:"filled",l:"Plein"},{v:"outlined",l:"Contour"},{v:"ghost",l:"Fantôme"},{v:"pill",l:"Pilule (arrondi total)"},{v:"square",l:"Carré (sans arrondi)"}].map(s=>(
             <button key={s.v} onClick={()=>setBoutons({style:s.v})} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${(b.style||"filled")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
-              <span className="text-sm text-gray-700">{s.l}</span>
+              <span className="text-sm text-gray-700">{tr(s.l)}</span>
               <div className="w-16 h-6 flex items-center justify-center text-[13px] font-semibold border"
                 style={{ backgroundColor: ["outlined","ghost"].includes(s.v)?"transparent":config.colors.accent, color: ["outlined","ghost"].includes(s.v)?config.colors.accent:config.colors.fond, borderColor: s.v!=="ghost"?config.colors.accent:"transparent", borderRadius: s.v==="pill"?"999px":s.v==="square"?"0":"8px", textDecoration: s.v==="ghost"?"underline":"none" }}>
-                Acheter
+                {tr("Acheter")}
               </div>
             </button>
           ))}
@@ -765,37 +777,37 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Taille & effet</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Taille & effet")}</p>
         <div className="grid grid-cols-4 gap-1.5">
           {[{v:"sm",l:"XS"},{v:"md",l:"M"},{v:"lg",l:"L"},{v:"xl",l:"XL"}].map(s=>(
-            <button key={s.v} onClick={()=>setBoutons({taille:s.v})} className={`py-2 rounded-xl text-sm font-semibold border transition-all ${(b.taille||"md")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]":"border-gray-200 text-gray-500 hover:border-gray-300"}`}>{s.l}</button>
+            <button key={s.v} onClick={()=>setBoutons({taille:s.v})} className={`py-2 rounded-xl text-sm font-semibold border transition-all ${(b.taille||"md")===s.v?"border-[#F5A623]/50 bg-[#F5A623]/10 text-[#F5A623]":"border-gray-200 text-gray-500 hover:border-gray-300"}`}>{tr(s.l)}</button>
           ))}
         </div>
-        <FSel label="Effet au survol" value={b.hover||"scale"} onChange={v=>setBoutons({hover:v})} opts={[{v:"lighten",l:"Éclaircir"},{v:"darken",l:"Assombrir"},{v:"scale",l:"Agrandir"},{v:"glow",l:"Lueur (glow)"},{v:"slide",l:"Glissement"}]} />
+        <FSel label={tr("Effet au survol")} value={b.hover||"scale"} onChange={v=>setBoutons({hover:v})} opts={[{v:"lighten",l:"Éclaircir"},{v:"darken",l:"Assombrir"},{v:"scale",l:"Agrandir"},{v:"glow",l:"Lueur (glow)"},{v:"slide",l:"Glissement"}]} />
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Type de navigation</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Type de navigation")}</p>
         <div className="space-y-1.5">
           {NAV_TYPES.map(t=>(
             <button key={t.v} onClick={()=>setNavStyle({type:t.v})} className={`w-full text-left p-3 rounded-xl border transition-all ${(nav.type||"classic")===t.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-gray-700">{t.l}</span>
+                <span className="text-sm font-semibold text-gray-700">{tr(t.l)}</span>
                 {(nav.type||"classic")===t.v && <Check size={10} className="text-[#F5A623]"/>}
               </div>
-              <p className="text-[12px] text-gray-500 mt-0.5">{t.desc}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{tr(t.desc)}</p>
             </button>
           ))}
         </div>
       </div>
 
       <div className="border-t border-gray-200 pt-4 space-y-3">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">Style navbar</p>
-        <FSel label="Apparence" value={nav.style||"light"} onChange={v=>setNavStyle({style:v})} opts={[{v:"light",l:"Claire (fond blanc)"},{v:"dark",l:"Sombre (fond noir)"},{v:"glass",l:"Verre (glassmorphism)"},{v:"transparent",l:"Transparente"}]} />
-        <FSel label="Hauteur" value={nav.hauteur||"64px"} onChange={v=>setNavStyle({hauteur:v})} opts={[{v:"48px",l:"Compact (48px)"},{v:"64px",l:"Standard (64px)"},{v:"80px",l:"Large (80px)"}]} />
-        <FCheck label="Navigation fixe (sticky)" checked={nav.sticky!==false} onChange={v=>setNavStyle({sticky:v})} />
-        <FCheck label="Barre de recherche" checked={nav.showSearch!==false} onChange={v=>setNavStyle({showSearch:v})} />
-        <FCheck label="Wishlist / favoris" checked={nav.showWishlist||false} onChange={v=>setNavStyle({showWishlist:v})} />
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest">{tr("Style navbar")}</p>
+        <FSel label={tr("Apparence")} value={nav.style||"light"} onChange={v=>setNavStyle({style:v})} opts={[{v:"light",l:"Claire (fond blanc)"},{v:"dark",l:"Sombre (fond noir)"},{v:"glass",l:"Verre (glassmorphism)"},{v:"transparent",l:"Transparente"}]} />
+        <FSel label={tr("Hauteur")} value={nav.hauteur||"64px"} onChange={v=>setNavStyle({hauteur:v})} opts={[{v:"48px",l:"Compact (48px)"},{v:"64px",l:"Standard (64px)"},{v:"80px",l:"Large (80px)"}]} />
+        <FCheck label={tr("Navigation fixe (sticky)")} checked={nav.sticky!==false} onChange={v=>setNavStyle({sticky:v})} />
+        <FCheck label={tr("Barre de recherche")} checked={nav.showSearch!==false} onChange={v=>setNavStyle({showSearch:v})} />
+        <FCheck label={tr("Wishlist / favoris")} checked={nav.showWishlist||false} onChange={v=>setNavStyle({showWishlist:v})} />
       </div>
     </div>
   );
@@ -803,6 +815,7 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
 
 // ─── Panel Modèles — bibliothèque AXSO Design, applicable sans quitter le Constructeur ──
 export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: () => Promise<void> }) {
+  const tr = useT();
   const [applying, setApplying] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [produits, setProduits] = useState<any[]>([]);
@@ -844,9 +857,9 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
   return (
     <div className="p-3 space-y-3">
       <p className="text-[13px] text-gray-500 leading-relaxed px-0.5">
-        Tous les designs AXSO — tes vrais produits sont branchés automatiquement.
+        {tr("Tous les designs AXSO — tes vrais produits sont branchés automatiquement.")}
       </p>
-      {erreur && <p className="text-[13px] text-red-600 px-0.5">{erreur}</p>}
+      {erreur && <p className="text-[13px] text-red-600 px-0.5">{tr(erreur)}</p>}
       <div className="grid grid-cols-2 gap-2.5">
         {MANIFESTE_LIBRAIRIE.map((e) => {
           const actif = estActif(e.fichier);
@@ -871,7 +884,7 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
                 />
               </div>
               <div className="px-2 py-1.5">
-                <p className="text-[13px] font-semibold text-gray-800 truncate">{e.nom}</p>
+                <p className="text-[13px] font-semibold text-gray-800 truncate">{tr(e.nom)}</p>
                 <p className="text-[11px] text-gray-400 truncate">{e.ambiance.slice(0, 2).join(" · ")}</p>
               </div>
               {actif && (
@@ -894,28 +907,29 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
 
 // ─── Panel Avancé ─────────────────────────────────────────────────────────────
 export function PanelAvance({ config, set, onReset }: any) {
+  const tr = useT();
   return (
     <div className="p-4 space-y-5">
       <div>
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-2">CSS personnalisé</p>
-        <p className="text-[13px] text-gray-600 mb-3 leading-relaxed">Injecté dans toutes les pages de votre boutique. Utilisez les classes Tailwind ou du CSS natif.</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-2">{tr("CSS personnalisé")}</p>
+        <p className="text-[13px] text-gray-600 mb-3 leading-relaxed">{tr("Injecté dans toutes les pages de votre boutique. Utilisez les classes Tailwind ou du CSS natif.")}</p>
         <textarea value={config.customCss||""} onChange={e=>set((p: ThemeConfig)=>({...p,customCss:e.target.value}))} rows={14}
           placeholder={`/* Exemples */\n.hero h1 { letter-spacing: 0.05em; }\n.product-card { transition: all 0.4s; }\n\n/* Variables CSS */\n:root {\n  --radius-custom: 20px;\n}`}
           className="w-full bg-[#080810] border border-gray-200 rounded-xl px-3 py-3 text-sm text-green-400 font-mono focus:outline-none focus:border-[#F5A623]/50 resize-none leading-relaxed" />
       </div>
       <div className="border-t border-gray-200 pt-4 space-y-2">
-        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">Actions</p>
+        <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Actions")}</p>
         <Link href="/dashboard/themes" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>Changer de thème de base</span><ChevronRight size={12}/>
+          <span>{tr("Changer de thème de base")}</span><ChevronRight size={12}/>
         </Link>
         <Link href="/dashboard/boutique" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>Logo, bannière & SEO</span><ChevronRight size={12}/>
+          <span>{tr("Logo, bannière & SEO")}</span><ChevronRight size={12}/>
         </Link>
         <button onClick={() => { if (typeof navigator !== "undefined") navigator.clipboard.writeText(JSON.stringify(config, null, 2)); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>Exporter la config JSON</span><Copy size={11}/>
+          <span>{tr("Exporter la config JSON")}</span><Copy size={11}/>
         </button>
         <button onClick={onReset} className="w-full px-3 py-2.5 rounded-xl border border-red-500/20 hover:border-red-400/40 text-sm text-red-500/60 hover:text-red-400 transition-all">
-          Réinitialiser toutes les personnalisations
+          {tr("Réinitialiser toutes les personnalisations")}
         </button>
       </div>
     </div>
@@ -970,35 +984,36 @@ function ProduitSectionSettings({ section, update, updateStyle }: { section: Pro
 }
 
 function SectionStylePanel({ section, updateStyle }: { section: ProductPageSection; updateStyle: (id: string, patch: Record<string, any>) => void }) {
+  const tr = useT();
   const st = section.style || {};
   const up = (patch: Record<string, any>) => updateStyle(section.id, patch);
   const bgActive = !!st.bgColor;
   return (
     <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 pt-2.5">
-      <p className="text-[13px] text-gray-500 font-black uppercase tracking-[0.16em]">Style de la section</p>
-      <FSel label="Taille du texte" value={st.fontScale || "md"} onChange={v => up({ fontScale: v })} opts={[
+      <p className="text-[13px] text-gray-500 font-black uppercase tracking-[0.16em]">{tr("Style de la section")}</p>
+      <FSel label={tr("Taille du texte")} value={st.fontScale || "md"} onChange={v => up({ fontScale: v })} opts={[
         { v: "sm", l: "Petite" }, { v: "md", l: "Normale" }, { v: "lg", l: "Grande" }, { v: "xl", l: "Très grande" },
       ]} />
       <div className="flex items-center justify-between py-1">
-        <span className="text-[13px] text-gray-400">Fond coloré</span>
+        <span className="text-[13px] text-gray-400">{tr("Fond coloré")}</span>
         <button onClick={() => up({ bgColor: bgActive ? undefined : "#F8F8F6" })} className="flex-shrink-0">
           {bgActive ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
         </button>
       </div>
-      {bgActive && <FCol label="Couleur de fond" value={st.bgColor || "#F8F8F6"} onChange={v => up({ bgColor: v })} />}
-      <FCol label="Couleur du texte" value={st.textColor || "#111111"} onChange={v => up({ textColor: v })} />
+      {bgActive && <FCol label={tr("Couleur de fond")} value={st.bgColor || "#F8F8F6"} onChange={v => up({ bgColor: v })} />}
+      <FCol label={tr("Couleur du texte")} value={st.textColor || "#111111"} onChange={v => up({ textColor: v })} />
       <div className="grid grid-cols-2 gap-2">
-        <FSel label="Espacement interne" value={st.paddingY || "none"} onChange={v => up({ paddingY: v })} opts={[
+        <FSel label={tr("Espacement interne")} value={st.paddingY || "none"} onChange={v => up({ paddingY: v })} opts={[
           { v: "none", l: "Aucun" }, { v: "sm", l: "Petit" }, { v: "md", l: "Moyen" }, { v: "lg", l: "Grand" }, { v: "xl", l: "Très grand" },
         ]} />
-        <FSel label="Marge extérieure" value={st.marginY || "none"} onChange={v => up({ marginY: v })} opts={[
+        <FSel label={tr("Marge extérieure")} value={st.marginY || "none"} onChange={v => up({ marginY: v })} opts={[
           { v: "none", l: "Par défaut" }, { v: "sm", l: "Petite" }, { v: "md", l: "Moyenne" }, { v: "lg", l: "Grande" },
         ]} />
       </div>
-      <FSel label="Largeur du contenu" value={st.maxWidth || "full"} onChange={v => up({ maxWidth: v })} opts={[
+      <FSel label={tr("Largeur du contenu")} value={st.maxWidth || "full"} onChange={v => up({ maxWidth: v })} opts={[
         { v: "full", l: "Pleine largeur" }, { v: "medium", l: "Moyenne" }, { v: "narrow", l: "Étroite" },
       ]} />
-      <FSel label="Alignement" value={st.align || "left"} onChange={v => up({ align: v })} opts={[
+      <FSel label={tr("Alignement")} value={st.align || "left"} onChange={v => up({ align: v })} opts={[
         { v: "left", l: "Gauche" }, { v: "center", l: "Centré" },
       ]} />
     </div>
@@ -1009,16 +1024,17 @@ function SectionStylePanel({ section, updateStyle }: { section: ProductPageSecti
 type Champ = { cle: string; label: string; type?: "text" | "textarea" | "icone" | "image" | "note" };
 
 function FIcone({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const tr = useT();
   const estImage = /^(https?:|\/|data:image)/.test(value || "");
   return (
     <div>
-      <label className="block text-[12px] text-gray-500 mb-1">{label}</label>
+      <label className="block text-[12px] text-gray-500 mb-1">{tr(label)}</label>
       <div className="flex items-center gap-2">
         {estImage
           ? <img src={value} alt="" className="w-9 h-9 rounded-lg object-contain bg-white border border-gray-200" />
           : <input value={value || ""} onChange={e => onChange(e.target.value)} maxLength={4} placeholder="✓" className="w-12 text-center bg-gray-100 border border-gray-200 rounded-lg px-2 py-2 text-sm" />}
         <label className="text-[12px] text-[#C77C0A] font-semibold cursor-pointer hover:underline">
-          {estImage ? "Changer" : "Envoyer une icône"}
+          {estImage ? tr("Changer") : tr("Envoyer une icône")}
           <input type="file" accept="image/*" className="hidden" onChange={async e => {
             const f = e.target.files?.[0]; if (!f) return;
             const fd = new FormData(); fd.append("file", f);
@@ -1026,18 +1042,19 @@ function FIcone({ label, value, onChange }: { label: string; value: string; onCh
             if (r?.url) onChange(r.url);
           }} />
         </label>
-        {estImage && <button onClick={() => onChange("✓")} className="text-[12px] text-gray-500 hover:text-red-500">Retirer</button>}
+        {estImage && <button onClick={() => onChange("✓")} className="text-[12px] text-gray-500 hover:text-red-500">{tr("Retirer")}</button>}
       </div>
     </div>
   );
 }
 
 function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string; items: any[]; champs: Champ[]; onChange: (items: any[]) => void; nouvel: () => any }) {
+  const tr = useT();
   const maj = (i: number, patch: any) => onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it)));
   const bouger = (i: number, d: number) => { const n = [...items]; const [x] = n.splice(i, 1); n.splice(Math.max(0, Math.min(n.length, i + d)), 0, x); onChange(n); };
   return (
     <div className="space-y-2">
-      <p className="text-[12px] text-gray-500 font-semibold">{titre}</p>
+      <p className="text-[12px] text-gray-500 font-semibold">{tr(titre)}</p>
       {items.map((item, i) => (
         <div key={i} className="bg-gray-50 border border-gray-100 rounded-xl p-2 space-y-1.5">
           <div className="flex items-center justify-end gap-1 -mb-1">
@@ -1054,7 +1071,7 @@ function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string;
       ))}
       <button onClick={() => onChange([...items, nouvel()])}
         className="w-full text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623] hover:text-[#C77C0A] transition-colors">
-        + Ajouter
+        {tr("+ Ajouter")}
       </button>
     </div>
   );
@@ -1062,14 +1079,15 @@ function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string;
 
 // `images` (tableau comparatif) : une image facultative par colonne, alignée sur `headers`.
 function TableEdit({ headers, rows, images, onChange }: { headers: string[]; rows: { cells: string[] }[]; images?: string[]; onChange: (p: { headers?: string[]; rows?: { cells: string[] }[]; images?: string[] }) => void }) {
+  const tr = useT();
   const nbCol = headers.length;
   return (
     <div className="space-y-2">
-      <p className="text-[12px] text-gray-500 font-semibold">En-têtes</p>
+      <p className="text-[12px] text-gray-500 font-semibold">{tr("En-têtes")}</p>
       <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${nbCol}, minmax(0,1fr))` }}>
         {headers.map((h, j) => <input key={j} value={h} onChange={e => onChange({ headers: headers.map((x, k) => (k === j ? e.target.value : x)) })} className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] font-semibold min-w-0" />)}
       </div>
-      <p className="text-[12px] text-gray-500 font-semibold">Lignes</p>
+      <p className="text-[12px] text-gray-500 font-semibold">{tr("Lignes")}</p>
       {rows.map((r, i) => (
         <div key={i} className="flex gap-1 items-center">
           <div className="grid gap-1 flex-1" style={{ gridTemplateColumns: `repeat(${nbCol}, minmax(0,1fr))` }}>
@@ -1081,12 +1099,12 @@ function TableEdit({ headers, rows, images, onChange }: { headers: string[]; row
         </div>
       ))}
       <div className="flex gap-1.5">
-        <button onClick={() => onChange({ rows: [...rows, { cells: Array(nbCol).fill("") }] })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Ligne</button>
-        <button onClick={() => onChange({ headers: [...headers, "Colonne"], rows: rows.map(r => ({ cells: [...r.cells, ""] })), ...(images && { images: [...images, ""] }) })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">+ Colonne</button>
-        {nbCol > 2 && <button onClick={() => onChange({ headers: headers.slice(0, -1), rows: rows.map(r => ({ cells: r.cells.slice(0, nbCol - 1) })), ...(images && { images: images.slice(0, nbCol - 1) }) })} className="text-[12px] text-gray-500 px-2 hover:text-red-500">− Col.</button>}
+        <button onClick={() => onChange({ rows: [...rows, { cells: Array(nbCol).fill("") }] })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">{tr("+ Ligne")}</button>
+        <button onClick={() => onChange({ headers: [...headers, "Colonne"], rows: rows.map(r => ({ cells: [...r.cells, ""] })), ...(images && { images: [...images, ""] }) })} className="flex-1 text-[12px] text-gray-600 border border-dashed border-gray-300 rounded-lg py-1.5 hover:border-[#F5A623]">{tr("+ Colonne")}</button>
+        {nbCol > 2 && <button onClick={() => onChange({ headers: headers.slice(0, -1), rows: rows.map(r => ({ cells: r.cells.slice(0, nbCol - 1) })), ...(images && { images: images.slice(0, nbCol - 1) }) })} className="text-[12px] text-gray-500 px-2 hover:text-red-500">{tr("− Col.")}</button>}
       </div>
       {images && headers.map((h, j) => (
-        <FInp key={j} label={`Image de la colonne « ${h || j + 1} » (optionnelle)`} value={images[j] || ""} media="image"
+        <FInp key={j} label={tr("Image de la colonne « {0} » (optionnelle)", h || j + 1)} value={images[j] || ""} media="image"
           onChange={v => onChange({ images: Array.from({ length: nbCol }, (_, k) => (k === j ? v : images[k] || "")) })} />
       ))}
     </div>
@@ -1094,9 +1112,10 @@ function TableEdit({ headers, rows, images, onChange }: { headers: string[]; row
 }
 
 function Bascule({ label, value, onChange }: { label: string; value: boolean; onChange: (v: boolean) => void }) {
+  const tr = useT();
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-[13px] text-gray-500">{label}</span>
+      <span className="text-[13px] text-gray-500">{tr(label)}</span>
       <button onClick={() => onChange(!value)} className="flex-shrink-0">
         {value ? <ToggleRight size={17} style={{ color: "#F5A623" }} /> : <ToggleLeft size={17} className="text-gray-700" />}
       </button>
@@ -1109,180 +1128,181 @@ function Bloc({ children }: { children: React.ReactNode }) {
 }
 
 function SectionTypeSettings({ section, update }: { section: ProductPageSection; update: (id: string, patch: Record<string, any>) => void }) {
+  const tr = useT();
   // Valeurs par défaut complétées : le marchand voit (et édite) exactement ce qui s'affiche.
   const c: Record<string, any> = { ...SECTIONS_FICHE[section.type]?.defaut(), ...section.config };
   const up = (patch: Record<string, any>) => update(section.id, patch);
-  const titre = <FInp label="Titre" value={c.titre || ""} onChange={v => up({ titre: v })} />;
+  const titre = <FInp label={tr("Titre")} value={c.titre || ""} onChange={v => up({ titre: v })} />;
 
   switch (section.type) {
     case "gallery": return (
       <Bloc>
-        <FSel label="Style de galerie" value={c.style === "dots" ? "dots" : "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
+        <FSel label={tr("Style de galerie")} value={c.style === "dots" ? "dots" : "vertical-thumbs"} onChange={v => up({ style: v })} opts={[
           { v: "vertical-thumbs", l: "Flèches et compteur" }, { v: "dots", l: "Flèches, compteur et points" },
         ]} />
-        <Bascule label="Diaporama automatique (toutes les 4 s)" value={c.diaporamaAuto === true} onChange={v => up({ diaporamaAuto: v })} />
-        <Bascule label="Zoom au survol" value={c.zoom !== false} onChange={v => up({ zoom: v })} />
-        <Bascule label="Panneau fixe au scroll" value={c.sticky !== false} onChange={v => up({ sticky: v })} />
+        <Bascule label={tr("Diaporama automatique (toutes les 4 s)")} value={c.diaporamaAuto === true} onChange={v => up({ diaporamaAuto: v })} />
+        <Bascule label={tr("Zoom au survol")} value={c.zoom !== false} onChange={v => up({ zoom: v })} />
+        <Bascule label={tr("Panneau fixe au scroll")} value={c.sticky !== false} onChange={v => up({ sticky: v })} />
       </Bloc>
     );
     case "info": return (
       <Bloc>
-        <Bascule label="Fil d'Ariane" value={c.breadcrumbs !== false} onChange={v => up({ breadcrumbs: v })} />
-        <Bascule label="Badges promo et confiance" value={c.badges !== false} onChange={v => up({ badges: v })} />
-        <Bascule label="Indicateur de stock" value={c.stock !== false} onChange={v => up({ stock: v })} />
+        <Bascule label={tr("Fil d'Ariane")} value={c.breadcrumbs !== false} onChange={v => up({ breadcrumbs: v })} />
+        <Bascule label={tr("Badges promo et confiance")} value={c.badges !== false} onChange={v => up({ badges: v })} />
+        <Bascule label={tr("Indicateur de stock")} value={c.stock !== false} onChange={v => up({ stock: v })} />
       </Bloc>
     );
     case "variants": return (
       <Bloc>
-        <FSel label="Affichage" value={c.style} onChange={v => up({ style: v })} opts={[
+        <FSel label={tr("Affichage")} value={c.style} onChange={v => up({ style: v })} opts={[
           { v: "boutons", l: "Boutons" }, { v: "pastilles", l: "Pastilles arrondies" }, { v: "liste", l: "Liste déroulante" },
         ]} />
         <div className="grid grid-cols-2 gap-2">
-          <FSel label="Taille du texte" value={c.taille} onChange={v => up({ taille: v })} opts={[{ v: "sm", l: "Petite" }, { v: "md", l: "Moyenne" }, { v: "lg", l: "Grande" }]} />
-          <FSel label="Espacement" value={c.espacement} onChange={v => up({ espacement: v })} opts={[{ v: "serre", l: "Serré" }, { v: "normal", l: "Normal" }, { v: "large", l: "Large" }]} />
+          <FSel label={tr("Taille du texte")} value={c.taille} onChange={v => up({ taille: v })} opts={[{ v: "sm", l: "Petite" }, { v: "md", l: "Moyenne" }, { v: "lg", l: "Grande" }]} />
+          <FSel label={tr("Espacement")} value={c.espacement} onChange={v => up({ espacement: v })} opts={[{ v: "serre", l: "Serré" }, { v: "normal", l: "Normal" }, { v: "large", l: "Large" }]} />
         </div>
-        <Bascule label="Afficher le nom (Taille, Couleur…)" value={c.afficherLibelle !== false} onChange={v => up({ afficherLibelle: v })} />
-        <p className="text-[12px] text-gray-400 leading-relaxed">Les valeurs (S, M, Rouge…) se gèrent sur chaque produit.</p>
+        <Bascule label={tr("Afficher le nom (Taille, Couleur…)")} value={c.afficherLibelle !== false} onChange={v => up({ afficherLibelle: v })} />
+        <p className="text-[12px] text-gray-400 leading-relaxed">{tr("Les valeurs (S, M, Rouge…) se gèrent sur chaque produit.")}</p>
       </Bloc>
     );
     case "quantity": return (
       <Bloc>
-        <Bascule label="Sélecteur de quantité" value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
-        <p className="text-[11.5px] text-gray-400">Le bouton « Ajouter au panier » est un bloc à part : « Ajouter » → « Bouton Ajouter au panier ».</p>
-        <FInp label="Texte du bouton d'achat (produit digital)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
-        <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
-        <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
-        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">Revenir aux couleurs du thème</button>}
-        <Bascule label="Bouton « Acheter maintenant »" value={c.afficherAcheterMaintenant !== false} onChange={v => up({ afficherAcheterMaintenant: v })} />
-        <Bascule label="Bouton WhatsApp" value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+        <Bascule label={tr("Sélecteur de quantité")} value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
+        <p className="text-[11.5px] text-gray-400">{tr("Le bouton « Ajouter au panier » est un bloc à part : « Ajouter » → « Bouton Ajouter au panier ».")}</p>
+        <FInp label={tr("Texte du bouton d'achat (produit digital)")} value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
+        <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
+        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
+        <Bascule label={tr("Bouton « Acheter maintenant »")} value={c.afficherAcheterMaintenant !== false} onChange={v => up({ afficherAcheterMaintenant: v })} />
+        <Bascule label={tr("Bouton WhatsApp")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
       </Bloc>
     );
     case "addToCart": return (
       <Bloc>
-        <FInp label="Texte du bouton (vide = « Ajouter au panier »)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
-        <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
-        <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
-        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">Revenir aux couleurs du thème</button>}
-        <p className="text-[11.5px] text-gray-400 leading-relaxed">Ajoute la variante et la quantité choisies au panier. Masqué pour les produits digitaux et en boutique digitale (achat direct).</p>
+        <FInp label={tr("Texte du bouton (vide = « Ajouter au panier »)")} value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
+        <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
+        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
+        <p className="text-[11.5px] text-gray-400 leading-relaxed">{tr("Ajoute la variante et la quantité choisies au panier. Masqué pour les produits digitaux et en boutique digitale (achat direct).")}</p>
       </Bloc>
     );
     case "trust": return (
       <Bloc>
         <div className="grid grid-cols-2 gap-2">
-          <FSel label="Disposition" value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
-          <FSel label="Colonnes" value={String(c.colonnes)} onChange={v => up({ colonnes: Number(v) })} opts={[{ v: "2", l: "2" }, { v: "3", l: "3" }, { v: "4", l: "4" }]} />
+          <FSel label={tr("Disposition")} value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
+          <FSel label={tr("Colonnes")} value={String(c.colonnes)} onChange={v => up({ colonnes: Number(v) })} opts={[{ v: "2", l: "2" }, { v: "3", l: "3" }, { v: "4", l: "4" }]} />
         </div>
-        <ListeItems titre="Badges" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", texte: "Nouveau badge" })}
+        <ListeItems titre={tr("Badges")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", texte: "Nouveau badge" })}
           champs={[{ cle: "icone", label: "Icône (emoji ou image)", type: "icone" }, { cle: "texte", label: "Texte" }]} />
-        <Bascule label="Encadré « Vendu par »" value={c.afficherVendeur !== false} onChange={v => up({ afficherVendeur: v })} />
+        <Bascule label={tr("Encadré « Vendu par »")} value={c.afficherVendeur !== false} onChange={v => up({ afficherVendeur: v })} />
       </Bloc>
     );
     case "description": return (
       <Bloc>
-        <Bascule label="Description enrichie par IA" value={c.ai !== false} onChange={v => up({ ai: v })} />
-        <Bascule label="Onglet « Livraison & retours »" value={c.afficherLivraison !== false} onChange={v => up({ afficherLivraison: v })} />
+        <Bascule label={tr("Description enrichie par IA")} value={c.ai !== false} onChange={v => up({ ai: v })} />
+        <Bascule label={tr("Onglet « Livraison & retours »")} value={c.afficherLivraison !== false} onChange={v => up({ afficherLivraison: v })} />
         {c.afficherLivraison !== false && (
-          <ListeItems titre="Contenu de l'onglet livraison" items={c.livraison || []} onChange={livraison => up({ livraison })} nouvel={() => ({ titre: "Nouveau point", texte: "" })}
+          <ListeItems titre={tr("Contenu de l'onglet livraison")} items={c.livraison || []} onChange={livraison => up({ livraison })} nouvel={() => ({ titre: "Nouveau point", texte: "" })}
             champs={[{ cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
         )}
       </Bloc>
     );
     case "reviews": return (
       <Bloc>
-        {titre}
+        {tr(titre)}
         <div className="grid grid-cols-2 gap-2">
-          <FSel label="Disposition" value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
-          <FSel label="Avis affichés" value={String(c.max)} onChange={v => up({ max: Number(v) })} opts={[{ v: "4", l: "4" }, { v: "8", l: "8" }, { v: "20", l: "20" }]} />
+          <FSel label={tr("Disposition")} value={c.disposition} onChange={v => up({ disposition: v })} opts={[{ v: "grille", l: "Grille" }, { v: "liste", l: "Liste" }]} />
+          <FSel label={tr("Avis affichés")} value={String(c.max)} onChange={v => up({ max: Number(v) })} opts={[{ v: "4", l: "4" }, { v: "8", l: "8" }, { v: "20", l: "20" }]} />
         </div>
-        <FCol label="Couleur des étoiles" value={c.couleurEtoiles || "#F5A623"} onChange={v => up({ couleurEtoiles: v })} />
-        <Bascule label="Résumé des notes" value={c.afficherResume !== false} onChange={v => up({ afficherResume: v })} />
-        <Bascule label="Badge « Achat vérifié »" value={c.afficherVerifie !== false} onChange={v => up({ afficherVerifie: v })} />
-        <Bascule label="Formulaire « Laisser un avis »" value={c.afficherFormulaire !== false} onChange={v => up({ afficherFormulaire: v })} />
+        <FCol label={tr("Couleur des étoiles")} value={c.couleurEtoiles || "#F5A623"} onChange={v => up({ couleurEtoiles: v })} />
+        <Bascule label={tr("Résumé des notes")} value={c.afficherResume !== false} onChange={v => up({ afficherResume: v })} />
+        <Bascule label={tr("Badge « Achat vérifié »")} value={c.afficherVerifie !== false} onChange={v => up({ afficherVerifie: v })} />
+        <Bascule label={tr("Formulaire « Laisser un avis »")} value={c.afficherFormulaire !== false} onChange={v => up({ afficherFormulaire: v })} />
       </Bloc>
     );
     case "similar": return (
       <Bloc>
-        {titre}
-        <FSel label="Nombre de produits" value={String(c.count)} onChange={v => up({ count: Number(v) })} opts={[{ v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" }]} />
+        {tr(titre)}
+        <FSel label={tr("Nombre de produits")} value={String(c.count)} onChange={v => up({ count: Number(v) })} opts={[{ v: "4", l: "4 produits" }, { v: "6", l: "6 produits" }, { v: "8", l: "8 produits" }]} />
       </Bloc>
     );
     case "richtext": return (
-      <Bloc>{titre}<FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline /><FInp label="Bouton CTA (vide = masqué)" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} /></Bloc>
+      <Bloc>{tr(titre)}<FInp label={tr("Texte")} value={c.texte || ""} onChange={v => up({ texte: v })} multiline /><FInp label={tr("Bouton CTA (vide = masqué)")} value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} /></Bloc>
     );
     case "features": case "guarantee": return (
-      <Bloc>{titre}
-        <ListeItems titre="Éléments" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", titre: "Titre", texte: "" })}
+      <Bloc>{tr(titre)}
+        <ListeItems titre={tr("Éléments")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ icone: "✓", titre: "Titre", texte: "" })}
           champs={[{ cle: "icone", label: "Icône", type: "icone" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }]} />
       </Bloc>
     );
     case "howto": return (
-      <Bloc>{titre}
-        <FSel label="Présentation" value={c.style} onChange={v => up({ style: v })} opts={[{ v: "etapes", l: "Étapes numérotées" }, { v: "accordeon", l: "Accordéon" }, { v: "carrousel", l: "Carrousel" }, { v: "colonnes", l: "Colonnes" }]} />
-        <ListeItems titre="Étapes" items={c.steps || []} onChange={steps => up({ steps })} nouvel={() => ({ num: String((c.steps?.length ?? 0) + 1).padStart(2, "0"), titre: "Nouvelle étape", texte: "", image: "" })}
+      <Bloc>{tr(titre)}
+        <FSel label={tr("Présentation")} value={c.style} onChange={v => up({ style: v })} opts={[{ v: "etapes", l: "Étapes numérotées" }, { v: "accordeon", l: "Accordéon" }, { v: "carrousel", l: "Carrousel" }, { v: "colonnes", l: "Colonnes" }]} />
+        <ListeItems titre={tr("Étapes")} items={c.steps || []} onChange={steps => up({ steps })} nouvel={() => ({ num: String((c.steps?.length ?? 0) + 1).padStart(2, "0"), titre: "Nouvelle étape", texte: "", image: "" })}
           champs={[{ cle: "num", label: "Numéro" }, { cle: "titre", label: "Titre" }, { cle: "texte", label: "Texte", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
       </Bloc>
     );
     case "banner": return (
-      <Bloc>{titre}
-        <FInp label="Texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-        <ImageUpload value={c.imageUrl || ""} onChange={(url: string) => up({ imageUrl: url })} onRemove={() => up({ imageUrl: "" })} label="Image de fond" aspectRatio="banner" />
-        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+      <Bloc>{tr(titre)}
+        <FInp label={tr("Texte")} value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+        <ImageUpload value={c.imageUrl || ""} onChange={(url: string) => up({ imageUrl: url })} onRemove={() => up({ imageUrl: "" })} label={tr("Image de fond")} aspectRatio="banner" />
+        <FInp label={tr("Texte du bouton")} value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
       </Bloc>
     );
     case "video": return (
       <Bloc>
-        <FInp label="Titre (optionnel)" value={c.titre || ""} onChange={v => up({ titre: v })} />
-        <FInp label="URL (YouTube, Vimeo, .mp4)" value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} media="video" />
-        <Bascule label="Lecture automatique" value={!!c.autoplay} onChange={v => up({ autoplay: v })} />
+        <FInp label={tr("Titre (optionnel)")} value={c.titre || ""} onChange={v => up({ titre: v })} />
+        <FInp label={tr("URL (YouTube, Vimeo, .mp4)")} value={c.videoUrl || ""} onChange={v => up({ videoUrl: v })} media="video" />
+        <Bascule label={tr("Lecture automatique")} value={!!c.autoplay} onChange={v => up({ autoplay: v })} />
       </Bloc>
     );
     case "faq": return (
-      <Bloc>{titre}
-        <ListeItems titre="Questions" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici." })}
+      <Bloc>{tr(titre)}
+        <ListeItems titre={tr("Questions")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ question: "Question ?", reponse: "Réponse ici." })}
           champs={[{ cle: "question", label: "Question" }, { cle: "reponse", label: "Réponse", type: "textarea" }, { cle: "image", label: "Image (optionnelle)", type: "image" }]} />
       </Bloc>
     );
     case "specs": return (
-      <Bloc>{titre}
-        <ListeItems titre="Lignes" items={c.rows || []} onChange={rows => up({ rows })} nouvel={() => ({ cle: "", valeur: "" })}
+      <Bloc>{tr(titre)}
+        <ListeItems titre={tr("Lignes")} items={c.rows || []} onChange={rows => up({ rows })} nouvel={() => ({ cle: "", valeur: "" })}
           champs={[{ cle: "cle", label: "Caractéristique" }, { cle: "valeur", label: "Valeur" }]} />
       </Bloc>
     );
     case "ingredients": return (
-      <Bloc>{titre}
-        <FInp label="Introduction" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
-        <ListeItems titre="Éléments (image et/ou texte)" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ image: "", nom: "", desc: "" })}
+      <Bloc>{tr(titre)}
+        <FInp label={tr("Introduction")} value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+        <ListeItems titre={tr("Éléments (image et/ou texte)")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ image: "", nom: "", desc: "" })}
           champs={[{ cle: "image", label: "Image (optionnelle)", type: "image" }, { cle: "nom", label: "Titre (optionnel)" }, { cle: "desc", label: "Texte (optionnel)", type: "textarea" }]} />
       </Bloc>
     );
     case "testimonials": return (
-      <Bloc>{titre}
-        <ListeItems titre="Témoignages" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Client", note: 5, texte: "", avatar: "" })}
+      <Bloc>{tr(titre)}
+        <ListeItems titre={tr("Témoignages")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Client", note: 5, texte: "", avatar: "" })}
           champs={[{ cle: "nom", label: "Nom" }, { cle: "note", label: "Note", type: "note" }, { cle: "texte", label: "Témoignage", type: "textarea" }, { cle: "avatar", label: "Photo (optionnelle)", type: "image" }]} />
       </Bloc>
     );
     case "sizeguide": return (
-      <Bloc>{titre}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} /></Bloc>
+      <Bloc>{tr(titre)}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} /></Bloc>
     );
     case "comparison": return (
-      <Bloc>{titre}<TableEdit headers={c.headers || []} rows={c.rows || []} images={c.images || []} onChange={up} /></Bloc>
+      <Bloc>{tr(titre)}<TableEdit headers={c.headers || []} rows={c.rows || []} images={c.images || []} onChange={up} /></Bloc>
     );
     case "bundle": return (
-      <Bloc>{titre}
-        <ListeItems titre="Produits du pack" items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Produit", imageUrl: "", prix: "" })}
+      <Bloc>{tr(titre)}
+        <ListeItems titre={tr("Produits du pack")} items={c.items || []} onChange={items => up({ items })} nouvel={() => ({ nom: "Produit", imageUrl: "", prix: "" })}
           champs={[{ cle: "nom", label: "Nom" }, { cle: "prix", label: "Prix affiché" }, { cle: "imageUrl", label: "Image", type: "image" }]} />
-        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+        <FInp label={tr("Texte du bouton")} value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
       </Bloc>
     );
     case "countdown": return (
-      <Bloc>{titre}
-        <FInp label="Sous-texte" value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
+      <Bloc>{tr(titre)}
+        <FInp label={tr("Sous-texte")} value={c.texte || ""} onChange={v => up({ texte: v })} multiline />
         <div>
-          <label className="block text-[12px] text-gray-500 mb-1">Date de fin</label>
+          <label className="block text-[12px] text-gray-500 mb-1">{tr("Date de fin")}</label>
           <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
             className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
         </div>
-        <p className="text-[11.5px] text-gray-400">Affiché juste sous le prix, masqué une fois la date passée.</p>
+        <p className="text-[11.5px] text-gray-400">{tr("Affiché juste sous le prix, masqué une fois la date passée.")}</p>
       </Bloc>
     );
     default: return null; // social : aucun contenu à régler, seulement le style
@@ -1296,6 +1316,7 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
 // juste reciblée sur ce tableau au lieu de config.customSections.
 
 export function PanelPageSections({ config, set, pageKey, titre }: { config: ThemeConfig; set: any; pageKey: "aboutPage" | "contactPage"; titre: string }) {
+  const tr = useT();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [showLibrary, setShowLibrary] = useState(false);
 
@@ -1337,16 +1358,16 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-gray-200 space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-[13px] font-semibold text-gray-700">Afficher la page {titre}</p>
+          <p className="text-[13px] font-semibold text-gray-700">{tr("Afficher la page")}{" "}{tr(titre)}</p>
           <button onClick={() => setPage({ actif: !page.actif })}>
             {page.actif === true ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
           </button>
         </div>
         {pageKey === "contactPage" && (
           <>
-            <FInp label="Texte d'introduction" value={page.intro || ""} onChange={v => setPage({ intro: v })} multiline />
+            <FInp label={tr("Texte d'introduction")} value={page.intro || ""} onChange={v => setPage({ intro: v })} multiline />
             <div className="flex items-center justify-between">
-              <p className="text-[13px] font-semibold text-gray-700">Formulaire de contact</p>
+              <p className="text-[13px] font-semibold text-gray-700">{tr("Formulaire de contact")}</p>
               <button onClick={() => setPage({ afficherFormulaire: !(page.afficherFormulaire ?? true) })}>
                 {(page.afficherFormulaire ?? true) ? <ToggleRight size={18} style={{ color: "#F5A623" }} /> : <ToggleLeft size={18} className="text-gray-400" />}
               </button>
@@ -1356,16 +1377,16 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
       </div>
 
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
-        <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">Blocs de contenu</p>
+        <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">{tr("Blocs de contenu")}</p>
         <button onClick={() => setShowLibrary(true)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
-          <Plus size={9} /> Ajouter
+          <Plus size={9} />{" "}{tr("Ajouter")}
         </button>
       </div>
-      {erreur && <p className="mx-4 mt-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{erreur}</p>}
+      {erreur && <p className="mx-4 mt-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{tr(erreur)}</p>}
 
       <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
         {sections.length === 0 && (
-          <p className="p-4 text-[13px] text-gray-500 leading-relaxed">Aucun bloc pour l'instant — clique sur "Ajouter" pour composer cette page (texte, chiffres clés, galerie...).</p>
+          <p className="p-4 text-[13px] text-gray-500 leading-relaxed">{tr("Aucun bloc pour l'instant — clique sur \"Ajouter\" pour composer cette page (texte, chiffres clés, galerie...).")}</p>
         )}
         {sections.map((sec, idx) => {
           const isOpen = activeSection === sec.id;
@@ -1379,18 +1400,18 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
               onDragEnd={() => { setDragIdx(null); setOverIdx(null); }}
               className={`${isOpen ? "bg-gray-50/80" : ""} transition-all ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-inset ring-[#F5A623]/50" : ""}`}>
               <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none" onClick={() => setActiveSection(isOpen ? null : sec.id)}>
-                <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner" onClick={e => e.stopPropagation()}>
+                <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title={tr("Glisser pour réordonner")} onClick={e => e.stopPropagation()}>
                   <GripVertical size={12} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-gray-700 truncate">{sec.label}</p>
+                  <p className="text-[13px] font-semibold text-gray-700 truncate">{tr(sec.label)}</p>
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0" onClick={e => e.stopPropagation()}>
                   <button onClick={() => toggleSection(sec.id)}>
                     {sec.actif ? <ToggleRight size={15} style={{ color: "#F5A623" }} /> : <ToggleLeft size={15} className="text-gray-400" />}
                   </button>
-                  <button onClick={() => duplicateSection(sec.id)} title="Dupliquer" className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={12} /></button>
-                  <button onClick={() => removeSection(sec.id)} title="Supprimer" className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                  <button onClick={() => duplicateSection(sec.id)} title={tr("Dupliquer")} className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={12} /></button>
+                  <button onClick={() => removeSection(sec.id)} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
                   {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-400" />}
                 </div>
               </div>
@@ -1408,6 +1429,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
 }
 
 export function PanelProduit({ config, setProductPage, set }: any) {
+  const tr = useT();
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [rechercheSection, setRechercheSection] = useState("");
   // Position d'insertion de la bibliothèque (null = fermée).
@@ -1451,7 +1473,7 @@ export function PanelProduit({ config, setProductPage, set }: any) {
     return { ...p, productPagesParProduit: reste };
   });
   const appliquerATous = () => {
-    if (!confirm("Appliquer cette fiche à tous les produits ?\n\nLes fiches personnalisées des autres produits seront remplacées.")) return;
+    if (!confirm(tr("Appliquer cette fiche à tous les produits ?\n\nLes fiches personnalisées des autres produits seront remplacées."))) return;
     set((p: ThemeConfig) => ({ ...p, productPage: pp, productPagesParProduit: {} }));
     choisir(null);
   };
@@ -1482,7 +1504,7 @@ export function PanelProduit({ config, setProductPage, set }: any) {
   if (insertion !== null) return (
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-        <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">Ajouter une section</p>
+        <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">{tr("Ajouter une section")}</p>
         <button onClick={() => setInsertion(null)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
       </div>
       <div className="px-3 pt-3"><ChampRecherche value={rechercheSection} onChange={setRechercheSection} /></div>
@@ -1498,8 +1520,8 @@ export function PanelProduit({ config, setProductPage, set }: any) {
                 <Li size={14} className="text-gray-500 group-hover:text-[#F5A623]" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-700">{SECTIONS_FICHE[type].label}</p>
-                <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{pris ? "Déjà sur la fiche (une seule autorisée)" : meta?.desc}</p>
+                <p className="text-sm font-semibold text-gray-700">{tr(SECTIONS_FICHE[type].label)}</p>
+                <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{pris ? tr("Déjà sur la fiche (une seule autorisée)") : tr(meta?.desc)}</p>
               </div>
               {!pris && <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />}
             </button>
@@ -1509,18 +1531,18 @@ export function PanelProduit({ config, setProductPage, set }: any) {
     </div>
   );
 
-  const LigneInsertion = ({ idx }: { idx: number }) => (
+  const LigneInsertion = ({ idx }: { idx: number }) => { const tr = useT(); return (
     <div className="group/ins relative h-2 -my-0.5 flex items-center">
       {dragId !== null && dropIdx === idx
         ? <div className="w-full h-0.5 rounded-full bg-[#F5A623]" />
         : dragId === null && (
-          <button onClick={() => setInsertion(idx)} title="Insérer une section ici"
+          <button onClick={() => setInsertion(idx)} title={tr("Insérer une section ici")}
             className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#F5A623] text-[#050508] flex items-center justify-center opacity-0 group-hover/ins:opacity-100 transition-opacity z-10">
             <Plus size={11} />
           </button>
         )}
     </div>
-  );
+  ); };
 
   return (
     <div className="flex flex-col h-full">
@@ -1529,23 +1551,23 @@ export function PanelProduit({ config, setProductPage, set }: any) {
         {/* Fiche ciblée : template global ou produit précis */}
         {produits.length > 0 && (
           <div className="p-4 border-b border-gray-200 space-y-2">
-            <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">Fiche à modifier</p>
+            <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">{tr("Fiche à modifier")}</p>
             <select value={cible ?? ""} onChange={e => changerCible(e.target.value || null)}
               className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
-              <option value="">Toutes les fiches (template global)</option>
-              {produits.map(p => <option key={p.id} value={p.id}>{p.nom}{perso[p.id] ? " · personnalisée" : ""}</option>)}
+              <option value="">{tr("Toutes les fiches (template global)")}</option>
+              {produits.map(p => <option key={p.id} value={p.id}>{tr(p.nom)}{perso[p.id] ? tr(" · personnalisée") : ""}</option>)}
             </select>
             <p className="text-[12px] text-gray-500 leading-relaxed">
               {cible
-                ? perso[cible] ? "Fiche personnalisée : vos changements ne concernent que ce produit." : "Ce produit suit le template global. Votre première modification lui crée sa propre fiche."
-                : nbPerso ? `${nbPerso} produit${nbPerso > 1 ? "s ont leur" : " a sa"} propre fiche et ne ${nbPerso > 1 ? "suivent" : "suit"} pas ce template.` : "Ce template s'applique à toutes les fiches produits."}
+                ? perso[cible] ? tr("Fiche personnalisée : vos changements ne concernent que ce produit.") : tr("Ce produit suit le template global. Votre première modification lui crée sa propre fiche.")
+                : nbPerso ? `${nbPerso} produit${nbPerso > 1 ? "s ont leur" : " a sa"} propre fiche et ne ${nbPerso > 1 ? "suivent" : "suit"} pas ce template.` : tr("Ce template s'applique à toutes les fiches produits.")}
             </p>
             {(cible ? !!perso[cible] : nbPerso > 0) && (
               <div className="flex flex-wrap gap-1.5">
                 {cible && (
-                  <button onClick={revenirGlobal} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-gray-200 text-gray-700 hover:border-gray-300">Revenir au template global</button>
+                  <button onClick={revenirGlobal} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-gray-200 text-gray-700 hover:border-gray-300">{tr("Revenir au template global")}</button>
                 )}
-                <button onClick={appliquerATous} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-[#F5A623]/50 text-[#B7791F] hover:bg-[#F5A623]/10">Appliquer à toutes les fiches</button>
+                <button onClick={appliquerATous} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-[#F5A623]/50 text-[#B7791F] hover:bg-[#F5A623]/10">{tr("Appliquer à toutes les fiches")}</button>
               </div>
             )}
           </div>
@@ -1553,15 +1575,15 @@ export function PanelProduit({ config, setProductPage, set }: any) {
 
         {/* Layout picker */}
         <div className="p-4 border-b border-gray-200">
-          <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2.5">Mise en page</p>
+          <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em] mb-2.5">{tr("Mise en page")}</p>
           <div className="grid grid-cols-2 gap-1.5">
             {LAYOUT_OPTIONS.map(lay => (
               <button key={lay.v} onClick={() => agir({ action: "mise_en_page", layout: lay.v })}
                 className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
                 <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1">
-                  {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {lay.l}
+                  {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {tr(lay.l)}
                 </p>
-                <p className="text-[13px] text-gray-600 mt-0.5 leading-relaxed">{lay.desc}</p>
+                <p className="text-[13px] text-gray-600 mt-0.5 leading-relaxed">{tr(lay.desc)}</p>
               </button>
             ))}
           </div>
@@ -1570,14 +1592,14 @@ export function PanelProduit({ config, setProductPage, set }: any) {
         {/* Section list */}
         <div className="p-4">
           <div className="flex items-center justify-between mb-2.5">
-            <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">Sections de la fiche</p>
+            <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">{tr("Sections de la fiche")}</p>
             <button onClick={() => setInsertion(sections.length)}
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-semibold transition-all"
               style={{ backgroundColor: "#F5A623", color: "#050508" }}>
-              <Plus size={9} /> Ajouter
+              <Plus size={9} />{" "}{tr("Ajouter")}
             </button>
           </div>
-          {erreur && <p className="mb-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{erreur}</p>}
+          {erreur && <p className="mb-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{tr(erreur)}</p>}
           <div onDragOver={e => e.preventDefault()} onDrop={deposer}>
             <LigneInsertion idx={0} />
             {sections.map((sec, idx) => {
@@ -1594,20 +1616,20 @@ export function PanelProduit({ config, setProductPage, set }: any) {
                     onDragEnd={() => { setDragId(null); setDropIdx(null); }}
                     className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"} ${dragId === sec.id ? "opacity-40" : ""}`}>
                     <div className="flex items-center gap-1.5 px-2 py-2">
-                      <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title="Glisser pour réordonner">
+                      <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title={tr("Glisser pour réordonner")}>
                         <GripVertical size={13} />
                       </div>
                       <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                         <SIcon size={11} className="text-gray-500" />
                       </div>
                       <button onClick={() => setActiveSection(isActive ? null : sec.id)} className={`flex-1 text-left text-[13px] font-medium truncate ${sec.actif ? "text-gray-800" : "text-gray-400"}`}>
-                        {SECTIONS_FICHE[sec.type]?.label ?? sec.type}
+                        {tr(SECTIONS_FICHE[sec.type]?.label) ?? tr(sec.type)}
                       </button>
-                      <button onClick={() => agir({ action: sec.actif ? "masquer" : "afficher", section: sec.id })} className="flex-shrink-0" title={sec.actif ? "Masquer" : "Afficher"}>
+                      <button onClick={() => agir({ action: sec.actif ? "masquer" : "afficher", section: sec.id })} className="flex-shrink-0" title={sec.actif ? tr("Masquer") : tr("Afficher")}>
                         {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
                       </button>
                       {!isBuiltIn && (
-                        <button onClick={() => { agir({ action: "supprimer", section: sec.id }); if (isActive) setActiveSection(null); }} title="Supprimer" className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
+                        <button onClick={() => { agir({ action: "supprimer", section: sec.id }); if (isActive) setActiveSection(null); }} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
                       )}
                       <button onClick={() => setActiveSection(isActive ? null : sec.id)} className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
                         <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
@@ -1623,7 +1645,7 @@ export function PanelProduit({ config, setProductPage, set }: any) {
         </div>
 
         <div className="px-4 pb-4">
-          <p className="text-[13px] text-gray-600 leading-relaxed">{cible ? "Ces réglages ne s'appliquent qu'à ce produit." : "Ces réglages s'appliquent à toutes les fiches produits non personnalisées."} Survolez l'espace entre deux sections pour en insérer une à cet endroit.</p>
+          <p className="text-[13px] text-gray-600 leading-relaxed">{cible ? tr("Ces réglages ne s'appliquent qu'à ce produit.") : tr("Ces réglages s'appliquent à toutes les fiches produits non personnalisées.")}{" "}{tr("Survolez l'espace entre deux sections pour en insérer une à cet endroit.")}</p>
         </div>
       </div>
     </div>
@@ -1633,12 +1655,13 @@ export function PanelProduit({ config, setProductPage, set }: any) {
 // ─── Champs helper ────────────────────────────────────────────────────────────
 // `media` : champ d'URL d'image/vidéo — ajoute l'import depuis l'appareil (+ aperçu de l'image).
 function FInp({ label, value, onChange, multiline, media }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; media?: "image" | "video" }) {
+  const tr = useT();
   return (
     <div className={media ? "space-y-1.5" : undefined}>
-      {label && <label className="block text-[12px] text-gray-500 mb-1">{label}</label>}
+      {label && <label className="block text-[12px] text-gray-500 mb-1">{tr(label)}</label>}
       {multiline
         ? <textarea value={value} onChange={e=>onChange(e.target.value)} rows={2} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50 resize-none" />
-        : <input value={value} onChange={e=>onChange(e.target.value)} placeholder={media === "video" ? "Lien YouTube, Vimeo ou fichier .mp4" : media === "image" ? "https://…" : undefined} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
+        : <input value={value} onChange={e=>onChange(e.target.value)} placeholder={media === "video" ? tr("Lien YouTube, Vimeo ou fichier .mp4") : media === "image" ? "https://…" : undefined} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
       }
       {media && <MediaUpload type={media} onUrl={onChange} />}
       {media === "image" && value && <img src={value} alt="" className="w-full h-20 rounded-lg object-cover border border-gray-200" onError={e=>(e.currentTarget.style.display="none")} />}
@@ -1647,9 +1670,10 @@ function FInp({ label, value, onChange, multiline, media }: { label: string; val
 }
 
 function FCol({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const tr = useT();
   return (
     <div className="flex items-center gap-2">
-      <label className="text-[12px] text-gray-400 flex-1 min-w-0 truncate">{label}</label>
+      <label className="text-[12px] text-gray-400 flex-1 min-w-0 truncate">{tr(label)}</label>
       <div className="flex items-center gap-1.5 flex-shrink-0">
         <input type="color" value={value} onChange={e=>onChange(e.target.value)} className="w-7 h-7 rounded-lg cursor-pointer border border-gray-300" style={{padding:"1px"}} />
         <input type="text" value={value.toUpperCase()} onChange={e=>{ if(/^#[0-9A-Fa-f]{0,6}$/.test(e.target.value)) onChange(e.target.value); }} className="w-16 bg-gray-100 border border-gray-200 rounded-lg px-2 py-1 text-[12px] font-mono text-gray-700 focus:outline-none focus:border-[#F5A623]/50" />
@@ -1659,20 +1683,22 @@ function FCol({ label, value, onChange }: { label: string; value: string; onChan
 }
 
 function FSel({ label, value, opts, onChange }: { label: string; value: string; opts: Array<{v:string;l:string}>; onChange: (v: string) => void }) {
+  const tr = useT();
   return (
     <div>
-      {label && <label className="block text-[12px] text-gray-500 mb-1">{label}</label>}
+      {label && <label className="block text-[12px] text-gray-500 mb-1">{tr(label)}</label>}
       <select value={value} onChange={e=>onChange(e.target.value)} className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
-        {opts.map(o=><option key={o.v} value={o.v}>{o.l}</option>)}
+        {opts.map(o=><option key={o.v} value={o.v}>{tr(o.l)}</option>)}
       </select>
     </div>
   );
 }
 
 function FCheck({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  const tr = useT();
   return (
     <div className="flex items-center justify-between py-1">
-      <span className="text-sm text-gray-600">{label}</span>
+      <span className="text-sm text-gray-600">{tr(label)}</span>
       <button role="switch" aria-checked={checked} aria-label={label} onClick={()=>onChange(!checked)}>
         {checked ? <ToggleRight size={18} style={{color:"#F5A623"}} /> : <ToggleLeft size={18} className="text-gray-600" />}
       </button>

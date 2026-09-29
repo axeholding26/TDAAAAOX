@@ -15,6 +15,7 @@ import type { BlockNode } from "@/lib/theme-config";
 import { ZONES, zoneDe, type Zone } from "@/lib/block-tree";
 import { BLOCK_LIBRARY_ITEMS } from "../canvas/blockDefaults";
 import { nomNoeud } from "./libelles";
+import { useT } from "@/components/I18nProvider";
 
 const TITRE_ZONE: Record<Zone, string> = { header: "En-tête", template: "Modèle", footer: "Pied de page" };
 const ICONE_ZONE: Record<Zone, any> = { header: PanelTop, template: LayoutPanelTop, footer: PanelBottom };
@@ -46,6 +47,7 @@ interface Props {
 // réordonner les sections dans leur zone et les blocs dans leur colonne ;
 // clavier supporté (Espace pour saisir, flèches, Espace pour poser).
 export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onToggleActif, onDupliquer, onSupprimer, onAjouterSection, onAjouterBloc }: Props) {
+  const tr = useT();
   const [ouvertes, setOuvertes] = useState<Record<string, boolean>>({});
   const [enCours, setEnCours] = useState<BlockNode | null>(null);
   const sensors = useSensors(
@@ -76,14 +78,14 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setEnCours(null)}>
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="px-5 py-4 border-b border-[#EEEEEE]">
-          <p className="text-[16px] font-semibold text-[#111111]">Page d'accueil</p>
+          <p className="text-[16px] font-semibold text-[#111111]">{tr("Page d'accueil")}</p>
         </div>
 
         {ZONES.map((zone) => {
           const sections = tree.filter((n) => zoneDe(n) === zone);
           return (
             <div key={zone} className="px-3 py-3 border-b border-[#EEEEEE] last:border-b-0">
-              <p className="px-2 pb-1.5 text-[14px] font-semibold text-[#111111]">{TITRE_ZONE[zone]}</p>
+              <p className="px-2 pb-1.5 text-[14px] font-semibold text-[#111111]">{tr(TITRE_ZONE[zone])}</p>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-0.5">
                   {sections.map((section) => (
@@ -105,7 +107,7 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
               </SortableContext>
               <button onClick={() => onAjouterSection(zone, sections.length)}
                 className="mt-0.5 w-full flex items-center gap-2 h-10 px-2 rounded-lg text-[14px] font-medium text-[#C77C0A] hover:bg-[#FFF7EA] transition-colors">
-                <PlusCircle size={17} /> Ajouter une section
+                <PlusCircle size={17} />{" "}{tr("Ajouter une section")}
               </button>
             </div>
           );
@@ -136,6 +138,7 @@ function LigneSection({ section, zone, ouverte, onBasculer, selectedId, onSelect
   onSelect: (id: string) => void; onToggleActif: (id: string) => void; onDupliquer: (id: string) => void;
   onSupprimer: (id: string) => void; onAjouterBloc: () => void;
 }) {
+  const tr = useT();
   const { attributes, listeners, setNodeRef, styleTri, isDragging } = useLigneTriable(section.id, zone);
   const colonnes = colonnesDe(section);
   const design = colonnes.some((c) => (c.children ?? []).some((b) => b.type === "embed-html"));
@@ -163,7 +166,7 @@ function LigneSection({ section, zone, ouverte, onBasculer, selectedId, onSelect
         <div className="pb-1">
           {colonnes.map((col, i) => (
             <div key={col.id}>
-              {colonnes.length > 1 && <p className="pl-11 pt-1.5 pb-0.5 text-[12px] font-medium text-[#999999]">Colonne {i + 1}</p>}
+              {colonnes.length > 1 && <p className="pl-11 pt-1.5 pb-0.5 text-[12px] font-medium text-[#999999]">{tr("Colonne")}{" "}{i + 1}</p>}
               <SortableContext items={(col.children ?? []).map((b) => b.id)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-0.5">
                   {(col.children ?? []).map((bloc) => (
@@ -176,7 +179,7 @@ function LigneSection({ section, zone, ouverte, onBasculer, selectedId, onSelect
           ))}
           <button onClick={onAjouterBloc}
             className="w-full flex items-center gap-2 h-9 pl-11 pr-2 rounded-lg text-[13.5px] font-medium text-[#C77C0A] hover:bg-[#FFF7EA] transition-colors">
-            <PlusCircle size={15} /> Ajouter un bloc
+            <PlusCircle size={15} />{" "}{tr("Ajouter un bloc")}
           </button>
         </div>
       )}
@@ -213,6 +216,7 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
   onSelect: () => void; onToggleActif: () => void; onDupliquer: () => void; onSupprimer: () => void;
   poignee: Record<string, any>;
 }) {
+  const tr = useT();
   return (
     <div
       className={`group/ligne flex items-center h-10 rounded-lg pr-1.5 transition-colors ${niveau === 1 ? "pl-6" : "pl-0.5"} ${
@@ -221,14 +225,14 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
     >
       <span className="w-6 flex-shrink-0 flex items-center justify-center">
         {depliable && (
-          <button onClick={onBasculer} aria-label={ouverte ? "Replier" : "Déplier"} className="w-6 h-6 flex items-center justify-center rounded text-[#888888] hover:text-[#111111]">
+          <button onClick={onBasculer} aria-label={ouverte ? tr("Replier") : tr("Déplier")} className="w-6 h-6 flex items-center justify-center rounded text-[#888888] hover:text-[#111111]">
             <ChevronRight size={15} className={`transition-transform duration-200 ${ouverte ? "rotate-90" : ""}`} />
           </button>
         )}
       </span>
 
       {/* Icône du type, remplacée par la poignée au survol (comme Shopify). */}
-      <span {...poignee} title="Glisser pour déplacer" style={{ touchAction: "none" }}
+      <span {...poignee} title={tr("Glisser pour déplacer")} style={{ touchAction: "none" }}
         className="relative w-7 h-7 flex-shrink-0 flex items-center justify-center rounded cursor-grab active:cursor-grabbing text-[#777777] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#F5A623]">
         <Icone size={16} className="group-hover/ligne:opacity-0 transition-opacity" />
         <GripVertical size={16} className="absolute opacity-0 group-hover/ligne:opacity-100 transition-opacity" />
@@ -236,13 +240,13 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
 
       <button onClick={onSelect} className={`flex-1 min-w-0 text-left pl-1.5 text-[14px] truncate h-full ${
         masque ? "text-[#AAAAAA]" : "text-[#111111]"} ${selectionne ? "font-semibold" : ""}`}>
-        {nom}
+        {tr(nom)}
       </button>
 
       <span className={`flex items-center gap-0.5 flex-shrink-0 ${masque ? "" : "opacity-0 group-hover/ligne:opacity-100 focus-within:opacity-100"} ${selectionne ? "opacity-100" : ""}`}>
-        <BoutonIcone titre={masque ? "Afficher" : "Masquer"} onClick={onToggleActif}>{masque ? <EyeOff size={15} /> : <Eye size={15} />}</BoutonIcone>
-        {!masque && <BoutonIcone titre="Dupliquer" onClick={onDupliquer}><Copy size={15} /></BoutonIcone>}
-        {!masque && <BoutonIcone titre="Supprimer" onClick={onSupprimer} danger><Trash2 size={15} /></BoutonIcone>}
+        <BoutonIcone titre={masque ? tr("Afficher") : tr("Masquer")} onClick={onToggleActif}>{masque ? <EyeOff size={15} /> : <Eye size={15} />}</BoutonIcone>
+        {!masque && <BoutonIcone titre={tr("Dupliquer")} onClick={onDupliquer}><Copy size={15} /></BoutonIcone>}
+        {!masque && <BoutonIcone titre={tr("Supprimer")} onClick={onSupprimer} danger><Trash2 size={15} /></BoutonIcone>}
       </span>
     </div>
   );

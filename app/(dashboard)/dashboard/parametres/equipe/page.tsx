@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { MODULES, ROLE_LABELS, type Niveau, type ModuleKey, type GrillePermissions } from "@/lib/permissions";
+import { useT } from "@/components/I18nProvider";
 
 const EQUIPE_TUTORIAL_STEPS = [
   { Icon: UserPlus,    titre: "Invite ton équipe",              description: "Ajoute un gérant, caissier, comptable ou un accès personnalisé — un lien d'invitation est généré immédiatement." },
@@ -59,11 +60,12 @@ function messageInvitation(nom: string, email: string, lien: string) {
 }
 
 function GrillePermissionsEditor({ value, onChange }: { value: GrillePermissions; onChange: (v: GrillePermissions) => void }) {
+  const t = useT();
   return (
     <div className="space-y-1.5">
       {MODULES.map((mod) => (
         <div key={mod} className="flex items-center justify-between gap-2 py-1.5 px-3 rounded-xl bg-gray-50">
-          <span className="text-[12px] font-medium text-gray-700">{MODULE_LABELS[mod]}</span>
+          <span className="text-[12px] font-medium text-gray-700">{t(MODULE_LABELS[mod])}</span>
           <div className="flex items-center gap-1">
             {(["aucun", "lecture", "ecriture"] as Niveau[]).map((niveau) => {
               const actif = value[mod] === niveau;
@@ -75,7 +77,7 @@ function GrillePermissionsEditor({ value, onChange }: { value: GrillePermissions
                   className={`text-[10.5px] font-bold px-2.5 py-1 rounded-lg transition-colors ${actif ? "text-white" : "text-gray-400 hover:text-gray-600 bg-white border border-gray-200"}`}
                   style={actif ? { background: niveau === "ecriture" ? "#F5A623" : niveau === "lecture" ? "#1B2A4A" : "#9ca3af" } : undefined}
                 >
-                  {NIVEAU_LABELS[niveau]}
+                  {t(NIVEAU_LABELS[niveau])}
                 </button>
               );
             })}
@@ -87,6 +89,7 @@ function GrillePermissionsEditor({ value, onChange }: { value: GrillePermissions
 }
 
 export default function EquipePage() {
+  const t = useT();
   const [membres, setMembres] = useState<Membre[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -112,7 +115,7 @@ export default function EquipePage() {
 
   async function inviter(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.email) { toast.error("L'email est requis"); return; }
+    if (!form.email) { toast.error(t("L'email est requis")); return; }
     setSaving(true);
     try {
       const body: any = { email: form.email, nom: form.nom || undefined, role: form.role };
@@ -120,13 +123,13 @@ export default function EquipePage() {
       const res = await fetch("/api/equipe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur lors de l'invitation");
-      toast.success("Invitation envoyée !");
+      toast.success(t("Invitation envoyée !"));
       setLastInvite({ nom: form.nom || form.email, email: form.email, lienInvitation: data.lienInvitation });
       setForm({ nom: "", email: "", role: "gerant" });
       setCustomPerms(permsVides());
       charger();
     } catch (err: any) {
-      toast.error(err.message || "Erreur lors de l'invitation");
+      toast.error(t(err.message) || t("Erreur lors de l'invitation"));
     } finally {
       setSaving(false);
     }
@@ -136,9 +139,9 @@ export default function EquipePage() {
     if (!lien) return;
     try {
       await navigator.clipboard.writeText(lien);
-      toast.success("Lien copié !");
+      toast.success(t("Lien copié !"));
     } catch {
-      toast.error("Impossible de copier le lien");
+      toast.error(t("Impossible de copier le lien"));
     }
   }
 
@@ -157,11 +160,11 @@ export default function EquipePage() {
       const res = await fetch(`/api/equipe/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      toast.success("Membre mis à jour");
+      toast.success(t("Membre mis à jour"));
       setExpandedId(null);
       charger();
     } catch (err: any) {
-      toast.error(err.message || "Erreur lors de la mise à jour");
+      toast.error(t(err.message) || t("Erreur lors de la mise à jour"));
     } finally {
       setSavingEdit(false);
     }
@@ -174,25 +177,25 @@ export default function EquipePage() {
       const res = await fetch(`/api/equipe/${m.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: nouveau }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      toast.success(nouveau === "actif" ? "Membre réactivé" : "Membre suspendu");
+      toast.success(nouveau === "actif" ? t("Membre réactivé") : t("Membre suspendu"));
       charger();
     } catch (err: any) {
-      toast.error(err.message || "Erreur");
+      toast.error(t(err.message) || t("Erreur"));
     } finally {
       setTogglingId(null);
     }
   }
 
   async function retirer(id: string) {
-    if (!confirm("Retirer ce membre de l'équipe ?")) return;
+    if (!confirm(t("Retirer ce membre de l'équipe ?"))) return;
     setRetiringId(id);
     try {
       await fetch(`/api/equipe?id=${id}`, { method: "DELETE" });
-      toast.success("Membre retiré");
+      toast.success(t("Membre retiré"));
       setExpandedId(null);
       charger();
     } catch {
-      toast.error("Erreur");
+      toast.error(t("Erreur"));
     } finally {
       setRetiringId(null);
     }
@@ -203,15 +206,15 @@ export default function EquipePage() {
 
   return (
     <div className="p-5 max-w-3xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="equipe" titre="Équipe" sousTitre="Rôles et accès de ton équipe" steps={EQUIPE_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="equipe" titre={t("Équipe")} sousTitre={t("Rôles et accès de ton équipe")} steps={EQUIPE_TUTORIAL_STEPS} />
 
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[18px] font-bold text-[#111]">Équipe</h1>
+            <h1 className="text-[18px] font-bold text-[#111]">{t("Équipe")}</h1>
             <BoutonRevoirTutoriel moduleKey="equipe" />
           </div>
-          <p className="text-[12px] text-gray-500">{membres.length} membre(s) dans votre équipe</p>
+          <p className="text-[12px] text-gray-500">{membres.length}{" "}{t("membre(s) dans votre équipe")}</p>
         </div>
       </div>
 
@@ -219,16 +222,16 @@ export default function EquipePage() {
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-2">
           <Users size={15} className="text-[#F5A623]" />
-          <h2 className="text-[#111] font-semibold text-[13.5px]">Membres de l'équipe</h2>
+          <h2 className="text-[#111] font-semibold text-[13.5px]">{t("Membres de l'équipe")}</h2>
         </div>
 
         {loading ? (
-          <div className="py-12 text-center text-[13px] text-gray-400">Chargement…</div>
+          <div className="py-12 text-center text-[13px] text-gray-400">{t("Chargement…")}</div>
         ) : membres.length === 0 ? (
           <div className="py-10 text-center">
             <Users size={28} className="text-gray-200 mx-auto mb-3" />
-            <p className="text-[13px] font-semibold text-[#111]">Aucun membre ajouté</p>
-            <p className="text-[11.5px] text-gray-400 mt-1">Invitez des collaborateurs pour gérer votre boutique</p>
+            <p className="text-[13px] font-semibold text-[#111]">{t("Aucun membre ajouté")}</p>
+            <p className="text-[11.5px] text-gray-400 mt-1">{t("Invitez des collaborateurs pour gérer votre boutique")}</p>
           </div>
         ) : (
           <div>
@@ -245,14 +248,14 @@ export default function EquipePage() {
                       <span className="text-[#F5A623] font-bold text-[12px]">{(m.nom || m.email).slice(0, 2).toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-[#111] truncate">{m.nom || m.email}</p>
+                      <p className="text-[13px] font-semibold text-[#111] truncate">{t(m.nom) || m.email}</p>
                       <p className="text-[11.5px] text-gray-400 truncate">{m.email}</p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: "#F5A623", background: "#F5A62315" }}>
-                          {ROLE_LABELS[m.role] ?? m.role}
+                          {t(ROLE_LABELS[m.role]) ?? t(m.role)}
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUT_CFG[m.statut]?.cls ?? ""}`}>
-                          {STATUT_CFG[m.statut]?.label ?? m.statut}
+                          {t(STATUT_CFG[m.statut]?.label) ?? t(m.statut)}
                         </span>
                       </div>
                     </div>
@@ -262,7 +265,7 @@ export default function EquipePage() {
                         {m.lienInvitation && (
                           <>
                             <button onClick={() => copierLien(m.lienInvitation)} className="text-[10.5px] font-bold px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-600 flex items-center gap-1 hover:bg-gray-200 transition-colors">
-                              <Copy size={11} /> Copier le lien
+                              <Copy size={11} />{" "}{t("Copier le lien")}
                             </button>
                             <a
                               href={`https://wa.me/?text=${encodeURIComponent(messageInvitation(m.nom, m.email, m.lienInvitation))}`}
@@ -285,31 +288,31 @@ export default function EquipePage() {
                   {expanded && (
                     <div className="px-4 pb-4 pt-1 space-y-3 bg-gray-50/60">
                       <div>
-                        <label className={lbl}>Rôle</label>
+                        <label className={lbl}>{t("Rôle")}</label>
                         <select value={editRole} onChange={(e) => setEditRole(e.target.value)} className={`${inp} bg-white`}>
-                          {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+                          {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{t(ROLE_LABELS[r])}</option>)}
                         </select>
                       </div>
 
                       {editRole === "personnalise" && (
                         <div>
-                          <label className={`${lbl} mb-1.5 block`}>Accès par module</label>
+                          <label className={`${lbl} mb-1.5 block`}>{t("Accès par module")}</label>
                           <GrillePermissionsEditor value={editPerms} onChange={setEditPerms} />
                         </div>
                       )}
 
                       <div className="flex items-center gap-2 flex-wrap pt-1">
                         <button onClick={() => enregistrerModif(m.id)} disabled={savingEdit} className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold disabled:opacity-50">
-                          {savingEdit ? "…" : "Enregistrer"}
+                          {savingEdit ? "…" : t("Enregistrer")}
                         </button>
                         <button
                           onClick={() => toggleStatut(m)} disabled={togglingId === m.id}
                           className={`px-4 py-2 rounded-xl text-[12px] font-bold flex items-center gap-1.5 disabled:opacity-50 ${m.statut === "suspendu" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}
                         >
-                          {m.statut === "suspendu" ? <><RefreshCw size={12} /> Réactiver</> : <><Ban size={12} /> Suspendre</>}
+                          {m.statut === "suspendu" ? <><RefreshCw size={12} />{" "}{t("Réactiver")}</> : <><Ban size={12} />{" "}{t("Suspendre")}</>}
                         </button>
                         <button onClick={() => retirer(m.id)} disabled={retiringId === m.id} className="px-4 py-2 rounded-xl text-[12px] font-bold bg-red-50 text-red-500 flex items-center gap-1.5 disabled:opacity-50">
-                          <Trash2 size={12} /> Retirer
+                          <Trash2 size={12} />{" "}{t("Retirer")}
                         </button>
                       </div>
                     </div>
@@ -323,11 +326,11 @@ export default function EquipePage() {
 
       {/* Rôles disponibles */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <h3 className="text-[#111] font-semibold text-[13px] mb-3">Rôles disponibles</h3>
+        <h3 className="text-[#111] font-semibold text-[13px] mb-3">{t("Rôles disponibles")}</h3>
         <div className="flex flex-wrap gap-2">
           {ROLE_OPTIONS.map((r) => (
             <span key={r} className="text-[11px] font-medium px-2.5 py-1 rounded-lg" style={{ color: "#F5A623", background: "#F5A62312", border: "1px solid #F5A62330" }}>
-              {ROLE_LABELS[r]}
+              {t(ROLE_LABELS[r])}
             </span>
           ))}
         </div>
@@ -337,41 +340,41 @@ export default function EquipePage() {
       <form onSubmit={inviter} className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2">
           <UserPlus size={15} className="text-[#F5A623]" />
-          <h2 className="text-[#111] font-semibold text-[13.5px]">Inviter un membre</h2>
+          <h2 className="text-[#111] font-semibold text-[13.5px]">{t("Inviter un membre")}</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className={lbl}>Prénom / Nom</label>
-            <input value={form.nom} onChange={(e) => setForm((v) => ({ ...v, nom: e.target.value }))} placeholder="Ex: Aminata Diallo" className={inp} />
+            <label className={lbl}>{t("Prénom / Nom")}</label>
+            <input value={form.nom} onChange={(e) => setForm((v) => ({ ...v, nom: e.target.value }))} placeholder={t("Ex: Aminata Diallo")} className={inp} />
           </div>
           <div>
-            <label className={lbl}>Email *</label>
+            <label className={lbl}>{t("Email *")}</label>
             <input type="email" required value={form.email} onChange={(e) => setForm((v) => ({ ...v, email: e.target.value }))} placeholder="collaborateur@example.com" className={inp} />
           </div>
         </div>
 
         <div>
-          <label className={lbl}>Rôle</label>
+          <label className={lbl}>{t("Rôle")}</label>
           <select value={form.role} onChange={(e) => setForm((v) => ({ ...v, role: e.target.value }))} className={`${inp} bg-white`}>
-            {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
+            {ROLE_OPTIONS.map((r) => <option key={r} value={r}>{t(ROLE_LABELS[r])}</option>)}
           </select>
         </div>
 
         {form.role === "personnalise" && (
           <div>
-            <label className={`${lbl} mb-1.5 block`}>Accès par module</label>
+            <label className={`${lbl} mb-1.5 block`}>{t("Accès par module")}</label>
             <GrillePermissionsEditor value={customPerms} onChange={setCustomPerms} />
           </div>
         )}
 
         <button type="submit" disabled={saving} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-[12.5px] disabled:opacity-50 transition-opacity hover:opacity-90" style={{ background: "#F5A623", color: "#fff" }}>
-          <UserPlus size={13} /> {saving ? "Envoi…" : "Envoyer l'invitation"}
+          <UserPlus size={13} /> {saving ? t("Envoi…") : t("Envoyer l'invitation")}
         </button>
 
         {lastInvite && (
           <div className="rounded-xl p-4 space-y-2" style={{ background: "#F5A62310", border: "1px solid #F5A62330" }}>
-            <p className="text-[12px] font-semibold text-[#111]">Invitation envoyée à {lastInvite.nom} — partage ce lien :</p>
+            <p className="text-[12px] font-semibold text-[#111]">{t("Invitation envoyée à")}{" "}{t(lastInvite.nom)}{" "}{t("— partage ce lien :")}</p>
             <div className="flex items-center gap-2">
               <input readOnly value={lastInvite.lienInvitation} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[11.5px] text-gray-600 truncate" />
               <button type="button" onClick={() => copierLien(lastInvite.lienInvitation)} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0">

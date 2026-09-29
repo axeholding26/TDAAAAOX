@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
+import { useT } from "@/components/I18nProvider";
 
 const WALLET_TUTORIAL_STEPS = [
   { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque paiement client est placé en séquestre 48h (protection acheteur) avant d'être crédité sur ton solde disponible." },
@@ -51,6 +52,7 @@ function fmt(n: number, devise = "XAF") {
 }
 
 function StatutBadge({ statut }: { statut: string }) {
+  const tr = useT();
   const map: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
     completed:  { label: "Complété",   color: "#15803D", bg: "#F0FDF4", border: "#BBF7D0", icon: CheckCircle2 },
     complete:   { label: "Complété",   color: "#15803D", bg: "#F0FDF4", border: "#BBF7D0", icon: CheckCircle2 },
@@ -64,7 +66,7 @@ function StatutBadge({ statut }: { statut: string }) {
   return (
     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold"
       style={{ color: s.color, background: s.bg, border: `1px solid ${s.border}` }}>
-      <Icon size={9} /> {s.label}
+      <Icon size={9} /> {tr(s.label)}
     </span>
   );
 }
@@ -87,6 +89,7 @@ function TxIcon({ type }: { type: string }) {
 }
 
 export default function WalletPage() {
+  const tr = useT();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [boutiques, setBoutiques] = useState<SoldeBoutique[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +112,7 @@ export default function WalletPage() {
       const data = await res.json();
       setWallet(data.wallet);
       setBoutiques(data.boutiques ?? []);
-    } catch { toast.error("Erreur chargement wallet"); }
+    } catch { toast.error(tr("Erreur chargement wallet")); }
     finally { setLoading(false); }
   }
 
@@ -117,8 +120,8 @@ export default function WalletPage() {
 
   async function soumettrRetrait(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.montant || Number(form.montant) <= 0) { toast.error("Montant invalide"); return; }
-    if (!form.destinataire.trim()) { toast.error("Numéro / IBAN requis"); return; }
+    if (!form.montant || Number(form.montant) <= 0) { toast.error(tr("Montant invalide")); return; }
+    if (!form.destinataire.trim()) { toast.error(tr("Numéro / IBAN requis")); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/wallet/retrait", {
@@ -127,8 +130,8 @@ export default function WalletPage() {
         body: JSON.stringify({ ...form, montant: Number(form.montant) }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Erreur retrait"); return; }
-      toast.success("Retrait initié ! Traitement sous 24–48h.");
+      if (!res.ok) { toast.error(tr(data.error) ?? tr("Erreur retrait")); return; }
+      toast.success(tr("Retrait initié ! Traitement sous 24–48h."));
       setShowRetrait(false);
       setForm({ montant: "", methode: "mobile_money", destinataire: "", operateur: "MTN", notes: "" });
       charger();
@@ -140,20 +143,20 @@ export default function WalletPage() {
   return (
     <div className="space-y-5 max-w-5xl"
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
-      <ModuleTutorial moduleKey="wallet" titre="Wallet" sousTitre="Ton solde et tes mouvements" steps={WALLET_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="wallet" titre={tr("Wallet")} sousTitre={tr("Ton solde et tes mouvements")} steps={WALLET_TUTORIAL_STEPS} />
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 pt-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Wallet Axso</h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("Wallet Axso")}</h1>
             <BoutonRevoirTutoriel moduleKey="wallet" />
           </div>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Votre compte de paiement sécurisé</p>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Votre compte de paiement sécurisé")}</p>
         </div>
         <button onClick={charger}
           className="flex items-center gap-1.5 text-[12px] font-medium text-[#888888] border border-[#E8E8E8] rounded-2xl px-3.5 py-2 hover:text-[#111111] hover:border-[#CCCCCC] transition-all">
-          <RefreshCw size={13} /> Actualiser
+          <RefreshCw size={13} />{" "}{tr("Actualiser")}
         </button>
       </div>
 
@@ -178,9 +181,9 @@ export default function WalletPage() {
               <div>
                 <div className="flex items-center gap-2 mb-5 opacity-60">
                   <ShieldCheck size={13} />
-                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase">Wallet Axso · Sécurisé</span>
+                  <span className="text-[11px] font-semibold tracking-[0.15em] uppercase">{tr("Wallet Axso · Sécurisé")}</span>
                 </div>
-                <p className="text-[13px] opacity-60 mb-1.5">Solde disponible</p>
+                <p className="text-[13px] opacity-60 mb-1.5">{tr("Solde disponible")}</p>
                 <p className="text-[48px] font-black tracking-tight leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {fmt(wallet?.solde ?? 0, devise)}
                 </p>
@@ -190,9 +193,9 @@ export default function WalletPage() {
                   onClick={() => setShowRetrait(true)}
                   disabled={(wallet?.solde ?? 0) <= 0}
                   className="flex items-center gap-2 px-6 py-3 bg-white text-[#D97706] font-bold rounded-2xl text-[13px] hover:bg-amber-50 transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
-                  <ArrowUpFromLine size={15} /> Retirer les fonds
+                  <ArrowUpFromLine size={15} />{" "}{tr("Retirer les fonds")}
                 </button>
-                <p className="text-[11px] opacity-40 sm:text-right">Minimum 1 000 {devise}</p>
+                <p className="text-[11px] opacity-40 sm:text-right">{tr("Minimum 1 000")}{" "}{tr(devise)}</p>
               </div>
             </div>
           </div>
@@ -201,9 +204,9 @@ export default function WalletPage() {
           {boutiques.length > 1 && (
             <div className="ax-card p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-                <p className="text-[13px] font-bold text-[#111111]">Toutes mes boutiques</p>
+                <p className="text-[13px] font-bold text-[#111111]">{tr("Toutes mes boutiques")}</p>
                 <p className="text-[12.5px] text-[#888888]">
-                  Total :{" "}
+                  {tr("Total :")}{" "}
                   {Object.entries(boutiques.reduce<Record<string, number>>((acc, b) => ({ ...acc, [b.devise]: (acc[b.devise] ?? 0) + b.solde }), {}))
                     .map(([dev, total]) => fmt(total, dev)).join(" + ")}
                 </p>
@@ -211,12 +214,12 @@ export default function WalletPage() {
               <div className="divide-y divide-[#F2F2F2]">
                 {boutiques.map(b => (
                   <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="text-[13px] text-[#333333] truncate">{b.nomBoutique}</span>
+                    <span className="text-[13px] text-[#333333] truncate">{tr(b.nomBoutique)}</span>
                     <span className="flex items-center gap-3 flex-shrink-0">
                       <span className="text-[13px] font-semibold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(b.solde, b.devise)}</span>
                       {b.active
-                        ? <span className="text-[11px] text-[#AAAAAA] w-14 text-right">affichée</span>
-                        : <button onClick={() => basculerBoutique(b.id, "/dashboard/wallet")} className="text-[11.5px] font-semibold text-[#D97706] hover:underline w-14 text-right">Ouvrir</button>}
+                        ? <span className="text-[11px] text-[#AAAAAA] w-14 text-right">{tr("affichée")}</span>
+                        : <button onClick={() => basculerBoutique(b.id, "/dashboard/wallet")} className="text-[11.5px] font-semibold text-[#D97706] hover:underline w-14 text-right">{tr("Ouvrir")}</button>}
                     </span>
                   </div>
                 ))}
@@ -240,7 +243,7 @@ export default function WalletPage() {
                       style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
                   )}
                   <div className="flex items-start justify-between gap-2 mb-4">
-                    <span className="ax-label">{s.label}</span>
+                    <span className="ax-label">{tr(s.label)}</span>
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
                       style={{ background: s.iconBg, border: `1px solid ${s.iconColor}20` }}>
                       <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
@@ -259,9 +262,8 @@ export default function WalletPage() {
             style={{ background: "#FFFBEB" }}>
             <Info size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
             <p className="text-[12.5px] text-[#92400E] leading-relaxed">
-              <strong>Comment fonctionne le Wallet Axso ?</strong><br />
-              Chaque paiement client est placé en <strong>séquestre 48h</strong> (protection acheteur).
-              Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix, la commission Axso (6%) est ajoutée au prix payé par le client.
+              <strong>{tr("Comment fonctionne le Wallet Axso ?")}</strong><br />
+              {tr("Chaque paiement client est placé en")}{" "}<strong>{tr("séquestre 48h")}</strong>{" "}{tr("(protection acheteur). Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix, la commission Axso (6%) est ajoutée au prix payé par le client.")}
             </p>
           </div>
 
@@ -278,7 +280,7 @@ export default function WalletPage() {
                   style={tab === t.key
                     ? { color: "#F5A623", borderColor: "#F5A623" }
                     : { color: "#AAAAAA", borderColor: "transparent" }}>
-                  {t.label}
+                  {tr(t.label)}
                 </button>
               ))}
             </div>
@@ -289,17 +291,17 @@ export default function WalletPage() {
                 {(wallet?.transactions ?? []).length === 0 ? (
                   <div className="py-16 text-center">
                     <Wallet size={28} className="mx-auto mb-3 text-[#DDDDDD]" />
-                    <p className="text-[13px] text-[#AAAAAA] font-medium">Aucune transaction pour le moment</p>
-                    <p className="text-[11.5px] text-[#CCCCCC] mt-1">Les mouvements apparaîtront ici après vos premières ventes</p>
+                    <p className="text-[13px] text-[#AAAAAA] font-medium">{tr("Aucune transaction pour le moment")}</p>
+                    <p className="text-[11.5px] text-[#CCCCCC] mt-1">{tr("Les mouvements apparaîtront ici après vos premières ventes")}</p>
                   </div>
                 ) : (wallet?.transactions ?? []).map(tx => (
                   <div key={tx.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors">
                     <TxIcon type={tx.type} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[12.5px] font-semibold text-[#222] truncate">{tx.description}</p>
+                      <p className="text-[12.5px] font-semibold text-[#222] truncate">{tr(tx.description)}</p>
                       {tx.reference && <p className="text-[11px] text-[#CCCCCC] font-mono">{tx.reference}</p>}
                       <p className="text-[11px] text-[#AAAAAA]">
-                        {new Date(tx.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(tx.createdAt).toLocaleDateString(tr.loc, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -320,7 +322,7 @@ export default function WalletPage() {
                 {(wallet?.retraits ?? []).length === 0 ? (
                   <div className="py-16 text-center">
                     <ArrowUpFromLine size={28} className="mx-auto mb-3 text-[#DDDDDD]" />
-                    <p className="text-[13px] text-[#AAAAAA] font-medium">Aucun retrait effectué</p>
+                    <p className="text-[13px] text-[#AAAAAA] font-medium">{tr("Aucun retrait effectué")}</p>
                   </div>
                 ) : (wallet?.retraits ?? []).map(r => (
                   <div key={r.id} className="flex items-center gap-3 px-5 py-3.5 hover:bg-[#FAFAFA] transition-colors">
@@ -332,11 +334,11 @@ export default function WalletPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[12.5px] font-semibold text-[#222]">
-                        {r.methode === "mobile_money" ? `Mobile Money · ${r.operateur ?? ""}` : "Virement bancaire"}
+                        {r.methode === "mobile_money" ? tr("Mobile Money · {0}", r.operateur ?? "") : tr("Virement bancaire")}
                       </p>
-                      <p className="text-[11px] text-[#AAAAAA] truncate">{r.destinataire}</p>
+                      <p className="text-[11px] text-[#AAAAAA] truncate">{tr(r.destinataire)}</p>
                       <p className="text-[11px] text-[#AAAAAA]">
-                        {new Date(r.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                        {new Date(r.createdAt).toLocaleDateString(tr.loc, { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -362,9 +364,9 @@ export default function WalletPage() {
 
             <div className="px-6 py-5 border-b border-[#F3F3F3] flex items-center justify-between">
               <div>
-                <h2 className="text-[16px] font-bold text-[#111111]">Retirer des fonds</h2>
+                <h2 className="text-[16px] font-bold text-[#111111]">{tr("Retirer des fonds")}</h2>
                 <p className="text-[12px] text-[#AAAAAA] mt-0.5">
-                  Disponible : <strong className="text-[#F5A623]">{fmt(wallet?.solde ?? 0, devise)}</strong>
+                  {tr("Disponible :")}{" "}<strong className="text-[#F5A623]">{fmt(wallet?.solde ?? 0, devise)}</strong>
                 </p>
               </div>
               <button onClick={() => setShowRetrait(false)}
@@ -376,19 +378,19 @@ export default function WalletPage() {
             <form onSubmit={soumettrRetrait} className="p-5 space-y-4">
               {/* Montant */}
               <div>
-                <label className="ax-label block mb-2">Montant</label>
+                <label className="ax-label block mb-2">{tr("Montant")}</label>
                 <div className="relative">
                   <input
                     type="number"
                     value={form.montant}
                     onChange={e => setForm(f => ({ ...f, montant: e.target.value }))}
-                    placeholder="Ex: 50 000"
+                    placeholder={tr("Ex: 50 000")}
                     min="1000"
                     max={wallet?.solde ?? 0}
                     className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[18px] font-bold outline-none focus:border-[#F5A623]/50 pr-14 transition-colors"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[#AAAAAA]">{devise}</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[#AAAAAA]">{tr(devise)}</span>
                 </div>
                 <div className="flex gap-2 mt-2">
                   {[25, 50, 75, 100].map(pct => (
@@ -403,7 +405,7 @@ export default function WalletPage() {
 
               {/* Méthode */}
               <div>
-                <label className="ax-label block mb-2">Méthode</label>
+                <label className="ax-label block mb-2">{tr("Méthode")}</label>
                 <div className="grid grid-cols-2 gap-2.5">
                   {[
                     { id: "mobile_money",     label: "Mobile Money",  Icon: Smartphone, desc: "MTN, Orange, Wave…" },
@@ -419,8 +421,8 @@ export default function WalletPage() {
                           ? { borderColor: "#F5A623", background: "#FFFBEB" }
                           : { borderColor: "#EBEBEB", background: "#FAFAFA" }}>
                         <Icon size={20} style={{ color: active ? "#F5A623" : "#AAAAAA" }} />
-                        <span className="text-[12px] font-bold" style={{ color: active ? "#D97706" : "#666666" }}>{m.label}</span>
-                        <span className="text-[11px] text-[#AAAAAA]">{m.desc}</span>
+                        <span className="text-[12px] font-bold" style={{ color: active ? "#D97706" : "#666666" }}>{tr(m.label)}</span>
+                        <span className="text-[11px] text-[#AAAAAA]">{tr(m.desc)}</span>
                       </button>
                     );
                   })}
@@ -430,7 +432,7 @@ export default function WalletPage() {
               {/* Opérateur (Mobile Money) */}
               {form.methode === "mobile_money" && (
                 <div>
-                  <label className="ax-label block mb-2">Opérateur</label>
+                  <label className="ax-label block mb-2">{tr("Opérateur")}</label>
                   <div className="grid grid-cols-4 gap-1.5">
                     {OPERATEURS.map(op => (
                       <button key={op.id} type="button"
@@ -449,25 +451,25 @@ export default function WalletPage() {
               {/* Numéro / IBAN */}
               <div>
                 <label className="ax-label block mb-2">
-                  {form.methode === "mobile_money" ? "Numéro Mobile Money" : "IBAN ou numéro de compte"}
+                  {form.methode === "mobile_money" ? tr("Numéro Mobile Money") : tr("IBAN ou numéro de compte")}
                 </label>
                 <input
                   type="text"
                   value={form.destinataire}
                   onChange={e => setForm(f => ({ ...f, destinataire: e.target.value }))}
-                  placeholder={form.methode === "mobile_money" ? "+237 6XX XXX XXX" : "FR76 XXXX XXXX XXXX"}
+                  placeholder={form.methode === "mobile_money" ? tr("+237 6XX XXX XXX") : tr("FR76 XXXX XXXX XXXX")}
                   className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
                 />
               </div>
 
               {/* Notes */}
               <div>
-                <label className="ax-label block mb-2">Note (optionnel)</label>
+                <label className="ax-label block mb-2">{tr("Note (optionnel)")}</label>
                 <input
                   type="text"
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Ex: Virement mensuel…"
+                  placeholder={tr("Ex: Virement mensuel…")}
                   className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
                 />
               </div>
@@ -480,12 +482,12 @@ export default function WalletPage() {
                     { label: "Frais de virement", value: "Inclus", bold: false },
                   ].map(row => (
                     <div key={row.label} className="flex justify-between text-[12.5px]">
-                      <span className="text-[#AAAAAA]">{row.label}</span>
-                      <span className="font-semibold text-[#888]">{row.value}</span>
+                      <span className="text-[#AAAAAA]">{tr(row.label)}</span>
+                      <span className="font-semibold text-[#888]">{tr(row.value)}</span>
                     </div>
                   ))}
                   <div className="border-t border-[#EBEBEB] pt-2 flex justify-between text-[13px] font-bold">
-                    <span className="text-[#111111]">Vous recevrez</span>
+                    <span className="text-[#111111]">{tr("Vous recevrez")}</span>
                     <span className="text-[#F5A623]" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {fmt(Number(form.montant), devise)}
                     </span>
@@ -497,7 +499,7 @@ export default function WalletPage() {
               <div className="flex items-start gap-2 bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-3">
                 <AlertCircle size={13} className="text-[#D97706] mt-0.5 flex-shrink-0" />
                 <p className="text-[11.5px] text-[#92400E]">
-                  Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.
+                  {tr("Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.")}
                 </p>
               </div>
 
@@ -506,8 +508,8 @@ export default function WalletPage() {
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white text-[13px] transition-all disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
                 style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 20px rgba(245,166,35,0.30)" }}>
                 {submitting
-                  ? <><Loader2 size={15} className="animate-spin" /> Traitement…</>
-                  : <><ArrowUpFromLine size={15} /> Confirmer le retrait</>}
+                  ? <><Loader2 size={15} className="animate-spin" />{" "}{tr("Traitement…")}</>
+                  : <><ArrowUpFromLine size={15} />{" "}{tr("Confirmer le retrait")}</>}
               </button>
             </form>
           </div>

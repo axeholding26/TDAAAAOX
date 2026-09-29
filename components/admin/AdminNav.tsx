@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Store, DollarSign, Truck, CreditCard,
   UserPlus, LogOut, Megaphone,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const NAV = [
   { href: "/admin", label: "Vue globale", icon: LayoutDashboard, exact: true },
@@ -18,6 +19,7 @@ const NAV = [
 ];
 
 export function AdminNav({ email, role }: { email: string; role: "admin" | "admin_lecteur" }) {
+  const t = useT();
   const pathname = usePathname();
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -30,10 +32,10 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
       <div className="p-6 border-b" style={{ borderColor: "rgba(245,166,35,0.12)" }}>
         <div className="flex items-center gap-3">
           <img
-            src="/logo-dark.png" alt="Axso"
+            src="/logo-dark.png" alt={t("Axso")}
             style={{ height: "30px", width: "auto", objectFit: "contain", flexShrink: 0 }}
           />
-          <p className="text-[10px] font-medium" style={{ color: "#AAAAAA" }}>Contrôle plateforme</p>
+          <p className="text-[10px] font-medium" style={{ color: "#AAAAAA" }}>{t("Contrôle plateforme")}</p>
         </div>
       </div>
 
@@ -53,7 +55,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
               }
             >
               <Icon size={16} />
-              {item.label}
+              {t(item.label)}
             </Link>
           );
         })}
@@ -68,7 +70,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-white truncate">{email}</p>
             <p className="text-[10px] font-medium" style={{ color: role === "admin" ? "#16A34A" : "#AAAAAA" }}>
-              {role === "admin" ? "Super Admin" : "Lecture seule"}
+              {role === "admin" ? t("Super Admin") : t("Lecture seule")}
             </p>
           </div>
         </div>
@@ -78,7 +80,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
           style={{ color: "#AAAAAA" }}
         >
           <LogOut size={16} />
-          Déconnexion
+          {t("Déconnexion")}
         </button>
       </div>
     </aside>

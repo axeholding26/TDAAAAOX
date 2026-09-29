@@ -5,6 +5,7 @@ import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, Navigation, Mess
 import { formatMontant } from "@/lib/utils";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
+import { useT } from "@/components/I18nProvider";
 
 const MapLivraison = dynamic(() => import("@/components/livreur/MapLivraison").then(m => m.MapLivraison), { ssr: false });
 
@@ -29,6 +30,7 @@ const STATUT_COLOR: Record<string, string> = {
 };
 
 export default function CommandeLivreurPage() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [commande, setCommande] = useState<Commande | null>(null);
@@ -55,12 +57,12 @@ export default function CommandeLivreurPage() {
         body: JSON.stringify({ statut: "livree" }),
       });
       if (res.ok) {
-        toast.success("Livraison confirmée !", { description: "Les fonds sont libérés automatiquement." });
+        toast.success(t("Livraison confirmée !"), { description: t("Les fonds sont libérés automatiquement.") });
         router.push("/livreur");
         router.refresh();
       } else {
         const d = await res.json();
-        toast.error(d.error || "Erreur");
+        toast.error(t(d.error) || t("Erreur"));
       }
     });
   }
@@ -70,7 +72,7 @@ export default function CommandeLivreurPage() {
       <div className="w-8 h-8 border-2 border-[#1B4FD8] border-t-transparent rounded-full animate-spin" />
     </div>
   );
-  if (!commande) return <div className="text-center py-16 text-gray-400">Commande introuvable</div>;
+  if (!commande) return <div className="text-center py-16 text-gray-400">{t("Commande introuvable")}</div>;
 
   const etapeActuelle = ETAPES.findIndex(e => e.statut === commande.statut);
   const peutLivrer = commande.statut === "expediee";
@@ -80,7 +82,7 @@ export default function CommandeLivreurPage() {
   return (
     <div className="space-y-4 pb-28">
       <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm">
-        <ArrowLeft size={16} /> Retour
+        <ArrowLeft size={16} />{" "}{t("Retour")}
       </button>
 
       {/* Header */}
@@ -88,11 +90,11 @@ export default function CommandeLivreurPage() {
         <div className="flex items-start justify-between mb-1">
           <div>
             <p className="text-gray-500 text-xs font-mono">{commande.numero}</p>
-            <h1 className="text-xl font-bold text-white mt-1">{commande.clientNom}</h1>
+            <h1 className="text-xl font-bold text-white mt-1">{t(commande.clientNom)}</h1>
           </div>
           <div className="text-right">
             <p className="text-[#1B4FD8] font-bold text-xl">{formatMontant(commande.montantTotal, commande.devise)}</p>
-            <p className="text-gray-500 text-xs mt-0.5">Livraison : {formatMontant(commande.montantLivraison, commande.devise)}</p>
+            <p className="text-gray-500 text-xs mt-0.5">{t("Livraison :")}{" "}{formatMontant(commande.montantLivraison, commande.devise)}</p>
           </div>
         </div>
 
@@ -105,7 +107,7 @@ export default function CommandeLivreurPage() {
           ))}
         </div>
         <p className="text-xs mt-2" style={{ color: STATUT_COLOR[commande.statut] || "#1B4FD8" }}>
-          {ETAPES[etapeActuelle]?.label}
+          {t(ETAPES[etapeActuelle]?.label)}
         </p>
       </div>
 
@@ -124,15 +126,15 @@ export default function CommandeLivreurPage() {
             <MapPin size={16} className="text-[#1B4FD8]" />
           </div>
           <div>
-            <p className="text-white font-semibold">{commande.adresseLivraison}</p>
-            <p className="text-gray-400 text-sm">{commande.ville}, {commande.pays}</p>
+            <p className="text-white font-semibold">{t(commande.adresseLivraison)}</p>
+            <p className="text-gray-400 text-sm">{t(commande.ville)}, {t(commande.pays)}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#60a5fa] py-3 rounded-2xl text-sm font-medium">
-            <Navigation size={15} /> Google Maps
+            <Navigation size={15} />{" "}{t("Google Maps")}
           </a>
           <a href={waUrl} target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 text-green-400 py-3 rounded-2xl text-sm font-medium">
@@ -143,15 +145,15 @@ export default function CommandeLivreurPage() {
         <a href={`tel:${commande.clientTelephone}`}
           className="flex items-center gap-3 w-full bg-[#161616] border border-white/5 text-gray-300 py-3 px-4 rounded-2xl text-sm hover:bg-[#222] transition-colors">
           <Phone size={14} className="text-gray-400" />
-          <span>{commande.clientTelephone}</span>
-          <span className="ml-auto text-[#1B4FD8] text-xs font-medium">Appeler</span>
+          <span>{t(commande.clientTelephone)}</span>
+          <span className="ml-auto text-[#1B4FD8] text-xs font-medium">{t("Appeler")}</span>
         </a>
       </div>
 
       {/* Articles */}
       <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <h2 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-          <Package size={14} className="text-[#1B4FD8]" /> Articles
+          <Package size={14} className="text-[#1B4FD8]" />{" "}{t("Articles")}
         </h2>
         <div className="space-y-3">
           {commande.lignes.map((ligne, i) => (
@@ -164,8 +166,8 @@ export default function CommandeLivreurPage() {
                 </div>
               )}
               <div className="flex-1">
-                <p className="text-white text-sm font-medium">{ligne.nom}</p>
-                <p className="text-gray-500 text-xs">Qté : {ligne.quantite}</p>
+                <p className="text-white text-sm font-medium">{t(ligne.nom)}</p>
+                <p className="text-gray-500 text-xs">{t("Qté :")}{" "}{ligne.quantite}</p>
               </div>
               <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(ligne.prix * ligne.quantite, commande.devise)}</p>
             </div>
@@ -173,8 +175,8 @@ export default function CommandeLivreurPage() {
         </div>
         {commande.noteClient && (
           <div className="mt-4 pt-4 border-t border-white/5">
-            <p className="text-gray-500 text-xs mb-1">Note du client</p>
-            <p className="text-gray-500 text-sm italic">"{commande.noteClient}"</p>
+            <p className="text-gray-500 text-xs mb-1">{t("Note du client")}</p>
+            <p className="text-gray-500 text-sm italic">"{t(commande.noteClient)}"</p>
           </div>
         )}
       </div>
@@ -186,9 +188,9 @@ export default function CommandeLivreurPage() {
             <button onClick={marquerLivre} disabled={isPending}
               className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold py-4 rounded-2xl text-lg hover:from-green-400 hover:to-green-300 transition-all disabled:opacity-50 shadow-xl shadow-green-500/20">
               <CheckCircle size={22} />
-              {isPending ? "Confirmation..." : "Confirmer la livraison"}
+              {isPending ? t("Confirmation...") : t("Confirmer la livraison")}
             </button>
-            <p className="text-center text-gray-500 text-xs mt-2">La commande sera marquée comme livrée</p>
+            <p className="text-center text-gray-500 text-xs mt-2">{t("La commande sera marquée comme livrée")}</p>
           </div>
         </div>
       )}

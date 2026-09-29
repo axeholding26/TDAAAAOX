@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Wallet, Lock, CreditCard, ArrowUpRight } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const PAIEMENTS_TUTORIAL_STEPS = [
   { Icon: Wallet,      titre: "Votre wallet Axso",     description: "Le solde disponible, ce que vous avez reçu, retiré et payé en commission — tout au même endroit." },
@@ -10,5 +11,6 @@ const PAIEMENTS_TUTORIAL_STEPS = [
 ];
 
 export function PaiementsTutorial() {
-  return <ModuleTutorial moduleKey="paiements" titre="Paiements" sousTitre="Wallet, transactions, retraits" steps={PAIEMENTS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="paiements" titre={t("Paiements")} sousTitre={t("Wallet, transactions, retraits")} steps={PAIEMENTS_TUTORIAL_STEPS} />;
 }

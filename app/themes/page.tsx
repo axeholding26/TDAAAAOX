@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Palette, ShoppingBag, Star } from "lucide-react";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Thèmes — AXSO",
@@ -21,7 +22,8 @@ const THEMES = MANIFESTE_LIBRAIRIE.map((e, i) => ({
   popular: i === 0,
 }));
 
-export default function ThemesPage() {
+export default async function ThemesPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -32,16 +34,16 @@ export default function ThemesPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              <Palette size={13} /> Thèmes premium
+              <Palette size={13} />{" "}{t("Thèmes premium")}
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-              Votre boutique,<br />
+              {t("Votre boutique,")}<br />
               <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                votre identité
+                {t("votre identité")}
               </span>
             </h1>
             <p className="text-[#737373] text-xl max-w-2xl mx-auto">
-              {THEMES.length} thèmes conçus pour les marchés africains — tous inclus dans votre abonnement.
+              {THEMES.length}{" "}{t("thèmes conçus pour les marchés africains — tous inclus dans votre abonnement.")}
             </p>
           </div>
 
@@ -58,12 +60,12 @@ export default function ThemesPage() {
                     style={{ background: theme.surface, borderBottom: `1px solid ${theme.accent}25` }}>
                     <div className="flex items-center gap-2">
                       <div style={{ width: 10, height: 10, borderRadius: "50%", background: theme.accent }} />
-                      <span className="text-xs font-bold" style={{ color: theme.accent }}>Ma Boutique</span>
+                      <span className="text-xs font-bold" style={{ color: theme.accent }}>{t("Ma Boutique")}</span>
                     </div>
                     <div className="flex gap-1.5">
                       {["Accueil","Produits","Cart"].map(l => (
                         <span key={l} className="text-[10px] px-2 py-0.5 rounded"
-                          style={{ background: `${theme.accent}12`, color: `${theme.accent}99` }}>{l}</span>
+                          style={{ background: `${theme.accent}12`, color: `${theme.accent}99` }}>{t(l)}</span>
                       ))}
                     </div>
                   </div>
@@ -88,7 +90,7 @@ export default function ThemesPage() {
                   {theme.popular && (
                     <div className="absolute top-2 right-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full z-10"
                       style={{ background: `linear-gradient(135deg,#F5A623,#d4880d)`, color: "#080808" }}>
-                      <Star size={11} fill="#080808" /> Populaire
+                      <Star size={11} fill="#080808" />{" "}{t("Populaire")}
                     </div>
                   )}
 
@@ -98,7 +100,7 @@ export default function ThemesPage() {
                     <Link href="/inscription"
                       className="font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105"
                       style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>
-                      Choisir ce thème →
+                      {t("Choisir ce thème →")}
                     </Link>
                   </div>
                 </div>
@@ -106,15 +108,15 @@ export default function ThemesPage() {
                 {/* Info */}
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-[#111111]">{theme.nom}</h3>
+                    <h3 className="font-bold text-[#111111]">{t(theme.nom)}</h3>
                     <div style={{ width: 14, height: 14, borderRadius: "50%", background: theme.accent, marginTop: 2 }} />
                   </div>
-                  <p className="text-[#737373] text-sm mb-3">{theme.desc}</p>
+                  <p className="text-[#737373] text-sm mb-3">{t(theme.desc)}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {theme.tags.map(tag => (
                       <span key={tag} className="text-xs px-2 py-0.5 rounded-full"
                         style={{ background: `${theme.accent}10`, color: theme.accent, border: `1px solid ${theme.accent}20` }}>
-                        {tag}
+                        {t(tag)}
                       </span>
                     ))}
                   </div>
@@ -124,11 +126,11 @@ export default function ThemesPage() {
           </div>
 
           <div className="mt-14 text-center">
-            <p className="text-[#808080] text-sm mb-5">Tous les thèmes sont inclus dans tous les plans. Changez à tout moment.</p>
+            <p className="text-[#808080] text-sm mb-5">{t("Tous les thèmes sont inclus dans tous les plans. Changez à tout moment.")}</p>
             <Link href="/inscription"
               className="inline-block font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>
-              Créer ma boutique gratuitement →
+              {t("Créer ma boutique gratuitement →")}
             </Link>
           </div>
         </div>

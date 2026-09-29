@@ -2,6 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { Package, CreditCard, Cpu, Truck, Globe, MessageCircle, TrendingUp, Clock } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Blog — AXSO",
@@ -53,7 +54,8 @@ const ARTICLES = [
   },
 ];
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const t = await getT();
   const [featured, ...rest] = ARTICLES;
   const FeaturedIcon = featured.Icon;
   return (
@@ -66,15 +68,15 @@ export default function BlogPage() {
         <div className="max-w-5xl mx-auto">
           <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] mb-5 px-3 py-1.5 rounded-full"
             style={{ color: "#F5A623", background: "rgba(245,166,35,0.08)", border: "1px solid rgba(245,166,35,0.2)" }}>
-            <TrendingUp size={11} /> Blog AXSO
+            <TrendingUp size={11} />{" "}{t("Blog AXSO")}
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-            Ressources pour<br />
+            {t("Ressources pour")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              les bâtisseurs d'empire
+              {t("les bâtisseurs d'empire")}
             </span>
           </h1>
-          <p className="text-[#737373] text-xl mb-16 max-w-2xl">Stratégie, mobile money, IA, livraison — tout ce qu'il faut pour vendre en ligne en Afrique.</p>
+          <p className="text-[#737373] text-xl mb-16 max-w-2xl">{t("Stratégie, mobile money, IA, livraison — tout ce qu'il faut pour vendre en ligne en Afrique.")}</p>
 
           {/* Article featured */}
           <div className="rounded-3xl border p-8 mb-10 relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
@@ -85,14 +87,14 @@ export default function BlogPage() {
             </div>
             <span className="text-xs font-bold px-3 py-1 rounded-full inline-block mb-5"
               style={{ background: `${featured.tagColor}15`, color: featured.tagColor, border: `1px solid ${featured.tagColor}30` }}>
-              ⭐ À la une · {featured.tag}
+              {t("⭐ À la une ·")}{" "}{t(featured.tag)}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-3 max-w-2xl leading-snug">{featured.titre}</h2>
-            <p className="text-[#666666] leading-relaxed mb-5 max-w-xl">{featured.extrait}</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-3 max-w-2xl leading-snug">{t(featured.titre)}</h2>
+            <p className="text-[#666666] leading-relaxed mb-5 max-w-xl">{t(featured.extrait)}</p>
             <div className="flex items-center gap-4 text-sm text-[#8C8C8C]">
               <span>{featured.date}</span>
               <span>·</span>
-              <span>{featured.lecture} de lecture</span>
+              <span>{t(featured.lecture)}{" "}{t("de lecture")}</span>
             </div>
           </div>
 
@@ -110,13 +112,13 @@ export default function BlogPage() {
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full inline-block mb-3"
                   style={{ background: `${a.tagColor}12`, color: a.tagColor, border: `1px solid ${a.tagColor}25` }}>
-                  {a.tag}
+                  {t(a.tag)}
                 </span>
-                <h3 className="font-bold text-[#111111] mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{a.titre}</h3>
-                <p className="text-[#808080] text-sm leading-relaxed mb-4">{a.extrait}</p>
+                <h3 className="font-bold text-[#111111] mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{t(a.titre)}</h3>
+                <p className="text-[#808080] text-sm leading-relaxed mb-4">{t(a.extrait)}</p>
                 <div className="flex items-center gap-3 text-xs text-[#999999]">
                   <Clock size={10} />
-                  <span>{a.date}</span><span>·</span><span>{a.lecture}</span>
+                  <span>{a.date}</span><span>·</span><span>{t(a.lecture)}</span>
                 </div>
               </div>
               );

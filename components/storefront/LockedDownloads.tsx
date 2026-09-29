@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { Lock, Download, Loader2 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Fichier { id: string; nom: string }
 
 export function LockedDownloads({ token, nom, accent, fond }: { token: string; nom: string; accent: string; fond: string }) {
+  const t = useT();
   const [password, setPassword] = useState("");
   const [fichiers, setFichiers] = useState<Fichier[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,36 +39,36 @@ export function LockedDownloads({ token, nom, accent, fond }: { token: string; n
     return (
       <form onSubmit={verifier} className="p-3 rounded-xl" style={{ backgroundColor: `${accent}08`, border: `1px solid ${accent}20` }}>
         <p className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-          <Lock size={12} style={{ color: accent }} /> {nom} — protégé par mot de passe
+          <Lock size={12} style={{ color: accent }} /> {t(nom)}{" "}{t("— protégé par mot de passe")}
         </p>
         <div className="flex gap-2">
           <input
             type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-            placeholder="Mot de passe fourni par le vendeur"
+            placeholder={t("Mot de passe fourni par le vendeur")}
             className={inp} style={{ borderColor: `${accent}25`, background: fond }}
           />
           <button type="submit" disabled={loading}
             className="px-4 py-2 rounded-lg text-xs font-bold flex-shrink-0 flex items-center gap-1.5"
             style={{ backgroundColor: accent, color: fond }}>
-            {loading ? <Loader2 size={12} className="animate-spin" /> : "Déverrouiller"}
+            {loading ? <Loader2 size={12} className="animate-spin" /> : t("Déverrouiller")}
           </button>
         </div>
-        {erreur && <p className="text-xs text-red-500 mt-1.5">{erreur}</p>}
+        {erreur && <p className="text-xs text-red-500 mt-1.5">{t(erreur)}</p>}
       </form>
     );
   }
 
   return (
     <div className="p-3 rounded-xl" style={{ backgroundColor: `${accent}08`, border: `1px solid ${accent}20` }}>
-      <p className="text-sm font-semibold mb-2">{nom}</p>
+      <p className="text-sm font-semibold mb-2">{t(nom)}</p>
       <div className="space-y-2">
         {fichiers.map((f) => (
           <div key={f.id} className="flex items-center justify-between gap-3">
-            <span className="text-xs opacity-60 truncate">{f.nom}</span>
+            <span className="text-xs opacity-60 truncate">{t(f.nom)}</span>
             <a href={`/api/telechargements/${token}?fichier=${f.id}&pw=${encodeURIComponent(password)}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 transition-all hover:opacity-90"
               style={{ backgroundColor: accent, color: fond }}>
-              <Download size={12} /> Télécharger
+              <Download size={12} />{" "}{t("Télécharger")}
             </a>
           </div>
         ))}

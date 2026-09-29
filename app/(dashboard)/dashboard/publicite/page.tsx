@@ -4,6 +4,7 @@ import { Megaphone, Plus, Loader2, X, Sparkles, TrendingUp, Eye, MousePointer, S
 import { toast } from "sonner";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 interface Campagne {
   id: string;
   plateforme: string;
@@ -59,6 +60,7 @@ const PAYS_LABELS: Record<string, string> = {
 };
 
 function MetricCard({ icon: Icone, label, value, sub, color }: any) {
+  const t = useT();
   return (
     <div className="ax-card p-5">
       <div className="flex items-start justify-between mb-3">
@@ -66,14 +68,15 @@ function MetricCard({ icon: Icone, label, value, sub, color }: any) {
           <Icone size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{value}</p>
-      <p className="text-[12px] text-[#AAAAAA] mt-0.5">{label}</p>
-      {sub && <p className="text-[11.5px] mt-1 font-semibold" style={{ color }}>{sub}</p>}
+      <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{t(value)}</p>
+      <p className="text-[12px] text-[#AAAAAA] mt-0.5">{t(label)}</p>
+      {sub && <p className="text-[11.5px] mt-1 font-semibold" style={{ color }}>{t(sub)}</p>}
     </div>
   );
 }
 
 function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: string, s: string) => void; onDelete: (id: string) => void }) {
+  const t = useT();
   const plat = PLATEFORMES.find(p => p.id === c.plateforme);
   const statut = STATUT_CONFIG[c.statut] || STATUT_CONFIG.brouillon;
   const ctr = c.impressions > 0 ? ((c.clics / c.impressions) * 100).toFixed(2) : "0";
@@ -87,25 +90,25 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
             {plat?.Icon && <plat.Icon size={20} style={{ color: plat.color }} />}
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-[#111111]">{c.nom}</p>
-            <p className="text-[11.5px] text-[#AAAAAA]">{plat?.label} · {c.objectif}</p>
+            <p className="text-[13px] font-semibold text-[#111111]">{t(c.nom)}</p>
+            <p className="text-[11.5px] text-[#AAAAAA]">{t(plat?.label)} · {t(c.objectif)}</p>
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full" style={{ color: statut.color, background: statut.bg }}>
-          {statut.label}
+          {t(statut.label)}
         </span>
       </div>
 
       {c.imageAdUrl && (
         <div className="mb-4 rounded-xl overflow-hidden aspect-video">
-          <img src={c.imageAdUrl} alt="Créatif" className="w-full h-full object-cover" />
+          <img src={c.imageAdUrl} alt={t("Créatif")} className="w-full h-full object-cover" />
         </div>
       )}
 
       {c.titreAd && (
         <div className="mb-4 bg-[#F9F9F9] rounded-xl p-3 border border-[#F3F3F3]">
-          <p className="text-[13px] font-semibold text-[#222]">{c.titreAd}</p>
-          {c.descriptionAd && <p className="text-[12px] text-[#666] mt-1 line-clamp-2">{c.descriptionAd}</p>}
+          <p className="text-[13px] font-semibold text-[#222]">{t(c.titreAd)}</p>
+          {c.descriptionAd && <p className="text-[12px] text-[#666] mt-1 line-clamp-2">{t(c.descriptionAd)}</p>}
         </div>
       )}
 
@@ -118,16 +121,16 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
           { label: "Conv.", val: c.conversions },
         ].map(m => (
           <div key={m.label} className="text-center bg-[#F9F9F9] rounded-xl p-2">
-            <p className="text-[13px] font-bold text-[#222]">{m.val}</p>
-            <p className="text-[10.5px] text-[#AAAAAA]">{m.label}</p>
+            <p className="text-[13px] font-bold text-[#222]">{t(m.val)}</p>
+            <p className="text-[10.5px] text-[#AAAAAA]">{t(m.label)}</p>
           </div>
         ))}
       </div>
 
       {/* Budget */}
       <div className="flex items-center justify-between mb-4 text-xs text-gray-500">
-        <span>Dépensé: <strong className="text-gray-800">{c.depense.toLocaleString()} {c.devise}</strong></span>
-        <span>Budget: <strong className="text-gray-800">{c.budget.toLocaleString()} {c.devise}</strong></span>
+        <span>{t("Dépensé:")}{" "}<strong className="text-gray-800">{c.depense.toLocaleString()} {t(c.devise)}</strong></span>
+        <span>{t("Budget:")}{" "}<strong className="text-gray-800">{c.budget.toLocaleString()} {t(c.devise)}</strong></span>
       </div>
       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-4">
         <div className="h-full rounded-full transition-all" style={{ width: `${Math.min((c.depense / c.budget) * 100, 100)}%`, background: plat?.color }} />
@@ -136,14 +139,14 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
       {c.roas > 0 && (
         <div className="flex items-center gap-2 mb-4 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
           <TrendingUp size={12} className="text-green-600" />
-          <span className="text-xs font-semibold text-green-700">ROAS: {c.roas.toFixed(2)}x</span>
-          <span className="text-xs text-green-600 ml-auto">Conv. {txConv}%</span>
+          <span className="text-xs font-semibold text-green-700">{t("ROAS:")}{" "}{c.roas.toFixed(2)}x</span>
+          <span className="text-xs text-green-600 ml-auto">{t("Conv.")}{" "}{t(txConv)}%</span>
         </div>
       )}
 
       {c.ciblePays?.length > 0 && (
         <div className="flex flex-wrap gap-1 mb-4">
-          {c.ciblePays.map(p => <span key={p} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{PAYS_LABELS[p] || p}</span>)}
+          {c.ciblePays.map(p => <span key={p} className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t(PAYS_LABELS[p]) || t(p)}</span>)}
         </div>
       )}
 
@@ -151,19 +154,19 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
         {c.statut === "brouillon" && (
           <button onClick={() => onStatut(c.id, "active")}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-semibold hover:bg-green-100 transition-colors">
-            <Play size={11} /> Activer
+            <Play size={11} />{" "}{t("Activer")}
           </button>
         )}
         {c.statut === "active" && (
           <button onClick={() => onStatut(c.id, "pause")}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#F5A623]/10 border border-[#F5A623]/30 text-[#111111] rounded-xl text-xs font-semibold hover:bg-[#F5A623]/15 transition-colors">
-            <Pause size={11} /> Pauser
+            <Pause size={11} />{" "}{t("Pauser")}
           </button>
         )}
         {c.statut === "pause" && (
           <button onClick={() => onStatut(c.id, "active")}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-green-50 border border-green-200 text-green-700 rounded-xl text-xs font-semibold hover:bg-green-100 transition-colors">
-            <Play size={11} /> Reprendre
+            <Play size={11} />{" "}{t("Reprendre")}
           </button>
         )}
         <button onClick={() => onDelete(c.id)}
@@ -176,6 +179,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
 }
 
 export default function PublicitePage() {
+  const t = useT();
   const { devise, fmt } = useDevise();
   const [campagnes, setCampagnes] = useState<Campagne[]>([]);
   const [stats, setStats] = useState<any>({});
@@ -213,7 +217,7 @@ export default function PublicitePage() {
       const data = await res.json();
       setCampagnes(data.campagnes || []);
       setStats(data.stats || {});
-    } catch { toast.error("Erreur chargement"); }
+    } catch { toast.error(t("Erreur chargement")); }
     finally { setLoading(false); }
   }
 
@@ -255,14 +259,14 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           nom: parsed.nom_campagne || f.nom,
           imageAdUrl,
         }));
-        toast.success("Créatif généré !");
+        toast.success(t("Créatif généré !"));
       }
-    } catch { toast.error("Erreur IA"); }
+    } catch { toast.error(t("Erreur IA")); }
     finally { setGenIA(false); }
   }
 
   async function creer() {
-    if (!form.nom || !form.budget) { toast.error("Nom et budget requis"); return; }
+    if (!form.nom || !form.budget) { toast.error(t("Nom et budget requis")); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/campagnes", {
@@ -287,24 +291,24 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         }),
       });
       if (!res.ok) throw new Error("Erreur");
-      toast.success("Campagne créée !");
+      toast.success(t("Campagne créée !"));
       setShowModal(false);
       setForm(f => ({ ...f, nom: "", budget: "", titreAd: "", descriptionAd: "", imageAdUrl: "", promptIA: "" }));
       charger();
-    } catch { toast.error("Erreur sauvegarde"); }
+    } catch { toast.error(t("Erreur sauvegarde")); }
     finally { setSaving(false); }
   }
 
   async function changerStatut(id: string, statut: string) {
     await fetch("/api/campagnes", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, statut }) });
     setCampagnes(cs => cs.map(c => c.id === id ? { ...c, statut } : c));
-    toast.success(`Campagne ${statut === "active" ? "activée" : statut === "pause" ? "mise en pause" : "mise à jour"}`);
+    toast.success(t("Campagne {0}", statut === "active" ? "activée" : statut === "pause" ? "mise en pause" : "mise à jour"));
   }
 
   async function supprimer(id: string) {
     await fetch(`/api/campagnes?id=${id}`, { method: "DELETE" });
     setCampagnes(cs => cs.filter(c => c.id !== id));
-    toast.success("Campagne supprimée");
+    toast.success(t("Campagne supprimée"));
   }
 
   const campagnesFiltrees = campagnes.filter(c => filterPlat === "tous" || c.plateforme === filterPlat);
@@ -316,35 +320,35 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Publicité</h1>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Gérez vos campagnes Meta, Google et TikTok</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Publicité")}</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Gérez vos campagnes Meta, Google et TikTok")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
           style={{ background: "linear-gradient(135deg, #1877F2, #4285F4)", boxShadow: "0 4px 20px rgba(24,119,242,0.3)" }}>
-          <Plus size={16} /> Nouvelle campagne
+          <Plus size={16} />{" "}{t("Nouvelle campagne")}
         </button>
       </div>
 
       {/* KPIs globaux */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard icon={DollarSign} label="Total dépensé" value={`${fmt((stats.totalDepense || 0))}`} color="#F5A623" />
-        <MetricCard icon={Eye} label="Impressions totales" value={(stats.totalImpressions || 0).toLocaleString()} color="#818cf8" />
-        <MetricCard icon={MousePointer} label="Clics totaux" value={(stats.totalClics || 0).toLocaleString()} sub={stats.totalImpressions ? `CTR: ${((stats.totalClics/stats.totalImpressions)*100).toFixed(2)}%` : undefined} color="#60a5fa" />
-        <MetricCard icon={ShoppingCart} label="Conversions" value={stats.totalConversions || 0} sub={stats.roas > 0 ? `ROAS: ${stats.roas.toFixed(2)}x` : undefined} color="#34d399" />
+        <MetricCard icon={DollarSign} label={t("Total dépensé")} value={`${fmt((stats.totalDepense || 0))}`} color="#F5A623" />
+        <MetricCard icon={Eye} label={t("Impressions totales")} value={(stats.totalImpressions || 0).toLocaleString()} color="#818cf8" />
+        <MetricCard icon={MousePointer} label={t("Clics totaux")} value={(stats.totalClics || 0).toLocaleString()} sub={stats.totalImpressions ? `CTR: ${((stats.totalClics/stats.totalImpressions)*100).toFixed(2)}%` : undefined} color="#60a5fa" />
+        <MetricCard icon={ShoppingCart} label={t("Conversions")} value={stats.totalConversions || 0} sub={stats.roas > 0 ? `ROAS: ${stats.roas.toFixed(2)}x` : undefined} color="#34d399" />
       </div>
 
       {/* Filtres plateformes */}
       <div className="flex gap-2">
         <button onClick={() => setFilterPlat("tous")}
           className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${filterPlat === "tous" ? "bg-gray-800 text-white border-gray-800" : "bg-white border-gray-200 text-gray-500"}`}>
-          Toutes
+          {t("Toutes")}
         </button>
         {PLATEFORMES.map(p => (
           <button key={p.id} onClick={() => setFilterPlat(p.id)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${filterPlat === p.id ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-500"}`}
             style={filterPlat === p.id ? { background: p.color } : {}}>
-            <p.Icon size={14} /> {p.label}
+            <p.Icon size={14} /> {t(p.label)}
           </button>
         ))}
       </div>
@@ -355,12 +359,12 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       ) : campagnesFiltrees.length === 0 ? (
         <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
           <Megaphone size={40} className="text-[#CCCCCC] mx-auto mb-4" />
-          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">Aucune campagne</h3>
-          <p className="text-[12.5px] text-[#AAAAAA] mb-6">Créez votre première campagne et laissez l'IA générer les créatifs</p>
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">{t("Aucune campagne")}</h3>
+          <p className="text-[12.5px] text-[#AAAAAA] mb-6">{t("Créez votre première campagne et laissez l'IA générer les créatifs")}</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto"
             style={{ background: "linear-gradient(135deg, #1877F2, #4285F4)" }}>
-            <Sparkles size={15} /> Créer avec l'IA
+            <Sparkles size={15} />{" "}{t("Créer avec l'IA")}
           </button>
         </div>
       ) : (
@@ -376,9 +380,9 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         <div className="flex items-start gap-3">
           <BarChart2 size={18} className="text-[#D4911A] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-[#111111]">Pixel Tracking Axso</p>
+            <p className="text-sm font-semibold text-[#111111]">{t("Pixel Tracking Axso")}</p>
             <p className="text-xs text-[#666666] mt-1">
-              Votre pixel de tracking est automatiquement actif sur votre boutique. Consultez l'attribution des ventes dans <a href="/dashboard/analytics" className="underline font-medium">Analytics</a>.
+              {t("Votre pixel de tracking est automatiquement actif sur votre boutique. Consultez l'attribution des ventes dans")}{" "}<a href="/dashboard/analytics" className="underline font-medium">{t("Analytics")}</a>.
             </p>
           </div>
         </div>
@@ -391,8 +395,8 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
               <div>
-                <h2 className="text-[15px] font-bold text-[#111111]">Nouvelle campagne</h2>
-                <p className="text-[12px] text-[#AAAAAA]">L'IA génère les créatifs automatiquement</p>
+                <h2 className="text-[15px] font-bold text-[#111111]">{t("Nouvelle campagne")}</h2>
+                <p className="text-[12px] text-[#AAAAAA]">{t("L'IA génère les créatifs automatiquement")}</p>
               </div>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
@@ -400,15 +404,15 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
             <div className="p-6 space-y-5">
               {/* Plateforme */}
               <div>
-                <label className="text-[12px] font-semibold text-[#555] block mb-2">Plateforme</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Plateforme")}</label>
                 <div className="grid grid-cols-3 gap-3">
                   {PLATEFORMES.map(p => (
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
                       className={`p-3 rounded-xl border text-center transition-all ${form.plateforme === p.id ? "border-2 text-white" : "bg-white border-gray-200"}`}
                       style={form.plateforme === p.id ? { borderColor: p.color, background: p.color } : {}}>
                       <div className="flex justify-center mb-1"><p.Icon size={24} style={{ color: form.plateforme === p.id ? "#fff" : p.color }} /></div>
-                      <p className="text-xs font-semibold">{p.label}</p>
-                      <p className="text-[10px] opacity-70">{p.desc}</p>
+                      <p className="text-xs font-semibold">{t(p.label)}</p>
+                      <p className="text-[10px] opacity-70">{t(p.desc)}</p>
                     </button>
                   ))}
                 </div>
@@ -417,37 +421,37 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* IA créatif */}
               <div className="bg-[#F5A623]/5 border border-[#F5A623]/20 rounded-xl p-4 space-y-3">
                 <label className="text-gray-700 text-sm font-semibold flex items-center gap-2">
-                  <Sparkles size={14} className="text-[#F5A623]" /> Générer les créatifs avec l'IA
+                  <Sparkles size={14} className="text-[#F5A623]" />{" "}{t("Générer les créatifs avec l'IA")}
                 </label>
                 <input value={form.promptIA} onChange={e => setForm(f => ({ ...f, promptIA: e.target.value }))}
-                  placeholder="Ex: Vendre mes robes wax premium aux femmes 25-40 ans à Dakar..."
+                  placeholder={t("Ex: Vendre mes robes wax premium aux femmes 25-40 ans à Dakar...")}
                   className={inputClass} />
                 <button onClick={genererCreatifIA} disabled={genIA || !form.promptIA}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg, #F5A623, #d4820a)" }}>
-                  {genIA ? <><Loader2 size={13} className="animate-spin" /> Génération…</> : <><Zap size={13} /> Générer titre + visuel</>}
+                  {genIA ? <><Loader2 size={13} className="animate-spin" />{" "}{t("Génération…")}</> : <><Zap size={13} />{" "}{t("Générer titre + visuel")}</>}
                 </button>
               </div>
 
               {/* Infos campagne */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="ax-label block mb-1.5">Nom de la campagne *</label>
-                  <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} placeholder="Ex: Soldes Ramadan 2024" className={inputClass} />
+                  <label className="ax-label block mb-1.5">{t("Nom de la campagne *")}</label>
+                  <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} placeholder={t("Ex: Soldes Ramadan 2024")} className={inputClass} />
                 </div>
                 <div>
-                  <label className="ax-label block mb-1.5">Budget total *</label>
+                  <label className="ax-label block mb-1.5">{t("Budget total *")}</label>
                   <input type="number" value={form.budget} onChange={e => setForm(f => ({ ...f, budget: e.target.value }))} placeholder="50000" className={inputClass} />
                 </div>
                 <div>
-                  <label className="ax-label block mb-1.5">Budget journalier</label>
+                  <label className="ax-label block mb-1.5">{t("Budget journalier")}</label>
                   <input type="number" value={form.budgetJour} onChange={e => setForm(f => ({ ...f, budgetJour: e.target.value }))} placeholder="5000" className={inputClass} />
                 </div>
               </div>
 
               {/* Objectif */}
               <div>
-                <label className="text-[12px] font-semibold text-[#555] block mb-2">Objectif</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Objectif")}</label>
                 <div className="grid grid-cols-4 gap-2">
                   {OBJECTIFS.map(o => {
                     const Icone = o.icon;
@@ -455,7 +459,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                       <button key={o.id} onClick={() => setForm(f => ({ ...f, objectif: o.id }))}
                         className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all text-xs ${form.objectif === o.id ? "border-[#F5A623]/50 bg-[#F5A623]/8 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>
                         <Icone size={16} />
-                        {o.label}
+                        {t(o.label)}
                       </button>
                     );
                   })}
@@ -464,7 +468,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
               {/* Ciblage pays */}
               <div>
-                <label className="text-[12px] font-semibold text-[#555] block mb-2">Pays cibles</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Pays cibles")}</label>
                 <div className="flex flex-wrap gap-2">
                   {PAYS_AFRIQUE.map(p => (
                     <button key={p}
@@ -473,7 +477,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                         ciblePays: f.ciblePays.includes(p) ? f.ciblePays.filter(x => x !== p) : [...f.ciblePays, p],
                       }))}
                       className={`text-xs px-3 py-1.5 rounded-xl border transition-all font-medium ${form.ciblePays.includes(p) ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623]" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}>
-                      {PAYS_LABELS[p]}
+                      {t(PAYS_LABELS[p])}
                     </button>
                   ))}
                 </div>
@@ -482,14 +486,14 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* Créatif IA pré-rempli */}
               {(form.titreAd || form.imageAdUrl) && (
                 <div className="grid sm:grid-cols-2 gap-4">
-                  {form.imageAdUrl && <img src={form.imageAdUrl} alt="Créatif" className="w-full rounded-xl object-cover aspect-video" />}
+                  {form.imageAdUrl && <img src={form.imageAdUrl} alt={t("Créatif")} className="w-full rounded-xl object-cover aspect-video" />}
                   <div className="space-y-3">
                     <div>
-                      <label className="text-gray-500 text-xs block mb-1">Titre de l'annonce</label>
+                      <label className="text-gray-500 text-xs block mb-1">{t("Titre de l'annonce")}</label>
                       <input value={form.titreAd} onChange={e => setForm(f => ({ ...f, titreAd: e.target.value }))} className={inputClass} />
                     </div>
                     <div>
-                      <label className="text-gray-500 text-xs block mb-1">Description</label>
+                      <label className="text-gray-500 text-xs block mb-1">{t("Description")}</label>
                       <textarea value={form.descriptionAd} onChange={e => setForm(f => ({ ...f, descriptionAd: e.target.value }))} rows={3} className={`${inputClass} resize-none`} />
                     </div>
                   </div>
@@ -497,14 +501,14 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               )}
 
               <div>
-                <label className="ax-label block mb-1.5">URL de destination</label>
+                <label className="ax-label block mb-1.5">{t("URL de destination")}</label>
                 <input value={form.urlDestination} onChange={e => setForm(f => ({ ...f, urlDestination: e.target.value }))} placeholder="https://votre-boutique.axso.africa" className={inputClass} />
               </div>
 
               <button onClick={creer} disabled={saving || !form.nom || !form.budget}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg, #1877F2, #4285F4)" }}>
-                {saving ? <><Loader2 size={16} className="animate-spin" /> Création…</> : <><Megaphone size={16} /> Créer la campagne</>}
+                {saving ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Création…")}</> : <><Megaphone size={16} />{" "}{t("Créer la campagne")}</>}
               </button>
             </div>
           </div>

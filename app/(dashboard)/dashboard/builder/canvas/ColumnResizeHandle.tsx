@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   leftId: string;
@@ -30,6 +31,7 @@ const MIN_PCT = 15;
 // pointercancel dans tous les cas (même hors fenêtre, même si l'onglet perd
 // le focus), donc que le nettoyage s'exécute toujours.
 export function ColumnResizeHandle({ leftId, rightId, onResize }: Props) {
+  const t = useT();
   const [dragging, setDragging] = useState(false);
   // État du geste en cours dans un ref (pas de re-render par pixel déplacé) —
   // seul `onResize` (donc l'arbre) est mis à jour à chaque mouvement.
@@ -80,7 +82,7 @@ export function ColumnResizeHandle({ leftId, rightId, onResize }: Props) {
       onClick={(e) => e.stopPropagation()}
       style={{ touchAction: "none" }}
       className="hidden sm:flex items-center justify-center w-4 flex-shrink-0 cursor-col-resize z-10 group/resize"
-      title="Glisser pour redimensionner les colonnes"
+      title={t("Glisser pour redimensionner les colonnes")}
     >
       <div className={`w-0.5 h-10 rounded-full transition-colors ${dragging ? "bg-[#F5A623]" : "bg-gray-200 group-hover/resize:bg-gray-400"}`} />
     </div>

@@ -2,10 +2,12 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Loader2, User, Mic, MicOff, History } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
 export default function AxiaPage() {
+  const t = useT();
   const [messages, setMessages] = useState<Msg[]>([{
     role: "assistant",
     content: "Bonjour ! Je suis Axia, ton assistante IA.\n\nPose-moi n'importe quelle question sur ta boutique : ventes, stocks, clients, marketing…",
@@ -114,20 +116,20 @@ export default function AxiaPage() {
       {/* Header */}
       <div className="flex-shrink-0 flex items-center gap-3 px-6 py-4 bg-white border-b border-gray-100">
         <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0">
-          <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+          <img src="/axia-icon.png" alt={t("Axia")} className="w-full h-full object-cover" />
         </div>
         <div>
-          <h1 className="text-base font-bold text-gray-900">Axia — Assistante IA</h1>
-          <p className="text-xs text-gray-400">Marketing · Stocks · Revenus · Clients · Livraisons</p>
+          <h1 className="text-base font-bold text-gray-900">{t("Axia — Assistante IA")}</h1>
+          <p className="text-xs text-gray-400">{t("Marketing · Stocks · Revenus · Clients · Livraisons")}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <Link href="/dashboard/axia/journal"
             className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 border border-gray-200 rounded-full px-3 py-1 transition-colors">
-            <History size={12} /> Journal
+            <History size={12} />{" "}{t("Journal")}
           </Link>
           <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 rounded-full px-3 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-xs font-semibold text-green-700">En ligne</span>
+            <span className="text-xs font-semibold text-green-700">{t("En ligne")}</span>
           </div>
         </div>
       </div>
@@ -138,7 +140,7 @@ export default function AxiaPage() {
           <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden ${m.role === "assistant" ? "" : "bg-[#F5A623]"}`}>
               {m.role === "assistant"
-                ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                ? <img src="/axia-icon.png" alt={t("Axia")} className="w-full h-full object-cover" />
                 : <User size={13} className="text-white" />}
             </div>
             <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
@@ -146,7 +148,7 @@ export default function AxiaPage() {
                 ? "bg-white border border-gray-100 text-gray-800 shadow-sm"
                 : "bg-[#F5A623] text-white"
             }`}>
-              {m.content}
+              {t(m.content)}
               {m.streaming && (
                 <span className="inline-flex gap-0.5 ml-1 align-middle">
                   {[0, 1, 2].map(k => (
@@ -164,7 +166,7 @@ export default function AxiaPage() {
             {SUGGESTIONS.map(s => (
               <button key={s} onClick={() => envoyer(s)}
                 className="text-left px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm text-gray-600 hover:border-[#F5A623] hover:text-gray-900 transition-all">
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
@@ -181,7 +183,7 @@ export default function AxiaPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); envoyer(); } }}
-            placeholder="Pose une question à Axia…"
+            placeholder={t("Pose une question à Axia…")}
             disabled={loading}
             className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
           />
@@ -200,7 +202,7 @@ export default function AxiaPage() {
           </button>
         </div>
         <p className="text-center text-[10px] text-gray-300 mt-2">
-          Axia peut créer des produits, envoyer des campagnes et analyser tes ventes.
+          {t("Axia peut créer des produits, envoyer des campagnes et analyser tes ventes.")}
         </p>
       </div>
 

@@ -2,10 +2,12 @@
 
 import type { BlockRenderProps } from "../types";
 import { InlineEditable } from "./InlineEditable";
+import { useT } from "@/components/I18nProvider";
 
 const TAILLE_MAP: Record<string, string> = { sm: "px-4 py-2 text-xs", md: "px-6 py-3 text-sm", lg: "px-8 py-4 text-base" };
 
 export function ButtonBlock({ config, colors, container, editable, onEditText }: BlockRenderProps) {
+  const tr = useT();
   const style = (config.style as string) || "primary";
   const taille = TAILLE_MAP[(config.taille as string) || "md"];
   const align = (config.align as string) || "left";
@@ -29,7 +31,7 @@ export function ButtonBlock({ config, colors, container, editable, onEditText }:
 
   return (
     <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 flex ${align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start"}`}>
-      {editable ? contenu : <a href={lien}>{contenu}</a>}
+      {editable ? tr(contenu) : <a href={lien}>{tr(contenu)}</a>}
     </div>
   );
 }

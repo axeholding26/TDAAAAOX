@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const LIENS = [
   { label: "Fonctionnalités", href: "/fonctionnalites" },
@@ -12,6 +13,7 @@ const LIENS = [
 ];
 
 export function NavbarMarketing() {
+  const t = useT();
   const [scrolled,    setScrolled]    = useState(false);
   const [hovered,     setHovered]     = useState(false);
   const [mobileOpen,  setMobileOpen]  = useState(false);
@@ -61,7 +63,7 @@ export function NavbarMarketing() {
       `}</style>
 
       <nav
-        aria-label="Navigation principale"
+        aria-label={t("Navigation principale")}
         style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
           display: "flex", flexDirection: "column", alignItems: "center",
@@ -136,7 +138,7 @@ export function NavbarMarketing() {
                 textDecoration: "none", whiteSpace: "nowrap",
                 transition: "color .15s, background .15s",
               }}>
-                {l.label}
+                {t(l.label)}
               </a>
             ))}
           </div>
@@ -160,7 +162,7 @@ export function NavbarMarketing() {
             onMouseEnter={e => e.currentTarget.style.color = "#fff"}
             onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,.5)"}
             >
-              Connexion
+              {t("Connexion")}
             </Link>
             <Link href="/inscription" className="ax-cta" style={{
               padding: "9px 22px", borderRadius: "999px",
@@ -171,7 +173,7 @@ export function NavbarMarketing() {
               transition: "transform .18s, box-shadow .18s",
               display: "inline-block",
             }}>
-              Créer ma boutique gratuite&nbsp;→
+              {t("Créer ma boutique gratuite →")}
             </Link>
           </div>
 
@@ -233,7 +235,7 @@ export function NavbarMarketing() {
               transition: "opacity .2s ease, transform .3s cubic-bezier(.34,1.56,.64,1)",
               pointerEvents: mobileOpen ? "none" : "auto",
             }}>
-              Créer gratuitement
+              {t("Créer gratuitement")}
             </Link>
             <button
               onClick={() => setMobileOpen(v => !v)}
@@ -246,7 +248,7 @@ export function NavbarMarketing() {
                 transition: "background .2s, transform .45s cubic-bezier(.34,1.56,.64,1)",
                 transform: mobileOpen ? "rotate(45deg)" : "none",
               }}
-              aria-label="Menu"
+              aria-label={t("Menu")}
             >
               {mobileOpen ? <X size={15} /> : <Menu size={15} />}
             </button>
@@ -277,7 +279,7 @@ export function NavbarMarketing() {
                       animation: mobileOpen ? `axFadeUp .32s ease ${i * 0.07}s both` : "none",
                     }}
                   >
-                    {l.label}
+                    {t(l.label)}
                   </a>
                 ))}
                 <div style={{
@@ -291,7 +293,7 @@ export function NavbarMarketing() {
                     fontSize: "14px", fontWeight: 600,
                     color: "rgba(255,255,255,.55)", textDecoration: "none",
                   }}>
-                    Connexion
+                    {t("Connexion")}
                   </Link>
                   <Link href="/inscription" onClick={() => setMobileOpen(false)} style={{
                     flex: 2, display: "block", textAlign: "center",
@@ -301,7 +303,7 @@ export function NavbarMarketing() {
                     textDecoration: "none",
                     boxShadow: "0 4px 20px rgba(245,166,35,.5)",
                   }}>
-                    Créer ma boutique gratuite
+                    {t("Créer ma boutique gratuite")}
                   </Link>
                 </div>
               </div>

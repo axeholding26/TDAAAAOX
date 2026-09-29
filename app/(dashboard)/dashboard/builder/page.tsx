@@ -9,6 +9,7 @@ import { DigitalBuilder } from "./digital/DigitalBuilder";
 import { BoutiqueBuilder } from "./boutique/BoutiqueBuilder";
 import { PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
 import { corrigerLiensDesign } from "@/lib/liens-design";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -69,6 +70,7 @@ const DEFAULT_PRODUCT_PAGE = {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function BuilderPage() {
+  const tr = useT();
   const [device, setDevice]           = useState<Device>("desktop");
   const [tenant, setTenant]           = useState<any>(null);
   const [config, setConfig]           = useState<ThemeConfig | null>(null);
@@ -268,7 +270,7 @@ export default function BuilderPage() {
   // Dépublier : la boutique passe « en pause » (même statut que l'interrupteur
   // de Ma boutique) — invisible pour le public, republiable d'un clic.
   const depublierBoutique = useCallback(async () => {
-    if (!confirm("Dépublier ta boutique ?\n\nElle ne sera plus visible en ligne tant que tu ne la republies pas. Tes produits, commandes et réglages sont conservés.")) return;
+    if (!confirm(tr("Dépublier ta boutique ?\n\nElle ne sera plus visible en ligne tant que tu ne la republies pas. Tes produits, commandes et réglages sont conservés."))) return;
     setPublishing(true);
     try {
       const res = await fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: "pause" }) });
@@ -301,7 +303,7 @@ export default function BuilderPage() {
     <div className="h-screen bg-white flex items-center justify-center">
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-500 text-sm">Chargement du constructeur</p>
+        <p className="text-gray-500 text-sm">{tr("Chargement du constructeur")}</p>
       </div>
     </div>
   );
@@ -316,36 +318,36 @@ export default function BuilderPage() {
         <div className="px-4 py-2.5 bg-red-50 border-b border-red-100 text-red-700 text-[13px] flex-shrink-0">
           <div className="flex items-start gap-2">
             <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
-            <span className="flex-1"><span className="font-semibold">Il manque pour publier :</span> {criteresManquants.map(c => c.label).join(", ")}.</span>
+            <span className="flex-1"><span className="font-semibold">{tr("Il manque pour publier :")}</span> {criteresManquants.map(c => c.label).join(", ")}.</span>
           </div>
           <div className="mt-2 grid sm:grid-cols-2 gap-2 max-w-3xl">
             {criteresManquants.some(c => c.cle === "nomBoutique") && (
               <input value={infosForm.nomBoutique} onChange={e => setInfosForm(f => ({ ...f, nomBoutique: e.target.value }))}
-                placeholder="Nom de la boutique" className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
+                placeholder={tr("Nom de la boutique")} className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
             )}
             {criteresManquants.some(c => c.cle === "whatsapp") && (
               <input value={infosForm.whatsapp} onChange={e => setInfosForm(f => ({ ...f, whatsapp: e.target.value }))}
-                placeholder="Numéro WhatsApp (+225…)" className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
+                placeholder={tr("Numéro WhatsApp (+225…)")} className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
             )}
             {criteresManquants.some(c => c.cle === "pays") && (
               <input value={infosForm.pays} onChange={e => setInfosForm(f => ({ ...f, pays: e.target.value }))}
-                placeholder="Pays" className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
+                placeholder={tr("Pays")} className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400" />
             )}
             {criteresManquants.some(c => c.cle === "description") && (
               <input value={infosForm.description} onChange={e => setInfosForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Description de la boutique" className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400 sm:col-span-2" />
+                placeholder={tr("Description de la boutique")} className="px-2.5 py-1.5 rounded-lg border border-red-200 bg-white text-[13px] text-gray-800 outline-none focus:border-red-400 sm:col-span-2" />
             )}
           </div>
           <div className="mt-2 flex items-center gap-3">
             {criteresManquants.some(c => ["nomBoutique","whatsapp","pays","description"].includes(c.cle)) && (
               <button onClick={sauvegarderInfos} disabled={savingInfos}
                 className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-all">
-                {savingInfos ? "Enregistrement…" : "Enregistrer ces infos"}
+                {savingInfos ? tr("Enregistrement…") : tr("Enregistrer ces infos")}
               </button>
             )}
             {criteresManquants.some(c => c.cle === "produits") && (
               <Link href="/dashboard/produits" className="text-[12px] font-semibold text-red-700 underline underline-offset-2">
-                Ajouter un produit →
+                {tr("Ajouter un produit →")}
               </Link>
             )}
           </div>
@@ -356,7 +358,7 @@ export default function BuilderPage() {
         <div className="flex items-start gap-2 px-4 py-2 bg-red-50 border-b border-red-100 text-red-700 text-[13px] flex-shrink-0">
           <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
           <div className="flex-1">
-            <span className="font-semibold">Impossible de publier — il manque :</span> {manquants.join(", ")}.
+            <span className="font-semibold">{tr("Impossible de publier — il manque :")}</span> {manquants.join(", ")}.
           </div>
           <button onClick={() => setManquants(null)} className="text-red-400 hover:text-red-600 flex-shrink-0"><X size={13} /></button>
         </div>
@@ -376,8 +378,8 @@ export default function BuilderPage() {
         publier={publierBoutique} depublier={depublierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
         panneauxPages={{
           produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,
-          apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
-          contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
+          apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre={tr("À propos")} />,
+          contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre={tr("Contact")} />,
         }}
       />
     );
@@ -408,8 +410,8 @@ export default function BuilderPage() {
           modeles={<PanelModeles tenant={tenant} onApplied={refetchTenant} />}
           panneauxPages={{
             produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,
-            apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
-            contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
+            apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre={tr("À propos")} />,
+            contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre={tr("Contact")} />,
           }}
           reglages={[
             { id: "couleurs", label: "Couleurs", desc: "Palette de la boutique", Icon: Palette, contenu: <PanelCouleurs config={config} setColors={setColors} /> },
@@ -421,7 +423,7 @@ export default function BuilderPage() {
             { id: "avance", label: "CSS avancé", desc: "Code CSS personnalisé", Icon: Code2, contenu: <PanelAvance config={config} set={set} tenant={tenant} onReset={() => { setConfig({ ...resolveThemeConfig(tenant.themeId) }); }} /> },
           ]}
         />
-        <ModuleTutorial moduleKey="builder" titre="Constructeur de boutique" sousTitre="Personnalise ta boutique en direct" steps={BUILDER_TUTORIAL_STEPS} />
+        <ModuleTutorial moduleKey="builder" titre={tr("Constructeur de boutique")} sousTitre={tr("Personnalise ta boutique en direct")} steps={BUILDER_TUTORIAL_STEPS} />
       </>
     );
 }

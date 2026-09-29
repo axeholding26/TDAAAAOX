@@ -5,6 +5,7 @@ import Link from "next/link";
 import { MapPin, Phone, Package, ChevronRight, TrendingUp, Zap, Bike, Car, PersonStanding, Truck, Map, MessageCircle } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { MapLivraisonClient } from "@/components/livreur/MapLivraisonClient";
+import { getT } from "@/lib/i18n/serveur";
 
 const STATUT: Record<string, { label: string; color: string; bg: string }> = {
   confirmee:      { label: "À récupérer",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
@@ -14,6 +15,7 @@ const STATUT: Record<string, { label: string; color: string; bg: string }> = {
 };
 
 export default async function LivreurDashboard() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
 
@@ -61,25 +63,25 @@ export default async function LivreurDashboard() {
           <div className="flex items-start justify-between mb-6">
             <div>
               <p className="text-gray-400 text-sm mb-1">
-                {now.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                {now.toLocaleDateString(t.loc, { weekday: "long", day: "numeric", month: "long" })}
               </p>
               <h1 className="text-2xl font-bold text-white font-playfair">
-                Bonjour, {livreur.nom.split(" ")[0]}
+                {t("Bonjour,")}{" "}{t(livreur.nom.split(" ")[0])}
               </h1>
               <p className="text-gray-400 text-sm mt-1 flex items-center gap-1">
                 <VehiculeIcon vehicule={livreur.vehicule} />
-                {VEHICULE_LABELS[livreur.vehicule] || "Livraison"}{livreur.zone ? ` · ${livreur.zone}` : ""}
+                {t(VEHICULE_LABELS[livreur.vehicule]) || t("Livraison")}{livreur.zone ? ` · ${livreur.zone}` : ""}
               </p>
             </div>
             {livreur.disponible ? (
               <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-3 py-1.5 rounded-xl">
                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-green-400 text-xs font-medium">Actif</span>
+                <span className="text-green-400 text-xs font-medium">{t("Actif")}</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl">
                 <div className="w-1.5 h-1.5 bg-red-400 rounded-full" />
-                <span className="text-red-400 text-xs font-medium">Hors service</span>
+                <span className="text-red-400 text-xs font-medium">{t("Hors service")}</span>
               </div>
             )}
           </div>
@@ -88,15 +90,15 @@ export default async function LivreurDashboard() {
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
               <p className="text-2xl font-bold text-[#1B4FD8]">{commandesActives.length}</p>
-              <p className="text-gray-400 text-xs mt-1">En cours</p>
+              <p className="text-gray-400 text-xs mt-1">{t("En cours")}</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
-              <p className="text-2xl font-bold text-green-400">{livraisonsJour}</p>
-              <p className="text-gray-400 text-xs mt-1">Auj.</p>
+              <p className="text-2xl font-bold text-green-400">{t(livraisonsJour)}</p>
+              <p className="text-gray-400 text-xs mt-1">{t("Auj.")}</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
-              <p className="text-2xl font-bold text-[#a78bfa]">{livraisonsSemaine}</p>
-              <p className="text-gray-400 text-xs mt-1">Cette semaine</p>
+              <p className="text-2xl font-bold text-[#a78bfa]">{t(livraisonsSemaine)}</p>
+              <p className="text-gray-400 text-xs mt-1">{t("Cette semaine")}</p>
             </div>
           </div>
         </div>
@@ -108,11 +110,11 @@ export default async function LivreurDashboard() {
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <Zap size={16} className="text-[#1B4FD8]" />
-              Livraison en cours
+              {t("Livraison en cours")}
             </h2>
             <span className="text-xs px-2 py-1 rounded-lg font-medium"
               style={{ color: STATUT[commandePrioritaire.statut]?.color, backgroundColor: STATUT[commandePrioritaire.statut]?.bg }}>
-              {STATUT[commandePrioritaire.statut]?.label}
+              {t(STATUT[commandePrioritaire.statut]?.label)}
             </span>
           </div>
 
@@ -129,14 +131,14 @@ export default async function LivreurDashboard() {
           <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
               <Link href={`/livreur/commande/${commandePrioritaire.id}`} className="flex items-start justify-between gap-3 mb-3">
                 <div>
-                  <p className="text-white font-bold">{commandePrioritaire.clientNom}</p>
+                  <p className="text-white font-bold">{t(commandePrioritaire.clientNom)}</p>
                   <div className="flex items-center gap-1.5 mt-1 text-gray-400 text-sm">
                     <MapPin size={12} />
-                    <span>{commandePrioritaire.adresseLivraison}, {commandePrioritaire.ville}</span>
+                    <span>{t(commandePrioritaire.adresseLivraison)}, {t(commandePrioritaire.ville)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 text-gray-400 text-sm">
                     <Phone size={12} />
-                    <span>{commandePrioritaire.clientTelephone}</span>
+                    <span>{t(commandePrioritaire.clientTelephone)}</span>
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -152,7 +154,7 @@ export default async function LivreurDashboard() {
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#60a5fa] py-2.5 rounded-xl text-sm"
                 >
-                  <Map size={14} /> Maps
+                  <Map size={14} />{" "}{t("Maps")}
                 </a>
                 <a
                   href={`https://wa.me/${commandePrioritaire.clientTelephone.replace(/\D/g, "")}`}
@@ -163,7 +165,7 @@ export default async function LivreurDashboard() {
                   <MessageCircle size={14} /> WhatsApp
                 </a>
                 <Link href={`/livreur/commande/${commandePrioritaire.id}`} className="flex items-center gap-1 text-gray-400 text-sm ml-auto px-3">
-                  Détails <ChevronRight size={14} />
+                  {t("Détails")}{" "}<ChevronRight size={14} />
                 </Link>
               </div>
           </div>
@@ -173,7 +175,7 @@ export default async function LivreurDashboard() {
       {/* Autres commandes actives */}
       {commandesActives.length > 1 && (
         <div>
-          <h2 className="text-white font-semibold mb-3 text-sm">Autres en attente</h2>
+          <h2 className="text-white font-semibold mb-3 text-sm">{t("Autres en attente")}</h2>
           <div className="space-y-2">
             {commandesActives.slice(1).map((cmd) => {
               const st = STATUT[cmd.statut] || STATUT.confirmee;
@@ -184,14 +186,14 @@ export default async function LivreurDashboard() {
                       <Package size={16} style={{ color: st.color }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{cmd.clientNom}</p>
+                      <p className="text-white text-sm font-medium truncate">{t(cmd.clientNom)}</p>
                       <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
-                        <MapPin size={9} />{cmd.ville}
+                        <MapPin size={9} />{t(cmd.ville)}
                       </p>
                     </div>
                     <div className="flex flex-col items-end flex-shrink-0">
                       <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
-                      <span className="text-[10px] mt-0.5" style={{ color: st.color }}>{st.label}</span>
+                      <span className="text-[10px] mt-0.5" style={{ color: st.color }}>{t(st.label)}</span>
                     </div>
                     <ChevronRight size={14} className="text-gray-500" />
                   </div>
@@ -208,12 +210,12 @@ export default async function LivreurDashboard() {
           <div className="w-16 h-16 rounded-2xl bg-[#1B4FD8]/10 flex items-center justify-center mx-auto mb-4">
             <Package size={28} className="text-[#1B4FD8]" />
           </div>
-          <p className="text-white font-semibold">Aucune livraison assignée</p>
-          <p className="text-gray-500 text-sm mt-2">Votre responsable vous assignera la prochaine commande</p>
+          <p className="text-white font-semibold">{t("Aucune livraison assignée")}</p>
+          <p className="text-gray-500 text-sm mt-2">{t("Votre responsable vous assignera la prochaine commande")}</p>
           {livreur.disponible && (
             <div className="flex items-center justify-center gap-2 mt-4 text-green-400 text-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              Vous êtes disponible
+              {t("Vous êtes disponible")}
             </div>
           )}
         </div>
@@ -222,7 +224,7 @@ export default async function LivreurDashboard() {
       {/* Lien vers historique */}
       <Link href="/livreur/commandes" className="flex items-center justify-center gap-2 w-full text-gray-500 hover:text-gray-300 text-sm py-3 transition-colors">
         <TrendingUp size={14} />
-        Voir tout l'historique ({livraisonsSemaine} cette semaine)
+        {t("Voir tout l'historique (")}{t(livraisonsSemaine)}{" "}{t("cette semaine)")}
       </Link>
     </div>
   );

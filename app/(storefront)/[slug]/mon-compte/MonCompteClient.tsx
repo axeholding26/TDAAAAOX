@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Package, Download, LogOut, User, Eye } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Compte {
   id: string;
@@ -44,6 +45,7 @@ const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
 // Dans une boutique à design, la page est entourée de l'en-tête et du pied de
 // page du design (voir page.tsx) : plus de plein écran gris, juste le contenu.
 export function MonCompteClient({ habille = false }: { habille?: boolean }) {
+  const t = useT();
   const params = useParams();
   const slug = params?.slug as string;
 
@@ -102,33 +104,33 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
       <div className={`flex items-center justify-center px-4 ${habille ? "py-20" : "min-h-screen bg-[#FAFAFA]"}`}>
         <div className="bg-white rounded-2xl border border-[#F0F0F0] p-8 w-full max-w-sm shadow-sm">
           <div className="mb-6 text-center">
-            <p className="text-xl font-bold text-[#111]">Mon compte</p>
-            <p className="text-[12px] text-[#888] mt-1">{view === "login" ? "Connecte-toi pour suivre tes commandes" : "Crée ton compte acheteur"}</p>
+            <p className="text-xl font-bold text-[#111]">{t("Mon compte")}</p>
+            <p className="text-[12px] text-[#888] mt-1">{view === "login" ? t("Connecte-toi pour suivre tes commandes") : t("Crée ton compte acheteur")}</p>
           </div>
 
           {error && (
-            <div className="mb-4 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-[12px] text-red-600">{error}</div>
+            <div className="mb-4 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-[12px] text-red-600">{t(error)}</div>
           )}
 
           <div className="space-y-3">
             {view === "register" && (
               <>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Nom complet</label>
-                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder="Jean Dupont" value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
+                  <label className="block text-[11px] text-[#888] mb-1">{t("Nom complet")}</label>
+                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder={t("Jean Dupont")} value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Téléphone (optionnel)</label>
-                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder="+237 6XX XXX XXX" value={form.telephone} onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))} />
+                  <label className="block text-[11px] text-[#888] mb-1">{t("Téléphone (optionnel)")}</label>
+                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder={t("+237 6XX XXX XXX")} value={form.telephone} onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))} />
                 </div>
               </>
             )}
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Email</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Email")}</label>
               <input type="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#888] mb-1">Mot de passe</label>
+              <label className="block text-[11px] text-[#888] mb-1">{t("Mot de passe")}</label>
               <input type="password" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
             </div>
           </div>
@@ -139,23 +141,23 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
             className="w-full mt-5 py-3 rounded-xl text-white font-semibold text-[14px] disabled:opacity-50"
             style={{ background: "#F5A623" }}
           >
-            {loading ? "..." : view === "login" ? "Se connecter" : "Créer mon compte"}
+            {loading ? "..." : view === "login" ? t("Se connecter") : t("Créer mon compte")}
           </button>
 
           <p className="text-center text-[12px] text-[#888] mt-4">
             {view === "login" ? (
-              <>Pas encore de compte ?{" "}
-                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("register"); setError(""); }}>Créer un compte</button>
+              <>{t("Pas encore de compte ?")}{" "}
+                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("register"); setError(""); }}>{t("Créer un compte")}</button>
               </>
             ) : (
-              <>Déjà un compte ?{" "}
-                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("login"); setError(""); }}>Se connecter</button>
+              <>{t("Déjà un compte ?")}{" "}
+                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("login"); setError(""); }}>{t("Se connecter")}</button>
               </>
             )}
           </p>
 
           <div className="mt-4 text-center">
-            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111]">← Retour à la boutique</Link>
+            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111]">{t("← Retour à la boutique")}</Link>
           </div>
         </div>
       </div>
@@ -173,16 +175,16 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
               <User size={18} className="text-white" />
             </div>
             <div>
-              <p className="text-[15px] font-semibold text-[#111]">{compte?.nom}</p>
+              <p className="text-[15px] font-semibold text-[#111]">{t(compte?.nom)}</p>
               <p className="text-[12px] text-[#888]">{compte?.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111] px-3 py-1.5 rounded-lg border border-[#E5E5E5]">
-              Boutique
+              {t("Boutique")}
             </Link>
             <button onClick={logout} className="flex items-center gap-1.5 text-[12px] text-[#888] hover:text-red-500 px-3 py-1.5 rounded-lg border border-[#E5E5E5]">
-              <LogOut size={12} /> Déconnexion
+              <LogOut size={12} />{" "}{t("Déconnexion")}
             </button>
           </div>
         </div>
@@ -190,11 +192,11 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-white rounded-xl border border-[#F0F0F0] p-4">
-            <p className="text-[11px] text-[#888]">Commandes</p>
+            <p className="text-[11px] text-[#888]">{t("Commandes")}</p>
             <p className="text-2xl font-bold text-[#111]">{commandes.length}</p>
           </div>
           <div className="bg-white rounded-xl border border-[#F0F0F0] p-4">
-            <p className="text-[11px] text-[#888]">Total dépensé</p>
+            <p className="text-[11px] text-[#888]">{t("Total dépensé")}</p>
             <p className="text-2xl font-bold text-[#111]">
               {commandes
                 .filter((c) => !["annulee", "remboursee"].includes(c.statut))
@@ -205,13 +207,13 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
         </div>
 
         {/* Commandes */}
-        <h2 className="text-[14px] font-semibold text-[#111] mb-3">Mes commandes</h2>
+        <h2 className="text-[14px] font-semibold text-[#111] mb-3">{t("Mes commandes")}</h2>
         {commandes.length === 0 ? (
           <div className="bg-white border border-dashed border-[#E5E5E5] rounded-xl p-10 text-center">
             <Package size={28} className="mx-auto mb-3 text-[#DDD]" />
-            <p className="text-[13px] text-[#888]">Aucune commande pour l'instant.</p>
+            <p className="text-[13px] text-[#888]">{t("Aucune commande pour l'instant.")}</p>
             <Link href={`/${slug}`} className="mt-4 inline-block px-4 py-2 rounded-xl text-white text-[13px] font-semibold" style={{ background: "#F5A623" }}>
-              Découvrir la boutique
+              {t("Découvrir la boutique")}
             </Link>
           </div>
         ) : (
@@ -226,8 +228,8 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                       <p className="text-[11px] text-[#888]">{new Date(c.createdAt).toLocaleDateString("fr")}</p>
                     </div>
                     <div className="text-right">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{sc.label}</span>
-                      <p className="text-[13px] font-bold text-[#111] mt-1">{c.montantTotal.toLocaleString()} {c.devise}</p>
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
+                      <p className="text-[13px] font-bold text-[#111] mt-1">{c.montantTotal.toLocaleString()} {t(c.devise)}</p>
                     </div>
                   </div>
 
@@ -239,8 +241,8 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                           <img src={l.produit.images[0]} alt={l.nom} className="w-10 h-10 rounded-lg object-cover bg-[#F5F5F5]" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] text-[#444] truncate">{l.nom}</p>
-                          <p className="text-[10px] text-[#888]">x{l.quantite} · {l.prix.toLocaleString()} {c.devise}</p>
+                          <p className="text-[12px] text-[#444] truncate">{t(l.nom)}</p>
+                          <p className="text-[10px] text-[#888]">x{l.quantite} · {l.prix.toLocaleString()} {t(c.devise)}</p>
                         </div>
                         {l.produit.type === "digital" && l.produit.fichierUrl && c.statut === "livree" && (
                           <a
@@ -250,7 +252,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white"
                             style={{ background: "#7c3aed" }}
                           >
-                            <Download size={11} /> Télécharger
+                            <Download size={11} />{" "}{t("Télécharger")}
                           </a>
                         )}
                       </div>
@@ -260,11 +262,11 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                   {/* Footer */}
                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#F0F0F0]">
                     {c.facture && (
-                      <span className="text-[11px] text-[#888]">Facture {c.facture.numero}</span>
+                      <span className="text-[11px] text-[#888]">{t("Facture")}{" "}{c.facture.numero}</span>
                     )}
                     {c.trackingToken && (
                       <Link href={`/${slug}/tracking/${c.trackingToken}`} className="flex items-center gap-1.5 text-[11px] text-[#F5A623] font-semibold ml-auto">
-                        <Eye size={11} /> Suivre
+                        <Eye size={11} />{" "}{t("Suivre")}
                       </Link>
                     )}
                   </div>

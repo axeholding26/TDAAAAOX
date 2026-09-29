@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Mic, Zap } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const MSG_USER = "Ajoute une promo -20% sur mes sneakers ce week-end";
 const MSG_AXIA  = "C'est fait ✓ La promo est active du samedi 00h00 au dimanche 23h59, et j'ai notifié tes 3 derniers clients intéressés.";
@@ -26,6 +27,7 @@ function useTypewriter(text: string, start: boolean, speed = 16, startDelay = 0)
 }
 
 export function AxiaSection() {
+  const t = useT();
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const axiaTyped = useTypewriter(MSG_AXIA, visible, 15, 950);
@@ -46,11 +48,11 @@ export function AxiaSection() {
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-5 sm:p-6 max-w-md">
               <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-gray-100">
                 <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#111111" }}>
-                  <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                  <img src="/axia-icon.png" alt={t("Axia")} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm text-[#111111]">Axia</p>
-                  <p className="text-[11px] text-gray-400">Ton assistante IA</p>
+                  <p className="font-bold text-sm text-[#111111]">{t("Axia")}</p>
+                  <p className="text-[11px] text-gray-400">{t("Ton assistante IA")}</p>
                 </div>
                 <Mic size={16} className="ml-auto text-gray-300" />
               </div>
@@ -58,13 +60,13 @@ export function AxiaSection() {
                 <div className="flex justify-end"
                   style={{ opacity: visible ? 1 : 0, animation: visible ? "slideRevealLeft 0.5s 300ms cubic-bezier(0.23,1,0.32,1) both" : "none" }}>
                   <div className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] text-white" style={{ background: "#F5A623" }}>
-                    {MSG_USER}
+                    {t(MSG_USER)}
                   </div>
                 </div>
                 {visible && (
                   <div className="flex justify-start" style={{ animation: "slideRevealLeft 0.4s 750ms cubic-bezier(0.23,1,0.32,1) both" }}>
                     <div className="rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed max-w-[85%] bg-gray-50 text-gray-700 border border-gray-100 min-h-[2.5em]">
-                      {axiaTyped}
+                      {t(axiaTyped)}
                       {!axiaDone && <span className="inline-block w-[2px] h-[13px] ml-0.5 align-middle animate-pulse" style={{ background: "#F5A623" }} />}
                     </div>
                   </div>
@@ -75,21 +77,21 @@ export function AxiaSection() {
 
           <div className="order-1 lg:order-2" style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(24px)", transition: "all 0.8s 0.1s cubic-bezier(0.23,1,0.32,1)" }}>
             <div className="w-full h-[280px] sm:h-[340px] lg:h-[380px] mb-2 -mt-4">
-              <Image src="/axia-icon.png" alt="Axia" width={380} height={380} className="w-full h-full object-contain" />
+              <Image src="/axia-icon.png" alt={t("Axia")} width={380} height={380} className="w-full h-full object-contain" />
             </div>
-            <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">Assistante IA</span>
+            <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">{t("Assistante IA")}</span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
-              Rencontre Axia, ta copilote au quotidien
+              {t("Rencontre Axia, ta copilote au quotidien")}
             </h2>
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-lg">
-              Parle-lui à l'écrit ou à la voix : elle configure ta boutique, répond à tes clients, lance des promotions et t'alerte sur ce qui compte — 24h/24.
+              {t("Parle-lui à l'écrit ou à la voix : elle configure ta boutique, répond à tes clients, lance des promotions et t'alerte sur ce qui compte — 24h/24.")}
             </p>
             <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-              <Zap size={14} style={{ color: "#F5A623" }} /> Comprend le français, disponible en interface vocale
+              <Zap size={14} style={{ color: "#F5A623" }} />{" "}{t("Comprend le français, disponible en interface vocale")}
             </div>
             <Link href="/inscription" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-transform hover:scale-[1.03]"
               style={{ background: "#111111" }}>
-              Parler à Axia →
+              {t("Parler à Axia →")}
             </Link>
           </div>
         </div>

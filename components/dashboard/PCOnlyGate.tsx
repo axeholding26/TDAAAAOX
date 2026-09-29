@@ -4,12 +4,14 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Monitor, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   label?: string;
 }
 
 export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
+  const t = useT();
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted]   = useState(false);
   const router = useRouter();
@@ -44,7 +46,7 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
 
       {/* Logo */}
       <div style={{ marginBottom: 44, position: "relative", zIndex: 1 }}>
-        <Image src="/logo-dark.png" alt="Axso" width={99} height={35} style={{ objectFit: "contain" }} />
+        <Image src="/logo-dark.png" alt={t("Axso")} width={99} height={35} style={{ objectFit: "contain" }} />
       </div>
 
       {/* Icon */}
@@ -63,14 +65,14 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
         marginBottom: 12, textAlign: "center", letterSpacing: "-0.3px",
         position: "relative", zIndex: 1,
       }}>
-        Mode PC recommandé
+        {t("Mode PC recommandé")}
       </h2>
       <p style={{
         fontSize: 14, color: "rgba(255,255,255,0.38)", textAlign: "center",
         maxWidth: 290, lineHeight: 1.65, marginBottom: 44,
         position: "relative", zIndex: 1,
       }}>
-        {label} est conçue pour grand écran et offre une expérience optimale sur ordinateur. Connectez-vous depuis un PC pour l'utiliser pleinement.
+        {t(label)}{" "}{t("est conçue pour grand écran et offre une expérience optimale sur ordinateur. Connectez-vous depuis un PC pour l'utiliser pleinement.")}
       </p>
 
       {/* CTA */}
@@ -86,7 +88,7 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
         }}
       >
         <ArrowLeft size={16} />
-        Retour au dashboard
+        {t("Retour au dashboard")}
       </button>
     </div>
   ), document.body);

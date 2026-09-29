@@ -1,12 +1,14 @@
 "use client";
 
 import { Printer } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 export function PrintButton() {
+  const t = useT();
   return (
     <button onClick={() => window.print()}
       className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 transition-all">
-      <Printer size={13} /> Imprimer / PDF
+      <Printer size={13} />{" "}{t("Imprimer / PDF")}
     </button>
   );
 }

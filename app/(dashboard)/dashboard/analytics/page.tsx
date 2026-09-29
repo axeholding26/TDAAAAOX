@@ -23,8 +23,10 @@ import { planActif } from "@/lib/abonnement";
 import { aAcces } from "@/lib/plans";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { AnalyticsTutorial } from "@/components/dashboard/tutorials/AnalyticsTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function AnalyticsPage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "produits");
@@ -100,11 +102,11 @@ export default async function AnalyticsPage() {
   const donneesMap: Record<string, { montant: number; commandes: number }> = {};
   for (let i = 0; i < fenetre; i++) {
     const d = new Date(il30Jours.getTime() + i * 24 * 60 * 60 * 1000);
-    const key = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    const key = d.toLocaleDateString(t.loc, { day: "2-digit", month: "2-digit" });
     donneesMap[key] = { montant: 0, commandes: 0 };
   }
   for (const c of commandesParJour) {
-    const key = new Date(c.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    const key = new Date(c.createdAt).toLocaleDateString(t.loc, { day: "2-digit", month: "2-digit" });
     if (donneesMap[key]) {
       donneesMap[key].montant += c.montantTotal;
       donneesMap[key].commandes += 1;
@@ -160,7 +162,7 @@ export default async function AnalyticsPage() {
     },
     {
       label: "Visiteurs",
-      valeur: Math.round(pageViews).toLocaleString("fr-FR"),
+      valeur: Math.round(pageViews).toLocaleString(t.loc),
       delta: delta(pageViews, pageViewsPrev),
       accent: "#F5A623",
       icone: Eye,
@@ -180,15 +182,15 @@ export default async function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Analytics <AgentActiveIndicator label="Agent Analytics actif" /> <BoutonRevoirTutoriel moduleKey="analytics" /></h1>
-          <p className="text-[#717171] text-sm mt-1">Activité réelle de votre boutique</p>
+          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">{t("Analytics")}{" "}<AgentActiveIndicator label={t("Agent Analytics actif")} /> <BoutonRevoirTutoriel moduleKey="analytics" /></h1>
+          <p className="text-[#717171] text-sm mt-1">{t("Activité réelle de votre boutique")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
             <Calendar size={14} className="text-[#717171]" />
-            <span className="text-[#111111] text-sm font-medium">{fenetre} derniers jours</span>
+            <span className="text-[#111111] text-sm font-medium">{t(fenetre)}{" "}{t("derniers jours")}</span>
             <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
-              vs J-{fenetre}
+              {t("vs J-")}{t(fenetre)}
             </span>
           </div>
           {tempsReel && <LiveRefreshBadge intervalMs={30000} />}
@@ -217,10 +219,10 @@ export default async function AnalyticsPage() {
                   </div>
                 )}
               </div>
-              <p className="text-2xl font-bold text-[#111111] font-poppins leading-tight">{k.valeur}</p>
-              <p className="text-[#717171] text-xs mt-1">{k.label}</p>
+              <p className="text-2xl font-bold text-[#111111] font-poppins leading-tight">{t(k.valeur)}</p>
+              <p className="text-[#717171] text-xs mt-1">{t(k.label)}</p>
               {d !== null && (
-                <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. {fenetre} jours précédents</p>
+                <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. {t(fenetre)}{" "}{t("jours précédents")}</p>
               )}
             </div>
           );
@@ -231,8 +233,8 @@ export default async function AnalyticsPage() {
       <>
       {/* Graphique des ventes */}
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-[#111111] mb-1">Évolution du chiffre d'affaires</h2>
-        <p className="text-[#717171] text-xs mb-5">Revenus journaliers des {fenetre} derniers jours (commandes complétées)</p>
+        <h2 className="text-sm font-semibold text-[#111111] mb-1">{t("Évolution du chiffre d'affaires")}</h2>
+        <p className="text-[#717171] text-xs mb-5">{t("Revenus journaliers des")}{" "}{t(fenetre)}{" "}{t("derniers jours (commandes complétées)")}</p>
         <SalesChart donnees={donnees30Jours} devise={tenant?.devise || "XOF"} />
       </div>
 
@@ -244,8 +246,8 @@ export default async function AnalyticsPage() {
               <TrendingUp size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">Top produits</h3>
-              <p className="text-[#717171] text-xs">Classés par nombre de ventes</p>
+              <h3 className="text-sm font-semibold text-[#111111]">{t("Top produits")}</h3>
+              <p className="text-[#717171] text-xs">{t("Classés par nombre de ventes")}</p>
             </div>
           </div>
           {topProduits.length === 0 ? (
@@ -253,7 +255,7 @@ export default async function AnalyticsPage() {
               <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
                 <Package size={20} className="text-[#717171]" />
               </div>
-              <p className="text-[#717171] text-sm">Aucune vente pour le moment</p>
+              <p className="text-[#717171] text-sm">{t("Aucune vente pour le moment")}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -283,13 +285,13 @@ export default async function AnalyticsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#111111] text-sm font-medium truncate">{p.nom}</p>
+                      <p className="text-[#111111] text-sm font-medium truncate">{t(p.nom)}</p>
                       <div className="w-full bg-[#F4F4F4] rounded-full h-1.5 mt-1.5">
                         <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: "#F5A623" }} />
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[#111111] text-sm font-bold font-poppins">{p.ventes}</p>
+                      <p className="text-[#111111] text-sm font-bold font-poppins">{t(p.ventes)}</p>
                       <p className="text-[#717171] text-[10px]">ventes</p>
                     </div>
                   </div>
@@ -306,8 +308,8 @@ export default async function AnalyticsPage() {
               <BarChart3 size={15} className="text-[#2563EB]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">Statuts des commandes</h3>
-              <p className="text-[#717171] text-xs">{totalCommandes} commandes au total</p>
+              <h3 className="text-sm font-semibold text-[#111111]">{t("Statuts des commandes")}</h3>
+              <p className="text-[#717171] text-xs">{t(totalCommandes)}{" "}{t("commandes au total")}</p>
             </div>
           </div>
           {totalCommandes === 0 ? (
@@ -315,7 +317,7 @@ export default async function AnalyticsPage() {
               <div className="w-12 h-12 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center">
                 <BarChart3 size={20} className="text-[#717171]" />
               </div>
-              <p className="text-[#717171] text-sm">Aucune commande pour le moment</p>
+              <p className="text-[#717171] text-sm">{t("Aucune commande pour le moment")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -333,10 +335,10 @@ export default async function AnalyticsPage() {
                     <div key={s.statut}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${info.badgeClass}`}>
-                          {info.label}
+                          {t(info.label)}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[#111111] text-sm font-bold font-poppins">{s._count}</span>
+                          <span className="text-[#111111] text-sm font-bold font-poppins">{t(s._count)}</span>
                           <span className="text-[#717171] text-xs">({pct}%)</span>
                         </div>
                       </div>
@@ -355,12 +357,12 @@ export default async function AnalyticsPage() {
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#111111]">Entonnoir de conversion</h3>
-            <p className="text-[#717171] text-xs mt-0.5">30 derniers jours</p>
+            <h3 className="text-sm font-semibold text-[#111111]">{t("Entonnoir de conversion")}</h3>
+            <p className="text-[#717171] text-xs mt-0.5">{t("30 derniers jours")}</p>
           </div>
           <div className="flex items-center gap-2 bg-[#F4F4F4] border border-[#E8E8E8] rounded-xl px-4 py-2">
-            <span className="text-[#717171] text-sm">Taux global</span>
-            <span className="font-bold text-[#111111] font-poppins text-lg">{tauxConversion}%</span>
+            <span className="text-[#717171] text-sm">{t("Taux global")}</span>
+            <span className="font-bold text-[#111111] font-poppins text-lg">{t(tauxConversion)}%</span>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -384,12 +386,12 @@ export default async function AnalyticsPage() {
                   />
                 </div>
                 <p className="text-[#111111] font-bold font-poppins text-lg leading-tight">
-                  {step.val.toLocaleString("fr-FR")}
+                  {step.val.toLocaleString(t.loc)}
                 </p>
-                <p className="text-[#717171] text-xs text-center">{step.label}</p>
+                <p className="text-[#717171] text-xs text-center">{t(step.label)}</p>
                 {ratio !== null && (
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]">
-                    {ratio}%
+                    {t(ratio)}%
                   </span>
                 )}
               </div>
@@ -406,8 +408,8 @@ export default async function AnalyticsPage() {
               <Star size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">Derniers avis clients</h3>
-              <p className="text-[#717171] text-xs">Les 5 plus récents</p>
+              <h3 className="text-sm font-semibold text-[#111111]">{t("Derniers avis clients")}</h3>
+              <p className="text-[#717171] text-xs">{t("Les 5 plus récents")}</p>
             </div>
           </div>
           <div className="space-y-2">
@@ -423,7 +425,7 @@ export default async function AnalyticsPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[#717171] text-xs truncate mb-1">{a.produit.nom}</p>
+                  <p className="text-[#717171] text-xs truncate mb-1">{t(a.produit.nom)}</p>
                   <div className="flex items-center gap-0.5 mb-1">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -434,7 +436,7 @@ export default async function AnalyticsPage() {
                     ))}
                   </div>
                   {a.commentaire && (
-                    <p className="text-[#717171] text-xs line-clamp-2">{a.commentaire}</p>
+                    <p className="text-[#717171] text-xs line-clamp-2">{t(a.commentaire)}</p>
                   )}
                 </div>
               </div>
@@ -445,8 +447,8 @@ export default async function AnalyticsPage() {
       </>
       ) : (
         <UpgradeGate
-          titre="Analytics avancés — Palier 1"
-          description="Historique complet, entonnoir de conversion, top produits et avis clients sont réservés aux paliers Pro et Illimité. Le Palier 0 affiche un résumé 7 jours."
+          titre={t("Analytics avancés — Palier 1")}
+          description={t("Historique complet, entonnoir de conversion, top produits et avis clients sont réservés aux paliers Pro et Illimité. Le Palier 0 affiche un résumé 7 jours.")}
           palierRequis="palier1"
         />
       )}

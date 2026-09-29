@@ -6,8 +6,10 @@ import { ExternalLink, ArrowLeft, BadgeCheck, Package, ShoppingCart, Users, Wall
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { getWalletResume } from "@/lib/wallet";
 import { BoutiqueActionsPanel } from "@/components/admin/BoutiqueActionsPanel";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function AdminBoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = await getT();
   const session = await getAdminSession();
   if (!session) redirect("/dashboard");
   const { id } = await params;
@@ -32,7 +34,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
   return (
     <div className="space-y-8">
       <Link href="/admin/boutiques" className="flex items-center gap-1.5 text-xs hover:underline w-fit" style={{ color: "#AAAAAA" }}>
-        <ArrowLeft size={12} /> Retour aux boutiques
+        <ArrowLeft size={12} />{" "}{t("Retour aux boutiques")}
       </Link>
 
       <div className="flex items-start justify-between flex-wrap gap-4">
@@ -43,15 +45,15 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{tenant.nomBoutique}</h1>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t(tenant.nomBoutique)}</h1>
               {tenant.certifie && <BadgeCheck size={18} style={{ color: "#F5A623" }} />}
             </div>
             <div className="flex items-center gap-3 mt-1">
               <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 hover:underline" style={{ color: "#F5A623" }}>
                 {tenant.slug} <ExternalLink size={9} />
               </a>
-              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${statutBadge.c}18`, color: statutBadge.c }}>{statutBadge.l}</span>
-              <span className="text-xs" style={{ color: "#666666" }}>Inscrite le {formatDate(tenant.createdAt)}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${statutBadge.c}18`, color: statutBadge.c }}>{t(statutBadge.l)}</span>
+              <span className="text-xs" style={{ color: "#666666" }}>{t("Inscrite le")}{" "}{formatDate(tenant.createdAt)}</span>
             </div>
           </div>
         </div>
@@ -71,8 +73,8 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
               <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${s.color}15`, border: `1px solid ${s.color}25` }}>
                 <Icon size={16} style={{ color: s.color }} />
               </div>
-              <p className="text-xl font-bold" style={{ color: "#ffffff" }}>{s.value}</p>
-              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{s.label}</p>
+              <p className="text-xl font-bold" style={{ color: "#ffffff" }}>{t(s.value)}</p>
+              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t(s.label)}</p>
             </div>
           );
         })}
@@ -83,15 +85,15 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
         <div className="rounded-2xl p-5 border flex items-center gap-6 flex-wrap" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
           <div>
             <p className="text-lg font-bold" style={{ color: "#F5A623" }}>{formatMontant(wallet.solde, wallet.devise)}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>Solde wallet marchand</p>
+            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>{t("Solde wallet marchand")}</p>
           </div>
           <div>
             <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(wallet.totalRecu, wallet.devise)}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>Total encaissé</p>
+            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>{t("Total encaissé")}</p>
           </div>
           <div>
             <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(wallet.totalRetire, wallet.devise)}</p>
-            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>Total retiré</p>
+            <p className="text-xs mt-0.5" style={{ color: "#AAAAAA" }}>{t("Total retiré")}</p>
           </div>
         </div>
       )}
@@ -101,7 +103,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
         <div className="flex flex-wrap gap-2">
           {badges.map(b => (
             <span key={b.id} className="text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5" style={{ background: "rgba(245,166,35,0.1)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.2)" }}>
-              {b.emoji} {b.titre}
+              {t(b.emoji)} {t(b.titre)}
             </span>
           ))}
         </div>
@@ -110,7 +112,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
       {estAdminComplet(session) ? (
         <BoutiqueActionsPanel tenantId={tenant.id} statut={tenant.statut} planType={tenant.planType} certifie={tenant.certifie} devise={tenant.devise} />
       ) : (
-        <p className="text-xs" style={{ color: "#666666" }}>Accès lecture seule — les actions de gestion sont réservées au super-admin.</p>
+        <p className="text-xs" style={{ color: "#666666" }}>{t("Accès lecture seule — les actions de gestion sont réservées au super-admin.")}</p>
       )}
     </div>
   );

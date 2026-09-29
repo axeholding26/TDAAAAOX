@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { useT } from "@/components/I18nProvider";
 
 // Zone de dépôt entre deux blocs (ou dans un conteneur vide) — chaque dépôt,
 // qu'il vienne de la bibliothèque ou d'un nœud existant, cible toujours un
@@ -9,6 +10,7 @@ import { useDroppable } from "@dnd-kit/core";
 // le temps disponible, au prix d'une réanimation moins fluide qu'un vrai
 // SortableContext — accepté pour la vague 1.
 export function DropIndicator({ parentId, index, empty, idPrefix = "gap" }: { parentId: string | null; index: number; empty?: boolean; idPrefix?: string }) {
+  const t = useT();
   // idPrefix distingue les zones de dépôt du canevas de celles, identiques
   // en (parentId, index), du plan de page (PageOutlinePanel) — les deux
   // vivent dans le même DndContext en même temps, donc leurs ids dnd-kit
@@ -26,7 +28,7 @@ export function DropIndicator({ parentId, index, empty, idPrefix = "gap" }: { pa
           isOver ? "border-[#F5A623] bg-[#F5A623]/10 text-[#F5A623] py-7" : "border-gray-200 text-gray-400 py-5"
         }`}
       >
-        Dépose un bloc ici
+        {t("Dépose un bloc ici")}
       </div>
     );
   }

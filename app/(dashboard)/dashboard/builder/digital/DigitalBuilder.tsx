@@ -31,6 +31,7 @@ import { useSurvol, cssSelection } from "../SurvolApercu";
 import { StyleCss } from "@/components/storefront/StyleCss";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
 import { CSS_MENUS_DEROULANTS } from "../menusDeroulants";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 // Largeur de l'aperçu ; la boutique s'y adapte réellement (container queries,
@@ -61,6 +62,7 @@ interface Props {
 }
 
 export function DigitalBuilder({ tenant, config, originalConfig, set, setColors, setFonts, handleSave, saving, saved, hasChanges, publier, depublier, publishing, criteresManquants, bandeaux, panneauxPages }: Props) {
+  const tr = useT();
   const [device, setDevice] = useState<Device>("desktop");
   // Page de la boutique en cours d'édition — même sélecteur que le Constructeur physique.
   const [page, setPage] = useState<PageEditee>("accueil");
@@ -119,8 +121,8 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
     if (logoUrl === logoEnregistre.current) return;
     const t = setTimeout(() => {
       fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl }) })
-        .then((r) => { if (r.ok) logoEnregistre.current = logoUrl; else toast.error("Logo non enregistré"); })
-        .catch(() => toast.error("Logo non enregistré"));
+        .then((r) => { if (r.ok) logoEnregistre.current = logoUrl; else toast.error(tr("Logo non enregistré")); })
+        .catch(() => toast.error(tr("Logo non enregistré")));
     }, 600);
     return () => clearTimeout(t);
   }, [logoUrl]);
@@ -142,19 +144,19 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
     // desktop : rien ne la recouvrait.
     <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F5F7FA] text-gray-800 overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <StyleCss css={CSS_MENUS_DEROULANTS} />
-      <PCOnlyGate label="Le Constructeur de boutique digitale" />
+      <PCOnlyGate label={tr("Le Constructeur de boutique digitale")} />
       {/* HEADER */}
       <header className="h-14 flex items-center justify-between px-4 bg-white border-b border-gray-200 flex-shrink-0 gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Link href="/dashboard" className="flex items-center gap-1.5 text-gray-400 hover:text-gray-800 transition-colors text-sm">
-            <ArrowLeft size={13} /> Dashboard
+            <ArrowLeft size={13} />{" "}{tr("Dashboard")}
           </Link>
           <div className="h-4 w-px bg-gray-100" />
-          <span className="text-sm text-gray-800 font-medium truncate max-w-32">{tenant.nomBoutique}</span>
-          {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">Brouillon</span>}
-          {tenant.statut === "pause" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">Hors ligne</span>}
-          {tenant.statut === "active" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">En ligne</span>}
-          {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">Modifié</span>}
+          <span className="text-sm text-gray-800 font-medium truncate max-w-32">{tr(tenant.nomBoutique)}</span>
+          {tenant.statut === "brouillon" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-orange-500/15 text-orange-500 font-semibold">{tr("Brouillon")}</span>}
+          {tenant.statut === "pause" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-semibold">{tr("Hors ligne")}</span>}
+          {tenant.statut === "active" && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">{tr("En ligne")}</span>}
+          {hasChanges && <span className="text-[13px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600">{tr("Modifié")}</span>}
         </div>
         <SelecteurPage page={page} onChange={(pg) => { setPage(pg); setSelectedEl(null); }} labelAccueil="Accueil de la boutique" />
         <div className="flex items-center gap-2">
@@ -168,35 +170,35 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           </div>
           {tenant.statut !== "active" ? (
             <button onClick={publier} disabled={publishing || criteresManquants.length > 0}
-              title={criteresManquants.length ? `Complète d'abord : ${criteresManquants.map((c) => c.label).join(", ")}` : "Rendre ma boutique visible en ligne"}
+              title={criteresManquants.length ? tr("Complète d'abord : {0}", criteresManquants.map((c) => c.label).join(", ")) : tr("Rendre ma boutique visible en ligne")}
               className="h-9 flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               {publishing ? <RefreshCw size={14} className="animate-spin" /> : <Rocket size={14} />}
-              {publishing ? "Publication…" : "Publier"}
+              {publishing ? tr("Publication…") : tr("Publier")}
             </button>
           ) : (
             // « Voir la boutique » est dans la barre en dessous (Prévisualisation) — ici, la retirer de la vente.
-            <button onClick={depublier} disabled={publishing} title="Retirer la boutique de la vente en ligne"
+            <button onClick={depublier} disabled={publishing} title={tr("Retirer la boutique de la vente en ligne")}
               className="h-9 flex items-center gap-1.5 px-4 rounded-lg text-sm font-semibold border border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-600 hover:bg-red-50 disabled:opacity-40 transition-colors">
               {publishing ? <RefreshCw size={14} className="animate-spin" /> : <EyeOff size={14} />}
-              {publishing ? "…" : "Dépublier"}
+              {publishing ? "…" : tr("Dépublier")}
             </button>
           )}
         </div>
       </header>
 
-      {bandeaux}
+      {tr(bandeaux)}
 
       {/* Barre secondaire — Prévisualisation / Réinitialiser / Enregistrer,
           au-dessus de l'aperçu, comme la référence Chariow. */}
       <div className="h-14 flex items-center justify-end gap-2 px-4 bg-white border-b border-gray-200 flex-shrink-0">
         {tenant.statut === "active" && (
           <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all">
-            <ExternalLink size={13} /> Prévisualisation
+            <ExternalLink size={13} />{" "}{tr("Prévisualisation")}
           </a>
         )}
-        <button onClick={reinitialiser} disabled={!hasChanges} title="Annule les modifications non sauvegardées"
+        <button onClick={reinitialiser} disabled={!hasChanges} title={tr("Annule les modifications non sauvegardées")}
           className="h-9 flex items-center gap-1.5 px-3.5 rounded-full text-sm font-medium text-gray-600 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:bg-transparent">
-          <RefreshCw size={13} /> Réinitialiser
+          <RefreshCw size={13} />{" "}{tr("Réinitialiser")}
         </button>
         {/* Inactif tant qu'aucun réglage n'a changé depuis le dernier
             enregistrement — hasChanges vient de page.tsx (comparaison
@@ -206,7 +208,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
             saved ? "bg-emerald-100 text-emerald-700" : "bg-[#F5A623] text-[#050508] hover:bg-[#e8990f] hover:shadow-md"
           }`}>
           {saving ? <RefreshCw size={14} className="animate-spin flex-shrink-0" /> : saved ? <Check size={14} className="flex-shrink-0" /> : <Save size={14} className="flex-shrink-0" />}
-          <span>{saving ? "Sauvegarde…" : saved ? "Sauvegardé" : "Enregistrer"}</span>
+          <span>{saving ? tr("Sauvegarde…") : saved ? tr("Sauvegardé") : tr("Enregistrer")}</span>
         </button>
       </div>
 
@@ -215,8 +217,8 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
         {page !== "accueil" && (
           <div className="w-[420px] flex-shrink-0 min-h-0 bg-white border-r border-gray-200 flex flex-col">
             {panneauxPages[page]
-              ? <><div className="px-5 h-12 flex items-center border-b border-gray-100 flex-shrink-0"><p className="text-[15px] font-semibold">{PAGES.find((pg) => pg.id === page)?.label}</p></div>
-                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{panneauxPages[page]}</div></>
+              ? <><div className="px-5 h-12 flex items-center border-b border-gray-100 flex-shrink-0"><p className="text-[15px] font-semibold">{tr(PAGES.find((pg) => pg.id === page)?.label)}</p></div>
+                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{tr(panneauxPages[page])}</div></>
               : <PanneauPage page={page} onPage={setPage} />}
           </div>
         )}
@@ -226,7 +228,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
         {page === "accueil" && <>
         {/* Panneau de réglages */}
         <div className="w-[420px] flex-shrink-0 min-h-0 bg-[#FAFAFB] border-r border-gray-200 overflow-y-auto scrollbar-thin p-4 space-y-4">
-          <Carte icon={<LayoutTemplate size={16} />} titre="Modèle de boutique" desc="Choisis la mise en page de ta boutique digitale.">
+          <Carte icon={<LayoutTemplate size={16} />} titre={tr("Modèle de boutique")} desc="Choisis la mise en page de ta boutique digitale.">
             <div className="grid grid-cols-2 gap-2.5">
               {DIGITAL_TEMPLATES.map((t) => (
                 <button key={t.id} onClick={() => choisirTemplate(t.id)}
@@ -249,15 +251,15 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
                     )}
                   </div>
                   <div className="px-2.5 py-2 bg-white">
-                    <p className="text-[13px] font-semibold text-gray-800">{t.label}</p>
-                    <p className="text-[11px] text-gray-400">{t.desc}</p>
+                    <p className="text-[13px] font-semibold text-gray-800">{tr(t.label)}</p>
+                    <p className="text-[11px] text-gray-400">{tr(t.desc)}</p>
                   </div>
                 </button>
               ))}
             </div>
           </Carte>
 
-          <Carte icon={<Palette size={16} />} titre="Couleur de votre marque" desc="La couleur principale de votre boutique.">
+          <Carte icon={<Palette size={16} />} titre={tr("Couleur de votre marque")} desc="La couleur principale de votre boutique.">
             <div className="flex items-center gap-2 flex-wrap">
               {ACCENT_PRESETS.map((c) => (
                 <button key={c} onClick={() => setColors({ accent: c })} className="w-8 h-8 rounded-full flex-shrink-0 border-2 transition-all" style={{ backgroundColor: c, borderColor: config.colors.accent === c ? "#111111" : "transparent" }} />
@@ -269,48 +271,48 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
             </div>
           </Carte>
 
-          <Carte icon={<Type size={16} />} titre="Police d'écriture" desc="Titres et contenu de votre boutique.">
+          <Carte icon={<Type size={16} />} titre={tr("Police d'écriture")} desc="Titres et contenu de votre boutique.">
             <div className="space-y-3">
-              <FSel label="Police des titres" value={config.fonts.titre} onChange={(v) => setFonts({ titre: v })} />
-              <FSel label="Police du contenu" value={config.fonts.corps} onChange={(v) => setFonts({ corps: v })} />
+              <FSel label={tr("Police des titres")} value={config.fonts.titre} onChange={(v) => setFonts({ titre: v })} />
+              <FSel label={tr("Police du contenu")} value={config.fonts.corps} onChange={(v) => setFonts({ corps: v })} />
             </div>
           </Carte>
 
-          <Carte icon={<Square size={16} />} titre="Style des coins" desc="Arrondis ou nets — cartes produits et boutons.">
+          <Carte icon={<Square size={16} />} titre={tr("Style des coins")} desc="Arrondis ou nets — cartes produits et boutons.">
             <div className="grid grid-cols-2 gap-2.5">
               {[{ v: "16px", l: "Arrondi" }, { v: "0px", l: "Carré" }].map((r) => (
                 <button key={r.v} onClick={() => set((p) => ({ ...p, radius: r.v }))}
                   className={`flex flex-col items-center gap-2 py-4 border-2 transition-all rounded-xl ${config.radius === r.v ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
                   <div className="w-8 h-8 border-2 border-gray-700" style={{ borderRadius: r.v }} />
-                  <span className="text-[12px] text-gray-600 font-medium">{r.l}</span>
+                  <span className="text-[12px] text-gray-600 font-medium">{tr(r.l)}</span>
                 </button>
               ))}
             </div>
           </Carte>
 
-          <Carte icon={<LayoutGrid size={16} />} titre="Organisation de la page" desc="Ce qui s'affiche sur votre boutique.">
+          <Carte icon={<LayoutGrid size={16} />} titre={tr("Organisation de la page")} desc="Ce qui s'affiche sur votre boutique.">
             <div className="space-y-1">
-              <FCheck label="Afficher les produits en vedette" desc="Met en avant vos produits phares" checked={dc.afficherVedettes} onChange={(v) => setDc({ afficherVedettes: v })} />
-              <FCheck label="Bouton d'achat sur la carte produit" desc="Achat immédiat depuis la liste" checked={dc.afficherBoutonAchatCarte} onChange={(v) => setDc({ afficherBoutonAchatCarte: v })} />
-              <FCheck label="Afficher les produits recommandés" desc="Suggestions en bas de page" checked={dc.afficherRecommandes} onChange={(v) => setDc({ afficherRecommandes: v })} />
-              <FCheck label="Afficher l'affiliation" desc="Lien Affiliation dans le menu" checked={dc.afficherAffiliation} onChange={(v) => setDc({ afficherAffiliation: v })} />
+              <FCheck label={tr("Afficher les produits en vedette")} desc="Met en avant vos produits phares" checked={dc.afficherVedettes} onChange={(v) => setDc({ afficherVedettes: v })} />
+              <FCheck label={tr("Bouton d'achat sur la carte produit")} desc="Achat immédiat depuis la liste" checked={dc.afficherBoutonAchatCarte} onChange={(v) => setDc({ afficherBoutonAchatCarte: v })} />
+              <FCheck label={tr("Afficher les produits recommandés")} desc="Suggestions en bas de page" checked={dc.afficherRecommandes} onChange={(v) => setDc({ afficherRecommandes: v })} />
+              <FCheck label={tr("Afficher l'affiliation")} desc="Lien Affiliation dans le menu" checked={dc.afficherAffiliation} onChange={(v) => setDc({ afficherAffiliation: v })} />
             </div>
           </Carte>
 
-          <Carte icon={<Columns size={16} />} titre="Disposition des produits" desc="Nombre de produits par ligne sur mobile.">
+          <Carte icon={<Columns size={16} />} titre={tr("Disposition des produits")} desc="Nombre de produits par ligne sur mobile.">
             <div className="grid grid-cols-2 gap-2.5">
               <button onClick={() => setDc({ disposition: "un" })} className={`flex flex-col items-center gap-2 py-4 border-2 rounded-xl transition-all ${dc.disposition === "un" ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
                 <Rows size={20} className="text-gray-600" />
-                <span className="text-[12px] text-gray-600 font-medium">Un par ligne</span>
+                <span className="text-[12px] text-gray-600 font-medium">{tr("Un par ligne")}</span>
               </button>
               <button onClick={() => setDc({ disposition: "deux" })} className={`flex flex-col items-center gap-2 py-4 border-2 rounded-xl transition-all ${dc.disposition === "deux" ? "border-[#111111] bg-gray-50" : "border-gray-200 hover:border-gray-300"}`}>
                 <Columns size={20} className="text-gray-600" />
-                <span className="text-[12px] text-gray-600 font-medium">Deux par ligne</span>
+                <span className="text-[12px] text-gray-600 font-medium">{tr("Deux par ligne")}</span>
               </button>
             </div>
           </Carte>
 
-          <Carte icon={<ArrowUpDown size={16} />} titre="Ordre d'affichage" desc="Comment vos clients voient vos produits.">
+          <Carte icon={<ArrowUpDown size={16} />} titre={tr("Ordre d'affichage")} desc="Comment vos clients voient vos produits.">
             <div className="space-y-1.5">
               {([
                 ["alphabetique", "Ordre alphabétique", "Ordre A → Z"],
@@ -321,8 +323,8 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
               ] as [ThemeDigitalConfig["tri"], string, string][]).map(([v, l, d]) => (
                 <button key={v} onClick={() => setDc({ tri: v })} className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-left transition-all ${dc.tri === v ? "bg-gray-100" : "hover:bg-gray-50"}`}>
                   <span>
-                    <span className="block text-[13px] font-medium text-gray-800">{l}</span>
-                    <span className="block text-[11px] text-gray-400">{d}</span>
+                    <span className="block text-[13px] font-medium text-gray-800">{tr(l)}</span>
+                    <span className="block text-[11px] text-gray-400">{tr(d)}</span>
                   </span>
                   <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${dc.tri === v ? "border-[#F5A623]" : "border-gray-300"}`}>
                     {dc.tri === v && <span className="w-2 h-2 rounded-full bg-[#F5A623]" />}
@@ -367,10 +369,10 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
               style={{ width: DEVICE_WIDTH[device], maxWidth: "100%" }}
             >
               {selectedEl && <StyleCss css={cssSelection(selectedEl)} />}
-              {survol}
+              {tr(survol)}
               {produits === null ? (
                 <div className="h-[70vh] flex items-center justify-center text-gray-400 text-sm gap-2">
-                  <RefreshCw size={14} className="animate-spin" /> Chargement de l'aperçu…
+                  <RefreshCw size={14} className="animate-spin" />{" "}{tr("Chargement de l'aperçu…")}
                 </div>
               ) : (
                 // Même habillage que la boutique en ligne (layout de la vitrine) :
@@ -403,7 +405,7 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
           <PanneauElement
             key={selectedEl}
             titre={infoEl.label}
-            sousTitre="Vitrine digitale"
+            sousTitre={tr("Vitrine digitale")}
             contenu={estLogo ? { image: logoUrl } : texteEditable ? { texte: texteActuel } : undefined}
             onContenu={(patch) => {
               if (patch.image != null) setLogoUrl(patch.image);
@@ -423,13 +425,14 @@ export function DigitalBuilder({ tenant, config, originalConfig, set, setColors,
 }
 
 function Carte({ icon, titre, desc, children }: { icon: React.ReactNode; titre: string; desc: string; children: React.ReactNode }) {
+  const tr = useT();
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4">
       <div className="flex items-start gap-2.5 mb-3.5">
         <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-600">{icon}</span>
         <div className="min-w-0">
-          <p className="text-[13px] font-semibold text-gray-800">{titre}</p>
-          <p className="text-[12px] text-gray-400 leading-snug">{desc}</p>
+          <p className="text-[13px] font-semibold text-gray-800">{tr(titre)}</p>
+          <p className="text-[12px] text-gray-400 leading-snug">{tr(desc)}</p>
         </div>
       </div>
       {children}
@@ -438,14 +441,15 @@ function Carte({ icon, titre, desc, children }: { icon: React.ReactNode; titre: 
 }
 
 function FSel({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const tr = useT();
   const cats = [...new Set(FONTS.map((f) => f.cat))];
   return (
     <div>
-      <label className="block text-[12px] text-gray-500 mb-1">{label}</label>
+      <label className="block text-[12px] text-gray-500 mb-1">{tr(label)}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
         {cats.map((cat) => (
           <optgroup key={cat} label={cat}>
-            {FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{f.label}</option>)}
+            {FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{tr(f.label)}</option>)}
           </optgroup>
         ))}
       </select>
@@ -454,11 +458,12 @@ function FSel({ label, value, onChange }: { label: string; value: string; onChan
 }
 
 function FCheck({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
+  const tr = useT();
   return (
     <button onClick={() => onChange(!checked)} className="w-full flex items-center justify-between gap-3 py-2 text-left">
       <span>
-        <span className="block text-[13px] font-medium text-gray-800">{label}</span>
-        <span className="block text-[11px] text-gray-400">{desc}</span>
+        <span className="block text-[13px] font-medium text-gray-800">{tr(label)}</span>
+        <span className="block text-[11px] text-gray-400">{tr(desc)}</span>
       </span>
       {checked ? <ToggleRight size={22} className="flex-shrink-0" style={{ color: "#F5A623" }} /> : <ToggleLeft size={22} className="text-gray-300 flex-shrink-0" />}
     </button>

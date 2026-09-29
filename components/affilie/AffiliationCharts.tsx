@@ -1,40 +1,44 @@
 "use client";
 
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useT } from "@/components/I18nProvider";
 
 interface Jour { date: string; clics: number; conversions: number; commissions: number; }
 
 function TooltipClics({ active, payload, label }: any) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "#fff", border: "1px solid #EBEBEB", borderRadius: 14, padding: "10px 14px", boxShadow: "0 12px 40px rgba(0,0,0,0.12)", fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <p style={{ fontSize: 10.5, color: "#AAA", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</p>
-      <p style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700 }}>{payload[0]?.value ?? 0} clic{payload[0]?.value > 1 ? "s" : ""}</p>
-      <p style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>{payload[1]?.value ?? 0} conversion{payload[1]?.value > 1 ? "s" : ""}</p>
+      <p style={{ fontSize: 10.5, color: "#AAA", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t(label)}</p>
+      <p style={{ fontSize: 12, color: "#3b82f6", fontWeight: 700 }}>{t(payload[0]?.value) ?? 0} clic{payload[0]?.value > 1 ? "s" : ""}</p>
+      <p style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>{t(payload[1]?.value) ?? 0} conversion{payload[1]?.value > 1 ? "s" : ""}</p>
     </div>
   );
 }
 
 function TooltipCommissions({ active, payload, label, devise }: any) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: "#fff", border: "1px solid #EBEBEB", borderRadius: 14, padding: "10px 14px", boxShadow: "0 12px 40px rgba(0,0,0,0.12)", fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <p style={{ fontSize: 10.5, color: "#AAA", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</p>
-      <p style={{ fontSize: 13, color: "#F5A623", fontWeight: 800 }}>{(payload[0]?.value ?? 0).toLocaleString("fr-FR")} {devise}</p>
+      <p style={{ fontSize: 10.5, color: "#AAA", marginBottom: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t(label)}</p>
+      <p style={{ fontSize: 13, color: "#F5A623", fontWeight: 800 }}>{(payload[0]?.value ?? 0).toLocaleString(t.loc)} {t(devise)}</p>
     </div>
   );
 }
 
 export function ClicsConversionsChart({ donnees }: { donnees: Jour[] }) {
+  const t = useT();
   const totalClics = donnees.reduce((s, d) => s + d.clics, 0);
   const totalConv = donnees.reduce((s, d) => s + d.conversions, 0);
   return (
     <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}>Clics et conversions par jour</p>
+        <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}>{t("Clics et conversions par jour")}</p>
       </div>
       {totalClics === 0 && totalConv === 0 ? (
-        <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>Aucune activité sur cette période.</p>
+        <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>{t("Aucune activité sur cette période.")}</p>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={donnees} margin={{ top: 4, right: 4, left: -22, bottom: 0 }}>
@@ -50,11 +54,11 @@ export function ClicsConversionsChart({ donnees }: { donnees: Jour[] }) {
       <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12, paddingTop: 12, borderTop: "1px solid #F5F5F7" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 10, height: 3, borderRadius: 2, background: "#3b82f6" }} />
-          <span style={{ fontSize: 11, color: "#999" }}>Clics ({totalClics})</span>
+          <span style={{ fontSize: 11, color: "#999" }}>{t("Clics (")}{t(totalClics)})</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div style={{ width: 10, height: 3, borderRadius: 2, background: "#10b981" }} />
-          <span style={{ fontSize: 11, color: "#999" }}>Conversions ({totalConv})</span>
+          <span style={{ fontSize: 11, color: "#999" }}>{t("Conversions (")}{t(totalConv)})</span>
         </div>
       </div>
     </div>
@@ -62,12 +66,13 @@ export function ClicsConversionsChart({ donnees }: { donnees: Jour[] }) {
 }
 
 export function CommissionsChart({ donnees, devise }: { donnees: Jour[]; devise: string }) {
+  const t = useT();
   const total = donnees.reduce((s, d) => s + d.commissions, 0);
   return (
     <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-      <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 16 }}>Commissions par jour ({devise})</p>
+      <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 16 }}>{t("Commissions par jour (")}{t(devise)})</p>
       {total === 0 ? (
-        <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>Aucune commission sur cette période.</p>
+        <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>{t("Aucune commission sur cette période.")}</p>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={donnees} margin={{ top: 4, right: 4, left: -22, bottom: 0 }}>

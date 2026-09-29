@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Truck, Plus, Trash2, Save, Package, CheckCircle, Clock, MapPin, Bus, LayoutGrid, TableProperties } from "lucide-react";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { FulfillmentKanban } from "@/components/dashboard/logistique/FulfillmentKanban";
+import { useT } from "@/components/I18nProvider";
 
 interface ReglePort {
   id: string;
@@ -53,6 +54,7 @@ const STATUT_COLORS: Record<string, string> = {
 const ZONES_SUGGEST = ["Cameroun", "Côte d'Ivoire", "Sénégal", "UEMOA", "CEMAC", "Afrique", "International"];
 
 export function LivraisonPanel() {
+  const tx = useT();
   const [tab, setTab] = useState<"commandes" | "regles">("commandes");
   const [vue, setVue] = useState<"kanban" | "table">("kanban");
   const [regles, setRegles] = useState<ReglePort[]>([]);
@@ -135,14 +137,14 @@ export function LivraisonPanel() {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <AgentActiveIndicator label="Agent Livraison actif" />
+        <AgentActiveIndicator label={tx("Agent Livraison actif")} />
         {tab === "regles" && (
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold ml-auto"
             style={{ background: "#F5A623" }}
           >
-            <Plus size={14} /> Nouvelle règle
+            <Plus size={14} />{" "}{tx("Nouvelle règle")}
           </button>
         )}
       </div>
@@ -158,9 +160,9 @@ export function LivraisonPanel() {
           <div key={label} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <Icon size={14} style={{ color }} />
-              <span className="text-[11px] text-[#888]">{label}</span>
+              <span className="text-[11px] text-[#888]">{tx(label)}</span>
             </div>
-            <p className="text-2xl font-bold" style={{ color }}>{value}</p>
+            <p className="text-2xl font-bold" style={{ color }}>{tx(value)}</p>
           </div>
         ))}
       </div>
@@ -174,7 +176,7 @@ export function LivraisonPanel() {
             className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all"
             style={tab === t ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}
           >
-            {t === "commandes" ? "Commandes" : "Règles tarifaires"}
+            {t === "commandes" ? tx("Commandes") : tx("Règles tarifaires")}
           </button>
         ))}
       </div>
@@ -184,62 +186,62 @@ export function LivraisonPanel() {
         <div className="space-y-4">
           {showForm && (
             <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-              <h3 className="text-[14px] font-semibold text-[#111] mb-4">Nouvelle règle de port</h3>
+              <h3 className="text-[14px] font-semibold text-[#111] mb-4">{tx("Nouvelle règle de port")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Nom de la règle</label>
-                  <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="ex: Standard Cameroun" value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Nom de la règle")}</label>
+                  <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder={tx("ex: Standard Cameroun")} value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Zone</label>
-                  <input list="zones-list" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="Cameroun" value={form.zone} onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))} />
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Zone")}</label>
+                  <input list="zones-list" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder={tx("Cameroun")} value={form.zone} onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))} />
                   <datalist id="zones-list">{zonesSuggestions.map((z) => <option key={z} value={z} />)}</datalist>
                   {zonesConfigurees.length === 0 && (
-                    <p className="text-[10px] text-[#AAA] mt-1">Configurez vos zones/quartiers dans Ma boutique → Livraison pour un sélecteur précis au checkout.</p>
+                    <p className="text-[10px] text-[#AAA] mt-1">{tx("Configurez vos zones/quartiers dans Ma boutique → Livraison pour un sélecteur précis au checkout.")}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Mode de livraison</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Mode de livraison")}</label>
                   <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.modeLivraison} onChange={(e) => setForm((f) => ({ ...f, modeLivraison: e.target.value }))}>
-                    {MODES_LIVRAISON.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
+                    {MODES_LIVRAISON.map((m) => <option key={m.id} value={m.id}>{tx(m.label)}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Frais (devise boutique)</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Frais (devise boutique)")}</label>
                   <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.frais} onChange={(e) => setForm((f) => ({ ...f, frais: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Frais/kg supplémentaire</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Frais/kg supplémentaire")}</label>
                   <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.fraisKg} onChange={(e) => setForm((f) => ({ ...f, fraisKg: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Délai estimé</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Délai estimé")}</label>
                   <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.delai} onChange={(e) => setForm((f) => ({ ...f, delai: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">{form.modeLivraison === "agence_voyage" ? "Agence de voyage" : "Transporteur (optionnel)"}</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{form.modeLivraison === "agence_voyage" ? tx("Agence de voyage") : tx("Transporteur (optionnel)")}</label>
                   <input list={form.modeLivraison === "agence_voyage" ? "agences-list" : undefined}
                     className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]"
-                    placeholder={form.modeLivraison === "agence_voyage" ? "GEV, Touristique Express..." : "Campost, DHL, MTN..."}
+                    placeholder={form.modeLivraison === "agence_voyage" ? tx("GEV, Touristique Express...") : tx("Campost, DHL, MTN...")}
                     value={form.transporteur} onChange={(e) => setForm((f) => ({ ...f, transporteur: e.target.value }))} />
                   {form.modeLivraison === "agence_voyage" && (
                     <datalist id="agences-list">{AGENCES_SUGGEST.map((a) => <option key={a} value={a} />)}</datalist>
                   )}
                 </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">Montant commande min (optionnel)</label>
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Montant commande min (optionnel)")}</label>
                   <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="0" value={form.montantMin} onChange={(e) => setForm((f) => ({ ...f, montantMin: e.target.value }))} />
                 </div>
                 <div className="flex items-center gap-2 mt-4">
                   <input type="checkbox" id="gratuit" checked={form.gratuit} onChange={(e) => setForm((f) => ({ ...f, gratuit: e.target.checked }))} />
-                  <label htmlFor="gratuit" className="text-[13px] text-[#444]">Livraison gratuite (ignorer les frais)</label>
+                  <label htmlFor="gratuit" className="text-[13px] text-[#444]">{tx("Livraison gratuite (ignorer les frais)")}</label>
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
                 <button onClick={saveRegle} disabled={saving} className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-[13px] font-semibold" style={{ background: "#F5A623" }}>
-                  <Save size={14} /> {saving ? "Enregistrement..." : "Enregistrer"}
+                  <Save size={14} /> {saving ? tx("Enregistrement...") : tx("Enregistrer")}
                 </button>
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">Annuler</button>
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 rounded-lg text-[13px] text-[#666] border border-[#E5E5E5]">{tx("Annuler")}</button>
               </div>
             </div>
           )}
@@ -247,9 +249,9 @@ export function LivraisonPanel() {
           {regles.length === 0 ? (
             <div className="bg-white border border-dashed border-[#E5E5E5] rounded-xl p-10 text-center">
               <MapPin size={32} className="mx-auto mb-3 text-[#DDD]" />
-              <p className="text-[13px] text-[#888]">Aucune règle de livraison. Crée ta première règle tarifaire.</p>
+              <p className="text-[13px] text-[#888]">{tx("Aucune règle de livraison. Crée ta première règle tarifaire.")}</p>
               <button onClick={() => setShowForm(true)} className="mt-4 px-4 py-2 rounded-lg text-white text-[13px] font-semibold" style={{ background: "#F5A623" }}>
-                Créer une règle
+                {tx("Créer une règle")}
               </button>
             </div>
           ) : (
@@ -262,19 +264,19 @@ export function LivraisonPanel() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-[13px] font-semibold text-[#111] truncate">{r.nom}</p>
+                        <p className="text-[13px] font-semibold text-[#111] truncate">{tx(r.nom)}</p>
                         {r.modeLivraison === "agence_voyage" && (
-                          <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#4338CA]"><Bus size={9} /> Agence</span>
+                          <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#4338CA]"><Bus size={9} />{" "}{tx("Agence")}</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#888]">{r.zone} · {r.delai} {r.transporteur ? `· ${r.transporteur}` : ""}</p>
+                      <p className="text-[11px] text-[#888]">{tx(r.zone)} · {tx(r.delai)} {r.transporteur ? `· ${r.transporteur}` : ""}</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <p className="text-[13px] font-bold text-[#111]">
-                      {r.gratuit ? "Gratuit" : `${r.frais.toLocaleString()} + ${r.fraisKg}/kg`}
+                      {r.gratuit ? tx("Gratuit") : `${r.frais.toLocaleString()} + ${r.fraisKg}/kg`}
                     </p>
-                    {r.montantMin && <p className="text-[10px] text-[#AAA]">dès {r.montantMin.toLocaleString()}</p>}
+                    {r.montantMin && <p className="text-[10px] text-[#AAA]">{tx("dès")}{" "}{r.montantMin.toLocaleString()}</p>}
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
@@ -302,11 +304,11 @@ export function LivraisonPanel() {
             <div className="flex gap-1 bg-[#F5F5F5] p-1 rounded-xl w-fit">
               <button onClick={() => setVue("kanban")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                 style={vue === "kanban" ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
-                <LayoutGrid size={12} /> Kanban
+                <LayoutGrid size={12} />{" "}{tx("Kanban")}
               </button>
               <button onClick={() => setVue("table")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
                 style={vue === "table" ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
-                <TableProperties size={12} /> Tableau
+                <TableProperties size={12} />{" "}{tx("Tableau")}
               </button>
             </div>
           </div>
@@ -320,31 +322,31 @@ export function LivraisonPanel() {
           {commandes.length === 0 ? (
             <div className="p-10 text-center">
               <Truck size={32} className="mx-auto mb-3 text-[#DDD]" />
-              <p className="text-[13px] text-[#888]">Aucune commande à expédier pour l'instant.</p>
+              <p className="text-[13px] text-[#888]">{tx("Aucune commande à expédier pour l'instant.")}</p>
             </div>
           ) : (
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr className="border-b border-[#F0F0F0]">
-                  <th className="text-left px-4 py-3 font-semibold text-[#888]">Commande</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[#888]">Client</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[#888]">Montant</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[#888]">Livraison</th>
-                  <th className="text-left px-4 py-3 font-semibold text-[#888]">Suivi</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Commande")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Client")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Montant")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Livraison")}</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Suivi")}</th>
                 </tr>
               </thead>
               <tbody>
                 {commandes.map((c) => (
                   <tr key={c.id} className="border-b border-[#F8F8F8] hover:bg-[#FAFAFA] transition-colors">
                     <td className="px-4 py-3 font-mono text-[#111]">{c.numero}</td>
-                    <td className="px-4 py-3 text-[#444]">{c.clientNom}</td>
-                    <td className="px-4 py-3 font-semibold text-[#111]">{c.montantTotal.toLocaleString()} {c.devise}</td>
+                    <td className="px-4 py-3 text-[#444]">{tx(c.clientNom)}</td>
+                    <td className="px-4 py-3 font-semibold text-[#111]">{c.montantTotal.toLocaleString()} {tx(c.devise)}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: STATUT_COLORS[c.livraisonStatut] ?? "#999" }}>
                         {c.livraisonStatut.replace(/_/g, " ")}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[#888]">{c.numeroSuivi ?? "—"}</td>
+                    <td className="px-4 py-3 text-[#888]">{tx(c.numeroSuivi) ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

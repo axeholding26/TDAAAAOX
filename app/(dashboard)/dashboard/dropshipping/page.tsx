@@ -4,6 +4,7 @@ import { Plus, Trash2, Globe, Star, RefreshCw, ExternalLink, Package, Upload, Za
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 const TABS = [
   { id: "agent", label: "Agent IA", icon: Zap },
   { id: "fournisseurs", label: "Fournisseurs", icon: Globe },
@@ -31,6 +32,7 @@ interface Message {
 }
 
 function OngletAgentIA() {
+  const tr = useT();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,7 +103,7 @@ function OngletAgentIA() {
       });
       setImported((p) => ({ ...p, [produitKey]: true }));
     } catch {
-      alert("Erreur lors de l'import.");
+      alert(tr("Erreur lors de l'import."));
     } finally {
       setImportingIdx((p) => ({ ...p, [produitKey]: false }));
     }
@@ -191,7 +193,7 @@ function OngletAgentIA() {
       i++;
     }
 
-    return <div className="space-y-1">{elements}</div>;
+    return <div className="space-y-1">{tr(elements)}</div>;
   }
 
   const isEmpty = messages.length === 0;
@@ -214,15 +216,15 @@ function OngletAgentIA() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-white text-[14px]">Agent Dropshipping IA</h2>
+                <h2 className="font-bold text-white text-[14px]">{tr("Agent Dropshipping IA")}</h2>
                 <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
                   style={{ background: "rgba(34,197,94,0.15)", color: "#4ade80", border: "1px solid rgba(34,197,94,0.2)" }}>
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                  En ligne
+                  {tr("En ligne")}
                 </span>
               </div>
               <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Recherche, analyse et importe des produits gagnants pour ton marché
+                {tr("Recherche, analyse et importe des produits gagnants pour ton marché")}
               </p>
             </div>
           </div>
@@ -234,8 +236,8 @@ function OngletAgentIA() {
             ].map(({ icon: Icon, label, val }) => (
               <div key={label} className="text-center hidden sm:block">
                 <Icon size={14} style={{ color: "#FFD280", margin: "0 auto 2px" }} />
-                <p className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.6)" }}>{label}</p>
-                <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{val}</p>
+                <p className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.6)" }}>{tr(label)}</p>
+                <p className="text-[9px]" style={{ color: "rgba(255,255,255,0.3)" }}>{tr(val)}</p>
               </div>
             ))}
           </div>
@@ -251,8 +253,8 @@ function OngletAgentIA() {
                 style={{ background: "linear-gradient(135deg,rgba(17,17,17,0.15),rgba(245,166,35,0.1))", border: "1px solid rgba(17,17,17,0.2)" }}>
                 <Sparkles size={24} style={{ color: "#FFD280" }} />
               </div>
-              <h3 className="font-bold text-[14px] text-[#111] mb-1">Commence par une question</h3>
-              <p className="text-[12px] text-gray-400">L'agent analyse les tendances et te propose des produits gagnants à importer directement.</p>
+              <h3 className="font-bold text-[14px] text-[#111] mb-1">{tr("Commence par une question")}</h3>
+              <p className="text-[12px] text-gray-400">{tr("L'agent analyse les tendances et te propose des produits gagnants à importer directement.")}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {SUGGESTIONS_RAPIDES.map((s) => (
@@ -262,10 +264,10 @@ function OngletAgentIA() {
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(17,17,17,0.3)"; (e.currentTarget as HTMLElement).style.background = "rgba(17,17,17,0.07)"; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(17,17,17,0.12)"; (e.currentTarget as HTMLElement).style.background = "rgba(17,17,17,0.03)"; }}>
                   <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-semibold text-gray-700">{s.label}</span>
+                    <span className="text-[12px] font-semibold text-gray-700">{tr(s.label)}</span>
                     <ChevronRight size={13} className="text-gray-300 group-hover:text-[#111111] transition-colors" />
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{s.prompt}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{tr(s.prompt)}</p>
                 </button>
               ))}
             </div>
@@ -287,7 +289,7 @@ function OngletAgentIA() {
               }`}
               style={msg.role === "user" ? { background: "linear-gradient(135deg,#111111,#1a1a1a)" } : {}}>
               {msg.role === "user" ? (
-                <p className="text-[12px] leading-relaxed">{msg.content}</p>
+                <p className="text-[12px] leading-relaxed">{tr(msg.content)}</p>
               ) : (
                 <div>
                   {renderContent(msg.content, idx)}
@@ -296,7 +298,7 @@ function OngletAgentIA() {
                       {msg.actions.slice(0, 4).map((a, ai) => (
                         <span key={ai} className="text-[9px] px-2 py-0.5 rounded-full font-mono"
                           style={{ background: "rgba(17,17,17,0.08)", color: "#111111" }}>
-                          {a.split("(")[0]}
+                          {tr(a.split("(")[0])}
                         </span>
                       ))}
                     </div>
@@ -304,7 +306,7 @@ function OngletAgentIA() {
                 </div>
               )}
               <p className="text-[9px] mt-1.5 opacity-40">
-                {msg.timestamp.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                {msg.timestamp.toLocaleTimeString(tr.loc, { hour: "2-digit", minute: "2-digit" })}
               </p>
             </div>
           </div>
@@ -319,7 +321,7 @@ function OngletAgentIA() {
             <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-2">
                 <Loader2 size={13} className="animate-spin" style={{ color: "#111111" }} />
-                <span className="text-[12px] text-gray-400">Analyse en cours…</span>
+                <span className="text-[12px] text-gray-400">{tr("Analyse en cours…")}</span>
               </div>
             </div>
           </div>
@@ -336,7 +338,7 @@ function OngletAgentIA() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          placeholder="Ex: Quels produits de mode femme vendre au Sénégal avec 70% de marge…"
+          placeholder={tr("Ex: Quels produits de mode femme vendre au Sénégal avec 70% de marge…")}
           className="flex-1 resize-none text-[12px] text-gray-800 placeholder-gray-400 outline-none leading-relaxed bg-transparent"
           style={{ maxHeight: 96 }}
         />
@@ -349,7 +351,7 @@ function OngletAgentIA() {
         </button>
       </div>
       <p className="text-center text-[10px] text-gray-400 mt-2">
-        Entrée pour envoyer · Maj+Entrée pour saut de ligne
+        {tr("Entrée pour envoyer · Maj+Entrée pour saut de ligne")}
       </p>
     </div>
   );
@@ -363,6 +365,7 @@ function ProductCard({
   marge: number; categorie: string; fournisseur: string; blockText: string;
   onImport: () => void; importing: boolean; imported: boolean;
 }) {
+  const tr = useT();
   const { fmt } = useDevise();
   const [expanded, setExpanded] = useState(false);
   const benefice = prixVente - prixAchat;
@@ -378,11 +381,11 @@ function ProductCard({
               <ShoppingBag size={14} style={{ color: "#F5A623" }} />
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-[12px] text-[#111] truncate">{nom}</p>
+              <p className="font-bold text-[12px] text-[#111] truncate">{tr(nom)}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
-                  style={{ background: "rgba(245,166,35,0.12)", color: "#b45309" }}>{categorie}</span>
-                <span className="text-[9px] text-gray-400">{fournisseur}</span>
+                  style={{ background: "rgba(245,166,35,0.12)", color: "#b45309" }}>{tr(categorie)}</span>
+                <span className="text-[9px] text-gray-400">{tr(fournisseur)}</span>
               </div>
             </div>
           </div>
@@ -399,10 +402,10 @@ function ProductCard({
           ].map(({ label, val, sub, accent, green }) => (
             <div key={label} className="rounded-xl px-2.5 py-2 text-center"
               style={{ background: green ? "rgba(34,197,94,0.07)" : accent ? "rgba(245,166,35,0.08)" : "rgba(255,255,255,0.6)", border: `1px solid ${green ? "rgba(34,197,94,0.15)" : accent ? "rgba(245,166,35,0.2)" : "rgba(0,0,0,0.06)"}` }}>
-              <p className="text-[10px] text-gray-400">{label}</p>
+              <p className="text-[10px] text-gray-400">{tr(label)}</p>
               <p className="text-[11px] font-black leading-tight mt-0.5"
-                style={{ color: green ? "#16a34a" : accent ? "#b45309" : "#111" }}>{val}</p>
-              <p className="text-[9px] text-gray-400">{sub}</p>
+                style={{ color: green ? "#16a34a" : accent ? "#b45309" : "#111" }}>{tr(val)}</p>
+              <p className="text-[9px] text-gray-400">{tr(sub)}</p>
             </div>
           ))}
         </div>
@@ -422,11 +425,11 @@ function ProductCard({
             : { background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#fff", boxShadow: "0 4px 14px rgba(245,166,35,0.3)" }
           }>
           {importing ? (
-            <><Loader2 size={13} className="animate-spin" /> Import en cours…</>
+            <><Loader2 size={13} className="animate-spin" />{" "}{tr("Import en cours…")}</>
           ) : imported ? (
-            <><CheckCircle2 size={13} /> Importé dans le catalogue</>
+            <><CheckCircle2 size={13} />{" "}{tr("Importé dans le catalogue")}</>
           ) : (
-            <><ArrowUpRight size={13} /> Importer dans ma boutique</>
+            <><ArrowUpRight size={13} />{" "}{tr("Importer dans ma boutique")}</>
           )}
         </button>
       </div>
@@ -462,6 +465,7 @@ function Stars({ n }: { n: number }) {
 }
 
 function OngletFournisseurs() {
+  const tr = useT();
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -496,7 +500,7 @@ function OngletFournisseurs() {
       <div className="flex items-center justify-between">
         <p className="text-[12px] text-gray-500">{fournisseurs.length} fournisseurs</p>
         <button onClick={()=>setShowForm(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-[12px] font-semibold" style={{background:"#F5A623"}}>
-          <Plus size={13}/> Ajouter
+          <Plus size={13}/>{" "}{tr("Ajouter")}
         </button>
       </div>
 
@@ -505,28 +509,28 @@ function OngletFournisseurs() {
           <div className="grid grid-cols-2 gap-3">
             {[{label:"Nom *",key:"nom",ph:"Fournisseur SAS"},{label:"Pays",key:"pays",ph:"Chine"},{label:"URL catalogue",key:"url",ph:"https://..."},{label:"Email",key:"email",ph:"contact@..."},{label:"Notes",key:"notes",ph:"Délais fiables..."}].map(({label,key,ph})=>(
               <div key={key}>
-                <label className="block text-[10px] text-gray-400 mb-1">{label}</label>
+                <label className="block text-[10px] text-gray-400 mb-1">{tr(label)}</label>
                 <input className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50" placeholder={ph} value={(form as any)[key]} onChange={e=>setForm(f=>({...f,[key]:e.target.value}))} />
               </div>
             ))}
             <div>
-              <label className="block text-[10px] text-gray-400 mb-1">Type</label>
+              <label className="block text-[10px] text-gray-400 mb-1">{tr("Type")}</label>
               <select className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none" value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
-                {Object.entries(TYPE_LABELS).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                {Object.entries(TYPE_LABELS).map(([k,v])=><option key={k} value={k}>{tr(v.label)}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 mb-1">Délai (jours)</label>
+              <label className="block text-[10px] text-gray-400 mb-1">{tr("Délai (jours)")}</label>
               <input type="number" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none" value={form.delaiLivraison} onChange={e=>setForm(f=>({...f,delaiLivraison:+e.target.value}))} />
             </div>
             <div>
-              <label className="block text-[10px] text-gray-400 mb-1">Marge auto (%)</label>
+              <label className="block text-[10px] text-gray-400 mb-1">{tr("Marge auto (%)")}</label>
               <input type="number" className="w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none" value={form.margeAuto} min={0} max={500} onChange={e=>setForm(f=>({...f,margeAuto:+e.target.value}))} />
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={saveFournisseur} disabled={saving||!form.nom} className="px-4 py-2 rounded-xl text-white text-[12px] font-semibold disabled:opacity-50" style={{background:"#F5A623"}}>{saving?"...":"Ajouter"}</button>
-            <button onClick={()=>setShowForm(false)} className="px-4 py-2 rounded-xl text-[12px] text-gray-500 border border-gray-200">Annuler</button>
+            <button onClick={saveFournisseur} disabled={saving||!form.nom} className="px-4 py-2 rounded-xl text-white text-[12px] font-semibold disabled:opacity-50" style={{background:"#F5A623"}}>{saving?"...":tr("Ajouter")}</button>
+            <button onClick={()=>setShowForm(false)} className="px-4 py-2 rounded-xl text-[12px] text-gray-500 border border-gray-200">{tr("Annuler")}</button>
           </div>
         </div>
       )}
@@ -534,7 +538,7 @@ function OngletFournisseurs() {
       {fournisseurs.length===0 ? (
         <div className="text-center py-12 border-2 border-dashed border-gray-200 rounded-2xl">
           <Globe size={28} className="mx-auto mb-3 text-gray-300"/>
-          <p className="text-[13px] text-gray-400">Aucun fournisseur. <button onClick={()=>setShowForm(true)} className="text-[#F5A623] font-semibold">Ajouter</button></p>
+          <p className="text-[13px] text-gray-400">{tr("Aucun fournisseur.")}{" "}<button onClick={()=>setShowForm(true)} className="text-[#F5A623] font-semibold">{tr("Ajouter")}</button></p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -546,18 +550,18 @@ function OngletFournisseurs() {
                 <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0"><Globe size={16} className="text-gray-400"/></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[12px] font-semibold text-[#111]">{f.nom}</p>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold text-white" style={{background:tc.color}}>{tc.label}</span>
+                    <p className="text-[12px] font-semibold text-[#111]">{tr(f.nom)}</p>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold text-white" style={{background:tc.color}}>{tr(tc.label)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <Stars n={Math.round(f.fiabilite)}/>
-                    <span className="text-[10px] text-gray-400">{f.pays} · {f.delaiLivraison}j</span>
-                    {fiabiliteOk!==null && <span className="text-[10px] text-gray-400">{fiabiliteOk}% OK</span>}
+                    <span className="text-[10px] text-gray-400">{tr(f.pays)} · {tr(f.delaiLivraison)}j</span>
+                    {fiabiliteOk!==null && <span className="text-[10px] text-gray-400">{tr(fiabiliteOk)}{tr("% OK")}</span>}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[11px] font-bold text-[#111]">+{Math.round(f.margeAuto*100)}% marge</p>
-                  <p className="text-[10px] text-gray-400">{f._count?.produits??0} produits</p>
+                  <p className="text-[11px] font-bold text-[#111]">+{Math.round(f.margeAuto*100)}{tr("% marge")}</p>
+                  <p className="text-[10px] text-gray-400">{tr(f._count?.produits)??0} produits</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {f.url && <a href={f.url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-gray-100"><ExternalLink size={12} className="text-gray-400"/></a>}
@@ -571,7 +575,7 @@ function OngletFournisseurs() {
 
       <div className="bg-[#FFFBF0] border border-[#F5A623]/20 rounded-xl p-4 flex items-start gap-3">
         <RefreshCw size={14} className="text-[#F5A623] mt-0.5 shrink-0"/>
-        <p className="text-[11px] text-gray-600">Routage automatique activé — AXIA crée automatiquement la commande fournisseur à chaque vente dropshipping.</p>
+        <p className="text-[11px] text-gray-600">{tr("Routage automatique activé — AXIA crée automatiquement la commande fournisseur à chaque vente dropshipping.")}</p>
       </div>
     </div>
   );
@@ -584,6 +588,7 @@ const STATUTS_CF = ["en_attente","envoye","confirme","expedie","livre","annule"]
 const STATUT_COLORS: Record<string,string> = { en_attente:"#F5A623", envoye:"#3b82f6", confirme:"#8b5cf6", expedie:"#f59e0b", livre:"#22c55e", annule:"#ef4444" };
 
 function OngletCommandes() {
+  const tr = useT();
   const [commandes, setCommandes] = useState<any[]>([]);
   const [stats, setStats] = useState({ total:0, en_attente:0, expedie:0, livre:0 });
   const [filterStatut, setFilterStatut] = useState("");
@@ -608,14 +613,14 @@ function OngletCommandes() {
       <div className="grid grid-cols-4 gap-2">
         {[{label:"Total",v:stats.total},{label:"En attente",v:stats.en_attente},{label:"Expédiés",v:stats.expedie},{label:"Livrés",v:stats.livre}].map(s=>(
           <div key={s.label} className="bg-white border border-gray-100 rounded-xl p-3">
-            <p className="text-[10px] text-gray-400">{s.label}</p>
-            <p className="text-[18px] font-bold text-[#111]">{s.v}</p>
+            <p className="text-[10px] text-gray-400">{tr(s.label)}</p>
+            <p className="text-[18px] font-bold text-[#111]">{tr(s.v)}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1">
-        <button onClick={()=>setFilterStatut("")} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${!filterStatut?"bg-[#111] text-white":"bg-gray-100 text-gray-500"}`}>Tous</button>
+        <button onClick={()=>setFilterStatut("")} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${!filterStatut?"bg-[#111] text-white":"bg-gray-100 text-gray-500"}`}>{tr("Tous")}</button>
         {STATUTS_CF.map(s=>(
           <button key={s} onClick={()=>setFilterStatut(s)} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${filterStatut===s?"text-white":"bg-gray-100 text-gray-500"}`}
             style={filterStatut===s?{background:STATUT_COLORS[s]}:{}}>
@@ -624,15 +629,15 @@ function OngletCommandes() {
         ))}
       </div>
 
-      {commandes.length===0 ? <p className="text-center text-sm text-gray-400 py-8">Aucune commande fournisseur</p> : (
+      {commandes.length===0 ? <p className="text-center text-sm text-gray-400 py-8">{tr("Aucune commande fournisseur")}</p> : (
         <div className="space-y-2">
           {commandes.map(cf=>(
             <div key={cf.id} className="bg-white border border-gray-100 rounded-xl overflow-hidden">
               <button className="w-full flex items-center gap-3 px-4 py-3 text-left" onClick={()=>setExpanded(expanded===cf.id?null:cf.id)}>
                 <Package size={13} className="text-gray-400 shrink-0"/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#111] truncate">{cf.commande?.numero} → {cf.fournisseur?.nom}</p>
-                  <p className="text-[10px] text-gray-400">{cf.commande?.clientNom}</p>
+                  <p className="text-[12px] font-semibold text-[#111] truncate">{cf.commande?.numero} → {tr(cf.fournisseur?.nom)}</p>
+                  <p className="text-[10px] text-gray-400">{tr(cf.commande?.clientNom)}</p>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white" style={{background:STATUT_COLORS[cf.statut]??"#888"}}>{cf.statut.replace(/_/g," ")}</span>
               </button>
@@ -640,9 +645,9 @@ function OngletCommandes() {
               {expanded===cf.id && (
                 <div className="px-4 pb-4 space-y-2 border-t border-gray-50">
                   <div className="grid grid-cols-2 gap-2 mt-2">
-                    <input placeholder="N° suivi" value={tracking[cf.id]??cf.trackingNo??""} onChange={e=>setTracking(t=>({...t,[cf.id]:e.target.value}))}
+                    <input placeholder={tr("N° suivi")} value={tracking[cf.id]??cf.trackingNo??""} onChange={e=>setTracking(t=>({...t,[cf.id]:e.target.value}))}
                       className="border border-gray-200 rounded-xl px-3 py-1.5 text-[11px] outline-none"/>
-                    <input placeholder="Réf. fournisseur" value={ref[cf.id]??cf.reference??""} onChange={e=>setRef(r=>({...r,[cf.id]:e.target.value}))}
+                    <input placeholder={tr("Réf. fournisseur")} value={ref[cf.id]??cf.reference??""} onChange={e=>setRef(r=>({...r,[cf.id]:e.target.value}))}
                       className="border border-gray-200 rounded-xl px-3 py-1.5 text-[11px] outline-none"/>
                   </div>
                   <div className="flex gap-1 flex-wrap">
@@ -667,6 +672,7 @@ function OngletCommandes() {
    ONGLET IMPORT CSV (inchangé)
 ───────────────────────────────────────────────────────────────────────────── */
 function OngletImportCSV() {
+  const tr = useT();
   const [fournisseurs, setFournisseurs] = useState<any[]>([]);
   const [fournisseurId, setFournisseurId] = useState("");
   const [csv, setCsv] = useState("");
@@ -694,15 +700,15 @@ function OngletImportCSV() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Fournisseur</label>
+          <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{tr("Fournisseur")}</label>
           <select value={fournisseurId} onChange={e=>setFournisseurId(e.target.value)}
             className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50">
-            <option value="">Sans lien fournisseur</option>
-            {fournisseurs.map(f=><option key={f.id} value={f.id}>{f.nom}</option>)}
+            <option value="">{tr("Sans lien fournisseur")}</option>
+            {fournisseurs.map(f=><option key={f.id} value={f.id}>{tr(f.nom)}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Marge %</label>
+          <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{tr("Marge %")}</label>
           <input type="number" min="0" max="500" value={marge} onChange={e=>setMarge(e.target.value)}
             className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none focus:border-[#F5A623]/50"/>
         </div>
@@ -716,13 +722,13 @@ function OngletImportCSV() {
         <Upload size={20} className="mx-auto mb-2 text-gray-300"/>
         {csv ? (
           <div>
-            <p className="text-[13px] font-semibold text-green-600">✓ Fichier chargé</p>
+            <p className="text-[13px] font-semibold text-green-600">{tr("✓ Fichier chargé")}</p>
             <p className="text-[11px] text-gray-400">{csv.split("\n").length-1} lignes</p>
           </div>
         ) : (
           <div>
-            <p className="text-[12px] text-gray-400">Glissez votre CSV ou cliquez</p>
-            <p className="text-[10px] text-gray-300 mt-1">nom, description, prix, stock, sku, categorie, image</p>
+            <p className="text-[12px] text-gray-400">{tr("Glissez votre CSV ou cliquez")}</p>
+            <p className="text-[10px] text-gray-300 mt-1">{tr("nom, description, prix, stock, sku, categorie, image")}</p>
           </div>
         )}
       </div>
@@ -730,15 +736,15 @@ function OngletImportCSV() {
       {csv && (
         <button onClick={importer} disabled={loading}
           className="w-full py-3 bg-[#F5A623] text-white rounded-xl text-[13px] font-bold hover:bg-[#e09520] disabled:opacity-50 transition-all">
-          {loading?"Import en cours…":"Importer les produits"}
+          {loading?tr("Import en cours…"):tr("Importer les produits")}
         </button>
       )}
 
       {resultat && (
         <div className={`rounded-2xl p-4 border ${resultat.ok?"bg-green-50 border-green-200":"bg-red-50 border-red-200"}`}>
           {resultat.ok ? (
-            <p className="text-[13px] font-bold text-green-700">{resultat.importes} produit(s) importé(s)</p>
-          ) : <p className="text-[12px] text-red-600">{resultat.message}</p>}
+            <p className="text-[13px] font-bold text-green-700">{tr(resultat.importes)}{" "}{tr("produit(s) importé(s)")}</p>
+          ) : <p className="text-[12px] text-red-600">{tr(resultat.message)}</p>}
         </div>
       )}
     </div>
@@ -749,19 +755,20 @@ function OngletImportCSV() {
    PAGE PRINCIPALE
 ───────────────────────────────────────────────────────────────────────────── */
 export default function DropshippingPage() {
+  const tr = useT();
   const [onglet, setOnglet] = useState("agent");
 
   return (
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">Dropshipping <AgentActiveIndicator label="Agent Dropshipping actif" /></h1>
-          <p className="text-[12px] text-gray-500">Agent IA, fournisseurs, commandes et import catalogue</p>
+          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">{tr("Dropshipping")}{" "}<AgentActiveIndicator label={tr("Agent Dropshipping actif")} /></h1>
+          <p className="text-[12px] text-gray-500">{tr("Agent IA, fournisseurs, commandes et import catalogue")}</p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
           style={{ background: "rgba(17,17,17,0.06)", border: "1px solid rgba(17,17,17,0.15)" }}>
           <Zap size={11} style={{ color: "#111111" }} />
-          <span className="text-[11px] font-semibold" style={{ color: "#111111" }}>Propulsé par AXIA</span>
+          <span className="text-[11px] font-semibold" style={{ color: "#111111" }}>{tr("Propulsé par AXIA")}</span>
         </div>
       </div>
 
@@ -771,7 +778,7 @@ export default function DropshippingPage() {
             className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}
             style={onglet === id && id === "agent" ? { boxShadow: "0 1px 4px rgba(17,17,17,0.15)" } : {}}>
             <Icon size={13} style={{ color: onglet === id && id === "agent" ? "#111111" : "inherit" }} />
-            <span className="hidden sm:inline">{label}</span>
+            <span className="hidden sm:inline">{tr(label)}</span>
             {id === "agent" && onglet !== "agent" && (
               <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
             )}

@@ -7,6 +7,8 @@ import { quotaCommandesAtteint, planActif } from "@/lib/abonnement";
 import { permissionsSession, estCaissierPur } from "@/lib/permissions-server";
 import { AbonnementOverlayProvider } from "@/components/dashboard/AbonnementOverlayProvider";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLangue, dico } from "@/lib/i18n/serveur";
 import { DeviseProvider } from "@/components/dashboard/DeviseProvider";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const modeCaisse = await estCaissierPur(session);
 
   return (
+    <I18nProvider langue={await getLangue()} dico={await dico("dashboard", "boutique")}>
     <AbonnementOverlayProvider>
       <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse}>
         <DeviseProvider devise={boutique?.devise || "XAF"}>{children}</DeviseProvider>
@@ -37,5 +40,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Nouvelle commande : alerte distincte (son de caisse + carte). */}
       <AlerteCommande />
     </AbonnementOverlayProvider>
+    </I18nProvider>
   );
 }

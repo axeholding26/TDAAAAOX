@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Heart, ShoppingBag, FileText, Ruler, Layers, Truck as TruckIcon } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const PRODUIT_DETAILS = [
   { label: "Description produit", Icon: FileText },
@@ -76,6 +77,7 @@ function useIsScrolling() {
 }
 
 export function HeroSection() {
+  const tr = useT();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [mosaicVisible, setMosaicVisible] = useState(true);
@@ -105,9 +107,9 @@ export function HeroSection() {
         <div className="ax-tile ax-tile-desktop" style={{ gridArea: "chart" }}>
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Revenus</p>
+              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{tr("Revenus")}</p>
               <p className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: "#111111" }}>+24%</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">vs le mois dernier</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{tr("vs le mois dernier")}</p>
             </div>
             <div className="flex items-end gap-1 h-14">
               {[35, 55, 42, 78, 60, 90, 100].map((h, i) => (
@@ -136,15 +138,15 @@ export function HeroSection() {
         <div className="ax-tile ax-tile-desktop" style={{ gridArea: "detail" }}>
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>
-              <p className="text-base sm:text-lg font-extrabold" style={{ color: "#111111" }}>XOF 24 900</p>
+              <p className="text-base sm:text-lg font-extrabold" style={{ color: "#111111" }}>{tr("XOF 24 900")}</p>
               <div className="mt-3 h-9 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold text-white" style={{ background: "#111111" }}>
-                <ShoppingBag size={12} /> Ajouter au panier
+                <ShoppingBag size={12} />{" "}{tr("Ajouter au panier")}
               </div>
             </div>
             <div className="space-y-2 mt-3">
               {PRODUIT_DETAILS.map(d => (
                 <div key={d.label} className="flex items-center gap-1.5 text-[10.5px] text-gray-500 border-t border-gray-100 pt-2 first:border-0 first:pt-0">
-                  <d.Icon size={10} style={{ color: "#F5A623" }} /> {d.label}
+                  <d.Icon size={10} style={{ color: "#F5A623" }} /> {tr(d.label)}
                 </div>
               ))}
             </div>
@@ -166,23 +168,23 @@ export function HeroSection() {
           }}>
             <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
               <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
-                Ton business démarre avec Axso
+                {tr("Ton business démarre avec Axso")}
               </h1>
               <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
-                Commence gratuitement, sans carte bancaire.
-                <br className="hidden sm:block" /> WhatsApp, Orange Money, MTN et Wave intégrés dès le premier jour.
+                {tr("Commence gratuitement, sans carte bancaire.")}
+                <br className="hidden sm:block" />{" "}{tr("WhatsApp, Orange Money, MTN et Wave intégrés dès le premier jour.")}
               </p>
             </div>
 
             <form onSubmit={demarrer}
               className="w-full rounded-[22px] shadow-2xl px-6 py-5 -mt-1 relative"
               style={{ background: "#111111" }}>
-              <p className="text-white font-bold text-[15px]">Commencer gratuitement</p>
-              <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">En t'inscrivant, tu acceptes de recevoir nos emails.</p>
+              <p className="text-white font-bold text-[15px]">{tr("Commencer gratuitement")}</p>
+              <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">{tr("En t'inscrivant, tu acceptes de recevoir nos emails.")}</p>
               <div className="flex items-center bg-white rounded-full pl-4 pr-1.5 py-1.5">
                 <input
                   type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  placeholder="Entre ton email"
+                  placeholder={tr("Entre ton email")}
                   className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#111111] placeholder:text-gray-400"
                 />
                 <button type="submit"

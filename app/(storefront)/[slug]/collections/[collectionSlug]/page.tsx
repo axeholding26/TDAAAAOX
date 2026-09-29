@@ -11,12 +11,14 @@ import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, ArrowLeft } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string; collectionSlug: string }>;
 }
 
 export default async function CollectionPage({ params }: Props) {
+  const t = await getT();
   const { slug, collectionSlug } = await params;
 
   const tenant = await prisma.tenant.findUnique({
@@ -97,14 +99,14 @@ export default async function CollectionPage({ params }: Props) {
         )}
         <div className={`relative ${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20`}>
           <Link href={`/${slug}/produits`} className="inline-flex items-center gap-1.5 text-xs font-medium mb-6 hover:opacity-80 transition-opacity" style={{ opacity: 0.6 }}>
-            <ArrowLeft size={12} /> Tous les produits
+            <ArrowLeft size={12} />{" "}{t("Tous les produits")}
           </Link>
           <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>
-            Collection
+            {t("Collection")}
           </span>
-          <h1 className="text-3xl sm:text-5xl font-bold font-playfair mb-3">{collection.nom}</h1>
+          <h1 className="text-3xl sm:text-5xl font-bold font-playfair mb-3">{t(collection.nom)}</h1>
           {collection.description && (
-            <p className="text-sm sm:text-base max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{collection.description}</p>
+            <p className="text-sm sm:text-base max-w-xl leading-relaxed" style={{ opacity: 0.65 }}>{t(collection.description)}</p>
           )}
           <p className="text-xs mt-4" style={{ opacity: 0.4 }}>{produits.length} produit{produits.length !== 1 ? "s" : ""}</p>
         </div>
@@ -114,13 +116,13 @@ export default async function CollectionPage({ params }: Props) {
         {produits.length === 0 ? (
           <div className="text-center py-24">
             <Package size={48} className="mx-auto mb-4 opacity-20" />
-            <p className="text-lg font-semibold mb-2">Cette collection est vide pour l'instant</p>
+            <p className="text-lg font-semibold mb-2">{t("Cette collection est vide pour l'instant")}</p>
             <Link
               href={`/${slug}/produits`}
               className={`text-sm mt-2 ${btnPrimaryClass}`}
               style={btnPrimaryStyle}
             >
-              Voir tous les produits
+              {t("Voir tous les produits")}
             </Link>
           </div>
         ) : (
@@ -156,12 +158,12 @@ export default async function CollectionPage({ params }: Props) {
                         )}
                         {remise > 0 && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
-                            -{remise}%
+                            -{t(remise)}%
                           </span>
                         )}
                         {p.stock === 0 && (
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/60 text-white">
-                            Épuisé
+                            {t("Épuisé")}
                           </span>
                         )}
                       </div>
@@ -170,14 +172,14 @@ export default async function CollectionPage({ params }: Props) {
                         style={{ background: `linear-gradient(to top, ${c.fond}cc 0%, transparent 60%)` }}
                       >
                         <span className="w-full text-center text-xs font-bold py-2 rounded-xl" style={{ backgroundColor: c.accent, color: c.fond }}>
-                          Voir le produit
+                          {t("Voir le produit")}
                         </span>
                       </div>
                     </div>
                     <div className="p-3.5">
-                      <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{p.nom}</p>
+                      <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{t(p.nom)}</p>
                       {p.categorie && (
-                        <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{p.categorie}</p>
+                        <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{t(p.categorie)}</p>
                       )}
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
@@ -190,7 +192,7 @@ export default async function CollectionPage({ params }: Props) {
                         )}
                       </div>
                       {p.ventes > 5 && (
-                        <p className="text-[10px] mt-1" style={{ opacity: 0.35 }}>{p.ventes} ventes</p>
+                        <p className="text-[10px] mt-1" style={{ opacity: 0.35 }}>{t(p.ventes)} ventes</p>
                       )}
                     </div>
                   </div>
@@ -205,7 +207,7 @@ export default async function CollectionPage({ params }: Props) {
 
   // Boutique à design : en-tête et pied de page du design, comme les autres pages.
   const Habillage = habillageDesign(cfg);
-  if (Habillage) return <Habillage>{contenu}</Habillage>;
+  if (Habillage) return <Habillage>{t(contenu)}</Habillage>;
 
   // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
   return (
@@ -226,10 +228,10 @@ export default async function CollectionPage({ params }: Props) {
         sansPanier={cfg.modeBoutique === "digital"}
       />
 
-      {contenu}
+      {t(contenu)}
 
       <footer className="border-t mt-16 py-8 text-center text-xs" style={{ borderColor: `${c.accent}10`, opacity: 0.4 }}>
-        <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>
+        <p>{t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: c.accent, opacity: 1 }}>{t("Axso")}</span></p>
       </footer>
     </div>
   );

@@ -1,6 +1,7 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Conditions Générales d'Utilisation — AXSO",
@@ -41,7 +42,8 @@ const SECTIONS = [
   },
 ];
 
-export default function CguPage() {
+export default async function CguPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -49,23 +51,23 @@ export default function CguPage() {
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="max-w-3xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            ⚖️ Légal
+            {t("⚖️ Légal")}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-bold mb-3">Conditions Générales d'Utilisation</h1>
-          <p className="text-[#8C8C8C] text-sm mb-14">Dernière mise à jour : 1er juillet 2026</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-3">{t("Conditions Générales d'Utilisation")}</h1>
+          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 1er juillet 2026")}</p>
 
           <div className="space-y-10">
             {SECTIONS.map(s => (
               <div key={s.titre} className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
-                <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{s.titre}</h2>
-                <p className="text-[#595959] leading-relaxed text-sm">{s.contenu}</p>
+                <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{t(s.titre)}</h2>
+                <p className="text-[#595959] leading-relaxed text-sm">{t(s.contenu)}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-14 rounded-2xl p-6 border"
             style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-            <p className="text-[#666666] text-sm">Des questions sur ces conditions ? Contactez-nous à{" "}
+            <p className="text-[#666666] text-sm">{t("Des questions sur ces conditions ? Contactez-nous à")}{" "}
               <a href="mailto:legal@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>legal@axso.app</a>
             </p>
           </div>

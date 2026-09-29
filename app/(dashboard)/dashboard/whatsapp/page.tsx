@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UpgradeGate } from "@/components/dashboard/UpgradeGate";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const WHATSAPP_TUTORIAL_STEPS = [
   { Icon: Settings,      titre: "Connecte ton WhatsApp Business", description: "Clique sur l'icône réglages en haut de la liste pour connecter WhatsApp — via Genuka (simple) ou l'API officielle Meta." },
@@ -74,18 +75,19 @@ const WEBHOOK_URL    = "https://axso.vercel.app/api/webhooks/whatsapp";
 const WEBHOOK_TOKEN  = process.env.NEXT_PUBLIC_META_WEBHOOK_TOKEN ?? "axso_meta_2026";
 
 function CopyBox({ label, value }: { label: string; value: string }) {
+  const tr = useT();
   const [copied, setCopied] = useState(false);
   function copy() {
     navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
   }
   return (
     <div className="space-y-1">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{tr(label)}</p>
       <div className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-        <code className="flex-1 text-xs font-mono text-white break-all">{value}</code>
+        <code className="flex-1 text-xs font-mono text-white break-all">{tr(value)}</code>
         <button onClick={copy} className="flex-shrink-0 text-xs font-bold px-2.5 py-1 rounded-lg transition-all"
           style={{ background: copied ? "rgba(37,211,102,0.2)" : "rgba(255,255,255,0.08)", color: copied ? "#25D366" : "#9ca3af" }}>
-          {copied ? "✓ Copié" : "Copier"}
+          {copied ? tr("✓ Copié") : tr("Copier")}
         </button>
       </div>
     </div>
@@ -93,6 +95,7 @@ function CopyBox({ label, value }: { label: string; value: string }) {
 }
 
 function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onClose: () => void; onConnecte: (cfg: WaConfig) => void }) {
+  const tr = useT();
   const [mode, setMode] = useState<"genuka" | "meta">("genuka");
   const [etape, setEtape] = useState<1 | 2 | 3>(1);
   const [form, setForm] = useState({ phone_number_id: "", access_token: "" });
@@ -103,28 +106,28 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
   const genukaWebhookUrl = tenantId ? `https://axso.vercel.app/api/webhooks/genuka/${tenantId}` : "";
 
   async function connecter() {
-    if (!form.phone_number_id || !form.access_token) { toast.error("Remplissez tous les champs"); return; }
+    if (!form.phone_number_id || !form.access_token) { toast.error(tr("Remplissez tous les champs")); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/connecteurs/whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(`✅ WhatsApp connecté — ${data.numero ?? ""} (${data.nom ?? ""})`);
+      toast.success(tr("✅ WhatsApp connecté — {0} ({1})", data.numero ?? "", data.nom ?? ""));
       onConnecte({ statut: "actif", via: "meta", config: { phone_number_id: form.phone_number_id, numero_affiche: data.numero, verified_name: data.nom } });
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(tr(e.message)); }
     finally { setLoading(false); }
   }
 
   async function connecterGenuka() {
-    if (!proxyToken.trim() && !webhookSecret.trim()) { toast.error("Renseignez le proxy token et/ou le secret du webhook"); return; }
+    if (!proxyToken.trim() && !webhookSecret.trim()) { toast.error(tr("Renseignez le proxy token et/ou le secret du webhook")); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/connecteurs/whatsapp-genuka", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ proxyToken: proxyToken.trim() || undefined, webhookSecret: webhookSecret.trim() || undefined }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success(proxyToken.trim() ? "✅ WhatsApp connecté via Genuka !" : "✅ Réception activée — ajoutez le proxy token plus tard pour activer l'envoi");
+      toast.success(proxyToken.trim() ? tr("✅ WhatsApp connecté via Genuka !") : tr("✅ Réception activée — ajoutez le proxy token plus tard pour activer l'envoi"));
       onConnecte({ statut: "actif", via: "genuka", config: null });
-    } catch (e: any) { toast.error(e.message); }
+    } catch (e: any) { toast.error(tr(e.message)); }
     finally { setLoading(false); }
   }
 
@@ -145,13 +148,13 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#25D366" }}>
                 <MessageCircle size={15} className="text-white" />
               </div>
-              <h2 className="text-white font-bold text-base">Connecter WhatsApp Business</h2>
+              <h2 className="text-white font-bold text-base">{tr("Connecter WhatsApp Business")}</h2>
             </div>
             <p className="text-gray-500 text-xs ml-10">
-              {mode === "genuka" ? "Connexion simplifiée via Genuka · recommandé" : "Configuration guidée en 3 étapes · API officielle Meta"}
+              {mode === "genuka" ? tr("Connexion simplifiée via Genuka · recommandé") : tr("Configuration guidée en 3 étapes · API officielle Meta")}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none mt-1">×</button>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-xl leading-none mt-1">{tr("×")}</button>
         </div>
 
         {/* Choix du mode */}
@@ -159,12 +162,12 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
           <button onClick={() => setMode("genuka")}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={mode === "genuka" ? { background: "#25D366", color: "white" } : { color: "#9ca3af" }}>
-            Genuka (simple)
+            {tr("Genuka (simple)")}
           </button>
           <button onClick={() => setMode("meta")}
             className="flex-1 py-2 rounded-lg text-xs font-bold transition-all"
             style={mode === "meta" ? { background: "#25D366", color: "white" } : { color: "#9ca3af" }}>
-            Meta direct (avancé)
+            {tr("Meta direct (avancé)")}
           </button>
         </div>
 
@@ -179,7 +182,7 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
             </div>
 
             <div>
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Proxy Token Genuka</label>
+              <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{tr("Proxy Token Genuka")}</label>
               <div className="relative">
                 <input value={proxyToken} onChange={e => setProxyToken(e.target.value)}
                   type={showToken ? "text" : "password"}
@@ -193,14 +196,14 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
             </div>
 
             <div className="rounded-xl p-4 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pour recevoir les messages entrants dans Axso</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{tr("Pour recevoir les messages entrants dans Axso")}</p>
               <Step n="5" text="Dans Genuka, allez dans" bold="Paramètres → Webhooks" text2="et ajoutez cette URL sur l'événement « message.received »" />
-              <CopyBox label="URL du webhook (propre à votre boutique)" value={genukaWebhookUrl || "Chargement…"} />
+              <CopyBox label={tr("URL du webhook (propre à votre boutique)")} value={genukaWebhookUrl || "Chargement…"} />
               <Step n="6" text="Genuka affichera un" bold="secret de signature" text2="— collez-le ci-dessous (recommandé)" />
               <div>
                 <input value={webhookSecret} onChange={e => setWebhookSecret(e.target.value)}
                   type="password"
-                  placeholder="Secret de signature (optionnel)"
+                  placeholder={tr("Secret de signature (optionnel)")}
                   className="w-full rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none transition-all"
                   style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${webhookSecret ? "rgba(37,211,102,0.4)" : "rgba(255,255,255,0.1)"}` }} />
               </div>
@@ -209,21 +212,21 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
             <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
               <Lightbulb size={18} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
               <p className="text-xs text-gray-400 leading-relaxed">
-                Le proxy token (envoi) et le webhook (réception) sont indépendants — vous pouvez connecter avec un seul des deux en attendant l'autre. Sans proxy token, l'envoi automatique se rabat sur WhatsApp direct ou un lien wa.me. Sans secret de signature, les messages entrants s'affichent quand même, mais la confirmation automatique de commande par mot-clé (« OUI ») reste désactivée par sécurité.
+                {tr("Le proxy token (envoi) et le webhook (réception) sont indépendants — vous pouvez connecter avec un seul des deux en attendant l'autre. Sans proxy token, l'envoi automatique se rabat sur WhatsApp direct ou un lien wa.me. Sans secret de signature, les messages entrants s'affichent quand même, mais la confirmation automatique de commande par mot-clé (« OUI ») reste désactivée par sécurité.")}
               </p>
             </div>
 
             <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
               <CheckCircle2 size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-gray-400 leading-relaxed">
-                Pas de vérification Meta Business Manager complète à faire vous-même — Genuka s'en charge via son propre flux de connexion.
+                {tr("Pas de vérification Meta Business Manager complète à faire vous-même — Genuka s'en charge via son propre flux de connexion.")}
               </p>
             </div>
 
             <button onClick={connecterGenuka} disabled={loading || (!proxyToken.trim() && !webhookSecret.trim())}
               className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50" style={{ background: "#25D366" }}>
               {loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              Connecter WhatsApp
+              {tr("Connecter WhatsApp")}
             </button>
           </div>
         )}
@@ -242,7 +245,7 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
                 </div>
                 <span className="text-xs font-semibold hidden sm:block"
                   style={{ color: etape === e.n ? "white" : etape > e.n ? "#25D366" : "#4b5563" }}>
-                  {e.label}
+                  {tr(e.label)}
                 </span>
               </button>
               {i < 2 && <div className="flex-1 h-px mx-3" style={{ background: etape > e.n ? "rgba(37,211,102,0.3)" : "rgba(255,255,255,0.06)" }} />}
@@ -267,11 +270,11 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(245,166,35,0.07)", border: "1px solid rgba(245,166,35,0.15)" }}>
                 <Lightbulb size={18} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  Pour un usage en production, votre compte WhatsApp doit être un <span className="text-white font-medium">compte Business vérifié par Meta</span>. Le numéro de test gratuit est suffisant pour commencer.
+                  {tr("Pour un usage en production, votre compte WhatsApp doit être un")}{" "}<span className="text-white font-medium">{tr("compte Business vérifié par Meta")}</span>{tr(". Le numéro de test gratuit est suffisant pour commencer.")}
                 </p>
               </div>
               <button onClick={() => setEtape(2)} className="w-full py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all" style={{ background: "#25D366" }}>
-                Étape suivante →
+                {tr("Étape suivante →")}
               </button>
             </div>
           )}
@@ -279,13 +282,13 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
           {/* ── ÉTAPE 2 : Configurer le webhook ── */}
           {etape === 2 && (
             <div className="space-y-4 pt-2">
-              <p className="text-gray-400 text-sm">Dans votre app Meta, allez dans <span className="text-white font-semibold">WhatsApp → Configuration → Webhooks</span> et entrez ces valeurs :</p>
+              <p className="text-gray-400 text-sm">{tr("Dans votre app Meta, allez dans")}{" "}<span className="text-white font-semibold">{tr("WhatsApp → Configuration → Webhooks")}</span> et entrez ces valeurs :</p>
 
-              <CopyBox label="URL de rappel (Callback URL)" value={WEBHOOK_URL} />
-              <CopyBox label="Token de vérification (Verify Token)" value={WEBHOOK_TOKEN} />
+              <CopyBox label={tr("URL de rappel (Callback URL)")} value={WEBHOOK_URL} />
+              <CopyBox label={tr("Token de vérification (Verify Token)")} value={WEBHOOK_TOKEN} />
 
               <div className="rounded-xl p-4 space-y-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Ensuite</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{tr("Ensuite")}</p>
                 <Step n="1" text="Cliquez" bold="Vérifier et enregistrer" text2="— Meta appellera automatiquement l'URL ci-dessus" />
                 <Step n="2" text="Dans la liste des champs, activez l'abonnement" bold="messages" />
                 <Step n="3" text="Cliquez" bold="S'abonner" />
@@ -294,16 +297,16 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
                 <CheckCircle2 size={18} className="text-green-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-400 leading-relaxed">
-                  Une fois vérifié, Axso recevra automatiquement tous vos messages WhatsApp entrants et les routera vers votre dashboard.
+                  {tr("Une fois vérifié, Axso recevra automatiquement tous vos messages WhatsApp entrants et les routera vers votre dashboard.")}
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <button onClick={() => setEtape(1)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/6 transition-all border border-white/8">
-                  ← Retour
+                  {tr("← Retour")}
                 </button>
                 <button onClick={() => setEtape(3)} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 transition-all" style={{ background: "#25D366" }}>
-                  Webhook configuré →
+                  {tr("Webhook configuré →")}
                 </button>
               </div>
             </div>
@@ -312,13 +315,13 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
           {/* ── ÉTAPE 3 : Connecter les clés ── */}
           {etape === 3 && (
             <div className="space-y-4 pt-2">
-              <p className="text-gray-400 text-sm">Dans votre app Meta, allez dans <span className="text-white font-semibold">WhatsApp → Configuration API</span> pour trouver ces deux valeurs :</p>
+              <p className="text-gray-400 text-sm">{tr("Dans votre app Meta, allez dans")}{" "}<span className="text-white font-semibold">{tr("WhatsApp → Configuration API")}</span> pour trouver ces deux valeurs :</p>
 
               <div className="space-y-3">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                    Phone Number ID
-                    <span className="normal-case font-normal text-gray-600 ml-2">— trouvé dans "Numéros de téléphone"</span>
+                    {tr("Phone Number ID")}
+                    <span className="normal-case font-normal text-gray-600 ml-2">{tr("— trouvé dans \"Numéros de téléphone\"")}</span>
                   </label>
                   <input value={form.phone_number_id} onChange={e => setForm(f => ({ ...f, phone_number_id: e.target.value }))}
                     placeholder="123456789012345"
@@ -328,8 +331,8 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
 
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1.5">
-                    Token d'accès permanent
-                    <span className="normal-case font-normal text-gray-600 ml-2">— générez-le dans Paramètres système</span>
+                    {tr("Token d'accès permanent")}
+                    <span className="normal-case font-normal text-gray-600 ml-2">{tr("— générez-le dans Paramètres système")}</span>
                   </label>
                   <div className="relative">
                     <input value={form.access_token} onChange={e => setForm(f => ({ ...f, access_token: e.target.value }))}
@@ -340,28 +343,28 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
                     <button onClick={() => setShowToken(s => !s)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-white px-2 py-1 rounded-lg transition-all"
                       style={{ background: "rgba(255,255,255,0.06)" }}>
-                      {showToken ? "Masquer" : "Voir"}
+                      {showToken ? tr("Masquer") : tr("Voir")}
                     </button>
                   </div>
-                  <p className="text-[10px] text-gray-600 mt-1 ml-1">⚠️ Utilisez un token permanent (non expirant) — pas le token temporaire de 24h</p>
+                  <p className="text-[10px] text-gray-600 mt-1 ml-1">{tr("⚠️ Utilisez un token permanent (non expirant) — pas le token temporaire de 24h")}</p>
                 </div>
               </div>
 
               <div className="rounded-xl p-3 flex gap-3" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
                 <Lock size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-500 leading-relaxed">
-                  Vos clés sont chiffrées et stockées uniquement sur votre compte Axso. Elles ne sont jamais partagées.
+                  {tr("Vos clés sont chiffrées et stockées uniquement sur votre compte Axso. Elles ne sont jamais partagées.")}
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <button onClick={() => setEtape(2)} className="flex-shrink-0 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-400 hover:text-white hover:bg-white/6 transition-all border border-white/8">
-                  ← Retour
+                  {tr("← Retour")}
                 </button>
                 <button onClick={connecter} disabled={loading || !form.phone_number_id || !form.access_token}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-40 transition-all"
                   style={{ background: "#25D366", boxShadow: "0 4px 20px rgba(37,211,102,0.25)" }}>
-                  {loading ? <><Loader2 size={15} className="animate-spin" /> Vérification en cours…</> : <><Wifi size={15} /> Tester et connecter</>}
+                  {loading ? <><Loader2 size={15} className="animate-spin" />{" "}{tr("Vérification en cours…")}</> : <><Wifi size={15} />{" "}{tr("Tester et connecter")}</>}
                 </button>
               </div>
             </div>
@@ -375,16 +378,17 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
 }
 
 function Step({ n, text, bold, text2, bold2, link, linkLabel }: { n: string; text?: string; bold?: string; text2?: string; bold2?: string; link?: string; linkLabel?: string }) {
+  const tr = useT();
   return (
     <div className="flex gap-2.5 items-start">
       <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5"
         style={{ background: "rgba(37,211,102,0.15)", color: "#25D366" }}>{n}</div>
       <p className="text-sm text-gray-400 leading-relaxed">
-        {text}{" "}
-        {link && <a href={link} target="_blank" rel="noopener noreferrer" className="text-white font-mono underline hover:text-[#25D366] transition-colors">{linkLabel}</a>}
-        {bold && <span className="text-white font-semibold">{bold}</span>}
-        {text2 && " " + text2 + " "}
-        {bold2 && <span className="text-white font-semibold">{bold2}</span>}
+        {tr(text)}{" "}
+        {link && <a href={link} target="_blank" rel="noopener noreferrer" className="text-white font-mono underline hover:text-[#25D366] transition-colors">{tr(linkLabel)}</a>}
+        {bold && <span className="text-white font-semibold">{tr(bold)}</span>}
+        {text2 && " " + tr(text2) + " "}
+        {bold2 && <span className="text-white font-semibold">{tr(bold2)}</span>}
       </p>
     </div>
   );
@@ -392,6 +396,7 @@ function Step({ n, text, bold, text2, bold2, link, linkLabel }: { n: string; tex
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function WhatsAppPage() {
+  const tr = useT();
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [contactActif, setContactActif] = useState<string | null>(null);
@@ -501,7 +506,7 @@ export default function WhatsAppPage() {
       setConversations(prev => prev.map(c =>
         c.de === contactActif ? { ...c, dernier: corps, updatedAt: new Date().toISOString() } : c
       ));
-    } catch (e: any) { toast.error(e.message || "Erreur envoi"); }
+    } catch (e: any) { toast.error(tr(e.message) || tr("Erreur envoi")); }
     finally { setEnvoi(false); }
   }
 
@@ -510,7 +515,7 @@ export default function WhatsAppPage() {
     const url = `${window.location.origin}/${slug}/tracking/${cmd.trackingToken}`;
     const msg = `🚚 Suivez votre commande #${cmd.numero} en temps réel :\n${url}`;
     await envoyer(msg);
-    toast.success("Lien de tracking envoyé !");
+    toast.success(tr("Lien de tracking envoyé !"));
   }
 
   async function envoyerFacture(cmd: Commande) {
@@ -518,7 +523,7 @@ export default function WhatsAppPage() {
     const url = `${window.location.origin}/${slug}/facture/${cmd.trackingToken}`;
     const msg = `📄 Voici votre facture pour la commande #${cmd.numero} :\n${url}`;
     await envoyer(msg);
-    toast.success("Facture envoyée !");
+    toast.success(tr("Facture envoyée !"));
   }
 
   async function confirmerCommande(commandeId: string, numero: string) {
@@ -528,10 +533,10 @@ export default function WhatsAppPage() {
     });
     const data = await res.json();
     if (res.ok) {
-      toast.success(`Commande #${numero} confirmée ✅`);
+      toast.success(tr("Commande #{0} confirmée ✅", numero));
       setCommandes(prev => prev.map(c => c.id === commandeId ? { ...c, statut: "confirmee" } : c));
       if (data.whatsappUrl) window.open(data.whatsappUrl, "_blank");
-    } else { toast.error(data.error || "Erreur"); }
+    } else { toast.error(tr(data.error) || tr("Erreur")); }
   }
 
   const convsFiltrees = conversations.filter(c =>
@@ -542,8 +547,8 @@ export default function WhatsAppPage() {
   if (!loading && locked) {
     return (
       <UpgradeGate
-        titre="WhatsApp verrouillé — quota de commandes atteint"
-        description="Vous avez atteint votre quota de 30 commandes ce mois-ci au Palier 0. Passez à un palier supérieur pour retrouver l'accès à WhatsApp — envoi et réception de messages."
+        titre={tr("WhatsApp verrouillé — quota de commandes atteint")}
+        description={tr("Vous avez atteint votre quota de 30 commandes ce mois-ci au Palier 0. Passez à un palier supérieur pour retrouver l'accès à WhatsApp — envoi et réception de messages.")}
         palierRequis="palier1"
       />
     );
@@ -551,7 +556,7 @@ export default function WhatsAppPage() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] rounded-2xl overflow-hidden border border-white/5" style={{ background: "#0d1117" }}>
-      <ModuleTutorial moduleKey="whatsapp" titre="WhatsApp" sousTitre="Vends et discute via WhatsApp" steps={WHATSAPP_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="whatsapp" titre="WhatsApp" sousTitre={tr("Vends et discute via WhatsApp")} steps={WHATSAPP_TUTORIAL_STEPS} />
 
       {/* ── GAUCHE : Conversations ── */}
       <div className={`${mobileThread ? "hidden" : "flex"} lg:flex flex-col border-r border-white/8 flex-shrink-0`} style={{ width: 320 }}>
@@ -564,27 +569,27 @@ export default function WhatsAppPage() {
               </div>
               <div>
                 <div className="font-bold text-white text-sm leading-tight flex items-center gap-1.5">
-                  WhatsApp Business
+                  {tr("WhatsApp Business")}
                   <BoutonRevoirTutoriel moduleKey="whatsapp" dark />
                 </div>
                 {connecte && waConfig?.via === "meta" && waConfig?.config?.numero_affiche && (
-                  <div className="text-[10px] text-gray-500 font-mono">{waConfig.config.numero_affiche}</div>
+                  <div className="text-[10px] text-gray-500 font-mono">{tr(waConfig.config.numero_affiche)}</div>
                 )}
                 {connecte && waConfig?.via === "genuka" && (
-                  <div className="text-[10px] text-gray-500">via Genuka</div>
+                  <div className="text-[10px] text-gray-500">{tr("via Genuka")}</div>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-1.5">
               {totalNonLus > 0 && (
                 <div className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-bold text-white" style={{ background: "#25D366" }}>
-                  <Bell size={9} /> {totalNonLus}
+                  <Bell size={9} /> {tr(totalNonLus)}
                 </div>
               )}
               <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-full font-semibold ${connecte ? "text-[#25D366]" : "text-red-400"}`}
                 style={{ background: connecte ? "rgba(37,211,102,0.12)" : "rgba(239,68,68,0.12)" }}>
                 {connecte ? <Wifi size={9} /> : <WifiOff size={9} />}
-                {connecte ? "Actif" : "Hors ligne"}
+                {connecte ? tr("Actif") : tr("Hors ligne")}
               </div>
               <button onClick={() => setShowConfig(true)} className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/8 transition-all">
                 <Settings size={13} />
@@ -593,7 +598,7 @@ export default function WhatsAppPage() {
           </div>
           <div className="relative">
             <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
-            <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder="Rechercher…"
+            <input value={recherche} onChange={e => setRecherche(e.target.value)} placeholder={tr("Rechercher…")}
               className="w-full bg-white/5 border border-white/8 rounded-xl pl-8 pr-3 py-2 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:border-[#25D366]/40" />
           </div>
         </div>
@@ -609,10 +614,10 @@ export default function WhatsAppPage() {
               <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.2)" }}>
                 <MessageCircle size={24} style={{ color: "#25D366" }} />
               </div>
-              <p className="text-gray-500 text-sm font-medium">Aucune conversation</p>
+              <p className="text-gray-500 text-sm font-medium">{tr("Aucune conversation")}</p>
               {!connecte && (
                 <button onClick={() => setShowConfig(true)} className="text-xs hover:underline" style={{ color: "#25D366" }}>
-                  Connecter WhatsApp Business →
+                  {tr("Connecter WhatsApp Business →")}
                 </button>
               )}
             </div>
@@ -629,14 +634,14 @@ export default function WhatsAppPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <p className="font-semibold text-sm text-white truncate">{conv.nom ?? conv.de}</p>
+                    <p className="font-semibold text-sm text-white truncate">{tr(conv.nom) ?? tr(conv.de)}</p>
                     <span className="text-[10px] text-gray-600 flex-shrink-0 ml-2">{heure(conv.updatedAt)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-gray-600 truncate">{conv.dernier}</p>
+                    <p className="text-xs text-gray-600 truncate">{tr(conv.dernier)}</p>
                     {conv.nonLus > 0 && (
                       <span className="flex-shrink-0 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold text-white flex items-center justify-center px-1" style={{ background: "#25D366" }}>
-                        {conv.nonLus}
+                        {tr(conv.nonLus)}
                       </span>
                     )}
                   </div>
@@ -661,8 +666,8 @@ export default function WhatsAppPage() {
                 {initiales(convActuelle.nom, contactActif)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-white text-sm leading-tight">{convActuelle.nom ?? contactActif}</p>
-                <p className="text-[10px] text-gray-500 font-mono">{contactActif}</p>
+                <p className="font-semibold text-white text-sm leading-tight">{tr(convActuelle.nom) ?? tr(contactActif)}</p>
+                <p className="text-[10px] text-gray-500 font-mono">{tr(contactActif)}</p>
               </div>
               <div className="flex items-center gap-2">
                 {commandes.length > 0 && (
@@ -689,7 +694,7 @@ export default function WhatsAppPage() {
                     {showDate && (
                       <div className="flex items-center justify-center my-3">
                         <span className="text-[10px] text-gray-600 px-3 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }}>
-                          {new Date(msg.createdAt).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+                          {new Date(msg.createdAt).toLocaleDateString(tr.loc, { weekday: "long", day: "numeric", month: "long" })}
                         </span>
                       </div>
                     )}
@@ -702,9 +707,9 @@ export default function WhatsAppPage() {
                           boxShadow: sortant ? "0 2px 8px rgba(37,211,102,0.18)" : "0 2px 8px rgba(0,0,0,0.25)",
                           color: "white",
                         }}>
-                        <p className="whitespace-pre-wrap">{msg.corps}</p>
+                        <p className="whitespace-pre-wrap">{tr(msg.corps)}</p>
                         <div className={`flex items-center gap-1 mt-1 ${sortant ? "justify-end" : ""}`}>
-                          <span className="text-[10px] opacity-50">{new Date(msg.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                          <span className="text-[10px] opacity-50">{new Date(msg.createdAt).toLocaleTimeString(tr.loc, { hour: "2-digit", minute: "2-digit" })}</span>
                           {sortant && (msg.lu ? <CheckCheck size={11} className="opacity-70" /> : <Check size={11} className="opacity-40" />)}
                         </div>
                       </div>
@@ -720,14 +725,14 @@ export default function WhatsAppPage() {
               <div className="border-t border-white/8 p-3" style={{ background: "#111827" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Zap size={11} style={{ color: "#F5A623" }} />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Réponses rapides</span>
+                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">{tr("Réponses rapides")}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {TEMPLATES.map((t, i) => (
                     <button key={i} onClick={() => envoyer(t.text)}
                       className="text-xs px-3 py-1.5 rounded-xl font-semibold transition-all hover:opacity-80"
                       style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "#d1d5db" }}>
-                      {t.label}
+                      {tr(t.label)}
                     </button>
                   ))}
                 </div>
@@ -738,9 +743,9 @@ export default function WhatsAppPage() {
             <div className="p-3 border-t border-white/8" style={{ background: "rgba(17,24,39,0.9)" }}>
               {!connecte ? (
                 <div className="text-center py-3">
-                  <p className="text-gray-500 text-sm">WhatsApp Business non connecté</p>
+                  <p className="text-gray-500 text-sm">{tr("WhatsApp Business non connecté")}</p>
                   <button onClick={() => setShowConfig(true)} className="text-xs hover:underline mt-1" style={{ color: "#25D366" }}>
-                    Connecter maintenant →
+                    {tr("Connecter maintenant →")}
                   </button>
                 </div>
               ) : (
@@ -752,7 +757,7 @@ export default function WhatsAppPage() {
                   </button>
                   <textarea value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); } }}
-                    placeholder="Tapez votre message… (Entrée pour envoyer)"
+                    placeholder={tr("Tapez votre message… (Entrée pour envoyer)")}
                     rows={1}
                     className="flex-1 border rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none"
                     style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", maxHeight: 120 }}
@@ -775,14 +780,14 @@ export default function WhatsAppPage() {
                 <MessageCircle size={36} style={{ color: "#25D366" }} />
               </div>
               <div>
-                <p className="text-white font-semibold text-lg">WhatsApp Business</p>
-                <p className="text-gray-600 text-sm mt-1">Sélectionnez une conversation ou attendez un message client</p>
+                <p className="text-white font-semibold text-lg">{tr("WhatsApp Business")}</p>
+                <p className="text-gray-600 text-sm mt-1">{tr("Sélectionnez une conversation ou attendez un message client")}</p>
               </div>
               {!connecte && (
                 <button onClick={() => setShowConfig(true)}
                   className="px-5 py-2.5 rounded-xl text-sm font-bold text-white flex items-center gap-2 mx-auto hover:opacity-90 transition-all"
                   style={{ background: "#25D366", boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}>
-                  <Wifi size={14} /> Connecter WhatsApp Business
+                  <Wifi size={14} />{" "}{tr("Connecter WhatsApp Business")}
                 </button>
               )}
             </div>
@@ -796,7 +801,7 @@ export default function WhatsAppPage() {
           <div className="p-4 border-b border-white/8">
             <p className="text-white font-semibold text-sm flex items-center gap-2">
               <ShoppingBag size={13} style={{ color: "#F5A623" }} />
-              Commandes liées
+              {tr("Commandes liées")}
               {commandes.length > 0 && <span className="ml-auto text-xs px-2 py-0.5 rounded-full font-bold" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>{commandes.length}</span>}
             </p>
           </div>
@@ -804,7 +809,7 @@ export default function WhatsAppPage() {
           {commandes.length === 0 ? (
             <div className="flex flex-col items-center justify-center flex-1 p-6 text-center">
               <ShoppingBag size={28} className="text-gray-800 mb-3" />
-              <p className="text-gray-600 text-xs">Aucune commande liée à ce contact</p>
+              <p className="text-gray-600 text-xs">{tr("Aucune commande liée à ce contact")}</p>
             </div>
           ) : (
             <div className="p-3 space-y-3">
@@ -816,14 +821,14 @@ export default function WhatsAppPage() {
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs text-white font-bold">#{cmd.numero}</span>
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1" style={{ color: s.color, background: `${s.color}18` }}>
-                        <Icon size={9} />{s.label}
+                        <Icon size={9} />{tr(s.label)}
                       </span>
                     </div>
                     {cmd.lignes.slice(0, 2).map((l, i) => (
-                      <p key={i} className="text-xs text-gray-500 truncate">{l.nom} ×{l.quantite}</p>
+                      <p key={i} className="text-xs text-gray-500 truncate">{tr(l.nom)}{" "}{tr("×")}{l.quantite}</p>
                     ))}
                     <div className="text-xs font-bold" style={{ color: "#F5A623" }}>
-                      {cmd.montantTotal.toLocaleString("fr-FR")} {cmd.devise}
+                      {cmd.montantTotal.toLocaleString(tr.loc)} {tr(cmd.devise)}
                     </div>
 
                     {/* Actions */}
@@ -832,27 +837,27 @@ export default function WhatsAppPage() {
                         <button onClick={() => confirmerCommande(cmd.id, cmd.numero)}
                           className="w-full text-[11px] py-1.5 rounded-lg font-bold text-white flex items-center justify-center gap-1.5 hover:opacity-90 transition-all"
                           style={{ background: "#25D366" }}>
-                          <CheckCircle2 size={11} /> Confirmer
+                          <CheckCircle2 size={11} />{" "}{tr("Confirmer")}
                         </button>
                       )}
                       {cmd.trackingToken && (
                         <button onClick={() => envoyerTracking(cmd)}
                           className="w-full text-[11px] py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 hover:bg-white/8 transition-all"
                           style={{ color: "#60a5fa", background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.15)" }}>
-                          <MapPin size={10} /> Envoyer tracking
+                          <MapPin size={10} />{" "}{tr("Envoyer tracking")}
                         </button>
                       )}
                       {cmd.trackingToken && (
                         <button onClick={() => envoyerFacture(cmd)}
                           className="w-full text-[11px] py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 hover:bg-white/8 transition-all"
                           style={{ color: "#FFD280", background: "rgba(167,139,250,0.08)", border: "1px solid rgba(167,139,250,0.15)" }}>
-                          <FileText size={10} /> Envoyer facture
+                          <FileText size={10} />{" "}{tr("Envoyer facture")}
                         </button>
                       )}
                       <button onClick={() => router.push(`/dashboard/commandes/${cmd.id}`)}
                         className="w-full text-[11px] py-1.5 rounded-lg font-semibold flex items-center justify-center gap-1.5 hover:bg-white/8 transition-all"
                         style={{ color: "#9ca3af", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        Voir la commande →
+                        {tr("Voir la commande →")}
                       </button>
                     </div>
                   </div>
@@ -864,10 +869,10 @@ export default function WhatsAppPage() {
           {/* Auto-confirm tip */}
           <div className="m-3 mt-auto p-3 rounded-xl" style={{ background: "rgba(37,211,102,0.06)", border: "1px solid rgba(37,211,102,0.15)" }}>
             <p className="text-xs font-semibold flex items-center gap-1.5 mb-1" style={{ color: "#25D366" }}>
-              <Zap size={10} /> Confirmation auto
+              <Zap size={10} />{" "}{tr("Confirmation auto")}
             </p>
             <p className="text-gray-600 text-xs leading-relaxed">
-              Si le client répond <span className="font-mono text-white">"OUI"</span>, <span className="font-mono text-white">"CONFIRMER"</span> ou <span className="font-mono text-white">"OK"</span>, la commande se confirme automatiquement.
+              {tr("Si le client répond")}{" "}<span className="font-mono text-white">{tr("\"OUI\"")}</span>, <span className="font-mono text-white">{tr("\"CONFIRMER\"")}</span> ou <span className="font-mono text-white">{tr("\"OK\"")}</span>, la commande se confirme automatiquement.
             </p>
           </div>
         </div>

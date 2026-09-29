@@ -9,12 +9,14 @@ import { CheckoutForm } from "@/components/storefront/CheckoutForm";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { Lock } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
 export default async function CheckoutPage({ params }: Props) {
+  const t = await getT();
   const { slug } = await params;
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   // Même règle que les autres pages : publique si active, visible par le propriétaire (aperçu du Constructeur).
@@ -42,10 +44,10 @@ export default async function CheckoutPage({ params }: Props) {
       <nav style={{ borderBottomColor: `${theme.accent}20` }} className="border-b">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href={`/${slug}`}>
-            <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>{tenant.nomBoutique}</span>
+            <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>{t(tenant.nomBoutique)}</span>
           </Link>
           <div className="flex items-center gap-2 text-sm opacity-50">
-            <span className="text-xs">Paiement sécurisé</span>
+            <span className="text-xs">{t("Paiement sécurisé")}</span>
             <Lock size={14} />
           </div>
         </div>
@@ -54,11 +56,11 @@ export default async function CheckoutPage({ params }: Props) {
       {/* Étapes */}
       <div className="max-w-4xl mx-auto px-4 py-4">
         <div className="flex items-center gap-2 text-xs opacity-50">
-          <Link href={`/${slug}/panier`}>Panier</Link>
+          <Link href={`/${slug}/panier`}>{t("Panier")}</Link>
           <span>›</span>
-          <span className="opacity-100 font-semibold" style={{ color: theme.accent }}>Informations</span>
+          <span className="opacity-100 font-semibold" style={{ color: theme.accent }}>{t("Informations")}</span>
           <span>›</span>
-          <span>Paiement</span>
+          <span>{t("Paiement")}</span>
         </div>
       </div>
 
@@ -68,7 +70,7 @@ export default async function CheckoutPage({ params }: Props) {
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>
-        <p>Paiement sécurisé via NotchPay · SSL 256-bit</p>
+        <p>{t("Paiement sécurisé via NotchPay · SSL 256-bit")}</p>
       </footer>
     </div>
   );

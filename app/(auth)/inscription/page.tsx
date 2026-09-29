@@ -17,6 +17,7 @@ import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { DIGITAL_TEMPLATES } from "@/Templates/template_digitaux/digital-templates";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
 const NAVY    = "#111111";   // noir AXSO (--axso-navy)
@@ -190,6 +191,7 @@ type Toast = { id: number; type: "success"|"info"|"error"; msg: string };
 let _tid = 0;
 
 function ToastStack({ toasts, onClose }: { toasts: Toast[]; onClose:(id:number)=>void }) {
+  const tr = useT();
   return (
     <div style={{ position:"fixed", top:20, right:20, zIndex:9999, display:"flex", flexDirection:"column", gap:9, pointerEvents:"none" }}>
       {toasts.map(t => (
@@ -208,7 +210,7 @@ function ToastStack({ toasts, onClose }: { toasts: Toast[]; onClose:(id:number)=
           {t.type==="success" && <CheckCircle2 size={15} color={SUCCESS} style={{flexShrink:0}}/>}
           {t.type==="info"    && <Info         size={15} color={YELLOW}    style={{flexShrink:0}}/>}
           {t.type==="error"   && <AlertCircle  size={15} color={ERROR}   style={{flexShrink:0}}/>}
-          <span style={{ fontSize:13, color:NAVY, flex:1, lineHeight:1.45 }}>{t.msg}</span>
+          <span style={{ fontSize:13, color:NAVY, flex:1, lineHeight:1.45 }}>{tr(t.msg)}</span>
           <button onClick={()=>onClose(t.id)} style={{ background:"none", border:"none", cursor:"pointer", color:MUTED, padding:2, flexShrink:0, pointerEvents:"all" }}>
             <X size={12}/>
           </button>
@@ -231,6 +233,7 @@ function useToast() {
 
 // ─── Avatar Axia ──────────────────────────────────────────────────────────────
 function AxiaAvatar({ size=38 }: { size?:number }) {
+  const tr = useT();
   return (
     <div style={{ position:"relative", width:size, height:size, flexShrink:0 }}>
       <div style={{
@@ -240,7 +243,7 @@ function AxiaAvatar({ size=38 }: { size?:number }) {
         overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center",
         boxShadow:`0 4px 14px rgba(245,166,35,.28)`,
       }}>
-        <img src="/axia-icon.png" alt="Axia"
+        <img src="/axia-icon.png" alt={tr("Axia")}
           style={{ width:"100%", height:"100%", objectFit:"cover" }}
           onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
       </div>
@@ -317,6 +320,7 @@ const TYPE_BOUTIQUE_OPTIONS: { v:TypeBoutique; Icon:LucideIcon; titre:string; de
 ];
 
 function TypeBoutiqueSelector({ onSelect }: { onSelect:(type:TypeBoutique)=>void }) {
+  const tr = useT();
   const [sel,setSel] = useState<TypeBoutique|"">("");
   return (
     <div className="msg-in" style={{ paddingLeft:47, display:"grid", gap:9, maxWidth:420 }}>
@@ -337,8 +341,8 @@ function TypeBoutiqueSelector({ onSelect }: { onSelect:(type:TypeBoutique)=>void
             <o.Icon size={17} color={YELLOW_D}/>
           </div>
           <div>
-            <div style={{ fontFamily:"'Sora',sans-serif", fontSize:13.5, fontWeight:700, color:NAVY }}>{o.titre}</div>
-            <div style={{ fontSize:11.5, color:MUTED, marginTop:1, fontFamily:"'Inter',sans-serif" }}>{o.desc}</div>
+            <div style={{ fontFamily:"'Sora',sans-serif", fontSize:13.5, fontWeight:700, color:NAVY }}>{tr(o.titre)}</div>
+            <div style={{ fontSize:11.5, color:MUTED, marginTop:1, fontFamily:"'Inter',sans-serif" }}>{tr(o.desc)}</div>
           </div>
         </button>
       ))}
@@ -348,6 +352,7 @@ function TypeBoutiqueSelector({ onSelect }: { onSelect:(type:TypeBoutique)=>void
 
 // ─── Sélecteur de pays ────────────────────────────────────────────────────────
 function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:string)=>void }) {
+  const tr = useT();
   const [sel,setSel] = useState("");
   const [afriqueOuvert,setAfriqueOuvert] = useState(false);
 
@@ -373,7 +378,7 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
             }}>
             <span style={{ height:19, display:"flex", alignItems:"center", fontSize:17 }}>{p.code==="AUTRE_AFRIQUE" ? "🌍" : <Drapeau code={p.code} taille={24} />}</span>
             <span style={{ fontSize:10, fontWeight:600, textAlign:"center", lineHeight:1.2, color:sel===p.code?YELLOW_D:MID, fontFamily:"'Inter',sans-serif" }}>
-              {p.nom}
+              {tr(p.nom)}
             </span>
           </button>
         ))}
@@ -385,10 +390,10 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
           background:SURFACE, border:`1.5px solid ${BORDER}`, borderRadius:14, padding:12,
         }}>
           <label style={{ fontSize:11, fontWeight:600, color:MID, fontFamily:"'Inter',sans-serif" }}>
-            Choisis ton pays parmi les 54 pays d'Afrique
+            {tr("Choisis ton pays parmi les 54 pays d'Afrique")}
           </label>
           <SelectPays value={sel !== "AUTRE_AFRIQUE" && !PAYS_LIST.some(x=>x.code===sel) ? sel : ""} options={PAYS_AFRIQUE}
-            placeholder="Sélectionne un pays…"
+            placeholder={tr("Sélectionne un pays…")}
             onChange={code=>{ const p = PAYS_AFRIQUE.find(x=>x.code===code); if (p) choisir(p.code, p.nom); }} />
         </div>
       )}
@@ -405,6 +410,7 @@ function PropositionsDesign({
   nomBoutique?:string; produits?:{nom:string;prix:number;description?:string}[];
   devise?:string; vente?:string;
 }) {
+  const tr = useT();
   const produitsParam = encodeURIComponent(JSON.stringify((produits||[]).slice(0,6)));
   const nomParam      = encodeURIComponent(nomBoutique || "Ma Boutique");
   const devParam      = encodeURIComponent(devise || "XAF");
@@ -451,7 +457,7 @@ function PropositionsDesign({
                   padding:"2px 8px", fontFamily:"'Sora',sans-serif",
                   letterSpacing:".05em", display:"flex", alignItems:"center", gap:4,
                 }}>
-                  <Star size={9} fill="#fff" strokeWidth={0}/> Recommandé
+                  <Star size={9} fill="#fff" strokeWidth={0}/>{" "}{tr("Recommandé")}
                 </div>
               )}
               {/* Badge check si sélectionné */}
@@ -487,7 +493,7 @@ function PropositionsDesign({
                   display:"flex", alignItems:"flex-end", padding:"0 10px 7px",
                 }}>
                   <span style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".09em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
-                    {e.nom}
+                    {tr(e.nom)}
                   </span>
                 </div>
               </div>
@@ -501,7 +507,7 @@ function PropositionsDesign({
                   {e.ambiance.slice(0,2).map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(" · ")}
                 </div>
                 <div style={{ fontSize:10, color:MUTED, lineHeight:1.4, fontFamily:"'Inter',sans-serif" }}>
-                  {raison}
+                  {tr(raison)}
                 </div>
               </div>
             </button>
@@ -518,6 +524,7 @@ function PropositionsDesign({
 // identité de couleurs de départ éditable ensuite dans le Constructeur
 // digital, voir lib/digital-templates.ts). ─────────────────────────────────────
 function PropositionsTemplatesDigitaux({ selectedId, onSelect }: { selectedId: string; onSelect:(id:string)=>void }) {
+  const tr = useT();
   return (
     <div className="msg-in" style={{ paddingLeft:47 }}>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, maxWidth:560 }}>
@@ -554,7 +561,7 @@ function PropositionsTemplatesDigitaux({ selectedId, onSelect }: { selectedId: s
                   padding:"2px 8px", fontFamily:"'Sora',sans-serif",
                   letterSpacing:".05em", display:"flex", alignItems:"center", gap:4,
                 }}>
-                  <Star size={9} fill="#fff" strokeWidth={0}/> Recommandé
+                  <Star size={9} fill="#fff" strokeWidth={0}/>{" "}{tr("Recommandé")}
                 </div>
               )}
               {sel && (
@@ -575,7 +582,7 @@ function PropositionsTemplatesDigitaux({ selectedId, onSelect }: { selectedId: s
                   display:"flex", alignItems:"flex-end", padding:"0 10px 7px",
                 }}>
                   <span style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,.95)", letterSpacing:".09em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
-                    {t.label}
+                    {tr(t.label)}
                   </span>
                 </div>
               </div>
@@ -585,10 +592,10 @@ function PropositionsTemplatesDigitaux({ selectedId, onSelect }: { selectedId: s
                 borderTop:`1px solid ${sel?YELLOW+"25":BORDER}`,
               }}>
                 <div style={{ fontSize:11, fontWeight:700, color:sel?YELLOW_D:NAVY, marginBottom:3, fontFamily:"'Sora',sans-serif" }}>
-                  {t.label}
+                  {tr(t.label)}
                 </div>
                 <div style={{ fontSize:10, color:MUTED, lineHeight:1.4, fontFamily:"'Inter',sans-serif" }}>
-                  {t.desc}
+                  {tr(t.desc)}
                 </div>
               </div>
             </button>
@@ -611,6 +618,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
   onDigitalTemplateChange: (id:string)=>void;
   onNomChange: (nom:string)=>void;
 }) {
+  const tr = useT();
   const digital = typeBoutique === "digital";
   const digitalTpl = DIGITAL_TEMPLATES.find(t => t.id === digitalTemplateId) || DIGITAL_TEMPLATES[0];
   const e = digital
@@ -643,7 +651,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
             <input
               value={plan.nomBoutique}
               onChange={ev=>onNomChange(ev.target.value)}
-              placeholder="Nom de ta boutique"
+              placeholder={tr("Nom de ta boutique")}
               maxLength={60}
               style={{
                 fontFamily:"'Sora',sans-serif", fontSize:18, fontWeight:800, color:NAVY, lineHeight:1.1,
@@ -652,7 +660,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
               }}
             />
             <div style={{ fontSize:11, color:MUTED, marginTop:3, fontFamily:"'Inter',sans-serif" }}>
-              {plan.categorie} · {plan.pays} · {plan.devise}
+              {tr(plan.categorie)} · {tr(plan.pays)} · {tr(plan.devise)}
             </div>
           </div>
           <div style={{
@@ -660,22 +668,22 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
             color:YELLOW, background:`${YELLOW}12`, border:`1px solid ${YELLOW}28`,
             letterSpacing:".06em", textTransform:"uppercase",
             fontFamily:"'Sora',sans-serif", flexShrink:0,
-          }}>{e.nom}</div>
+          }}>{tr(e.nom)}</div>
         </div>
 
         {/* Produits */}
         <div style={{ padding:"12px 20px" }}>
           <div style={{ fontSize:10, fontWeight:700, color:MUTED, textTransform:"uppercase", letterSpacing:".1em", marginBottom:9, fontFamily:"'Sora',sans-serif" }}>
-            {plan.produits.length} produits générés par Axia
+            {plan.produits.length}{" "}{tr("produits générés par Axia")}
           </div>
           {plan.produits.map((p,i)=>(
             <div key={i} style={{
               display:"flex", justifyContent:"space-between", alignItems:"center",
               padding:"6px 0", borderBottom:i<plan.produits.length-1?`1px solid ${BORDER_L}`:"none",
             }}>
-              <span style={{ fontSize:13, color:NAVY, opacity:.85, fontFamily:"'Inter',sans-serif" }}>{p.nom}</span>
+              <span style={{ fontSize:13, color:NAVY, opacity:.85, fontFamily:"'Inter',sans-serif" }}>{tr(p.nom)}</span>
               <span style={{ fontSize:13, fontWeight:700, color:YELLOW_D, fontFamily:"'Sora',sans-serif" }}>
-                {p.prix.toLocaleString()} {plan.devise}
+                {p.prix.toLocaleString()} {tr(plan.devise)}
               </span>
             </div>
           ))}
@@ -690,7 +698,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
       }}>
         <Wand2 size={15} color={YELLOW}/>
         <span style={{ fontSize:13, color:YELLOW_D, fontWeight:600, fontFamily:"'Sora',sans-serif" }}>
-          Axia a sélectionné 4 {digital ? "gabarits" : "designs"} personnalisés pour <strong>{plan.nomBoutique}</strong> — choisis celui qui te correspond
+          {tr("Axia a sélectionné 4")}{" "}{digital ? "gabarits" : "designs"}{" "}{tr("personnalisés pour")}{" "}<strong>{tr(plan.nomBoutique)}</strong>{" "}{tr("— choisis celui qui te correspond")}
         </span>
       </div>
 
@@ -718,13 +726,13 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
 
       {!nomValide && (
         <div style={{ fontSize:11.5, color:YELLOW_D, fontFamily:"'Inter',sans-serif", marginTop:-6 }}>
-          Donne un nom à ta boutique (2 caractères minimum) pour continuer — modifie-le juste au-dessus si besoin.
+          {tr("Donne un nom à ta boutique (2 caractères minimum) pour continuer — modifie-le juste au-dessus si besoin.")}
         </div>
       )}
 
       <button onClick={onConfirm} disabled={!nomValide} className="btn-primary"
         style={{ padding:"15px 24px", borderRadius:14, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10, opacity:nomValide?1:.5, cursor:nomValide?"pointer":"not-allowed" }}>
-        <Sparkles size={16}/> Ce design me convient — Créer ma boutique <ArrowRight size={16}/>
+        <Sparkles size={16}/>{" "}{tr("Ce design me convient — Créer ma boutique")}{" "}<ArrowRight size={16}/>
       </button>
     </div>
   );
@@ -734,6 +742,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, digitalTemplateId, onCo
 function CompteForm({ onSubmit, loading, erreur }: {
   onSubmit:(d:CompteData)=>void; loading:boolean; erreur?:string;
 }) {
+  const tr = useT();
   const { register, handleSubmit, formState:{errors} } = useForm<CompteData>({ resolver:zodResolver(schemaCompte) });
   const [voirMdp,setVoirMdp] = useState(false);
   const fields = [
@@ -748,7 +757,7 @@ function CompteForm({ onSubmit, loading, erreur }: {
         {fields.map(f=>(
           <div key={f.key}>
             <label style={{ display:"block", fontSize:11, fontWeight:700, color:MID, textTransform:"uppercase", letterSpacing:".08em", marginBottom:5, fontFamily:"'Sora',sans-serif" }}>
-              {f.label}
+              {tr(f.label)}
             </label>
             <div style={{ position:"relative" }}>
               <div style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none" }}>
@@ -758,7 +767,7 @@ function CompteForm({ onSubmit, loading, erreur }: {
                 style={f.key==="password"?{paddingRight:44}:undefined}/>
               {f.key==="password" && (
                 <button type="button" onClick={()=>setVoirMdp(v=>!v)}
-                  aria-label={voirMdp?"Masquer le mot de passe":"Afficher le mot de passe"}
+                  aria-label={voirMdp?tr("Masquer le mot de passe"):tr("Afficher le mot de passe")}
                   style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", padding:4, cursor:"pointer", display:"flex" }}>
                   {voirMdp ? <EyeOff size={16} color={MUTED}/> : <Eye size={16} color={MUTED}/>}
                 </button>
@@ -766,20 +775,20 @@ function CompteForm({ onSubmit, loading, erreur }: {
             </div>
             {errors[f.key] && (
               <p style={{ color:ERROR, fontSize:11, marginTop:4, fontFamily:"'Inter',sans-serif" }}>
-                {errors[f.key]?.message}
+                {tr(errors[f.key]?.message)}
               </p>
             )}
           </div>
         ))}
         {erreur && (
           <div style={{ padding:"10px 14px", background:"#FEF2F2", border:`1px solid #FECACA`, borderRadius:10, fontSize:13, color:ERROR, fontFamily:"'Inter',sans-serif" }}>
-            {erreur}
+            {tr(erreur)}
           </div>
         )}
         <button type="submit" disabled={loading} className="btn-primary"
           style={{ marginTop:4, padding:"14px 24px", borderRadius:13, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-          {loading ? <><Loader2 size={16} className="animate-spin"/> Lancement…</>
-                   : <><Sparkles size={16}/> Lancer ma boutique <ArrowRight size={16}/></>}
+          {loading ? <><Loader2 size={16} className="animate-spin"/>{" "}{tr("Lancement…")}</>
+                   : <><Sparkles size={16}/>{" "}{tr("Lancer ma boutique")}{" "}<ArrowRight size={16}/></>}
         </button>
       </form>
     </div>
@@ -788,6 +797,7 @@ function CompteForm({ onSubmit, loading, erreur }: {
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 export default function InscriptionPage() {
+  const tr = useT();
   const bottomRef = useRef<HTMLDivElement>(null);
   const { toasts, push: toast, close: closeToast } = useToast();
 
@@ -947,7 +957,7 @@ export default function InscriptionPage() {
         padding:"16px 24px", gap:12,
       }}>
         <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none", flexShrink:0 }}>
-          <img src="/logo.png" alt="Axso" style={{ height:56, width:"auto", objectFit:"contain" }}/>
+          <img src="/logo.png" alt={tr("Axso")} style={{ height:56, width:"auto", objectFit:"contain" }}/>
         </Link>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           {toasts.length>0 && (
@@ -963,8 +973,8 @@ export default function InscriptionPage() {
             </div>
           )}
           <Link href="/connexion" style={{ fontSize:13, color:MID, textDecoration:"none", fontWeight:500, textAlign:"right", lineHeight:1.35 }}>
-            Déjà un compte ?{" "}
-            <span style={{ color:YELLOW, fontWeight:700 }}>Connexion</span>
+            {tr("Déjà un compte ?")}{" "}
+            <span style={{ color:YELLOW, fontWeight:700 }}>{tr("Connexion")}</span>
           </Link>
         </div>
       </header>
@@ -1001,7 +1011,7 @@ export default function InscriptionPage() {
                     display:"flex", alignItems:"center", justifyContent:"center",
                     boxShadow:`0 14px 48px rgba(245,166,35,.3)`,
                   }}>
-                    <img src="/axia-icon.png" alt="Axia"
+                    <img src="/axia-icon.png" alt={tr("Axia")}
                       style={{ width:"80%", height:"80%", objectFit:"cover", borderRadius:"22%" }}
                       onError={e=>{ (e.currentTarget as HTMLImageElement).style.display="none"; }}/>
                   </div>
@@ -1021,7 +1031,7 @@ export default function InscriptionPage() {
               }}>
                 <Sparkles size={12} color={YELLOW}/>
                 <span style={{ fontSize:11, fontWeight:700, color:YELLOW_D, letterSpacing:".07em", textTransform:"uppercase", fontFamily:"'Sora',sans-serif" }}>
-                  Propulsé par l'IA
+                  {tr("Propulsé par l'IA")}
                 </span>
               </div>
 
@@ -1031,12 +1041,12 @@ export default function InscriptionPage() {
                 lineHeight:1.1, margin:"0 0 14px",
                 letterSpacing:"-.03em",
               }}>
-                Crée ton empire<br/>
+                {tr("Crée ton empire")}<br/>
                 <span style={{ color:YELLOW }}>e-commerce africain</span>
               </h1>
 
               <p style={{ fontSize:15, color:MID, lineHeight:1.8, maxWidth:480, margin:"0 auto 28px", fontFamily:"'Inter',sans-serif" }}>
-                En quelques questions, Axia conçoit ton site e-commerce ultra haut de gamme. Design, produits, livraison — tout configuré automatiquement.
+                {tr("En quelques questions, Axia conçoit ton site e-commerce ultra haut de gamme. Design, produits, livraison — tout configuré automatiquement.")}
               </p>
 
               {/* 4 features */}
@@ -1055,8 +1065,8 @@ export default function InscriptionPage() {
                     <div style={{ width:32, height:32, borderRadius:10, background:`${YELLOW}10`, border:`1px solid ${YELLOW}22`, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:10 }}>
                       <Icon size={15} color={YELLOW}/>
                     </div>
-                    <div style={{ fontWeight:700, fontSize:12, color:NAVY, marginBottom:2, fontFamily:"'Sora',sans-serif" }}>{label}</div>
-                    <div style={{ fontSize:11, color:MUTED }}>{desc}</div>
+                    <div style={{ fontWeight:700, fontSize:12, color:NAVY, marginBottom:2, fontFamily:"'Sora',sans-serif" }}>{tr(label)}</div>
+                    <div style={{ fontSize:11, color:MUTED }}>{tr(desc)}</div>
                   </div>
                 ))}
               </div>
@@ -1067,23 +1077,23 @@ export default function InscriptionPage() {
                 className="btn-primary"
                 style={{ padding:"17px 52px", borderRadius:18, fontSize:15, display:"inline-flex", alignItems:"center", gap:12, boxShadow:`0 12px 40px rgba(245,166,35,.32)` }}>
                 <Sparkles size={18}/>
-                Créer ma boutique gratuitement
+                {tr("Créer ma boutique gratuitement")}
                 <ChevronRight size={18}/>
               </button>
               <p style={{ marginTop:11, fontSize:12, color:MUTED }}>
-                Gratuit · Sans carte bancaire · En ligne en 60 secondes
+                {tr("Gratuit · Sans carte bancaire · En ligne en 60 secondes")}
               </p>
 
               {/* Drapeaux pays */}
               <div style={{ marginTop:28 }}>
                 <div style={{ height:1, background:`linear-gradient(to right,transparent,${BORDER},transparent)`, margin:"0 auto 14px", maxWidth:400 }}/>
                 <p style={{ fontSize:11, color:MUTED, margin:"0 0 10px", textTransform:"uppercase", letterSpacing:".1em" }}>
-                  Rejoint par 1 000+ boutiques en Afrique
+                  {tr("Rejoint par 1 000+ boutiques en Afrique")}
                 </p>
                 <div style={{ display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
                   {[["SN","Sénégal"],["CI","Côte d'Ivoire"],["CM","Cameroun"],["NG","Nigeria"],["GH","Ghana"]].map(([code,nom])=>(
                     <span key={code} style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:11, padding:"3px 11px 3px 6px", borderRadius:999, background:SURFACE, border:`1px solid ${BORDER}`, color:MID }}>
-                      <Drapeau code={code} taille={16} />{nom}
+                      <Drapeau code={code} taille={16} />{tr(nom)}
                     </span>
                   ))}
                 </div>
@@ -1099,19 +1109,19 @@ export default function InscriptionPage() {
                 structure générée : "digital" seul retire le catalogue au
                 profit d'une page de vente centrée sur le produit. */}
             <AxiaMsg delay={0}>
-              Bonjour ! 👋{" "}
-              <strong style={{color:YELLOW_D}}>Tu vas vendre quel type de produits ?</strong>
+              {tr("Bonjour ! 👋")}{" "}
+              <strong style={{color:YELLOW_D}}>{tr("Tu vas vendre quel type de produits ?")}</strong>
             </AxiaMsg>
             {phase==="q-type" && <TypeBoutiqueSelector onSelect={submitType}/>}
             {typeBoutique&&phase!=="q-type" && (
-              <UserMsg>{TYPE_BOUTIQUE_OPTIONS.find(o=>o.v===typeBoutique)?.titre}</UserMsg>
+              <UserMsg>{tr(TYPE_BOUTIQUE_OPTIONS.find(o=>o.v===typeBoutique)?.titre)}</UserMsg>
             )}
 
             {/* Q1 — Que vends-tu */}
             {typeBoutique && (
               <AxiaMsg delay={80}>
-                <strong style={{color:YELLOW_D}}>Dis-moi ce que tu vends.</strong>{" "}
-                Plus tu es précis, plus ton site sera parfait.
+                <strong style={{color:YELLOW_D}}>{tr("Dis-moi ce que tu vends.")}</strong>{" "}
+                {tr("Plus tu es précis, plus ton site sera parfait.")}
               </AxiaMsg>
             )}
 
@@ -1126,7 +1136,7 @@ export default function InscriptionPage() {
                         border:`1.5px solid ${venteInput===ex?YELLOW:BORDER}`,
                         color:venteInput===ex?YELLOW_D:MID,
                         cursor:"pointer", transition:"all .13s", fontFamily:"'Inter',sans-serif",
-                      }}>{ex}</button>
+                      }}>{tr(ex)}</button>
                   ))}
                 </div>
                 <div style={{ display:"flex", gap:10 }}>
@@ -1154,12 +1164,12 @@ export default function InscriptionPage() {
               </div>
             )}
 
-            {vente&&phase!=="q-vente" && <UserMsg>{vente}</UserMsg>}
+            {vente&&phase!=="q-vente" && <UserMsg>{tr(vente)}</UserMsg>}
 
             {/* Q1.5 — Nom de la boutique */}
             {vente && (
               <AxiaMsg delay={80}>
-                <strong style={{color:YELLOW_D}}>Quel nom veux-tu donner à ta boutique ?</strong>
+                <strong style={{color:YELLOW_D}}>{tr("Quel nom veux-tu donner à ta boutique ?")}</strong>
               </AxiaMsg>
             )}
             {phase==="q-nom" && (
@@ -1168,7 +1178,7 @@ export default function InscriptionPage() {
                   value={nomInput}
                   onChange={e=>setNomInput(e.target.value)}
                   onKeyDown={e=>{ if(e.key==="Enter"){ e.preventDefault(); submitNom(); } }}
-                  placeholder="Ex: Adama Store, Kente & Co, Axia Formations…"
+                  placeholder={tr("Ex: Adama Store, Kente & Co, Axia Formations…")}
                   maxLength={60}
                   autoFocus
                   style={{
@@ -1187,27 +1197,27 @@ export default function InscriptionPage() {
                 </button>
               </div>
             )}
-            {nomChoisi&&phase!=="q-nom" && <UserMsg>{nomChoisi}</UserMsg>}
+            {nomChoisi&&phase!=="q-nom" && <UserMsg>{tr(nomChoisi)}</UserMsg>}
 
             {/* Q2 — Pays */}
             {nomChoisi&&(phase==="q-pays"||paysCode) && (
               <AxiaMsg delay={80}>
-                Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍
+                {tr("Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍")}
               </AxiaMsg>
             )}
             {phase==="q-pays" && erreur && (
               <div className="msg-in" style={{ paddingLeft:47, fontSize:13, color:"#DC2626" }}>
-                {erreur} — choisis à nouveau ton pays pour relancer l'analyse.
+                {tr(erreur)}{" "}{tr("— choisis à nouveau ton pays pour relancer l'analyse.")}
               </div>
             )}
             {phase==="q-pays" && <PaysSelector onSelect={submitPays}/>}
-            {paysNom&&phase!=="q-pays" && <UserMsg>📍 {paysNom}</UserMsg>}
+            {paysNom&&phase!=="q-pays" && <UserMsg>📍 {tr(paysNom)}</UserMsg>}
 
             {/* Analyse */}
             {phase==="analyse" && (
               <>
                 <AxiaMsg delay={0}>
-                  Parfait ! Je crée ton plan de boutique et je sélectionne les 4 meilleurs designs pour toi… ✨
+                  {tr("Parfait ! Je crée ton plan de boutique et je sélectionne les 4 meilleurs designs pour toi… ✨")}
                 </AxiaMsg>
                 <AxiaThinking/>
               </>
@@ -1217,7 +1227,7 @@ export default function InscriptionPage() {
             {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && themeIds.length>0 && (
               <>
                 <AxiaMsg delay={0}>
-                  <strong style={{color:YELLOW_D}}>J'ai analysé ton projet.</strong>{" "}{messageIA}
+                  <strong style={{color:YELLOW_D}}>{tr("J'ai analysé ton projet.")}</strong>{" "}{tr(messageIA)}
                 </AxiaMsg>
                 {phase==="plan" && (
                   <PlanCard
@@ -1240,8 +1250,8 @@ export default function InscriptionPage() {
               <>
                 <AxiaMsg delay={100}>
                   <span style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    Excellent choix ! Crée ton compte pour lancer{" "}
-                    <strong style={{color:YELLOW_D}}>{plan?.nomBoutique}</strong>. 🚀
+                    {tr("Excellent choix ! Crée ton compte pour lancer")}{" "}
+                    <strong style={{color:YELLOW_D}}>{tr(plan?.nomBoutique)}</strong>. 🚀
                   </span>
                 </AxiaMsg>
                 {phase==="q-compte" && (
@@ -1261,19 +1271,19 @@ export default function InscriptionPage() {
                   <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:16 }}>
                     <Loader2 size={18} color={YELLOW} className="animate-spin"/>
                     <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Sora',sans-serif", color:NAVY }}>
-                      Axia construit ta boutique…
+                      {tr("Axia construit ta boutique…")}
                     </span>
                   </div>
                   {steps.map((s,i)=>(
                     <div key={i} className="msg-in" style={{ display:"flex", alignItems:"center", gap:10, fontSize:13, marginBottom:8 }}>
                       <CheckCircle2 size={14} color={SUCCESS} style={{flexShrink:0}}/>
-                      <span style={{color:MID, fontFamily:"'Inter',sans-serif"}}>{s}</span>
+                      <span style={{color:MID, fontFamily:"'Inter',sans-serif"}}>{tr(s)}</span>
                     </div>
                   ))}
                   {steps.length<STEPS_CREATION.length && (
                     <div style={{ display:"flex", alignItems:"center", gap:10, fontSize:13 }}>
                       <Loader2 size={14} color={YELLOW} className="animate-spin" style={{flexShrink:0}}/>
-                      <span style={{color:MUTED}}>En cours…</span>
+                      <span style={{color:MUTED}}>{tr("En cours…")}</span>
                     </div>
                   )}
                 </div>
@@ -1293,10 +1303,10 @@ export default function InscriptionPage() {
                 </div>
                 <div>
                   <h2 style={{ fontFamily:"'Sora',sans-serif", fontSize:28, fontWeight:800, color:NAVY, margin:0 }}>
-                    Ta boutique est prête ! 🎉
+                    {tr("Ta boutique est prête ! 🎉")}
                   </h2>
                   <p style={{ color:MID, fontSize:14, marginTop:8 }}>
-                    {plan?.nomBoutique&&<strong style={{color:YELLOW_D}}>{plan.nomBoutique}</strong>} — direction le Constructeur pour la personnaliser et la publier. Redirection…
+                    {plan?.nomBoutique&&<strong style={{color:YELLOW_D}}>{tr(plan.nomBoutique)}</strong>}{" "}{tr("— direction le Constructeur pour la personnaliser et la publier. Redirection…")}
                   </p>
                 </div>
                 <Loader2 size={22} color={YELLOW} className="animate-spin"/>
@@ -1315,9 +1325,9 @@ export default function InscriptionPage() {
           padding:"0 24px 28px", color:MUTED, fontSize:12,
         }}>
           <div style={{ height:1, background:`linear-gradient(to right,transparent,${BORDER},transparent)`, margin:"0 auto 14px", maxWidth:400 }}/>
-          Tu es livreur ?{" "}
+          {tr("Tu es livreur ?")}{" "}
           <Link href="/inscription/livreur" style={{ color:YELLOW, fontWeight:700, textDecoration:"none" }}>
-            Rejoindre la plateforme →
+            {tr("Rejoindre la plateforme →")}
           </Link>
         </footer>
       )}

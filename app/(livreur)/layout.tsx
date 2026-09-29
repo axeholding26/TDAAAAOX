@@ -5,9 +5,13 @@ import Link from "next/link";
 import { Home, List, LogOut } from "lucide-react";
 import { NotificationsPanel } from "@/components/livreur/NotificationsPanel";
 import { DisponibiliteToggle } from "@/components/livreur/DisponibiliteToggle";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLangue, dico } from "@/lib/i18n/serveur";
 import { GeoTracker } from "@/components/livreur/GeoTracker";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function LivreurLayout({ children }: { children: React.ReactNode }) {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
 
@@ -22,6 +26,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
   if (!livreur) redirect("/connexion");
 
   return (
+    <I18nProvider langue={await getLangue()} dico={await dico("livreur")}>
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Fond étoilé subtil */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -34,13 +39,13 @@ export default async function LivreurLayout({ children }: { children: React.Reac
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
-              src="/logo-dark.png" alt="Axso"
+              src="/logo-dark.png" alt={t("Axso")}
               style={{ height: "30px", width: "auto", objectFit: "contain", flexShrink: 0 }}
             />
             <div>
-              <p className="text-white font-semibold text-sm leading-none">{livreur.nom.split(" ")[0]}</p>
+              <p className="text-white font-semibold text-sm leading-none">{t(livreur.nom.split(" ")[0])}</p>
               <p className="text-gray-500 text-xs">
-                {livreur.tenant?.nomBoutique || "Livreur indépendant"}
+                {t(livreur.tenant?.nomBoutique) || t("Livreur indépendant")}
               </p>
             </div>
           </div>
@@ -64,18 +69,19 @@ export default async function LivreurLayout({ children }: { children: React.Reac
         <div className="max-w-2xl mx-auto px-4 py-3 grid grid-cols-3">
           <Link href="/livreur" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
             <Home size={20} />
-            <span className="text-[10px]">Accueil</span>
+            <span className="text-[10px]">{t("Accueil")}</span>
           </Link>
           <Link href="/livreur/commandes" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
             <List size={20} />
-            <span className="text-[10px]">Livraisons</span>
+            <span className="text-[10px]">{t("Livraisons")}</span>
           </Link>
           <Link href="/connexion" className="flex flex-col items-center gap-1 text-gray-500 hover:text-red-400 transition-colors py-1">
             <LogOut size={20} />
-            <span className="text-[10px]">Quitter</span>
+            <span className="text-[10px]">{t("Quitter")}</span>
           </Link>
         </div>
       </nav>
     </div>
+    </I18nProvider>
   );
 }

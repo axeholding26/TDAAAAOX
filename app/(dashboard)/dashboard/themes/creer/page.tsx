@@ -4,10 +4,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowLeft, Upload, FileCode, Loader2, Wand2 } from "lucide-react";
 import { ApercuDesign, parametresApercu, CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
+import { useT } from "@/components/I18nProvider";
 
 type Mode = "librairie" | "import";
 
 export default function CreerThemePage() {
+  const tr = useT();
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("librairie");
 
@@ -36,10 +38,10 @@ export default function CreerThemePage() {
         body: JSON.stringify({ fichier }),
       });
       if (!res.ok) throw new Error();
-      toast.success(`Design "${nom}" activé !`);
+      toast.success(tr("Design \"{0}\" activé !", nom));
       router.push("/dashboard/themes");
     } catch {
-      toast.error("Erreur lors de l'activation");
+      toast.error(tr("Erreur lors de l'activation"));
     } finally {
       setProvisionnant(null);
     }
@@ -50,8 +52,8 @@ export default function CreerThemePage() {
   const [importing, setImporting] = useState(false);
 
   async function importerDepuisFichier() {
-    if (!importFile) { toast.error("Choisissez un fichier .html à analyser"); return; }
-    if (importFile.size > 300_000) { toast.error("Fichier trop volumineux (300 Ko maximum)."); return; }
+    if (!importFile) { toast.error(tr("Choisissez un fichier .html à analyser")); return; }
+    if (importFile.size > 300_000) { toast.error(tr("Fichier trop volumineux (300 Ko maximum).")); return; }
     if (!confirm(CONFIRMER_CHANGEMENT(importFile.name))) return;
     setImporting(true);
     try {
@@ -70,10 +72,10 @@ export default function CreerThemePage() {
         body: JSON.stringify({ themeId: data.theme.id }),
       });
       if (!activation.ok) throw new Error("Thème créé, mais son activation a échoué — active-le depuis « Mes thèmes ».");
-      toast.success("Thème créé à partir de votre design !");
+      toast.success(tr("Thème créé à partir de votre design !"));
       router.push("/dashboard/themes");
     } catch (e: any) {
-      toast.error(e?.message || "Erreur lors de l'import");
+      toast.error(tr(e?.message) || tr("Erreur lors de l'import"));
     } finally {
       setImporting(false);
     }
@@ -85,10 +87,10 @@ export default function CreerThemePage() {
       <header className="h-14 flex items-center gap-3 px-4 bg-white border-b border-gray-200 flex-shrink-0 z-10">
         <button onClick={() => router.push("/dashboard/themes")}
           className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors text-sm">
-          <ArrowLeft size={15} /> Retour
+          <ArrowLeft size={15} />{" "}{tr("Retour")}
         </button>
         <div className="h-5 w-px bg-gray-200" />
-        <p className="text-sm font-semibold text-gray-900">Nouveau design</p>
+        <p className="text-sm font-semibold text-gray-900">{tr("Nouveau design")}</p>
       </header>
 
       {/* Mode : bibliothèque AXSO Design, ou import de design perso */}
@@ -96,7 +98,7 @@ export default function CreerThemePage() {
         {([["librairie", "Bibliothèque AXSO Design"], ["import", "Importer mon design"]] as [Mode, string][]).map(([m, label]) => (
           <button key={m} onClick={() => setMode(m)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${mode === m ? "bg-[#F5A623]/15 text-[#F5A623]" : "text-gray-500 hover:text-gray-700"}`}>
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>
@@ -104,19 +106,18 @@ export default function CreerThemePage() {
       {mode === "librairie" ? (
         <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
           <p className="text-xs text-gray-500 mb-4 max-w-2xl">
-            {librairie.length} designs choisis pour votre boutique. En choisir un remplace votre design
-            actuel, avec vos vrais produits déjà branchés dans la grille.
+            {librairie.length}{" "}{tr("designs choisis pour votre boutique. En choisir un remplace votre design actuel, avec vos vrais produits déjà branchés dans la grille.")}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-6xl">
             {librairie.map((t) => (
               <div key={t.id} className="rounded-2xl border-2 border-gray-200 bg-white overflow-hidden hover:border-gray-300 transition-all">
                 <ApercuDesign fichier={t.fichier} fond={t.config?.colors?.fond} params={params} className="h-44" />
                 <div className="p-3.5">
-                  <p className="text-sm font-bold text-gray-800">{t.nom}</p>
-                  <p className="text-[11px] text-gray-400 mb-3 leading-snug">{t.description}</p>
+                  <p className="text-sm font-bold text-gray-800">{tr(t.nom)}</p>
+                  <p className="text-[11px] text-gray-400 mb-3 leading-snug">{tr(t.description)}</p>
                   <button onClick={() => utiliserDesignLibrairie(t.fichier, t.nom)} disabled={!!provisionnant}
                     className="w-full py-2 rounded-xl text-[11px] font-bold text-white disabled:opacity-50 hover:opacity-90 transition-all bg-[#F5A623]">
-                    {provisionnant === t.fichier ? "..." : "Utiliser ce design"}
+                    {provisionnant === t.fichier ? "..." : tr("Utiliser ce design")}
                   </button>
                 </div>
               </div>
@@ -128,12 +129,10 @@ export default function CreerThemePage() {
           <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-1.5">
               <Wand2 size={16} className="text-[#F5A623]" />
-              <p className="text-sm font-semibold text-gray-900">Importer votre propre design</p>
+              <p className="text-sm font-semibold text-gray-900">{tr("Importer votre propre design")}</p>
             </div>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
-              Envoyez un fichier HTML de référence (une maquette, un site qui vous plaît).
-              Notre IA analyse uniquement son style — couleurs, polices, ambiance — pour créer
-              un thème AXSO personnalisé. Le fichier n'est jamais exécuté ni publié tel quel.
+              {tr("Envoyez un fichier HTML de référence (une maquette, un site qui vous plaît). Notre IA analyse uniquement son style — couleurs, polices, ambiance — pour créer un thème AXSO personnalisé. Le fichier n'est jamais exécuté ni publié tel quel.")}
             </p>
 
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-[#F5A623]/50 transition-all">
@@ -142,19 +141,19 @@ export default function CreerThemePage() {
               {importFile ? (
                 <>
                   <FileCode size={22} className="text-[#F5A623]" />
-                  <span className="text-xs font-medium text-gray-700">{importFile.name}</span>
+                  <span className="text-xs font-medium text-gray-700">{tr(importFile.name)}</span>
                 </>
               ) : (
                 <>
                   <Upload size={22} className="text-gray-400" />
-                  <span className="text-xs text-gray-500">Cliquez pour choisir un fichier .html</span>
+                  <span className="text-xs text-gray-500">{tr("Cliquez pour choisir un fichier .html")}</span>
                 </>
               )}
             </label>
 
             <button onClick={importerDepuisFichier} disabled={importing || !importFile}
               className="w-full mt-5 flex items-center justify-center gap-2 bg-[#F5A623] text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#d4820a] disabled:opacity-50 transition-all">
-              {importing ? <><Loader2 size={14} className="animate-spin" /> Analyse en cours…</> : "Analyser & créer mon thème"}
+              {importing ? <><Loader2 size={14} className="animate-spin" />{" "}{tr("Analyse en cours…")}</> : tr("Analyser & créer mon thème")}
             </button>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { StyleCss } from "./StyleCss";
 import { SELECTEUR as LIENS_DESIGN, estLienRecherche, CSS_LIEN } from "./RechercheDesign";
+import { useT } from "@/components/I18nProvider";
 
 // Réglages « Boutons et navigation » qui demandent un comportement, appliqués
 // aux designs AXSO importés (le CSS pur est dans lib/reglages-design.ts) :
@@ -38,6 +39,7 @@ const idProduit = (a: HTMLAnchorElement) => a.getAttribute("href")?.split("/prod
 const estCarte = (a: HTMLAnchorElement) => !!idProduit(a) && (!!a.querySelector("img, svg, [class*='media'], [class*='img']") || /card/i.test(a.className));
 
 export function NavigationDesign({ slug, type, favoris, fondEntete, accent, texte, collections, apercu }: Props) {
+  const t = useT();
   const chemin = usePathname();
   const ids = useWishlistStore((s) => s.produitIds);
   const toggle = useWishlistStore((s) => s.toggle);
@@ -197,12 +199,12 @@ export function NavigationDesign({ slug, type, favoris, fondEntete, accent, text
                   <span className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center font-bold" style={{ background: `${accent}18`, color: accent }}>
                     {c.imageUrl ? <img src={c.imageUrl} alt="" className="w-full h-full object-cover" /> : c.nom.slice(0, 1).toUpperCase()}
                   </span>
-                  <span className="text-[14px] font-semibold leading-snug">{c.nom}</span>
+                  <span className="text-[14px] font-semibold leading-snug">{t(c.nom)}</span>
                 </Link>
               ))}
             </div>
             <Link href={`/${slug}/produits`} onClick={(e) => { if (apercu) e.preventDefault(); setMega(null); }} className="mt-4 inline-block text-[13.5px] font-semibold underline underline-offset-4" style={{ color: accent }}>
-              Voir tout le catalogue →
+              {t("Voir tout le catalogue →")}
             </Link>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   Clock, MessageSquare, Sparkles, Info, ChevronDown, ChevronUp,
   Phone, AlertCircle, Plus, Trash2
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface ChatbotConfig {
   delaiReponse: number;
@@ -34,6 +35,7 @@ const LANGUES = [
 const EXEMPLES_EXCLUS = ["STOP", "Désabonner", "désabonnement", "unsubscribe"];
 
 export default function ChatbotPage() {
+  const t = useT();
   const [actif, setActif] = useState(false);
   const [config, setConfig] = useState<ChatbotConfig>({
     delaiReponse: 0,
@@ -93,8 +95,8 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Chatbot WhatsApp IA</h1>
-          <p className="text-gray-400 text-sm mt-0.5">AXIA répond automatiquement à vos messages WhatsApp</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("Chatbot WhatsApp IA")}</h1>
+          <p className="text-gray-400 text-sm mt-0.5">{t("AXIA répond automatiquement à vos messages WhatsApp")}</p>
         </div>
         {/* Toggle ON/OFF */}
         <button
@@ -102,7 +104,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
           className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm transition-all ${actif ? "bg-green-500 text-white shadow-lg shadow-green-500/30" : "bg-gray-100 text-gray-500"}`}
         >
           <Power size={15}/>
-          {actif ? "Actif" : "Inactif"}
+          {actif ? t("Actif") : t("Inactif")}
         </button>
       </div>
 
@@ -110,9 +112,9 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
         <AlertCircle size={16} className="text-amber-500 flex-shrink-0 mt-0.5"/>
         <div>
-          <p className="text-sm font-semibold text-amber-800">WhatsApp Business requis</p>
+          <p className="text-sm font-semibold text-amber-800">{t("WhatsApp Business requis")}</p>
           <p className="text-xs text-amber-600 mt-0.5">
-            Connectez votre compte WhatsApp Business dans <a href="/dashboard/connecteurs" className="underline font-bold">Connecteurs</a> pour activer le chatbot.
+            {t("Connectez votre compte WhatsApp Business dans")}{" "}<a href="/dashboard/connecteurs" className="underline font-bold">{t("Connecteurs")}</a> pour activer le chatbot.
           </p>
         </div>
       </div>
@@ -124,10 +126,10 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
         </div>
         <div>
           <p className={`font-bold text-sm ${actif ? "text-green-800" : "text-gray-600"}`}>
-            {actif ? "AXIA répond automatiquement à vos messages" : "Chatbot désactivé — vous répondez manuellement"}
+            {actif ? t("AXIA répond automatiquement à vos messages") : t("Chatbot désactivé — vous répondez manuellement")}
           </p>
           <p className={`text-xs mt-0.5 ${actif ? "text-green-600" : "text-gray-400"}`}>
-            {actif ? `Personnalité: ${PERSONNALITES.find(p => p.id === config.personnalite)?.label} · Délai: ${config.delaiReponse}s` : "Activez le toggle ci-dessus pour démarrer"}
+            {actif ? t("Personnalité: {0} · Délai: {1}s", PERSONNALITES.find(p => p.id === config.personnalite)?.label, config.delaiReponse) : t("Activez le toggle ci-dessus pour démarrer")}
           </p>
         </div>
         {actif && <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse ml-auto"/>}
@@ -136,7 +138,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       {/* ── Personnalité ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <h2 className="font-bold text-gray-900 text-sm mb-3 flex items-center gap-2">
-          <Sparkles size={15} className="text-violet-500"/> Personnalité d'AXIA
+          <Sparkles size={15} className="text-violet-500"/>{" "}{t("Personnalité d'AXIA")}
         </h2>
         <div className="grid grid-cols-2 gap-2">
           {PERSONNALITES.map(p => (
@@ -145,8 +147,8 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
               onClick={() => setConfig(c => ({ ...c, personnalite: p.id }))}
               className={`text-left p-3 rounded-xl border-2 transition-all ${config.personnalite === p.id ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
             >
-              <p className={`text-sm font-bold ${config.personnalite === p.id ? "text-[#e8950f]" : "text-gray-700"}`}>{p.label}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{p.desc}</p>
+              <p className={`text-sm font-bold ${config.personnalite === p.id ? "text-[#e8950f]" : "text-gray-700"}`}>{t(p.label)}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{t(p.desc)}</p>
             </button>
           ))}
         </div>
@@ -155,13 +157,13 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       {/* ── Message d'accueil ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <h2 className="font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
-          <MessageSquare size={15} className="text-[#D4911A]"/> Message d'accueil
+          <MessageSquare size={15} className="text-[#D4911A]"/>{" "}{t("Message d'accueil")}
         </h2>
-        <p className="text-xs text-gray-400 mb-3">Envoyé automatiquement quand quelqu'un contacte pour la première fois (optionnel)</p>
+        <p className="text-xs text-gray-400 mb-3">{t("Envoyé automatiquement quand quelqu'un contacte pour la première fois (optionnel)")}</p>
         <textarea
           value={config.messageAccueil}
           onChange={e => setConfig(c => ({ ...c, messageAccueil: e.target.value }))}
-          placeholder="Ex: Bonjour ! Je suis AXIA, votre assistante chez [Boutique]. Comment puis-je vous aider ?"
+          placeholder={t("Ex: Bonjour ! Je suis AXIA, votre assistante chez [Boutique]. Comment puis-je vous aider ?")}
           rows={3}
           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5A623]/50 resize-none"
         />
@@ -169,7 +171,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
 
       {/* ── Langue ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <h2 className="font-bold text-gray-900 text-sm mb-3">Langue de réponse</h2>
+        <h2 className="font-bold text-gray-900 text-sm mb-3">{t("Langue de réponse")}</h2>
         <div className="flex flex-wrap gap-2">
           {LANGUES.map(l => (
             <button
@@ -177,7 +179,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
               onClick={() => setConfig(c => ({ ...c, langue: l.id }))}
               className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all ${config.langue === l.id ? "border-[#F5A623] bg-amber-50 text-[#e8950f]" : "border-gray-200 text-gray-500 hover:border-gray-300"}`}
             >
-              {l.label}
+              {t(l.label)}
             </button>
           ))}
         </div>
@@ -186,9 +188,9 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       {/* ── Délai de réponse ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <h2 className="font-bold text-gray-900 text-sm mb-1 flex items-center gap-2">
-          <Clock size={15} className="text-gray-400"/> Délai avant réponse
+          <Clock size={15} className="text-gray-400"/>{" "}{t("Délai avant réponse")}
         </h2>
-        <p className="text-xs text-gray-400 mb-4">Un délai naturel évite l'effet "bot évident"</p>
+        <p className="text-xs text-gray-400 mb-4">{t("Un délai naturel évite l'effet \"bot évident\"")}</p>
         <div className="flex items-center gap-4">
           <input
             type="range" min={0} max={30} step={5}
@@ -196,10 +198,10 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
             onChange={e => setConfig(c => ({ ...c, delaiReponse: parseInt(e.target.value) }))}
             className="flex-1 accent-[#F5A623]"
           />
-          <span className="text-lg font-bold text-gray-900 w-16 text-right">{config.delaiReponse}s</span>
+          <span className="text-lg font-bold text-gray-900 w-16 text-right">{t(config.delaiReponse)}s</span>
         </div>
         <div className="flex justify-between text-[10px] text-gray-300 mt-1 px-0.5">
-          <span>Immédiat</span><span>10s</span><span>20s</span><span>30s</span>
+          <span>{t("Immédiat")}</span><span>10s</span><span>20s</span><span>30s</span>
         </div>
       </div>
 
@@ -207,7 +209,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-            <Clock size={15} className="text-indigo-500"/> Horaires de réponse
+            <Clock size={15} className="text-indigo-500"/>{" "}{t("Horaires de réponse")}
           </h2>
           <button
             onClick={() => setConfig(c => ({ ...c, horaires: { ...c.horaires, actif: !c.horaires.actif } }))}
@@ -219,30 +221,30 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
         {config.horaires.actif && (
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Début</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Début")}</label>
               <input type="time" value={config.horaires.debut} onChange={e => setConfig(c => ({ ...c, horaires: { ...c.horaires, debut: e.target.value } }))}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none"/>
             </div>
             <div className="flex-1">
-              <label className="text-xs text-gray-500 mb-1 block">Fin</label>
+              <label className="text-xs text-gray-500 mb-1 block">{t("Fin")}</label>
               <input type="time" value={config.horaires.fin} onChange={e => setConfig(c => ({ ...c, horaires: { ...c.horaires, fin: e.target.value } }))}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none"/>
             </div>
           </div>
         )}
-        {!config.horaires.actif && <p className="text-xs text-gray-400">AXIA répondra 24h/24 — 7j/7</p>}
+        {!config.horaires.actif && <p className="text-xs text-gray-400">{t("AXIA répondra 24h/24 — 7j/7")}</p>}
       </div>
 
       {/* ── Mots-clés exclus ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <h2 className="font-bold text-gray-900 text-sm mb-1">Mots-clés exclus</h2>
-        <p className="text-xs text-gray-400 mb-3">AXIA ne répondra pas si le message contient ces mots (ex: STOP, désabonner)</p>
+        <h2 className="font-bold text-gray-900 text-sm mb-1">{t("Mots-clés exclus")}</h2>
+        <p className="text-xs text-gray-400 mb-3">{t("AXIA ne répondra pas si le message contient ces mots (ex: STOP, désabonner)")}</p>
         <div className="flex gap-2 mb-3">
           <input
             value={newMotsCle}
             onChange={e => setNewMotsCle(e.target.value)}
             onKeyDown={e => e.key === "Enter" && ajouterMotCle()}
-            placeholder="Ajouter un mot-clé…"
+            placeholder={t("Ajouter un mot-clé…")}
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-300"
           />
           <button onClick={ajouterMotCle} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
@@ -252,7 +254,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
         <div className="flex flex-wrap gap-2">
           {config.motsClesExclus.map(mc => (
             <span key={mc} className="flex items-center gap-1.5 px-3 py-1 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-600">
-              {mc}
+              {t(mc)}
               <button onClick={() => setConfig(c => ({ ...c, motsClesExclus: c.motsClesExclus.filter(m => m !== mc) }))} className="text-gray-300 hover:text-red-400 transition-all">
                 <Trash2 size={10}/>
               </button>
@@ -260,8 +262,8 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
           ))}
           {config.motsClesExclus.length === 0 && (
             <div className="text-xs text-gray-300">
-              Suggestions: {EXEMPLES_EXCLUS.map(e => (
-                <button key={e} onClick={() => setConfig(c => ({ ...c, motsClesExclus: [...c.motsClesExclus, e] }))} className="mx-1 underline hover:text-gray-500">{e}</button>
+              {t("Suggestions:")}{" "}{EXEMPLES_EXCLUS.map(e => (
+                <button key={e} onClick={() => setConfig(c => ({ ...c, motsClesExclus: [...c.motsClesExclus, e] }))} className="mx-1 underline hover:text-gray-500">{t(e)}</button>
               ))}
             </div>
           )}
@@ -271,23 +273,23 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
       {/* ── Instructions supplémentaires ── */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="font-bold text-gray-900 text-sm">Instructions personnalisées</h2>
+          <h2 className="font-bold text-gray-900 text-sm">{t("Instructions personnalisées")}</h2>
           <button onClick={() => setShowPreview(p => !p)} className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
-            {showPreview ? <><ChevronUp size={12}/> Masquer prompt</> : <><ChevronDown size={12}/> Voir prompt</>}
+            {showPreview ? <><ChevronUp size={12}/>{" "}{t("Masquer prompt")}</> : <><ChevronDown size={12}/>{" "}{t("Voir prompt")}</>}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mb-3">Ajoutez des règles spécifiques (ex: "Ne jamais mentionner les concurrents")</p>
+        <p className="text-xs text-gray-400 mb-3">{t("Ajoutez des règles spécifiques (ex: \"Ne jamais mentionner les concurrents\")")}</p>
         <textarea
           value={config.instructionsSupp}
           onChange={e => setConfig(c => ({ ...c, instructionsSupp: e.target.value }))}
-          placeholder="Ex: Toujours proposer le paiement par Wave ou Orange Money. Ne jamais promettre une livraison en moins de 24h..."
+          placeholder={t("Ex: Toujours proposer le paiement par Wave ou Orange Money. Ne jamais promettre une livraison en moins de 24h...")}
           rows={3}
           className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#F5A623]/50 resize-none"
         />
         {showPreview && (
           <div className="mt-3 bg-gray-900 rounded-xl p-4">
-            <p className="text-[10px] text-gray-400 mb-2 font-mono uppercase tracking-wider">Prompt système généré</p>
-            <pre className="text-[11px] text-green-400 font-mono whitespace-pre-wrap leading-relaxed">{promptPreview}</pre>
+            <p className="text-[10px] text-gray-400 mb-2 font-mono uppercase tracking-wider">{t("Prompt système généré")}</p>
+            <pre className="text-[11px] text-green-400 font-mono whitespace-pre-wrap leading-relaxed">{t(promptPreview)}</pre>
           </div>
         )}
       </div>
@@ -299,7 +301,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
         className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-white text-sm transition-all disabled:opacity-50 sticky bottom-4"
         style={{ background: saved ? "#059669" : "linear-gradient(135deg, #F5A623, #e8950f)", boxShadow: saved ? "0 4px 16px rgba(5,150,105,0.3)" : "0 4px 16px rgba(245,166,35,0.3)" }}
       >
-        {saving ? <><Loader2 size={15} className="animate-spin"/> Sauvegarde…</> : saved ? <><CheckCircle2 size={15}/> Sauvegardé !</> : <><Save size={15}/> Sauvegarder la configuration</>}
+        {saving ? <><Loader2 size={15} className="animate-spin"/>{" "}{t("Sauvegarde…")}</> : saved ? <><CheckCircle2 size={15}/>{" "}{t("Sauvegardé !")}</> : <><Save size={15}/>{" "}{t("Sauvegarder la configuration")}</>}
       </button>
     </div>
   );

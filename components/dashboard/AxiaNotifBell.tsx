@@ -6,6 +6,7 @@ import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import {
   Bell, ShoppingBag, MessageCircle, AlertTriangle, DollarSign, Star, Package, Info,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface NotifMarchand {
   id: string; type: string; titre: string; message: string;
@@ -38,6 +39,7 @@ function tempsEcoule(iso: string) {
 // Sans ça, un marchand qui atterrit sur AXIA (écran par défaut) n'a aucune
 // visibilité sur les nouvelles commandes tant qu'il ne navigue pas ailleurs.
 export function AxiaNotifBell() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotifMarchand[]>([]);
   const [nonLues, setNonLues] = useState(0);
@@ -65,13 +67,13 @@ export function AxiaNotifBell() {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen(v => !v)} title="Notifications"
+      <button onClick={() => setOpen(v => !v)} title={t("Notifications")}
         className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0">
         <Bell size={13} className="text-white/60" />
         {nonLues > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[15px] h-[15px] px-[3px] rounded-full flex items-center justify-center text-[8px] font-extrabold text-white"
             style={{ background: "#F5A623", border: "2px solid #16233f" }}>
-            {nonLues > 9 ? "9+" : nonLues}
+            {nonLues > 9 ? "9+" : t(nonLues)}
           </span>
         )}
       </button>
@@ -80,10 +82,10 @@ export function AxiaNotifBell() {
         <div className="absolute right-0 top-[42px] w-[300px] max-w-[85vw] rounded-2xl overflow-hidden z-50"
           style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 64px rgba(0,0,0,0.45)" }}>
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <span className="text-[13px] font-bold text-white">Notifications</span>
+            <span className="text-[13px] font-bold text-white">{t("Notifications")}</span>
             {nonLues > 0 && (
               <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>
-                {nonLues} nouvelle{nonLues > 1 ? "s" : ""}
+                {t(nonLues)} nouvelle{nonLues > 1 ? "s" : ""}
               </span>
             )}
           </div>
@@ -92,7 +94,7 @@ export function AxiaNotifBell() {
             {notifications.length === 0 && (
               <div className="py-8 text-center px-4">
                 <Bell size={20} className="mx-auto mb-2 text-white/15" />
-                <p className="text-[12px] text-white/35">Aucune notification pour l'instant</p>
+                <p className="text-[12px] text-white/35">{t("Aucune notification pour l'instant")}</p>
               </div>
             )}
             {notifications.map((n, i) => {
@@ -108,24 +110,24 @@ export function AxiaNotifBell() {
                 >
                   <Icon size={15} style={{ color, flexShrink: 0, marginTop: 2 }} />
                   <div className="min-w-0">
-                    <p className="text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.9)", fontWeight: n.lu ? 400 : 700 }}>{n.titre}</p>
-                    <p className="text-[11.5px] mt-0.5 leading-snug text-white/45">{n.message}</p>
+                    <p className="text-[12.5px] leading-snug" style={{ color: "rgba(255,255,255,0.9)", fontWeight: n.lu ? 400 : 700 }}>{t(n.titre)}</p>
+                    <p className="text-[11.5px] mt-0.5 leading-snug text-white/45">{t(n.message)}</p>
                     <p className="text-[10.5px] mt-1 text-white/30">{tempsEcoule(n.createdAt)}{n.autreBoutique ? ` · ${n.nomBoutique}` : ""}</p>
                   </div>
                 </div>
               );
               // Notification d'une autre boutique : on bascule dessus avant d'ouvrir le lien.
-              if (n.autreBoutique) return <div key={n.id} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{content}</div>;
+              if (n.autreBoutique) return <div key={n.id} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{t(content)}</div>;
               return n.lien
-                ? <Link key={n.id} href={n.lien}>{content}</Link>
-                : <div key={n.id}>{content}</div>;
+                ? <Link key={n.id} href={n.lien}>{t(content)}</Link>
+                : <div key={n.id}>{t(content)}</div>;
             })}
           </div>
 
           {notifications.length > 0 && (
             <div className="px-4 py-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
               <button onClick={marquerToutLu} className="text-[11.5px] font-bold" style={{ color: "#F5A623" }}>
-                Tout marquer comme lu
+                {t("Tout marquer comme lu")}
               </button>
             </div>
           )}

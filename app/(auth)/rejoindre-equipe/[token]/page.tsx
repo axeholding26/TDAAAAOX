@@ -4,6 +4,7 @@ import { use as usePromise } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, UserPlus, CheckCircle2, XCircle } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const ACCENT = "#F5A623";
 const ACCENT_DARK = "#d4880d";
@@ -13,6 +14,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function RejoindreEquipePage({ params }: { params: Promise<{ token: string }> }) {
+  const t = useT();
   const { token } = usePromise(params);
   const router = useRouter();
 
@@ -73,7 +75,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
           {statut === "chargement" && (
             <div className="py-10 text-center text-[#808080] text-sm flex flex-col items-center gap-3">
               <Loader2 size={20} className="animate-spin" style={{ color: ACCENT }} />
-              Vérification de l'invitation...
+              {t("Vérification de l'invitation...")}
             </div>
           )}
 
@@ -82,8 +84,8 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 mx-auto" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
                 <XCircle size={18} className="text-red-500" />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1.5">Invitation invalide</h2>
-              <p className="text-[#808080] text-sm">{erreur}</p>
+              <h2 className="text-xl font-bold text-[#111111] mb-1.5">{t("Invitation invalide")}</h2>
+              <p className="text-[#808080] text-sm">{t(erreur)}</p>
             </div>
           )}
 
@@ -92,21 +94,20 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <UserPlus size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">Rejoindre {invitation.boutique}</h2>
+              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Rejoindre")}{" "}{t(invitation.boutique)}</h2>
               <p className="text-[#808080] text-sm mb-7">
-                Bonjour {invitation.nom}, tu es invité·e avec le rôle <strong>{ROLE_LABELS[invitation.role] ?? invitation.role}</strong>.
-                Choisis un mot de passe pour créer ton compte.
+                {t("Bonjour")}{" "}{t(invitation.nom)}{t(", tu es invité·e avec le rôle")}{" "}<strong>{t(ROLE_LABELS[invitation.role]) ?? t(invitation.role)}</strong>{t(". Choisis un mot de passe pour créer ton compte.")}
               </p>
 
               {erreur && (
                 <div className="rounded-xl p-3 text-sm text-center mb-5" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-                  {erreur}
+                  {t(erreur)}
                 </div>
               )}
 
               <form onSubmit={accepter} className="space-y-4">
                 <div>
-                  <label className="block text-[#595959] text-sm font-medium mb-1.5">Mot de passe</label>
+                  <label className="block text-[#595959] text-sm font-medium mb-1.5">{t("Mot de passe")}</label>
                   <div className="relative">
                     <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••" className={inputCls + " pr-10"} minLength={6} required />
@@ -119,7 +120,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
                 <button type="submit" disabled={envoi}
                   className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>
-                  {envoi ? <><Loader2 size={16} className="animate-spin" /> Création du compte...</> : "Créer mon compte →"}
+                  {envoi ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Création du compte...")}</> : t("Créer mon compte →")}
                 </button>
               </form>
             </>
@@ -130,8 +131,8 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 mx-auto" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}>
                 <CheckCircle2 size={18} className="text-green-500" />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1.5">Compte créé !</h2>
-              <p className="text-[#808080] text-sm">Redirection vers la connexion...</p>
+              <h2 className="text-xl font-bold text-[#111111] mb-1.5">{t("Compte créé !")}</h2>
+              <p className="text-[#808080] text-sm">{t("Redirection vers la connexion...")}</p>
             </div>
           )}
         </div>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Wand2, Sparkles, Package, Download, Check, Loader2, RefreshCw, ChevronRight, Info } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface ProduitGenere {
   nom: string;
@@ -28,6 +29,7 @@ const EXEMPLES = [
 ];
 
 export default function MagicImportPage() {
+  const t = useT();
   const [description, setDescription] = useState("");
   const [nombreProduits, setNombreProduits] = useState(8);
   const [generating, setGenerating] = useState(false);
@@ -37,7 +39,7 @@ export default function MagicImportPage() {
   const [importedCount, setImportedCount] = useState(0);
 
   async function generer() {
-    if (!description.trim()) { toast.error("Décrivez votre boutique ou vos produits"); return; }
+    if (!description.trim()) { toast.error(t("Décrivez votre boutique ou vos produits")); return; }
     setGenerating(true);
     try {
       const res = await fetch("/api/magic-import", {
@@ -49,9 +51,9 @@ export default function MagicImportPage() {
       if (!res.ok) throw new Error(data.message);
       setProduits(data.produits.map((p: any) => ({ ...p, selected: true })));
       setPhase("review");
-      toast.success(`${data.total} produits générés par Gemini`);
+      toast.success(t("{0} produits générés par Gemini", data.total));
     } catch (err: any) {
-      toast.error(err.message || "Erreur de génération");
+      toast.error(t(err.message) || t("Erreur de génération"));
     } finally {
       setGenerating(false);
     }
@@ -63,7 +65,7 @@ export default function MagicImportPage() {
 
   async function importer() {
     const selected = produits.filter(p => p.selected);
-    if (!selected.length) { toast.error("Sélectionne au moins un produit"); return; }
+    if (!selected.length) { toast.error(t("Sélectionne au moins un produit")); return; }
     setImporting(true);
     try {
       const res = await fetch("/api/magic-import", {
@@ -76,7 +78,7 @@ export default function MagicImportPage() {
       setImportedCount(data.created);
       setPhase("done");
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(t(err.message));
     } finally {
       setImporting(false);
     }
@@ -99,13 +101,13 @@ export default function MagicImportPage() {
           <Wand2 size={22} className="text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 font-poppins">Magic Import</h1>
-          <p className="text-gray-400 text-sm">Gemini + Flux.1 génère votre catalogue complet avec images ultra HD en quelques secondes</p>
+          <h1 className="text-2xl font-bold text-gray-900 font-poppins">{t("Magic Import")}</h1>
+          <p className="text-gray-400 text-sm">{t("Gemini + Flux.1 génère votre catalogue complet avec images ultra HD en quelques secondes")}</p>
         </div>
         {phase === "review" && (
           <button onClick={reset}
             className="ml-auto flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 border border-gray-200 px-3 py-1.5 rounded-xl transition-all">
-            <RefreshCw size={13} /> Nouveau
+            <RefreshCw size={13} />{" "}{t("Nouveau")}
           </button>
         )}
       </div>
@@ -118,12 +120,10 @@ export default function MagicImportPage() {
             <div className="flex items-start gap-3">
               <Info size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-bold text-amber-800 mb-1">Comment ça marche</p>
+                <p className="text-sm font-bold text-amber-800 mb-1">{t("Comment ça marche")}</p>
                 <p className="text-sm text-amber-700 leading-relaxed">
-                  Décrivez votre boutique en quelques mots → <strong>Gemini</strong> génère un catalogue
-                  complet avec descriptions, prix adaptés au marché africain, tags SEO et prompts optimisés pour
-                  <strong> Flux.1-dev</strong>. Les images Flux.1 ultra HD se chargent automatiquement.
-                  Sélectionnez vos produits et importez en 1 clic.
+                  {t("Décrivez votre boutique en quelques mots →")}{" "}<strong>{t("Gemini")}</strong>{" "}{t("génère un catalogue complet avec descriptions, prix adaptés au marché africain, tags SEO et prompts optimisés pour")}
+                  <strong>{" "}{t("Flux.1-dev")}</strong>{t(". Les images Flux.1 ultra HD se chargent automatiquement. Sélectionnez vos produits et importez en 1 clic.")}
                 </p>
               </div>
             </div>
@@ -133,12 +133,12 @@ export default function MagicImportPage() {
           <div className="bg-white border border-gray-100 rounded-2xl p-6 space-y-5">
             <div>
               <label className="text-sm font-semibold text-gray-700 block mb-2">
-                Décrivez votre boutique ou votre niche de produits
+                {t("Décrivez votre boutique ou votre niche de produits")}
               </label>
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value.slice(0, 600))}
-                placeholder="Ex: Je vends des robes africaines wax premium, des bazins brodés et des accessoires mode pour femmes au Sénégal. Gamme de prix 15 000 – 85 000 XOF."
+                placeholder={t("Ex: Je vends des robes africaines wax premium, des bazins brodés et des accessoires mode pour femmes au Sénégal. Gamme de prix 15 000 – 85 000 XOF.")}
                 className="w-full h-36 p-4 rounded-xl border border-gray-200 text-sm text-gray-800 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 placeholder-gray-300 transition-all"
               />
               <p className="text-xs text-gray-300 mt-1 text-right">{description.length}/600</p>
@@ -147,8 +147,8 @@ export default function MagicImportPage() {
             {/* Nombre de produits */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="text-sm font-semibold text-gray-700">Nombre de produits</label>
-                <span className="text-xl font-black text-amber-500">{nombreProduits}</span>
+                <label className="text-sm font-semibold text-gray-700">{t("Nombre de produits")}</label>
+                <span className="text-xl font-black text-amber-500">{t(nombreProduits)}</span>
               </div>
               <div className="flex items-center gap-4">
                 <input type="range" min={3} max={20} value={nombreProduits}
@@ -171,22 +171,22 @@ export default function MagicImportPage() {
             <button onClick={generer} disabled={generating || !description.trim()}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-[15px] flex items-center justify-center gap-3 hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-200/60">
               {generating ? (
-                <><Loader2 size={19} className="animate-spin" /> Gemini génère votre catalogue...</>
+                <><Loader2 size={19} className="animate-spin" />{" "}{t("Gemini génère votre catalogue...")}</>
               ) : (
-                <><Wand2 size={19} /> Générer {nombreProduits} produits avec Flux.1-dev</>
+                <><Wand2 size={19} />{" "}{t("Générer")}{" "}{t(nombreProduits)}{" "}{t("produits avec Flux.1-dev")}</>
               )}
             </button>
           </div>
 
           {/* Quick examples */}
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Exemples rapides</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{t("Exemples rapides")}</p>
             <div className="space-y-2">
               {EXEMPLES.map(ex => (
                 <button key={ex} onClick={() => setDescription(ex)}
                   className="w-full text-left text-xs bg-white border border-gray-100 text-gray-500 px-4 py-2.5 rounded-xl hover:border-amber-300 hover:text-gray-800 hover:bg-amber-50 transition-all flex items-center gap-2">
                   <Sparkles size={11} className="text-amber-400 flex-shrink-0" />
-                  {ex}
+                  {t(ex)}
                 </button>
               ))}
             </div>
@@ -201,17 +201,17 @@ export default function MagicImportPage() {
           <div className="flex items-center justify-between bg-white border border-gray-100 rounded-2xl px-5 py-3 gap-3 flex-wrap">
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-gray-700">
-                <span className="text-amber-500 font-black">{selectedCount}</span> / {produits.length} sélectionnés
+                <span className="text-amber-500 font-black">{selectedCount}</span> / {produits.length}{" "}{t("sélectionnés")}
               </span>
               <button onClick={() => setProduits(p => p.map(x => ({ ...x, selected: true })))}
-                className="text-xs text-amber-500 hover:text-amber-600 font-semibold">Tout</button>
+                className="text-xs text-amber-500 hover:text-amber-600 font-semibold">{t("Tout")}</button>
               <button onClick={() => setProduits(p => p.map(x => ({ ...x, selected: false })))}
-                className="text-xs text-gray-400 hover:text-gray-600 font-semibold">Aucun</button>
+                className="text-xs text-gray-400 hover:text-gray-600 font-semibold">{t("Aucun")}</button>
             </div>
             <button onClick={importer} disabled={importing || selectedCount === 0}
               className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 shadow-md shadow-amber-200">
               {importing ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-              Importer {selectedCount > 0 ? selectedCount : ""} produit{selectedCount > 1 ? "s" : ""}
+              {t("Importer")}{" "}{selectedCount > 0 ? selectedCount : ""} produit{selectedCount > 1 ? "s" : ""}
             </button>
           </div>
 
@@ -237,26 +237,26 @@ export default function MagicImportPage() {
                   {/* Category badge */}
                   <div className="absolute bottom-2 left-2">
                     <span className="text-[10px] font-semibold bg-black/55 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      {p.categorie}
+                      {t(p.categorie)}
                     </span>
                   </div>
                   {/* Flux badge */}
                   <div className="absolute bottom-2 right-2">
                     <span className="text-[9px] font-bold bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1.5 py-0.5 rounded-full">
-                      FLUX.1
+                      {t("FLUX.1")}
                     </span>
                   </div>
                 </div>
 
                 {/* Info */}
                 <div className="p-3.5">
-                  <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-0.5">{p.nom}</p>
-                  <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{p.description}</p>
+                  <p className="text-sm font-bold text-gray-900 line-clamp-1 mb-0.5">{t(p.nom)}</p>
+                  <p className="text-[11px] text-gray-400 line-clamp-2 leading-relaxed">{t(p.description)}</p>
 
                   {/* Price */}
                   <div className="flex items-baseline gap-2 mt-2.5">
                     <span className="text-[15px] font-black text-gray-900">{p.prix.toLocaleString()}</span>
-                    <span className="text-xs text-gray-400">{p.devise}</span>
+                    <span className="text-xs text-gray-400">{t(p.devise)}</span>
                     {p.prixCompare > p.prix && (
                       <span className="text-xs text-gray-300 line-through ml-auto">{p.prixCompare.toLocaleString()}</span>
                     )}
@@ -267,7 +267,7 @@ export default function MagicImportPage() {
                     <div className="flex gap-1 mt-2 flex-wrap">
                       {p.tags.slice(0, 3).map(tag => (
                         <span key={tag} className="text-[9px] bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md font-medium">
-                          #{tag}
+                          #{t(tag)}
                         </span>
                       ))}
                     </div>
@@ -282,9 +282,9 @@ export default function MagicImportPage() {
             <button onClick={importer} disabled={importing || selectedCount === 0}
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-[15px] flex items-center justify-center gap-3 hover:opacity-90 transition-all disabled:opacity-50 shadow-xl shadow-amber-300/40">
               {importing ? (
-                <><Loader2 size={20} className="animate-spin" /> Importation en cours...</>
+                <><Loader2 size={20} className="animate-spin" />{" "}{t("Importation en cours...")}</>
               ) : (
-                <><Package size={20} /> Importer {selectedCount} produit{selectedCount > 1 ? "s" : ""} dans ma boutique <ChevronRight size={17} /></>
+                <><Package size={20} />{" "}{t("Importer")}{" "}{selectedCount} produit{selectedCount > 1 ? "s" : ""}{" "}{t("dans ma boutique")}{" "}<ChevronRight size={17} /></>
               )}
             </button>
           </div>
@@ -297,23 +297,22 @@ export default function MagicImportPage() {
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center mb-5 shadow-lg shadow-green-100">
             <Check size={38} className="text-green-500" />
           </div>
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Catalogue importé !</h2>
+          <h2 className="text-2xl font-black text-gray-900 mb-2">{t("Catalogue importé !")}</h2>
           <p className="text-gray-400 text-sm mb-8 max-w-md">
-            {importedCount} produit{importedCount > 1 ? "s" : ""} ajouté{importedCount > 1 ? "s" : ""} à votre boutique avec des images Flux.1 haute définition.
-            Axia peut maintenant les enrichir et les promouvoir.
+            {importedCount} produit{importedCount > 1 ? "s" : ""}{" "}{t("ajouté")}{importedCount > 1 ? "s" : ""}{" "}{t("à votre boutique avec des images Flux.1 haute définition. Axia peut maintenant les enrichir et les promouvoir.")}
           </p>
           <div className="flex gap-3">
             <Link href="/dashboard/produits"
               className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all">
-              Voir les produits
+              {t("Voir les produits")}
             </Link>
             <Link href="/dashboard"
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-violet-600 text-white font-semibold text-sm hover:opacity-90 transition-all flex items-center gap-2">
-              <Sparkles size={14} /> Demander à Axia de promouvoir
+              <Sparkles size={14} />{" "}{t("Demander à Axia de promouvoir")}
             </Link>
             <button onClick={reset}
               className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold text-sm hover:opacity-90 transition-all">
-              Nouveau catalogue
+              {t("Nouveau catalogue")}
             </button>
           </div>
         </div>

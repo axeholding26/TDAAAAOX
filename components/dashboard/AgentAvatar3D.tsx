@@ -1,4 +1,5 @@
 "use client";
+import { useT } from "@/components/I18nProvider";
 
 // Avatar 3D unique pour chaque agent IA — utilisé dans le dashboard et le hub des agents.
 // Chaque agent a une identité visuelle distincte (forme, couleur, animation).
@@ -38,6 +39,7 @@ interface Props {
 }
 
 export function AgentAvatar3D({ agentId, size = 52, pulse = false }: Props) {
+  const t = useT();
   const meta = AGENT_META[agentId];
   const s = size;
   const cx = s / 2;
@@ -298,7 +300,7 @@ export function AgentAvatar3D({ agentId, size = 52, pulse = false }: Props) {
   return (
     <div style={{ width: s, height: s, position: "relative", flexShrink: 0 }}>
       <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} fill="none" overflow="visible" style={{ display: "block" }}>
-        {avatars[agentId]}
+        {t(avatars[agentId])}
       </svg>
 
       <style>{`

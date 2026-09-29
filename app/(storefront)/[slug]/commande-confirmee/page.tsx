@@ -8,6 +8,7 @@ import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { CommandeConfirmeeClient } from "./CommandeConfirmeeClient";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { Lock } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default async function CommandeConfirmeePage({ params, searchParams }: Props) {
+  const t = await getT();
   const { slug } = await params;
   const { commandeId } = await searchParams;
 
@@ -63,7 +65,7 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
 
   const Habillage = habillageDesign(cfg);
   if (Habillage) {
-    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{contenuConfirmation}</div></Habillage>;
+    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{t(contenuConfirmation)}</div></Habillage>;
   }
 
   return (
@@ -73,18 +75,18 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
         <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href={`/${slug}`}>
             <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>
-              {tenant.nomBoutique}
+              {t(tenant.nomBoutique)}
             </span>
           </Link>
           <div className="flex items-center gap-2 text-sm opacity-50">
-            <span className="text-xs">Commande sécurisée</span>
+            <span className="text-xs">{t("Commande sécurisée")}</span>
             <Lock size={14} />
           </div>
         </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-12">
-        {contenuConfirmation}
+        {t(contenuConfirmation)}
       </div>
 
       <footer
@@ -92,8 +94,8 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
         style={{ borderColor: `${theme.accent}20` }}
       >
         <p>
-          {tenant.nomBoutique} · Propulsé par{" "}
-          <span style={{ color: theme.accent }}>Axso</span>
+          {t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}
+          <span style={{ color: theme.accent }}>{t("Axso")}</span>
         </p>
       </footer>
     </div>

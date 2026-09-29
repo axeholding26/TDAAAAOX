@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Loader2, MessageCircle, CheckCircle2, Truck, Check, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useT } from "@/components/I18nProvider";
 
 // ── Pipeline linéaire simplifié ──────────────────────────────────────────────
 // en_attente → confirmee → expediee → livree  (avec annulee comme sortie à tout moment)
@@ -43,6 +44,7 @@ interface Props {
 }
 
 export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
+  const t = useT();
   const router = useRouter();
   const [statut, setStatut] = useState(statutActuel);
   const [loading, setLoading] = useState(false);
@@ -68,16 +70,16 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
       setStatut(nouveau);
       if (data.envoyeAuto) {
         setNotifEnvoyee(true);
-        toast.success(`${STATUT_LABEL[nouveau]} · Client notifié WhatsApp ✅`);
+        toast.success(t("{0} · Client notifié WhatsApp ✅", STATUT_LABEL[nouveau]));
       } else if (data.whatsappUrl) {
         setWhatsappUrl(data.whatsappUrl);
-        toast.success(`Statut → ${STATUT_LABEL[nouveau]}`);
+        toast.success(t("Statut → {0}", STATUT_LABEL[nouveau]));
       } else {
-        toast.success(`Statut → ${STATUT_LABEL[nouveau]}`);
+        toast.success(t("Statut → {0}", STATUT_LABEL[nouveau]));
       }
       router.refresh();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(t(err.message));
     } finally {
       setLoading(false);
     }
@@ -89,7 +91,7 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
       <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold"
         style={{ color: colors.text, backgroundColor: colors.bg, border: `1px solid ${colors.dot}30` }}>
         <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colors.dot }} />
-        {STATUT_LABEL[statut] ?? statut}
+        {t(STATUT_LABEL[statut]) ?? t(statut)}
       </div>
 
       {/* Bouton action principale (prochaine étape) */}
@@ -103,7 +105,7 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
           {loading
             ? <Loader2 size={13} className="animate-spin" />
             : <nextAction.icon size={13} />}
-          {nextAction.label}
+          {t(nextAction.label)}
         </button>
       )}
 
@@ -115,14 +117,14 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:bg-red-50 disabled:opacity-40"
           style={{ border: "1px solid rgba(248,113,113,0.35)", color: "#f87171" }}
         >
-          <XCircle size={12} /> Annuler
+          <XCircle size={12} />{" "}{t("Annuler")}
         </button>
       )}
 
       {/* Notification WhatsApp fallback */}
       {notifEnvoyee && (
         <div className="flex items-center gap-1.5 text-xs text-green-600 bg-green-50 border border-green-200 px-3 py-2 rounded-xl">
-          <CheckCircle2 size={13} /> Client notifié WhatsApp
+          <CheckCircle2 size={13} />{" "}{t("Client notifié WhatsApp")}
         </div>
       )}
       {whatsappUrl && !notifEnvoyee && (
@@ -135,7 +137,7 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
           onClick={() => setWhatsappUrl(null)}
         >
           <MessageCircle size={14} />
-          Notifier le client
+          {t("Notifier le client")}
         </a>
       )}
     </div>

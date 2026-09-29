@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
 import { CartParallax } from "./CartParallax";
+import { useT } from "@/components/I18nProvider";
 
 const HIGHFIELD_VIDEO_URL = "";
 const HIGHFIELD_IFRAME_URL = "";
@@ -14,6 +15,7 @@ const VIDEO_CARTS = [
 ];
 
 export function VideoSection() {
+  const t = useT();
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -93,7 +95,7 @@ export function VideoSection() {
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-6 bg-[#F5A623]/10 border border-[#F5A623]/25 text-[#F5A623]">
             <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse"/>
-            Vois ton empire naître en direct
+            {t("Vois ton empire naître en direct")}
           </span>
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-5 leading-tight"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
@@ -109,12 +111,11 @@ export function VideoSection() {
                 animation: "shimmer 3s linear infinite",
               }}
             >
-              C'est tout ce qu'il faut.
+              {t("C'est tout ce qu'il faut.")}
             </span>
           </h2>
           <p className="text-xl text-gray-500 max-w-2xl mx-auto">
-            Dis-nous ce que tu vends. AXSO crée ta boutique, tes prix, tes visuels et ton
-            premier post Instagram. En direct. Sous tes yeux.
+            {t("Dis-nous ce que tu vends. AXSO crée ta boutique, tes prix, tes visuels et ton premier post Instagram. En direct. Sous tes yeux.")}
           </p>
         </div>
 
@@ -155,10 +156,10 @@ export function VideoSection() {
               </div>
               <div className="flex-1 bg-gray-50 rounded-xl px-4 py-2 flex items-center gap-2 border border-gray-200/80">
                 <Lock size={14} className="text-gray-300 flex-shrink-0" />
-                <span className="text-sm text-gray-400 flex-1 text-center">app.axso.africa — Construction de ton empire</span>
+                <span className="text-sm text-gray-400 flex-1 text-center">{t("app.axso.africa — Construction de ton empire")}</span>
               </div>
               <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623]">
-                ● LIVE
+                {t("● LIVE")}
               </span>
             </div>
 
@@ -207,9 +208,9 @@ export function VideoSection() {
                       ▶
                     </div>
                   </div>
-                  <p className="text-white/60 text-lg font-medium mb-2">Démo AXSO en direct</p>
+                  <p className="text-white/60 text-lg font-medium mb-2">{t("Démo AXSO en direct")}</p>
                   <p className="text-white/35 text-sm text-center max-w-xs px-4">
-                    La vidéo de démo arrive bientôt — ton empire se construit en temps réel
+                    {t("La vidéo de démo arrive bientôt — ton empire se construit en temps réel")}
                   </p>
                   <div className="absolute bottom-8 left-8 right-8">
                     <div className="h-1 bg-white/10 rounded-full overflow-hidden">
@@ -224,7 +225,7 @@ export function VideoSection() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white/30 text-xs">0:00</span>
-                      <span className="text-white/30 text-xs inline-flex items-center gap-1"><Rocket size={12} /> Empire en construction</span>
+                      <span className="text-white/30 text-xs inline-flex items-center gap-1"><Rocket size={12} />{" "}{t("Empire en construction")}</span>
                       <span className="text-white/30 text-xs">1:00</span>
                     </div>
                   </div>
@@ -243,13 +244,13 @@ export function VideoSection() {
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center text-[#F5A623]"><Bot size={16} /></div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-700">Agent Onboarding</p>
-                  <p className="text-[10px] text-gray-400">Empire créé en 58 secondes</p>
+                  <p className="text-xs font-semibold text-gray-700">{t("Agent Onboarding")}</p>
+                  <p className="text-[10px] text-gray-400">{t("Empire créé en 58 secondes")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-semibold">✓ Boutique live</span>
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold inline-flex items-center gap-1"><Zap size={10} /> Agents actifs</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-semibold">{t("✓ Boutique live")}</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold inline-flex items-center gap-1"><Zap size={10} />{" "}{t("Agents actifs")}</span>
               </div>
             </div>
           </div>
@@ -272,8 +273,8 @@ export function VideoSection() {
               >
                 {item.icon}
               </div>
-              <p className="font-bold text-gray-900 mb-1">{item.title}</p>
-              <p className="text-sm text-gray-400">{item.desc}</p>
+              <p className="font-bold text-gray-900 mb-1">{t(item.title)}</p>
+              <p className="text-sm text-gray-400">{t(item.desc)}</p>
             </div>
           ))}
         </div>

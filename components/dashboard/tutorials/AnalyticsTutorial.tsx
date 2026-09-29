@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { TrendingUp, BarChart3, Eye, Star } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const ANALYTICS_TUTORIAL_STEPS = [
   { Icon: TrendingUp, titre: "4 indicateurs clés",           description: "Chiffre d'affaires, commandes, visiteurs et taux de conversion, comparés à la période précédente avec leur variation en %." },
@@ -10,5 +11,6 @@ const ANALYTICS_TUTORIAL_STEPS = [
 ];
 
 export function AnalyticsTutorial() {
-  return <ModuleTutorial moduleKey="analytics" titre="Analytics" sousTitre="Performance de ta boutique" steps={ANALYTICS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="analytics" titre={t("Analytics")} sousTitre={t("Performance de ta boutique")} steps={ANALYTICS_TUTORIAL_STEPS} />;
 }

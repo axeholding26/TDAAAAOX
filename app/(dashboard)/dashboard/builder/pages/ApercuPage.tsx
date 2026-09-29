@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { pageDepuisChemin, type PageEditee } from "./pages";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
@@ -15,6 +16,7 @@ export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
   slug: string; chemin: string; device: Device; version: number;
   onNaviguer: (page: PageEditee) => void;
 }) {
+  const t = useT();
   const cadre = useRef<HTMLIFrameElement>(null);
   const actuelle = pageDepuisChemin(slug, `/${slug}${chemin}`);
 
@@ -30,7 +32,7 @@ export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
         ref={cadre}
         key={chemin}
         src={`/${slug}${chemin}`}
-        title="Aperçu de la page"
+        title={t("Aperçu de la page")}
         className="mx-auto flex-1 w-full bg-white rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] transition-[width] duration-300 border-0"
         style={{ width: LARGEUR[device], maxWidth: "100%" }}
         onLoad={() => {

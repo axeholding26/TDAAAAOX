@@ -19,6 +19,8 @@ import { Drapeau } from "@/components/ui/SelectPays";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 import { cssElements } from "@/lib/element-styles";
 import { StyleCss } from "@/components/storefront/StyleCss";
+import { useT } from "@/components/I18nProvider";
+import { choisirLangue } from "@/components/ui/LangueSelecteur";
 
 // Éléments de la vitrine sélectionnables dans le Constructeur digital
 // (attribut data-axs-el). `texte` : valeur par défaut d'un texte remplaçable
@@ -120,6 +122,7 @@ const VARIANT = {
 export function DigitalStoreShell({
   slug, nomBoutique, logoUrl, description, pays, devise, colors, radius, templateId, digitalConfig, products, preview, lienAffiliation = "/affiliation",
 }: DigitalStoreShellProps) {
+  const tr = useT();
   const v = VARIANT[templateId] || VARIANT.charriow;
   const visiteur = useVisiteur(); // pastille pays/devise du visiteur (hors aperçu du Constructeur)
   const [q, setQ] = useState("");
@@ -151,7 +154,8 @@ export function DigitalStoreShell({
   const cardRadius = v.card === "flat" ? "0px" : radius;
   const disposition = digitalConfig.disposition === "un" ? "grid-cols-1 @min-[640px]:grid-cols-2" : "grid-cols-2 @min-[640px]:grid-cols-3";
   const href = (path: string) => (preview ? "#" : path);
-  const t = (id: string, defaut?: string) => digitalConfig.textes?.[id]?.trim() || defaut || ELEMENTS_DIGITAUX[id]?.texte || "";
+  // Texte saisi par le vendeur tel quel ; seuls les textes par défaut sont traduits.
+  const t = (id: string, defaut?: string) => digitalConfig.textes?.[id]?.trim() || tr(defaut || ELEMENTS_DIGITAUX[id]?.texte || "");
 
   const navItems = [
     { id: "menu-produits", href: `/${slug}`, actif: true },
@@ -179,7 +183,7 @@ export function DigitalStoreShell({
             >
               {logoUrl ? <img src={logoUrl} alt="" className="w-full h-full object-cover" style={{ borderRadius: "inherit" }} /> : nomBoutique.slice(0, 1).toUpperCase()}
             </span>
-            <span data-axs-el="nom-boutique" className="truncate max-w-[140px] @min-[640px]:max-w-none">{nomBoutique}</span>
+            <span data-axs-el="nom-boutique" className="truncate max-w-[140px] @min-[640px]:max-w-none">{tr(nomBoutique)}</span>
           </Link>
 
           <nav className={`hidden @min-[768px]:flex items-center gap-6 text-sm ${v.uppercaseNav ? "uppercase tracking-wide" : ""}`}>
@@ -198,7 +202,7 @@ export function DigitalStoreShell({
             {preview || !visiteur ? (
               <div data-axs-el="pastille-pays" className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
                 {pays ? <Drapeau code={pays} taille={18} /> : <Globe2 size={13} />}
-                <span>{nomPays(pays)} ({devise})</span>
+                <span>{nomPays(pays)} ({tr(devise)})</span>
               </div>
             ) : (
               <span data-axs-el="pastille-pays" className="inline-flex"><PastillePays couleur={colors.texteMuted || colors.texte} /></span>
@@ -226,12 +230,12 @@ export function DigitalStoreShell({
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder={t("recherche")}
-              aria-label="Rechercher un produit"
+              aria-label={tr("Rechercher un produit")}
               className="flex-1 min-w-0 bg-transparent outline-none text-sm placeholder:opacity-60 [&::-webkit-search-cancel-button]:hidden"
               style={{ color: colors.texte }}
             />
             {q && (
-              <button type="button" onClick={() => setQ("")} aria-label="Effacer la recherche" className="w-6 h-6 flex items-center justify-center rounded-full opacity-50 hover:opacity-100" style={{ color: colors.texte }}>
+              <button type="button" onClick={() => setQ("")} aria-label={tr("Effacer la recherche")} className="w-6 h-6 flex items-center justify-center rounded-full opacity-50 hover:opacity-100" style={{ color: colors.texte }}>
                 <X size={14} />
               </button>
             )}
@@ -261,7 +265,7 @@ export function DigitalStoreShell({
           {filtres.length === 0 ? (
             <div className="py-20 text-center opacity-50">
               <Package size={32} className="mx-auto mb-3" />
-              <p className="text-sm">Aucun produit ne correspond à votre recherche.</p>
+              <p className="text-sm">{tr("Aucun produit ne correspond à votre recherche.")}</p>
             </div>
           ) : (
             <div data-axs-el="grille" className={`grid ${disposition} gap-4 @min-[640px]:gap-6`}>
@@ -300,11 +304,11 @@ export function DigitalStoreShell({
                 >
                   {logoUrl ? <img src={logoUrl} alt="" className="w-full h-full object-cover" style={{ borderRadius: "inherit" }} /> : nomBoutique.slice(0, 1).toUpperCase()}
                 </span>
-                <span data-axs-el="pied-nom">{nomBoutique}</span>
+                <span data-axs-el="pied-nom">{tr(nomBoutique)}</span>
               </Link>
-              <span data-axs-el="pied-langue" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
-                🇫🇷 Français
-              </span>
+              <button type="button" onClick={preview ? undefined : () => choisirLangue(tr.langue === "fr" ? "en" : "fr")} data-axs-el="pied-langue" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
+                {tr("🇫🇷 Français")}
+              </button>
             </div>
             <div>
               <p data-axs-el="pied-titre-liens" className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: colors.texteMuted || colors.texte, opacity: 0.7 }}>{t("pied-titre-liens")}</p>
@@ -333,12 +337,12 @@ export function DigitalStoreShell({
           </p>
 
           <div className="pt-5 border-t flex flex-col @min-[640px]:flex-row items-center justify-between gap-3 text-xs" style={{ borderColor: colors.bordure || `${colors.texte}15`, color: colors.texteMuted || colors.texte }}>
-            <span data-axs-el="copyright">{nomBoutique} © {new Date().getFullYear()} Tous droits réservés.</span>
+            <span data-axs-el="copyright">{tr(nomBoutique)} © {new Date().getFullYear()}{" "}{tr("Tous droits réservés.")}</span>
             {/* Mention obligatoire : jamais sélectionnable (pas de data-axs-el), ni
                 modifiable, ni masquable — styles en ligne complets pour ne rien
                 hériter des réglages du pied de page. */}
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: "#111111", color: "#FFFFFF", fontSize: 11, fontWeight: 600, fontFamily: "'Poppins',system-ui,sans-serif", letterSpacing: "normal", textTransform: "none", opacity: 1, visibility: "visible" }}>
-              Powered by <strong>AXSO</strong>
+              {tr("Powered by")}{" "}<strong>AXSO</strong>
             </span>
           </div>
         </div>
@@ -348,6 +352,7 @@ export function DigitalStoreShell({
 }
 
 function FiltreSelect({ id, label, value, onChange, options, colors, radius }: { id: string; label: string; value: string; onChange: (v: string) => void; options: string[]; colors: ThemeColors; radius: string }) {
+  const tr = useT();
   return (
     <div data-axs-el={id} className="relative flex-shrink-0 w-full @min-[640px]:w-44">
       <select
@@ -356,8 +361,8 @@ function FiltreSelect({ id, label, value, onChange, options, colors, radius }: {
         className="w-full h-11 pl-3 pr-8 text-sm appearance-none outline-none"
         style={{ backgroundColor: colors.surface, color: value ? colors.texte : colors.texteMuted || colors.texte, borderRadius: radius, border: `1px solid ${colors.bordure || "transparent"}` }}
       >
-        <option value="">{label}</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        <option value="">{tr(label)}</option>
+        {options.map((o) => <option key={o} value={o}>{tr(o)}</option>)}
       </select>
     </div>
   );
@@ -366,6 +371,7 @@ function FiltreSelect({ id, label, value, onChange, options, colors, radius }: {
 function ProductCard({ p, slug, colors, radius, cardStyle, preview, afficherBouton, texteBouton, devise }: {
   p: DigitalProductVM; slug: string; colors: ThemeColors; radius: string; cardStyle: "flat" | "shadow" | "border" | "soft"; preview?: boolean; afficherBouton: boolean; texteBouton: string; devise: string;
 }) {
+  const tr = useT();
   const { fmt } = usePrix();
   const wrapStyle: React.CSSProperties = { borderRadius: radius, backgroundColor: colors.surface };
   const wrapClass =
@@ -383,11 +389,11 @@ function ProductCard({ p, slug, colors, radius, cardStyle, preview, afficherBout
         )}
       </div>
       <div className="p-3.5">
-        <h3 data-axs-el="carte-nom" className="text-sm font-medium line-clamp-2 mb-1.5" style={{ color: colors.texte }}>{p.nom}</h3>
+        <h3 data-axs-el="carte-nom" className="text-sm font-medium line-clamp-2 mb-1.5" style={{ color: colors.texte }}>{tr(p.nom)}</h3>
         <div className="flex items-center justify-between gap-2">
           <span data-axs-el="carte-prix" className="text-sm font-bold" style={{ color: colors.accent }}>{fmt(p.prixAffiche, devise)}</span>
           {afficherBouton && (
-            <span data-axs-el="carte-bouton" className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.accent, color: colors.fond }}>{texteBouton}</span>
+            <span data-axs-el="carte-bouton" className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: colors.accent, color: colors.fond }}>{tr(texteBouton)}</span>
           )}
         </div>
       </div>

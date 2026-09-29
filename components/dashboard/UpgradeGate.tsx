@@ -1,6 +1,7 @@
 "use client";
 import { Lock, Sparkles } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   titre: string;
@@ -14,12 +15,13 @@ interface Props {
 const LABEL_PALIER: Record<string, string> = { palier1: "Pro", palier2: "Illimité" };
 
 export function UpgradeGate({ titre, description, palierRequis = "palier2", apercu }: Props) {
+  const t = useT();
   const { openAbonnement } = useAbonnementOverlay();
   return (
     <div className="relative rounded-2xl overflow-hidden border border-gray-100 bg-white">
       {apercu && (
         <div className="pointer-events-none select-none opacity-40" style={{ filter: "blur(3px)" }}>
-          {apercu}
+          {t(apercu)}
         </div>
       )}
       <div className={apercu ? "absolute inset-0 flex items-center justify-center p-6" : "flex items-center justify-center p-10"}
@@ -28,12 +30,12 @@ export function UpgradeGate({ titre, description, palierRequis = "palier2", aper
           <div className="w-12 h-12 rounded-2xl bg-[#F5A623]/10 border border-[#F5A623]/25 flex items-center justify-center mx-auto">
             <Lock size={18} className="text-[#F5A623]" />
           </div>
-          <h3 className="font-bold text-gray-900">{titre}</h3>
-          <p className="text-sm text-gray-500 leading-relaxed">{description}</p>
+          <h3 className="font-bold text-gray-900">{t(titre)}</h3>
+          <p className="text-sm text-gray-500 leading-relaxed">{t(description)}</p>
           <button type="button" onClick={() => openAbonnement(palierRequis)}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-white px-4 py-2.5 rounded-xl transition-all hover:opacity-90"
             style={{ background: "#F5A623", boxShadow: "0 4px 16px rgba(245,166,35,0.3)" }}>
-            <Sparkles size={13} /> Passer au Palier {LABEL_PALIER[palierRequis]}
+            <Sparkles size={13} />{" "}{t("Passer au Palier")}{" "}{t(LABEL_PALIER[palierRequis])}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Truck, Plus, Phone, MapPin, Loader2, Globe } from "lucide-react";
 import { LiveFleetMap } from "@/components/dashboard/logistique/LiveFleetMap";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const LIVREURS_TUTORIAL_STEPS = [
   { Icon: Plus,   titre: "Crée un compte livreur",         description: "Ajoute un livreur à ton équipe avec nom, téléphone, véhicule et zone de couverture." },
@@ -30,6 +31,7 @@ const VEHICULE_EMOJI: Record<string, string> = {
 };
 
 export function LivreursPanel() {
+  const t = useT();
   const [mesPlateforme, setMesPlateforme] = useState<Livreur[]>([]);
   const [plateforme, setPlateforme] = useState<Livreur[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +66,12 @@ export function LivreursPanel() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur");
-      toast.success("Livreur créé avec succès !");
+      toast.success(t("Livreur créé avec succès !"));
       setShowForm(false);
       setForm({ nom: "", email: "", telephone: "", password: "", vehicule: "moto", zone: "" });
       charger();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(t(err.message));
     } finally {
       setSaving(false);
     }
@@ -79,20 +81,20 @@ export function LivreursPanel() {
 
   return (
     <div className="space-y-5">
-      <ModuleTutorial moduleKey="logistique-livreurs" titre="Livreurs" sousTitre="Ta flotte de livraison" steps={LIVREURS_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="logistique-livreurs" titre={t("Livreurs")} sousTitre={t("Ta flotte de livraison")} steps={LIVREURS_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end">
         <button
           onClick={() => setShowForm(!showForm)}
           className="flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-4 py-2.5 rounded-xl text-sm hover:bg-[#d4820a] transition-colors"
         >
           <Plus size={16} />
-          Nouveau livreur
+          {t("Nouveau livreur")}
         </button>
       </div>
 
       {/* Carte flotte en direct */}
       <div className="bg-white border border-gray-100 rounded-2xl p-4">
-        <p className="text-sm font-bold text-gray-900 mb-3">Position en temps réel</p>
+        <p className="text-sm font-bold text-gray-900 mb-3">{t("Position en temps réel")}</p>
         <LiveFleetMap />
       </div>
 
@@ -106,7 +108,7 @@ export function LivreursPanel() {
               : "text-gray-400 hover:text-gray-900"
           }`}
         >
-          Mon équipe ({mesPlateforme.length})
+          {t("Mon équipe (")}{mesPlateforme.length})
         </button>
         <button
           onClick={() => setOnglet("plateforme")}
@@ -117,7 +119,7 @@ export function LivreursPanel() {
           }`}
         >
           <Globe size={14} />
-          Plateforme ({plateforme.length})
+          {t("Plateforme (")}{plateforme.length})
         </button>
       </div>
 
@@ -125,7 +127,7 @@ export function LivreursPanel() {
       {onglet === "plateforme" && (
         <div className="bg-[#F5A623]/5 border border-[#F5A623]/20 rounded-xl px-4 py-3">
           <p className="text-[#F5A623] text-xs">
-            Ces livreurs sont indépendants et disponibles sur toute la plateforme Axso. Vous pouvez les assigner à vos commandes depuis l'onglet Livraison.
+            {t("Ces livreurs sont indépendants et disponibles sur toute la plateforme Axso. Vous pouvez les assigner à vos commandes depuis l'onglet Livraison.")}
           </p>
         </div>
       )}
@@ -133,20 +135,20 @@ export function LivreursPanel() {
       {/* Formulaire création */}
       {showForm && (
         <div className="bg-white border border-[#F5A623]/20 rounded-2xl p-6">
-          <h2 className="text-gray-800 font-semibold mb-4">Créer un compte livreur</h2>
+          <h2 className="text-gray-800 font-semibold mb-4">{t("Créer un compte livreur")}</h2>
           <form onSubmit={creerLivreur} className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Nom complet *</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Nom complet *")}</label>
                 <input
                   required value={form.nom}
                   onChange={(e) => setForm({ ...form, nom: e.target.value })}
-                  placeholder="Mamadou Diallo"
+                  placeholder={t("Mamadou Diallo")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Email *</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Email *")}</label>
                 <input
                   required type="email" value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -155,7 +157,7 @@ export function LivreursPanel() {
                 />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Téléphone *</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Téléphone *")}</label>
                 <input
                   required value={form.telephone}
                   onChange={(e) => setForm({ ...form, telephone: e.target.value })}
@@ -164,33 +166,33 @@ export function LivreursPanel() {
                 />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Mot de passe *</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Mot de passe *")}</label>
                 <input
                   required type="password" value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="Min. 6 caractères"
+                  placeholder={t("Min. 6 caractères")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 />
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Véhicule</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Véhicule")}</label>
                 <select
                   value={form.vehicule}
                   onChange={(e) => setForm({ ...form, vehicule: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 >
-                  <option value="moto">🏍️ Moto</option>
-                  <option value="voiture">🚗 Voiture</option>
-                  <option value="velo">🚲 Vélo</option>
-                  <option value="a_pied">🚶 À pied</option>
+                  <option value="moto">{t("🏍️ Moto")}</option>
+                  <option value="voiture">{t("🚗 Voiture")}</option>
+                  <option value="velo">{t("🚲 Vélo")}</option>
+                  <option value="a_pied">{t("🚶 À pied")}</option>
                 </select>
               </div>
               <div>
-                <label className="text-gray-400 text-xs block mb-1.5">Zone de couverture</label>
+                <label className="text-gray-400 text-xs block mb-1.5">{t("Zone de couverture")}</label>
                 <input
                   value={form.zone}
                   onChange={(e) => setForm({ ...form, zone: e.target.value })}
-                  placeholder="Dakar centre, Plateau..."
+                  placeholder={t("Dakar centre, Plateau...")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 />
               </div>
@@ -198,7 +200,7 @@ export function LivreursPanel() {
 
             <div className="bg-[#F5A623]/10 border border-[#F5A623]/20 rounded-xl p-3">
               <p className="text-[#F5A623] text-xs">
-                Le livreur pourra se connecter sur <strong>/connexion</strong> avec cet email et mot de passe. Il sera redirigé vers son interface dédiée.
+                {t("Le livreur pourra se connecter sur")}{" "}<strong>/connexion</strong>{" "}{t("avec cet email et mot de passe. Il sera redirigé vers son interface dédiée.")}
               </p>
             </div>
 
@@ -208,13 +210,13 @@ export function LivreursPanel() {
                 className="flex items-center gap-2 bg-[#F5A623] text-black font-semibold px-6 py-3 rounded-xl text-sm hover:bg-[#d4820a] transition-colors disabled:opacity-50"
               >
                 {saving && <Loader2 size={14} className="animate-spin" />}
-                Créer le compte
+                {t("Créer le compte")}
               </button>
               <button
                 type="button" onClick={() => setShowForm(false)}
                 className="px-6 py-3 rounded-xl text-sm text-gray-400 border border-gray-200 hover:border-[#F5A623]/30 transition-all"
               >
-                Annuler
+                {t("Annuler")}
               </button>
             </div>
           </form>
@@ -230,10 +232,10 @@ export function LivreursPanel() {
         <div className="bg-white border border-gray-100 rounded-2xl p-10 text-center">
           <Truck size={32} className="text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 font-medium">
-            {onglet === "miens" ? "Aucun livreur dans votre équipe" : "Aucun livreur indépendant disponible"}
+            {onglet === "miens" ? t("Aucun livreur dans votre équipe") : t("Aucun livreur indépendant disponible")}
           </p>
           <p className="text-gray-600 text-sm mt-1">
-            {onglet === "miens" ? "Créez votre première équipe de livraison" : "Les livreurs indépendants apparaîtront ici"}
+            {onglet === "miens" ? t("Créez votre première équipe de livraison") : t("Les livreurs indépendants apparaîtront ici")}
           </p>
         </div>
       ) : (
@@ -241,31 +243,31 @@ export function LivreursPanel() {
           {listeAffichee.map((l) => (
             <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4">
               <div className="w-11 h-11 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center flex-shrink-0 text-lg">
-                {VEHICULE_EMOJI[l.vehicule] || "🚚"}
+                {t(VEHICULE_EMOJI[l.vehicule]) || "🚚"}
               </div>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className="text-gray-800 font-semibold">{l.nom}</p>
+                  <p className="text-gray-800 font-semibold">{t(l.nom)}</p>
                   <div className={`w-2 h-2 rounded-full flex-shrink-0 ${l.disponible ? "bg-green-400 animate-pulse" : "bg-gray-600"}`} />
                   <span className={`text-xs ${l.disponible ? "text-green-400" : "text-gray-500"}`}>
-                    {l.disponible ? "Disponible" : "Hors service"}
+                    {l.disponible ? t("Disponible") : t("Hors service")}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-400">
                   <span className="flex items-center gap-1"><Phone size={10} />{l.telephone}</span>
-                  {l.zone && <span className="flex items-center gap-1"><MapPin size={10} />{l.zone}</span>}
+                  {l.zone && <span className="flex items-center gap-1"><MapPin size={10} />{t(l.zone)}</span>}
                   {onglet === "plateforme" && l.tenant && (
-                    <span className="text-[#F5A623]/60">{l.tenant.nomBoutique}</span>
+                    <span className="text-[#F5A623]/60">{t(l.tenant.nomBoutique)}</span>
                   )}
                   {onglet === "plateforme" && !l.tenant && (
-                    <span className="text-gray-500 italic">Indépendant</span>
+                    <span className="text-gray-500 italic">{t("Indépendant")}</span>
                   )}
                 </div>
               </div>
 
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <span className="text-[#F5A623] font-bold text-sm">{l._count.commandes}</span>
+                <span className="text-[#F5A623] font-bold text-sm">{t(l._count.commandes)}</span>
                 <span className="text-gray-500 text-xs">livraisons</span>
               </div>
             </div>

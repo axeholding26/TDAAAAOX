@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Package, Clock, Truck, TrendingUp } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const COMMANDES_TUTORIAL_STEPS = [
   { Icon: Package,      titre: "Toutes tes commandes",     description: "Retrouve chaque commande passée par tes clients, avec le nombre d'articles, le montant et la date, triées de la plus récente à la plus ancienne." },
@@ -10,5 +11,6 @@ const COMMANDES_TUTORIAL_STEPS = [
 ];
 
 export function CommandesTutorial() {
-  return <ModuleTutorial moduleKey="commandes" titre="Commandes" sousTitre="Suivi et gestion des ventes" steps={COMMANDES_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="commandes" titre={t("Commandes")} sousTitre={t("Suivi et gestion des ventes")} steps={COMMANDES_TUTORIAL_STEPS} />;
 }

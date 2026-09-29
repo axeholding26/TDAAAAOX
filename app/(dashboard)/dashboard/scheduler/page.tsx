@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { Calendar, Plus, Clock, Trash2, CheckCircle2, XCircle, Loader2, Sparkles, X, Edit3, Zap, Camera, ThumbsUp, Music4, MessageCircle, Bird } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 type Statut = "planifie" | "publie" | "annule";
 
@@ -32,6 +33,7 @@ const STATUT_BADGES: Record<Statut, { label: string; color: string; bg: string; 
 };
 
 function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: string) => void; onStatut: (id: string, s: Statut) => void }) {
+  const t = useT();
   const plat = PLATEFORMES.find(p => p.id === post.plateforme);
   const statut = STATUT_BADGES[post.statut];
   const StatutIcon = statut.icon;
@@ -48,19 +50,19 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {plat && <plat.Icon size={16} style={{ color: plat.color }} />}
-            <span className="text-xs font-semibold text-gray-700" style={{ color: plat?.color }}>{plat?.label}</span>
+            <span className="text-xs font-semibold text-gray-700" style={{ color: plat?.color }}>{t(plat?.label)}</span>
           </div>
           <span className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full" style={{ color: statut.color, background: statut.bg }}>
-            <StatutIcon size={10} />{statut.label}
+            <StatutIcon size={10} />{t(statut.label)}
           </span>
         </div>
 
-        <p className="text-[13px] text-[#444] leading-relaxed line-clamp-3">{post.contenu}</p>
+        <p className="text-[13px] text-[#444] leading-relaxed line-clamp-3">{t(post.contenu)}</p>
 
         {post.hashtags?.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {post.hashtags.slice(0, 4).map(h => (
-              <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#888]">#{h}</span>
+              <span key={h} className="text-[11px] px-2 py-0.5 rounded-full bg-[#F5F5F7] text-[#888]">#{t(h)}</span>
             ))}
             {post.hashtags.length > 4 && <span className="text-[11px] text-gray-400">+{post.hashtags.length - 4}</span>}
           </div>
@@ -69,13 +71,13 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
         <div className="flex items-center justify-between pt-1 border-t border-[#F3F3F3]">
           <div className="flex items-center gap-1.5 text-[11.5px] text-[#AAAAAA]">
             <Clock size={11} />
-            <span>{date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} à {date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+            <span>{date.toLocaleDateString(t.loc, { day: "numeric", month: "short" })}{" "}{t("à")}{" "}{date.toLocaleTimeString(t.loc, { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
           <div className="flex gap-1">
             {post.statut === "planifie" && (
               <button onClick={() => onStatut(post.id, "publie")}
                 className="text-xs px-2.5 py-1 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 transition-colors font-medium">
-                ✓ Publié
+                {t("✓ Publié")}
               </button>
             )}
             <button onClick={() => onDelete(post.id)}
@@ -90,6 +92,7 @@ function PostCard({ post, onDelete, onStatut }: { post: Post; onDelete: (id: str
 }
 
 export default function SchedulerPage() {
+  const t = useT();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -117,12 +120,12 @@ export default function SchedulerPage() {
       const res = await fetch("/api/posts");
       const data = await res.json();
       setPosts(data.posts || []);
-    } catch { toast.error("Erreur chargement"); }
+    } catch { toast.error(t("Erreur chargement")); }
     finally { setLoading(false); }
   }
 
   async function genererAvecIA() {
-    if (!form.aiPrompt.trim()) { toast.error("Décrivez ce que vous voulez promouvoir"); return; }
+    if (!form.aiPrompt.trim()) { toast.error(t("Décrivez ce que vous voulez promouvoir")); return; }
     setGenerating(true);
     try {
       const res = await fetch("/api/ai/universal", {
@@ -152,14 +155,14 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1080&height=1080&nologo=true&model=flux&seed=${Math.floor(Math.random()*999999)}`;
 
         setForm(f => ({ ...f, contenu: parsed.contenu || "", hashtags: parsed.hashtags || [], imageUrl }));
-        toast.success("Post généré !");
+        toast.success(t("Post généré !"));
       }
-    } catch { toast.error("Erreur IA"); }
+    } catch { toast.error(t("Erreur IA")); }
     finally { setGenerating(false); }
   }
 
   async function sauvegarder() {
-    if (!form.contenu.trim() || !form.planifieLe) { toast.error("Contenu et date requis"); return; }
+    if (!form.contenu.trim() || !form.planifieLe) { toast.error(t("Contenu et date requis")); return; }
     setSaving(true);
     try {
       const res = await fetch("/api/posts", {
@@ -175,24 +178,24 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         }),
       });
       if (!res.ok) throw new Error("Erreur");
-      toast.success("Post planifié !");
+      toast.success(t("Post planifié !"));
       setShowModal(false);
       setForm({ plateforme: "instagram", contenu: "", hashtags: [], imageUrl: "", planifieLe: "", noteInterne: "", aiPrompt: "" });
       charger();
-    } catch { toast.error("Erreur sauvegarde"); }
+    } catch { toast.error(t("Erreur sauvegarde")); }
     finally { setSaving(false); }
   }
 
   async function supprimerPost(id: string) {
     await fetch(`/api/posts?id=${id}`, { method: "DELETE" });
     setPosts(p => p.filter(x => x.id !== id));
-    toast.success("Post supprimé");
+    toast.success(t("Post supprimé"));
   }
 
   async function changerStatut(id: string, statut: Statut) {
     await fetch("/api/posts", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, statut }) });
     setPosts(p => p.map(x => x.id === id ? { ...x, statut } : x));
-    toast.success(statut === "publie" ? "Marqué comme publié ✓" : "Statut mis à jour");
+    toast.success(statut === "publie" ? t("Marqué comme publié ✓") : t("Statut mis à jour"));
   }
 
   const postsFiltres = posts.filter(p => {
@@ -212,13 +215,13 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Scheduler Social</h1>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Scheduler Social")}</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all"
           style={{ background: "linear-gradient(135deg, #E1306C, #833AB4)", boxShadow: "0 4px 20px rgba(225,48,108,0.3)" }}>
-          <Plus size={16} /> Nouveau post
+          <Plus size={16} />{" "}{t("Nouveau post")}
         </button>
       </div>
 
@@ -230,8 +233,8 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           { label: "Publiés", val: stats.publie, color: "#34d399" },
         ].map(s => (
           <div key={s.label} className="ax-card p-5">
-            <p className="text-[22px] font-bold mb-1 tabular-nums" style={{ color: s.color, fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
-            <p className="text-[12px] text-[#AAAAAA]">{s.label}</p>
+            <p className="text-[22px] font-bold mb-1 tabular-nums" style={{ color: s.color, fontVariantNumeric: "tabular-nums" }}>{t(s.val)}</p>
+            <p className="text-[12px] text-[#AAAAAA]">{t(s.label)}</p>
           </div>
         ))}
       </div>
@@ -245,7 +248,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               <button key={p} onClick={() => setFilterPlateforme(p)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filterPlateforme === p ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"}`}
                 style={filterPlateforme === p ? { background: plat?.color || "#6b7280" } : {}}>
-                {p === "tous" ? "Tous" : <span className="flex items-center gap-1">{plat?.Icon && <plat.Icon size={11} />} {plat?.label}</span>}
+                {p === "tous" ? t("Tous") : <span className="flex items-center gap-1">{plat?.Icon && <plat.Icon size={11} />} {t(plat?.label)}</span>}
               </button>
             );
           })}
@@ -254,7 +257,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           {["tous", "planifie", "publie", "annule"].map(s => (
             <button key={s} onClick={() => setFilterStatut(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filterStatut === s ? "bg-gray-800 text-white border-gray-800" : "bg-white border-gray-200 text-gray-500"}`}>
-              {s === "tous" ? "Tous statuts" : s === "planifie" ? "Planifiés" : s === "publie" ? "Publiés" : "Annulés"}
+              {s === "tous" ? t("Tous statuts") : s === "planifie" ? t("Planifiés") : s === "publie" ? t("Publiés") : t("Annulés")}
             </button>
           ))}
         </div>
@@ -268,12 +271,12 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       ) : postsFiltres.length === 0 ? (
         <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
           <Calendar size={40} className="text-[#CCCCCC] mx-auto mb-4" />
-          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">Aucun post planifié</h3>
-          <p className="text-[12.5px] text-[#AAAAAA] mb-6">L'IA peut générer et planifier vos posts en quelques secondes</p>
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">{t("Aucun post planifié")}</h3>
+          <p className="text-[12.5px] text-[#AAAAAA] mb-6">{t("L'IA peut générer et planifier vos posts en quelques secondes")}</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto transition-all"
             style={{ background: "linear-gradient(135deg, #E1306C, #833AB4)" }}>
-            <Sparkles size={15} /> Créer avec l'IA
+            <Sparkles size={15} />{" "}{t("Créer avec l'IA")}
           </button>
         </div>
       ) : (
@@ -290,7 +293,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
-              <h2 className="text-[15px] font-bold text-[#111111]">Nouveau post planifié</h2>
+              <h2 className="text-[15px] font-bold text-[#111111]">{t("Nouveau post planifié")}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
 
@@ -300,20 +303,20 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                 {[{ id: true, label: "Générer avec l'IA", Icon: Sparkles }, { id: false, label: "Manuel", Icon: Edit3 }].map(m => (
                   <button key={String(m.id)} onClick={() => setAiMode(m.id)}
                     className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${aiMode === m.id ? "bg-white text-[#111111] shadow-sm" : "text-[#AAAAAA]"}`}>
-                    <m.Icon size={13} /> {m.label}
+                    <m.Icon size={13} /> {t(m.label)}
                   </button>
                 ))}
               </div>
 
               {/* Plateforme */}
               <div>
-                <label className="text-[12px] font-semibold text-[#555] block mb-2">Plateforme</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Plateforme")}</label>
                 <div className="flex gap-2 flex-wrap">
                   {PLATEFORMES.map(p => (
                     <button key={p.id} onClick={() => setForm(f => ({ ...f, plateforme: p.id }))}
                       className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium border transition-all ${form.plateforme === p.id ? "text-white border-transparent" : "bg-white border-gray-200 text-gray-600"}`}
                       style={form.plateforme === p.id ? { background: p.color } : {}}>
-                      <p.Icon size={13} /> {p.label}
+                      <p.Icon size={13} /> {t(p.label)}
                     </button>
                   ))}
                 </div>
@@ -323,15 +326,15 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {aiMode && (
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[12px] font-semibold text-[#555] block mb-2">Que voulez-vous promouvoir ?</label>
+                    <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Que voulez-vous promouvoir ?")}</label>
                     <textarea value={form.aiPrompt} onChange={e => setForm(f => ({ ...f, aiPrompt: e.target.value }))}
-                      rows={3} placeholder="Ex: Nouvelle collection de robes wax printemps 2024, promo -20% ce weekend..."
+                      rows={3} placeholder={t("Ex: Nouvelle collection de robes wax printemps 2024, promo -20% ce weekend...")}
                       className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                   </div>
                   <button onClick={genererAvecIA} disabled={generating || !form.aiPrompt.trim()}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
                     style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)" }}>
-                    {generating ? <><Loader2 size={14} className="animate-spin" /> Génération…</> : <><Zap size={14} /> Générer le post + visuel IA</>}
+                    {generating ? <><Loader2 size={14} className="animate-spin" />{" "}{t("Génération…")}</> : <><Zap size={14} />{" "}{t("Générer le post + visuel IA")}</>}
                   </button>
                 </div>
               )}
@@ -340,7 +343,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {form.contenu && (
                 <div className="grid sm:grid-cols-2 gap-4">
                   {form.imageUrl && (
-                    <img src={form.imageUrl} alt="Visuel" className="w-full aspect-square object-cover rounded-xl" />
+                    <img src={form.imageUrl} alt={t("Visuel")} className="w-full aspect-square object-cover rounded-xl" />
                   )}
                   <div className="space-y-2">
                     <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
@@ -348,7 +351,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                     {form.hashtags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {form.hashtags.slice(0, 6).map(h => (
-                          <span key={h} className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{h}</span>
+                          <span key={h} className="text-[11px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">#{t(h)}</span>
                         ))}
                       </div>
                     )}
@@ -359,16 +362,16 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* Contenu manuel */}
               {!aiMode && !form.contenu && (
                 <div>
-                  <label className="text-[12px] font-semibold text-[#555] block mb-2">Contenu du post</label>
+                  <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Contenu du post")}</label>
                   <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
-                    rows={5} placeholder="Rédigez votre post..."
+                    rows={5} placeholder={t("Rédigez votre post...")}
                     className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                 </div>
               )}
 
               {/* Date */}
               <div>
-                <label className="text-[12px] font-semibold text-[#555] block mb-2">Date et heure de publication</label>
+                <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Date et heure de publication")}</label>
                 <input type="datetime-local" value={form.planifieLe} onChange={e => setForm(f => ({ ...f, planifieLe: e.target.value }))}
                   className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all" />
               </div>
@@ -377,7 +380,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                 <button onClick={sauvegarder} disabled={saving || !form.contenu || !form.planifieLe}
                   className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50"
                   style={{ background: "linear-gradient(135deg, #E1306C, #833AB4)" }}>
-                  {saving ? <><Loader2 size={16} className="animate-spin" /> Planification…</> : <><Calendar size={16} /> Planifier</>}
+                  {saving ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Planification…")}</> : <><Calendar size={16} />{" "}{t("Planifier")}</>}
                 </button>
               </div>
             </div>

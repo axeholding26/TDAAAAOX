@@ -18,8 +18,10 @@ import {
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { MarketingTutorial } from "@/components/dashboard/tutorials/MarketingTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 export default async function MarketingPage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "marketing");
@@ -95,14 +97,14 @@ export default async function MarketingPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">Marketing <AgentActiveIndicator label="Agent Marketing actif" /></h1>
+            <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">{t("Marketing")}{" "}<AgentActiveIndicator label={t("Agent Marketing actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="marketing" />
           </div>
-          <p className="text-[#717171] text-sm mt-1">Boostez vos ventes avec des outils ciblés</p>
+          <p className="text-[#717171] text-sm mt-1">{t("Boostez vos ventes avec des outils ciblés")}</p>
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
           <Users size={14} className="text-[#717171]" />
-          <span className="text-[#717171] text-sm">{totalClients} client{totalClients > 1 ? "s" : ""}</span>
+          <span className="text-[#717171] text-sm">{t(totalClients)} client{totalClients > 1 ? "s" : ""}</span>
         </div>
       </div>
 
@@ -120,8 +122,8 @@ export default async function MarketingPage() {
               <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4] mb-3">
                 <Icone size={15} style={{ color: stat.accent }} />
               </div>
-              <p className="text-[#111111] text-xl font-bold font-poppins">{stat.value}</p>
-              <p className="text-[#717171] text-xs mt-0.5">{stat.label}</p>
+              <p className="text-[#111111] text-xl font-bold font-poppins">{t(stat.value)}</p>
+              <p className="text-[#717171] text-xs mt-0.5">{t(stat.label)}</p>
             </div>
           );
         })}
@@ -144,15 +146,15 @@ export default async function MarketingPage() {
                   />
                 </div>
 
-                <p className="text-[#111111] font-semibold text-sm">{tool.titre}</p>
-                <p className="text-[#717171] text-sm mt-1 leading-relaxed flex-1">{tool.description}</p>
+                <p className="text-[#111111] font-semibold text-sm">{t(tool.titre)}</p>
+                <p className="text-[#717171] text-sm mt-1 leading-relaxed flex-1">{t(tool.description)}</p>
 
                 <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.statClass}`}>
-                    {tool.stat}
+                    {t(tool.stat)}
                   </span>
                   <span className="text-xs font-medium text-[#717171] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    Accéder →
+                    {t("Accéder →")}
                   </span>
                 </div>
               </div>
@@ -170,15 +172,15 @@ export default async function MarketingPage() {
                 <Tag size={15} className="text-[#F5A623]" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-[#111111]">Codes promo récents</h2>
-                <p className="text-[#717171] text-xs">{codesActifs} actif{codesActifs > 1 ? "s" : ""} sur {codesPromo.length}</p>
+                <h2 className="text-sm font-semibold text-[#111111]">{t("Codes promo récents")}</h2>
+                <p className="text-[#717171] text-xs">{t(codesActifs)} actif{codesActifs > 1 ? "s" : ""} sur {codesPromo.length}</p>
               </div>
             </div>
             <Link
               href="/dashboard/marketing/codes-promo"
               className="flex items-center gap-1 text-sm font-medium text-[#F5A623] hover:text-[#D97706] transition-colors"
             >
-              Voir tout <ArrowRight size={14} />
+              {t("Voir tout")}{" "}<ArrowRight size={14} />
             </Link>
           </div>
 
@@ -194,20 +196,20 @@ export default async function MarketingPage() {
                   </code>
                   <span className="text-[#717171] text-sm">
                     {code.type === "pourcentage"
-                      ? `${code.valeur}% de remise`
-                      : `${formatMontant(code.valeur, tenant.devise)} de remise`}
+                      ? t("{0}% de remise", code.valeur)
+                      : t("{0} de remise", formatMontant(code.valeur, tenant.devise))}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[#717171] text-xs">
-                    {code.utilisations}/{code.maxUtilisations ?? "∞"} util.
+                    {t(code.utilisations)}/{t(code.maxUtilisations) ?? "∞"} util.
                   </span>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                     code.actif
                       ? "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]"
                       : "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]"
                   }`}>
-                    {code.actif ? "Actif" : "Inactif"}
+                    {code.actif ? t("Actif") : t("Inactif")}
                   </span>
                 </div>
               </div>
@@ -222,14 +224,14 @@ export default async function MarketingPage() {
           <div className="w-14 h-14 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center mx-auto mb-4">
             <Megaphone size={24} className="text-[#717171]" />
           </div>
-          <p className="text-[#111111] font-semibold text-base mb-2">Prêt à booster vos ventes ?</p>
+          <p className="text-[#111111] font-semibold text-base mb-2">{t("Prêt à booster vos ventes ?")}</p>
           <p className="text-[#717171] text-sm mb-6 max-w-sm mx-auto">
-            Commencez par créer un code promo pour attirer vos premiers clients.
+            {t("Commencez par créer un code promo pour attirer vos premiers clients.")}
           </p>
           <Link href="/dashboard/marketing/codes-promo">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#111111] text-white">
               <Tag size={14} />
-              Créer un code promo
+              {t("Créer un code promo")}
             </span>
           </Link>
         </div>

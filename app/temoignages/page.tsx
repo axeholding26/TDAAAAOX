@@ -3,6 +3,7 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
 import { Star, Quote, ArrowRight, TrendingUp, Users, ShoppingBag, Award } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Témoignages — AXSO, ce que disent nos marchands",
@@ -123,7 +124,8 @@ const LOGOS = [
   "TechGadgets", "Mode Express", "BarryDeco", "Ghana Beauty Hub",
 ];
 
-export default function TemoignagesPage() {
+export default async function TemoignagesPage() {
+  const tr = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -141,16 +143,16 @@ export default function TemoignagesPage() {
                   style={{ background: c }} />
               ))}
             </div>
-            <span className="text-xs font-bold" style={{ color: "#F5A623" }}>1 247 marchands nous font confiance</span>
+            <span className="text-xs font-bold" style={{ color: "#F5A623" }}>{tr("1 247 marchands nous font confiance")}</span>
           </div>
           <h1 className="text-4xl sm:text-6xl font-black mb-6 leading-[1.08]">
-            Ils ont transformé<br />
+            {tr("Ils ont transformé")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              leur business
+              {tr("leur business")}
             </span>
           </h1>
           <p className="text-[#666666] text-xl leading-relaxed max-w-2xl mx-auto">
-            Des marchands de 12 pays africains partagent leur expérience avec AXSO — en chiffres, en honnêteté.
+            {tr("Des marchands de 12 pays africains partagent leur expérience avec AXSO — en chiffres, en honnêteté.")}
           </p>
         </div>
       </section>
@@ -166,7 +168,7 @@ export default function TemoignagesPage() {
                 <Icon size={18} style={{ color: "#F5A623" }} />
               </div>
               <p className="text-3xl font-black mb-1" style={{ color: "#F5A623" }}>{n}</p>
-              <p className="text-[#808080] text-xs">{label}</p>
+              <p className="text-[#808080] text-xs">{tr(label)}</p>
             </div>
           ))}
         </div>
@@ -183,18 +185,18 @@ export default function TemoignagesPage() {
             {Array(5).fill(0).map((_, i) => <Star key={i} size={18} fill="#F5A623" style={{ color: "#F5A623" }} />)}
           </div>
           <blockquote className="text-xl sm:text-2xl font-medium text-[#333333] leading-relaxed mb-8 max-w-3xl">
-            "Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Axia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24."
+            {tr("\"Avant AXSO, je gérais tout sur WhatsApp et les transferts manuels. Aujourd'hui j'ai une vraie boutique en ligne, mes clients paient via Wave ou Orange Money et je reçois mes fonds directement dans mon wallet. Axia gère mes descriptions produits et même mes relances clients — c'est comme avoir une assistante disponible 24h/24.\"")}
           </blockquote>
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>AK</div>
             <div>
-              <p className="font-bold text-[#111111]">Aminata Koné</p>
-              <p className="text-[#737373] text-sm">Fondatrice, Wax & Prestige · <span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>CI</span> Côte d'Ivoire</p>
+              <p className="font-bold text-[#111111]">{tr("Aminata Koné")}</p>
+              <p className="text-[#737373] text-sm">{tr("Fondatrice, Wax & Prestige ·")}{" "}<span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>CI</span>{" "}{tr("Côte d'Ivoire")}</p>
             </div>
             <div className="ml-auto hidden sm:block text-right">
               <p className="text-2xl font-black" style={{ color: "#F5A623" }}>+280%</p>
-              <p className="text-[#8C8C8C] text-xs">de CA en 4 mois</p>
+              <p className="text-[#8C8C8C] text-xs">{tr("de CA en 4 mois")}</p>
             </div>
           </div>
         </div>
@@ -204,8 +206,8 @@ export default function TemoignagesPage() {
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-3">Toutes les histoires</h2>
-            <p className="text-[#808080]">Résultats réels, vérifiables dans nos données marchands</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-3">{tr("Toutes les histoires")}</h2>
+            <p className="text-[#808080]">{tr("Résultats réels, vérifiables dans nos données marchands")}</p>
           </div>
 
           <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
@@ -218,11 +220,11 @@ export default function TemoignagesPage() {
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
                     style={{ background: `${t.accentBg}20`, color: t.accentBg, border: `1.5px solid ${t.accentBg}35` }}>
-                    {t.avatar}
+                    {tr(t.avatar)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#111111] text-sm">{t.nom}</p>
-                    <p className="text-[#808080] text-xs truncate">{t.role} · <span className="font-bold" style={{ color: t.accentBg }}>{t.code}</span> {t.pays}</p>
+                    <p className="font-bold text-[#111111] text-sm">{tr(t.nom)}</p>
+                    <p className="text-[#808080] text-xs truncate">{tr(t.role)} · <span className="font-bold" style={{ color: t.accentBg }}>{t.code}</span> {tr(t.pays)}</p>
                   </div>
                   <div className="flex gap-0.5 flex-shrink-0">
                     {Array(t.note).fill(0).map((_, i) => (
@@ -234,11 +236,11 @@ export default function TemoignagesPage() {
                 {/* Chiffre clé */}
                 <div className="rounded-xl px-3 py-2 mb-4 inline-block"
                   style={{ background: `${t.accentBg}0d`, border: `1px solid ${t.accentBg}20` }}>
-                  <span className="text-sm font-black" style={{ color: t.accentBg }}>{t.chiffre}</span>
+                  <span className="text-sm font-black" style={{ color: t.accentBg }}>{tr(t.chiffre)}</span>
                 </div>
 
                 {/* Contenu */}
-                <p className="text-[#595959] text-sm leading-relaxed">{t.contenu}</p>
+                <p className="text-[#595959] text-sm leading-relaxed">{tr(t.contenu)}</p>
               </div>
             ))}
           </div>
@@ -248,18 +250,18 @@ export default function TemoignagesPage() {
       {/* ── Logos wall ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-24">
         <div className="max-w-4xl mx-auto">
-          <p className="text-center text-[#B3B3B3] text-xs font-bold uppercase tracking-[0.25em] mb-8">Ils vendent avec AXSO</p>
+          <p className="text-center text-[#B3B3B3] text-xs font-bold uppercase tracking-[0.25em] mb-8">{tr("Ils vendent avec AXSO")}</p>
           <div className="flex flex-wrap justify-center gap-3">
             {LOGOS.map(logo => (
               <div key={logo}
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold"
                 style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.07)", color: "rgba(0,0,0,0.35)" }}>
-                {logo}
+                {tr(logo)}
               </div>
             ))}
             <div className="px-5 py-2.5 rounded-xl text-sm font-semibold"
               style={{ background: "rgba(245,166,35,0.05)", border: "1px solid rgba(245,166,35,0.15)", color: "rgba(245,166,35,0.6)" }}>
-              + 1 230 autres →
+              {tr("+ 1 230 autres →")}
             </div>
           </div>
         </div>
@@ -273,12 +275,12 @@ export default function TemoignagesPage() {
             {Array(5).fill(0).map((_, i) => <Star key={i} size={28} fill="#F5A623" style={{ color: "#F5A623" }} />)}
           </div>
           <p className="text-6xl font-black mb-2" style={{ color: "#F5A623" }}>4,8</p>
-          <p className="text-[#808080] mb-2">Note moyenne sur 1 247 avis vérifiés</p>
+          <p className="text-[#808080] mb-2">{tr("Note moyenne sur 1 247 avis vérifiés")}</p>
           <div className="flex justify-center gap-8 mt-6 flex-wrap">
             {[["Facilité d'utilisation","4,9"],["Support client","4,8"],["Rapport qualité/prix","4,9"],["Fonctionnalités","4,7"]].map(([l, n]) => (
               <div key={l} className="text-center">
                 <p className="text-2xl font-black text-[#111111]">{n}</p>
-                <p className="text-[#999999] text-xs">{l}</p>
+                <p className="text-[#999999] text-xs">{tr(l)}</p>
               </div>
             ))}
           </div>
@@ -288,18 +290,18 @@ export default function TemoignagesPage() {
       {/* ── CTA ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4">Rejoignez-les aujourd'hui</h2>
-          <p className="text-[#737373] text-lg mb-8">Démarrez gratuitement — aucune carte requise. Votre boutique en ligne en 2 minutes.</p>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4">{tr("Rejoignez-les aujourd'hui")}</h2>
+          <p className="text-[#737373] text-lg mb-8">{tr("Démarrez gratuitement — aucune carte requise. Votre boutique en ligne en 2 minutes.")}</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/inscription"
               className="inline-flex items-center gap-2 font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>
-              Créer ma boutique gratuitement <ArrowRight size={18} />
+              {tr("Créer ma boutique gratuitement")}{" "}<ArrowRight size={18} />
             </Link>
             <Link href="/contact"
               className="font-semibold px-8 py-4 rounded-2xl transition-all hover:bg-gray-50"
               style={{ border: "1px solid rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.65)" }}>
-              Parler à l'équipe
+              {tr("Parler à l'équipe")}
             </Link>
           </div>
         </div>

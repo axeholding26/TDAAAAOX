@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   slug: string; accent: string; texte: string;
@@ -21,6 +22,7 @@ function calc(dateFin?: string) {
 }
 
 export function SectionCountdown({ slug, accent, texte, titre, texteDesc, dateFin, ctaTexte }: Props) {
+  const tr = useT();
   const [t, setT] = useState(() => calc(dateFin));
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export function SectionCountdown({ slug, accent, texte, titre, texteDesc, dateFi
   return (
     <section className="py-16" style={{ background: `${accent}08` }}>
       <div className="max-w-3xl mx-auto px-4 text-center">
-        {titre && <h2 className="text-3xl font-bold font-playfair mb-3" style={{ color: texte }}>{titre}</h2>}
-        {texteDesc && <p className="text-base mb-8" style={{ color: texte, opacity: 0.65 }}>{texteDesc}</p>}
+        {titre && <h2 className="text-3xl font-bold font-playfair mb-3" style={{ color: texte }}>{tr(titre)}</h2>}
+        {texteDesc && <p className="text-base mb-8" style={{ color: texte, opacity: 0.65 }}>{tr(texteDesc)}</p>}
         <div className="flex items-center justify-center gap-4 mb-8">
           {[["Jours", t.j], ["Heures", t.h], ["Min", t.m], ["Sec", t.s]].map(([label, val]) => (
             <div key={label as string} className="flex flex-col items-center">
@@ -42,13 +44,13 @@ export function SectionCountdown({ slug, accent, texte, titre, texteDesc, dateFi
                 style={{ background: "white", color: accent, border: `2px solid ${accent}30` }}>
                 {String(val).padStart(2, "0")}
               </div>
-              <span className="text-xs mt-2 uppercase tracking-widest" style={{ color: texte, opacity: 0.4 }}>{label}</span>
+              <span className="text-xs mt-2 uppercase tracking-widest" style={{ color: texte, opacity: 0.4 }}>{tr(label)}</span>
             </div>
           ))}
         </div>
         {ctaTexte && (
           <Link href={`/${slug}/produits`} className="inline-flex px-8 py-4 rounded-2xl font-bold text-sm text-white" style={{ background: accent }}>
-            {ctaTexte}
+            {tr(ctaTexte)}
           </Link>
         )}
       </div>

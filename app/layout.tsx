@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { LangueSelecteur } from "@/components/ui/LangueSelecteur";
+import { I18nProvider } from "@/components/I18nProvider";
+import { getLangue, dico } from "@/lib/i18n/serveur";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -26,15 +29,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const langue = await getLangue();
   return (
     // data-scroll-behavior : globals.css met scroll-behavior:smooth sur <html> ; Next le désactive
     // pendant les changements de page (sinon avertissement à chaque chargement).
-    <html lang="fr" className={poppins.variable} data-scroll-behavior="smooth">
+    <html lang={langue} className={poppins.variable} data-scroll-behavior="smooth">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -44,8 +48,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full antialiased">
-        {children}
-        <Toaster position="top-right" richColors />
+        <I18nProvider langue={langue} dico={await dico("commun")}>
+          {children}
+          <Toaster position="top-right" richColors />
+          <LangueSelecteur flottant />
+        </I18nProvider>
       </body>
     </html>
   );

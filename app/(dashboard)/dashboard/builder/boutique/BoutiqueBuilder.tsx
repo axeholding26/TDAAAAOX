@@ -28,6 +28,7 @@ import { PanneauElement } from "../PanneauElement";
 import { StyleCss } from "@/components/storefront/StyleCss";
 import { CSS_MENUS_DEROULANTS } from "../menusDeroulants";
 import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 type Onglet = "sections" | "parametres" | "modeles";
@@ -65,6 +66,7 @@ interface Props {
 // En-tête / Modèle / Pied de page à gauche, aperçu en direct au centre,
 // réglages de l'élément sélectionné à droite.
 export function BoutiqueBuilder(p: Props) {
+  const tr = useT();
   const { config, set, tenant, device } = p;
   const [onglet, setOnglet] = useState<Onglet>("sections");
   // Page de la boutique en cours d'édition (sélecteur de la barre du haut).
@@ -182,12 +184,12 @@ export function BoutiqueBuilder(p: Props) {
   return (
     <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F1F2F4] text-[#111111] overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <StyleCss css={CSS_MENUS_DEROULANTS} />
-      <PCOnlyGate label="Le Constructeur de boutique" />
+      <PCOnlyGate label={tr("Le Constructeur de boutique")} />
 
       {/* ── Barre du haut : fixe, identique quel que soit le design ── */}
       <header className="h-[60px] flex-shrink-0 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 bg-white border-b border-[#E5E5E5]">
         <div className="flex items-center gap-1.5 min-w-0">
-          <Link href="/dashboard" title="Quitter le constructeur" aria-label="Quitter le constructeur"
+          <Link href="/dashboard" title={tr("Quitter le constructeur")} aria-label={tr("Quitter le constructeur")}
             className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
             <LogOut size={18} className="rotate-180" />
           </Link>
@@ -203,20 +205,20 @@ export function BoutiqueBuilder(p: Props) {
         <div className="flex items-center gap-3 text-[14px] min-w-0">
           <span className="flex items-center gap-2 font-medium text-[#111111] truncate">
             <LayoutTemplate size={16} className="text-[#777777] flex-shrink-0" />
-            {design?.nom ?? "Mon thème"}
+            {tr(design?.nom) ?? tr("Mon thème")}
           </span>
           {tenant.statut === "active"
-            ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">En ligne</span>
+            ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#DCFCE7] text-[#15803D]">{tr("En ligne")}</span>
             : tenant.statut === "brouillon"
-              ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">Brouillon</span>
-              : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#F3F4F6] text-[#4B5563]">Hors ligne</span>}
+              ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">{tr("Brouillon")}</span>
+              : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#F3F4F6] text-[#4B5563]">{tr("Hors ligne")}</span>}
           <span className="w-px h-5 bg-[#E5E5E5]" />
           <SelecteurPage page={page} onChange={setPage} />
         </div>
 
         <div className="flex items-center justify-end gap-1.5 min-w-0">
           <span className="hidden xl:block text-[13px] text-[#888888] mr-1 truncate">
-            {p.saving ? "Enregistrement…" : p.saved ? "Enregistré" : p.hasChanges ? "Modifications non enregistrées" : ""}
+            {p.saving ? tr("Enregistrement…") : p.saved ? tr("Enregistré") : p.hasChanges ? tr("Modifications non enregistrées") : ""}
           </span>
           <div className="flex items-center rounded-lg bg-[#F3F3F3] p-0.5">
             {([["desktop", Monitor, "Ordinateur"], ["tablet", Tablet, "Tablette"], ["mobile", Smartphone, "Mobile"]] as [Device, LucideIcon, string][]).map(([d, Icon, label]) => (
@@ -226,10 +228,10 @@ export function BoutiqueBuilder(p: Props) {
               </button>
             ))}
           </div>
-          <BoutonBarre titre="Annuler (Ctrl+Z)" onClick={p.undo} disabled={!p.peutAnnuler}><Undo2 size={17} /></BoutonBarre>
-          <BoutonBarre titre="Rétablir (Ctrl+Y)" onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={17} /></BoutonBarre>
+          <BoutonBarre titre={tr("Annuler (Ctrl+Z)")} onClick={p.undo} disabled={!p.peutAnnuler}><Undo2 size={17} /></BoutonBarre>
+          <BoutonBarre titre={tr("Rétablir (Ctrl+Y)")} onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={17} /></BoutonBarre>
           {tenant.statut === "active" && (
-            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" title="Voir la boutique" aria-label="Voir la boutique"
+            <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" title={tr("Voir la boutique")} aria-label={tr("Voir la boutique")}
               className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
               <ExternalLink size={17} />
             </a>
@@ -238,26 +240,26 @@ export function BoutiqueBuilder(p: Props) {
             className={`h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold transition-colors disabled:cursor-not-allowed ${
               p.saved ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA]"}`}>
             {p.saving ? <RefreshCw size={15} className="animate-spin" /> : p.saved ? <Check size={15} /> : <Save size={15} />}
-            {p.saving ? "Enregistrement…" : p.saved ? "Enregistré" : "Enregistrer"}
+            {p.saving ? tr("Enregistrement…") : p.saved ? tr("Enregistré") : tr("Enregistrer")}
           </button>
           {tenant.statut === "active" ? (
-            <button onClick={p.depublier} disabled={p.publishing} title="Retirer la boutique de la vente en ligne"
+            <button onClick={p.depublier} disabled={p.publishing} title={tr("Retirer la boutique de la vente en ligne")}
               className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold border border-[#E5E5E5] text-[#444444] hover:border-[#FCA5A5] hover:text-[#DC2626] hover:bg-[#FEF2F2] disabled:opacity-40 transition-colors">
               {p.publishing ? <RefreshCw size={15} className="animate-spin" /> : <EyeOff size={15} />}
-              {p.publishing ? "…" : "Dépublier"}
+              {p.publishing ? "…" : tr("Dépublier")}
             </button>
           ) : (
             <button onClick={p.publier} disabled={p.publishing || p.criteresManquants.length > 0}
-              title={p.criteresManquants.length ? `Complète d'abord : ${p.criteresManquants.map((c) => c.label).join(", ")}` : undefined}
+              title={p.criteresManquants.length ? tr("Complète d'abord : {0}", p.criteresManquants.map((c) => c.label).join(", ")) : undefined}
               className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               {p.publishing ? <RefreshCw size={15} className="animate-spin" /> : <Rocket size={15} />}
-              {p.publishing ? "Publication…" : "Publier"}
+              {p.publishing ? tr("Publication…") : tr("Publier")}
             </button>
           )}
         </div>
       </header>
 
-      {p.bandeaux}
+      {tr(p.bandeaux)}
 
       <div className="flex-1 flex min-h-0">
         {/* ── Panneau de gauche ── */}
@@ -265,8 +267,8 @@ export function BoutiqueBuilder(p: Props) {
           {onglet === "sections" && page !== "accueil" && (
             p.panneauxPages[page]
               ? <div className="flex-1 flex flex-col min-h-0">
-                  <div className="px-5 h-14 flex items-center border-b border-[#EEEEEE] flex-shrink-0"><p className="text-[15px] font-semibold">{PAGES.find((pg) => pg.id === page)?.label}</p></div>
-                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{p.panneauxPages[page]}</div>
+                  <div className="px-5 h-14 flex items-center border-b border-[#EEEEEE] flex-shrink-0"><p className="text-[15px] font-semibold">{tr(PAGES.find((pg) => pg.id === page)?.label)}</p></div>
+                  <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{tr(p.panneauxPages[page])}</div>
                 </div>
               : <PanneauPage page={page} onPage={setPage} />
           )}
@@ -287,15 +289,15 @@ export function BoutiqueBuilder(p: Props) {
 
           {onglet === "parametres" && !reglage && (
             <div className="flex-1 overflow-y-auto scrollbar-thin">
-              <div className="px-5 py-4 border-b border-[#EEEEEE]"><p className="text-[16px] font-semibold">Paramètres du thème</p></div>
+              <div className="px-5 py-4 border-b border-[#EEEEEE]"><p className="text-[16px] font-semibold">{tr("Paramètres du thème")}</p></div>
               <ul className="p-2">
                 {p.reglages.map((r) => (
                   <li key={r.id}>
                     <button onClick={() => setReglageOuvert(r.id)} className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left hover:bg-[#F5F5F5] transition-colors">
                       <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-[#F5F5F5] flex items-center justify-center text-[#666666]"><r.Icon size={17} /></span>
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[14px] font-medium">{r.label}</span>
-                        <span className="block text-[12.5px] text-[#888888] truncate">{r.desc}</span>
+                        <span className="block text-[14px] font-medium">{tr(r.label)}</span>
+                        <span className="block text-[12.5px] text-[#888888] truncate">{tr(r.desc)}</span>
                       </span>
                       <ChevronRight size={16} className="text-[#AAAAAA]" />
                     </button>
@@ -308,17 +310,17 @@ export function BoutiqueBuilder(p: Props) {
           {onglet === "parametres" && reglage && (
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-3 h-14 border-b border-[#EEEEEE] flex-shrink-0">
-                <button onClick={() => setReglageOuvert(null)} aria-label="Retour" className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5]"><ArrowLeft size={17} /></button>
-                <p className="text-[15px] font-semibold">{reglage.label}</p>
+                <button onClick={() => setReglageOuvert(null)} aria-label={tr("Retour")} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5]"><ArrowLeft size={17} /></button>
+                <p className="text-[15px] font-semibold">{tr(reglage.label)}</p>
               </div>
-              <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{reglage.contenu}</div>
+              <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{tr(reglage.contenu)}</div>
             </div>
           )}
 
           {onglet === "modeles" && (
             <div className="flex-1 overflow-y-auto scrollbar-thin">
-              <div className="px-5 py-4 border-b border-[#EEEEEE]"><p className="text-[16px] font-semibold">Modèles</p></div>
-              {p.modeles}
+              <div className="px-5 py-4 border-b border-[#EEEEEE]"><p className="text-[16px] font-semibold">{tr("Modèles")}</p></div>
+              {tr(p.modeles)}
             </div>
           )}
 
@@ -348,7 +350,7 @@ export function BoutiqueBuilder(p: Props) {
           <PanneauElement
             key={selectedEl}
             titre={infoEl.nom}
-            sousTitre={`Dans « ${nomNoeud(sectionDe(embed.id) ?? embed)} »`}
+            sousTitre={tr("Dans « {0} »", nomNoeud(sectionDe(embed.id) ?? embed))}
             contenu={{ texte: infoEl.texte, lien: infoEl.lien, image: infoEl.image, alt: infoEl.alt, placeholder: infoEl.placeholder, texteEnLigne: infoEl.texteEnLigne }}
             onContenu={(patch) => majEmbed((c) => ({ html: modifierElement(c.html || "", selectedEl, (el) => appliquerContenu(el, patch)) }))}
             styles={(embed.config?.elementStyles as ElementStyles | undefined)?.[selectedEl] ?? {}}

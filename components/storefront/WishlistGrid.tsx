@@ -6,6 +6,7 @@ import { Heart, Package } from "lucide-react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { WishlistHeartButton } from "./WishlistHeartButton";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
+import { useT } from "@/components/I18nProvider";
 
 interface Produit {
   id: string; nom: string; images: string[]; categorie: string | null;
@@ -19,6 +20,7 @@ export function WishlistGrid({
   slug: string; devise: string; accent: string; fond: string; texte: string; surface: string; radius: string;
   container: string; gridProduits: string; carteClass: string; btnPrimaryStyle: React.CSSProperties; btnPrimaryClass: string;
 }) {
+  const t = useT();
   const { fmt } = usePrix();
   const produitIds = useWishlistStore((s) => s.produitIds);
   const [produits, setProduits] = useState<Produit[] | null>(null);
@@ -35,20 +37,20 @@ export function WishlistGrid({
     <div className={`${container} mx-auto px-4 sm:px-6 lg:px-8 py-10`}>
       <div className="mb-8">
         <span className="text-xs font-semibold uppercase tracking-widest mb-1 flex items-center gap-2" style={{ color: accent }}>
-          <Heart size={13} /> Liste de souhaits
+          <Heart size={13} />{" "}{t("Liste de souhaits")}
         </span>
-        <h1 className="text-3xl sm:text-4xl font-bold font-playfair">Mes favoris</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold font-playfair">{t("Mes favoris")}</h1>
       </div>
 
       {produits === null ? (
-        <div className="text-center py-24" style={{ opacity: 0.4 }}>Chargement…</div>
+        <div className="text-center py-24" style={{ opacity: 0.4 }}>{t("Chargement…")}</div>
       ) : produits.length === 0 ? (
         <div className="text-center py-24">
           <Heart size={48} className="mx-auto mb-4 opacity-20" />
-          <p className="text-lg font-semibold mb-2">Aucun favori pour le moment</p>
-          <p className="text-sm mb-6" style={{ opacity: 0.5 }}>Cliquez sur le cœur d'un produit pour l'ajouter ici.</p>
+          <p className="text-lg font-semibold mb-2">{t("Aucun favori pour le moment")}</p>
+          <p className="text-sm mb-6" style={{ opacity: 0.5 }}>{t("Cliquez sur le cœur d'un produit pour l'ajouter ici.")}</p>
           <Link href={`/${slug}/produits`} className={`text-sm ${btnPrimaryClass}`} style={btnPrimaryStyle}>
-            Découvrir les produits
+            {t("Découvrir les produits")}
           </Link>
         </div>
       ) : (
@@ -68,14 +70,14 @@ export function WishlistGrid({
                     )}
                     <WishlistHeartButton produitId={p.id} accent={accent} fond={fond} className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full" />
                     {remise > 0 && (
-                      <span className="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">-{remise}%</span>
+                      <span className="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">-{t(remise)}%</span>
                     )}
                     {p.stock === 0 && (
-                      <span className="absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/60 text-white">Épuisé</span>
+                      <span className="absolute bottom-2.5 left-2.5 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-black/60 text-white">{t("Épuisé")}</span>
                     )}
                   </div>
                   <div className="p-3.5">
-                    <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{p.nom}</p>
+                    <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{t(p.nom)}</p>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm" style={{ color: accent }}>{fmt(p.prixAffiche, devise)}</span>
                       {remise > 0 && <span className="text-xs line-through" style={{ opacity: 0.35 }}>{fmt(p.prixCompareAffiche!, devise)}</span>}

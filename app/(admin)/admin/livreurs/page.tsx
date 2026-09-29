@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { formatDate } from "@/lib/utils";
 import { Truck, MapPin, CheckCircle, XCircle, Bike, Car, Package } from "lucide-react";
 import { getAdminSession } from "@/lib/admin-auth";
+import { getT } from "@/lib/i18n/serveur";
 
 const VEHICULES: Record<string, { label: string; icon: any }> = {
   moto: { label: "Moto", icon: Bike },
@@ -25,6 +26,7 @@ const C = {
 };
 
 export default async function AdminLivreursPage() {
+  const t = await getT();
   const session = await getAdminSession();
   if (!session) redirect("/dashboard");
 
@@ -52,16 +54,16 @@ export default async function AdminLivreursPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: C.text1 }}>Livreurs</h1>
-        <p className="text-sm mt-1" style={{ color: C.text2 }}>{livreurs.length} livreurs sur la plateforme</p>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: C.text1 }}>{t("Livreurs")}</h1>
+        <p className="text-sm mt-1" style={{ color: C.text2 }}>{livreurs.length}{" "}{t("livreurs sur la plateforme")}</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s, i) => (
           <div key={i} className="rounded-2xl p-5 border" style={{ background: C.carte, borderColor: C.bordure }}>
-            <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs mt-1" style={{ color: C.text2 }}>{s.label}</p>
+            <p className="text-2xl font-bold" style={{ color: s.color }}>{t(s.value)}</p>
+            <p className="text-xs mt-1" style={{ color: C.text2 }}>{t(s.label)}</p>
           </div>
         ))}
       </div>
@@ -70,14 +72,14 @@ export default async function AdminLivreursPage() {
       <div className="rounded-2xl overflow-hidden border" style={{ background: C.carte, borderColor: C.bordure }}>
         <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: C.bordure }}>
           <Truck size={15} style={{ color: C.accent }} />
-          <h2 className="font-semibold" style={{ color: C.text1 }}>Tous les livreurs</h2>
+          <h2 className="font-semibold" style={{ color: C.text1 }}>{t("Tous les livreurs")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b" style={{ borderColor: C.bordure }}>
                 {["Livreur", "Téléphone", "Véhicule", "Zone", "Boutique", "Livraisons", "Position", "Statut", "Inscrit le"].map(h => (
-                  <th key={h} className={th} style={{ color: C.text2 }}>{h}</th>
+                  <th key={h} className={th} style={{ color: C.text2 }}>{t(h)}</th>
                 ))}
               </tr>
             </thead>
@@ -93,31 +95,31 @@ export default async function AdminLivreursPage() {
                           style={{ background: "rgba(245,166,35,0.12)", color: C.accent }}>
                           {l.nom.slice(0, 2).toUpperCase()}
                         </div>
-                        <p className="font-medium" style={{ color: C.text1 }}>{l.nom}</p>
+                        <p className="font-medium" style={{ color: C.text1 }}>{t(l.nom)}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4 font-mono text-xs" style={{ color: C.text2 }}>{l.telephone}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5" style={{ color: C.text2 }}>
                         <VehiculeIcon size={13} />
-                        <span className="text-xs">{vehicule.label}</span>
+                        <span className="text-xs">{t(vehicule.label)}</span>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-xs" style={{ color: C.text2 }}>{l.zone || "—"}</td>
+                    <td className="px-5 py-4 text-xs" style={{ color: C.text2 }}>{t(l.zone) || "—"}</td>
                     <td className="px-5 py-4">
                       {l.tenant ? (
                         <span className="text-xs px-2 py-0.5 rounded-full"
                           style={{ background: "rgba(245,166,35,0.1)", color: C.accent, border: "1px solid rgba(245,166,35,0.2)" }}>
-                          {l.tenant.nomBoutique}
+                          {t(l.tenant.nomBoutique)}
                         </span>
                       ) : (
                         <span className="text-xs px-2 py-0.5 rounded-full"
                           style={{ background: "rgba(255,255,255,0.06)", color: C.text2, border: `1px solid ${C.bordure}` }}>
-                          Plateforme
+                          {t("Plateforme")}
                         </span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-center" style={{ color: C.text1 }}>{l._count.commandes}</td>
+                    <td className="px-5 py-4 text-center" style={{ color: C.text1 }}>{t(l._count.commandes)}</td>
                     <td className="px-5 py-4">
                       {l.latitude && l.longitude ? (
                         <div className="flex items-center gap-1 text-xs" style={{ color: C.success }}>
@@ -125,7 +127,7 @@ export default async function AdminLivreursPage() {
                           <span>{l.latitude.toFixed(3)}, {l.longitude.toFixed(3)}</span>
                         </div>
                       ) : (
-                        <span className="text-xs" style={{ color: C.text3 }}>Non partagée</span>
+                        <span className="text-xs" style={{ color: C.text3 }}>{t("Non partagée")}</span>
                       )}
                     </td>
                     <td className="px-5 py-4">
@@ -135,14 +137,14 @@ export default async function AdminLivreursPage() {
                             ? <CheckCircle size={11} style={{ color: C.success }} />
                             : <XCircle size={11} style={{ color: C.error }} />}
                           <span className="text-[10px]" style={{ color: l.actif ? C.success : C.error }}>
-                            {l.actif ? "Actif" : "Inactif"}
+                            {l.actif ? t("Actif") : t("Inactif")}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 rounded-full"
                             style={{ background: l.disponible ? C.success : C.text3 }} />
                           <span className="text-[10px]" style={{ color: l.disponible ? C.success : C.text3 }}>
-                            {l.disponible ? "Dispo" : "Occupé"}
+                            {l.disponible ? t("Dispo") : t("Occupé")}
                           </span>
                         </div>
                       </div>
@@ -156,7 +158,7 @@ export default async function AdminLivreursPage() {
           {livreurs.length === 0 && (
             <div className="py-16 text-center" style={{ color: C.text3 }}>
               <Truck size={32} className="mx-auto mb-3 opacity-30" />
-              <p>Aucun livreur inscrit</p>
+              <p>{t("Aucun livreur inscrit")}</p>
             </div>
           )}
         </div>

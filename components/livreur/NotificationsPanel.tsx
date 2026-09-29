@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Bell, Package, X, CheckCheck, Check, AlertTriangle, Bike, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 type Notif = {
   id: string;
@@ -14,6 +15,7 @@ type Notif = {
 };
 
 export function NotificationsPanel() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notif[]>([]);
   const [nonLues, setNonLues] = useState(0);
@@ -41,8 +43,8 @@ export function NotificationsPanel() {
           charger();
           // Toast pour chaque nouvelle notif
           payload.data.forEach((n: Notif) => {
-            toast(n.titre, {
-              description: n.message,
+            toast(t(n.titre), {
+              description: t(n.message),
               icon: <Bell size={14} />,
               duration: 6000,
             });
@@ -51,7 +53,7 @@ export function NotificationsPanel() {
 
         if (payload.type === "commandes" && payload.data?.length > 0) {
           payload.data.forEach((cmd: any) => {
-            toast("Nouvelle commande assignée !", {
+            toast(t("Nouvelle commande assignée !"), {
               description: `${cmd.clientNom} · ${cmd.ville}`,
               icon: <Package size={14} />,
               duration: 8000,
@@ -89,7 +91,7 @@ export function NotificationsPanel() {
         <Bell size={18} />
         {nonLues > 0 && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F5A623] rounded-full text-black text-[10px] font-bold flex items-center justify-center animate-pulse">
-            {nonLues > 9 ? "9+" : nonLues}
+            {nonLues > 9 ? "9+" : t(nonLues)}
           </span>
         )}
       </button>
@@ -101,14 +103,14 @@ export function NotificationsPanel() {
             <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
               <div className="flex items-center gap-2">
                 <Bell size={14} className="text-[#F5A623]" />
-                <h3 className="text-white font-semibold text-sm">Notifications</h3>
+                <h3 className="text-white font-semibold text-sm">{t("Notifications")}</h3>
                 {nonLues > 0 && (
-                  <span className="bg-[#F5A623] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">{nonLues}</span>
+                  <span className="bg-[#F5A623] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">{t(nonLues)}</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {nonLues > 0 && (
-                  <button onClick={toutMarquerLu} className="text-gray-500 hover:text-[#F5A623] transition-colors" title="Tout marquer lu">
+                  <button onClick={toutMarquerLu} className="text-gray-500 hover:text-[#F5A623] transition-colors" title={t("Tout marquer lu")}>
                     <CheckCheck size={14} />
                   </button>
                 )}
@@ -122,7 +124,7 @@ export function NotificationsPanel() {
               {notifications.length === 0 ? (
                 <div className="p-6 text-center text-gray-500 text-sm">
                   <Bell size={24} className="mx-auto mb-2 opacity-30" />
-                  Aucune notification
+                  {t("Aucune notification")}
                 </div>
               ) : notifications.map((n) => (
                 <div
@@ -134,10 +136,10 @@ export function NotificationsPanel() {
                       {(() => { const Icon = TYPE_ICON_MAP[n.type] || Bell; return <Icon size={16} />; })()}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${!n.lu ? "text-white" : "text-gray-300"}`}>{n.titre}</p>
-                      <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{n.message}</p>
+                      <p className={`text-sm font-medium ${!n.lu ? "text-white" : "text-gray-300"}`}>{t(n.titre)}</p>
+                      <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{t(n.message)}</p>
                       <p className="text-gray-600 text-[10px] mt-1">
-                        {new Date(n.createdAt).toLocaleString("fr-FR", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
+                        {new Date(n.createdAt).toLocaleString(t.loc, { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" })}
                       </p>
                     </div>
                     {!n.lu && <div className="w-2 h-2 bg-[#F5A623] rounded-full flex-shrink-0 mt-1.5" />}

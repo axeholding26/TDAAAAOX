@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Plus, Search, AlertTriangle, TrendingUp } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const PRODUITS_TUTORIAL_STEPS = [
   { Icon: Plus,          titre: "Ajoute un produit",       description: "Clique sur \"Nouveau produit\" pour créer une fiche avec photos, prix, variantes et stock." },
@@ -10,5 +11,6 @@ const PRODUITS_TUTORIAL_STEPS = [
 ];
 
 export function ProduitsTutorial() {
-  return <ModuleTutorial moduleKey="produits" titre="Produits" sousTitre="Ton catalogue" steps={PRODUITS_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="produits" titre={t("Produits")} sousTitre={t("Ton catalogue")} steps={PRODUITS_TUTORIAL_STEPS} />;
 }

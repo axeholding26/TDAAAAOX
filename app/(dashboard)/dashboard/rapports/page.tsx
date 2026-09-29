@@ -10,6 +10,7 @@ import {
 import { PrintButton } from "@/components/dashboard/PrintButton";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { RapportsTutorial } from "@/components/dashboard/tutorials/RapportsTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 const PERIODES = [
   { v: "7", l: "7 jours" },
@@ -39,6 +40,7 @@ function VariationBadge({ v }: { v: { pct: number; sens: "hausse" | "baisse" | "
 }
 
 export default async function RapportsPage({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "produits");
@@ -104,9 +106,9 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
 
   const KPIS = [
     { label: "Revenus générés", valeur: formatMontant(revenus, devise), v: variation(revenus, revenusPrecedents), Icon: Wallet, couleur: "#F5A623" },
-    { label: "Commandes traitées", valeur: commandes.toLocaleString("fr-FR"), v: variation(commandes, commandesPrecedentes), Icon: ShoppingCart, couleur: "#3b82f6" },
+    { label: "Commandes traitées", valeur: commandes.toLocaleString(t.loc), v: variation(commandes, commandesPrecedentes), Icon: ShoppingCart, couleur: "#3b82f6" },
     { label: "Panier moyen", valeur: formatMontant(panierMoyen, devise), v: variation(panierMoyen, panierMoyenPrecedent), Icon: TrendingUp, couleur: "#10b981" },
-    { label: "Nouveaux clients", valeur: nouveauxClients.toLocaleString("fr-FR"), v: variation(nouveauxClients, nouveauxClientsPrecedents), Icon: Users, couleur: "#8b5cf6" },
+    { label: "Nouveaux clients", valeur: nouveauxClients.toLocaleString(t.loc), v: variation(nouveauxClients, nouveauxClientsPrecedents), Icon: Users, couleur: "#8b5cf6" },
   ];
 
   return (
@@ -116,10 +118,10 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
         <div>
           <div className="flex items-center gap-2 mb-1">
             <FileBarChart size={18} className="text-[#F5A623]" />
-            <h1 className="text-2xl font-bold text-gray-900">Rapport de productivité</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("Rapport de productivité")}</h1>
             <span className="print:hidden"><BoutonRevoirTutoriel moduleKey="rapports" /></span>
           </div>
-          <p className="text-gray-400 text-sm">{tenant?.nomBoutique} · {jours} derniers jours · comparé aux {jours} jours précédents</p>
+          <p className="text-gray-400 text-sm">{t(tenant?.nomBoutique)} · {t(jours)}{" "}{t("derniers jours · comparé aux")}{" "}{t(jours)}{" "}{t("jours précédents")}</p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
           <div className="flex items-center bg-gray-100 rounded-xl p-1">
@@ -127,7 +129,7 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
               <a key={p.v} href={`/dashboard/rapports?periode=${p.v}`}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                 style={jours === Number(p.v) ? { background: "white", color: "#111", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" } : { color: "#9ca3af" }}>
-                {p.l}
+                {t(p.l)}
               </a>
             ))}
           </div>
@@ -145,8 +147,8 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
               </div>
               <VariationBadge v={k.v} />
             </div>
-            <p className="text-xl font-black text-gray-900">{k.valeur}</p>
-            <p className="text-[11px] text-gray-400 mt-0.5">{k.label}</p>
+            <p className="text-xl font-black text-gray-900">{t(k.valeur)}</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">{t(k.label)}</p>
           </div>
         ))}
       </div>
@@ -154,9 +156,9 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Répartition par statut */}
         <div className="ax-card p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4">Commandes par statut</h2>
+          <h2 className="text-sm font-bold text-gray-900 mb-4">{t("Commandes par statut")}</h2>
           {statutDistribution.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Aucune commande sur cette période.</p>
+            <p className="text-sm text-gray-400 text-center py-8">{t("Aucune commande sur cette période.")}</p>
           ) : (
             <div className="space-y-2.5">
               {statutDistribution.sort((a, b) => b._count - a._count).map(s => {
@@ -164,8 +166,8 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
                 return (
                   <div key={s.statut}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-gray-600">{STATUT_LABELS[s.statut] ?? s.statut}</span>
-                      <span className="text-xs font-bold text-gray-800">{s._count} · {pct}%</span>
+                      <span className="text-xs font-medium text-gray-600">{t(STATUT_LABELS[s.statut]) ?? t(s.statut)}</span>
+                      <span className="text-xs font-bold text-gray-800">{t(s._count)} · {pct}%</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, background: s.statut === "annulee" ? "#ef4444" : "#F5A623" }} />
@@ -175,7 +177,7 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
               })}
               {annulees > 0 && (
                 <p className="flex items-center gap-1.5 text-[11px] text-red-500 pt-2">
-                  <XCircle size={11} /> Taux d'annulation : {tauxAnnulation}%
+                  <XCircle size={11} />{" "}{t("Taux d'annulation :")}{" "}{t(tauxAnnulation)}%
                 </p>
               )}
             </div>
@@ -184,9 +186,9 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
 
         {/* Top produits */}
         <div className="ax-card p-5">
-          <h2 className="text-sm font-bold text-gray-900 mb-4">Top produits vendus</h2>
+          <h2 className="text-sm font-bold text-gray-900 mb-4">{t("Top produits vendus")}</h2>
           {topProduits.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Aucune vente sur cette période.</p>
+            <p className="text-sm text-gray-400 text-center py-8">{t("Aucune vente sur cette période.")}</p>
           ) : (
             <div className="space-y-3">
               {topProduits.map((p, i) => (
@@ -195,7 +197,7 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-gray-800 truncate">{p.nom}</p>
+                    <p className="text-xs font-semibold text-gray-800 truncate">{t(p.nom)}</p>
                     <p className="text-[10.5px] text-gray-400">{p.quantite} vendu{p.quantite > 1 ? "s" : ""}</p>
                   </div>
                   <p className="text-xs font-bold text-gray-900 flex-shrink-0">{formatMontant(p.revenu, devise)}</p>
@@ -207,7 +209,7 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
       </div>
 
       <p className="text-[10.5px] text-gray-300 text-center print:block hidden">
-        Généré le {new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })} · Axso
+        {t("Généré le")}{" "}{new Date().toLocaleDateString(t.loc, { day: "2-digit", month: "long", year: "numeric" })}{" "}{t("· Axso")}
       </p>
     </div>
   );

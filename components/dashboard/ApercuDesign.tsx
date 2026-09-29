@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { prixClient } from "@/lib/pricing";
+import { useT } from "@/components/I18nProvider";
 
 // Vrai aperçu d'un design AXSO (page rendue par /api/preview-theme, avec les
 // produits de la boutique), réduit pour tenir dans sa carte quelle que soit
@@ -9,6 +10,7 @@ import { prixClient } from "@/lib/pricing";
 const LARGEUR = 1280;
 
 export function ApercuDesign({ fichier, fond, params = "", className = "h-48" }: { fichier: string; fond?: string; params?: string; className?: string }) {
+  const t = useT();
   const boite = useRef<HTMLDivElement>(null);
   const [taille, setTaille] = useState<{ l: number; h: number } | null>(null);
   useEffect(() => {
@@ -24,7 +26,7 @@ export function ApercuDesign({ fichier, fond, params = "", className = "h-48" }:
       {echelle > 0 && (
         <iframe
           src={`/api/preview-theme?fichier=${encodeURIComponent(fichier)}${params}`}
-          title="Aperçu du design"
+          title={t("Aperçu du design")}
           loading="lazy"
           sandbox="allow-same-origin allow-scripts"
           scrolling="no"

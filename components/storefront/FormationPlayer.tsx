@@ -6,6 +6,7 @@ import {
   CheckCircle2, Circle, PlayCircle, FileText, Headphones,
   ChevronRight, ChevronLeft, Award, GraduationCap, Menu, X,
 } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Lecon {
   id: string; titre: string; type: string; contenu: string | null;
@@ -41,6 +42,7 @@ function embedVideo(l: Lecon): string | null {
 }
 
 export function FormationPlayer(p: Props) {
+  const t = useT();
   const toutesLecons = useMemo(() => p.chapitres.flatMap((c) => c.lecons), [p.chapitres]);
   const [leconActiveId, setLeconActiveId] = useState<string | null>(toutesLecons[0]?.id ?? null);
   const [completes, setCompletes] = useState<Set<string>>(new Set(p.completedIds));
@@ -66,10 +68,10 @@ export function FormationPlayer(p: Props) {
       });
       if (!res.ok) throw new Error();
       setCompletes((s) => new Set(s).add(leconActive.id));
-      toast.success("Leçon marquée comme terminée");
+      toast.success(t("Leçon marquée comme terminée"));
       if (suivante) setLeconActiveId(suivante.id);
     } catch {
-      toast.error("Erreur — réessayez");
+      toast.error(t("Erreur — réessayez"));
     } finally {
       setMarquage(false);
     }
@@ -86,8 +88,8 @@ export function FormationPlayer(p: Props) {
         </button>
         {p.logoUrl ? <img src={p.logoUrl} alt="" className="h-7 rounded" /> : <GraduationCap size={20} style={{ color: p.accent }} />}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold truncate">{p.produitNom}</p>
-          <p className="text-[11px] opacity-50 truncate">{p.nomBoutique}{p.niveau ? ` · ${p.niveau}` : ""}</p>
+          <p className="text-sm font-bold truncate">{t(p.produitNom)}</p>
+          <p className="text-[11px] opacity-50 truncate">{t(p.nomBoutique)}{p.niveau ? ` · ${p.niveau}` : ""}</p>
         </div>
         <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
           <div className="w-28 h-1.5 rounded-full overflow-hidden" style={{ background: `${p.accent}15` }}>
@@ -106,7 +108,7 @@ export function FormationPlayer(p: Props) {
           <div className="p-4 space-y-4">
             {p.chapitres.map((ch, ci) => (
               <div key={ch.id}>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-40">Chapitre {ci + 1} · {ch.titre}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-2 opacity-40">{t("Chapitre")}{" "}{t(ci) + 1} · {t(ch.titre)}</p>
                 <div className="space-y-1">
                   {ch.lecons.map((l) => {
                     const actif = l.id === leconActive?.id;
@@ -121,7 +123,7 @@ export function FormationPlayer(p: Props) {
                       >
                         {fait ? <CheckCircle2 size={15} style={{ color: p.accent, flexShrink: 0 }} /> : <Circle size={15} style={{ opacity: 0.25, flexShrink: 0 }} />}
                         <Icon size={13} style={{ opacity: 0.4, flexShrink: 0 }} />
-                        <span className="text-[13px] flex-1 min-w-0 truncate" style={{ fontWeight: actif ? 700 : 500, opacity: actif ? 1 : 0.75 }}>{l.titre}</span>
+                        <span className="text-[13px] flex-1 min-w-0 truncate" style={{ fontWeight: actif ? 700 : 500, opacity: actif ? 1 : 0.75 }}>{t(l.titre)}</span>
                       </button>
                     );
                   })}
@@ -131,7 +133,7 @@ export function FormationPlayer(p: Props) {
             {p.certif && pct === 100 && (
               <div className="rounded-xl p-3.5 text-center mt-4" style={{ background: `${p.accent}12`, border: `1px solid ${p.accent}30` }}>
                 <Award size={20} className="mx-auto mb-1.5" style={{ color: p.accent }} />
-                <p className="text-[11px] font-bold" style={{ color: p.accent }}>Formation terminée !</p>
+                <p className="text-[11px] font-bold" style={{ color: p.accent }}>{t("Formation terminée !")}</p>
               </div>
             )}
           </div>
@@ -141,10 +143,10 @@ export function FormationPlayer(p: Props) {
         {/* Contenu */}
         <main className="flex-1 min-w-0 px-4 sm:px-8 py-6 sm:py-10 max-w-3xl mx-auto w-full">
           {!leconActive ? (
-            <p className="text-center opacity-50 py-20">Cette formation n'a pas encore de contenu.</p>
+            <p className="text-center opacity-50 py-20">{t("Cette formation n'a pas encore de contenu.")}</p>
           ) : (
             <>
-              <h1 className="text-xl sm:text-2xl font-bold font-playfair mb-5">{leconActive.titre}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold font-playfair mb-5">{t(leconActive.titre)}</h1>
 
               {leconActive.type === "video" && embed && (
                 <div className="relative w-full overflow-hidden rounded-2xl mb-6" style={{ paddingBottom: "56.25%", background: "#000" }}>
@@ -171,18 +173,18 @@ export function FormationPlayer(p: Props) {
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-30"
                   style={{ border: `1px solid ${p.accent}25`, color: p.texte }}
                 >
-                  <ChevronLeft size={14} /> Précédent
+                  <ChevronLeft size={14} />{" "}{t("Précédent")}
                 </button>
 
                 {completes.has(leconActive.id) ? (
                   <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: p.accent }}>
-                    <CheckCircle2 size={16} /> Terminé
+                    <CheckCircle2 size={16} />{" "}{t("Terminé")}
                   </span>
                 ) : (
                   <button onClick={marquerTermine} disabled={marquage}
                     className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
                     style={{ background: p.accent, color: p.fond }}>
-                    {marquage ? "…" : "Marquer comme terminé"}
+                    {marquage ? "…" : t("Marquer comme terminé")}
                   </button>
                 )}
 
@@ -192,7 +194,7 @@ export function FormationPlayer(p: Props) {
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-30"
                   style={{ border: `1px solid ${p.accent}25`, color: p.texte }}
                 >
-                  Suivant <ChevronRight size={14} />
+                  {t("Suivant")}{" "}<ChevronRight size={14} />
                 </button>
               </div>
             </>
@@ -201,7 +203,7 @@ export function FormationPlayer(p: Props) {
       </div>
 
       <footer className="border-t py-6 text-center text-xs opacity-40" style={{ borderColor: `${p.accent}12` }}>
-        {p.nomBoutique} · Propulsé par <span style={{ color: p.accent }}>Axso</span>
+        {t(p.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: p.accent }}>{t("Axso")}</span>
       </footer>
     </div>
   );

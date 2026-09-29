@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Rocket } from "lucide-react";
 import { CartParallax } from "./CartParallax";
+import { useT } from "@/components/I18nProvider";
 
 const CTA_CARTS = [
   { size: 500, top: "10%", duration: 19, delay: 0,  opacity: 0.05, direction: "rtl" as const },
@@ -11,6 +12,7 @@ const CTA_CARTS = [
 ];
 
 function FlipDigit({ valeur, label }: { valeur: number; label: string }) {
+  const tr = useT();
   const [prev, setPrev] = useState(valeur);
   const [flipping, setFlipping] = useState(false);
 
@@ -38,12 +40,13 @@ function FlipDigit({ valeur, label }: { valeur: number; label: string }) {
           {String(valeur).padStart(2, "0")}
         </span>
       </div>
-      <span className="text-gray-400 text-xs mt-2 uppercase tracking-widest">{label}</span>
+      <span className="text-gray-400 text-xs mt-2 uppercase tracking-widest">{tr(label)}</span>
     </div>
   );
 }
 
 export function CtaFinal() {
+  const tr = useT();
   const [temps, setTemps] = useState({ h: 47, m: 59, s: 59 });
   const [visible, setVisible] = useState(false);
   const [magnetOffset, setMagnetOffset] = useState({ x: 0, y: 0 });
@@ -122,7 +125,7 @@ export function CtaFinal() {
           }}
         >
           <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-          <span className="text-[#F5A623] text-sm font-medium">Offre de lancement — encore</span>
+          <span className="text-[#F5A623] text-sm font-medium">{tr("Offre de lancement — encore")}</span>
         </div>
 
         {/* 3D Flip Countdown */}
@@ -133,11 +136,11 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.7s 0.1s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <FlipDigit valeur={temps.h} label="Heures" />
+          <FlipDigit valeur={temps.h} label={tr("Heures")} />
           <span className="text-[#F5A623] text-3xl font-bold animate-pulse" style={{ textShadow: "0 0 20px rgba(245,166,35,0.5)" }}>:</span>
-          <FlipDigit valeur={temps.m} label="Minutes" />
+          <FlipDigit valeur={temps.m} label={tr("Minutes")} />
           <span className="text-[#F5A623] text-3xl font-bold animate-pulse" style={{ textShadow: "0 0 20px rgba(245,166,35,0.5)" }}>:</span>
-          <FlipDigit valeur={temps.s} label="Secondes" />
+          <FlipDigit valeur={temps.s} label={tr("Secondes")} />
         </div>
 
         {/* Headline */}
@@ -148,7 +151,7 @@ export function CtaFinal() {
             animation: visible ? "slideRevealLeft 0.8s 0.2s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Arrête de perdre des ventes sur WhatsApp.
+          {tr("Arrête de perdre des ventes sur WhatsApp.")}
           <br />
           <span
             className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] via-[#FFD280] to-[#E09015]"
@@ -157,7 +160,7 @@ export function CtaFinal() {
               animation: "shimmer 3s linear infinite",
             }}
           >
-            Ta boutique professionnelle t'attend.
+            {tr("Ta boutique professionnelle t'attend.")}
           </span>
         </h2>
 
@@ -168,9 +171,9 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.7s 0.4s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.
+          {tr("En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.")}
           <br className="hidden sm:block" />
-          Gratuit pour commencer — tu paies seulement quand tu vends.
+          {tr("Gratuit pour commencer — tu paies seulement quand tu vends.")}
         </p>
 
         {/* Magnetic CTA button */}
@@ -205,7 +208,7 @@ export function CtaFinal() {
             />
             <Sparkles size={22} className="relative z-10" />
             <Rocket size={20} className="relative z-10" />
-            <span className="relative z-10">Créer ma boutique gratuite maintenant</span>
+            <span className="relative z-10">{tr("Créer ma boutique gratuite maintenant")}</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -217,7 +220,7 @@ export function CtaFinal() {
             animation: visible ? "flip3dIn 0.6s 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          Gratuit pour toujours · Orange Money & MTN acceptés · Boutique live en 3 minutes
+          {tr("Gratuit pour toujours · Orange Money & MTN acceptés · Boutique live en 3 minutes")}
         </p>
       </div>
     </section>

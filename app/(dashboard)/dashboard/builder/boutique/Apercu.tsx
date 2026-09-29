@@ -17,6 +17,7 @@ import { nomNoeud } from "./libelles";
 import { ATTR_EL, cibleSelectionnable, genElId, nomElement } from "./elements-dom";
 import { useSurvol, cssSelection } from "../SurvolApercu";
 import { pageDepuisChemin, type PageEditee } from "../pages/pages";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
@@ -44,6 +45,7 @@ interface Props {
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
 export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer }: Props) {
+  const tr = useT();
   const racine = useRef<HTMLDivElement>(null);
   const defileur = useRef<HTMLDivElement>(null);
   // Même comportement que sur la boutique (navigation, animations), sans rien écrire dans le HTML du design.
@@ -109,18 +111,18 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
       >
         {cssDesign && <StyleCss css={cssDesign} />}
         {selectedEl && <StyleCss css={cssSelection(selectedEl)} />}
-        {survol}
+        {tr(survol)}
         {/* Mêmes polices que la vitrine (StorefrontTypography, portée .axs-store). */}
         <StorefrontTypography fonts={config.fonts} />
         {cssPerso && <StyleCss css={cssPerso} />}
         <div data-apercu-page className="axs-store" style={{ containerType: "inline-size" }}>
           {visibles.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-3 text-center px-6">
-              <p className="text-[15px] font-semibold text-[#111111]">Ta page d'accueil est vide</p>
-              <p className="text-[14px] text-[#777777]">Ajoute ta première section pour commencer.</p>
+              <p className="text-[15px] font-semibold text-[#111111]">{tr("Ta page d'accueil est vide")}</p>
+              <p className="text-[14px] text-[#777777]">{tr("Ajoute ta première section pour commencer.")}</p>
               <button onClick={(e) => { e.stopPropagation(); onAjouterSection("template", 0); }}
                 className="mt-1 h-10 px-4 rounded-lg text-[14px] font-semibold bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] transition-colors">
-                Ajouter une section
+                {tr("Ajouter une section")}
               </button>
             </div>
           )}
@@ -181,11 +183,12 @@ function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onS
 }
 
 function BoutonInsertion({ position, visible, onClick }: { position: "top" | "bottom"; visible: boolean; onClick: () => void }) {
+  const tr = useT();
   return (
     <button
       type="button"
-      title="Ajouter une section ici"
-      aria-label="Ajouter une section ici"
+      title={tr("Ajouter une section ici")}
+      aria-label={tr("Ajouter une section ici")}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
       className={`absolute left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full flex items-center justify-center bg-[#F5A623] text-[#111111] shadow-md ring-2 ring-white transition-all hover:scale-110 ${
         position === "top" ? "-top-3.5" : "-bottom-3.5"

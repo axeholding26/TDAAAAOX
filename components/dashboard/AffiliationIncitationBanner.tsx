@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Rocket, ArrowRight } from "lucide-react";
+import { getT } from "@/lib/i18n/serveur";
 
 // Incite les marchands sans programme d'affiliation actif à en créer un —
 // c'est ce qui alimente le marketplace public /affiliation en produits
 // promouvables. Sans ça, le marketplace reste vide de contenu.
-export function AffiliationIncitationBanner() {
+export async function AffiliationIncitationBanner() {
+  const t = await getT();
   return (
     <Link href="/dashboard/affiliation"
       className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all hover:opacity-90"
@@ -13,13 +15,13 @@ export function AffiliationIncitationBanner() {
         <Rocket size={16} style={{ color: "#F5A623" }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold" style={{ color: "#8a5c10" }}>Faites vendre vos produits par d'autres — gratuitement</p>
+        <p className="text-sm font-bold" style={{ color: "#8a5c10" }}>{t("Faites vendre vos produits par d'autres — gratuitement")}</p>
         <p className="text-xs leading-snug" style={{ color: "rgba(138,92,16,0.75)" }}>
-          Activez votre programme d'affiliation : vos produits apparaissent sur le marketplace AXSO, des affiliés les recommandent, vous ne payez qu'à la vente.
+          {t("Activez votre programme d'affiliation : vos produits apparaissent sur le marketplace AXSO, des affiliés les recommandent, vous ne payez qu'à la vente.")}
         </p>
       </div>
       <span className="flex-shrink-0 text-xs font-bold px-3.5 py-2 rounded-full text-white whitespace-nowrap flex items-center gap-1.5" style={{ background: "#F5A623" }}>
-        Activer <ArrowRight size={12} />
+        {t("Activer")}{" "}<ArrowRight size={12} />
       </span>
     </Link>
   );

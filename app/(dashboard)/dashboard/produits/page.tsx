@@ -11,6 +11,7 @@ import { formatMontant } from "@/lib/utils";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { ProduitsTutorial } from "@/components/dashboard/tutorials/ProduitsTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 const FILTER_TABS = [
   { key: "all",      label: "Tous"         },
@@ -20,14 +21,15 @@ const FILTER_TABS = [
   { key: "epuise",   label: "Épuisés"      },
 ];
 
-function StockBadge({ stock }: { stock: number }) {
+async function StockBadge({ stock }: { stock: number }) {
+  const t = await getT();
   if (stock === 0)
-    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">Épuisé</span>;
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">{t("Épuisé")}</span>;
   if (stock <= 5)
     return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">{stock} restants</span>;
   if (stock <= 20)
-    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">{stock} en stock</span>;
-  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]">{stock} en stock</span>;
+    return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">{stock}{" "}{t("en stock")}</span>;
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F0FDF4] text-[#15803D] border border-[#BBF7D0]">{stock}{" "}{t("en stock")}</span>;
 }
 
 export default async function ProduitsPage({
@@ -35,6 +37,7 @@ export default async function ProduitsPage({
 }: {
   searchParams: Promise<{ q?: string; filtre?: string }>;
 }) {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "produits");
@@ -78,22 +81,22 @@ export default async function ProduitsPage({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 pt-1">
         <div className="min-w-0">
           <div className="flex items-center gap-2 sm:gap-2.5 mb-1 flex-wrap">
-            <h1 className="text-[18px] sm:text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">Produits <AgentActiveIndicator label="Agent Produits actif" /></h1>
+            <h1 className="text-[18px] sm:text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{t("Produits")}{" "}<AgentActiveIndicator label={t("Agent Produits actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="produits" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {tous.length}
             </span>
             {stockFaible > 0 && (
               <span className="text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                <AlertTriangle size={9} /> {stockFaible} stock faible
+                <AlertTriangle size={9} /> {t(stockFaible)}{" "}{t("stock faible")}
               </span>
             )}
           </div>
-          <p className="text-[12px] sm:text-[12.5px] text-[#AAAAAA]">Gérez votre catalogue et suivez vos ventes</p>
+          <p className="text-[12px] sm:text-[12.5px] text-[#AAAAAA]">{t("Gérez votre catalogue et suivez vos ventes")}</p>
         </div>
         <Link href="/dashboard/produits/nouveau"
           className="flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-3 sm:py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap w-full sm:w-auto flex-shrink-0">
-          <Plus size={14} /> Nouveau produit
+          <Plus size={14} />{" "}{t("Nouveau produit")}
         </Link>
       </div>
 
@@ -110,14 +113,14 @@ export default async function ProduitsPage({
                     style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
                 )}
                 <div className="flex items-start justify-between gap-2 mb-3 sm:mb-4">
-                  <span className="ax-label leading-tight">{s.label}</span>
+                  <span className="ax-label leading-tight">{t(s.label)}</span>
                   <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
                     style={{ background: s.iconBg, border: `1px solid ${s.iconColor}20` }}>
                     <Icon size={13} style={{ color: s.iconColor }} strokeWidth={1.8} />
                   </div>
                 </div>
                 <p className="text-[20px] sm:text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
-                  {s.value}
+                  {t(s.value)}
                 </p>
               </div>
             );
@@ -135,14 +138,14 @@ export default async function ProduitsPage({
             <input
               name="q"
               defaultValue={q}
-              placeholder="Rechercher un produit..."
+              placeholder={t("Rechercher un produit...")}
               className="bg-transparent text-[13.5px] sm:text-[13px] text-[#111111] placeholder:text-[#CCCCCC] outline-none flex-1 min-w-0"
             />
           </div>
           {q && (
             <Link href={filtre ? `/dashboard/produits?filtre=${filtre}` : "/dashboard/produits"}
               className="flex items-center px-3 py-3 sm:py-2.5 rounded-2xl border border-[#E8E8E8] text-[12px] text-[#888] hover:text-[#111] hover:border-[#CCC] transition-all flex-shrink-0">
-              Effacer
+              {t("Effacer")}
             </Link>
           )}
         </form>
@@ -165,7 +168,7 @@ export default async function ProduitsPage({
                 style={isActive
                   ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
                   : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
-                {tab.label}
+                {t(tab.label)}
                 {count > 0 && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                     style={isActive
@@ -187,17 +190,17 @@ export default async function ProduitsPage({
             <Package size={24} className="text-[#CCCCCC]" />
           </div>
           <p className="text-[14px] font-semibold text-[#111111] mb-1">
-            {q ? `Aucun résultat pour « ${q} »` : "Aucun produit"}
+            {q ? t("Aucun résultat pour « {0} »", q) : t("Aucun produit")}
           </p>
           <p className="text-[12px] text-[#AAAAAA] mb-6">
             {q
-              ? "Essayez un autre terme ou modifiez le filtre"
-              : "Votre catalogue est vide. Ajoutez votre premier produit pour commencer à vendre."}
+              ? t("Essayez un autre terme ou modifiez le filtre")
+              : t("Votre catalogue est vide. Ajoutez votre premier produit pour commencer à vendre.")}
           </p>
           {!q && (
             <Link href="/dashboard/produits/nouveau"
               className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#111111] text-white hover:bg-[#2a2a2a] transition-colors">
-              <Plus size={13} /> Ajouter un produit
+              <Plus size={13} />{" "}{t("Ajouter un produit")}
             </Link>
           )}
         </div>
@@ -222,7 +225,7 @@ export default async function ProduitsPage({
                   {!p.actif && (
                     <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
                       <span className="flex items-center gap-1 text-white text-[9px] sm:text-[10px] font-bold bg-black/50 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full backdrop-blur-sm">
-                        <EyeOff size={9} /> Inactif
+                        <EyeOff size={9} />{" "}{t("Inactif")}
                       </span>
                     </div>
                   )}
@@ -232,7 +235,7 @@ export default async function ProduitsPage({
                     <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 hidden sm:block">
                       <span className="inline-flex items-center gap-1 text-[9.5px] font-semibold px-2 py-0.5 rounded-full bg-white/95 text-[#666] border border-[#E8E8E8]">
                         <Tag size={7.5} />
-                        {(p as any).categorie}
+                        {t((p as any).categorie)}
                       </span>
                     </div>
                   )}
@@ -240,12 +243,12 @@ export default async function ProduitsPage({
                   {/* Stock overlay badge */}
                   {p.stock === 0 && (
                     <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                      <span className="text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">Épuisé</span>
+                      <span className="text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]">{t("Épuisé")}</span>
                     </div>
                   )}
                   {p.stock > 0 && p.stock <= 5 && (
                     <div className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2">
-                      <span className="text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">Stock faible</span>
+                      <span className="text-[8.5px] sm:text-[9.5px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">{t("Stock faible")}</span>
                     </div>
                   )}
 
@@ -260,7 +263,7 @@ export default async function ProduitsPage({
                 {/* Info */}
                 <div className="p-2.5 sm:p-4 flex flex-col flex-1">
                   <h3 className="text-[12px] sm:text-[13px] font-semibold text-[#111111] mb-1.5 sm:mb-2.5 line-clamp-2 leading-snug">
-                    {p.nom}
+                    {t(p.nom)}
                   </h3>
 
                   <div className="flex items-center justify-between gap-1.5 mb-1.5 sm:mb-2 flex-wrap">
@@ -274,13 +277,13 @@ export default async function ProduitsPage({
                   <div className="flex items-center justify-between mt-auto pt-2 sm:pt-3 border-t border-[#F5F5F7]">
                     <div className="flex items-center gap-1 text-[#BBBBBB] text-[10px] sm:text-[11px]">
                       <TrendingUp size={9} className="text-[#CCCCCC] flex-shrink-0" />
-                      <span className="truncate">{p.ventes} vente{p.ventes !== 1 ? "s" : ""}</span>
+                      <span className="truncate">{t(p.ventes)} vente{p.ventes !== 1 ? "s" : ""}</span>
                     </div>
                     <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
                       {p._count.avis > 0 && (
                         <div className="flex items-center gap-1 text-[#BBBBBB] text-[10px] sm:text-[11px]">
                           <Star size={9} className="text-[#F5A623]" fill="#F5A623" />
-                          <span>{p._count.avis}</span>
+                          <span>{t(p._count.avis)}</span>
                         </div>
                       )}
                       <div className="hidden sm:flex w-6 h-6 rounded-lg border border-[#EBEBEB] items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">

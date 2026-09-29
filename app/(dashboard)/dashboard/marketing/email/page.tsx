@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { Send, Wand2, Users, CheckCircle2, XCircle, Mail, RefreshCw, Sparkles, Eye, Gem, Moon, Flame, Crown, UserPlus } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Stats {
@@ -45,6 +46,7 @@ const TEMPLATES = [
 
 // ── Composant principal ──────────────────────────────────────────────────────
 export default function EmailMarketingPage() {
+  const tr = useT();
   const [stats, setStats] = useState<Stats | null>(null);
   const [historique, setHistorique] = useState<Campagne[]>([]);
   const [segment, setSegment] = useState("tous");
@@ -144,8 +146,8 @@ export default function EmailMarketingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">Email Marketing</h1>
-          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">Envoyez des campagnes directement depuis Axso</p>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("Email Marketing")}</h1>
+          <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Envoyez des campagnes directement depuis Axso")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setOnglet("composer")}
@@ -153,14 +155,14 @@ export default function EmailMarketingPage() {
             style={onglet === "composer"
               ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
               : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
-            Composer
+            {tr("Composer")}
           </button>
           <button onClick={() => { setOnglet("historique"); charger(); }}
             className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all"
             style={onglet === "historique"
               ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
               : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
-            Historique ({historique.length})
+            {tr("Historique (")}{historique.length})
           </button>
         </div>
       </div>
@@ -178,13 +180,13 @@ export default function EmailMarketingPage() {
           >
             <div className="flex items-center gap-2 mb-1">
               <p.Icon size={18} className="text-gray-600 flex-shrink-0" />
-              <span className="font-semibold text-gray-900 text-sm">{p.label}</span>
+              <span className="font-semibold text-gray-900 text-sm">{tr(p.label)}</span>
               <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${p.actif ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                {p.actif ? "Connecté" : "Non connecté"}
+                {p.actif ? tr("Connecté") : tr("Non connecté")}
               </span>
             </div>
-            <p className="text-xs text-gray-400">{p.desc}</p>
-            {!p.actif && <p className="text-xs text-[#F5A623] mt-1">→ Connecter dans Connecteurs</p>}
+            <p className="text-xs text-gray-400">{tr(p.desc)}</p>
+            {!p.actif && <p className="text-xs text-[#F5A623] mt-1">{tr("→ Connecter dans Connecteurs")}</p>}
           </button>
         ))}
       </div>
@@ -195,7 +197,7 @@ export default function EmailMarketingPage() {
           <div className="space-y-5">
             {/* Segment */}
             <div className="ax-card p-5">
-              <label className="text-sm font-bold text-gray-700 mb-3 block">Destinataires</label>
+              <label className="text-sm font-bold text-gray-700 mb-3 block">{tr("Destinataires")}</label>
               <div className="space-y-2">
                 {SEGMENTS.map((s) => (
                   <button
@@ -205,9 +207,9 @@ export default function EmailMarketingPage() {
                   >
                     <span className="flex items-center gap-2">
                       <s.Icon size={15} className={segment === s.value ? "text-[#F5A623]" : "text-gray-400"} />
-                      <span className={segment === s.value ? "font-semibold text-gray-900" : "text-gray-600"}>{s.label}</span>
+                      <span className={segment === s.value ? "font-semibold text-gray-900" : "text-gray-600"}>{tr(s.label)}</span>
                     </span>
-                    <span className="text-xs font-bold text-gray-400">{stats?.segments?.[s.value as keyof typeof stats.segments] ?? "..."}</span>
+                    <span className="text-xs font-bold text-gray-400">{tr(stats?.segments?.[s.value as keyof typeof stats.segments]) ?? "..."}</span>
                   </button>
                 ))}
               </div>
@@ -215,7 +217,7 @@ export default function EmailMarketingPage() {
 
             {/* Templates */}
             <div className="ax-card p-5">
-              <label className="text-sm font-bold text-gray-700 mb-3 block">Template</label>
+              <label className="text-sm font-bold text-gray-700 mb-3 block">{tr("Template")}</label>
               <div className="grid grid-cols-2 gap-2">
                 {TEMPLATES.map((t) => (
                   <button
@@ -224,7 +226,7 @@ export default function EmailMarketingPage() {
                     className={`p-3 rounded-xl border-2 text-left text-sm transition-all flex items-center gap-2 ${templateId === t.id ? "border-[#F5A623] bg-amber-50" : "border-gray-100 hover:border-gray-200"}`}
                   >
                     <t.Icon size={15} className={templateId === t.id ? "text-[#F5A623] flex-shrink-0" : "text-gray-400 flex-shrink-0"} />
-                    <span className={`font-medium ${templateId === t.id ? "text-gray-900" : "text-gray-600"}`}>{t.label}</span>
+                    <span className={`font-medium ${templateId === t.id ? "text-gray-900" : "text-gray-600"}`}>{tr(t.label)}</span>
                   </button>
                 ))}
               </div>
@@ -235,33 +237,33 @@ export default function EmailMarketingPage() {
           <div className="space-y-4">
             <div className="ax-card p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold text-gray-700">Contenu de la campagne</h2>
+                <h2 className="text-sm font-bold text-gray-700">{tr("Contenu de la campagne")}</h2>
                 <button
                   onClick={genererAvecIA}
                   disabled={generating}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-all disabled:opacity-60"
                 >
                   {generating ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
-                  {generating ? "Génération IA..." : "Générer avec IA"}
+                  {generating ? tr("Génération IA...") : tr("Générer avec IA")}
                 </button>
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Sujet *</label>
+                <label className="text-xs text-gray-400 mb-1 block">{tr("Sujet *")}</label>
                 <input
                   value={sujet}
                   onChange={(e) => setSujet(e.target.value)}
-                  placeholder="Ex: 🔥 Offre spéciale pour vous !"
+                  placeholder={tr("Ex: 🔥 Offre spéciale pour vous !")}
                   className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all"
                 />
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Corps du message * (variables: {"{prenom}"} {"{boutique}"})</label>
+                <label className="text-xs text-gray-400 mb-1 block">{tr("Corps du message * (variables:")}{" "}{tr("{prenom}")} {tr("{boutique}")})</label>
                 <textarea
                   value={corps}
                   onChange={(e) => setCorps(e.target.value)}
-                  placeholder="Bonjour {prenom},&#10;&#10;Votre message ici..."
+                  placeholder={tr("Bonjour {prenom},&#10;&#10;Votre message ici...")}
                   rows={8}
                   className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all resize-none"
                 />
@@ -271,17 +273,17 @@ export default function EmailMarketingPage() {
               {corps && (
                 <button onClick={() => setPreview(!preview)} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 transition-colors">
                   <Eye size={12} />
-                  {preview ? "Masquer" : "Prévisualiser"} l'email
+                  {preview ? tr("Masquer") : tr("Prévisualiser")} l'email
                 </button>
               )}
 
               {preview && corps && (
                 <div className="border border-gray-200 rounded-xl overflow-hidden">
                   <div className="bg-gray-50 px-4 py-2 border-b border-gray-100 text-xs text-gray-500">
-                    Aperçu — {sujet || "(sans sujet)"}
+                    {tr("Aperçu —")}{" "}{tr(sujet) || tr("(sans sujet)")}
                   </div>
                   <div className="p-4 bg-white max-h-60 overflow-y-auto">
-                    <div className="bg-[#F5A623] text-white px-6 py-4 rounded-t-xl font-bold text-base">Votre Boutique</div>
+                    <div className="bg-[#F5A623] text-white px-6 py-4 rounded-t-xl font-bold text-base">{tr("Votre Boutique")}</div>
                     <div className="px-6 py-4 text-sm text-gray-700 leading-relaxed border border-t-0 border-gray-100 rounded-b-xl" style={{ whiteSpace: "pre-wrap" }}>
                       {corps.replace(/\{prenom\}/g, "Aminata").replace(/\{boutique\}/g, "Votre Boutique")}
                     </div>
@@ -295,15 +297,15 @@ export default function EmailMarketingPage() {
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-50 border border-green-200">
                 <CheckCircle2 size={18} className="text-green-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-bold text-green-800">Campagne envoyée !</p>
-                  <p className="text-xs text-green-600">{result.envoyes}/{result.total} emails via {result.source}</p>
+                  <p className="text-sm font-bold text-green-800">{tr("Campagne envoyée !")}</p>
+                  <p className="text-xs text-green-600">{tr(result.envoyes)}/{result.total}{" "}{tr("emails via")}{" "}{tr(result.source)}</p>
                 </div>
               </div>
             )}
             {erreur && (
               <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-50 border border-red-200">
                 <XCircle size={18} className="text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700">{erreur}</p>
+                <p className="text-sm text-red-700">{tr(erreur)}</p>
               </div>
             )}
 
@@ -315,7 +317,7 @@ export default function EmailMarketingPage() {
                 style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)" }}
               >
                 {sending ? <RefreshCw size={16} className="animate-spin" /> : <Send size={16} />}
-                {sending ? "Envoi..." : `Envoyer (${nbDest})`}
+                {sending ? tr("Envoi...") : tr("Envoyer ({0})", nbDest)}
               </button>
             </div>
           </div>
@@ -325,7 +327,7 @@ export default function EmailMarketingPage() {
       {onglet === "historique" && (
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-bold text-gray-900">Campagnes envoyées</h2>
+            <h2 className="font-bold text-gray-900">{tr("Campagnes envoyées")}</h2>
             <button onClick={charger} className="p-2 rounded-xl hover:bg-gray-50 transition-all text-gray-400">
               <RefreshCw size={16} />
             </button>
@@ -333,7 +335,7 @@ export default function EmailMarketingPage() {
           {historique.length === 0 ? (
             <div className="text-center py-16 text-gray-400">
               <Mail size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Aucune campagne envoyée</p>
+              <p className="text-sm">{tr("Aucune campagne envoyée")}</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-50">
@@ -343,17 +345,17 @@ export default function EmailMarketingPage() {
                     {c.statut === "envoye" ? <CheckCircle2 size={18} className="text-green-600" /> : <XCircle size={18} className="text-red-500" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm truncate">{c.sujet}</p>
+                    <p className="font-semibold text-gray-900 text-sm truncate">{tr(c.sujet)}</p>
                     <p className="text-xs text-gray-400">
-                      {SEGMENTS.find(s => s.value === c.segment)?.label ?? c.segment} · {c.nbEnvoyes} envoyé{c.nbEnvoyes > 1 ? "s" : ""} · {c.source}
+                      {tr(SEGMENTS.find(s => s.value === c.segment)?.label) ?? tr(c.segment)} · {tr(c.nbEnvoyes)}{" "}{tr("envoyé")}{c.nbEnvoyes > 1 ? "s" : ""} · {tr(c.source)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.statut === "envoye" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                      {c.statut === "envoye" ? "Envoyé" : "Échec"}
+                      {c.statut === "envoye" ? tr("Envoyé") : tr("Échec")}
                     </span>
                     <p className="text-xs text-gray-400 mt-1">
-                      {new Date(c.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(c.createdAt).toLocaleDateString(tr.loc, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>

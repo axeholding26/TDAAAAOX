@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { IconAxia } from "@/components/dashboard/AppIcons";
+import { useT } from "@/components/I18nProvider";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -69,17 +70,18 @@ function useAxiaChat(onSyncWithServer: () => Promise<void>) {
 }
 
 function ChatBody({ messages, loading, scrollRef, suggestions, onSuggestion }: { messages: Msg[]; loading: boolean; scrollRef: React.RefObject<HTMLDivElement | null>; suggestions: string[]; onSuggestion: (s: string) => void }) {
+  const t = useT();
   return (
     <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-3">
       {messages.length === 0 && (
         <div className="space-y-3">
-          <p className="text-[14px] text-[#666666] leading-relaxed">Décris ce que tu veux changer sur ta page : AXIA ajoute, modifie ou réorganise les sections à ta place.</p>
-          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#999999] pt-1">Suggestions</p>
+          <p className="text-[14px] text-[#666666] leading-relaxed">{t("Décris ce que tu veux changer sur ta page : AXIA ajoute, modifie ou réorganise les sections à ta place.")}</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-[#999999] pt-1">{t("Suggestions")}</p>
           <div className="space-y-2">
             {suggestions.map((s) => (
               <button key={s} onClick={() => onSuggestion(s)}
                 className="w-full text-left text-[13.5px] leading-snug px-3.5 py-2.5 rounded-xl border border-[#E8E8E8] bg-white text-[#333333] hover:border-[#F5A623] hover:bg-[#FFF7EA] transition-colors">
-                {s}
+                {t(s)}
               </button>
             ))}
           </div>
@@ -88,14 +90,14 @@ function ChatBody({ messages, loading, scrollRef, suggestions, onSuggestion }: {
       {messages.map((m, i) => (
         <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-[#111111] text-white rounded-br-md" : "bg-[#F4F4F5] text-[#111111] rounded-bl-md"}`}>
-            {m.content}
+            {t(m.content)}
           </div>
         </div>
       ))}
       {loading && (
         <div className="flex justify-start">
           <div className="rounded-2xl rounded-bl-md px-3.5 py-2.5 bg-[#F4F4F5] text-[#666666] flex items-center gap-2 text-[14px]">
-            <Loader2 size={14} className="animate-spin text-[#F5A623]" /> AXIA travaille sur ta page…
+            <Loader2 size={14} className="animate-spin text-[#F5A623]" />{" "}{t("AXIA travaille sur ta page…")}
           </div>
         </div>
       )}
@@ -104,18 +106,19 @@ function ChatBody({ messages, loading, scrollRef, suggestions, onSuggestion }: {
 }
 
 function ChatInput({ input, setInput, loading, onSubmit }: { input: string; setInput: (v: string) => void; loading: boolean; onSubmit: () => void }) {
+  const t = useT();
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="flex items-center gap-2 p-3 border-t border-[#EEEEEE] flex-shrink-0">
       <input
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder="Ex : ajoute un bandeau promo en haut…"
+        placeholder={t("Ex : ajoute un bandeau promo en haut…")}
         disabled={loading}
-        aria-label="Message pour AXIA"
+        aria-label={t("Message pour AXIA")}
         className="flex-1 min-w-0 h-11 px-3.5 text-[14px] rounded-xl border border-[#E0E0E0] bg-white text-[#111111] placeholder:text-[#AAAAAA] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none disabled:opacity-50"
       />
-      <button type="submit" disabled={loading || !input.trim()} aria-label="Envoyer"
+      <button type="submit" disabled={loading || !input.trim()} aria-label={t("Envoyer")}
         className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:opacity-40 transition-colors">
         <Send size={16} />
       </button>
@@ -126,6 +129,7 @@ function ChatInput({ input, setInput, loading, onSubmit }: { input: string; setI
 // Bulle flottante repliable — l'IA est un coup de pouce ponctuel, le
 // constructeur reste centré sur l'aperçu et le plan de page façon Shopify.
 function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 }: { onSyncWithServer: () => Promise<void>; defaultOpen: boolean; decalageDroite?: number }) {
+  const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   const suggestions = SUGGESTIONS_BOUTIQUE;
   const { messages, input, setInput, loading, scrollRef, envoyer } = useAxiaChat(onSyncWithServer);
@@ -139,10 +143,10 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
               <span className="w-8 h-8 rounded-lg bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0"><Sparkles size={16} className="text-[#F5A623]" /></span>
               <div className="min-w-0">
                 <p className="text-[14px] font-semibold text-white leading-tight">AXIA</p>
-                <p className="text-[12px] text-white/55 leading-tight">Personnalise ta page</p>
+                <p className="text-[12px] text-white/55 leading-tight">{t("Personnalise ta page")}</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)} aria-label="Fermer AXIA" className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10"><X size={16} /></button>
+            <button onClick={() => setOpen(false)} aria-label={t("Fermer AXIA")} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/60 hover:text-white hover:bg-white/10"><X size={16} /></button>
           </div>
           <ChatBody messages={messages} loading={loading} scrollRef={scrollRef} suggestions={suggestions} onSuggestion={envoyer} />
           <ChatInput input={input} setInput={setInput} loading={loading} onSubmit={() => envoyer(input)} />
@@ -151,8 +155,8 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-14 h-14 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 bg-[#111111]"
-        title={open ? "Fermer AXIA" : "Ouvrir AXIA"}
-        aria-label={open ? "Fermer AXIA" : "Ouvrir AXIA"}
+        title={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
+        aria-label={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
       >
         {open ? <X size={20} className="text-white" /> : <IconAxia size={44} />}
       </button>

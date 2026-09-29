@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatMontant, dateRelative } from "@/lib/utils";
 import { ArrowUpRight, ChevronRight, Package } from "lucide-react";
 import type { CommandeAvecLignes } from "@/types";
+import { useT } from "@/components/I18nProvider";
 
 interface OrdersTableProps { commandes: CommandeAvecLignes[] }
 
@@ -21,37 +22,40 @@ const AVATAR_COLORS = [
 ];
 
 function StatutBadge({ statut }: { statut: string }) {
+  const t = useT();
   const s = STATUTS[statut] ?? { label: statut, bg: "#F9FAFB", text: "#6B7280", dot: "#D1D5DB", border: "#E5E7EB" };
   return (
     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold"
       style={{ background: s.bg, color: s.text, border: `1px solid ${s.border}` }}>
       <span className="w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: s.dot }} />
-      {s.label}
+      {t(s.label)}
     </span>
   );
 }
 
 function Avatar({ nom }: { nom: string }) {
+  const t = useT();
   const hash = nom.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const [bg, text] = AVATAR_COLORS[hash % AVATAR_COLORS.length];
   const initiales = nom.split(" ").map(p => p[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold flex-shrink-0"
       style={{ background: bg, color: text, border: `1px solid ${text}20` }}>
-      {initiales}
+      {t(initiales)}
     </div>
   );
 }
 
 export function OrdersTable({ commandes }: OrdersTableProps) {
+  const t = useT();
   if (!commandes?.length) {
     return (
       <div className="ax-card p-14 text-center">
         <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
           <Package size={24} className="text-[#AAAAAA]" />
         </div>
-        <p className="text-[14px] font-semibold text-[#111111] mb-1">Aucune commande encore</p>
-        <p className="text-[12px] text-[#AAAAAA]">Partagez votre boutique pour recevoir vos premières commandes</p>
+        <p className="text-[14px] font-semibold text-[#111111] mb-1">{t("Aucune commande encore")}</p>
+        <p className="text-[12px] text-[#AAAAAA]">{t("Partagez votre boutique pour recevoir vos premières commandes")}</p>
       </div>
     );
   }
@@ -63,12 +67,12 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[#F3F3F3]">
         <div>
-          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">Commandes récentes</h3>
-          <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{commandes.length} dernières transactions</p>
+          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Commandes récentes")}</h3>
+          <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{commandes.length}{" "}{t("dernières transactions")}</p>
         </div>
         <Link href="/dashboard/commandes"
           className="flex items-center gap-1.5 text-[12px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:border-[#CCC] hover:bg-[#F9F9F9] transition-all group">
-          Voir tout <ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          {t("Voir tout")}{" "}<ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </Link>
       </div>
 
@@ -86,7 +90,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
                 { label: "Date",      w: "w-[110px]" },
                 { label: "",          w: "w-[40px]"  },
               ].map(({ label, w }) => (
-                <th key={label} className={`px-5 py-3 text-left ax-label ${w}`}>{label}</th>
+                <th key={label} className={`px-5 py-3 text-left ax-label ${w}`}>{t(label)}</th>
               ))}
             </tr>
           </thead>
@@ -106,9 +110,9 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
                   <div className="flex items-center gap-2.5">
                     <Avatar nom={c.clientNom || "?"} />
                     <div>
-                      <p className="text-[13px] font-semibold text-[#222] leading-tight">{c.clientNom}</p>
+                      <p className="text-[13px] font-semibold text-[#222] leading-tight">{t(c.clientNom)}</p>
                       {c.clientEmail && (
-                        <p className="text-[11px] text-[#AAAAAA] mt-0.5 truncate max-w-[180px]">{c.clientEmail}</p>
+                        <p className="text-[11px] text-[#AAAAAA] mt-0.5 truncate max-w-[180px]">{t(c.clientEmail)}</p>
                       )}
                     </div>
                   </div>
@@ -152,7 +156,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
                 <span className="text-[11.5px] font-mono font-bold text-[#F5A623]">#{c.numero}</span>
                 <StatutBadge statut={c.statut} />
               </div>
-              <p className="text-[13px] font-semibold text-[#222] truncate">{c.clientNom}</p>
+              <p className="text-[13px] font-semibold text-[#222] truncate">{t(c.clientNom)}</p>
               <p className="text-[11px] text-[#BBBBBB] mt-0.5">{dateRelative(c.createdAt)}</p>
             </div>
             <div className="text-right flex-shrink-0">

@@ -7,6 +7,7 @@ import { formatMontant, formatDate } from "@/lib/utils";
 import { CreditCard, TrendingUp, Clock, CheckCircle2, Wallet, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { PaiementsTutorial } from "@/components/dashboard/tutorials/PaiementsTutorial";
+import { getT } from "@/lib/i18n/serveur";
 
 const STATUT_PAIEMENT: Record<string, { label: string; color: string; bg: string }> = {
   pending:   { label: "En attente", color: "#d97706", bg: "#fffbeb" },
@@ -33,6 +34,7 @@ function methodeLabel(m: string | null) {
 }
 
 export default async function PaiementsPage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "finance");
@@ -64,10 +66,10 @@ export default async function PaiementsPage() {
       <PaiementsTutorial />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">Paiements & Finances</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("Paiements & Finances")}</h1>
           <BoutonRevoirTutoriel moduleKey="paiements" />
         </div>
-        <p className="text-gray-400 text-sm mt-0.5">Wallet, transactions et retraits</p>
+        <p className="text-gray-400 text-sm mt-0.5">{t("Wallet, transactions et retraits")}</p>
       </div>
 
       {/* ── KPIs ── */}
@@ -83,9 +85,9 @@ export default async function PaiementsPage() {
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: m.bg, border: `1px solid ${m.color}20` }}>
                 <m.icon size={16} style={{ color: m.color }} />
               </div>
-              <span className="text-gray-400 text-xs font-medium">{m.label}</span>
+              <span className="text-gray-400 text-xs font-medium">{t(m.label)}</span>
             </div>
-            <p className="text-gray-900 text-xl font-bold">{m.value}</p>
+            <p className="text-gray-900 text-xl font-bold">{t(m.value)}</p>
           </div>
         ))}
       </div>
@@ -97,10 +99,10 @@ export default async function PaiementsPage() {
         <div className="bg-white border border-gray-100 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Wallet size={16} className="text-[#F5A623]" />
-            <h2 className="font-bold text-gray-900">Mon Wallet Axso</h2>
+            <h2 className="font-bold text-gray-900">{t("Mon Wallet Axso")}</h2>
           </div>
           <div className="bg-gradient-to-br from-[#F5A623] to-[#e8950f] rounded-2xl p-5 text-white mb-4">
-            <p className="text-sm opacity-75 mb-1">Solde disponible</p>
+            <p className="text-sm opacity-75 mb-1">{t("Solde disponible")}</p>
             <p className="text-3xl font-bold">{formatMontant(wallet?.solde ?? 0, devise)}</p>
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
@@ -111,8 +113,8 @@ export default async function PaiementsPage() {
             ].map((s) => (
               <div key={s.label} className="bg-gray-50 rounded-xl p-3">
                 <s.icon size={14} style={{ color: s.color }} className="mx-auto mb-1" />
-                <p className="text-xs text-gray-400">{s.label}</p>
-                <p className="text-sm font-bold text-gray-900 mt-0.5">{s.value}</p>
+                <p className="text-xs text-gray-400">{t(s.label)}</p>
+                <p className="text-sm font-bold text-gray-900 mt-0.5">{t(s.value)}</p>
               </div>
             ))}
           </div>
@@ -123,15 +125,15 @@ export default async function PaiementsPage() {
       {/* ── Transactions récentes ── */}
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-bold text-gray-900">Transactions</h2>
-          <span className="text-xs text-gray-400">{completed.length} complétées · {pending.length} en attente</span>
+          <h2 className="font-bold text-gray-900">{t("Transactions")}</h2>
+          <span className="text-xs text-gray-400">{completed.length}{" "}{t("complétées ·")}{" "}{pending.length}{" "}{t("en attente")}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 {["Référence", "Client", "Montant", "Méthode", "Statut", "Date"].map(h => (
-                  <th key={h} className="text-left text-xs text-gray-500 font-medium px-5 py-3">{h}</th>
+                  <th key={h} className="text-left text-xs text-gray-500 font-medium px-5 py-3">{t(h)}</th>
                 ))}
               </tr>
             </thead>
@@ -139,19 +141,19 @@ export default async function PaiementsPage() {
               {commandes.length === 0 ? (
                 <tr><td colSpan={6} className="text-center text-gray-400 py-12 text-sm">
                   <CreditCard size={24} className="mx-auto mb-2 opacity-30" />
-                  Aucune transaction
+                  {t("Aucune transaction")}
                 </td></tr>
               ) : commandes.map((cmd) => {
                 const st = STATUT_PAIEMENT[cmd.paiementStatut] ?? { label: cmd.paiementStatut, color: "#6b7280", bg: "#f9fafb" };
                 return (
                   <tr key={cmd.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-3.5 font-mono text-xs text-indigo-600">{cmd.numero}</td>
-                    <td className="px-5 py-3.5 text-gray-700 font-medium">{cmd.client?.nom ?? cmd.clientNom}</td>
+                    <td className="px-5 py-3.5 text-gray-700 font-medium">{t(cmd.client?.nom) ?? t(cmd.clientNom)}</td>
                     <td className="px-5 py-3.5 font-bold text-gray-900">{formatMontant(cmd.montantTotal, devise)}</td>
-                    <td className="px-5 py-3.5 text-gray-500 text-xs">{methodeLabel(cmd.methodePaiement)}</td>
+                    <td className="px-5 py-3.5 text-gray-500 text-xs">{t(methodeLabel(cmd.methodePaiement))}</td>
                     <td className="px-5 py-3.5">
                       <span className="text-xs px-2.5 py-1 rounded-full font-semibold" style={{ color: st.color, backgroundColor: st.bg }}>
-                        {st.label}
+                        {t(st.label)}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-gray-400 text-xs">{formatDate(cmd.createdAt)}</td>
@@ -169,11 +171,11 @@ export default async function PaiementsPage() {
         {/* Commissions */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
           <div className="p-5 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">Commissions Axso (6%)</h2>
+            <h2 className="font-bold text-gray-900">{t("Commissions Axso (6%)")}</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {commissions.length === 0 ? (
-              <p className="text-center text-gray-400 py-8 text-sm">Aucune commission</p>
+              <p className="text-center text-gray-400 py-8 text-sm">{t("Aucune commission")}</p>
             ) : commissions.map((c) => (
               <div key={c.id} className="px-5 py-3.5 flex items-center justify-between">
                 <div>
@@ -192,24 +194,24 @@ export default async function PaiementsPage() {
         {/* Retraits */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
           <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="font-bold text-gray-900">Retraits</h2>
+            <h2 className="font-bold text-gray-900">{t("Retraits")}</h2>
             <a href="/dashboard/revenus" className="text-xs text-[#F5A623] font-semibold hover:underline">
-              Demander un retrait →
+              {t("Demander un retrait →")}
             </a>
           </div>
           <div className="divide-y divide-gray-50">
             {retraits.length === 0 ? (
-              <p className="text-center text-gray-400 py-8 text-sm">Aucun retrait effectué</p>
+              <p className="text-center text-gray-400 py-8 text-sm">{t("Aucun retrait effectué")}</p>
             ) : retraits.map((r) => (
               <div key={r.id} className="px-5 py-3.5 flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 capitalize">{r.methode.replace("_", " ")} · {r.operateur ?? ""}</p>
-                  <p className="text-xs text-gray-400">{r.destinataire} · {formatDate(r.createdAt)}</p>
+                  <p className="text-sm font-medium text-gray-900 capitalize">{r.methode.replace("_", " ")} · {t(r.operateur) ?? ""}</p>
+                  <p className="text-xs text-gray-400">{t(r.destinataire)} · {formatDate(r.createdAt)}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold text-indigo-600">{formatMontant(r.montant, r.devise)}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.statut === "complete" ? "bg-green-100 text-green-700" : r.statut === "echoue" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>
-                    {r.statut === "complete" ? "Complété" : r.statut === "echoue" ? "Échoué" : "En cours"}
+                    {r.statut === "complete" ? t("Complété") : r.statut === "echoue" ? t("Échoué") : t("En cours")}
                   </span>
                 </div>
               </div>

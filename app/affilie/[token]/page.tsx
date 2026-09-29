@@ -7,6 +7,7 @@ import {
   MessageCircle, Camera, Mail, Award, Clock, CheckCircle2, XCircle, Sparkles,
 } from "lucide-react";
 import { ClicsConversionsChart, CommissionsChart } from "@/components/affilie/AffiliationCharts";
+import { useT } from "@/components/I18nProvider";
 
 const PERIODES = [7, 30, 90] as const;
 
@@ -19,6 +20,7 @@ function descriptionCommission(programme: any): string {
 }
 
 export default function PortailAffiliePage() {
+  const tr = useT();
   const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function PortailAffiliePage() {
   function copier(texte: string, id: string) {
     navigator.clipboard.writeText(texte).then(() => {
       setCopie(id);
-      toast.success("Copié !");
+      toast.success(tr("Copié !"));
       setTimeout(() => setCopie(null), 2000);
     });
   }
@@ -53,7 +55,7 @@ export default function PortailAffiliePage() {
   if (!data) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#FAFAFA", fontFamily: "system-ui,sans-serif" }}>
-        <p style={{ color: "#888" }}>Portail introuvable.</p>
+        <p style={{ color: "#888" }}>{tr("Portail introuvable.")}</p>
       </div>
     );
   }
@@ -85,31 +87,31 @@ export default function PortailAffiliePage() {
         <div style={{ maxWidth: 720, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             {tenant.logoUrl && <img src={tenant.logoUrl} alt="" style={{ height: 28, borderRadius: 6 }} />}
-            <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, letterSpacing: "0.08em", textTransform: "uppercase" }}>{tenant.nomBoutique}</span>
+            <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, letterSpacing: "0.08em", textTransform: "uppercase" }}>{tr(tenant.nomBoutique)}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <Sparkles size={18} color="#F5A623" />
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>Programme d'affiliation</h1>
+            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0 }}>{tr("Programme d'affiliation")}</h1>
           </div>
           <p style={{ fontSize: 13.5, opacity: 0.7, marginBottom: 24 }}>
-            Partage ton lien : {descriptionCommission(programme)} {affilie.statut !== "actif" && "— ton compte est en attente de validation."}
+            {tr("Partage ton lien :")}{" "}{descriptionCommission(programme)} {affilie.statut !== "actif" && tr("— ton compte est en attente de validation.")}
           </p>
 
           {/* Lien de parrainage — carte premium */}
           <div style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: 18, backdropFilter: "blur(8px)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
               <span style={{ fontSize: 11.5, opacity: 0.6 }}>
-                Ton lien de parrainage (tracké — cookie {programme?.dureeCookie ?? 30} jours)
+                {tr("Ton lien de parrainage (tracké — cookie")}{" "}{tr(programme?.dureeCookie) ?? 30} jours)
               </span>
               <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: "0.04em", color: "#F5A623", background: "rgba(245,166,35,0.15)", border: "1px solid rgba(245,166,35,0.3)", borderRadius: 99, padding: "4px 10px" }}>
-                CODE {affilie.codeParrainage}
+                CODE {tr(affilie.codeParrainage)}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.25)", borderRadius: 14, padding: "10px 14px", flexWrap: "wrap" }}>
-              <span style={{ flex: 1, minWidth: 180, fontSize: 13, fontFamily: "monospace", color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lienPartage}</span>
+              <span style={{ flex: 1, minWidth: 180, fontSize: 13, fontFamily: "monospace", color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tr(lienPartage)}</span>
               <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
                 <button onClick={() => copier(lienPartage, "lien")} style={{ background: "rgba(255,255,255,0.12)", border: "none", borderRadius: 10, padding: "8px 14px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: "white", fontSize: 12, fontWeight: 700 }}>
-                  {copie === "lien" ? <Check size={13} /> : <Copy size={13} />} Copier
+                  {copie === "lien" ? <Check size={13} /> : <Copy size={13} />}{" "}{tr("Copier")}
                 </button>
                 <a href={`https://wa.me/?text=${encodeURIComponent(textes[0].texte)}`} target="_blank" rel="noopener noreferrer"
                   style={{ background: "#25D366", border: "none", borderRadius: 10, padding: "8px 14px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer", color: "white", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
@@ -125,7 +127,7 @@ export default function PortailAffiliePage() {
 
         {/* Sélecteur de période */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}>Performance des {periode} derniers jours</p>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}>{tr("Performance des")}{" "}{tr(periode)}{" "}{tr("derniers jours")}</p>
           <div style={{ display: "flex", background: "white", borderRadius: 12, padding: 4, boxShadow: "0 2px 10px rgba(0,0,0,0.06)" }}>
             {PERIODES.map(pv => (
               <button key={pv} onClick={() => setPeriode(pv)}
@@ -135,7 +137,7 @@ export default function PortailAffiliePage() {
                   background: periode === pv ? "#111111" : "transparent",
                   color: periode === pv ? "white" : "#9ca3af",
                 }}>
-                {pv} j
+                {tr(pv)} j
               </button>
             ))}
           </div>
@@ -144,16 +146,16 @@ export default function PortailAffiliePage() {
         {/* Stats période */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 12, marginBottom: 16 }}>
           {[
-            { label: "Solde disponible", value: `${(p?.soldeDisponible ?? 0).toLocaleString("fr-FR")} ${tenant.devise}`, sub: p?.seuilPaiement ? `Retrait dès ${p.seuilPaiement.toLocaleString("fr-FR")} ${tenant.devise}` : undefined, Icon: Wallet, color: "#F5A623" },
-            { label: "Commissions période", value: `${(p?.commissionsPeriode ?? 0).toLocaleString("fr-FR")} ${tenant.devise}`, Icon: TrendingUp, color: "#10b981" },
+            { label: "Solde disponible", value: `${(p?.soldeDisponible ?? 0).toLocaleString(tr.loc)} ${tenant.devise}`, sub: p?.seuilPaiement ? `Retrait dès ${p.seuilPaiement.toLocaleString(tr.loc)} ${tenant.devise}` : undefined, Icon: Wallet, color: "#F5A623" },
+            { label: "Commissions période", value: `${(p?.commissionsPeriode ?? 0).toLocaleString(tr.loc)} ${tenant.devise}`, Icon: TrendingUp, color: "#10b981" },
             { label: "Conversions période", value: p?.conversionsPeriode ?? 0, sub: `${p?.clicsPeriode ?? 0} clics`, Icon: MousePointerClick, color: "#3b82f6" },
-            { label: "Commissions payées", value: `${(p?.commissionsPayeesPeriode ?? 0).toLocaleString("fr-FR")} ${tenant.devise}`, Icon: CheckCircle2, color: "#8b5cf6" },
+            { label: "Commissions payées", value: `${(p?.commissionsPayeesPeriode ?? 0).toLocaleString(tr.loc)} ${tenant.devise}`, Icon: CheckCircle2, color: "#8b5cf6" },
           ].map((s) => (
             <div key={s.label} style={{ background: "white", borderRadius: 16, padding: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
               <s.Icon size={14} style={{ color: s.color, marginBottom: 6 }} />
-              <p style={{ fontSize: 18, fontWeight: 800, color: "#111" }}>{s.value}</p>
-              <p style={{ fontSize: 10.5, color: "#999" }}>{s.label}</p>
-              {s.sub && <p style={{ fontSize: 9.5, color: "#C0C0C0", marginTop: 2 }}>{s.sub}</p>}
+              <p style={{ fontSize: 18, fontWeight: 800, color: "#111" }}>{tr(s.value)}</p>
+              <p style={{ fontSize: 10.5, color: "#999" }}>{tr(s.label)}</p>
+              {s.sub && <p style={{ fontSize: 9.5, color: "#C0C0C0", marginTop: 2 }}>{tr(s.sub)}</p>}
             </div>
           ))}
         </div>
@@ -168,8 +170,8 @@ export default function PortailAffiliePage() {
         {palier && palier.prochainPalier && (
           <div style={{ background: "white", borderRadius: 20, padding: 20, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-              <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}><Award size={12} style={{ display: "inline", marginRight: 4, color: "#F5A623" }} />Palier {palier.nom} — {palier.tauxActuel}%</p>
-              <p style={{ fontSize: 11, color: "#888" }}>{palier.conversionsRestantes} vente{palier.conversionsRestantes! > 1 ? "s" : ""} avant {palier.prochainPalier}</p>
+              <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}><Award size={12} style={{ display: "inline", marginRight: 4, color: "#F5A623" }} />{tr("Palier")}{" "}{tr(palier.nom)} — {tr(palier.tauxActuel)}%</p>
+              <p style={{ fontSize: 11, color: "#888" }}>{tr(palier.conversionsRestantes)} vente{palier.conversionsRestantes! > 1 ? "s" : ""} avant {tr(palier.prochainPalier)}</p>
             </div>
             <div style={{ height: 8, background: "#F0F0F0", borderRadius: 99, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${Math.min(100, (affilie.conversions / (affilie.conversions + palier.conversionsRestantes)) * 100)}%`, background: "linear-gradient(90deg,#F5A623,#FFD280)", borderRadius: 99 }} />
@@ -181,7 +183,7 @@ export default function PortailAffiliePage() {
         {produits && produits.length > 0 && (
           <div style={{ background: "white", borderRadius: 20, padding: 20, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>
-              Liens par produit
+              {tr("Liens par produit")}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {produits.map((prod: any) => {
@@ -193,8 +195,8 @@ export default function PortailAffiliePage() {
                       {prod.image ? <img src={prod.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 16 }}>📦</span>}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 12.5, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{prod.nom}</p>
-                      <p style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>Commission {prod.tauxCommissionPct}%</p>
+                      <p style={{ fontSize: 12.5, fontWeight: 600, color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{tr(prod.nom)}</p>
+                      <p style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>{tr("Commission")}{" "}{tr(prod.tauxCommissionPct)}%</p>
                     </div>
                     <button onClick={() => copier(lienProduit, idCopie)} style={{ flexShrink: 0, background: "#F5A623", border: "none", borderRadius: 10, padding: "8px 12px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                       {copie === idCopie ? <Check size={13} color="white" /> : <Copy size={13} color="white" />}
@@ -208,20 +210,20 @@ export default function PortailAffiliePage() {
 
         {/* Textes prêts à partager */}
         <div style={{ background: "white", borderRadius: 20, padding: 20, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 14 }}>Textes prêts à partager</p>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 14 }}>{tr("Textes prêts à partager")}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {textes.map((t) => (
               <div key={t.id} style={{ border: "1px solid #F0F0F0", borderRadius: 14, padding: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <t.Icon size={13} style={{ color: t.couleur }} />
-                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "#111" }}>{t.label}</span>
+                    <span style={{ fontSize: 11.5, fontWeight: 700, color: "#111" }}>{tr(t.label)}</span>
                   </div>
                   <button onClick={() => copier(t.texte, t.id)} style={{ background: "#FAFAFA", border: "1px solid #F0F0F0", borderRadius: 8, padding: "4px 10px", fontSize: 10.5, fontWeight: 700, color: "#666", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                    {copie === t.id ? <Check size={11} /> : <Copy size={11} />} Copier
+                    {copie === t.id ? <Check size={11} /> : <Copy size={11} />}{" "}{tr("Copier")}
                   </button>
                 </div>
-                <p style={{ fontSize: 11.5, color: "#666", whiteSpace: "pre-line", lineHeight: 1.5 }}>{t.texte}</p>
+                <p style={{ fontSize: 11.5, color: "#666", whiteSpace: "pre-line", lineHeight: 1.5 }}>{tr(t.texte)}</p>
               </div>
             ))}
           </div>
@@ -229,9 +231,9 @@ export default function PortailAffiliePage() {
 
         {/* Commissions récentes */}
         <div style={{ background: "white", borderRadius: 20, padding: 20, marginBottom: 16, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 12 }}>Commissions récentes</p>
+          <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 12 }}>{tr("Commissions récentes")}</p>
           {commissions.length === 0 ? (
-            <p style={{ fontSize: 12, color: "#999", textAlign: "center", padding: "16px 0" }}>Aucune commission pour le moment — partagez votre lien pour commencer !</p>
+            <p style={{ fontSize: 12, color: "#999", textAlign: "center", padding: "16px 0" }}>{tr("Aucune commission pour le moment — partagez votre lien pour commencer !")}</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {commissions.map((c: any) => {
@@ -239,10 +241,10 @@ export default function PortailAffiliePage() {
                 return (
                   <div key={c.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #F8F8F8" }}>
                     <div>
-                      <p style={{ fontSize: 12, color: "#111", fontWeight: 600 }}>{c.montantCommission.toLocaleString()} {tenant.devise}</p>
-                      <p style={{ fontSize: 10.5, color: "#AAA" }}>{new Date(c.createdAt).toLocaleDateString("fr-FR")}</p>
+                      <p style={{ fontSize: 12, color: "#111", fontWeight: 600 }}>{c.montantCommission.toLocaleString()} {tr(tenant.devise)}</p>
+                      <p style={{ fontSize: 10.5, color: "#AAA" }}>{new Date(c.createdAt).toLocaleDateString(tr.loc)}</p>
                     </div>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 99, color: b.color, background: `${b.color}15` }}>{b.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 99, color: b.color, background: `${b.color}15` }}>{tr(b.label)}</span>
                   </div>
                 );
               })}
@@ -253,14 +255,14 @@ export default function PortailAffiliePage() {
         {/* Historique paiements */}
         {paiements.length > 0 && (
           <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-            <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 12 }}>Historique de paiement</p>
+            <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 12 }}>{tr("Historique de paiement")}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {paiements.map((pay: any) => (
                 <div key={pay.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #F8F8F8" }}>
                   {pay.statut === "traite" ? <CheckCircle2 size={14} color="#10b981" /> : pay.statut === "echec" ? <XCircle size={14} color="#ef4444" /> : <Clock size={14} color="#F5A623" />}
                   <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: 12, color: "#111", fontWeight: 600 }}>{pay.montant.toLocaleString()} {tenant.devise}</p>
-                    <p style={{ fontSize: 10.5, color: "#AAA" }}>{new Date(pay.createdAt).toLocaleDateString("fr-FR")}</p>
+                    <p style={{ fontSize: 12, color: "#111", fontWeight: 600 }}>{pay.montant.toLocaleString()} {tr(tenant.devise)}</p>
+                    <p style={{ fontSize: 10.5, color: "#AAA" }}>{new Date(pay.createdAt).toLocaleDateString(tr.loc)}</p>
                   </div>
                 </div>
               ))}
@@ -269,7 +271,7 @@ export default function PortailAffiliePage() {
         )}
 
         <p style={{ textAlign: "center", fontSize: 11, color: "#BBB", marginTop: 24 }}>
-          Propulsé par <span style={{ color: "#F5A623", fontWeight: 700 }}>Axso</span>
+          {tr("Propulsé par")}{" "}<span style={{ color: "#F5A623", fontWeight: 700 }}>{tr("Axso")}</span>
         </p>
       </div>
     </div>

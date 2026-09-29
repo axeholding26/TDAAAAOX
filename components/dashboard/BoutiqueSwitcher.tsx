@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "@/components/I18nProvider";
 
 interface BoutiqueCompte {
   id: string; nomBoutique: string; active: boolean; nonLues: number;
@@ -26,6 +27,7 @@ export async function basculerBoutique(tenantId: string, destination?: string | 
 // Sélecteur de boutique active — visible seulement avec 2 boutiques ou plus.
 // Le compteur entre parenthèses = notifications non lues de chaque boutique.
 export function BoutiqueSwitcher({ sombre = false }: { sombre?: boolean }) {
+  const t = useT();
   const [boutiques, setBoutiques] = useState<BoutiqueCompte[]>([]);
   const [busy, setBusy] = useState(false);
 
@@ -41,10 +43,10 @@ export function BoutiqueSwitcher({ sombre = false }: { sombre?: boolean }) {
     <label className="block">
       <span className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wide mb-1"
         style={{ color: sombre ? "rgba(255,255,255,0.5)" : "#999999" }}>
-        Boutique active
+        {t("Boutique active")}
         {nonLuesAilleurs > 0 && (
           <span className="rounded-full px-1.5 text-[10px] text-white normal-case" style={{ background: "#DC2626" }}>
-            {nonLuesAilleurs} ailleurs
+            {t(nonLuesAilleurs)} ailleurs
           </span>
         )}
       </span>
@@ -62,7 +64,7 @@ export function BoutiqueSwitcher({ sombre = false }: { sombre?: boolean }) {
       >
         {boutiques.map(b => (
           <option key={b.id} value={b.id} style={{ color: "#111111" }}>
-            {b.nomBoutique}{!b.active && b.nonLues > 0 ? ` (${b.nonLues})` : ""}
+            {t(b.nomBoutique)}{!b.active && b.nonLues > 0 ? ` (${b.nonLues})` : ""}
           </option>
         ))}
       </select>

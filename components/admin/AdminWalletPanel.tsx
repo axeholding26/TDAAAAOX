@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Wallet, ArrowUpFromLine, Loader2, Smartphone, Building2, ShieldCheck } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface RetraitItem {
   id: string; montant: number; devise: string; methode: string;
@@ -29,6 +30,7 @@ const STATUT_LABEL: Record<string, { label: string; color: string }> = {
 };
 
 export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
+  const t = useT();
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -46,7 +48,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
       // chargement infini.
       setWallet(data.wallet ?? { solde: 0, totalRecu: 0, totalRetire: 0, devise: "XAF", retraits: [] });
     } catch (e: any) {
-      toast.error(e.message ?? "Impossible de charger le wallet plateforme");
+      toast.error(t(e.message) ?? t("Impossible de charger le wallet plateforme"));
       setWallet({ solde: 0, totalRecu: 0, totalRetire: 0, devise: "XAF", retraits: [] });
     } finally {
       setLoading(false);
@@ -57,8 +59,8 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
 
   async function retirer(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.montant || Number(form.montant) <= 0) { toast.error("Montant invalide"); return; }
-    if (!form.destinataire.trim()) { toast.error("Destinataire requis"); return; }
+    if (!form.montant || Number(form.montant) <= 0) { toast.error(t("Montant invalide")); return; }
+    if (!form.destinataire.trim()) { toast.error(t("Destinataire requis")); return; }
     setSubmitting(true);
     try {
       const res = await fetch("/api/admin/wallet/retrait", {
@@ -68,12 +70,12 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      toast.success("Retrait initié");
+      toast.success(t("Retrait initié"));
       setForm({ montant: "", methode: "mobile_money", operateur: "MTN", destinataire: "" });
       setShowForm(false);
       charger();
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur retrait");
+      toast.error(t(e.message) ?? t("Erreur retrait"));
     } finally {
       setSubmitting(false);
     }
@@ -87,8 +89,8 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
             <Wallet size={18} style={{ color: "#F5A623" }} />
           </div>
           <div>
-            <h2 className="font-semibold" style={{ color: "#ffffff" }}>Wallet Axso</h2>
-            <p className="text-xs" style={{ color: "#AAAAAA" }}>Commission + revenus d'abonnement — argent réellement reçu via NotchPay</p>
+            <h2 className="font-semibold" style={{ color: "#ffffff" }}>{t("Wallet Axso")}</h2>
+            <p className="text-xs" style={{ color: "#AAAAAA" }}>{t("Commission + revenus d'abonnement — argent réellement reçu via NotchPay")}</p>
           </div>
         </div>
         {peutRetirer && (
@@ -97,7 +99,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
             style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}
           >
-            <ArrowUpFromLine size={14} /> Retirer
+            <ArrowUpFromLine size={14} />{" "}{t("Retirer")}
           </button>
         )}
       </div>
@@ -109,26 +111,26 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div>
               <p className="text-2xl font-bold" style={{ color: "#F5A623" }}>{fmt(wallet.solde, wallet.devise)}</p>
-              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Solde disponible</p>
+              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t("Solde disponible")}</p>
             </div>
             <div>
               <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{fmt(wallet.totalRecu, wallet.devise)}</p>
-              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Total encaissé</p>
+              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t("Total encaissé")}</p>
             </div>
             <div>
               <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{fmt(wallet.totalRetire, wallet.devise)}</p>
-              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>Total retiré</p>
+              <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t("Total retiré")}</p>
             </div>
           </div>
 
           {showForm && peutRetirer && (
             <form onSubmit={retirer} className="rounded-xl p-4 mb-6 space-y-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div className="flex items-center gap-2 text-xs mb-1" style={{ color: "#16A34A" }}>
-                <ShieldCheck size={12} /> Débit atomique + remboursement automatique en cas d'échec NotchPay
+                <ShieldCheck size={12} />{" "}{t("Débit atomique + remboursement automatique en cas d'échec NotchPay")}
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <input
-                  type="number" placeholder="Montant (FCFA)" value={form.montant}
+                  type="number" placeholder={t("Montant (FCFA)")} value={form.montant}
                   onChange={e => setForm(f => ({ ...f, montant: e.target.value }))}
                   className="px-3 py-2.5 text-sm rounded-lg border focus:outline-none"
                   style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#ffffff" }}
@@ -139,8 +141,8 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
                   className="px-3 py-2.5 text-sm rounded-lg border focus:outline-none"
                   style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#ffffff" }}
                 >
-                  <option value="mobile_money">Mobile Money</option>
-                  <option value="virement_bancaire">Virement bancaire</option>
+                  <option value="mobile_money">{t("Mobile Money")}</option>
+                  <option value="virement_bancaire">{t("Virement bancaire")}</option>
                 </select>
               </div>
               {form.methode === "mobile_money" && (
@@ -151,13 +153,13 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
                       style={form.operateur === op.id
                         ? { background: "rgba(245,166,35,0.15)", borderColor: "#F5A623", color: "#F5A623" }
                         : { background: "transparent", borderColor: "rgba(255,255,255,0.1)", color: "#AAAAAA" }}>
-                      <Smartphone size={11} /> {op.label}
+                      <Smartphone size={11} /> {t(op.label)}
                     </button>
                   ))}
                 </div>
               )}
               <input
-                placeholder={form.methode === "mobile_money" ? "Numéro (+237 6XX XXX XXX)" : "IBAN / numéro de compte"}
+                placeholder={form.methode === "mobile_money" ? t("Numéro (+237 6XX XXX XXX)") : t("IBAN / numéro de compte")}
                 value={form.destinataire}
                 onChange={e => setForm(f => ({ ...f, destinataire: e.target.value }))}
                 className="w-full px-3 py-2.5 text-sm rounded-lg border focus:outline-none"
@@ -167,13 +169,13 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50"
                 style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}>
                 {submitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowUpFromLine size={14} />}
-                Confirmer le retrait
+                {t("Confirmer le retrait")}
               </button>
             </form>
           )}
 
           <div className="space-y-2">
-            {wallet.retraits.length === 0 && <p className="text-xs text-center py-4" style={{ color: "#666666" }}>Aucun retrait pour l'instant</p>}
+            {wallet.retraits.length === 0 && <p className="text-xs text-center py-4" style={{ color: "#666666" }}>{t("Aucun retrait pour l'instant")}</p>}
             {wallet.retraits.map(r => {
               const s = STATUT_LABEL[r.statut] ?? { label: r.statut, color: "#AAAAAA" };
               return (
@@ -182,11 +184,11 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
                     {r.methode === "mobile_money" ? <Smartphone size={13} style={{ color: "#AAAAAA" }} /> : <Building2 size={13} style={{ color: "#AAAAAA" }} />}
                     <div>
                       <p className="text-xs font-medium" style={{ color: "#ffffff" }}>{fmt(r.montant, r.devise)}</p>
-                      <p className="text-[10px]" style={{ color: "#AAAAAA" }}>{r.destinataire}</p>
+                      <p className="text-[10px]" style={{ color: "#AAAAAA" }}>{t(r.destinataire)}</p>
                     </div>
                   </div>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${s.color}18`, color: s.color }}>
-                    {s.label}
+                    {t(s.label)}
                   </span>
                 </div>
               );

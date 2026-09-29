@@ -1,6 +1,7 @@
 "use client";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { TrendingUp, AlertTriangle, BarChart3, Target } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 // Icônes = composants React : ne peuvent pas être sérialisées du serveur
 // (page.tsx) vers un client component en tant que prop — ce petit wrapper
@@ -13,5 +14,6 @@ const ACCUEIL_TUTORIAL_STEPS = [
 ];
 
 export function AccueilTutorial() {
-  return <ModuleTutorial moduleKey="accueil" titre="Tableau de bord" sousTitre="Vue d'ensemble de ta boutique" steps={ACCUEIL_TUTORIAL_STEPS} />;
+  const t = useT();
+  return <ModuleTutorial moduleKey="accueil" titre={t("Tableau de bord")} sousTitre={t("Vue d'ensemble de ta boutique")} steps={ACCUEIL_TUTORIAL_STEPS} />;
 }

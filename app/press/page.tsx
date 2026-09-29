@@ -3,6 +3,7 @@ import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { Newspaper, Globe, Image as ImageIcon, Palette, Camera } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Presse — AXSO",
@@ -29,7 +30,8 @@ const KIT_ITEMS: { Icon: LucideIcon; titre: string; desc: string; taille: string
   { Icon: Camera,    titre: "Photos d'équipe",  desc: "Portraits et photos lifestyle HD",           taille: "18 MB"  },
 ];
 
-export default function PressPage() {
+export default async function PressPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -40,15 +42,15 @@ export default function PressPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20">
             <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-              <Newspaper size={14} className="inline-block mr-1.5" />Espace presse
+              <Newspaper size={14} className="inline-block mr-1.5" />{t("Espace presse")}
             </span>
             <h1 className="text-4xl sm:text-5xl font-bold mb-5 leading-tight">
-              Ressources pour<br />
+              {t("Ressources pour")}<br />
               <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-                les médias
+                {t("les médias")}
               </span>
             </h1>
-            <p className="text-[#737373] text-xl max-w-2xl mx-auto">Logos, visuels, chiffres clés et contact presse. Tout ce dont vous avez besoin pour parler d'AXSO.</p>
+            <p className="text-[#737373] text-xl max-w-2xl mx-auto">{t("Logos, visuels, chiffres clés et contact presse. Tout ce dont vous avez besoin pour parler d'AXSO.")}</p>
           </div>
 
           {/* Chiffres */}
@@ -57,7 +59,7 @@ export default function PressPage() {
               <div key={c.n} className="text-center rounded-2xl p-5 border"
                 style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
                 <p className="text-2xl font-black mb-1" style={{ color: "#F5A623" }}>{c.n}</p>
-                <p className="text-[#737373] text-xs">{c.label}</p>
+                <p className="text-[#737373] text-xs">{t(c.label)}</p>
               </div>
             ))}
           </div>
@@ -68,13 +70,13 @@ export default function PressPage() {
               <div key={kit.titre} className="rounded-2xl border p-6 flex flex-col"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <kit.Icon size={30} className="mb-4" style={{ color: "#F5A623" }} />
-                <h3 className="font-bold text-[#111111] mb-1">{kit.titre}</h3>
-                <p className="text-[#808080] text-sm flex-1 mb-4">{kit.desc}</p>
+                <h3 className="font-bold text-[#111111] mb-1">{t(kit.titre)}</h3>
+                <p className="text-[#808080] text-sm flex-1 mb-4">{t(kit.desc)}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#999999]">{kit.taille}</span>
                   <button className="text-xs font-bold px-3 py-1.5 rounded-lg transition-all hover:scale-105"
                     style={{ background: "rgba(245,166,35,0.12)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.2)" }}>
-                    Télécharger ↓
+                    {t("Télécharger ↓")}
                   </button>
                 </div>
               </div>
@@ -82,17 +84,17 @@ export default function PressPage() {
           </div>
 
           {/* Mentions presse */}
-          <h2 className="text-2xl font-bold mb-7">Ils parlent de nous</h2>
+          <h2 className="text-2xl font-bold mb-7">{t("Ils parlent de nous")}</h2>
           <div className="space-y-3 mb-16">
             {MENTIONS.map(m => (
               <div key={m.titre} className="rounded-xl border px-6 py-4 flex items-center justify-between"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <div>
                   <span className="inline-flex items-center gap-1 text-xs font-bold mr-2 text-[#666666]">
-                    <Globe size={12} />{m.pays}
+                    <Globe size={12} />{t(m.pays)}
                   </span>
-                  <span className="font-bold text-sm" style={{ color: "#F5A623" }}>{m.media}</span>
-                  <p className="text-[#595959] text-sm mt-0.5">{m.titre}</p>
+                  <span className="font-bold text-sm" style={{ color: "#F5A623" }}>{t(m.media)}</span>
+                  <p className="text-[#595959] text-sm mt-0.5">{t(m.titre)}</p>
                 </div>
                 <span className="text-xs text-[#999999] flex-shrink-0 ml-4">{m.date}</span>
               </div>
@@ -102,12 +104,12 @@ export default function PressPage() {
           {/* Contact presse */}
           <div className="rounded-3xl border p-8 text-center"
             style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02))", borderColor: "rgba(245,166,35,0.2)" }}>
-            <h3 className="text-xl font-bold text-[#111111] mb-2">Contact presse</h3>
-            <p className="text-[#737373] mb-5">Demandes d'interviews, citations officielles et informations complémentaires.</p>
+            <h3 className="text-xl font-bold text-[#111111] mb-2">{t("Contact presse")}</h3>
+            <p className="text-[#737373] mb-5">{t("Demandes d'interviews, citations officielles et informations complémentaires.")}</p>
             <a href="mailto:presse@axso.app"
               className="inline-block font-bold px-8 py-3.5 rounded-xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 25px rgba(245,166,35,0.3)" }}>
-              presse@axso.app →
+              {t("presse@axso.app →")}
             </a>
           </div>
         </div>

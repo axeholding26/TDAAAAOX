@@ -32,6 +32,7 @@ import {
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
+import { useT } from "@/components/I18nProvider";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -224,6 +225,7 @@ function LienPrincipal({
   activeBg?: string;
   activeText?: string;
 }) {
+  const t = useT();
   const { openAbonnement } = useAbonnementOverlay();
   const active = estActif(item, pathname, searchParams);
   const locked = !!item.requiresPalier && !palierAuMoins(palier ?? "palier0", item.requiresPalier);
@@ -248,7 +250,7 @@ function LienPrincipal({
         "flex-1 truncate leading-none font-medium",
         locked ? "text-gray-400" : active ? "font-semibold text-[#111111]" : "text-gray-600 group-hover:text-[#111111]",
       )}>
-        {item.label}
+        {t(item.label)}
       </span>
       {locked && <Lock size={12} className="flex-shrink-0 text-gray-300" />}
       {!locked && item.badge && (
@@ -266,7 +268,7 @@ function LienPrincipal({
   if (locked) {
     return (
       <button type="button" onClick={() => openAbonnement(item.requiresPalier)} className={cn(className, "w-full text-left")}>
-        {contenu}
+        {t(contenu)}
       </button>
     );
   }
@@ -274,13 +276,13 @@ function LienPrincipal({
     return (
       <button type="button" onClick={() => openAbonnement()} className={cn(className, "w-full text-left")}
         style={active ? { backgroundColor: activeBg, color: activeText } : undefined}>
-        {contenu}
+        {t(contenu)}
       </button>
     );
   }
   return (
     <Link href={item.href} className={className} style={active ? { backgroundColor: activeBg, color: activeText } : undefined}>
-      {contenu}
+      {t(contenu)}
     </Link>
   );
 }
@@ -298,6 +300,7 @@ function LienEnfant({
   activeBg?: string;
   activeText?: string;
 }) {
+  const t = useT();
   const { openAbonnement } = useAbonnementOverlay();
   const active = estActif(item, pathname, searchParams);
   const locked = !!item.requiresPalier && !palierAuMoins(palier ?? "palier0", item.requiresPalier);
@@ -312,7 +315,7 @@ function LienEnfant({
         "flex-1 truncate leading-none",
         locked ? "text-gray-400" : active ? "font-semibold text-[#111111]" : "text-gray-500 group-hover:text-[#111111]",
       )}>
-        {item.label}
+        {t(item.label)}
       </span>
       {locked && <Lock size={11} className="flex-shrink-0 text-gray-300" />}
       {!locked && item.badge && (
@@ -330,7 +333,7 @@ function LienEnfant({
   if (locked) {
     return (
       <button type="button" onClick={() => openAbonnement(item.requiresPalier)} className={cn(className, "text-left")}>
-        {contenu}
+        {t(contenu)}
       </button>
     );
   }
@@ -338,13 +341,13 @@ function LienEnfant({
     return (
       <button type="button" onClick={() => openAbonnement()} className={cn(className, "text-left")}
         style={active ? { backgroundColor: activeBg, color: activeText } : undefined}>
-        {contenu}
+        {t(contenu)}
       </button>
     );
   }
   return (
     <Link href={item.href} className={className} style={active ? { backgroundColor: activeBg, color: activeText } : undefined}>
-      {contenu}
+      {t(contenu)}
     </Link>
   );
 }
@@ -361,6 +364,7 @@ function GroupeRepliable({
   ouvert: boolean;
   onToggle: () => void;
 }) {
+  const t = useT();
   const Icon = groupe.Icon;
   const contientActif = groupe.items.some(it => estActif(it, pathname, searchParams));
   // Replié, le groupe signale quand même une activité à traiter.
@@ -380,7 +384,7 @@ function GroupeRepliable({
       >
         <Icon size={14} className="flex-shrink-0" />
         <span className="flex-1 text-left text-[11.5px] font-bold uppercase tracking-[0.1em]">
-          {groupe.label}
+          {t(groupe.label)}
         </span>
         {badgeMasque && (
           <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse" style={{ backgroundColor: "#F5A623" }} />
@@ -411,6 +415,7 @@ function GroupeRepliable({
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permissions }: SidebarProps) {
+  const t = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -453,7 +458,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
             backgroundClip: "text",
           }}
         >
-          Build your empire here
+          {t("Build your empire here")}
         </span>
       </div>
 
@@ -502,7 +507,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
           >
             <ExternalLink size={14} className="text-white/80 flex-shrink-0" />
             <span className="text-[12.5px] font-bold text-white flex-1 truncate">
-              {boutiqueNom || "Voir ma boutique"}
+              {t(boutiqueNom) || t("Voir ma boutique")}
             </span>
             <ChevronRight size={13} className="text-white/40 group-hover:text-white/80 transition-all group-hover:translate-x-0.5" />
           </a>
@@ -522,11 +527,11 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
               boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
             }}
           >
-            {userInitials || "A"}
+            {t(userInitials) || "A"}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-[#111111] leading-tight">Mon compte</div>
-            <div className="text-[11px] text-[#999999] leading-none mt-1">Profil et sécurité</div>
+            <div className="text-[13px] font-semibold text-[#111111] leading-tight">{t("Mon compte")}</div>
+            <div className="text-[11px] text-[#999999] leading-none mt-1">{t("Profil et sécurité")}</div>
           </div>
           <Settings2 size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />
         </Link>

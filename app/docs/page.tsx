@@ -2,6 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { Zap, ShoppingBag, CreditCard, Truck, Cpu, Plug } from "lucide-react";
 import type { Metadata } from "next";
+import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Documentation — AXSO",
@@ -17,7 +18,8 @@ const SECTIONS = [
   { Icon: Plug,        titre: "API & intégrations", articles: ["API REST v1 — authentification", "Webhooks — événements", "Connecteurs WhatsApp Business", "SDK JavaScript"], accent: "#F5A623" },
 ];
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const t = await getT();
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -27,15 +29,15 @@ export default function DocsPage() {
           style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.09) 0%, transparent 65%)" }} />
         <div className="max-w-5xl mx-auto">
           <span className="inline-block text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: "#F5A623" }}>
-            Documentation
+            {t("Documentation")}
           </span>
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
-            Tout ce qu'il faut savoir<br />
+            {t("Tout ce qu'il faut savoir")}<br />
             <span style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
-              pour maîtriser AXSO
+              {t("pour maîtriser AXSO")}
             </span>
           </h1>
-          <p className="text-[#737373] text-xl mb-5 max-w-2xl">Guides pas à pas, références API, tutoriels vidéo.</p>
+          <p className="text-[#737373] text-xl mb-5 max-w-2xl">{t("Guides pas à pas, références API, tutoriels vidéo.")}</p>
 
           {/* Search */}
           <div className="relative max-w-lg mb-16">
@@ -44,8 +46,8 @@ export default function DocsPage() {
               .docs-search::placeholder { color:rgba(0,0,0,0.3); }
               .docs-search:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
             `}</style>
-            <input type="search" placeholder="Chercher dans la doc..." className="docs-search" />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A6A6A6] text-sm">⌘K</span>
+            <input type="search" placeholder={t("Chercher dans la doc...")} className="docs-search" />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A6A6A6] text-sm">{t("⌘K")}</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -57,21 +59,21 @@ export default function DocsPage() {
                     style={{ background: `${accent}12`, border: `1px solid ${accent}20` }}>
                     <Icon size={15} style={{ color: accent }} />
                   </div>
-                  <h3 className="font-bold text-[#111111]">{titre}</h3>
+                  <h3 className="font-bold text-[#111111]">{t(titre)}</h3>
                 </div>
                 <ul className="space-y-2">
                   {articles.map(a => (
                     <li key={a}>
                       <a href="#" className="text-sm text-[#737373] hover:text-[#111111] transition-colors flex items-center gap-2 group">
                         <span className="w-1 h-1 rounded-full flex-shrink-0 transition-colors" style={{ background: "rgba(0,0,0,0.2)" }} />
-                        {a}
+                        {t(a)}
                       </a>
                     </li>
                   ))}
                 </ul>
                 <a href="#" className="inline-flex items-center gap-1.5 mt-5 text-xs font-bold transition-opacity hover:opacity-70"
                   style={{ color: accent }}>
-                  Voir tout <span>→</span>
+                  {t("Voir tout")}{" "}<span>→</span>
                 </a>
               </div>
             ))}

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const temoignages = [
   {
@@ -33,6 +34,7 @@ function generateParticles(): Particle[] {
 }
 
 export function TemoignagesSection() {
+  const tr = useT();
   const [actif, setActif] = useState(0);
   const [dir, setDir] = useState<"left" | "right">("right");
   const [visible, setVisible] = useState(false);
@@ -104,10 +106,10 @@ export function TemoignagesSection() {
           }}
         >
           <span className="text-[#111111] text-sm font-semibold uppercase tracking-widest mb-4 block">
-            Témoignages
+            {tr("Témoignages")}
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">
-            Ils vendent déjà avec Axso
+            {tr("Ils vendent déjà avec Axso")}
           </h2>
         </div>
 
@@ -154,7 +156,7 @@ export function TemoignagesSection() {
                 animation: `${dir === "right" ? "slideRevealRight" : "slideRevealLeft"} 0.4s cubic-bezier(0.23,1,0.32,1) both`,
               }}
             >
-              "{t.texte}"
+              "{tr(t.texte)}"
             </blockquote>
 
             <div
@@ -171,15 +173,15 @@ export function TemoignagesSection() {
                   boxShadow: `0 0 0 4px ${t.couleur}30, 0 8px 32px ${t.couleur}50`,
                 }}
               >
-                {t.avatar}
+                {tr(t.avatar)}
               </div>
               <div className="text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-bold text-lg">{t.nom}</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{t.pays}</span>
+                  <span className="text-gray-900 font-bold text-lg">{tr(t.nom)}</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{tr(t.pays)}</span>
                 </div>
-                <p className="text-gray-400 text-sm">{t.role}</p>
-                <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {t.ventes}</p>
+                <p className="text-gray-400 text-sm">{tr(t.role)}</p>
+                <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {tr(t.ventes)}</p>
               </div>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search } from "lucide-react";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/devise-convert";
+import { useT } from "@/components/I18nProvider";
 
 export function Drapeau({ code, taille = 20 }: { code: string | null | undefined; taille?: number }) {
   if (!code || !/^[A-Za-z]{2}$/.test(code)) return null;
@@ -28,6 +29,7 @@ export function SelectPays({ value, onChange, options = PAYS_OPTIONS, placeholde
   children?: ReactNode;
   ariaLabel?: string;
 }) {
+  const t = useT();
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState("");
   const [actif, setActif] = useState(0);
@@ -82,7 +84,7 @@ export function SelectPays({ value, onChange, options = PAYS_OPTIONS, placeholde
         {children ?? (
           <>
             {courant ? <Drapeau code={courant.code} /> : null}
-            <span className={`flex-1 text-left truncate ${courant ? "" : "opacity-50"}`}>{courant?.nom ?? value ?? placeholder}</span>
+            <span className={`flex-1 text-left truncate ${courant ? "" : "opacity-50"}`}>{t(courant?.nom) ?? t(value) ?? t(placeholder)}</span>
             <ChevronDown size={16} className={`opacity-50 transition-transform ${ouvert ? "rotate-180" : ""}`} aria-hidden />
           </>
         )}
@@ -93,18 +95,18 @@ export function SelectPays({ value, onChange, options = PAYS_OPTIONS, placeholde
           style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width }}>
           <div className="ax-pays-recherche">
             <Search size={15} aria-hidden />
-            <input autoFocus value={recherche} placeholder="Rechercher un pays…" aria-label="Rechercher un pays"
+            <input autoFocus value={recherche} placeholder={t("Rechercher un pays…")} aria-label={t("Rechercher un pays")}
               onChange={(e) => { setRecherche(e.target.value); setActif(0); }} />
           </div>
           <ul ref={liste} role="listbox" aria-label={ariaLabel}>
-            {filtres.length === 0 && <li className="ax-pays-vide">Aucun pays trouvé</li>}
+            {filtres.length === 0 && <li className="ax-pays-vide">{t("Aucun pays trouvé")}</li>}
             {filtres.map((p, i) => (
               <li key={p.code} data-i={i} role="option" aria-selected={p.code === value}
                 className={`ax-pays-option ${i === actif ? "is-actif" : ""} ${p.code === value ? "is-choisi" : ""}`}
                 onMouseEnter={() => setActif(i)} onClick={() => choisir(p.code)}>
                 <Drapeau code={p.code} taille={22} />
-                <span className="flex-1 truncate">{p.nom}</span>
-                {PAYS_DEVISES[p.code] && <span className="ax-pays-devise">{PAYS_DEVISES[p.code]}</span>}
+                <span className="flex-1 truncate">{t(p.nom)}</span>
+                {PAYS_DEVISES[p.code] && <span className="ax-pays-devise">{t(PAYS_DEVISES[p.code])}</span>}
                 {p.code === value && <Check size={15} strokeWidth={2.5} className="ax-pays-check" aria-hidden />}
               </li>
             ))}

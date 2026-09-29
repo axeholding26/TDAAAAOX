@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Camera } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   open: boolean;
@@ -36,6 +37,7 @@ function jouerBip() {
  * mais se referme dès la première détection au lieu de rester ouvert en boucle.
  */
 export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
+  const tr = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const zxingControlsRef = useRef<{ stop: () => void } | null>(null);
@@ -139,7 +141,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
         }}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <span className="text-white font-bold text-[14px]">Scanner le code-barres</span>
+          <span className="text-white font-bold text-[14px]">{tr("Scanner le code-barres")}</span>
           <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10">
             <X size={14} className="text-white/60" />
           </button>
@@ -151,14 +153,14 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
           {!pret && !erreur && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
               <Loader2 size={26} className="animate-spin" style={{ color: "#F5A623" }} />
-              <p className="text-white/50 text-[12px]">Ouverture de la caméra…</p>
+              <p className="text-white/50 text-[12px]">{tr("Ouverture de la caméra…")}</p>
             </div>
           )}
 
           {erreur && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
               <Camera size={26} className="text-white/30" />
-              <p className="text-white/60 text-[12px]">{erreur}</p>
+              <p className="text-white/60 text-[12px]">{tr(erreur)}</p>
             </div>
           )}
 
@@ -186,7 +188,7 @@ export function BarcodeCaptureModal({ open, onClose, onDetect }: Props) {
         </div>
 
         <p className="text-center text-white/40 text-[11.5px] px-6 pt-3 pb-5 leading-relaxed">
-          Placez le code-barres du produit dans le cadre — le champ se remplit automatiquement dès qu'il est reconnu.
+          {tr("Placez le code-barres du produit dans le cadre — le champ se remplit automatiquement dès qu'il est reconnu.")}
         </p>
       </div>
 

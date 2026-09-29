@@ -7,6 +7,7 @@ import { useAxiaConversations } from "@/hooks/useAxiaConversations";
 import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversationSidebar";
 import { AxiaNotifBell } from "@/components/dashboard/AxiaNotifBell";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { useT } from "@/components/I18nProvider";
 
 const AXIA_TUTORIAL_STEPS = [
   { Icon: MessageSquare, titre: "Discute avec AXIA", description: "Pose n'importe quelle question sur ta boutique — ventes, stock, clients — ou demande-lui d'agir directement : créer un produit, lancer une promo, relancer un client." },
@@ -69,6 +70,7 @@ const PHASE_CONFIG: Record<VoicePhase, { orbGrad: string; orbShadow: string; rin
 // côté serveur, dans app/(dashboard)/dashboard/page.tsx — ce composant n'est
 // jamais monté pour un compte palier0.
 export function AxiaHomeClient() {
+  const tr = useT();
   const [nomBoutique, setNomBoutique] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -433,7 +435,7 @@ export function AxiaHomeClient() {
       <ModuleTutorial
         moduleKey="axia"
         titre="AXIA"
-        sousTitre="Ton assistant boutique intelligent"
+        sousTitre={tr("Ton assistant boutique intelligent")}
         steps={AXIA_TUTORIAL_STEPS}
       />
 
@@ -473,7 +475,7 @@ export function AxiaHomeClient() {
                       style={m.role === "user"
                         ? { background: "rgba(245,166,35,0.18)", color: "rgba(255,255,255,0.92)", border: "1px solid rgba(245,166,35,0.25)" }
                         : { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.85)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      {text}
+                      {tr(text)}
                     </div>
                   </div>
                 );
@@ -491,7 +493,7 @@ export function AxiaHomeClient() {
                 ? <div className="w-10 h-10 rounded-full border-4 border-white/20 border-t-white animate-spin" />
                 : (
                   <div className="w-full h-full rounded-full overflow-hidden border-2 border-white/25">
-                    <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                    <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
                   </div>
                 )}
               {voicePhase === "listening" && (
@@ -527,11 +529,11 @@ export function AxiaHomeClient() {
             )}
 
             <p className="text-white/50 text-sm text-center px-8 max-w-sm min-h-[1.5em]">
-              {interimText || (
-                voicePhase === "idle" ? "Touche l'orbe pour parler"
-                : voicePhase === "listening" ? "Je t'écoute…"
-                : voicePhase === "speaking" ? "Touche l'orbe pour interrompre"
-                : "Traitement en cours…"
+              {tr(interimText) || (
+                voicePhase === "idle" ? tr("Touche l'orbe pour parler")
+                : voicePhase === "listening" ? tr("Je t'écoute…")
+                : voicePhase === "speaking" ? tr("Touche l'orbe pour interrompre")
+                : tr("Traitement en cours…")
               )}
             </p>
           </div>
@@ -572,39 +574,39 @@ export function AxiaHomeClient() {
           <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
             <button onClick={() => setSidebarOpen(v => !v)}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
-              title="Historique des conversations">
+              title={tr("Historique des conversations")}>
               <PanelLeft size={14} className="text-white/60" />
             </button>
             <button onClick={nouvelleConversation}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0"
-              title="Nouvelle conversation">
+              title={tr("Nouvelle conversation")}>
               <Plus size={14} className="text-white/60" />
             </button>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl overflow-hidden flex-shrink-0 ml-0.5 sm:ml-1" style={{ boxShadow: "0 0 20px rgba(245,166,35,0.25)" }}>
-              <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+              <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
             </div>
             <span className="hidden sm:inline text-white font-bold text-sm tracking-tight">AXIA</span>
             <span className="hidden sm:block ml-0.5"><BoutonRevoirTutoriel moduleKey="axia" dark /></span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <AxiaNotifBell />
-            <button onClick={() => setTtsOn(v => !v)} title="Réponses vocales"
+            <button onClick={() => setTtsOn(v => !v)} title={tr("Réponses vocales")}
               className="flex w-7 h-7 sm:w-8 sm:h-8 rounded-xl items-center justify-center transition-colors hover:bg-white/10 flex-shrink-0">
               {ttsOn ? <Volume2 size={13} className="text-white/60" /> : <VolumeX size={13} className="text-white/25" />}
             </button>
-            <button onClick={openVoiceMode} title="Mode vocal"
+            <button onClick={openVoiceMode} title={tr("Mode vocal")}
               className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-colors flex-shrink-0"
               style={{ background: "rgba(245,166,35,0.15)" }}>
               <Phone size={12} className="text-[#F5A623]" />
             </button>
-            <Link href="/dashboard/axia/journal" title="Journal"
+            <Link href="/dashboard/axia/journal" title={tr("Journal")}
               className="hidden sm:flex items-center gap-1.5 text-[11.5px] font-semibold text-white/60 hover:text-white border border-white/10 hover:border-white/25 rounded-full px-3 py-1.5 transition-all flex-shrink-0">
-              <History size={12} /> Journal
+              <History size={12} />{" "}{tr("Journal")}
             </Link>
-            <Link href="/dashboard/accueil" title="Tableau de bord"
+            <Link href="/dashboard/accueil" title={tr("Tableau de bord")}
               className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-2.5 sm:px-3.5 py-1.5 transition-all hover:opacity-90 flex-shrink-0"
               style={{ background: "#F5A623", color: "#111111" }}>
-              <LayoutDashboard size={12} /> <span className="hidden sm:inline">Tableau de bord</span>
+              <LayoutDashboard size={12} /> <span className="hidden sm:inline">{tr("Tableau de bord")}</span>
             </Link>
           </div>
         </div>
@@ -614,12 +616,12 @@ export function AxiaHomeClient() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 min-h-0">
             <div className="ax-axia-mascot w-20 h-20 sm:w-24 sm:h-24 mb-5 rounded-3xl overflow-hidden"
               style={{ boxShadow: "0 0 50px rgba(245,166,35,0.35), 0 8px 30px rgba(0,0,0,0.3)" }}>
-              <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+              <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold text-white text-center mb-1.5">
-              {nomBoutique ? `Bonjour, ${nomBoutique}` : "Bonjour"}
+              {nomBoutique ? tr("Bonjour, {0}", nomBoutique) : tr("Bonjour")}
             </h1>
-            <p className="text-white/40 text-sm text-center mb-8">Que veux-tu faire pour ta boutique aujourd'hui ?</p>
+            <p className="text-white/40 text-sm text-center mb-8">{tr("Que veux-tu faire pour ta boutique aujourd'hui ?")}</p>
 
             <ChatInput
               input={input} setInput={setInput} loading={loading} pendingImage={pendingImage} setPendingImage={setPendingImage}
@@ -633,7 +635,7 @@ export function AxiaHomeClient() {
                   className="flex items-center gap-2 text-left px-4 py-3 rounded-2xl text-[13px] text-white/70 hover:text-white transition-all"
                   style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                   <Sparkles size={12} className="flex-shrink-0" style={{ color: "#F5A623" }} />
-                  {s}
+                  {tr(s)}
                 </button>
               ))}
             </div>
@@ -652,8 +654,8 @@ export function AxiaHomeClient() {
                     <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden"
                       style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.08)" }}>
                       {m.role === "assistant"
-                        ? <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
-                        : <span className="text-[11px] font-bold text-[#111111]">{(nomBoutique ?? "M")[0]}</span>}
+                        ? <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
+                        : <span className="text-[11px] font-bold text-[#111111]">{tr((nomBoutique ?? "M")[0])}</span>}
                     </div>
                     <div className="flex flex-col gap-1.5" style={{ maxWidth: "85%" }}>
                       {m.imageUrl && (
@@ -667,7 +669,7 @@ export function AxiaHomeClient() {
                             style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                             {m.role === "assistant"
                               ? <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text || (m.streaming ? "" : m.content)) }} />
-                              : <span className="whitespace-pre-wrap">{text}</span>}
+                              : <span className="whitespace-pre-wrap">{tr(text)}</span>}
                             {m.streaming && (
                               <span className="inline-flex gap-0.5 ml-1 align-middle">
                                 {[0, 1, 2].map(k => (
@@ -679,12 +681,12 @@ export function AxiaHomeClient() {
                           {m.role === "assistant" && text && !m.streaming && (
                             <div className="absolute -bottom-2 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                               <button onClick={() => { navigator.clipboard.writeText(text); setCopiedIdx(i); setTimeout(() => setCopiedIdx(null), 1500); }}
-                                className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(20,20,20,0.9)", border: "1px solid rgba(255,255,255,0.1)" }} title="Copier">
+                                className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(20,20,20,0.9)", border: "1px solid rgba(255,255,255,0.1)" }} title={tr("Copier")}>
                                 {copiedIdx === i ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} className="text-white/50" />}
                               </button>
                               {isLast && !loading && (
                                 <button onClick={regenerateLast}
-                                  className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(20,20,20,0.9)", border: "1px solid rgba(255,255,255,0.1)" }} title="Régénérer">
+                                  className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(20,20,20,0.9)", border: "1px solid rgba(255,255,255,0.1)" }} title={tr("Régénérer")}>
                                   <RotateCcw size={10} className="text-white/50" />
                                 </button>
                               )}
@@ -702,7 +704,7 @@ export function AxiaHomeClient() {
                         <div className="flex flex-wrap gap-1.5">
                           {m.actions.map((a, j) => (
                             <span key={j} className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-lg font-medium" style={{ background: "rgba(16,185,129,0.12)", color: "#34d399", border: "1px solid rgba(16,185,129,0.25)" }}>
-                              <Sparkles size={9} /> {a}
+                              <Sparkles size={9} /> {tr(a)}
                             </span>
                           ))}
                         </div>
@@ -715,7 +717,7 @@ export function AxiaHomeClient() {
               {loading && (
                 <div className="flex gap-3">
                   <div className="w-8 h-8 rounded-xl flex-shrink-0 overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
-                    <img src="/axia-icon.png" alt="Axia" className="w-full h-full object-cover" />
+                    <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
                   </div>
                   <div className="rounded-2xl px-4 py-3 flex items-center gap-2.5" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <div className="flex gap-1 items-center">
@@ -723,7 +725,7 @@ export function AxiaHomeClient() {
                         <div key={j} className="w-1.5 h-1.5 rounded-full" style={{ background: "#F5A623", animation: `xdot 1s ${j * 0.18}s ease-in-out infinite` }} />
                       ))}
                     </div>
-                    <span className="text-[12px] text-white/40">{THINKING_MSGS[thinkingMsgIdx]}</span>
+                    <span className="text-[12px] text-white/40">{tr(THINKING_MSGS[thinkingMsgIdx])}</span>
                   </div>
                 </div>
               )}
@@ -764,6 +766,7 @@ function ChatInput({
   onFile: (e: React.ChangeEvent<HTMLInputElement>) => void; onSend: () => void; onStop: () => void;
   autoGrow: (el: HTMLTextAreaElement) => void; centered?: boolean;
 }) {
+  const tr = useT();
   return (
     <div className={centered ? "w-full max-w-2xl mx-auto" : "flex-shrink-0 px-4 sm:px-6 pb-4 sm:pb-6 pt-2 max-w-3xl w-full mx-auto"}>
       {pendingImage && (
@@ -778,7 +781,7 @@ function ChatInput({
       <div className="flex items-end gap-2 rounded-2xl px-3 py-2.5 transition-colors"
         style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", backdropFilter: "blur(10px)" }}>
         <button onClick={() => fileRef.current?.click()}
-          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors mb-0.5" title="Joindre une image">
+          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors mb-0.5" title={tr("Joindre une image")}>
           <Paperclip size={14} className="text-white/50" />
         </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
@@ -788,7 +791,7 @@ function ChatInput({
           rows={1}
           onChange={e => { setInput(e.target.value); autoGrow(e.target); }}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
-          placeholder="Demande n'importe quoi à AXIA…"
+          placeholder={tr("Demande n'importe quoi à AXIA…")}
           disabled={loading}
           className="flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/35 resize-none py-1 leading-relaxed min-w-0"
           style={{ maxHeight: 140 }}
@@ -796,7 +799,7 @@ function ChatInput({
         {loading ? (
           <button onClick={onStop}
             className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mb-0.5"
-            style={{ background: "linear-gradient(135deg,#ef4444,#b91c1c)" }} title="Arrêter">
+            style={{ background: "linear-gradient(135deg,#ef4444,#b91c1c)" }} title={tr("Arrêter")}>
             <Square size={11} className="text-white" fill="white" />
           </button>
         ) : (

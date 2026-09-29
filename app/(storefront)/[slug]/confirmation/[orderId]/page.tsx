@@ -8,6 +8,7 @@ import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { ConfirmationDigitaleContent } from "@/components/storefront/ConfirmationDigitaleContent";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
+import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
   params: Promise<{ slug: string; orderId: string }>;
@@ -32,6 +33,7 @@ async function verifierEtConfirmerNotchPay(commandeId: string, paiementReference
 }
 
 export default async function ConfirmationPage({ params, searchParams }: Props) {
+  const t = await getT();
   const { slug, orderId } = await params;
   await searchParams;
 
@@ -118,15 +120,15 @@ export default async function ConfirmationPage({ params, searchParams }: Props) 
 
   const Habillage = habillageDesign(themeConfig);
   if (Habillage) {
-    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{contenuConfirmation}</div></Habillage>;
+    return <Habillage><div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">{t(contenuConfirmation)}</div></Habillage>;
   }
 
   return (
     <div style={{ backgroundColor: theme.fond, color: theme.texte, minHeight: "100vh" }}>
-      {contenuConfirmation}
+      {t(contenuConfirmation)}
 
       <footer className="border-t py-8 text-center text-sm opacity-40 mt-8" style={{ borderColor: `${theme.accent}20` }}>
-        <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: theme.accent }}>Axso</span></p>
+        <p>{t(tenant.nomBoutique)}{" "}{t("· Propulsé par")}{" "}<span style={{ color: theme.accent }}>{t("Axso")}</span></p>
       </footer>
     </div>
   );

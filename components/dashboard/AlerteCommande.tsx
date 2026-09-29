@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, MessageCircle, X } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 // Alerte « nouvelle commande » — distincte des autres notifications (qui
 // passent par un toast + le carillon de NotificationSound) : son de caisse
@@ -45,6 +46,7 @@ function sonCaisse() {
 }
 
 export function AlerteCommande() {
+  const tr = useT();
   const [alertes, setAlertes] = useState<Notif[]>([]);
   const vues = useRef<Set<string> | null>(null); // null : premier chargement (rien d'ancien n'alerte)
 
@@ -88,19 +90,19 @@ export function AlerteCommande() {
             <div className="flex items-start gap-3">
               <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#F5A623", color: "#111111" }}><Icone size={20} /></span>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ color: "#F5A623" }}>Nouvelle commande</p>
-                <p className="text-[14px] font-semibold leading-snug mt-0.5">{n.titre}</p>
-                <p className="text-[12.5px] text-white/70 leading-snug mt-0.5 line-clamp-2">{n.message}</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.15em]" style={{ color: "#F5A623" }}>{tr("Nouvelle commande")}</p>
+                <p className="text-[14px] font-semibold leading-snug mt-0.5">{tr(n.titre)}</p>
+                <p className="text-[12.5px] text-white/70 leading-snug mt-0.5 line-clamp-2">{tr(n.message)}</p>
               </div>
-              <button onClick={() => fermer(n.id)} aria-label="Fermer" className="text-white/50 hover:text-white flex-shrink-0"><X size={16} /></button>
+              <button onClick={() => fermer(n.id)} aria-label={tr("Fermer")} className="text-white/50 hover:text-white flex-shrink-0"><X size={16} /></button>
             </div>
             <Link href={n.lien || "/dashboard/commandes"} onClick={() => fermer(n.id)}
               className="mt-3 w-full h-10 flex items-center justify-center rounded-xl text-[13.5px] font-bold" style={{ background: "#F5A623", color: "#111111" }}>
-              Voir la commande
+              {tr("Voir la commande")}
             </Link>
             {"Notification" in globalThis && Notification.permission === "default" && (
               <button onClick={() => Notification.requestPermission()} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
-                Activer les alertes système (quand l’onglet est en arrière-plan)
+                {tr("Activer les alertes système (quand l’onglet est en arrière-plan)")}
               </button>
             )}
           </div>

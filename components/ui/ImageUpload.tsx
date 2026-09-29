@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { televerser } from "@/lib/televerser";
 import { Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   value?: string;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function ImageUpload({ value, onChange, onRemove, label, hint, className = "", aspectRatio = "square" }: Props) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -29,7 +31,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
 
   async function upload(file: File) {
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 5 MB)");
+      toast.error(t("Fichier trop volumineux (max 5 MB)"));
       return;
     }
     setUploading(true);
@@ -51,7 +53,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
       if (!res.ok) throw new Error(data.error);
       onChange(data.url);
     } catch (err: any) {
-      toast.error(err.message || "Erreur upload");
+      toast.error(t(err.message) || t("Erreur upload"));
     } finally {
       setUploading(false);
     }
@@ -63,7 +65,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
 
   return (
     <div className={`space-y-1.5 ${className}`}>
-      {label && <label className="ax-label block">{label}</label>}
+      {label && <label className="ax-label block">{t(label)}</label>}
       <div
         className={`relative ${aspectClass} ${roundedClass} border-2 border-dashed transition-all cursor-pointer overflow-hidden group ${
           dragging ? "border-[#F5A623] bg-[#F5A623]/8" : "border-[#E8E8E8] bg-[#FAFAFA] hover:border-[#F5A623]/50 hover:bg-[#FFFBEB]/40"
@@ -86,7 +88,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
               </button>
             )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <span className="text-white text-[11px] font-semibold bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">Changer</span>
+              <span className="text-white text-[11px] font-semibold bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">{t("Changer")}</span>
             </div>
           </>
         ) : (
@@ -98,8 +100,8 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
                 <div className="w-10 h-10 rounded-2xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center group-hover:scale-105 transition-transform">
                   <Upload size={16} className="text-[#D4911A]" />
                 </div>
-                <p className="text-[#888888] text-[11.5px] text-center font-medium">Cliquer ou glisser une image</p>
-                <p className="text-[#CCCCCC] text-[10px]">JPEG, PNG, WebP — max 5 MB</p>
+                <p className="text-[#888888] text-[11.5px] text-center font-medium">{t("Cliquer ou glisser une image")}</p>
+                <p className="text-[#CCCCCC] text-[10px]">{t("JPEG, PNG, WebP — max 5 MB")}</p>
               </>
             )}
           </div>
@@ -110,7 +112,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
           </div>
         )}
       </div>
-      {hint && <p className="text-[#CCCCCC] text-[10.5px]">{hint}</p>}
+      {hint && <p className="text-[#CCCCCC] text-[10.5px]">{t(hint)}</p>}
       <input
         ref={inputRef}
         type="file"

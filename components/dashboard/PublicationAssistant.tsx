@@ -5,6 +5,7 @@ import {
   Globe, ImageIcon, HelpCircle, DollarSign, Type,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   produitId: string;
@@ -21,6 +22,7 @@ interface Props {
 export default function PublicationAssistant({
   produitId, nom, description, images, prix, metaTitle, faqCount, onPublier, onClose,
 }: Props) {
+  const t = useT();
   const [publishing, setPublishing] = useState(false);
   const [genFaq, setGenFaq] = useState(false);
 
@@ -48,7 +50,7 @@ export default function PublicationAssistant({
   };
 
   const genererFaq = async () => {
-    if (!nom) { toast.error("Entrez d'abord le nom du produit"); return; }
+    if (!nom) { toast.error(t("Entrez d'abord le nom du produit")); return; }
     setGenFaq(true);
     try {
       const r = await fetch("/api/ai/faq", {
@@ -63,9 +65,9 @@ export default function PublicationAssistant({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ faq: d.faq }),
       });
-      toast.success("FAQ générée ! Rechargez la page pour la voir.");
+      toast.success(t("FAQ générée ! Rechargez la page pour la voir."));
     } catch (e: any) {
-      toast.error(e.message ?? "Erreur IA");
+      toast.error(t(e.message) ?? t("Erreur IA"));
     } finally {
       setGenFaq(false);
     }
@@ -83,9 +85,9 @@ export default function PublicationAssistant({
               <div className="w-6 h-6 rounded-lg bg-[#F5A623] flex items-center justify-center">
                 <Sparkles size={13} className="text-white" />
               </div>
-              <h2 className="text-base font-bold text-gray-900">Avant de publier…</h2>
+              <h2 className="text-base font-bold text-gray-900">{t("Avant de publier…")}</h2>
             </div>
-            <p className="text-xs text-gray-400 ml-8">Vérifications pour maximiser vos ventes</p>
+            <p className="text-xs text-gray-400 ml-8">{t("Vérifications pour maximiser vos ventes")}</p>
           </div>
           <button
             onClick={onClose}
@@ -98,13 +100,13 @@ export default function PublicationAssistant({
         {/* Score */}
         <div className="px-6 pb-4">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-gray-500 font-medium">Complétude du produit</span>
+            <span className="text-xs text-gray-500 font-medium">{t("Complétude du produit")}</span>
             <span className="text-sm font-bold" style={{ color }}>{pct}%</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
           </div>
-          <p className="text-[10px] text-gray-400 mt-1">{score}/{items.length} éléments complétés</p>
+          <p className="text-[10px] text-gray-400 mt-1">{score}/{items.length}{" "}{t("éléments complétés")}</p>
         </div>
 
         {/* Checklist */}
@@ -120,8 +122,8 @@ export default function PublicationAssistant({
                   : <AlertCircle size={10} className="text-white" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-xs font-semibold ${item.ok ? "text-[#16a34a]" : "text-amber-700"}`}>{item.label}</p>
-                {!item.ok && <p className="text-[10.5px] text-amber-600 mt-0.5 leading-relaxed">{item.conseil}</p>}
+                <p className={`text-xs font-semibold ${item.ok ? "text-[#16a34a]" : "text-amber-700"}`}>{t(item.label)}</p>
+                {!item.ok && <p className="text-[10.5px] text-amber-600 mt-0.5 leading-relaxed">{t(item.conseil)}</p>}
               </div>
             </div>
           ))}
@@ -136,7 +138,7 @@ export default function PublicationAssistant({
               className="w-full flex items-center gap-2 p-3 rounded-xl border border-[#F5A623]/30 bg-[#FFFBF0] text-[#d4820a] text-xs font-medium hover:bg-[#FEF3C7] transition-colors disabled:opacity-50"
             >
               {genFaq ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-              Générer une FAQ avec l'IA
+              {t("Générer une FAQ avec l'IA")}
             </button>
           </div>
         )}
@@ -147,7 +149,7 @@ export default function PublicationAssistant({
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm hover:bg-gray-50 transition-colors"
           >
-            Continuer d'améliorer
+            {t("Continuer d'améliorer")}
           </button>
           <button
             onClick={handlePublier}
@@ -156,8 +158,8 @@ export default function PublicationAssistant({
             style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)" }}
           >
             {publishing
-              ? <><Loader2 size={14} className="animate-spin" /> Publication…</>
-              : <><Check size={14} /> Publier quand même</>}
+              ? <><Loader2 size={14} className="animate-spin" />{" "}{t("Publication…")}</>
+              : <><Check size={14} />{" "}{t("Publier quand même")}</>}
           </button>
         </div>
       </div>

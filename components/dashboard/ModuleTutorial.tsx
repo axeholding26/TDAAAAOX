@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { X, ArrowRight, ArrowLeft, Check, Crown, LayoutDashboard } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 export interface TutorialStep {
   Icon: any;
@@ -46,6 +47,7 @@ function cleVue(key: string) { return `axso-tutoriel-vu:${key}`; }
 // seul par boutique) ; tous les autres restent silencieux et ne s'ouvrent
 // que via le bouton "?" (BoutonRevoirTutoriel) — voir les props ci-dessus.
 export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier, autoOpen, storageKey }: Props) {
+  const tr = useT();
   const [ouvert, setOuvert] = useState(false);
   const [step, setStep] = useState(0);
   const [monte, setMonte] = useState(false);
@@ -95,8 +97,8 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
         </button>
 
         <div className="px-7 pt-8 pb-2 text-center">
-          <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "#F5A623" }}>{titre}</p>
-          {sousTitre && <p className="text-white/35 text-[11.5px]">{sousTitre}</p>}
+          <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] mb-1" style={{ color: "#F5A623" }}>{tr(titre)}</p>
+          {sousTitre && <p className="text-white/35 text-[11.5px]">{tr(sousTitre)}</p>}
         </div>
 
         <div className="px-7 py-6 min-h-[220px] flex flex-col items-center justify-center text-center">
@@ -106,15 +108,14 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
                 style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", boxShadow: "0 8px 30px rgba(245,166,35,0.4)" }}>
                 <Crown size={26} className="text-white" />
               </div>
-              <h3 className="text-white font-bold text-[16px] mb-2">Fonctionnalité Pro</h3>
+              <h3 className="text-white font-bold text-[16px] mb-2">{tr("Fonctionnalité Pro")}</h3>
               <p className="text-white/55 text-[13px] leading-relaxed mb-5">
-                L'interface AXIA en plein écran, dès la connexion, fait partie du palier <strong className="text-[#F5A623]">Pro</strong>.
-                En attendant, retrouve toutes tes ventes, produits et statistiques depuis le tableau de bord classique.
+                {tr("L'interface AXIA en plein écran, dès la connexion, fait partie du palier")}{" "}<strong className="text-[#F5A623]">{tr("Pro")}</strong>{tr(". En attendant, retrouve toutes tes ventes, produits et statistiques depuis le tableau de bord classique.")}
               </p>
               <Link href={offrePalier!.href} onClick={fermer}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-[13px] transition-all hover:scale-105"
                 style={{ background: "#F5A623", color: "#111111" }}>
-                <LayoutDashboard size={14} /> {offrePalier!.label}
+                <LayoutDashboard size={14} /> {tr(offrePalier!.label)}
               </Link>
             </>
           ) : s && (
@@ -123,8 +124,8 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
                 style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)", animation: "axtStepIn 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}>
                 <s.Icon size={24} style={{ color: "#F5A623" }} />
               </div>
-              <h3 className="text-white font-bold text-[16px] mb-2">{s.titre}</h3>
-              <p className="text-white/55 text-[13px] leading-relaxed">{s.description}</p>
+              <h3 className="text-white font-bold text-[16px] mb-2">{tr(s.titre)}</h3>
+              <p className="text-white/55 text-[13px] leading-relaxed">{tr(s.description)}</p>
             </>
           )}
         </div>
@@ -139,7 +140,7 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
 
         <div className="flex items-center justify-between px-7 pb-7 gap-3">
           <button onClick={fermer} className="text-[12px] font-semibold text-white/35 hover:text-white/60 transition-colors">
-            Passer
+            {tr("Passer")}
           </button>
           <div className="flex items-center gap-2">
             {step > 0 && (
@@ -152,13 +153,13 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
               <button onClick={() => setStep(s => s + 1)}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-[12.5px] transition-all hover:opacity-90"
                 style={{ background: "#F5A623", color: "#111111" }}>
-                Suivant <ArrowRight size={13} />
+                {tr("Suivant")}{" "}<ArrowRight size={13} />
               </button>
             ) : (
               <button onClick={fermer}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-[12.5px] transition-all hover:opacity-90"
                 style={{ background: "#F5A623", color: "#111111" }}>
-                <Check size={13} /> Compris
+                <Check size={13} />{" "}{tr("Compris")}
               </button>
             )}
           </div>
@@ -176,10 +177,11 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
 
 /** Bouton "?" compact à poser à côté du titre d'une page pour rouvrir son tutoriel à la demande. */
 export function BoutonRevoirTutoriel({ moduleKey, dark }: { moduleKey: string; dark?: boolean }) {
+  const tr = useT();
   return (
     <button
       onClick={() => window.dispatchEvent(new CustomEvent("axso:ouvrir-tutoriel", { detail: moduleKey }))}
-      title="Revoir le tutoriel"
+      title={tr("Revoir le tutoriel")}
       className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-colors flex-shrink-0"
       style={dark
         ? { background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)", border: "1px solid rgba(255,255,255,0.12)" }

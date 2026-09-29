@@ -7,6 +7,7 @@ import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package }
 import { useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
 import { usePrix, PastillePays } from "@/components/storefront/DeviseVitrine";
+import { useT } from "@/components/I18nProvider";
 
 interface Props {
   slug: string;
@@ -34,6 +35,7 @@ interface RechercheProduit {
 const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
 
 export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact, sansPanier }: Props) {
+  const t = useT();
   const { fmt } = usePrix();
   const totalItems = useCartStore((s) => s.totalItems());
   const wishlistCount = useWishlistStore((s) => s.produitIds.length);
@@ -166,11 +168,11 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[180px]" />
       ) : (
         <span className="text-xl font-bold font-playfair truncate" style={{ color: accent }}>
-          {nomBoutique}
+          {t(nomBoutique)}
         </span>
       )}
       {certifie && (
-        <span className="flex-shrink-0" title="Boutique certifiée Axso">
+        <span className="flex-shrink-0" title={t("Boutique certifiée Axso")}>
           <BadgeCheck size={16} style={{ color: accent }} />
         </span>
       )}
@@ -182,22 +184,22 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
   const linksNode = !minimal && (
     <div className="hidden md:flex items-center gap-8">
       <Link href={`/${slug}/produits`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
-        Produits
+        {t("Produits")}
       </Link>
       {showAbout && (
         <Link href={`/${slug}/a-propos`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
-          À propos
+          {t("À propos")}
         </Link>
       )}
       {showContact && (
         <Link href={`/${slug}/contact`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
-          Contact
+          {t("Contact")}
         </Link>
       )}
       {type === "mega" && collections.length > 0 ? (
         <div className="relative" onMouseEnter={() => setMegaOuvert(true)} onMouseLeave={() => setMegaOuvert(false)}>
           <button className="flex items-center gap-1 text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
-            Collections <ChevronDown size={13} />
+            {t("Collections")}{" "}<ChevronDown size={13} />
           </button>
           <div
             className="absolute left-1/2 -translate-x-1/2 top-full pt-3 transition-all duration-200"
@@ -206,7 +208,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             <div className="grid grid-cols-2 gap-1 p-3 rounded-2xl min-w-[280px]" style={{ backgroundColor: fond, border: `1px solid ${accent}20`, boxShadow: "0 20px 50px rgba(0,0,0,0.15)" }}>
               {collections.map((col) => (
                 <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} className="px-3 py-2 rounded-xl text-sm hover:opacity-70 transition-opacity" style={{ color: texte }}>
-                  {col.nom}
+                  {t(col.nom)}
                 </Link>
               ))}
             </div>
@@ -215,7 +217,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       ) : (
         collectionLinks.map((col) => (
           <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
-            {col.nom}
+            {t(col.nom)}
           </Link>
         ))
       )}
@@ -235,7 +237,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                 value={query}
                 onChange={e => onQueryChange(e.target.value, "desktop")}
                 onFocus={() => { if (resultats.length) setDropdownOuvert(true); }}
-                placeholder="Rechercher…"
+                placeholder={t("Rechercher…")}
                 autoComplete="off"
                 className="w-56 h-9 pl-9 pr-3 text-sm rounded-full outline-none transition-shadow focus:shadow-[0_0_0_3px_var(--ax-anneau)]"
                 style={{ backgroundColor: `${accent}12`, color: txt, border: `1px solid ${accent}30`, ["--ax-anneau" as any]: `${accent}33` }}
@@ -249,7 +251,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                         {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package size={14} style={{ color: accent }} /></div>}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12.5px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
+                        <p className="text-[12.5px] font-medium truncate" style={{ color: texte }}>{t(p.nom)}</p>
                         <p className="text-[11.5px] font-semibold" style={{ color: accent }}>{fmt(p.prix, devise)}</p>
                       </div>
                     </Link>
@@ -262,7 +264,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
               onClick={() => setRechercheOuverte(true)}
               className="flex items-center justify-center w-9 h-9 rounded-xl transition-all hover:opacity-80"
               style={{ backgroundColor: `${accent}12`, color: txt }}
-              aria-label="Rechercher"
+              aria-label={t("Rechercher")}
             >
               <Search size={16} />
             </button>
@@ -275,7 +277,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
           href={`/${slug}/wishlist`}
           className="relative flex items-center justify-center w-9 h-9 rounded-xl transition-all hover:opacity-80"
           style={{ backgroundColor: `${accent}12`, color: txt }}
-          aria-label="Liste de souhaits"
+          aria-label={t("Liste de souhaits")}
         >
           <Heart size={16} />
           {wishlistCount > 0 && (
@@ -293,10 +295,10 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         style={{ backgroundColor: accent, color: fond, borderRadius: radius }}
       >
         <ShoppingBag size={16} />
-        <span className="hidden sm:inline">Panier</span>
+        <span className="hidden sm:inline">{t("Panier")}</span>
         {totalItems > 0 && (
           <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ backgroundColor: fond, color: accent }}>
-            {totalItems > 99 ? "99+" : totalItems}
+            {totalItems > 99 ? "99+" : t(totalItems)}
           </span>
         )}
       </Link>}
@@ -305,7 +307,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         onClick={() => setMenuOuvert(!menuOuvert)}
         className={`${minimal ? "flex" : "md:hidden flex"} items-center justify-center w-10 h-10 rounded-xl transition-all`}
         style={{ backgroundColor: `${accent}15`, color: txt }}
-        aria-label="Menu"
+        aria-label={t("Menu")}
       >
         {menuOuvert ? <X size={18} /> : <Menu size={18} />}
       </button>
@@ -326,7 +328,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                 name="q"
                 value={mobileQuery}
                 onChange={e => onQueryChange(e.target.value, "mobile")}
-                placeholder="Rechercher un produit…"
+                placeholder={t("Rechercher un produit…")}
                 autoComplete="off"
                 className="w-full pl-10 pr-3 py-2.5 text-sm rounded-xl outline-none"
                 style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
@@ -341,7 +343,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                       {p.image ? <img src={p.image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package size={13} style={{ color: accent }} /></div>}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-medium truncate" style={{ color: texte }}>{p.nom}</p>
+                      <p className="text-[12px] font-medium truncate" style={{ color: texte }}>{t(p.nom)}</p>
                       <p className="text-[11px] font-semibold" style={{ color: accent }}>{fmt(p.prix, devise)}</p>
                     </div>
                   </Link>
@@ -351,30 +353,30 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
           </div>
         )}
         <Link href={`/${slug}/produits`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
-          Tous les produits
+          {t("Tous les produits")}
         </Link>
         {showAbout && (
           <Link href={`/${slug}/a-propos`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
-            À propos
+            {t("À propos")}
           </Link>
         )}
         {showContact && (
           <Link href={`/${slug}/contact`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
-            Contact
+            {t("Contact")}
           </Link>
         )}
         {showWishlist && (
           <Link href={`/${slug}/wishlist`} onClick={() => setMenuOuvert(false)} className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
-            <Heart size={14} /> Liste de souhaits {wishlistCount > 0 && `(${wishlistCount})`}
+            <Heart size={14} />{" "}{t("Liste de souhaits")}{" "}{wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
         )}
         {collections.map((col) => (
           <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
-            {col.nom}
+            {t(col.nom)}
           </Link>
         ))}
         <div className="flex items-center justify-between px-3 py-3 text-sm font-medium" style={{ color: texte }}>
-          Pays et devise <PastillePays couleur={texte} />
+          {t("Pays et devise")}{" "}<PastillePays couleur={texte} />
         </div>
         {!sansPanier && <div className="pt-2">
           <Link
@@ -384,7 +386,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             style={{ backgroundColor: accent, color: fond }}
           >
             <ShoppingBag size={16} />
-            Voir mon panier{totalItems > 0 && ` (${totalItems})`}
+            {t("Voir mon panier")}{totalItems > 0 && ` (${totalItems})`}
           </Link>
         </div>}
       </div>
@@ -395,12 +397,12 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
     return (
       <nav className={outerClass}>
         <div style={barBase} className={barClass}>
-          <div className="hidden md:flex flex-1">{linksNode}</div>
-          <div className="flex md:hidden">{logoNode}</div>
-          <div className="hidden md:flex flex-1 justify-center">{logoNode}</div>
-          <div className="flex flex-1 justify-end">{actionsNode}</div>
+          <div className="hidden md:flex flex-1">{t(linksNode)}</div>
+          <div className="flex md:hidden">{t(logoNode)}</div>
+          <div className="hidden md:flex flex-1 justify-center">{t(logoNode)}</div>
+          <div className="flex flex-1 justify-end">{t(actionsNode)}</div>
         </div>
-        {mobileMenu}
+        {t(mobileMenu)}
       </nav>
     );
   }
@@ -408,11 +410,11 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
   return (
     <nav className={outerClass}>
       <div style={barBase} className={barClass}>
-        {logoNode}
-        {!minimal && <div className="flex-1 flex justify-center">{linksNode}</div>}
-        {actionsNode}
+        {t(logoNode)}
+        {!minimal && <div className="flex-1 flex justify-center">{t(linksNode)}</div>}
+        {t(actionsNode)}
       </div>
-      {mobileMenu}
+      {t(mobileMenu)}
     </nav>
   );
 }

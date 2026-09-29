@@ -6,6 +6,7 @@ import { formatMontant, formatDate } from "@/lib/utils";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { useT } from "@/components/I18nProvider";
 const DIGITAL_TUTORIAL_STEPS = [
   { Icon: Package,    titre: "4 types de produits digitaux", description: "Fichier téléchargeable, licence à clés, bundle ou formation — clique \"Nouveau produit digital\" pour créer le tien." },
   { Icon: TrendingUp, titre: "Suivi en un coup d'œil",         description: "Téléchargements, revenu total, licences actives et nombre de produits — tes stats clés tout en haut de la page." },
@@ -37,6 +38,7 @@ const NOUVEAU_TYPE_CONFIG: Record<string, { icon: any; label: string; color: str
 };
 
 function NouveauxProduitsSection({ devise }: { devise: string }) {
+  const tr = useT();
   const [produits, setProduits] = useState<NouveauProduit[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +57,7 @@ function NouveauxProduitsSection({ devise }: { devise: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-[#F5A623]" />
-          <h2 className="text-sm font-semibold text-[#111111]">Nouveau système</h2>
+          <h2 className="text-sm font-semibold text-[#111111]">{tr("Nouveau système")}</h2>
           <span className="text-xs text-[#AAAAAA] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
             {produits.length}
           </span>
@@ -92,28 +94,28 @@ function NouveauxProduitsSection({ devise }: { devise: string }) {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-1.5" style={{ background: cfg.bg }}>
                     <Icone size={28} style={{ color: cfg.color }} />
-                    <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{cfg.label}</span>
+                    <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{tr(cfg.label)}</span>
                   </div>
                 )}
                 <div className="absolute top-2 left-2">
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>
-                    <Icone size={9} /> {cfg.label}
+                    <Icone size={9} /> {tr(cfg.label)}
                   </span>
                 </div>
                 {!p.actif && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/50 border border-white/20">Brouillon</span>
+                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/50 border border-white/20">{tr("Brouillon")}</span>
                   </div>
                 )}
               </div>
               <div className="p-4 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-[#111111] line-clamp-2 mb-1">{p.nom}</p>
-                {meta && <p className="text-[11px] text-[#AAAAAA] mb-2">{meta}</p>}
+                <p className="text-sm font-semibold text-[#111111] line-clamp-2 mb-1">{tr(p.nom)}</p>
+                {meta && <p className="text-[11px] text-[#AAAAAA] mb-2">{tr(meta)}</p>}
                 <div className="mt-auto flex items-center justify-between">
                   <span className="text-base font-bold text-[#F5A623]">{formatMontant(p.prix, devise)}</span>
                   <div className="flex items-center gap-1 text-[11px] text-[#AAAAAA]">
                     <TrendingUp size={10} className="text-[#16A34A]" />
-                    {p._count.lignesCommande} vente{p._count.lignesCommande !== 1 ? "s" : ""}
+                    {tr(p._count.lignesCommande)} vente{p._count.lignesCommande !== 1 ? "s" : ""}
                   </div>
                 </div>
               </div>
@@ -127,11 +129,11 @@ function NouveauxProduitsSection({ devise }: { devise: string }) {
           <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center group-hover:bg-[#EDEDED] transition-colors">
             <Plus size={18} className="text-[#AAAAAA]" />
           </div>
-          <span className="text-xs font-medium text-[#AAAAAA]">Nouveau produit</span>
+          <span className="text-xs font-medium text-[#AAAAAA]">{tr("Nouveau produit")}</span>
         </Link>
       </div>
       <div className="border-t border-[#F0F0F0] pt-4">
-        <p className="text-xs text-[#AAAAAA] font-medium uppercase tracking-wider">Produits classiques</p>
+        <p className="text-xs text-[#AAAAAA] font-medium uppercase tracking-wider">{tr("Produits classiques")}</p>
       </div>
     </div>
   );
@@ -225,6 +227,7 @@ const TYPE_OPTIONS = [
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function TypeBadge({ type }: { type: string }) {
+  const tr = useT();
   const t = TYPE_LABELS[type] ?? TYPE_LABELS.autre;
   const Icon = t.icon;
   return (
@@ -233,22 +236,24 @@ function TypeBadge({ type }: { type: string }) {
       style={{ color: t.color, background: t.bg }}
     >
       <Icon size={9} />
-      {t.label}
+      {tr(t.label)}
     </span>
   );
 }
 
 function LicenceBadge({ type }: { type: string }) {
+  const tr = useT();
   return (
     <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F4F4F4] text-[#666666] border border-[#E8E8E8]">
       <Shield size={8} />
-      {LICENCE_LABELS[type] ?? type}
+      {tr(LICENCE_LABELS[type]) ?? tr(type)}
     </span>
   );
 }
 
 // Mini SVG bar chart for 30-day download graph
 function MiniBarChart({ data }: { data: GraphData }) {
+  const tr = useT();
   const max = Math.max(...data.map((d) => d.count), 1);
   const w = 280;
   const h = 56;
@@ -262,7 +267,7 @@ function MiniBarChart({ data }: { data: GraphData }) {
         const y = h - barH;
         return (
           <g key={d.date}>
-            <title>{d.date}: {d.count} téléchargement{d.count > 1 ? "s" : ""}</title>
+            <title>{d.date}: {d.count}{" "}{tr("téléchargement")}{d.count > 1 ? "s" : ""}</title>
             <rect
               x={x}
               y={y}
@@ -288,6 +293,7 @@ function CustomersModal({
   produit: Produit;
   onClose: () => void;
 }) {
+  const tr = useT();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -357,10 +363,10 @@ function CustomersModal({
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-[#E8E8E8]">
           <div>
-            <h2 className="text-base font-bold text-[#111111]">{produit.nom}</h2>
+            <h2 className="text-base font-bold text-[#111111]">{tr(produit.nom)}</h2>
             <p className="text-xs text-[#AAAAAA] mt-0.5">
-              {produit.ventes} vente{produit.ventes !== 1 ? "s" : ""} ·{" "}
-              {produit._count.telechargements} lien{produit._count.telechargements !== 1 ? "s" : ""} généré{produit._count.telechargements !== 1 ? "s" : ""}
+              {tr(produit.ventes)} vente{produit.ventes !== 1 ? "s" : ""} ·{" "}
+              {tr(produit._count.telechargements)} lien{produit._count.telechargements !== 1 ? "s" : ""}{" "}{tr("généré")}{produit._count.telechargements !== 1 ? "s" : ""}
             </p>
           </div>
           <button onClick={onClose} className="text-[#AAAAAA] hover:text-[#111111] transition-colors">
@@ -381,7 +387,7 @@ function CustomersModal({
               }`}
             >
               {tab === "clients" ? <Users size={13} /> : <BarChart2 size={13} />}
-              {tab === "clients" ? "Clients" : "Analytiques"}
+              {tab === "clients" ? tr("Clients") : tr("Analytiques")}
             </button>
           ))}
         </div>
@@ -396,7 +402,7 @@ function CustomersModal({
             clients.length === 0 ? (
               <div className="text-center py-12">
                 <Users size={32} className="text-[#AAAAAA] mx-auto mb-3" />
-                <p className="text-[#666666] text-sm">Aucun client pour ce produit</p>
+                <p className="text-[#666666] text-sm">{tr("Aucun client pour ce produit")}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -412,25 +418,25 @@ function CustomersModal({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#111111]">{c.clientNom}</p>
-                          <p className="text-xs text-[#AAAAAA]">{c.clientEmail}</p>
+                          <p className="text-sm font-semibold text-[#111111]">{tr(c.clientNom)}</p>
+                          <p className="text-xs text-[#AAAAAA]">{tr(c.clientEmail)}</p>
                           <p className="text-[11px] text-[#AAAAAA] mt-1">
-                            #{c.commandeNumero} · {formatDate(c.achatDate)}
+                            #{tr(c.commandeNumero)} · {formatDate(c.achatDate)}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1.5">
                           {hasTelecharge ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#16A34A] bg-[#ECFDF5] px-2 py-0.5 rounded-full">
-                              <Download size={9} /> Téléchargé
+                              <Download size={9} />{" "}{tr("Téléchargé")}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full">
-                              <Clock size={9} /> Pas encore
+                              <Clock size={9} />{" "}{tr("Pas encore")}
                             </span>
                           )}
                           {hasExpiredToken && (
                             <span className="text-[10px] text-[#DC2626] bg-[#FEF2F2] px-2 py-0.5 rounded-full">
-                              Lien expiré
+                              {tr("Lien expiré")}
                             </span>
                           )}
                         </div>
@@ -450,7 +456,7 @@ function CustomersModal({
                           ) : (
                             <Send size={11} />
                           )}
-                          {copiedToken === `resend-${c.commandeId}` ? "Copié !" : "Nouveau lien"}
+                          {copiedToken === `resend-${c.commandeId}` ? tr("Copié !") : tr("Nouveau lien")}
                         </button>
 
                         {c.telechargements.map((t) =>
@@ -466,7 +472,7 @@ function CustomersModal({
                               ) : (
                                 <Ban size={11} />
                               )}
-                              Révoquer
+                              {tr("Révoquer")}
                             </button>
                           ) : null
                         )}
@@ -481,23 +487,23 @@ function CustomersModal({
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#F5F5F5] rounded-xl p-4">
-                  <p className="text-xs text-[#AAAAAA]">Téléchargements (30j)</p>
-                  <p className="text-2xl font-bold text-[#111111] mt-1">{totalDLs}</p>
+                  <p className="text-xs text-[#AAAAAA]">{tr("Téléchargements (30j)")}</p>
+                  <p className="text-2xl font-bold text-[#111111] mt-1">{tr(totalDLs)}</p>
                 </div>
                 <div className="bg-[#F5F5F5] rounded-xl p-4">
-                  <p className="text-xs text-[#AAAAAA]">Total ventes</p>
-                  <p className="text-2xl font-bold text-[#111111] mt-1">{produit.ventes}</p>
+                  <p className="text-xs text-[#AAAAAA]">{tr("Total ventes")}</p>
+                  <p className="text-2xl font-bold text-[#111111] mt-1">{tr(produit.ventes)}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-xs font-medium text-[#666666] mb-3">Téléchargements — 30 derniers jours</p>
+                <p className="text-xs font-medium text-[#666666] mb-3">{tr("Téléchargements — 30 derniers jours")}</p>
                 <div className="bg-[#F5F5F5] rounded-xl p-4 overflow-x-auto">
                   {graphData.length > 0 ? (
                     <MiniBarChart data={graphData} />
                   ) : (
                     <p className="text-xs text-[#AAAAAA] text-center py-4">
-                      Aucune donnée analytique
+                      {tr("Aucune donnée analytique")}
                     </p>
                   )}
                 </div>
@@ -510,24 +516,24 @@ function CustomersModal({
               </div>
 
               <div className="bg-[#F5F5F5] rounded-xl p-4 space-y-2">
-                <p className="text-xs font-medium text-[#666666] mb-3">Paramètres de livraison</p>
+                <p className="text-xs font-medium text-[#666666] mb-3">{tr("Paramètres de livraison")}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-[#666666]">
-                  <span>Limite DL</span>
+                  <span>{tr("Limite DL")}</span>
                   <span className="text-[#111111] font-medium">
-                    {produit.meta.limiteTelechargement ? `${produit.meta.limiteTelechargement}x` : "Illimité"}
+                    {produit.meta.limiteTelechargement ? `${produit.meta.limiteTelechargement}x` : tr("Illimité")}
                   </span>
-                  <span>Expiration accès</span>
+                  <span>{tr("Expiration accès")}</span>
                   <span className="text-[#111111] font-medium">
-                    {produit.meta.expirationAcces ? `${produit.meta.expirationAcces}j` : "Jamais"}
+                    {produit.meta.expirationAcces ? `${produit.meta.expirationAcces}j` : tr("Jamais")}
                   </span>
-                  <span>Licence</span>
+                  <span>{tr("Licence")}</span>
                   <span className="text-[#111111] font-medium">
-                    {LICENCE_LABELS[produit.meta.typeLicence] ?? produit.meta.typeLicence}
+                    {tr(LICENCE_LABELS[produit.meta.typeLicence]) ?? tr(produit.meta.typeLicence)}
                   </span>
-                  <span>Filigrane</span>
-                  <span className="text-[#111111] font-medium">{produit.meta.filigrane ? "Oui" : "Non"}</span>
-                  <span>Liens uniques</span>
-                  <span className="text-[#111111] font-medium">{produit.meta.liensUniques ? "Oui" : "Non"}</span>
+                  <span>{tr("Filigrane")}</span>
+                  <span className="text-[#111111] font-medium">{produit.meta.filigrane ? tr("Oui") : tr("Non")}</span>
+                  <span>{tr("Liens uniques")}</span>
+                  <span className="text-[#111111] font-medium">{produit.meta.liensUniques ? tr("Oui") : tr("Non")}</span>
                 </div>
               </div>
             </div>
@@ -553,6 +559,7 @@ function ProductCard({
   onDuplicate: (p: Produit) => void;
   onOpenModal: (p: Produit) => void;
 }) {
+  const tr = useT();
   const [menuOpen, setMenuOpen] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
@@ -593,7 +600,7 @@ function ProductCard({
           >
             <TypeIcon size={32} style={{ color: typeInfo.color }} />
             <span className="text-xs font-medium" style={{ color: typeInfo.color }}>
-              {typeInfo.label}
+              {tr(typeInfo.label)}
             </span>
           </div>
         )}
@@ -602,7 +609,7 @@ function ProductCard({
         {!produit.actif && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/50 border border-white/20">
-              Archivé
+              {tr("Archivé")}
             </span>
           </div>
         )}
@@ -629,7 +636,7 @@ function ProductCard({
                     href={`/dashboard/produits/${produit.id}`}
                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
                   >
-                    <Eye size={13} /> Modifier
+                    <Eye size={13} />{" "}{tr("Modifier")}
                   </Link>
                   <button
                     onClick={handleDuplicate}
@@ -637,7 +644,7 @@ function ProductCard({
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
                   >
                     {duplicating ? <Loader2 size={13} className="animate-spin" /> : <Copy size={13} />}
-                    Dupliquer
+                    {tr("Dupliquer")}
                   </button>
                   <button
                     onClick={handleToggle}
@@ -651,14 +658,14 @@ function ProductCard({
                     ) : (
                       <ArchiveRestore size={13} />
                     )}
-                    {produit.actif ? "Archiver" : "Réactiver"}
+                    {produit.actif ? tr("Archiver") : tr("Réactiver")}
                   </button>
                   <div className="border-t border-[#E8E8E8] my-1" />
                   <button
                     onClick={() => { setMenuOpen(false); onOpenModal(produit); }}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
                   >
-                    <Users size={13} /> Clients & Liens
+                    <Users size={13} />{" "}{tr("Clients & Liens")}
                   </button>
                 </div>
               </>
@@ -670,7 +677,7 @@ function ProductCard({
       {/* Info */}
       <div className="p-4 flex flex-col flex-1">
         <h3 className="text-[#111111] font-semibold text-sm leading-snug line-clamp-2 mb-1">
-          {produit.nom}
+          {tr(produit.nom)}
         </h3>
         <LicenceBadge type={meta.typeLicence} />
 
@@ -689,7 +696,7 @@ function ProductCard({
         <div className="mt-3 pt-3 border-t border-[#F0F0F0] grid grid-cols-2 gap-2">
           <div className="flex items-center gap-1.5 text-[11px] text-[#AAAAAA]">
             <TrendingUp size={10} className="text-[#16A34A]" />
-            <span className="text-[#111111] font-semibold">{produit.ventes}</span> vente{produit.ventes !== 1 ? "s" : ""}
+            <span className="text-[#111111] font-semibold">{tr(produit.ventes)}</span> vente{produit.ventes !== 1 ? "s" : ""}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#AAAAAA]">
             <Download size={10} className="text-[#1B2A4A]" />
@@ -701,7 +708,7 @@ function ProductCard({
         <div className="flex flex-wrap gap-1 mt-2">
           {meta.limiteTelechargement ? (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F0F0F0] text-[#666666]">
-              Max {meta.limiteTelechargement} DL
+              {tr("Max")}{" "}{tr(meta.limiteTelechargement)} DL
             </span>
           ) : (
             <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-[#F0F0F0] text-[#666666]">
@@ -710,16 +717,16 @@ function ProductCard({
           )}
           {meta.expirationAcces ? (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F0F0F0] text-[#666666]">
-              Expire {meta.expirationAcces}j
+              {tr("Expire")}{" "}{tr(meta.expirationAcces)}j
             </span>
           ) : (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#F0F0F0] text-[#666666]">
-              Accès permanent
+              {tr("Accès permanent")}
             </span>
           )}
           {meta.filigrane && (
             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#FFF7ED] text-[#D97706]">
-              Filigrane
+              {tr("Filigrane")}
             </span>
           )}
         </div>
@@ -729,7 +736,7 @@ function ProductCard({
           onClick={() => onOpenModal(produit)}
           className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl border border-[#E8E8E8] text-[#666666] hover:text-[#111111] hover:border-[#D0D0D0] transition-all"
         >
-          <Users size={12} /> Clients & Analytiques
+          <Users size={12} />{" "}{tr("Clients & Analytiques")}
         </button>
       </div>
     </div>
@@ -739,6 +746,7 @@ function ProductCard({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function DigitalProduitsPage() {
+  const tr = useT();
   const { devise } = useDevise();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -815,21 +823,21 @@ export default function DigitalProduitsPage() {
 
   return (
     <div className="space-y-6">
-      <ModuleTutorial moduleKey="produits-digital" titre="Produits digitaux" sousTitre="Fichiers, formations, licences" steps={DIGITAL_TUTORIAL_STEPS} />
+      <ModuleTutorial moduleKey="produits-digital" titre={tr("Produits digitaux")} sousTitre={tr("Fichiers, formations, licences")} steps={DIGITAL_TUTORIAL_STEPS} />
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold text-[#111111] font-poppins">Produits Digitaux</h1>
+            <h1 className="text-2xl font-bold text-[#111111] font-poppins">{tr("Produits Digitaux")}</h1>
             <BoutonRevoirTutoriel moduleKey="produits-digital" />
             {stats && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]">
-                {stats.totalProduits} au total
+                {tr(stats.totalProduits)}{" "}{tr("au total")}
               </span>
             )}
           </div>
           <p className="text-[#717171] text-sm">
-            Ebooks, cours, logiciels, templates, audio, vidéo — livrés instantanément
+            {tr("Ebooks, cours, logiciels, templates, audio, vidéo — livrés instantanément")}
           </p>
         </div>
         <Link
@@ -837,7 +845,7 @@ export default function DigitalProduitsPage() {
           className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-[#111111] text-white whitespace-nowrap hover:bg-[#333333] transition-colors"
         >
           <Plus size={15} />
-          Nouveau produit digital
+          {tr("Nouveau produit digital")}
         </Link>
       </div>
 
@@ -887,9 +895,9 @@ export default function DigitalProduitsPage() {
                   >
                     <Icon size={15} style={{ color: s.iconColor }} />
                   </div>
-                  <p className="text-xs text-[#AAAAAA]">{s.label}</p>
+                  <p className="text-xs text-[#AAAAAA]">{tr(s.label)}</p>
                 </div>
-                <p className="text-xl font-bold text-[#111111]">{s.value}</p>
+                <p className="text-xl font-bold text-[#111111]">{tr(s.value)}</p>
               </div>
             );
           })}
@@ -904,7 +912,7 @@ export default function DigitalProduitsPage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un produit..."
+            placeholder={tr("Rechercher un produit...")}
             className="bg-transparent text-sm text-[#111111] placeholder:text-[#AAAAAA] outline-none flex-1 min-w-0"
           />
           {search && (
@@ -922,7 +930,7 @@ export default function DigitalProduitsPage() {
             className="appearance-none bg-white border border-[#E8E8E8] rounded-xl px-4 py-2.5 pr-8 text-sm text-[#666666] focus:outline-none focus:border-[#D0D0D0] cursor-pointer"
           >
             {TYPE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>{tr(o.label)}</option>
             ))}
           </select>
         </div>
@@ -935,7 +943,7 @@ export default function DigitalProduitsPage() {
             className="appearance-none bg-white border border-[#E8E8E8] rounded-xl px-4 py-2.5 pr-8 text-sm text-[#666666] focus:outline-none focus:border-[#D0D0D0] cursor-pointer"
           >
             {STATUT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>{tr(o.label)}</option>
             ))}
           </select>
         </div>
@@ -969,7 +977,7 @@ export default function DigitalProduitsPage() {
               }
             >
               <Icon size={11} />
-              {t.label}
+              {tr(t.label)}
               <span
                 className="px-1 py-0.5 rounded-full text-[10px] font-bold"
                 style={
@@ -990,18 +998,18 @@ export default function DigitalProduitsPage() {
         <div className="flex items-center justify-center py-24">
           <div className="text-center space-y-3">
             <Loader2 size={28} className="animate-spin text-[#AAAAAA] mx-auto" />
-            <p className="text-sm text-[#AAAAAA]">Chargement des produits…</p>
+            <p className="text-sm text-[#AAAAAA]">{tr("Chargement des produits…")}</p>
           </div>
         </div>
       ) : error ? (
         <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-2xl p-8 text-center">
           <AlertCircle size={28} className="text-[#DC2626] mx-auto mb-3" />
-          <p className="text-[#DC2626] text-sm font-medium">{error}</p>
+          <p className="text-[#DC2626] text-sm font-medium">{tr(error)}</p>
           <button
             onClick={fetchData}
             className="mt-4 text-xs text-[#DC2626] underline"
           >
-            Réessayer
+            {tr("Réessayer")}
           </button>
         </div>
       ) : filtered.length === 0 ? (
@@ -1011,13 +1019,13 @@ export default function DigitalProduitsPage() {
           </div>
           <h3 className="text-[#111111] font-semibold text-base mb-2">
             {search || typeFilter !== "tous" || statutFilter !== "tous"
-              ? "Aucun produit ne correspond à vos filtres"
-              : "Votre catalogue digital est vide"}
+              ? tr("Aucun produit ne correspond à vos filtres")
+              : tr("Votre catalogue digital est vide")}
           </h3>
           <p className="text-[#717171] text-sm mb-8 max-w-sm mx-auto">
             {search || typeFilter !== "tous" || statutFilter !== "tous"
-              ? "Essayez d'élargir vos critères de recherche."
-              : "Ajoutez des ebooks, cours, logiciels ou templates et commencez à vendre des produits digitaux."}
+              ? tr("Essayez d'élargir vos critères de recherche.")
+              : tr("Ajoutez des ebooks, cours, logiciels ou templates et commencez à vendre des produits digitaux.")}
           </p>
           {!search && typeFilter === "tous" && statutFilter === "tous" && (
             <Link
@@ -1025,7 +1033,7 @@ export default function DigitalProduitsPage() {
               className="inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl bg-[#111111] text-white hover:bg-[#333333] transition-colors"
             >
               <Plus size={15} />
-              Créer mon premier produit digital
+              {tr("Créer mon premier produit digital")}
             </Link>
           )}
         </div>
@@ -1033,7 +1041,7 @@ export default function DigitalProduitsPage() {
         <>
           <p className="text-xs text-[#AAAAAA]">
             {filtered.length} produit{filtered.length !== 1 ? "s" : ""}
-            {search && ` pour « ${search} »`}
+            {search && tr(" pour « {0} »", search)}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((p) => (

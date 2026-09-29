@@ -10,6 +10,7 @@ import { LivreursPanel } from "./LivreursPanel";
 import { RetoursPanel } from "./RetoursPanel";
 import { FacturesPanel } from "./FacturesPanel";
 import { POSPanel } from "./POSPanel";
+import { useT } from "@/components/I18nProvider";
 
 interface Stats {
   enCours: number;
@@ -30,6 +31,7 @@ const TABS = [
 ];
 
 export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string; stats: Stats }) {
+  const tr = useT();
   const [onglet, setOnglet] = useState(TABS.some((t) => t.id === initialTab) ? initialTab! : "apercu");
 
   const cartes = [
@@ -48,8 +50,8 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
   return (
     <div className="space-y-5 max-w-6xl">
       <div>
-        <h1 className="text-xl font-bold text-[#111111]">Logistique</h1>
-        <p className="text-sm text-gray-400 mt-0.5">Livraison, livreurs, retours, factures et caisse — tout en un seul endroit</p>
+        <h1 className="text-xl font-bold text-[#111111]">{tr("Logistique")}</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{tr("Livraison, livreurs, retours, factures et caisse — tout en un seul endroit")}</p>
       </div>
 
       {/* Tabs */}
@@ -58,7 +60,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
           <button key={id} onClick={() => setOnglet(id)}
             className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}>
             <Icon size={13} />
-            {label}
+            {tr(label)}
           </button>
         ))}
       </div>
@@ -71,7 +73,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
                 <Truck size={15} className="text-red-500" />
               </div>
               <p className="text-sm text-red-700">
-                <span className="font-bold">{stats.echecs}</span> livraison{stats.echecs > 1 ? "s ont" : " a"} échoué et attend{stats.echecs > 1 ? "ent" : ""} une replanification
+                <span className="font-bold">{stats.echecs}</span>{" "}{tr(stats.echecs > 1 ? "livraisons ont échoué et attendent une replanification" : "livraison a échoué et attend une replanification")}
               </p>
             </div>
           )}
@@ -88,17 +90,17 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-[#111111]">{c.label}</p>
-                    <span className="text-lg font-bold" style={{ color: c.accent }}>{c.valeur}</span>
+                    <p className="text-sm font-bold text-[#111111]">{tr(c.label)}</p>
+                    <span className="text-lg font-bold" style={{ color: c.accent }}>{tr(c.valeur)}</span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5">{c.desc}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{tr(c.desc)}</p>
                 </div>
               </button>
             ))}
           </div>
 
           <div>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Autres modules</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">{tr("Autres modules")}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {liensExternes.map((c) => (
                 <Link
@@ -111,10 +113,10 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-[13px] font-bold text-[#111111]">{c.label}</p>
-                      {c.valeur !== null && <span className="text-[13px] font-bold" style={{ color: c.accent }}>{c.valeur}</span>}
+                      <p className="text-[13px] font-bold text-[#111111]">{tr(c.label)}</p>
+                      {c.valeur !== null && <span className="text-[13px] font-bold" style={{ color: c.accent }}>{tr(c.valeur)}</span>}
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{c.desc}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{tr(c.desc)}</p>
                   </div>
                   <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0 mt-1" />
                 </Link>

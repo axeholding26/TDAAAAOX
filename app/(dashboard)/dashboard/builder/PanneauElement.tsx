@@ -11,6 +11,7 @@ import { X, ArrowUpToLine, RotateCcw, Trash2, AlignLeft, AlignCenter, AlignRight
 import { FONTS } from "@/lib/theme-fonts";
 import type { ElementStyle, EtatStyle } from "@/lib/element-styles";
 import { MediaUpload } from "@/components/ui/MediaUpload";
+import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -45,6 +46,7 @@ const APPAREIL: Record<Device, { etat: EtatStyle; label: string; Icon: typeof Mo
 };
 
 export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, device, onStyle, onReinitialiser, onParent, onSupprimer, onClose, masquable = true }: Props) {
+  const t = useT();
   const [survol, setSurvol] = useState(false);
   const etat: EtatStyle = device === "desktop" && survol ? "hover" : APPAREIL[device].etat;
   const s = styles[etat] ?? {};
@@ -53,26 +55,26 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
   const { Icon: IconeAppareil } = APPAREIL[device];
 
   return (
-    <aside aria-label={`Réglages : ${titre}`} className="w-[340px] flex-shrink-0 flex flex-col bg-white border-l border-[#E5E5E5] text-[#111111]">
+    <aside aria-label={t("Réglages : {0}", titre)} className="w-[340px] flex-shrink-0 flex flex-col bg-white border-l border-[#E5E5E5] text-[#111111]">
       <div className="flex items-start justify-between gap-2 px-4 py-3.5 border-b border-[#EEEEEE] flex-shrink-0">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold truncate">{titre}</p>
-          {sousTitre && <p className="text-[12.5px] text-[#888888] truncate">{sousTitre}</p>}
+          <p className="text-[15px] font-semibold truncate">{t(titre)}</p>
+          {sousTitre && <p className="text-[12.5px] text-[#888888] truncate">{t(sousTitre)}</p>}
         </div>
-        <button onClick={onClose} aria-label="Fermer" className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={17} /></button>
+        <button onClick={onClose} aria-label={t("Fermer")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={17} /></button>
       </div>
 
       <div className="px-4 py-2.5 border-b border-[#EEEEEE] flex-shrink-0 space-y-2">
         <p className="flex items-center gap-1.5 text-[12.5px] text-[#666666]">
-          <IconeAppareil size={14} /> Réglages pour <strong className="text-[#111111]">{APPAREIL[device].label}</strong>
-          {device !== "desktop" && <span className="text-[#999999]">(le reste hérite de l'ordinateur)</span>}
+          <IconeAppareil size={14} />{" "}{t("Réglages pour")}{" "}<strong className="text-[#111111]">{t(APPAREIL[device].label)}</strong>
+          {device !== "desktop" && <span className="text-[#999999]">{t("(le reste hérite de l'ordinateur)")}</span>}
         </p>
         {device === "desktop" && (
           <div role="tablist" className="grid grid-cols-2 p-0.5 rounded-lg bg-[#F3F3F3]">
             {[["Normal", false], ["Au survol", true]].map(([label, v]) => (
               <button key={String(label)} role="tab" aria-selected={survol === v} onClick={() => setSurvol(v as boolean)}
                 className={`h-8 rounded-md text-[13px] font-medium transition-all ${survol === v ? "bg-white shadow-sm text-[#111111]" : "text-[#777777] hover:text-[#111111]"}`}>
-                {label as string}
+                {t(label as string)}
               </button>
             ))}
           </div>
@@ -81,45 +83,45 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
 
       <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-6">
         {aContenu && etat === "base" && onContenu && (
-          <Groupe titre="Contenu">
-            {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">Ce texte contient une mise en forme : <strong className="text-[#111111]">clique dessus dans l'aperçu</strong> pour le modifier directement.</p>}
-            {contenu!.texte != null && <Champ label="Texte"><textarea value={contenu!.texte} rows={3} onChange={(e) => onContenu({ texte: e.target.value })} className={INPUT + " h-auto py-2 resize-y"} /></Champ>}
-            {contenu!.lien != null && <Champ label="Lien (URL ou page)"><input value={contenu!.lien} onChange={(e) => onContenu({ lien: e.target.value })} placeholder="/ma-boutique/produits" className={INPUT} /></Champ>}
+          <Groupe titre={t("Contenu")}>
+            {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">{t("Ce texte contient une mise en forme :")}{" "}<strong className="text-[#111111]">{t("clique dessus dans l'aperçu")}</strong> pour le modifier directement.</p>}
+            {contenu!.texte != null && <Champ label={t("Texte")}><textarea value={contenu!.texte} rows={3} onChange={(e) => onContenu({ texte: e.target.value })} className={INPUT + " h-auto py-2 resize-y"} /></Champ>}
+            {contenu!.lien != null && <Champ label={t("Lien (URL ou page)")}><input value={contenu!.lien} onChange={(e) => onContenu({ lien: e.target.value })} placeholder="/ma-boutique/produits" className={INPUT} /></Champ>}
             {contenu!.image != null && <>
-              <Champ label="Image (URL)"><input value={contenu!.image} onChange={(e) => onContenu({ image: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
+              <Champ label={t("Image (URL)")}><input value={contenu!.image} onChange={(e) => onContenu({ image: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
               <MediaUpload type="image" onUrl={(url) => onContenu({ image: url })} />
             </>}
-            {contenu!.alt != null && <Champ label="Texte alternatif"><input value={contenu!.alt} onChange={(e) => onContenu({ alt: e.target.value })} className={INPUT} /></Champ>}
-            {contenu!.placeholder != null && <Champ label="Texte indicatif"><input value={contenu!.placeholder} onChange={(e) => onContenu({ placeholder: e.target.value })} className={INPUT} /></Champ>}
+            {contenu!.alt != null && <Champ label={t("Texte alternatif")}><input value={contenu!.alt} onChange={(e) => onContenu({ alt: e.target.value })} className={INPUT} /></Champ>}
+            {contenu!.placeholder != null && <Champ label={t("Texte indicatif")}><input value={contenu!.placeholder} onChange={(e) => onContenu({ placeholder: e.target.value })} className={INPUT} /></Champ>}
           </Groupe>
         )}
 
-        <Groupe titre="Typographie">
-          <Champ label="Police">
+        <Groupe titre={t("Typographie")}>
+          <Champ label={t("Police")}>
             <select value={s.police ?? ""} onChange={(e) => maj({ police: e.target.value })} className={INPUT}>
-              <option value="">Police du design</option>
+              <option value="">{t("Police du design")}</option>
               {[...new Set(FONTS.map((f) => f.cat))].map((cat) => (
-                <optgroup key={cat} label={cat}>{FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{f.label}</option>)}</optgroup>
+                <optgroup key={cat} label={cat}>{FONTS.filter((f) => f.cat === cat).map((f) => <option key={f.v} value={f.v}>{t(f.label)}</option>)}</optgroup>
               ))}
             </select>
           </Champ>
           <div className="grid grid-cols-2 gap-2.5">
-            <Champ label="Taille"><Mesure value={s.taille} onChange={(v) => maj({ taille: v })} placeholder="16px" /></Champ>
-            <Champ label="Graisse">
+            <Champ label={t("Taille")}><Mesure value={s.taille} onChange={(v) => maj({ taille: v })} placeholder="16px" /></Champ>
+            <Champ label={t("Graisse")}>
               <select value={s.graisse ?? ""} onChange={(e) => maj({ graisse: e.target.value })} className={INPUT}>
-                <option value="">Du design</option>
-                {[["300", "Fine"], ["400", "Normale"], ["500", "Moyenne"], ["600", "Semi-grasse"], ["700", "Grasse"], ["800", "Très grasse"], ["900", "Noire"]].map(([v, l]) => <option key={v} value={v}>{l} ({v})</option>)}
+                <option value="">{t("Du design")}</option>
+                {[["300", "Fine"], ["400", "Normale"], ["500", "Moyenne"], ["600", "Semi-grasse"], ["700", "Grasse"], ["800", "Très grasse"], ["900", "Noire"]].map(([v, l]) => <option key={v} value={v}>{t(l)} ({t(v)})</option>)}
               </select>
             </Champ>
-            <Champ label="Interligne"><Mesure value={s.interligne} onChange={(v) => maj({ interligne: v })} placeholder="1.5" /></Champ>
-            <Champ label="Espacement"><Mesure value={s.espacementLettres} onChange={(v) => maj({ espacementLettres: v })} placeholder="0.02em" /></Champ>
+            <Champ label={t("Interligne")}><Mesure value={s.interligne} onChange={(v) => maj({ interligne: v })} placeholder="1.5" /></Champ>
+            <Champ label={t("Espacement")}><Mesure value={s.espacementLettres} onChange={(v) => maj({ espacementLettres: v })} placeholder="0.02em" /></Champ>
           </div>
-          <Champ label="Casse">
+          <Champ label={t("Casse")}>
             <select value={s.casse ?? ""} onChange={(e) => maj({ casse: (e.target.value || undefined) as ElementStyle["casse"] })} className={INPUT}>
-              <option value="">Du design</option><option value="none">Normale</option><option value="uppercase">MAJUSCULES</option><option value="lowercase">minuscules</option><option value="capitalize">Première Lettre</option>
+              <option value="">{t("Du design")}</option><option value="none">{t("Normale")}</option><option value="uppercase">MAJUSCULES</option><option value="lowercase">minuscules</option><option value="capitalize">{t("Première Lettre")}</option>
             </select>
           </Champ>
-          <Champ label="Alignement">
+          <Champ label={t("Alignement")}>
             <div className="grid grid-cols-4 gap-1 p-0.5 rounded-lg bg-[#F3F3F3]">
               {([["left", AlignLeft, "Gauche"], ["center", AlignCenter, "Centré"], ["right", AlignRight, "Droite"], ["justify", AlignJustify, "Justifié"]] as const).map(([v, Icon, l]) => (
                 <button key={v} title={l} aria-label={l} aria-pressed={s.alignement === v} onClick={() => maj({ alignement: s.alignement === v ? undefined : v })}
@@ -129,56 +131,56 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
               ))}
             </div>
           </Champ>
-          <Champ label="Couleur du texte"><Couleur value={s.couleur} onChange={(v) => maj({ couleur: v })} /></Champ>
+          <Champ label={t("Couleur du texte")}><Couleur value={s.couleur} onChange={(v) => maj({ couleur: v })} /></Champ>
         </Groupe>
 
-        <Groupe titre="Arrière-plan">
-          <Champ label="Couleur de fond"><Couleur value={s.fond} onChange={(v) => maj({ fond: v })} /></Champ>
-          <Champ label="Dégradé (prioritaire)"><input value={s.degrade ?? ""} onChange={(e) => maj({ degrade: e.target.value })} placeholder="linear-gradient(135deg, #F5A623, #E8590C)" className={INPUT} /></Champ>
-          <Champ label="Image de fond"><input value={s.imageFond ?? ""} onChange={(e) => maj({ imageFond: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
+        <Groupe titre={t("Arrière-plan")}>
+          <Champ label={t("Couleur de fond")}><Couleur value={s.fond} onChange={(v) => maj({ fond: v })} /></Champ>
+          <Champ label={t("Dégradé (prioritaire)")}><input value={s.degrade ?? ""} onChange={(e) => maj({ degrade: e.target.value })} placeholder="linear-gradient(135deg, #F5A623, #E8590C)" className={INPUT} /></Champ>
+          <Champ label={t("Image de fond")}><input value={s.imageFond ?? ""} onChange={(e) => maj({ imageFond: e.target.value })} placeholder="https://…" className={INPUT} /></Champ>
           <MediaUpload type="image" onUrl={(url) => maj({ imageFond: url })} />
           {s.imageFond && (
             <div className="relative">
               <img src={s.imageFond} alt="" className="w-full h-24 object-cover rounded-lg border border-[#E5E5E5]" />
-              <button onClick={() => maj({ imageFond: "" })} className="absolute top-1.5 right-1.5 text-[12px] px-2 py-1 rounded-md bg-white/90 text-[#DC2626] shadow-sm hover:bg-white">Retirer</button>
+              <button onClick={() => maj({ imageFond: "" })} className="absolute top-1.5 right-1.5 text-[12px] px-2 py-1 rounded-md bg-white/90 text-[#DC2626] shadow-sm hover:bg-white">{t("Retirer")}</button>
             </div>
           )}
         </Groupe>
 
-        <Groupe titre="Bordure">
+        <Groupe titre={t("Bordure")}>
           <div className="grid grid-cols-2 gap-2.5">
-            <Champ label="Épaisseur"><Mesure value={s.bordureEpaisseur} onChange={(v) => maj({ bordureEpaisseur: v })} placeholder="1px" /></Champ>
-            <Champ label="Arrondi"><Mesure value={s.rayon} onChange={(v) => maj({ rayon: v })} placeholder="8px" /></Champ>
+            <Champ label={t("Épaisseur")}><Mesure value={s.bordureEpaisseur} onChange={(v) => maj({ bordureEpaisseur: v })} placeholder="1px" /></Champ>
+            <Champ label={t("Arrondi")}><Mesure value={s.rayon} onChange={(v) => maj({ rayon: v })} placeholder="8px" /></Champ>
           </div>
-          <Champ label="Couleur de bordure"><Couleur value={s.bordureCouleur} onChange={(v) => maj({ bordureCouleur: v })} /></Champ>
+          <Champ label={t("Couleur de bordure")}><Couleur value={s.bordureCouleur} onChange={(v) => maj({ bordureCouleur: v })} /></Champ>
         </Groupe>
 
-        <Groupe titre="Espacements">
-          <Quatre label="Intérieur (padding)" valeurs={[s.paddingHaut, s.paddingDroite, s.paddingBas, s.paddingGauche]}
+        <Groupe titre={t("Espacements")}>
+          <Quatre label={t("Intérieur (padding)")} valeurs={[s.paddingHaut, s.paddingDroite, s.paddingBas, s.paddingGauche]}
             onChange={([h, d, b, g]) => maj({ paddingHaut: h, paddingDroite: d, paddingBas: b, paddingGauche: g })} />
-          <Quatre label="Extérieur (marges)" valeurs={[s.margeHaut, s.margeDroite, s.margeBas, s.margeGauche]}
+          <Quatre label={t("Extérieur (marges)")} valeurs={[s.margeHaut, s.margeDroite, s.margeBas, s.margeGauche]}
             onChange={([h, d, b, g]) => maj({ margeHaut: h, margeDroite: d, margeBas: b, margeGauche: g })} />
         </Groupe>
 
-        <Groupe titre="Dimensions">
+        <Groupe titre={t("Dimensions")}>
           <div className="grid grid-cols-3 gap-2">
-            <Champ label="Largeur"><Mesure value={s.largeur} onChange={(v) => maj({ largeur: v })} placeholder="auto" /></Champ>
-            <Champ label="Larg. max"><Mesure value={s.largeurMax} onChange={(v) => maj({ largeurMax: v })} placeholder="100%" /></Champ>
-            <Champ label="Hauteur"><Mesure value={s.hauteur} onChange={(v) => maj({ hauteur: v })} placeholder="auto" /></Champ>
+            <Champ label={t("Largeur")}><Mesure value={s.largeur} onChange={(v) => maj({ largeur: v })} placeholder="auto" /></Champ>
+            <Champ label={t("Larg. max")}><Mesure value={s.largeurMax} onChange={(v) => maj({ largeurMax: v })} placeholder="100%" /></Champ>
+            <Champ label={t("Hauteur")}><Mesure value={s.hauteur} onChange={(v) => maj({ hauteur: v })} placeholder="auto" /></Champ>
           </div>
         </Groupe>
 
         {etat !== "hover" && masquable && (
           <label className="flex items-center justify-between gap-3 cursor-pointer">
-            <span className="text-[14px]">Masquer {device === "desktop" ? "partout" : `sur ${APPAREIL[device].label.toLowerCase()}`}</span>
+            <span className="text-[14px]">{t("Masquer")}{" "}{device === "desktop" ? "partout" : `sur ${APPAREIL[device].label.toLowerCase()}`}</span>
             <input type="checkbox" checked={!!s.masque} onChange={(e) => maj({ masque: e.target.checked })} className="w-4 h-4 accent-[#F5A623]" />
           </label>
         )}
 
         <div className="space-y-2 pt-1">
-          {onParent && <Action onClick={onParent} Icon={ArrowUpToLine}>Sélectionner le bloc parent</Action>}
-          <Action onClick={onReinitialiser} Icon={RotateCcw}>Réinitialiser le style</Action>
-          {onSupprimer && <Action onClick={onSupprimer} Icon={Trash2} danger>Supprimer l'élément</Action>}
+          {onParent && <Action onClick={onParent} Icon={ArrowUpToLine}>{t("Sélectionner le bloc parent")}</Action>}
+          <Action onClick={onReinitialiser} Icon={RotateCcw}>{t("Réinitialiser le style")}</Action>
+          {onSupprimer && <Action onClick={onSupprimer} Icon={Trash2} danger>{t("Supprimer l'élément")}</Action>}
         </div>
       </div>
     </aside>
@@ -188,18 +190,20 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
 const INPUT = "w-full h-9 px-2.5 text-[14px] rounded-lg border border-[#E0E0E0] bg-white text-[#111111] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20";
 
 function Groupe({ titre, children }: { titre: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <section className="space-y-2.5">
-      <p className="text-[12.5px] font-semibold uppercase tracking-wide text-[#999999]">{titre}</p>
+      <p className="text-[12.5px] font-semibold uppercase tracking-wide text-[#999999]">{t(titre)}</p>
       {children}
     </section>
   );
 }
 
 function Champ({ label, children }: { label: string; children: React.ReactNode }) {
+  const t = useT();
   return (
     <label className="block">
-      <span className="block text-[13px] text-[#555555] mb-1">{label}</span>
+      <span className="block text-[13px] text-[#555555] mb-1">{t(label)}</span>
       {children}
     </label>
   );
@@ -217,22 +221,24 @@ function Mesure({ value, onChange, placeholder }: { value?: string; onChange: (v
 }
 
 function Couleur({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+  const t = useT();
   return (
     <div className="flex items-center gap-2">
       <span className="relative w-9 h-9 flex-shrink-0 rounded-lg border border-[#E0E0E0] overflow-hidden" style={{ background: value || "repeating-conic-gradient(#EEE 0 25%, #FFF 0 50%) 0 0 / 10px 10px" }}>
-        <input type="color" value={/^#[0-9a-f]{6}$/i.test(value ?? "") ? value : "#000000"} onChange={(e) => onChange(e.target.value)} aria-label="Choisir une couleur" className="absolute inset-0 opacity-0 cursor-pointer" />
+        <input type="color" value={/^#[0-9a-f]{6}$/i.test(value ?? "") ? value : "#000000"} onChange={(e) => onChange(e.target.value)} aria-label={t("Choisir une couleur")} className="absolute inset-0 opacity-0 cursor-pointer" />
       </span>
-      <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder="Couleur du design" className={INPUT} />
-      {value && <button onClick={() => onChange("")} aria-label="Retirer la couleur" title="Revenir à la couleur du design" className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#999999] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={15} /></button>}
+      <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={t("Couleur du design")} className={INPUT} />
+      {value && <button onClick={() => onChange("")} aria-label={t("Retirer la couleur")} title={t("Revenir à la couleur du design")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#999999] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={15} /></button>}
     </div>
   );
 }
 
 function Quatre({ label, valeurs, onChange }: { label: string; valeurs: (string | undefined)[]; onChange: (v: (string | undefined)[]) => void }) {
+  const t = useT();
   const noms = ["Haut", "Droite", "Bas", "Gauche"];
   return (
     <div>
-      <span className="block text-[13px] text-[#555555] mb-1">{label}</span>
+      <span className="block text-[13px] text-[#555555] mb-1">{t(label)}</span>
       <div className="grid grid-cols-4 gap-1.5">
         {noms.map((n, i) => (
           <label key={n} className="block">

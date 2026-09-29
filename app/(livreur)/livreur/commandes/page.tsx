@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { MapPin, ChevronRight } from "lucide-react";
 import { formatDate, formatMontant } from "@/lib/utils";
+import { getT } from "@/lib/i18n/serveur";
 
 const STATUT_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   confirmee:      { label: "À récupérer", color: "#f59e0b", bg: "#f59e0b15" },
@@ -14,6 +15,7 @@ const STATUT_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default async function HistoriquePage() {
+  const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
 
@@ -38,28 +40,28 @@ export default async function HistoriquePage() {
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/livreur" className="text-gray-400 text-sm hover:text-white">← Retour</Link>
-        <h1 className="text-xl font-bold text-white font-playfair mt-2">Mes livraisons</h1>
+        <Link href="/livreur" className="text-gray-400 text-sm hover:text-white">{t("← Retour")}</Link>
+        <h1 className="text-xl font-bold text-white font-playfair mt-2">{t("Mes livraisons")}</h1>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
           <p className="text-lg font-bold text-white">{stats.total}</p>
-          <p className="text-gray-500 text-xs">Total</p>
+          <p className="text-gray-500 text-xs">{t("Total")}</p>
         </div>
         <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-[#3b82f6]">{stats.enCours}</p>
-          <p className="text-gray-500 text-xs">En cours</p>
+          <p className="text-lg font-bold text-[#3b82f6]">{t(stats.enCours)}</p>
+          <p className="text-gray-500 text-xs">{t("En cours")}</p>
         </div>
         <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-green-400">{stats.livrees}</p>
-          <p className="text-gray-500 text-xs">Livrées</p>
+          <p className="text-lg font-bold text-green-400">{t(stats.livrees)}</p>
+          <p className="text-gray-500 text-xs">{t("Livrées")}</p>
         </div>
       </div>
 
       <div className="space-y-2">
         {commandes.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">Aucune livraison assignée</div>
+          <div className="text-center py-12 text-gray-500">{t("Aucune livraison assignée")}</div>
         ) : commandes.map((cmd) => {
           const st = STATUT_CONFIG[cmd.statut] || STATUT_CONFIG.confirmee;
           return (
@@ -71,14 +73,14 @@ export default async function HistoriquePage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ color: st.color, backgroundColor: st.bg }}>
-                    {st.label}
+                    {t(st.label)}
                   </span>
                   <span className="text-gray-500 text-xs font-mono">{cmd.numero}</span>
                 </div>
-                <p className="text-white text-sm font-medium">{cmd.clientNom}</p>
+                <p className="text-white text-sm font-medium">{t(cmd.clientNom)}</p>
                 <p className="text-gray-500 text-xs flex items-center gap-1 mt-0.5">
                   <MapPin size={10} />
-                  {cmd.ville}
+                  {t(cmd.ville)}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1 flex-shrink-0">

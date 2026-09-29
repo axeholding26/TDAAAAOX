@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { Radio } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 const LiveFleetMapInner = dynamic(
   () => import("./LiveFleetMapInner").then((m) => m.LiveFleetMapInner),
@@ -19,6 +20,7 @@ interface Livreur {
 }
 
 export function LiveFleetMap() {
+  const t = useT();
   const [livreurs, setLivreurs] = useState<Livreur[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,12 +52,12 @@ export function LiveFleetMap() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-[12px] text-gray-400">
           <Radio size={12} className="text-green-500" />
-          {positionnes.length} livreur{positionnes.length !== 1 ? "s" : ""} en position sur {livreurs.length}
+          {positionnes.length} livreur{positionnes.length !== 1 ? "s" : ""}{" "}{t("en position sur")}{" "}{livreurs.length}
         </div>
       </div>
       {positionnes.length === 0 ? (
         <div className="flex items-center justify-center h-[360px] bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center px-6">
-          <p className="text-[13px] text-gray-400">Aucun livreur ne partage sa position pour le moment — la carte s'activera dès qu'un livreur ouvrira son lien de tracking GPS.</p>
+          <p className="text-[13px] text-gray-400">{t("Aucun livreur ne partage sa position pour le moment — la carte s'activera dès qu'un livreur ouvrira son lien de tracking GPS.")}</p>
         </div>
       ) : (
         <LiveFleetMapInner livreurs={livreurs} />
