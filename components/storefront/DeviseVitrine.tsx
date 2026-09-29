@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 import { Globe2, ChevronDown } from "lucide-react";
 import { convertirMontant, PAYS_OPTIONS } from "@/lib/devise-convert";
 import { formatMontant } from "@/lib/utils";
+import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 
 // ratio = multiplicateur devise de la boutique → devise du visiteur, aux taux du jour (lib/taux-change.ts).
 type Contexte = { devise: string; pays: string | null; deviseBoutique: string; ratio: number };
@@ -40,36 +41,22 @@ export function Prix({ montant, devise }: { montant: number; devise: string }) {
   return <>{usePrix().fmt(montant, devise)}</>;
 }
 
-/** Liste native des pays africains, posée invisible sur une pastille : le choix est gardé un an (cookie lu par lib/devise-visiteur.ts). */
-export function SelecteurPays({ pays }: { pays: string | null }) {
-  // Rechargement complet : les prix des designs sont rendus côté serveur dans leur HTML figé (router.refresh ne les réaffiche pas).
-  return (
-    <select aria-label="Pays et devise d'affichage" value={pays ?? ""} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-      onChange={(e) => { document.cookie = `axso_pays=${e.target.value}; path=/; max-age=31536000; SameSite=Lax`; window.location.reload(); }}>
-      {!pays && <option value="" disabled>Votre pays…</option>}
-      {pays && !PAYS_OPTIONS.some((p) => p.code === pays) && <option value={pays}>{pays}</option>}
-      {PAYS_OPTIONS.map((p) => <option key={p.code} value={p.code}>{p.nom}</option>)}
-    </select>
-  );
-}
-
-/** Code pays ISO → drapeau emoji. */
-export function drapeau(code: string | null | undefined) {
-  return code && /^[A-Z]{2}$/.test(code) ? String.fromCodePoint(...[...code].map((c) => 0x1f1a5 + c.charCodeAt(0))) : "";
-}
-
-/** Pastille « 🇳🇬 NGN ▾ » : pays et devise du visiteur, modifiables. Rien hors vitrine. */
+/** Pastille « drapeau NGN ▾ » : pays et devise du visiteur, modifiables. Rien hors vitrine.
+ *  Le choix est gardé un an (cookie lu par lib/devise-visiteur.ts). */
 export function PastillePays({ couleur, className = "" }: { couleur?: string; className?: string }) {
   const v = useVisiteur();
   if (!v) return null;
+  const options = v.pays && !PAYS_OPTIONS.some((p) => p.code === v.pays) ? [{ code: v.pays, nom: v.pays }, ...PAYS_OPTIONS] : PAYS_OPTIONS;
   return (
-    <span className={`relative inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 ${className}`}
+    // Rechargement complet : les prix des designs sont rendus côté serveur dans leur HTML figé (router.refresh ne les réaffiche pas).
+    <SelectPays value={v.pays} options={options} ariaLabel="Pays et devise d'affichage"
+      onChange={(code) => { document.cookie = `axso_pays=${code}; path=/; max-age=31536000; SameSite=Lax`; window.location.reload(); }}
+      className={`inline-flex items-center gap-1.5 text-xs font-semibold pl-1.5 pr-2.5 py-1.5 rounded-full border whitespace-nowrap flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80 ${className}`}
       style={{ color: couleur ?? "currentColor", borderColor: "color-mix(in srgb, currentColor 22%, transparent)" }}>
-      {drapeau(v.pays) ? <span aria-hidden>{drapeau(v.pays)}</span> : <Globe2 size={13} aria-hidden />}
+      {v.pays ? <Drapeau code={v.pays} taille={18} /> : <Globe2 size={14} aria-hidden />}
       <span>{v.devise}</span>
       <ChevronDown size={12} aria-hidden className="opacity-60" />
-      <SelecteurPays pays={v.pays} />
-    </span>
+    </SelectPays>
   );
 }
 

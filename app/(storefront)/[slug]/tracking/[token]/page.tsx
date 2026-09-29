@@ -72,7 +72,7 @@ export default function TrackingPage() {
         <div style={{ maxWidth:500, margin:"0 auto" }}>
           {/* Axso logo top-center */}
           <div style={{ textAlign:"center", marginBottom:12 }}>
-            <img src="/logo-dark.png" alt="Axso" style={{ height:22, objectFit:"contain", opacity:0.5 }} />
+            <img src="/logo-dark.png" alt="Axso" style={{ height:26, objectFit:"contain" }} />
           </div>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div>

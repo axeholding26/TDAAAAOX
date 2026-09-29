@@ -13,8 +13,9 @@
 //   panneau de réglages et l'aperçu partagent directement le même arbre React.
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock, X } from "lucide-react";
-import { usePrix, useVisiteur, PastillePays, drapeau } from "@/components/storefront/DeviseVitrine";
+import { Search, ShoppingBag, Package, Globe2, Sparkles, Lock, X } from "lucide-react";
+import { usePrix, useVisiteur, PastillePays } from "@/components/storefront/DeviseVitrine";
+import { Drapeau } from "@/components/ui/SelectPays";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 import { cssElements } from "@/lib/element-styles";
 import { StyleCss } from "@/components/storefront/StyleCss";
@@ -196,7 +197,7 @@ export function DigitalStoreShell({
             </Link>
             {preview || !visiteur ? (
               <div data-axs-el="pastille-pays" className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
-                {drapeau(pays) ? <span aria-hidden>{drapeau(pays)}</span> : <Globe2 size={13} />}
+                {pays ? <Drapeau code={pays} taille={18} /> : <Globe2 size={13} />}
                 <span>{nomPays(pays)} ({devise})</span>
               </div>
             ) : (
@@ -358,7 +359,6 @@ function FiltreSelect({ id, label, value, onChange, options, colors, radius }: {
         <option value="">{label}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
-      <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: colors.texteMuted || colors.texte }} />
     </div>
   );
 }

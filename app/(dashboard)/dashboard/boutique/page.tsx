@@ -14,7 +14,8 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
-import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
+import { PAYS_DEVISES } from "@/lib/ai-agent";
+import { SelectPays } from "@/components/ui/SelectPays";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
@@ -376,11 +377,7 @@ export default function BoutiquePage() {
                 ))}
                 <div>
                   <label className={labelCls}><Globe size={11} /> Pays</label>
-                  <select value={form.pays} onChange={e => set("pays", e.target.value)}
-                    className={inputCls} style={{ appearance: "none" }}>
-                    <option value="">Sélectionner…</option>
-                    {PAYS_OPTIONS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
-                  </select>
+                  <SelectPays value={form.pays} onChange={code => set("pays", code)} />
                   {form.pays && PAYS_DEVISES[form.pays] && (
                     <p className="text-[11px] text-[#999999] mt-1">Devise de la boutique : <strong>{PAYS_DEVISES[form.pays]}</strong> (définie par le pays)</p>
                   )}

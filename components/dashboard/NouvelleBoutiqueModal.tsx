@@ -4,7 +4,8 @@ import { createPortal } from "react-dom";
 import { X, Loader2, Store, Check, AlertCircle, Sparkles, Shirt, Utensils, Cpu, Home, Palette, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { slugify } from "@/lib/utils";
-import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
+import { PAYS_DEVISES } from "@/lib/ai-agent";
+import { SelectPays } from "@/components/ui/SelectPays";
 
 const CATEGORIES = [
   { label: "Mode", Icon: Shirt },
@@ -156,10 +157,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Pays</label>
-              <select value={pays} onChange={e => setPays(e.target.value)}
-                className="w-full rounded-xl px-3 py-2.5 text-sm border border-gray-200 focus:outline-none focus:border-[#F5A623] bg-white">
-                {PAYS_OPTIONS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
-              </select>
+              <SelectPays value={pays} onChange={setPays} />
             </div>
             <div>
               <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">WhatsApp</label>

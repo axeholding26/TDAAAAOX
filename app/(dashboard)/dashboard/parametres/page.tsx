@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
+import { SelectPays } from "@/components/ui/SelectPays";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
 const PARAMETRES_TUTORIAL_STEPS = [
@@ -235,17 +236,13 @@ export default function ParametresPage() {
           <div>
             <label className={labelCls}>Catégorie</label>
             <select value={form.categorie} onChange={e => setForm({ ...form, categorie: e.target.value })}
-              className={inputCls} style={{ appearance: "none" }}>
+              className={inputCls}>
               {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
             <label className={labelCls}>Pays</label>
-            <select value={form.pays} onChange={e => setForm({ ...form, pays: e.target.value, devise: PAYS_DEVISES[e.target.value] ?? form.devise })}
-              className={inputCls} style={{ appearance: "none" }}>
-              <option value="">Sélectionner…</option>
-              {PAYS_OPTIONS.map(p => <option key={p.code} value={p.code}>{p.nom}</option>)}
-            </select>
+            <SelectPays value={form.pays} onChange={code => setForm({ ...form, pays: code, devise: PAYS_DEVISES[code] ?? form.devise })} />
           </div>
           <div>
             <label className={labelCls}>Devise</label>

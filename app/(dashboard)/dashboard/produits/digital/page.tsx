@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package, TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore, ChevronDown, Search, X, Users, BarChart2, Send, Ban, RefreshCw, Loader2, AlertCircle, Check, Eye, Clock, Infinity, FileDown, Key, Sparkles } from "lucide-react";
+import { Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package, TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore, Search, X, Users, BarChart2, Send, Ban, RefreshCw, Loader2, AlertCircle, Check, Eye, Clock, Infinity, FileDown, Key, Sparkles } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
@@ -925,7 +925,6 @@ export default function DigitalProduitsPage() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#AAAAAA] pointer-events-none" />
         </div>
 
         {/* Status filter */}
@@ -939,7 +938,6 @@ export default function DigitalProduitsPage() {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#AAAAAA] pointer-events-none" />
         </div>
 
         {/* Refresh */}

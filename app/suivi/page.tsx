@@ -130,7 +130,7 @@ export default function SuiviPage() {
             Accueil
           </Link>
           <div className="flex items-center justify-center">
-            <Image src="/logo-dark.png" alt="Axso" width={72} height={24} style={{ objectFit: "contain", opacity: 0.7 }} />
+            <Image src="/logo-dark.png" alt="Axso" width={85} height={30} style={{ objectFit: "contain" }} />
           </div>
           <div className="w-20" />
         </div>

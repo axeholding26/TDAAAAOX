@@ -44,7 +44,7 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
 
       {/* Logo */}
       <div style={{ marginBottom: 44, position: "relative", zIndex: 1 }}>
-        <Image src="/logo-dark.png" alt="Axso" width={88} height={28} style={{ objectFit: "contain", opacity: 0.75 }} />
+        <Image src="/logo-dark.png" alt="Axso" width={99} height={35} style={{ objectFit: "contain" }} />
       </div>
 
       {/* Icon */}

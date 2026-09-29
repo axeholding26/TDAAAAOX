@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
+import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { DIGITAL_TEMPLATES } from "@/Templates/template_digitaux/digital-templates";
 
@@ -105,18 +106,18 @@ const CSS = `
 
 // ─── Pays ─────────────────────────────────────────────────────────────────────
 const PAYS_LIST = [
-  { code:"SN", nom:"Sénégal",       flag:"🇸🇳", devise:"XOF" },
-  { code:"CI", nom:"Côte d'Ivoire", flag:"🇨🇮", devise:"XOF" },
-  { code:"CM", nom:"Cameroun",      flag:"🇨🇲", devise:"XAF" },
-  { code:"MA", nom:"Maroc",         flag:"🇲🇦", devise:"MAD" },
-  { code:"NG", nom:"Nigeria",       flag:"🇳🇬", devise:"NGN" },
-  { code:"GH", nom:"Ghana",         flag:"🇬🇭", devise:"GHS" },
-  { code:"TG", nom:"Togo",          flag:"🇹🇬", devise:"XOF" },
-  { code:"BJ", nom:"Bénin",         flag:"🇧🇯", devise:"XOF" },
-  { code:"ML", nom:"Mali",          flag:"🇲🇱", devise:"XOF" },
-  { code:"KE", nom:"Kenya",         flag:"🇰🇪", devise:"KES" },
-  { code:"CD", nom:"RDC",           flag:"🇨🇩", devise:"CDF" },
-  { code:"AUTRE_AFRIQUE", nom:"Autre pays d'Afrique", flag:"🌍", devise:"" },
+  { code:"SN", nom:"Sénégal",       devise:"XOF" },
+  { code:"CI", nom:"Côte d'Ivoire", devise:"XOF" },
+  { code:"CM", nom:"Cameroun",      devise:"XAF" },
+  { code:"MA", nom:"Maroc",         devise:"MAD" },
+  { code:"NG", nom:"Nigeria",       devise:"NGN" },
+  { code:"GH", nom:"Ghana",         devise:"GHS" },
+  { code:"TG", nom:"Togo",          devise:"XOF" },
+  { code:"BJ", nom:"Bénin",         devise:"XOF" },
+  { code:"ML", nom:"Mali",          devise:"XOF" },
+  { code:"KE", nom:"Kenya",         devise:"KES" },
+  { code:"CD", nom:"RDC",           devise:"CDF" },
+  { code:"AUTRE_AFRIQUE", nom:"Autre pays d'Afrique", devise:"" },
 ];
 
 // Liste complète des 54 pays membres de l'Union africaine — affichée quand le
@@ -370,7 +371,7 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
               cursor:"pointer", transition:"all .15s",
               boxShadow:sel===p.code?`0 0 0 2px ${YELLOW}22`:"none",
             }}>
-            <span style={{ fontSize:19 }}>{p.flag}</span>
+            <span style={{ height:19, display:"flex", alignItems:"center", fontSize:17 }}>{p.code==="AUTRE_AFRIQUE" ? "🌍" : <Drapeau code={p.code} taille={24} />}</span>
             <span style={{ fontSize:10, fontWeight:600, textAlign:"center", lineHeight:1.2, color:sel===p.code?YELLOW_D:MID, fontFamily:"'Inter',sans-serif" }}>
               {p.nom}
             </span>
@@ -386,22 +387,9 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
           <label style={{ fontSize:11, fontWeight:600, color:MID, fontFamily:"'Inter',sans-serif" }}>
             Choisis ton pays parmi les 54 pays d'Afrique
           </label>
-          <select
-            defaultValue=""
-            onChange={ev=>{
-              const p = PAYS_AFRIQUE.find(x=>x.code===ev.target.value);
-              if (p) choisir(p.code, p.nom);
-            }}
-            style={{
-              padding:"10px 12px", borderRadius:10, border:`1.5px solid ${BORDER}`,
-              fontSize:13, fontFamily:"'Inter',sans-serif", color:NAVY, background:"#fff",
-              outline:"none", cursor:"pointer",
-            }}>
-            <option value="" disabled>Sélectionne un pays…</option>
-            {PAYS_AFRIQUE.map(p=>(
-              <option key={p.code} value={p.code}>{p.nom}</option>
-            ))}
-          </select>
+          <SelectPays value={sel !== "AUTRE_AFRIQUE" && !PAYS_LIST.some(x=>x.code===sel) ? sel : ""} options={PAYS_AFRIQUE}
+            placeholder="Sélectionne un pays…"
+            onChange={code=>{ const p = PAYS_AFRIQUE.find(x=>x.code===code); if (p) choisir(p.code, p.nom); }} />
         </div>
       )}
     </div>
@@ -1093,9 +1081,9 @@ export default function InscriptionPage() {
                   Rejoint par 1 000+ boutiques en Afrique
                 </p>
                 <div style={{ display:"flex", justifyContent:"center", gap:8, flexWrap:"wrap" }}>
-                  {["🇸🇳 Sénégal","🇨🇮 Côte d'Ivoire","🇨🇲 Cameroun","🇳🇬 Nigeria","🇬🇭 Ghana"].map(c=>(
-                    <span key={c} style={{ fontSize:11, padding:"3px 11px", borderRadius:999, background:SURFACE, border:`1px solid ${BORDER}`, color:MID }}>
-                      {c}
+                  {[["SN","Sénégal"],["CI","Côte d'Ivoire"],["CM","Cameroun"],["NG","Nigeria"],["GH","Ghana"]].map(([code,nom])=>(
+                    <span key={code} style={{ display:"inline-flex", alignItems:"center", gap:6, fontSize:11, padding:"3px 11px 3px 6px", borderRadius:999, background:SURFACE, border:`1px solid ${BORDER}`, color:MID }}>
+                      <Drapeau code={code} taille={16} />{nom}
                     </span>
                   ))}
                 </div>

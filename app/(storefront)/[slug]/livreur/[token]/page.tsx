@@ -94,7 +94,7 @@ export default function LivreurPage() {
       <div style={{ textAlign:"center", marginBottom:32 }}>
         {/* Axso logo */}
         <div style={{ marginBottom:16 }}>
-          <img src="/logo-dark.png" alt="Axso" style={{ height:28, objectFit:"contain", opacity:0.6, display:"inline-block" }} />
+          <img src="/logo-dark.png" alt="Axso" style={{ height:28, objectFit:"contain", display:"inline-block" }} />
         </div>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:64, height:64, borderRadius:"50%", background:"rgba(245,166,35,0.12)", border:"2px solid rgba(245,166,35,0.25)", margin:"0 auto 8px" }}>
           <Bike size={32} color="#F5A623" />
