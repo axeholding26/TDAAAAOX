@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { Image as ImageIcon, Save, Monitor, LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2, Sparkles, X, Undo2, AlertCircle } from "lucide-react";
 import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, DEFAULT_PRODUCT_SECTIONS } from "@/lib/theme-config";
-import { DigitalBuilder } from "./digital/DigitalBuilder";
 import { BoutiqueBuilder } from "./boutique/BoutiqueBuilder";
 import { PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
 import { corrigerLiensDesign } from "@/lib/liens-design";
@@ -111,7 +110,7 @@ export default function BuilderPage() {
     } else {
       resolved = resolveThemeConfig(data.themeId, tenantConfig);
     }
-    resolved = corrigerLiensDesign(resolved, { slug: data.slug }); // mêmes liens d'en-tête / pied que la vitrine
+    resolved = corrigerLiensDesign(resolved, { slug: data.slug, digital: resolved.modeBoutique === "digital" }); // mêmes liens d'en-tête / pied que la vitrine
     setConfig(resolved);
     setOriginalConfig(resolved);
   }, []);
@@ -365,25 +364,6 @@ export default function BuilderPage() {
       )}
     </>
   );
-
-  // Boutique 100% digitale — Constructeur entièrement séparé (façon
-  // Chariow), plus le Constructeur libre par blocs. Toute la plomberie de
-  // chargement/sauvegarde/undo ci-dessus reste partagée (même API, même
-  // debounce d'auto-save) ; seule l'interface change.
-  if (config.modeBoutique === "digital") {
-    return (
-      <DigitalBuilder
-        tenant={tenant} config={config} originalConfig={originalConfig} set={set} setColors={setColors} setFonts={setFonts}
-        handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
-        publier={publierBoutique} depublier={depublierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
-        panneauxPages={{
-          produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,
-          apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre={tr("À propos")} />,
-          contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre={tr("Contact")} />,
-        }}
-      />
-    );
-  }
 
   return (
       <>

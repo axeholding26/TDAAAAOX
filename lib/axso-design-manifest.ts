@@ -235,9 +235,11 @@ export function detecterCategorie(vente: string): string {
   return "general";
 }
 
-// Retourne 4 IDs de thèmes adaptés à la catégorie, priorité au themeId du plan
-export function choisir4Themes(vente: string, planThemeId?: string): string[] {
-  const cat = detecterCategorie(vente);
+// Retourne 4 IDs de thèmes adaptés à la catégorie, priorité au themeId du plan.
+// Boutique digitale : designs sobres (formations, ebooks, logiciels…) sauf livres / tech.
+export function choisir4Themes(vente: string, planThemeId?: string, digital = false): string[] {
+  let cat = detecterCategorie(vente);
+  if (digital && !["books", "tech", "services"].includes(cat)) cat = "services";
   const parCat: Record<string, string[]> = {
     fashion:     ["ndop-site.html","noir-atelier-site.html","aube-site.html","pulse-site.html"],
     books:       ["codex-site.html","pop-site.html","aube-site.html","halle-site.html"],

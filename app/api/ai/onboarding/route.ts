@@ -7,8 +7,6 @@ import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
 import { provisionerThemeInitial } from "@/lib/axso-design-library";
-import { DIGITAL_TEMPLATES } from "@/Templates/template_digitaux/digital-templates";
-import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 
 // Analyse IA (10-45 s quand Gemini bascule sur ses modèles de secours) : le défaut serverless coupe avant.
@@ -25,10 +23,6 @@ const schemaExecuter = z.object({
   // détermine la structure de la boutique (catalogue complet vs page de
   // vente unique). Absent = "catalogue" (comportement historique inchangé).
   typeBoutique: z.enum(["physique", "digital"]).optional(),
-  // Choix explicite du marchand parmi les 4 gabarits digitaux (carte cliquée
-  // dans PropositionsTemplatesDigitaux, voir inscription/page.tsx) — prime
-  // sur l'heuristique par catégorie ci-dessous quand fourni.
-  digitalTemplateId: z.enum(["charriow", "aurore", "onyx", "mint"]).optional(),
   // Les 4 designs AXSO Design proposés à l'inscription — seuls designs
   // proposés ensuite dans le Constructeur (ThemeConfig.designsOrigine).
   designsProposes: z.array(z.string()).max(4).optional(),
@@ -86,29 +80,9 @@ export async function POST(request: Request) {
     }
 
     if (body.phase === "executer") {
-      const { plan, compte, typeBoutique, digitalTemplateId: digitalTemplateIdChoisi, designsProposes } = schemaExecuter.parse(body);
+      const { plan, compte, typeBoutique, designsProposes } = schemaExecuter.parse(body);
       plan.devise = deviseDuPays(plan.pays, plan.devise);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
-      // Gabarit du Constructeur digital (voir lib/digital-templates.ts pour
-      // les 4 choix — plus un arbre de blocs : un layout React dédié,
-      // éditable ensuite via "Couleur de votre marque"/"Style des coins"
-      // dans le Constructeur digital). Priorité au choix explicite du
-      // marchand (carte cliquée dans PropositionsTemplatesDigitaux) ; sans
-      // choix (ex. appel API direct), heuristique déterministe sur la
-      // catégorie déclarée à l'inscription, pas d'appel IA supplémentaire :
-      // "onyx" pour les offres à forte valeur perçue (formation, conseil),
-      // "mint" pour le créatif/marketing, "aurore" pour un catalogue nombreux
-      // (templates, presets), "charriow" (référence) en défaut sûr.
-      const digitalTemplateId = (() => {
-        if (modeBoutique !== "digital") return undefined;
-        if (digitalTemplateIdChoisi) return digitalTemplateIdChoisi;
-        const c = plan.categorie.toLowerCase();
-        if (/formation|coaching|consult|masterclass|cours|luxe|bijou/.test(c)) return "onyx" as const;
-        if (/design|creatif|marketing|social|art|musique/.test(c)) return "mint" as const;
-        if (/template|preset|pack|asset|plugin|modele/.test(c)) return "aurore" as const;
-        return "charriow" as const;
-      })();
-      const digitalTemplate = digitalTemplateId ? DIGITAL_TEMPLATES.find((t) => t.id === digitalTemplateId) : undefined;
 
       // Vérifier que l'email n'existe pas déjà
       const emailExiste = await prisma.user.findUnique({ where: { email: compte.email } });
@@ -146,20 +120,11 @@ export async function POST(request: Request) {
         modeBoutique,
       });
 
-      // Fusionner : structure générée + sections custom de l'IA. Boutique
-      // digitale : le gabarit choisi FOURNIT directement digitalConfig
-      // (templateId) + couleurs + rayon — le marchand retrouve son
-      // Constructeur digital déjà réglé dès la première ouverture, sans
-      // étape "choisir un gabarit" à refaire.
+      // Fusionner : structure générée + sections custom de l'IA.
       const themeConfig: Record<string, any> = {
         ...generatedConfig,
         ...(customSections.length > 0 && { customSections }),
         ...(designsProposes?.length && { designsOrigine: designsProposes }),
-        ...(digitalTemplate && {
-          digitalConfig: { ...DEFAULT_DIGITAL_CONFIG, templateId: digitalTemplate.id },
-          colors: { ...generatedConfig.colors, ...digitalTemplate.colors },
-          radius: digitalTemplate.radius,
-        }),
       };
 
       // Transaction : créer tenant + user + produits
@@ -240,23 +205,19 @@ export async function POST(request: Request) {
       // maintenant que les vrais produits existent en base : la grille
       // accueil/boutique les affiche directement. Non bloquant — en cas
       // d'échec, la boutique reste sur le socle par défaut ("terre-et-or").
-      // Sauté pour une boutique digitale : DigitalCatalogPage (rendu séparé,
-      // voir plus haut) ne lit jamais builderHtml/builderTree — cloner un
-      // design de catalogue physique ici ne servirait à rien.
-      if (modeBoutique !== "digital") {
-        try {
-          const theme = await provisionerThemeInitial({
-            tenantId: tenant.id,
-            categorie: plan.categorie,
-            slug: tenant.slug,
-            nomBoutique: tenant.nomBoutique,
-            devise: tenant.devise,
-            fichier: plan.themeId,
-          });
-          await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
-        } catch (err) {
-          console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
-        }
+      // Boutique digitale : même design, adapté au rendu (lib/liens-design.ts).
+      try {
+        const theme = await provisionerThemeInitial({
+          tenantId: tenant.id,
+          categorie: plan.categorie,
+          slug: tenant.slug,
+          nomBoutique: tenant.nomBoutique,
+          devise: tenant.devise,
+          fichier: plan.themeId,
+        });
+        await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
+      } catch (err) {
+        console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
       }
 
       // Avis clients IA de démonstration — pour qu'une boutique fraîchement

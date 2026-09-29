@@ -39,14 +39,14 @@ export function ApercuDesign({ fichier, fond, params = "", className = "h-48" }:
   );
 }
 
-/** Paramètres d'aperçu : nom, devise et produits réels de la boutique (réponse brute de /api/produits). */
-export function parametresApercu(tenant: { nomBoutique?: string; devise?: string; commissionRate?: number } | null, produits: any[]) {
+/** Paramètres d'aperçu : nom, devise et produits réels de la boutique (réponse brute de /api/produits) ; boutique digitale : aperçu adapté. */
+export function parametresApercu(tenant: { nomBoutique?: string; devise?: string; commissionRate?: number; themeConfig?: any } | null, produits: any[]) {
   // Mêmes produits et prix que la vitrine (actifs, prix client commission incluse) ; images data: exclues (trop longues pour une URL).
   const liste = produits.filter((p) => p.actif !== false).slice(0, 24).map((p) => ({
     id: p.id, nom: p.nom, prix: prixClient(p.prix, tenant?.commissionRate ?? 0.06),
     image: /^https?:\/\//.test(p.images?.[0] ?? "") ? p.images[0] : "",
   }));
-  return `&nom=${encodeURIComponent(tenant?.nomBoutique || "Ma Boutique")}&devise=${encodeURIComponent(tenant?.devise || "XAF")}&produits=${encodeURIComponent(JSON.stringify(liste))}`;
+  return `&nom=${encodeURIComponent(tenant?.nomBoutique || "Ma Boutique")}&devise=${encodeURIComponent(tenant?.devise || "XAF")}&produits=${encodeURIComponent(JSON.stringify(liste))}${tenant?.themeConfig?.modeBoutique === "digital" ? "&digital=1" : ""}`;
 }
 
 /** Fichier du design d'un Theme provisionné (« axso-design-<fichier>-<horodatage> »), sinon null. */

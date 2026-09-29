@@ -14,11 +14,11 @@ import { ScrollReveal, type RevealType } from "@/components/storefront/ScrollRev
 import { HomeFaqSection } from "@/components/storefront/HomeFaqSection";
 import { CustomSectionsRenderer } from "@/components/storefront/CustomSectionsRenderer";
 import { Package } from "lucide-react";
+import { NewsletterForm } from "@/components/storefront/NewsletterForm";
 import { ImportedLiteralHomePage } from "@/components/storefront/templates/ImportedLiteralHomePage";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
 import { ordonnerParZone } from "@/lib/block-tree";
 import { cssSectionsDesign } from "@/lib/scope-css";
-import { DigitalCatalogPage } from "@/components/storefront/digital/DigitalCatalogPage";
 import { getT } from "@/lib/i18n/serveur";
 
 interface Props {
@@ -61,22 +61,6 @@ export default async function StorefrontPage({ params }: Props) {
   if (!(await boutiqueVisible(tenant))) notFound();
 
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
-
-  // Boutique 100% digitale — rendu entièrement séparé (Constructeur dédié,
-  // voir lib/theme-config.ts::ThemeDigitalConfig), jamais le socle catalogue
-  // physique ci-dessous ni le Constructeur libre (builderTree).
-  if (cfg.modeBoutique === "digital") {
-    return (
-      <DigitalCatalogPage
-        tenant={{
-          id: tenant.id, slug: tenant.slug, nomBoutique: tenant.nomBoutique,
-          logoUrl: tenant.logoUrl, description: tenant.description,
-          pays: tenant.pays, devise: tenant.devise, commissionRate: tenant.commissionRate,
-        }}
-        cfg={cfg}
-      />
-    );
-  }
 
   const { colors: c, sections: sec, radius } = cfg;
 
@@ -673,21 +657,9 @@ export default async function StorefrontPage({ params }: Props) {
           <div className="max-w-2xl mx-auto px-4 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold font-playfair mb-3">{t(sec.newsletter.titre)}</h2>
             <p className="mb-8 text-lg" style={{ opacity: 0.65 }}>{t(sec.newsletter.texte)}</p>
-            <form className="flex flex-col sm:flex-row gap-3 justify-center" method="post" action="/api/newsletter">
-              <input
-                type="email"
-                placeholder={sec.newsletter.placeholder}
-                className="flex-1 px-5 py-3.5 text-sm border focus:outline-none max-w-sm"
-                style={{ backgroundColor: c.fond, borderColor: `${c.accent}30`, color: c.texte, borderRadius: radius }}
-              />
-              <button
-                type="submit"
-                className="px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90"
-                style={btnPrimaryStyle}
-              >
-                {t(sec.newsletter.ctaTexte)}
-              </button>
-            </form>
+            <NewsletterForm slug={slug} placeholder={sec.newsletter.placeholder} cta={t(sec.newsletter.ctaTexte)}
+              inputStyle={{ backgroundColor: c.fond, borderColor: `${c.accent}30`, color: c.texte, borderRadius: radius }}
+              buttonStyle={btnPrimaryStyle} />
           </div>
         </section>
       </ScrollReveal>
@@ -740,6 +712,7 @@ export default async function StorefrontPage({ params }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
+        sansPanier={cfg.modeBoutique === "digital"}
       />
 
       {ordre.map((id) => SECTION_NODES[id] ? <div key={id} data-axs-id={id}>{t(SECTION_NODES[id])}</div> : null)}

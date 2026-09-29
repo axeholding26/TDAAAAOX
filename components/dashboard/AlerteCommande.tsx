@@ -29,19 +29,38 @@ function sonCaisse() {
   try {
     const Ctx = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new Ctx();
-    // Arpège montant rapide (do-mi-sol-do) puis « ding » tenu : reconnaissable entre tous.
-    [523, 659, 784, 1047, 1568].forEach((f, i) => {
+    const sortie = ctx.createDynamicsCompressor();
+    sortie.connect(ctx.destination);
+    const t0 = ctx.currentTime + 0.02;
+    const note = (f: number, t: number, vol: number, duree: number, type: OscillatorType = "sine") => {
       const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.type = i === 4 ? "sine" : "triangle";
-      osc.frequency.value = f;
-      osc.connect(gain); gain.connect(ctx.destination);
-      const t = ctx.currentTime + i * 0.09, duree = i === 4 ? 0.9 : 0.18;
+      osc.type = type; osc.frequency.value = f;
+      osc.connect(gain); gain.connect(sortie);
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.3, t + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + duree);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + duree);
       osc.start(t); osc.stop(t + duree + 0.05);
+    };
+    // « Ka » : tiroir-caisse qui claque (bruit filtré + choc sourd).
+    const bruit = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+    bruit.getChannelData(0).forEach((_, i, d) => { d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 3; });
+    const src = ctx.createBufferSource(), filtre = ctx.createBiquadFilter(), gBruit = ctx.createGain();
+    src.buffer = bruit; filtre.type = "bandpass"; filtre.frequency.value = 2200; filtre.Q.value = 1.2; gBruit.gain.value = 0.9;
+    src.connect(filtre); filtre.connect(gBruit); gBruit.connect(sortie); src.start(t0);
+    note(140, t0, 0.5, 0.09, "triangle");
+    // « Ching » : cloche de caisse — partiels inharmoniques d'une cloche, doublée et légèrement désaccordée pour le scintillement.
+    const tc = t0 + 0.11;
+    [[1, 0.32], [2.76, 0.18], [5.4, 0.09], [8.93, 0.05]].forEach(([r, v]) => {
+      note(1568 * r, tc, v, 1.6 / Math.sqrt(r));
+      note(1574 * r, tc, v * 0.6, 1.4 / Math.sqrt(r));
     });
-    setTimeout(() => ctx.close().catch(() => {}), 2000);
+    // Pluie de pièces qui tombent dans le tiroir (motif fixe : même signature à chaque commande).
+    [[0.32, 4186], [0.38, 5274], [0.43, 3951], [0.47, 4699], [0.52, 5588], [0.55, 4435], [0.61, 5920], [0.66, 4978], [0.74, 5274]].forEach(([dt, f], i) => {
+      const v = 0.14 * (1 - i / 12);
+      note(f, tc + dt, v, 0.14);
+      note(f * 1.51, tc + dt, v * 0.4, 0.08);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 2500);
   } catch { /* audio indisponible */ }
 }
 

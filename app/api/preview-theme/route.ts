@@ -3,6 +3,7 @@
 // - grilles accueil/boutique remplies avec les cartes des vrais produits (comme la vitrine)
 // - Logo remplacé par le nom de la boutique
 // - devise/fmt correcte
+// - &digital=1 : adapté à une boutique digitale (lib/liens-design.ts)
 // - Vue "home" forcée, navigations désactivées pour le mode aperçu
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -10,6 +11,7 @@ import { NextResponse } from "next/server";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { remplacerTokensCarte } from "@/lib/theme-import-clone";
 import { formatMontant } from "@/lib/utils";
+import { adapterDocumentDigital } from "@/lib/liens-design";
 
 const TEMPLATES_DIR = join(process.cwd(), "Templates");
 
@@ -68,6 +70,8 @@ export async function GET(request: Request) {
   // Injection du nom dans la balise logo (regex tolérante)
   const safeNom = nom.replace(/</g, "&lt;").replace(/>/g, "&gt;");
   html = html.replace(/(<[^>]+class="[^"]*\blogo\b[^"]*"[^>]*>)[^<]*/g, (_m, balise: string) => balise + safeNom);
+
+  if (searchParams.get("digital") === "1") html = adapterDocumentDigital(html);
 
   // Remplacer fmt (comptage d'accolades)
   html = replaceFmt(html, fmtOverride);

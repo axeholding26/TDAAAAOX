@@ -81,7 +81,7 @@ export function appliquerConstructeur(cfg: ThemeConfig): ThemeConfig {
 
 const RE_GRILLE = /id="(homeGrid|plpGrid)"/;
 
-type Catalogue = { cartes: string; nb: number; categories: { slug: string; label: string }[] };
+type Catalogue = { cartes: string[]; nb: number; categories: { slug: string; label: string }[] };
 
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -100,10 +100,14 @@ function reconstruireFiltres(racine: ParsedElement, categories: Catalogue["categ
   });
 }
 
+const CARTES_ACCUEIL = 8;
+
 function remplirGrilles(html: string | undefined, cat: Catalogue): string | undefined {
   if (!html || !RE_GRILLE.test(html)) return html;
   const racine = parse(html);
-  racine.querySelectorAll("#homeGrid, #plpGrid").forEach((g) => g.set_content(cat.cartes));
+  // Accueil : les plus récents ; catalogue : tous.
+  racine.querySelectorAll("#homeGrid").forEach((g) => g.set_content(cat.cartes.slice(0, CARTES_ACCUEIL).join("")));
+  racine.querySelectorAll("#plpGrid").forEach((g) => g.set_content(cat.cartes.join("")));
   // Compteur figé dans le design (« 8 pièces ») → vrai nombre, même mot.
   racine.querySelectorAll("#plpCount").forEach((el) => {
     const mot = el.text.trim().match(/^\d+\s+(.+?)s?$/)?.[1];
@@ -131,7 +135,7 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
   const [theme, tenant, produits, ordreCategories] = await Promise.all([
     prisma.theme.findUnique({ where: { id: themeId }, select: { slug: true } }),
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, devise: true, commissionRate: true } }),
-    prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, take: 24 }),
+    prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, take: 500 }), // ponytail: tout le catalogue en HTML, paginer au-delà de 500
     prisma.categorieProduit.findMany({ where: { tenantId }, orderBy: [{ ordre: "asc" }, { createdAt: "asc" }], select: { nom: true } }),
   ]);
   const fichier = theme ? fichierDepuisSlugTheme(theme.slug) : null;
@@ -150,7 +154,7 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
     const prix = convertirMontant(prixClient(p.prix, taux), tenant.devise, devise, tauxChange);
     const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(prix, devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
     return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}" data-prix="${prix}" data-rang="${rang}"`);
-  }).join("");
+  });
   const cat: Catalogue = { cartes, nb: produits.length, categories };
   return {
     ...cfg,
@@ -168,5 +172,5 @@ export async function resolveConfigVitrine(themeId: string, tenantId: string, sa
     prisma.collection.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, select: { slug: true, nom: true } }),
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),
   ]);
-  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId), { slug: tenant?.slug, collections }));
+  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId), { slug: tenant?.slug, collections, digital: cfg.modeBoutique === "digital" }));
 }

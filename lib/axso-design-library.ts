@@ -67,11 +67,6 @@ export async function provisionerThemeDepuisLibrairie(params: {
   fichier?: string;
 }): Promise<{ id: string }> {
   const { tenantId, categorie, produits, slug, nomBoutique, fichier } = params;
-  // Porte fermée : les designs AXSO sont réservés aux boutiques physiques. Le
-  // digital a ses propres gabarits (lib/digital-templates.ts) — point de
-  // passage unique de tous les appelants (inscription, Thèmes, AXIA…).
-  const cible = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeConfig: true } });
-  if (estBoutiqueDigitale(cible?.themeConfig)) throw new Error(DESIGN_RESERVE_PHYSIQUE);
   const entree = fichier
     ? MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier) ?? selectionnerGabaritLibrairie(categorie)
     : selectionnerGabaritLibrairie(categorie);
@@ -158,13 +153,6 @@ export async function provisionerThemeInitial(params: {
 }
 
 // ─── Designs proposés & doublons ───────────────────────────────────────────────
-export const DESIGN_RESERVE_PHYSIQUE = "Les designs AXSO sont réservés aux boutiques de produits physiques";
-
-export function estBoutiqueDigitale(themeConfig: unknown): boolean {
-  const mode = (themeConfig as Record<string, any> | null)?.modeBoutique;
-  return mode === "digital";
-}
-
 const PREFIXE_SLUG_DESIGN = "axso-design-";
 
 /** "axso-design-aube-site-1726…" → "aube-site.html" (convention de provisionerThemeDepuisLibrairie). */
@@ -187,16 +175,13 @@ export async function designsOrigine(tenantId: string): Promise<string[]> {
   if (!tenant) return [];
   const cfg = (tenant.themeConfig as Record<string, any>) || {};
   if (Array.isArray(cfg.designsOrigine) && cfg.designsOrigine.length) return cfg.designsOrigine;
-  // Designs AXSO = boutiques physiques uniquement ; le digital a ses propres
-  // gabarits (lib/digital-templates.ts), jamais mélangés.
-  if (estBoutiqueDigitale(cfg)) return [];
 
   const premier = await prisma.theme.findFirst({
     where: { tenantId, slug: { startsWith: PREFIXE_SLUG_DESIGN } },
     orderBy: { createdAt: "asc" },
     select: { slug: true },
   });
-  const liste = choisir4Themes(`${tenant.description ?? ""} ${tenant.categorie}`, premier ? fichierDepuisSlugTheme(premier.slug) ?? undefined : undefined);
+  const liste = choisir4Themes(`${tenant.description ?? ""} ${tenant.categorie}`, premier ? fichierDepuisSlugTheme(premier.slug) ?? undefined : undefined, cfg.modeBoutique === "digital");
   await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...cfg, designsOrigine: liste } } });
   return liste;
 }

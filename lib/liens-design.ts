@@ -115,18 +115,74 @@ function corrigerPied(footer: El, slug: string, collections?: CollectionLien[]) 
   }
 }
 
+// ─── Boutique digitale (modeBoutique "digital") ──────────────────────────────
+// Mêmes designs que le physique : achat direct sans panier, rien à livrer.
+// Le lien Panier de l'en-tête devient « Mes achats » (Mon compte : achats et
+// téléchargements) et les mentions de livraison/retours disparaissent — bandeau
+// « A — B », case d'une grille de chiffres clés, élément de défilement.
+const LIVRAISON = /livraison|livré|exp[ée]di|retours?\s+(sous|gratuit)|montage inclus/i;
+
+function adapterDigital(racine: El, slug: string) {
+  for (const a of racine.querySelectorAll(`a[href="/${slug}/panier"], a[onclick="go('panier')"]`)) {
+    a.removeAttribute("onclick");
+    const ids = a.querySelectorAll("[id]").map((el) => { el.setAttribute("style", "display:none"); return el.outerHTML; }); // aperçu : ses scripts les cherchent
+    a.setAttribute("href", `/${slug}/mon-compte`);
+    a.setAttribute("data-axs-achats", "");
+    a.set_content(`Mes achats${ids.join("")}`);
+  }
+  const feuilles = racine.querySelectorAll("*").filter((el) => {
+    if (["SCRIPT", "STYLE"].includes(el.tagName)) return false;
+    const propre = el.childNodes.filter((n) => n.nodeType === 3).map((n) => n.text).join(" ").trim();
+    return propre.length < 90 && LIVRAISON.test(propre);
+  });
+  for (const el of feuilles) {
+    if (!el.parentNode) continue; // déjà retiré avec sa case
+    const texte = el.text.trim();
+    if (!LIVRAISON.test(texte)) continue; // case déjà réécrite
+    const segments = texte.split(/\s+[—–]\s+/);
+    if (segments.length > 1) {
+      const restants = segments.filter((s) => !LIVRAISON.test(s));
+      if (restants.length) el.set_content(restants.join(" — ")); else el.remove();
+      continue;
+    }
+    const parent = el.parentNode as El;
+    const cellule = parent.childNodes.filter((n) => n.nodeType === 3).every((n) => !n.text.trim()) ? parent.children : [];
+    if (cellule.length === 2 && cellule.includes(el)) {
+      const maj = texte === texte.toUpperCase();
+      cellule[0].set_content("24/7");
+      cellule[1].set_content(maj ? "ACCÈS IMMÉDIAT" : "Accès immédiat");
+      continue;
+    }
+    const sep = [el.nextElementSibling, el.previousElementSibling].find((s) => s && /^[—–]$/.test(s.text.trim()));
+    sep?.remove();
+    el.remove();
+  }
+}
+
 // `options.slug` : indispensable pour une section de pied de page seule sans
 // aucun lien (Aube, Cadran), d'où l'adresse ne peut pas se déduire.
-export interface OptionsLiens { slug?: string; collections?: CollectionLien[] }
+export interface OptionsLiens { slug?: string; collections?: CollectionLien[]; digital?: boolean }
 
-export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, collections }: OptionsLiens = {}): string | undefined {
-  if (!html || !/<(header|footer)\b/.test(html)) return html;
+export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, collections, digital }: OptionsLiens = {}): string | undefined {
+  if (!html) return html;
+  const avecChrome = /<(header|footer)\b/.test(html);
+  if (!avecChrome && !digital) return html;
   const slug = slugConnu || html.match(/href="\/([^/"?#]+)\/(?:produits|panier)"/)?.[1];
   if (!slug) return html;
   const racine = parse(html);
   racine.querySelectorAll("header").forEach((h) => corrigerEntete(h, slug));
   racine.querySelectorAll("footer").forEach((f) => corrigerPied(f, slug, collections));
+  if (digital) adapterDigital(racine, slug);
   return racine.toString();
+}
+
+/** Aperçu brut d'un design (/api/preview-theme) : seul le <body> est retouché, le document (doctype, scripts) reste intact. */
+export function adapterDocumentDigital(doc: string): string {
+  const debut = doc.search(/<body\b/i), fin = doc.search(/<\/body>/i);
+  if (debut < 0 || fin < 0) return doc;
+  const racine = parse(doc.slice(debut, fin));
+  adapterDigital(racine, "apercu");
+  return doc.slice(0, debut) + racine.toString() + doc.slice(fin);
 }
 
 function corrigerArbre(nodes: BlockNode[], options: OptionsLiens): BlockNode[] {

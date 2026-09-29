@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
 }
 
 function construireHtml(corps: string, nom: string | null, boutique: string) {
-  const prenom = (nom ?? "").split(" ")[0] || "Client";
+  // « Abonné newsletter » : inscrit sans nom (app/api/storefront/[slug]/newsletter).
+  const prenom = (nom === "Abonné newsletter" ? "" : (nom ?? "").split(" ")[0]) || "Client";
   const text = corps
     .replace(/\{prenom\}/g, prenom)
     .replace(/\{boutique\}/g, boutique)

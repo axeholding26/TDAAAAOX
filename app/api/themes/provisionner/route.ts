@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial, designsOrigine, supprimerThemesDesignInactifs, estBoutiqueDigitale, DESIGN_RESERVE_PHYSIQUE } from "@/lib/axso-design-library";
+import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial, designsOrigine, supprimerThemesDesignInactifs } from "@/lib/axso-design-library";
 import { appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
     await designsOrigine(tenantId);
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
-    if (estBoutiqueDigitale(tenant.themeConfig)) return NextResponse.json({ error: DESIGN_RESERVE_PHYSIQUE }, { status: 400 });
 
     if (fichier && !MANIFESTE_LIBRAIRIE.some((e) => e.fichier === fichier)) {
       return NextResponse.json({ error: "Design inconnu" }, { status: 400 });

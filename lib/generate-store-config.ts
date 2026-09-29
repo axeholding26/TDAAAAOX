@@ -642,11 +642,8 @@ export function generateStoreConfig(opts: {
   nomBoutique: string;
   pays?: string;
   devise?: string;
-  // "digital" : catalogue multi-produits digitaux (DigitalCatalogPage, un
-  // rendu entièrement séparé, voir lib/theme-config.ts) — traité comme
-  // "catalogue" par cette fonction (sections/sectionOrder générés ici ne
-  // sont jamais lus par ce chemin de rendu, mais restent un socle de repli
-  // inoffensif si le marchand bascule un jour vers le catalogue classique).
+  // "digital" : mêmes designs que le catalogue, achat direct sans panier
+  // (voir ThemeConfig.modeBoutique) — seules les sections de fiche produit diffèrent.
   modeBoutique?: "catalogue" | "digital";
 }): { themeConfig: Record<string, any> } {
   const { categorie, nomBoutique, pays, modeBoutique = "catalogue" } = opts;

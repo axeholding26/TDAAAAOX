@@ -8,6 +8,7 @@ import { StorefrontTypography } from "@/components/storefront/StorefrontTypograp
 import { PanierVitrine } from "@/components/storefront/PanierVitrine";
 import { FiltresCatalogue } from "@/components/storefront/FiltresCatalogue";
 import { RechercheDesign } from "@/components/storefront/RechercheDesign";
+import { WidgetsDesign } from "@/components/storefront/WidgetsDesign";
 import { NavigationDesign } from "@/components/storefront/NavigationDesign";
 import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
@@ -89,6 +90,7 @@ async function ContenuVitrine({ children, params }: Props) {
         <FiltresCatalogue />
       </Suspense>
       <RechercheDesign slug={slug} />
+      <WidgetsDesign slug={slug} />
       {cfg.builderCss && <PastillePaysDesign />}
       {navDesign && (
         <NavigationDesign slug={slug} type={navDesign.type} favoris={!!navDesign.showWishlist} collections={collectionsMega}

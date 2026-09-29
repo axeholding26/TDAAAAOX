@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { MANIFESTE_LIBRAIRIE, designsOrigine, supprimerThemesDesignInactifs, estBoutiqueDigitale } from "@/lib/axso-design-library";
+import { MANIFESTE_LIBRAIRIE, designsOrigine, supprimerThemesDesignInactifs } from "@/lib/axso-design-library";
 
 export async function GET() {
   try {
     const session = await auth();
     const tenantId = (session?.user as any)?.tenantId;
 
-    // Tous les designs physiques (pas seulement les 4 proposés à l'inscription), sans doublons.
+    // Tous les designs (pas seulement les 4 proposés à l'inscription), sans doublons.
     if (tenantId) await designsOrigine(tenantId);
-    let digitale = false;
     if (tenantId) {
-      const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeId: true, themeConfig: true } });
+      const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeId: true } });
       await supprimerThemesDesignInactifs(tenantId, t?.themeId ?? null);
-      digitale = estBoutiqueDigitale(t?.themeConfig);
     }
 
     const themesDB = tenantId
@@ -34,8 +32,7 @@ export async function GET() {
     // POST /api/themes/provisionner (qui crée un vrai Theme pour CE tenant,
     // vrais produits déjà branchés) plutôt que d'assigner directement un id
     // partagé comme pour les thèmes classiques/premium ci-dessus.
-    // Boutique digitale : aucun design physique proposé.
-    const themesLibrairie = MANIFESTE_LIBRAIRIE.filter(() => !digitale).map((e, i) => ({
+    const themesLibrairie = MANIFESTE_LIBRAIRIE.map((e, i) => ({
       id: `axso-design:${e.fichier}`,
       slug: e.fichier,
       fichier: e.fichier,
