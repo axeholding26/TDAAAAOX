@@ -7,7 +7,7 @@ import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
 import { provisionerThemeInitial } from "@/lib/axso-design-library";
-import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
+import { DIGITAL_TEMPLATES } from "@/Templates/template_digitaux/digital-templates";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 

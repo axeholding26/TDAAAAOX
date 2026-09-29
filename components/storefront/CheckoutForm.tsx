@@ -754,8 +754,8 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
   async function creerCommande() {
-    if (!form.nom.trim() || !form.email.trim()) {
-      toast.error("Nom et email obligatoires pour les produits digitaux");
+    if (!form.nom.trim() || !form.email.trim() || !form.telephone.trim()) {
+      toast.error("Nom, email et téléphone obligatoires pour les produits digitaux");
       return;
     }
     setLoading(true);
@@ -868,7 +868,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
                 <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
               </div>
             </Field>
-            <Field label="Téléphone (optionnel)">
+            <Field label="Téléphone" required>
               <div className="relative">
                 <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
                 <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />

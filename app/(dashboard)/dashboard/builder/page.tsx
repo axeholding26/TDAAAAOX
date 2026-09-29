@@ -109,7 +109,7 @@ export default function BuilderPage() {
     } else {
       resolved = resolveThemeConfig(data.themeId, tenantConfig);
     }
-    resolved = corrigerLiensDesign(resolved); // mêmes liens d'en-tête / pied que la vitrine
+    resolved = corrigerLiensDesign(resolved, { slug: data.slug }); // mêmes liens d'en-tête / pied que la vitrine
     setConfig(resolved);
     setOriginalConfig(resolved);
   }, []);
@@ -375,7 +375,7 @@ export default function BuilderPage() {
         handleSave={handleSave} saving={saving} saved={saved} hasChanges={!!hasChanges}
         publier={publierBoutique} depublier={depublierBoutique} publishing={publishing} criteresManquants={criteresManquants} bandeaux={bandeaux}
         panneauxPages={{
-          produit: <PanelProduit config={config} setProductPage={setProductPage} />,
+          produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,
           apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
           contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
         }}
@@ -407,7 +407,7 @@ export default function BuilderPage() {
           onSyncWithServer={syncWithServer}
           modeles={<PanelModeles tenant={tenant} onApplied={refetchTenant} />}
           panneauxPages={{
-            produit: <PanelProduit config={config} setProductPage={setProductPage} />,
+            produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,
             apropos: <PanelPageSections config={config} set={set} pageKey="aboutPage" titre="À propos" />,
             contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre="Contact" />,
           }}

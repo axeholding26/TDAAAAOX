@@ -219,7 +219,17 @@ export interface ThemeSections {
 export type ProductPageSectionType =
   | "gallery" | "info" | "variants" | "quantity" | "trust" | "description" | "reviews" | "similar"
   | "richtext" | "banner" | "video" | "faq" | "specs" | "countdown" | "social"
-  | "features" | "howto" | "ingredients" | "testimonials" | "sizeguide" | "guarantee" | "bundle" | "comparison";
+  | "features" | "howto" | "ingredients" | "testimonials" | "sizeguide" | "guarantee" | "bundle" | "comparison"
+  // Vidéo du produit — section de base, placée d'office juste avant la
+  // description. Elle diffuse les vidéos réellement rattachées au produit
+  // (Produit → Images & vidéos), pas une URL saisie dans la section : le
+  // marchand la déplace, la masque ou en règle le titre, sans jamais avoir à
+  // recoller un lien produit par produit. Sans vidéo sur le produit, la
+  // section ne rend rien.
+  | "videoProduit"
+  // Bouton « Ajouter au panier » — plus présent d'office : bloc facultatif
+  // que le marchand ajoute depuis la bibliothèque, dans la colonne d'achat.
+  | "addToCart";
 
 // Style personnalisable par section de fiche produit (fond, couleurs, espacement, largeur)
 export interface ProductPageSectionStyle {
@@ -266,6 +276,7 @@ export const DEFAULT_PRODUCT_SECTIONS: ProductPageSection[] = [
   { id: "variants",    type: "variants",    actif: true, config: {} },
   { id: "quantity",    type: "quantity",    actif: true, config: {} },
   { id: "trust",       type: "trust",       actif: true, config: {} },
+  { id: "videoProduit", type: "videoProduit", actif: true, config: { titre: "", autoplay: false } },
   { id: "description", type: "description", actif: true, config: { ai: true } },
   { id: "reviews",     type: "reviews",     actif: true, config: {} },
   { id: "similar",     type: "similar",     actif: true, config: { count: 4, titre: "Vous aimerez aussi" } },
@@ -356,6 +367,9 @@ export interface ThemeConfig {
   customCss?: string;
   sections: ThemeSections;
   productPage?: ThemeProductPageConfig;
+  // Fiches personnalisées produit par produit (clé = id du produit), façon
+  // Shopify : un produit absent suit `productPage` (template global).
+  productPagesParProduit?: Record<string, ThemeProductPageConfig>;
   aboutPage?: ThemeAboutPageConfig;
   contactPage?: ThemeContactPageConfig;
   builderHtml?: string;
@@ -548,6 +562,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
       faq: overrides.sections?.faq ?? base.sections.faq ?? DEFAULT_FAQ,
     },
     productPage: overrides.productPage ?? base.productPage,
+    productPagesParProduit: overrides.productPagesParProduit ?? base.productPagesParProduit,
     aboutPage: overrides.aboutPage ?? base.aboutPage,
     contactPage: overrides.contactPage ?? base.contactPage,
     builderHtml: overrides.builderHtml ?? base.builderHtml,
@@ -624,6 +639,7 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     sectionSousBlocs: ancienConfig.sectionSousBlocs,
     customCss: ancienConfig.customCss,
     productPage: ancienConfig.productPage,
+    productPagesParProduit: ancienConfig.productPagesParProduit,
     aboutPage: ancienConfig.aboutPage,
     contactPage: ancienConfig.contactPage,
     designsOrigine: ancienConfig.designsOrigine,

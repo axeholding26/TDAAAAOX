@@ -247,6 +247,9 @@ function reecrireLiensGo(root: ParsedElement, slug: string) {
     boutique: `/${slug}/produits`,
     panier: `/${slug}/panier`,
     commande: `/${slug}/checkout`,
+    compte: `/${slug}/mon-compte`,
+    apropos: `/${slug}/a-propos`,
+    contact: `/${slug}/contact`,
   };
   root.querySelectorAll("[onclick]").forEach((el) => {
     const onclick = el.getAttribute("onclick") || "";

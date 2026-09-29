@@ -6,7 +6,7 @@
 import { prisma } from "@/lib/prisma";
 import { prixClient } from "@/lib/pricing";
 import { DEFAULT_DIGITAL_CONFIG, type ThemeConfig } from "@/lib/theme-config";
-import { DigitalStoreShell, type DigitalProductVM } from "./DigitalStoreShell";
+import { DigitalStoreShell, type DigitalProductVM } from "@/Templates/template_digitaux/DigitalStoreShell";
 
 interface Props {
   tenant: {
@@ -33,11 +33,15 @@ const ORDER_BY: Record<string, any> = {
 export async function DigitalCatalogPage({ tenant, cfg }: Props) {
   const dc = { ...DEFAULT_DIGITAL_CONFIG, ...(cfg.digitalConfig || {}) };
 
-  const produits = await prisma.produit.findMany({
-    where: { tenantId: tenant.id, actif: true, visibleListage: true },
-    orderBy: ORDER_BY[dc.tri] || ORDER_BY.recents,
-    take: 60,
-  });
+  const [produits, programme] = await Promise.all([
+    prisma.produit.findMany({
+      where: { tenantId: tenant.id, actif: true, visibleListage: true },
+      orderBy: ORDER_BY[dc.tri] || ORDER_BY.recents,
+      take: 60,
+    }),
+    // Menu « Affiliation » : page d'inscription au programme de la boutique, sinon la place de marché AXSO.
+    dc.afficherAffiliation ? prisma.programmeAffiliation.findUnique({ where: { tenantId: tenant.id }, select: { id: true, actif: true } }) : null,
+  ]);
 
   const products: DigitalProductVM[] = produits.map((p) => ({
     id: p.id,
@@ -63,6 +67,7 @@ export async function DigitalCatalogPage({ tenant, cfg }: Props) {
       templateId={dc.templateId}
       digitalConfig={dc}
       products={products}
+      lienAffiliation={programme?.actif ? `/rejoindre/${programme.id}` : "/affiliation"}
     />
   );
 }

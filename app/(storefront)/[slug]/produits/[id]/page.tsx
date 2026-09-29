@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { ficheDuProduit } from "@/lib/fiche-produit";
 import { prisma } from "@/lib/prisma";
 import { boutiqueVisible } from "@/lib/tenant";
 import { auth } from "@/lib/auth";
@@ -85,7 +86,8 @@ export default async function ProduitPage({ params }: Props) {
   // Le nombre de produits similaires est réglable dans le builder (section
   // "similar" de la fiche produit) — il faut le lire avant la requête Prisma,
   // sinon `take` reste figé à 4 quel que soit le réglage du marchand.
-  const similarSection = cfg.productPage?.sections?.find(s => s.type === "similar");
+  const fiche = ficheDuProduit(cfg, produit.id);
+  const similarSection = fiche?.sections?.find(s => s.type === "similar");
   const similarCount = similarSection?.actif !== false ? Number(similarSection?.config?.count) || 4 : 0;
 
   const produitsSimilairesRaw = similarCount > 0
@@ -192,7 +194,7 @@ export default async function ProduitPage({ params }: Props) {
     radius,
     whatsapp: tenant.whatsapp ?? null,
     whatsappNumero: tenant.whatsappNumero ?? null,
-    productPage: cfg.productPage ?? null,
+    productPage: fiche ?? null,
     layout: cfg.layout ?? null,
     boutons: cfg.boutons ?? null,
     peutDevenirAffilie,

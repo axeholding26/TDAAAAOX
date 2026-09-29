@@ -17,9 +17,9 @@ import { ArrowLeft, Monitor, Tablet, Smartphone, ExternalLink, Save, RefreshCw, 
 import type { ThemeConfig, ThemeDigitalConfig } from "@/lib/theme-config";
 import { DEFAULT_DIGITAL_CONFIG } from "@/lib/theme-config";
 import { FONTS } from "@/lib/theme-fonts";
-import { DIGITAL_TEMPLATES, getDigitalTemplate } from "@/lib/digital-templates";
+import { DIGITAL_TEMPLATES, getDigitalTemplate } from "@/Templates/template_digitaux/digital-templates";
 import { prixClient } from "@/lib/pricing";
-import { DigitalStoreShell, ELEMENTS_DIGITAUX, type DigitalProductVM } from "@/components/storefront/digital/DigitalStoreShell";
+import { DigitalStoreShell, ELEMENTS_DIGITAUX, type DigitalProductVM } from "@/Templates/template_digitaux/DigitalStoreShell";
 import { ApercuFiche } from "../boutique/ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";

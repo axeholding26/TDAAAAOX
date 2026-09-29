@@ -1,7 +1,7 @@
 // ─── Bibliothèque AXSO Design (Templates/*.html) — provisionnement ────────────
 // Devient LE système de thèmes d'AXSO — remplace progressivement les 16
 // anciens thèmes classiques/premium (voir plan de migration). Provisionne
-// une vraie boutique à partir d'un des 15 designs de référence, via le
+// une vraie boutique à partir d'un des designs de référence, via le
 // pipeline de clonage de lib/theme-import-clone.ts. Le manifeste lui-même
 // (données pures, importable côté client) vit dans lib/axso-design-manifest.ts
 // — CE fichier lit `fs` (Templates/*.html) et écrit en base (prisma), donc

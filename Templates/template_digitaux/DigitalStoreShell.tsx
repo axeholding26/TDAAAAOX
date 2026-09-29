@@ -17,7 +17,7 @@ import { Search, ShoppingBag, Package, ChevronDown, Globe2, Sparkles, Lock, X } 
 import { usePrix, useVisiteur, PastillePays, drapeau } from "@/components/storefront/DeviseVitrine";
 import type { ThemeColors, ThemeDigitalConfig } from "@/lib/theme-config";
 import { cssElements } from "@/lib/element-styles";
-import { StyleCss } from "../StyleCss";
+import { StyleCss } from "@/components/storefront/StyleCss";
 
 // Éléments de la vitrine sélectionnables dans le Constructeur digital
 // (attribut data-axs-el). `texte` : valeur par défaut d'un texte remplaçable
@@ -48,7 +48,7 @@ export const ELEMENTS_DIGITAUX: Record<string, { label: string; texte?: string }
   pied: { label: "Pied de page" },
   "pied-logo": { label: "Logo du pied de page" },
   "pied-nom": { label: "Nom de la boutique (pied de page)" },
-  "pied-langue": { label: "Sélecteur de langue" },
+  "pied-langue": { label: "Langue de la boutique" },
   "pied-titre-liens": { label: "Titre « Liens »", texte: "Liens" },
   "pied-titre-legales": { label: "Titre « Légales »", texte: "Légales" },
   "pied-achats": { label: "Lien « Mes achats » (pied)", texte: "Mes achats" },
@@ -88,6 +88,8 @@ export interface DigitalStoreShellProps {
   products: DigitalProductVM[];
   /** true dans l'aperçu du Constructeur (dashboard) — désactive la navigation réelle des liens */
   preview?: boolean;
+  /** Page du programme d'affiliation de la boutique (repli : place de marché AXSO) */
+  lienAffiliation?: string;
 }
 
 // Ordre d'affichage choisi dans le Constructeur — appliqué ici pour que
@@ -115,7 +117,7 @@ const VARIANT = {
 };
 
 export function DigitalStoreShell({
-  slug, nomBoutique, logoUrl, description, pays, devise, colors, radius, templateId, digitalConfig, products, preview,
+  slug, nomBoutique, logoUrl, description, pays, devise, colors, radius, templateId, digitalConfig, products, preview, lienAffiliation = "/affiliation",
 }: DigitalStoreShellProps) {
   const v = VARIANT[templateId] || VARIANT.charriow;
   const visiteur = useVisiteur(); // pastille pays/devise du visiteur (hors aperçu du Constructeur)
@@ -152,7 +154,7 @@ export function DigitalStoreShell({
 
   const navItems = [
     { id: "menu-produits", href: `/${slug}`, actif: true },
-    ...(digitalConfig.afficherAffiliation ? [{ id: "menu-affiliation", href: `/${slug}/produits`, actif: false }] : []),
+    ...(digitalConfig.afficherAffiliation ? [{ id: "menu-affiliation", href: lienAffiliation, actif: false }] : []),
     { id: "menu-a-propos", href: `/${slug}/a-propos`, actif: false },
     { id: "menu-contact", href: `/${slug}/contact`, actif: false },
   ];
@@ -300,7 +302,7 @@ export function DigitalStoreShell({
                 <span data-axs-el="pied-nom">{nomBoutique}</span>
               </Link>
               <span data-axs-el="pied-langue" className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border" style={{ borderColor: colors.bordure || `${colors.texte}20`, color: colors.texteMuted || colors.texte }}>
-                🇫🇷 Français <ChevronDown size={12} />
+                🇫🇷 Français
               </span>
             </div>
             <div>

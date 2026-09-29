@@ -293,14 +293,11 @@ export default function ConnexionPage() {
 
       {/* ── Right panel — form ── */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 relative">
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 lg:hidden">
-          <Link href="/">
+        <div className="w-full max-w-md">
+          <Link href="/" className="lg:hidden flex justify-center mb-8">
             <img src="/logo.png" alt="axso"
-              style={{ height: "48px", width: "auto", objectFit: "contain" }} />
+              style={{ height: "72px", width: "auto", objectFit: "contain" }} />
           </Link>
-        </div>
-
-        <div className="w-full max-w-md pt-16 lg:pt-0">
           <Suspense fallback={
             <div className="rounded-3xl p-8 text-center text-[#999999] text-sm"
               style={{ background: "#ffffff", border: "1px solid rgba(245,166,35,0.15)", boxShadow: "0 20px 60px rgba(0,0,0,0.08)" }}>

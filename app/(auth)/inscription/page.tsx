@@ -15,7 +15,7 @@ import {
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
-import { DIGITAL_TEMPLATES } from "@/lib/digital-templates";
+import { DIGITAL_TEMPLATES } from "@/Templates/template_digitaux/digital-templates";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
 const NAVY    = "#111111";   // noir AXSO (--axso-navy)
@@ -956,10 +956,10 @@ export default function InscriptionPage() {
         position:"relative", zIndex:1,
         display:"flex", alignItems:"center", justifyContent:"space-between",
         maxWidth:720, margin:"0 auto", width:"100%",
-        padding:"16px 24px",
+        padding:"16px 24px", gap:12,
       }}>
-        <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none" }}>
-          <img src="/logo.png" alt="Axso" style={{ height:38, objectFit:"contain" }}/>
+        <Link href="/" style={{ display:"flex", alignItems:"center", gap:10, textDecoration:"none", flexShrink:0 }}>
+          <img src="/logo.png" alt="Axso" style={{ height:56, width:"auto", objectFit:"contain" }}/>
         </Link>
         <div style={{ display:"flex", alignItems:"center", gap:14 }}>
           {toasts.length>0 && (
@@ -974,7 +974,7 @@ export default function InscriptionPage() {
               }}>{toasts.length}</div>
             </div>
           )}
-          <Link href="/connexion" style={{ fontSize:13, color:MID, textDecoration:"none", fontWeight:500 }}>
+          <Link href="/connexion" style={{ fontSize:13, color:MID, textDecoration:"none", fontWeight:500, textAlign:"right", lineHeight:1.35 }}>
             Déjà un compte ?{" "}
             <span style={{ color:YELLOW, fontWeight:700 }}>Connexion</span>
           </Link>

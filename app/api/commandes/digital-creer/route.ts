@@ -9,8 +9,8 @@ export async function POST(req: NextRequest) {
     // base (même formule que la vitrine) — sinon on pouvait payer le prix de son choix.
     const { tenantId, client, items, codeAffiliation, codePromo: codeSaisi } = await req.json();
 
-    if (!tenantId || !items?.length || !client?.nom || !client?.email) {
-      return NextResponse.json({ error: "Nom et email obligatoires" }, { status: 400 });
+    if (!tenantId || !items?.length || !client?.nom?.trim() || !client?.email?.trim() || !client?.telephone?.trim()) {
+      return NextResponse.json({ error: "Nom, email et téléphone obligatoires" }, { status: 400 });
     }
 
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });

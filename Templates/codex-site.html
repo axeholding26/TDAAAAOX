@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CODEX — Site complet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#0B0B12; --panel:#15151F; --ink:#F2F1F6; --gold:#D4AF6A; --violet:#8B7CF7; --graphite:#8B899C; --line:rgba(242,241,246,0.1); --success:#4FB88A; --error:#E0655B; }
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{ background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+a{color:inherit; text-decoration:none; cursor:pointer;}
+button, input{font-family:inherit;} button{border:none; background:none; cursor:pointer;}
+h1,h2,h3{ font-family:'EB Garamond',serif; font-weight:500; }
+.mono{ font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:0.03em; }
+.view{ display:none; } .view.active{ display:block; }
+.promo-bar{ background:var(--panel); color:var(--gold); text-align:center; padding:9px 0; font-size:12px; letter-spacing:0.04em; border-bottom:1px solid var(--line); }
+header{ position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:22px 4vw; background:rgba(11,11,18,0.9); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+.logo{ font-family:'EB Garamond',serif; font-size:24px; font-style:italic; }
+nav ul{ display:flex; gap:30px; list-style:none; font-size:13.5px; color:var(--graphite); }
+nav ul li a:hover, nav ul li a.active{ color:var(--ink); }
+.nav-right{ display:flex; gap:18px; align-items:center; font-size:13px; color:var(--graphite); }
+.cart-btn{ background:var(--gold); color:var(--bg); padding:9px 16px; font-weight:700; font-size:12.5px; }
+.cart-count{ background:var(--violet); color:#fff; font-size:10px; border-radius:50%; width:16px; height:16px; display:inline-flex; align-items:center; justify-content:center; margin-left:6px; }
+@media(max-width:900px){ nav ul{display:none;} }
+.breadcrumb{ padding:20px 4vw 0; font-size:12.5px; color:var(--graphite); max-width:1320px; margin:0 auto; }
+.btn-primary{ display:inline-flex; align-items:center; justify-content:center; gap:10px; width:fit-content; padding:15px 28px; font-weight:700; font-size:13px; background:var(--gold); color:var(--bg); transition:transform .2s ease; }
+.btn-primary:hover{ transform:translateY(-1px); }
+.btn-ghost{ display:inline-flex; align-items:center; justify-content:center; gap:10px; width:fit-content; border:1px solid var(--line); padding:14px 26px; font-weight:600; font-size:13px; color:var(--ink); }
+.btn-ghost:hover{ border-color:var(--gold); color:var(--gold); }
+.btn-full{ width:100%; }
+.product-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; position:relative; display:block; }
+.product-card .media{ position:relative; aspect-ratio:4/5; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.product-card .fmt-badge{ position:absolute; top:14px; right:14px; z-index:2; background:rgba(11,11,18,0.85); border:1px solid var(--line); color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:5px 9px; border-radius:5px; }
+.product-card .wishlist{ position:absolute; top:14px; left:14px; z-index:2; width:30px; height:30px; border-radius:50%; background:rgba(11,11,18,0.7); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.product-card .wishlist.active{ color:var(--violet); }
+.product-card .info{ padding:16px 18px 18px; }
+.product-card .creator{ font-size:11px; color:var(--graphite); margin-bottom:6px; }
+.product-card .name{ font-weight:600; font-size:14.5px; margin-bottom:8px; }
+.product-card .meta{ display:flex; justify-content:space-between; align-items:center; }
+.product-card .price{ font-family:'EB Garamond',serif; font-style:italic; font-size:16px; color:var(--gold); }
+.toast{ position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--panel); border:1px solid var(--line); color:var(--ink); padding:14px 26px; font-size:13.5px; opacity:0; pointer-events:none; transition:opacity .3s, transform .3s; z-index:200; }
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+footer{ padding:60px 4vw 30px; border-top:1px solid var(--line); margin-top:70px; }
+.foot-grid{ max-width:1320px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:36px; padding-bottom:44px; border-bottom:1px solid var(--line); }
+.foot-grid h4{ font-size:11.5px; letter-spacing:0.05em; color:var(--graphite); margin-bottom:16px; text-transform:uppercase; }
+.foot-grid ul{ list-style:none; display:flex; flex-direction:column; gap:10px; }
+.foot-grid ul li a:hover{ color:var(--gold); }
+.foot-brand p{ margin-top:14px; max-width:30ch; font-size:13px; color:var(--graphite); }
+.foot-bottom{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; padding-top:22px; font-size:12px; color:var(--graphite); }
+@media(max-width:900px){ .foot-grid{ grid-template-columns:1fr 1fr; } }
+.field{ margin-bottom:18px; }
+.field label{ display:block; font-size:12.5px; color:var(--graphite); margin-bottom:8px; }
+.field input{ width:100%; border:1px solid var(--line); background:var(--panel); padding:13px 14px; font-size:14px; color:var(--ink); border-radius:6px; }
+.field input.err{ border-color:var(--error); }
+.field .err-msg{ display:none; font-size:11.5px; color:var(--error); margin-top:6px; }
+.field.has-err .err-msg{ display:block; }
+.field input:focus{ outline:none; border-color:var(--gold); }
+.field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.hero{ position:relative; padding:8vw 4vw 5vw; overflow:hidden; }
+.hero-glow{ position:absolute; top:-15%; right:0; width:50%; height:80%; background:radial-gradient(circle, rgba(139,124,247,0.14) 0%, transparent 70%); filter:blur(30px); pointer-events:none; }
+.hero-inner{ position:relative; z-index:1; display:grid; grid-template-columns:0.9fr 1.1fr; gap:5vw; align-items:center; }
+.hero-copy h1{ font-size:clamp(38px,4.6vw,60px); line-height:1.1; max-width:11ch; font-style:italic; }
+.hero-copy p{ margin-top:24px; max-width:38ch; color:var(--graphite); font-size:15.5px; line-height:1.75; }
+.deck{ position:relative; height:470px; }
+.deck-card{ position:absolute; width:56%; aspect-ratio:3/4; left:22%; border-radius:14px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,0.5); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; }
+.deck-card.d1{ top:0; transform:rotate(-6deg) translateX(-30px); z-index:1; opacity:0.55; }
+.deck-card.d2{ top:20px; transform:rotate(3deg) translateX(20px); z-index:2; opacity:0.75; }
+.deck-card.d0{ top:40px; z-index:3; }
+@media(max-width:900px){ .hero-inner{ grid-template-columns:1fr; } .deck{ height:280px; } }
+.marquee{ background:var(--panel); padding:13px 0; overflow:hidden; white-space:nowrap; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.marquee-track{ display:inline-flex; gap:52px; animation:scrollx 25s linear infinite; font-size:12.5px; letter-spacing:0.04em; color:var(--gold); text-transform:uppercase; }
+@keyframes scrollx{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.section{ padding:90px 4vw 20px; max-width:1320px; margin:0 auto; }
+.section-head{ display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:36px; }
+.section-head h2{ font-size:30px; font-style:italic; }
+.grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+@media(max-width:960px){ .grid3{ grid-template-columns:repeat(2,1fr); } }
+.page-head{ max-width:1320px; margin:0 auto; padding:20px 4vw 10px; display:flex; justify-content:space-between; align-items:flex-end; }
+.page-head h1{ font-size:32px; font-style:italic; }
+.listing{ max-width:1320px; margin:0 auto; padding:30px 4vw 90px; display:grid; grid-template-columns:230px 1fr; gap:44px; }
+.filters h4{ font-size:12px; letter-spacing:0.04em; margin:24px 0 14px; text-transform:uppercase; color:var(--graphite); }
+.filters h4:first-child{ margin-top:0; }
+.filter-opt{ display:flex; align-items:center; gap:10px; font-size:13.5px; margin-bottom:10px; cursor:pointer; }
+.cat-pills .pill{ font-size:13.5px; margin-bottom:10px; cursor:pointer; color:var(--graphite); }
+.cat-pills .pill.active{ color:var(--gold); font-weight:600; }
+.filters:not(:has(.pill)){ display:none; }
+.listing:not(:has(.filters .pill)){ grid-template-columns:1fr; }
+.clear-filters{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:16px; display:inline-block; }
+.toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+.toolbar span{ font-size:13px; color:var(--graphite); }
+.sort-select{ border:1px solid var(--line); padding:9px 14px; font-size:13px; background:var(--panel); color:var(--ink); border-radius:6px; }
+.plp-empty{ text-align:center; padding:80px 0; color:var(--graphite); display:none; }
+@media(max-width:900px){ .listing{ grid-template-columns:1fr; } }
+.pdp{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; display:grid; grid-template-columns:90px 1fr 1fr; gap:26px; }
+.pdp-rail{ display:flex; flex-direction:column; gap:10px; }
+.pdp-rail .thumb{ aspect-ratio:16/10.5; overflow:hidden; border:1px solid var(--line); opacity:.5; transition:opacity .25s, border-color .25s; cursor:pointer; border-radius:6px; }
+.pdp-rail .thumb.active{ opacity:1; border-color:var(--gold); }
+.pdp-main{ position:relative; aspect-ratio:16/10.5; overflow:hidden; border-radius:10px; border:1px solid var(--line); }
+.pdp-main .g-slide{ position:absolute; inset:0; opacity:0; transition:opacity .35s ease; display:flex; align-items:center; justify-content:center; }
+.pdp-main .g-slide.active{ opacity:1; }
+.creator-row{ display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.avatar{ width:30px; height:30px; border-radius:50%; background:linear-gradient(160deg,var(--violet),var(--gold)); }
+.creator-row span{ font-size:12.5px; color:var(--graphite); }
+.pdp-info h1{ font-size:28px; font-style:italic; }
+.price-row{ margin-top:14px; font-family:'EB Garamond',serif; font-style:italic; font-size:22px; color:var(--gold); }
+.opt-block{ margin-top:26px; }
+.opt-block label{ display:block; font-size:13px; font-weight:600; margin-bottom:10px; }
+.license-row{ display:flex; gap:10px; }
+.license-opt{ flex:1; border:1px solid var(--line); border-radius:10px; padding:14px 16px; cursor:pointer; }
+.license-opt.active{ border-color:var(--gold); background:rgba(212,175,106,0.06); }
+.license-opt b{ display:block; font-size:13px; margin-bottom:4px; }
+.license-opt span{ font-size:11px; color:var(--graphite); }
+.qty-cart-row{ margin-top:28px; display:flex; gap:12px; }
+.qty-box{ display:flex; align-items:center; border:1px solid var(--line); border-radius:6px; }
+.qty-box button{ width:38px; height:50px; font-size:16px; }
+.qty-box input{ width:36px; text-align:center; border:none; font-size:14px; background:transparent; color:var(--ink); }
+.qty-cart-row .btn-primary{ flex:1; }
+.includes{ margin-top:26px; display:flex; flex-direction:column; gap:9px; }
+.includes div{ display:flex; gap:9px; align-items:flex-start; font-size:13px; color:#d5d3dc; }
+.includes .ck{ color:var(--gold); flex-shrink:0; }
+.related{ max-width:1320px; margin:0 auto; padding:0 4vw 90px; }
+.related h2{ font-size:24px; margin-bottom:26px; font-style:italic; }
+@media(max-width:960px){ .pdp{ grid-template-columns:1fr; } .pdp-rail{ flex-direction:row; overflow-x:auto; } .pdp-rail .thumb{ min-width:100px; } }
+.cart-wrap{ max-width:1320px; margin:0 auto; padding:20px 4vw 100px; }
+.cart-wrap h1{ font-size:30px; margin-bottom:32px; font-style:italic; }
+.cart-layout{ display:grid; grid-template-columns:1fr 380px; gap:56px; align-items:start; }
+.cart-item{ display:grid; grid-template-columns:110px 1fr auto; gap:18px; padding:22px 0; border-bottom:1px solid var(--line); align-items:center; }
+.cart-item .thumb{ aspect-ratio:16/10.5; overflow:hidden; border-radius:6px; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; }
+.cart-item .meta b{ font-family:'EB Garamond',serif; font-size:16px; display:block; margin-bottom:6px; }
+.cart-item .meta span{ font-size:12px; color:var(--graphite); display:block; margin-bottom:3px; }
+.cart-item .remove{ font-size:12px; text-decoration:underline; color:var(--graphite); margin-top:6px; display:inline-block; }
+.cart-item .right{ text-align:right; }
+.cart-item .qty-box{ display:flex; align-items:center; border:1px solid var(--line); margin-bottom:8px; border-radius:6px; }
+.cart-item .qty-box button{ width:28px; height:32px; font-size:13px; }
+.cart-item .qty-box input{ width:26px; text-align:center; border:none; font-size:12px; background:transparent; color:var(--ink); }
+.cart-item .price{ font-family:'EB Garamond',serif; font-style:italic; color:var(--gold); font-size:15px; }
+.cart-empty{ padding:60px 0; text-align:center; color:var(--graphite); }
+.summary{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:28px 24px; position:sticky; top:100px; }
+.summary h3{ font-size:18px; margin-bottom:20px; font-style:italic; }
+.sum-row{ display:flex; justify-content:space-between; font-size:14px; margin-bottom:13px; color:#d5d3dc; }
+.sum-row.total{ font-family:'EB Garamond',serif; font-style:italic; font-size:19px; color:var(--gold); border-top:1px solid var(--line); padding-top:16px; margin-top:16px; }
+.sum-row.discount{ color:var(--success); }
+.promo-row{ display:flex; gap:8px; margin:14px 0; }
+.promo-row input{ flex:1; border:1px solid var(--line); padding:11px 12px; font-size:13px; background:var(--bg); color:var(--ink); border-radius:6px; }
+.promo-row button{ border:1px solid var(--gold); color:var(--gold); padding:0 16px; font-size:12px; border-radius:6px; }
+.promo-msg{ font-size:12px; display:none; margin-bottom:8px; } .promo-msg.show{ display:block; } .promo-msg.ok{ color:var(--success); } .promo-msg.bad{ color:var(--error); }
+.trust-mini{ margin-top:18px; font-size:12px; color:var(--graphite); line-height:1.8; }
+.checkout-wrap{ max-width:1200px; margin:0 auto; padding:44px 4vw 100px; display:grid; grid-template-columns:1fr 400px; gap:60px; }
+.checkout-wrap h2{ font-size:19px; margin:36px 0 18px; font-style:italic; }
+.checkout-wrap h2:first-child{ margin-top:0; }
+.steps-row{ max-width:1200px; margin:0 auto; padding:20px 4vw 0; display:flex; gap:8px; font-size:12px; color:var(--graphite); }
+.steps-row span.active{ color:var(--gold); font-weight:600; }
+.info-box{ border:1px solid var(--line); border-radius:8px; padding:16px 18px; font-size:13px; color:#d5d3dc; line-height:1.7; margin-bottom:26px; background:var(--panel); }
+.pay-opts{ display:flex; flex-direction:column; gap:10px; }
+.pay-opt{ border:1px solid var(--line); padding:15px 16px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; border-radius:8px; }
+.pay-opt.active{ border-color:var(--gold); background:rgba(212,175,106,0.06); }
+.pay-opt b{ font-size:13.5px; display:block; }
+.pay-opt .radio{ width:15px; height:15px; border-radius:50%; border:1.5px solid var(--gold); position:relative; margin-top:2px; flex-shrink:0; }
+.pay-opt.active .radio::after{ content:''; position:absolute; inset:3px; background:var(--gold); border-radius:50%; }
+.momo-fields{ margin-top:8px; display:none; } .pay-opt.active .momo-fields{ display:block; }
+.order-summary{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:28px 24px; position:sticky; top:20px; }
+.os-item{ display:flex; gap:12px; margin-bottom:14px; align-items:center; }
+.os-item .thumb{ width:60px; aspect-ratio:16/10.5; border-radius:5px; border:1px solid var(--line); flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.os-item .meta{ flex:1; font-size:12px; }
+.os-item .meta b{ display:block; font-family:'EB Garamond',serif; font-size:13px; }
+@media(max-width:900px){ .checkout-wrap{ grid-template-columns:1fr; } }
+.confirm-wrap{ max-width:640px; margin:0 auto; padding:90px 4vw 120px; text-align:center; }
+.confirm-icon{ width:64px; height:64px; border-radius:50%; background:var(--success); color:#fff; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 24px; }
+.confirm-wrap h1{ font-size:28px; font-style:italic; }
+.confirm-wrap p{ margin-top:14px; color:var(--graphite); font-size:14.5px; line-height:1.7; }
+.order-no{ font-family:'JetBrains Mono',monospace; font-size:14px; margin-top:18px; color:var(--gold); }
+.download-list{ margin-top:36px; text-align:left; }
+.download-item{ display:flex; justify-content:space-between; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px 18px; margin-bottom:10px; }
+.download-item b{ font-size:13.5px; display:block; } .download-item span{ font-size:11.5px; color:var(--graphite); }
+.download-item a{ background:var(--gold); color:var(--bg); padding:9px 16px; font-size:12px; font-weight:700; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<svg style="position:absolute; width:0; height:0;"><defs>
+  <symbol id="book-schema" viewBox="0 0 400 260">
+    <path d="M200,52 C160,36 105,34 58,44 L58,222 C105,212 160,214 200,230 Z" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <path d="M200,52 C240,36 295,34 342,44 L342,222 C295,212 240,214 200,230 Z" stroke="currentColor" stroke-width="1.4" fill="none"/>
+    <line x1="200" y1="52" x2="200" y2="230" stroke="currentColor" stroke-width="1.2" opacity="0.7"/>
+    <path d="M80,80 C115,72 150,73 180,82 M80,102 C115,94 150,95 180,104 M80,124 C115,116 150,117 180,126 M80,146 C112,139 140,140 165,147" stroke="currentColor" stroke-width="0.9" opacity="0.45" fill="none"/>
+    <path d="M220,82 C250,73 285,72 320,80 M220,104 C250,95 285,94 320,102 M220,126 C250,117 285,116 320,124" stroke="currentColor" stroke-width="0.9" opacity="0.45" fill="none"/>
+    <path d="M300,40 L300,96 L312,86 L324,96 L324,40" stroke="currentColor" stroke-width="1.1" fill="none" opacity="0.8"/>
+  </symbol>
+</defs></svg>
+
+<div class="promo-bar">LIVRAISON 48H À DOUALA ET YAOUNDÉ — EMBALLAGE CADEAU OFFERT</div>
+<header>
+  <div class="logo">Codex</div>
+  <nav><ul><li><a onclick="go('home')" id="nav-home" class="active">Accueil</a></li><li><a onclick="go('boutique')" id="nav-boutique">Boutique</a></li></ul></nav>
+  <div class="nav-right"><a>Recherche</a><a onclick="go('compte')">Mon compte</a><a class="cart-btn" onclick="go('panier')">Panier<span class="cart-count" id="cartCount">0</span></a></div>
+</header>
+
+<!-- HOME -->
+<div class="view active" id="view-home">
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="mono" style="color:var(--gold);">LIBRAIRIE &amp; PAPETERIE DE CARACTÈRE</span>
+        <h1 style="margin-top:20px;">Les belles pages méritent de beaux carnets.</h1>
+        <p>Romans, essais et beaux livres choisis un par un, carnets cousus main, stylos et accessoires pour écrire mieux.</p>
+        <a class="btn-primary" onclick="go('boutique')" style="margin-top:28px;">Explorer la librairie</a>
+      </div>
+      <div class="deck">
+        <div class="deck-card d1" style="background:linear-gradient(120% 100% at 30% 15%, #3a2c50, #17131f);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#book-schema"/></svg></div>
+        <div class="deck-card d2" style="background:linear-gradient(120% 100% at 70% 15%, #2a2440, #0B0B12);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#book-schema"/></svg></div>
+        <div class="deck-card d0" style="background:linear-gradient(120% 100% at 50% 15%, #22304a, #0B0B12);"><svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#book-schema"/></svg></div>
+      </div>
+    </div>
+  </section>
+  <div class="marquee"><div class="marquee-track">
+    <span>LIVRAISON 48H</span><span>—</span><span>EMBALLAGE CADEAU OFFERT</span><span>—</span><span>CONSEILS DE LIBRAIRES</span><span>—</span>
+    <span>LIVRAISON 48H</span><span>—</span><span>EMBALLAGE CADEAU OFFERT</span><span>—</span><span>CONSEILS DE LIBRAIRES</span><span>—</span>
+  </div></div>
+  <section class="section">
+    <div class="section-head"><h2>Sélection de la semaine</h2><span class="mono" style="color:var(--graphite);">CHOISIS PAR NOS LIBRAIRES</span></div>
+    <div class="grid3" id="homeGrid"></div>
+  </section>
+</div>
+
+<!-- BOUTIQUE -->
+<div class="view" id="view-boutique">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Boutique</div>
+  <div class="page-head"><h1>Toute la librairie</h1><span class="mono" id="plpCount" style="color:var(--graphite);">9 articles</span></div>
+  <div class="listing">
+    <aside class="filters">
+      <h4>Catégorie</h4>
+      <div class="cat-pills">
+        <div class="pill active" data-cat="all">Tout</div>
+        <div class="pill" data-cat="livres">Livres</div>
+        <div class="pill" data-cat="carnets">Carnets</div>
+        <div class="pill" data-cat="papeterie">Papeterie</div>
+      </div>
+    </aside>
+    <div>
+      <div class="toolbar"><span>Trier par</span>
+        <select class="sort-select" data-axs-tri aria-label="Trier les produits"><option value="recent">Trier : Nouveautés</option><option value="asc">Prix croissant</option><option value="desc">Prix décroissant</option></select>
+      </div>
+      <div class="grid3" id="plpGrid"></div>
+      <div class="plp-empty" id="plpEmpty">Aucun article dans cette catégorie.</div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUIT -->
+<div class="view" id="view-produit">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / <a onclick="go('boutique')">Boutique</a> / <span id="crumbName">Produit</span></div>
+  <section class="pdp">
+    <div class="pdp-rail" id="pdpRail"></div>
+    <div class="pdp-main" id="pdpMain"></div>
+    <div class="pdp-info">
+      <div class="creator-row"><div class="avatar"></div><span id="pdpCreator">Par auteur · 340 ventes</span></div>
+      <h1 id="pdpName">—</h1>
+      <div class="price-row" id="pdpPriceRow"></div>
+      <p style="margin-top:18px; max-width:42ch; color:var(--graphite); font-size:14px; line-height:1.75;" id="pdpDesc"></p>
+      <div class="includes" id="pdpIncludes"></div>
+      <div class="opt-block"><label>Édition</label><div class="license-row" id="licenseRow"></div></div>
+      <div class="qty-cart-row">
+        <div class="qty-box"><button onclick="changePdpQty(-1)">−</button><input id="pdpQty" value="1" readonly><button onclick="changePdpQty(1)">+</button></div>
+        <button class="btn-primary" id="pdpAddBtn" onclick="addCurrentToCart()">Ajouter au panier</button>
+      </div>
+    </div>
+  </section>
+  <section class="related"><h2>Nos libraires recommandent aussi</h2><div class="grid3" id="relatedGrid"></div></section>
+</div>
+
+<!-- PANIER -->
+<div class="view" id="view-panier">
+  <div class="breadcrumb"><a onclick="go('home')">Accueil</a> / Panier</div>
+  <div class="cart-wrap">
+    <h1 id="cartTitle">Ton panier</h1>
+    <div class="cart-layout">
+      <div>
+        <div id="cartItems"></div>
+        <div class="cart-empty" id="cartEmpty" style="display:none;">Ton panier est vide.<br><a class="btn-ghost" onclick="go('boutique')" style="margin-top:18px;">Explorer le catalogue</a></div>
+        <a class="btn-ghost" onclick="go('boutique')" style="margin-top:26px;" id="continueShoppingLink">← Continuer mes achats</a>
+      </div>
+      <div class="summary">
+        <h3>Récapitulatif</h3>
+        <div class="sum-row"><span>Sous-total</span><span id="sumSubtotal">0 XAF</span></div>
+        <div class="sum-row discount" id="sumDiscountRow" style="display:none;"><span id="sumDiscountLabel">Réduction</span><span id="sumDiscountVal"></span></div>
+        <div class="promo-row"><input type="text" id="promoInput" placeholder="Code promo (ex : CODEX15)"><button onclick="applyPromo()">Appliquer</button></div>
+        <div class="promo-msg" id="promoMsg"></div>
+        <div class="sum-row total"><span>Total</span><span id="sumTotal">0 XAF</span></div>
+        <a class="btn-primary btn-full" onclick="go('commande')" style="margin-top:18px;" id="checkoutBtn">Passer au paiement</a>
+        <div class="trust-mini">✓ Livraison 48h à Douala et Yaoundé<br>✓ Emballage cadeau offert<br>✓ Retours gratuits sous 14 jours</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMMANDE -->
+<div class="view" id="view-commande">
+  <div class="steps-row"><span>Panier</span> → <span class="active">Commande</span> → <span>Confirmation</span></div>
+  <div class="checkout-wrap">
+    <div>
+      <h2>1. Coordonnées de livraison</h2>
+      <div class="field-row">
+        <div class="field" id="f-prenom"><label>Prénom</label><input type="text" placeholder="Yannick"><div class="err-msg">Ce champ est requis</div></div>
+        <div class="field" id="f-nom"><label>Nom</label><input type="text" placeholder="Yenkey"><div class="err-msg">Ce champ est requis</div></div>
+      </div>
+      <div class="field" id="f-tel"><label>Téléphone (WhatsApp)</label><input type="text" placeholder="+237 6XX XX XX XX"><div class="err-msg">Ce champ est requis</div></div>
+      <div class="field" id="f-adresse"><label>Adresse</label><input type="text" placeholder="Rue, quartier"><div class="err-msg">Ce champ est requis</div></div>
+      <div class="field" id="f-ville"><label>Ville</label><input type="text" placeholder="Douala"><div class="err-msg">Ce champ est requis</div></div>
+      <h2>2. Paiement</h2>
+      <div class="pay-opts">
+        <div class="pay-opt active" onclick="pickPay(this)"><div class="radio"></div><div><b>Orange Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro Orange Money"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>MTN Mobile Money</b><div class="momo-fields"><div class="field" style="margin-top:8px; margin-bottom:0;"><input type="text" placeholder="Numéro MTN MoMo"></div></div></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Carte bancaire (Visa / Mastercard)</b></div></div>
+        <div class="pay-opt" onclick="pickPay(this)"><div class="radio"></div><div><b>Paiement à la livraison</b></div></div>
+      </div>
+      <button class="btn-primary btn-full" style="margin-top:32px;" onclick="submitOrder()">Confirmer et payer — <span id="checkoutTotal">0 XAF</span></button>
+    </div>
+    <div class="order-summary">
+      <h3>Ta commande</h3>
+      <div id="orderSummaryItems"></div>
+      <div class="sum-row" style="padding-top:14px; border-top:1px solid var(--line);"><span>Sous-total</span><span id="osSubtotal">0 XAF</span></div>
+      <div class="sum-row discount" id="osDiscountRow" style="display:none;"><span>Réduction</span><span id="osDiscount"></span></div>
+      <div class="sum-row total"><span>Total</span><span id="osTotal">0 XAF</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRMATION -->
+<div class="view" id="view-confirmation">
+  <div class="confirm-wrap">
+    <div class="confirm-icon">✓</div>
+    <h1>Commande confirmée</h1>
+    <p>Merci ! Ta commande est en préparation. Un message de confirmation a été envoyé sur WhatsApp.</p>
+    <div class="order-no" id="orderNumber">COMMANDE #—</div>
+    <div class="download-list" id="downloadList"></div>
+    <a class="btn-primary" onclick="go('home')" style="margin-top:36px;">Retour à l'accueil</a>
+  </div>
+</div>
+
+<footer>
+  <div class="foot-grid">
+    <div><div class="logo" style="font-size:20px;">Codex</div><p>Librairie et papeterie indépendante. Des livres choisis, des carnets qui durent.</p></div>
+    <div><h4>EXPLORER</h4><ul><li><a onclick="go('boutique')">Tous les produits</a></li></ul></div>
+    <div><h4>LA MAISON</h4><ul><li><a onclick="go('apropos')">Notre histoire</a></li><li><a onclick="go('compte')">Mon compte</a></li></ul></div>
+    <div><h4>SERVICE</h4><ul><li><a>Livraison</a></li><li><a>Retours</a></li><li><a onclick="go('contact')">Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom"><span>© 2026 CODEX</span><span>Confidentialité — Conditions générales</span></div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PRODUCTS = {
+  aurora: { name:'Les Soleils des Indépendances', price:9500, cat:'livres', fmt:'ROMAN', creator:'Ahmadou Kourouma', sales:340,
+    desc:"Le grand roman de la désillusion post-coloniale, dans une édition soignée au papier crème.",
+    includes:['256 pages, papier crème 90 g','Préface inédite','Signet tissu'],
+    licenses:[{id:'broche',name:'Broché',desc:'Édition courante',mult:1},{id:'relie',name:'Relié',desc:'Couverture toilée',mult:1.6}] },
+  motion:  { name:'Carnet cousu main — Kraft A5', price:12000, cat:'carnets', fmt:'CARNET', creator:'Atelier Codex', sales:210,
+    desc:"Carnet A5 cousu main, 160 pages ivoire 100 g, reliure à plat pour écrire jusqu'au bord.",
+    includes:['160 pages ivoire 100 g','Reliure cousue à plat','Couverture kraft gaufrée'],
+    licenses:[{id:'ligne',name:'Ligné',desc:'Pages lignées',mult:1},{id:'blanc',name:'Blanc',desc:'Pages blanches',mult:1},{id:'points',name:'Pointillé',desc:'Bullet journal',mult:1.1}] },
+  notionos:{ name:'Stylo plume — Laiton brossé', price:28000, cat:'papeterie', fmt:'STYLO', creator:'Atelier Codex', sales:580,
+    desc:"Stylo plume en laiton brossé, plume acier moyenne, livré avec convertisseur et 6 cartouches.",
+    includes:['Plume acier M','Convertisseur inclus','Étui en cuir'],
+    licenses:[{id:'unique',name:'Modèle unique',desc:'Tel que présenté',mult:1}] },
+  presetpk:{ name:"L'Aventure ambiguë", price:7500, cat:'livres', fmt:'ROMAN', creator:'Cheikh Hamidou Kane', sales:920,
+    desc:"Un classique de la littérature africaine sur la rencontre de deux mondes, en format poche.",
+    includes:['192 pages','Dossier pédagogique','Format poche'],
+    licenses:[{id:'broche',name:'Broché',desc:'Format poche',mult:1},{id:'relie',name:'Relié',desc:'Édition collector',mult:2.2}] },
+  vscodeui:{ name:'Marque-pages en laiton (lot de 3)', price:4500, cat:'papeterie', fmt:'ACCESSOIRE', creator:'Atelier Codex', sales:1450,
+    desc:"Trois marque-pages en laiton gravé, finition dorée, glissés dans une pochette cadeau.",
+    includes:['3 marque-pages gravés','Pochette cadeau','Finition dorée'],
+    licenses:[{id:'unique',name:'Modèle unique',desc:'Tel que présenté',mult:1}] },
+  webflow: { name:'Beau livre — Architectures du Sahel', price:36000, cat:'livres', fmt:'BEAU LIVRE', creator:'Collectif', sales:190,
+    desc:"Grand format illustré sur l'architecture de terre du Sahel, 240 photographies inédites.",
+    includes:['312 pages grand format','240 photographies','Coffret toilé'],
+    licenses:[{id:'unique',name:'Modèle unique',desc:'Tel que présenté',mult:1}] },
+  copywriting:{ name:'Agenda semainier 2027', price:15000, cat:'carnets', fmt:'AGENDA', creator:'Atelier Codex', sales:410,
+    desc:"Semainier relié, une semaine sur deux pages, planning annuel et pages de notes.",
+    includes:['Semaine sur 2 pages','Planning annuel','Ruban marque-page'],
+    licenses:[{id:'noir',name:'Noir',desc:'Couverture noire',mult:1},{id:'bordeaux',name:'Bordeaux',desc:'Couverture bordeaux',mult:1}] },
+  iconpack:{ name:'Encre de Chine — Flacon 50 ml', price:6500, cat:'papeterie', fmt:'ENCRE', creator:'Atelier Codex', sales:680,
+    desc:"Encre de Chine noire intense, résistante à l'eau une fois sèche, pour plume et pinceau.",
+    includes:['Flacon verre 50 ml','Pipette incluse','Résistante à l\'eau'],
+    licenses:[{id:'unique',name:'Modèle unique',desc:'Tel que présenté',mult:1}] },
+  ecommerce:{ name:'Une si longue lettre', price:8000, cat:'livres', fmt:'ROMAN', creator:'Mariama Bâ', sales:275,
+    desc:"Roman épistolaire majeur, réédité avec une postface et une couverture illustrée.",
+    includes:['176 pages','Postface inédite','Couverture illustrée'],
+    licenses:[{id:'broche',name:'Broché',desc:'Édition courante',mult:1},{id:'relie',name:'Relié',desc:'Couverture toilée',mult:1.7}] }
+};
+const PROMO_CODES = { 'CODEX15':0.15, 'CREATEUR10':0.10 };
+
+let cart = [];
+let wishlist = new Set();
+let currentProductId = 'aurora';
+let pdpSelectedLicense = null, pdpQty = 1;
+let promoDiscount = 0, promoCodeApplied = '';
+
+function fmtP(n){ return n.toLocaleString('fr-FR') + ' XAF'; }
+function tone(id,i){
+  const tones = ['linear-gradient(120% 100% at 30% 15%, #3a2c50, #17131f)','linear-gradient(120% 100% at 70% 15%, #2a2440, #0B0B12)','linear-gradient(120% 100% at 50% 15%, #22304a, #0B0B12)','linear-gradient(120% 100% at 40% 15%, #241830, #0B0B12)'];
+  return tones[i % tones.length];
+}
+function cardHTML(id){
+  const p = PRODUCTS[id];
+  const wl = wishlist.has(id)?'active':''; const heart = wishlist.has(id)?'♥':'♡';
+  return `<a onclick="viewProduct('${id}')" class="product-card" data-id="${id}" data-cat="${p.cat}" data-fmt="${p.fmt}" data-price="${p.price}">
+    <div class="media" style="background:${tone(id,0)};"><span class="fmt-badge">${p.fmt}</span><span class="wishlist ${wl}" data-id="${id}" onclick="toggleWishlist(event,'${id}')">${heart}</span>
+    <svg viewBox="0 0 400 260" style="width:80%;color:#fff;"><use href="#book-schema"/></svg></div>
+    <div class="info"><div class="creator">Par ${p.creator}</div><div class="name">${p.name}</div><div class="meta"><span class="price">${fmtP(p.price)}</span><span class="mono" style="color:var(--graphite);">${p.sales} ventes</span></div></div></a>`;
+}
+function renderHomeGrid(){ document.getElementById('homeGrid').innerHTML = Object.keys(PRODUCTS).slice(0,3).map(cardHTML).join(''); }
+function renderBoutiqueGrid(){ document.getElementById('plpGrid').innerHTML = Object.keys(PRODUCTS).map(cardHTML).join(''); applyFilters(); }
+
+let activeCat = 'all';
+document.querySelectorAll('.cat-pills .pill').forEach(el=>el.addEventListener('click',()=>{ document.querySelectorAll('.cat-pills .pill').forEach(x=>x.classList.remove('active')); el.classList.add('active'); activeCat=el.getAttribute('data-cat'); applyFilters(); }));
+document.querySelector('[data-axs-tri]').addEventListener('change', applySort);
+function applyFilters(){
+  let visible=0;
+  document.querySelectorAll('#plpGrid .product-card').forEach(card=>{
+    const ok = activeCat==='all' || card.getAttribute('data-cat')===activeCat;
+    card.style.display = ok ? '' : 'none'; if(ok) visible++;
+  });
+  document.getElementById('plpEmpty').style.display = visible===0 ? 'block' : 'none';
+  applySort();
+}
+function applySort(){
+  const mode = document.querySelector('[data-axs-tri]').value;
+  const grid = document.getElementById('plpGrid'); const cards = Array.from(grid.children);
+  if(mode==='asc') cards.sort((a,b)=>a.getAttribute('data-price')-b.getAttribute('data-price'));
+  else if(mode==='desc') cards.sort((a,b)=>b.getAttribute('data-price')-a.getAttribute('data-price'));
+  cards.forEach(c=>grid.appendChild(c));
+}
+function toggleWishlist(e,id){ e.stopPropagation(); e.preventDefault();
+  if(wishlist.has(id)) wishlist.delete(id); else { wishlist.add(id); showToast('Ajouté à ta liste de souhaits'); }
+  document.querySelectorAll(`.wishlist[data-id="${id}"]`).forEach(el=>{ el.classList.toggle('active', wishlist.has(id)); el.textContent = wishlist.has(id)?'♥':'♡'; });
+}
+function viewProduct(id){ currentProductId=id; const p=PRODUCTS[id]; pdpSelectedLicense=p.licenses[0].id; pdpQty=1; renderProduct(); go('produit'); }
+function currentPrice(){ const p=PRODUCTS[currentProductId]; const lic=p.licenses.find(l=>l.id===pdpSelectedLicense); return Math.round(p.price*lic.mult); }
+function renderProduct(){
+  const p = PRODUCTS[currentProductId];
+  document.getElementById('crumbName').textContent = p.name;
+  document.getElementById('pdpCreator').textContent = `Par ${p.creator} · ${p.sales} ventes`;
+  document.getElementById('pdpName').textContent = p.name;
+  document.getElementById('pdpDesc').textContent = p.desc;
+  document.getElementById('pdpIncludes').innerHTML = p.includes.map(i=>`<div><span class="ck">✓</span>${i}</div>`).join('');
+  const rail = document.getElementById('pdpRail'), main = document.getElementById('pdpMain');
+  const slides = [0,1,2];
+  rail.innerHTML = slides.map((i)=>`<div class="thumb ${i===0?'active':''}" style="background:${tone(currentProductId,i)};" onclick="swapImg(this,${i})"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#book-schema"/></svg></div>`).join('');
+  main.innerHTML = slides.map((i)=>`<div class="g-slide ${i===0?'active':''}" data-slide="${i}" style="background:${tone(currentProductId,i)};"><span class="fmt-badge" style="position:absolute;top:16px;right:16px;">${p.fmt}</span><svg viewBox="0 0 400 260" style="width:70%;color:#fff;"><use href="#book-schema"/></svg></div>`).join('');
+  document.getElementById('licenseRow').innerHTML = p.licenses.map(l=>`<div class="license-opt ${l.id===pdpSelectedLicense?'active':''}" onclick="pickLicense('${l.id}', this)"><b>${l.name}</b><span>${l.desc}</span></div>`).join('');
+  document.getElementById('pdpQty').value = pdpQty;
+  updatePdpPriceUI();
+  const others = Object.keys(PRODUCTS).filter(id=>id!==currentProductId).slice(0,3);
+  document.getElementById('relatedGrid').innerHTML = others.map(cardHTML).join('');
+}
+function swapImg(el,idx){ document.querySelectorAll('.pdp-rail .thumb').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  document.querySelectorAll('.g-slide').forEach(s=>s.classList.toggle('active', s.getAttribute('data-slide')===String(idx))); }
+function pickLicense(id, el){ pdpSelectedLicense=id; document.querySelectorAll('.license-opt').forEach(o=>o.classList.remove('active'));
+  el.classList.add('active'); updatePdpPriceUI(); }
+function changePdpQty(d){ pdpQty=Math.max(1,pdpQty+d); document.getElementById('pdpQty').value=pdpQty; updatePdpPriceUI(); }
+function updatePdpPriceUI(){
+  const price = currentPrice();
+  document.getElementById('pdpPriceRow').textContent = fmtP(price);
+  document.getElementById('pdpAddBtn').textContent = `Ajouter au panier — ${fmtP(price*pdpQty)}`;
+}
+function addCurrentToCart(){
+  const p = PRODUCTS[currentProductId];
+  const lic = p.licenses.find(l=>l.id===pdpSelectedLicense);
+  const unitPrice = Math.round(p.price*lic.mult);
+  const existing = cart.find(it=>it.id===currentProductId && it.licenseId===pdpSelectedLicense);
+  if(existing) existing.qty += pdpQty; else cart.push({id:currentProductId, licenseId:pdpSelectedLicense, licenseName:lic.name, unitPrice, qty:pdpQty});
+  renderCartBadge(); showToast(`${p.name} ajouté au panier`);
+}
+function renderCartBadge(){ document.getElementById('cartCount').textContent = cart.reduce((n,it)=>n+it.qty,0); }
+function cartSubtotal(){ return cart.reduce((s,it)=>s+it.unitPrice*it.qty,0); }
+function renderCartPage(){
+  document.getElementById('cartTitle').textContent = `Ton panier (${cart.reduce((n,it)=>n+it.qty,0)})`;
+  const wrap=document.getElementById('cartItems'); const empty=document.getElementById('cartEmpty'); const cont=document.getElementById('continueShoppingLink');
+  if(cart.length===0){ wrap.innerHTML=''; empty.style.display='block'; cont.style.display='none'; document.getElementById('checkoutBtn').style.pointerEvents='none'; document.getElementById('checkoutBtn').style.opacity='0.4'; }
+  else{
+    empty.style.display='none'; cont.style.display='inline-flex'; document.getElementById('checkoutBtn').style.pointerEvents=''; document.getElementById('checkoutBtn').style.opacity='1';
+    wrap.innerHTML = cart.map((it,idx)=>{ const p=PRODUCTS[it.id];
+      return `<div class="cart-item"><div class="thumb" style="background:${tone(it.id,0)};"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#book-schema"/></svg></div>
+      <div class="meta"><b>${p.name}</b><span>${it.licenseName}</span><a class="remove" onclick="removeFromCart(${idx})">Retirer</a></div>
+      <div class="right"><div class="qty-box"><button onclick="changeCartQty(${idx},-1)">−</button><input value="${it.qty}" readonly><button onclick="changeCartQty(${idx},1)">+</button></div><div class="price">${fmtP(it.unitPrice*it.qty)}</div></div></div>`;
+    }).join('');
+  }
+  const subtotal=cartSubtotal(); const disc=Math.round(subtotal*promoDiscount);
+  document.getElementById('sumSubtotal').textContent=fmtP(subtotal);
+  document.getElementById('sumTotal').textContent=fmtP(subtotal-disc);
+  if(promoDiscount>0){ document.getElementById('sumDiscountRow').style.display='flex'; document.getElementById('sumDiscountLabel').textContent=`Code ${promoCodeApplied} (-${promoDiscount*100}%)`; document.getElementById('sumDiscountVal').textContent='−'+fmtP(disc); }
+  else document.getElementById('sumDiscountRow').style.display='none';
+  renderCartBadge();
+}
+function changeCartQty(idx,d){ cart[idx].qty=Math.max(1,cart[idx].qty+d); renderCartPage(); }
+function removeFromCart(idx){ cart.splice(idx,1); renderCartPage(); }
+function applyPromo(){
+  const code=document.getElementById('promoInput').value.trim().toUpperCase(); const msg=document.getElementById('promoMsg');
+  if(PROMO_CODES[code]){ promoDiscount=PROMO_CODES[code]; promoCodeApplied=code; msg.textContent=`Code ${code} appliqué : -${promoDiscount*100}%`; msg.className='promo-msg show ok'; }
+  else{ promoDiscount=0; promoCodeApplied=''; msg.textContent='Code invalide.'; msg.className='promo-msg show bad'; }
+  renderCartPage();
+}
+function pickPay(el){ document.querySelectorAll('.pay-opt').forEach(o=>o.classList.remove('active')); el.classList.add('active'); }
+function renderCheckoutSummary(){
+  const subtotal=cartSubtotal(); const disc=Math.round(subtotal*promoDiscount); const total=subtotal-disc;
+  document.getElementById('orderSummaryItems').innerHTML = cart.map(it=>{ const p=PRODUCTS[it.id];
+    return `<div class="os-item"><div class="thumb" style="background:${tone(it.id,0)};"><svg viewBox="0 0 400 260" style="width:100%;color:#fff;"><use href="#book-schema"/></svg></div><div class="meta"><b>${p.name}</b><span>${it.licenseName} · Qté ${it.qty}</span></div><div class="price" style="font-size:12px;">${fmtP(it.unitPrice*it.qty)}</div></div>`;
+  }).join('');
+  document.getElementById('osSubtotal').textContent=fmtP(subtotal);
+  document.getElementById('osTotal').textContent=fmtP(total);
+  document.getElementById('checkoutTotal').textContent=fmtP(total);
+  if(promoDiscount>0){ document.getElementById('osDiscountRow').style.display='flex'; document.getElementById('osDiscount').textContent='−'+fmtP(disc); } else document.getElementById('osDiscountRow').style.display='none';
+}
+function validateField(id){ const f=document.getElementById(id); const inp=f.querySelector('input'); const ok=inp.value.trim().length>0; f.classList.toggle('has-err',!ok); inp.classList.toggle('err',!ok); return ok; }
+function submitOrder(){
+  const ids=['f-prenom','f-nom','f-tel','f-adresse','f-ville']; const results=ids.map(validateField);
+  if(results.includes(false)){ showToast('Merci de compléter les champs requis'); return; }
+  if(cart.length===0){ showToast('Ton panier est vide'); return; }
+  const orderNo = 'CDX-' + Math.floor(100000+Math.random()*899999);
+  document.getElementById('orderNumber').textContent='COMMANDE #'+orderNo;
+  document.getElementById('downloadList').innerHTML = cart.map(it=>{ const p=PRODUCTS[it.id];
+    return `<div class="download-item"><div><b>${p.name}</b><span>${it.licenseName} · Qté ${it.qty}</span></div><span>${fmtP(it.unitPrice*it.qty)}</span></div>`;
+  }).join('');
+  cart=[]; promoDiscount=0; promoCodeApplied=''; renderCartBadge(); go('confirmation');
+}
+function go(page){
+  if(!document.getElementById('view-'+page)) return;
+  document.querySelectorAll('.view').forEach(p=>p.classList.remove('active'));
+  document.getElementById('view-'+page).classList.add('active');
+  document.getElementById('nav-home').classList.toggle('active', page==='home');
+  document.getElementById('nav-boutique').classList.toggle('active', page==='boutique'||page==='produit');
+  if(page==='panier') renderCartPage();
+  if(page==='commande') renderCheckoutSummary();
+  if(page==='boutique') renderBoutiqueGrid();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2600); }
+
+renderHomeGrid(); renderBoutiqueGrid(); viewProduct('aurora'); go('home');
+cart.push({id:'aurora', licenseId:'relie', licenseName:'Relié', unitPrice:15200, qty:1});
+cart.push({id:'iconpack', licenseId:'unique', licenseName:'Modèle unique', unitPrice:6500, qty:1});
+renderCartBadge();
+</script>
+</body>
+</html>

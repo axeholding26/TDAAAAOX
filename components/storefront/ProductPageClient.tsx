@@ -39,11 +39,11 @@ const DEFAULT_SECTIONS: ProdSection[] = [
   { id: "similar",     type: "similar",     actif: true, config: { count: 4, titre: "Vous aimerez aussi" } },
 ];
 
-const RIGHT_COL = new Set(["info", "variants", "quantity", "trust"]);
+const RIGHT_COL = new Set(["info", "variants", "quantity", "addToCart", "trust"]);
 // Types de produits digitaux — pas de stock physique, bouton "télécharger/accéder"
 // plutôt que "panier". Garder en phase avec TYPES_PRODUIT_DIGITAL (lib/affiliation.ts).
 const TYPES_DIGITAUX = new Set(["digital", "fichier", "formation", "licence"]);
-const BELOW_TYPES = new Set(["description","reviews","similar","richtext","features","howto","banner","video","faq","specs","ingredients","testimonials","sizeguide","guarantee","bundle","comparison","countdown","social"]);
+const BELOW_TYPES = new Set(["description","reviews","similar","richtext","features","howto","banner","video","faq","specs","ingredients","testimonials","sizeguide","guarantee","bundle","comparison","social"]);
 
 export interface ProductPageClientProps {
   produit: {
@@ -412,40 +412,38 @@ function StyledSection({ style, children }: { style?: SectionStyle; children: Re
   );
 }
 
-// ─── Countdown Section ────────────────────────────────────────────────────────
-function CountdownSection({ config, accent, surface, slug }: { config: Record<string, any>; accent: string; surface: string; slug: string }) {
-  const [left, setLeft] = useState({ j: 0, h: 0, m: 0, s: 0 });
+// ─── Countdown (affiché juste sous le prix) ───────────────────────────────────
+function CountdownSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
+  // null avant le montage : pas d'écart de rendu serveur/client sur l'heure.
+  const [reste, setReste] = useState<number | null>(null);
   useEffect(() => {
     const end = new Date(config.dateFin || "").getTime();
-    const tick = () => {
-      const diff = Math.max(0, end - Date.now());
-      setLeft({ j: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000), s: Math.floor((diff % 60000) / 1000) });
-    };
+    const tick = () => setReste(Math.max(0, (end || 0) - Date.now()));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [config.dateFin]);
+  if (!reste) return null; // pas monté, date invalide ou offre terminée
 
-  const Unit = ({ v, l }: { v: number; l: string }) => (
-    <div className="text-center">
-      <div className="text-3xl font-black tabular-nums w-16 py-3 rounded-2xl" style={{ background: surface, color: accent }}>{String(v).padStart(2, "0")}</div>
-      <p className="text-xs opacity-40 mt-1">{l}</p>
-    </div>
-  );
+  const unites = [
+    { v: Math.floor(reste / 86400000), l: "Jours" }, { v: Math.floor((reste % 86400000) / 3600000), l: "Heures" },
+    { v: Math.floor((reste % 3600000) / 60000), l: "Min" }, { v: Math.floor((reste % 60000) / 1000), l: "Sec" },
+  ];
   return (
-    <div className="py-14 px-6 text-center border-t" style={{ borderColor: `${accent}10` }}>
-      {config.titre && <h3 className="text-2xl font-bold mb-2">{config.titre}</h3>}
-      {config.texte && <p className="opacity-60 mb-8 max-w-md mx-auto text-sm">{config.texte}</p>}
-      <div className="flex justify-center gap-3 mb-8">
-        <Unit v={left.j} l="Jours" /><span className="text-2xl font-black opacity-30 mt-2">:</span>
-        <Unit v={left.h} l="Heures" /><span className="text-2xl font-black opacity-30 mt-2">:</span>
-        <Unit v={left.m} l="Min" /><span className="text-2xl font-black opacity-30 mt-2">:</span>
-        <Unit v={left.s} l="Sec" />
+    <div className="rounded-2xl px-4 py-3.5" style={{ background: `${accent}0D`, border: `1px solid ${accent}30` }}>
+      {config.titre && <p className="text-sm font-bold leading-snug" style={{ color: accent }}>{config.titre}</p>}
+      {config.texte && <p className="text-[13px] leading-snug opacity-60 mt-0.5">{config.texte}</p>}
+      <div className={`flex items-start gap-1.5 ${config.titre || config.texte ? "mt-2.5" : ""}`}>
+        {unites.map((u, i) => (
+          <div key={u.l} className="flex items-start gap-1.5">
+            {i > 0 && <span className="text-lg font-black opacity-30 leading-[2.5rem]">:</span>}
+            <div className="text-center">
+              <div className="text-xl font-black tabular-nums w-12 h-10 flex items-center justify-center rounded-xl" style={{ background: surface, color: accent }}>{String(u.v).padStart(2, "0")}</div>
+              <p className="text-[10px] uppercase tracking-wide opacity-45 mt-1">{u.l}</p>
+            </div>
+          </div>
+        ))}
       </div>
-      {config.ctaTexte && (
-        <Link href={`/${slug}/checkout`} className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm"
-          style={{ background: accent, color: "#fff" }}>{config.ctaTexte}</Link>
-      )}
     </div>
   );
 }
@@ -882,8 +880,8 @@ function ComparisonSection({ config, accent, surface }: { config: Record<string,
 }
 
 // ─── Achat direct d'un produit digital ───────────────────────────────────────
-// Un clic → l'email du client (NotchPay exige un email ou un téléphone, et il
-// sert à envoyer le lien de téléchargement) → page de paiement NotchPay
+// Un clic → nom, téléphone et email du client (l'email sert à envoyer le lien
+// de téléchargement) → page de paiement NotchPay
 // (MTN MoMo, Orange Money, carte bancaire). Aucun montant n'est envoyé : le
 // serveur le recalcule depuis la base (commande puis paiement).
 function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, couleurTexte, radius, desactive }: {
@@ -891,19 +889,20 @@ function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, co
 }) {
   const { fmt, aPayer } = usePrix();
   const [ouvert, setOuvert] = useState(false);
+  const [nom, setNom] = useState("");
+  const [telephone, setTelephone] = useState("");
   const [email, setEmail] = useState("");
   const [envoi, setEnvoi] = useState(false);
-  const emailValide = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const valide = nom.trim().length > 1 && telephone.replace(/\D/g, "").length >= 8 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const payer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailValide || envoi) return;
+    if (!valide || envoi) return;
     setEnvoi(true);
     try {
-      const adresse = email.trim().toLowerCase();
       const cmd = await fetch("/api/commandes/digital-creer", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantId, client: { nom: adresse.split("@")[0], email: adresse }, items: [{ produitId, quantite: 1 }], codeAffiliation: (() => { try { return localStorage.getItem("axso_ref") || undefined; } catch { return undefined; } })() }),
+        body: JSON.stringify({ tenantId, client: { nom: nom.trim(), telephone: telephone.trim(), email: email.trim().toLowerCase() }, items: [{ produitId, quantite: 1 }], codeAffiliation: (() => { try { return localStorage.getItem("axso_ref") || undefined; } catch { return undefined; } })() }),
       });
       const c = await cmd.json();
       if (!cmd.ok) throw new Error(c.error || "Commande impossible");
@@ -931,12 +930,18 @@ function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, co
   }
   return (
     <form onSubmit={payer} className="space-y-2.5 p-4 rounded-2xl border" style={{ borderColor: `${fond}40`, background: `${fond}08` }}>
-      <label className="block">
-        <span className="block text-[13px] font-semibold mb-1.5">Ton email — le lien de téléchargement y sera envoyé</span>
-        <input type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemple.com" autoComplete="email"
-          className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
-      </label>
-      <button type="submit" disabled={!emailValide || envoi}
+      {([
+        { label: "Nom complet", type: "text", valeur: nom, maj: setNom, ph: "Ex : Aminata Diallo", auto: "name" },
+        { label: "Téléphone", type: "tel", valeur: telephone, maj: setTelephone, ph: "+237 6 00 00 00 00", auto: "tel" },
+        { label: "Email — le lien de téléchargement y sera envoyé", type: "email", valeur: email, maj: setEmail, ph: "email@exemple.com", auto: "email" },
+      ] as const).map((c, i) => (
+        <label key={c.type} className="block">
+          <span className="block text-[13px] font-semibold mb-1.5">{c.label}</span>
+          <input type={c.type} required autoFocus={i === 0} value={c.valeur} onChange={(e) => c.maj(e.target.value)} placeholder={c.ph} autoComplete={c.auto}
+            className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
+        </label>
+      ))}
+      <button type="submit" disabled={!valide || envoi}
         className="w-full py-3.5 font-bold text-[15px] flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40"
         style={{ background: fond, color: couleurTexte, borderRadius: radius }}>
         {envoi ? <><Loader2 size={17} className="animate-spin" /> Redirection vers le paiement…</> : <><Lock size={16} /> Payer {aPayer(prix, devise)}</>}
@@ -1179,6 +1184,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const similarTitre    = simCfg.titre || "Vous aimerez aussi";
 
   const rightSections = sections.filter(s => RIGHT_COL.has(s.type) && s.actif);
+  const countdownSec  = sections.find(s => s.type === "countdown" && s.actif);
+  // Bloc « Ajouter au panier » ajouté par le marchand (jamais en boutique digitale ni pour un produit digital).
+  const avecBoutonPanier = !tenant.boutiqueDigitale && !TYPES_DIGITAUX.has(produit.type) && rightSections.some(s => s.type === "addToCart");
   const belowSections = sections.filter(s => BELOW_TYPES.has(s.type) && s.actif);
 
   // State
@@ -1244,6 +1252,12 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
     )
   );
 
+  const renderCountdown = () => countdownSec && (
+    <StyledSection style={countdownSec.style}>
+      <CountdownSection config={cfgDe(countdownSec)} accent={accent} surface={surface} />
+    </StyledSection>
+  );
+
   const renderInfoHeader = () => (
     <>
       {isOn("info") && (
@@ -1297,6 +1311,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
               </span>
             )}
           </div>
+          {renderCountdown()}
           {showStock && (
             <div className="flex items-center gap-2 text-sm">
               {enRupture ? (
@@ -1321,6 +1336,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   const renderRightSections = () => (
     <>
+      {!isOn("info") && renderCountdown()}
       {rightSections.map(sec => {
         const cfg = cfgDe(sec);
         const btnFond = cfg.couleurBouton || accent;
@@ -1349,25 +1365,8 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   texte={cfg.texteBouton || produit.texteBoutonAchat || "Acheter"} fond={btnFond} couleurTexte={btnTexte} radius={btnRadiusPx} desactive={enRupture} />
               ) : (
               <div className="space-y-2.5">
-                {/* Ajout au panier : jamais en boutique digitale, facultatif en boutique physique. */}
-                {!tenant.boutiqueDigitale && cfg.afficherAjoutPanier !== false && (
-                <button onClick={doAddToCart} disabled={enRupture}
-                  className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
-                  style={{
-                    ...btnAchatSizing,
-                    background: enRupture ? "#E0E0E0" : (btnRempli ? (cfg.couleurBouton ? btnFond : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`) : "transparent"),
-                    color: enRupture ? "#999" : (btnRempli ? btnTexte : btnFond),
-                    border: !btnRempli ? `2px solid ${btnFond}` : "none",
-                    textDecoration: btnStyle === "ghost" ? "underline" : "none",
-                    boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${btnFond}40`,
-                    ["--ax-accent-glow" as any]: `${btnFond}80`,
-                  }}>
-                  {TYPES_DIGITAUX.has(produit.type) ? <Download size={18} /> : <ShoppingCart size={18} />}
-                  {enRupture ? "Indisponible" : (cfg.texteBouton || produit.texteBoutonAchat || "Ajouter au panier")}
-                </button>
-                )}
-                {/* Toujours présent sans bouton panier : sinon aucun moyen d'acheter. */}
-                {(cfg.afficherAcheterMaintenant !== false || tenant.boutiqueDigitale || cfg.afficherAjoutPanier === false) && (
+                {/* Toujours présent sans bloc « Ajouter au panier » : sinon aucun moyen d'acheter. */}
+                {(cfg.afficherAcheterMaintenant !== false || !avecBoutonPanier) && (
                   <button onClick={buyNow} disabled={enRupture}
                     className="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
                     style={{ borderColor: btnFond, color: btnFond, background: `${btnFond}08`, borderRadius: btnRadiusPx }}>
@@ -1384,6 +1383,22 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
               </div>
               )}
             </div>
+          )}
+          {sec.type === "addToCart" && avecBoutonPanier && (
+            <button onClick={doAddToCart} disabled={enRupture}
+              className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
+              style={{
+                ...btnAchatSizing,
+                background: enRupture ? "#E0E0E0" : (btnRempli ? (cfg.couleurBouton ? btnFond : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`) : "transparent"),
+                color: enRupture ? "#999" : (btnRempli ? btnTexte : btnFond),
+                border: !btnRempli ? `2px solid ${btnFond}` : "none",
+                textDecoration: btnStyle === "ghost" ? "underline" : "none",
+                boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${btnFond}40`,
+                ["--ax-accent-glow" as any]: `${btnFond}80`,
+              }}>
+              <ShoppingCart size={18} />
+              {enRupture ? "Indisponible" : (cfg.texteBouton || produit.texteBoutonAchat || "Ajouter au panier")}
+            </button>
           )}
           {sec.type === "trust" && (
             <div className="space-y-3">
@@ -1593,7 +1608,6 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             {sec.type === "guarantee"    && <GuaranteeSection   config={sec.config} accent={accent} surface={surface} />}
             {sec.type === "bundle"       && <BundleSection      config={sec.config} accent={accent} surface={surface} radius={radius} slug={slug} />}
             {sec.type === "comparison"   && <ComparisonSection  config={sec.config} accent={accent} surface={surface} />}
-            {sec.type === "countdown"    && <CountdownSection   config={sec.config} accent={accent} surface={surface} slug={slug} />}
             {sec.type === "social"       && <SocialSection      accent={accent} nom={produit.nom} />}
 
           </StyledSection>

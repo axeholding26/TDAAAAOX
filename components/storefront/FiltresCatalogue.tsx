@@ -43,8 +43,22 @@ export function FiltresCatalogue() {
       const cat = pastille.dataset.cat ?? "all";
       filtrer((carte) => cat === "all" || carte.dataset.cat === cat);
     };
+    // Tri (<select data-axs-tri> : recent | asc | desc) — réordonne les cartes
+    // d'après data-prix / data-rang posés par lib/vitrine-design.ts.
+    const tri = (e: Event) => {
+      const select = (e.target as HTMLElement).closest<HTMLSelectElement>("[data-axs-embed-html] select[data-axs-tri]");
+      if (!select) return;
+      const nb = (c: HTMLElement, k: string) => Number(c.dataset[k]) || 0;
+      const comparer = select.value === "asc" ? (a: HTMLElement, b: HTMLElement) => nb(a, "prix") - nb(b, "prix")
+        : select.value === "desc" ? (a: HTMLElement, b: HTMLElement) => nb(b, "prix") - nb(a, "prix")
+        : (a: HTMLElement, b: HTMLElement) => nb(a, "rang") - nb(b, "rang");
+      document.querySelectorAll<HTMLElement>("[data-axs-embed-html] #plpGrid").forEach((grille) => {
+        [...grille.querySelectorAll<HTMLElement>(":scope > [data-cat]")].sort(comparer).forEach((c) => grille.appendChild(c));
+      });
+    };
     document.addEventListener("click", clic);
-    return () => document.removeEventListener("click", clic);
+    document.addEventListener("change", tri);
+    return () => { document.removeEventListener("click", clic); document.removeEventListener("change", tri); };
   }, []);
   return null;
 }

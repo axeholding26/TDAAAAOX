@@ -12,7 +12,8 @@ import { nomNoeud } from "./boutique/libelles";
 import { ATTR_EL, racineElement } from "./boutique/elements-dom";
 import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
 import { appliquerActionPage, uid, type ActionPage } from "@/lib/pages-annexes";
-import { SECTIONS_FICHE, TYPES_FICHE, appliquerActionFiche, sectionsFiche, typesIndisponibles, type ActionFiche } from "@/lib/fiche-produit";
+import { SECTIONS_FICHE, TYPES_FICHE, appliquerActionFiche, ficheDuProduit, sectionsFiche, typesIndisponibles, type ActionFiche } from "@/lib/fiche-produit";
+import { useFicheCible } from "./boutique/ApercuFiche";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import { MediaUpload } from "@/components/ui/MediaUpload";
 import { FONTS } from "@/lib/theme-fonts";
@@ -926,7 +927,8 @@ const PRODUIT_SECTION_META: Record<string, { Icon: any; desc: string }> = {
   gallery:      { Icon: ImageIcon,     desc: "Photos du produit" },
   info:         { Icon: FileText,      desc: "Nom, prix, stock, fil d'Ariane" },
   variants:     { Icon: Layers,        desc: "Tailles, couleurs…" },
-  quantity:     { Icon: ShoppingCart,  desc: "Quantité et boutons d'achat" },
+  quantity:     { Icon: ShoppingCart,  desc: "Quantité, Acheter maintenant, WhatsApp" },
+  addToCart:    { Icon: ShoppingCart,  desc: "Ajoute la variante choisie au panier" },
   trust:        { Icon: Shield,        desc: "Badges de réassurance" },
   description:  { Icon: BookOpen,      desc: "Description et livraison" },
   reviews:      { Icon: Star,          desc: "Avis clients" },
@@ -944,7 +946,7 @@ const PRODUIT_SECTION_META: Record<string, { Icon: any; desc: string }> = {
   guarantee:    { Icon: Shield,        desc: "Informations garantie et service client" },
   bundle:       { Icon: Layers,        desc: "Produits fréquemment achetés ensemble" },
   comparison:   { Icon: LayoutGrid,    desc: "Comparez avec d'autres versions" },
-  countdown:    { Icon: Timer,         desc: "Urgence pour une offre limitée" },
+  countdown:    { Icon: Timer,         desc: "Urgence, affiché juste sous le prix" },
   social:       { Icon: Share2,        desc: "Boutons Facebook, WhatsApp, lien copie" },
 };
 
@@ -1146,14 +1148,22 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     case "quantity": return (
       <Bloc>
         <Bascule label="Sélecteur de quantité" value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
-        <Bascule label="Bouton « Ajouter au panier » (boutique physique)" value={c.afficherAjoutPanier !== false} onChange={v => up({ afficherAjoutPanier: v })} />
-        <p className="text-[11.5px] text-gray-400 -mt-1">Jamais affiché dans une boutique digitale : le client achète directement.</p>
-        <FInp label="Texte du bouton (vide = « Ajouter au panier »)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <p className="text-[11.5px] text-gray-400">Le bouton « Ajouter au panier » est un bloc à part : « Ajouter » → « Bouton Ajouter au panier ».</p>
+        <FInp label="Texte du bouton d'achat (produit digital)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
         <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
         <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
         {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">Revenir aux couleurs du thème</button>}
         <Bascule label="Bouton « Acheter maintenant »" value={c.afficherAcheterMaintenant !== false} onChange={v => up({ afficherAcheterMaintenant: v })} />
         <Bascule label="Bouton WhatsApp" value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+      </Bloc>
+    );
+    case "addToCart": return (
+      <Bloc>
+        <FInp label="Texte du bouton (vide = « Ajouter au panier »)" value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <FCol label="Couleur du bouton" value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
+        <FCol label="Couleur du texte du bouton" value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
+        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">Revenir aux couleurs du thème</button>}
+        <p className="text-[11.5px] text-gray-400 leading-relaxed">Ajoute la variante et la quantité choisies au panier. Masqué pour les produits digitaux et en boutique digitale (achat direct).</p>
       </Bloc>
     );
     case "trust": return (
@@ -1272,7 +1282,7 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
           <input type="datetime-local" value={c.dateFin || ""} onChange={e => up({ dateFin: e.target.value })}
             className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-[13px] text-gray-800 focus:outline-none focus:border-[#F5A623]/50" />
         </div>
-        <FInp label="Texte du bouton" value={c.ctaTexte || ""} onChange={v => up({ ctaTexte: v })} />
+        <p className="text-[11.5px] text-gray-400">Affiché juste sous le prix, masqué une fois la date passée.</p>
       </Bloc>
     );
     default: return null; // social : aucun contenu à régler, seulement le style
@@ -1397,7 +1407,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
   );
 }
 
-export function PanelProduit({ config, setProductPage }: any) {
+export function PanelProduit({ config, setProductPage, set }: any) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [rechercheSection, setRechercheSection] = useState("");
   // Position d'insertion de la bibliothèque (null = fermée).
@@ -1406,7 +1416,20 @@ export function PanelProduit({ config, setProductPage }: any) {
   const [dropIdx, setDropIdx] = useState<number | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  const pp = config.productPage || {};
+  // Fiche ciblée : template global (null) ou fiche propre à un produit, façon
+  // Shopify. Un produit sans fiche propre suit le template global ; sa
+  // première modification lui en crée une (copie du global), sans toucher
+  // aux autres produits.
+  const { produitId: cible, choisir } = useFicheCible();
+  const [produits, setProduits] = useState<{ id: string; nom: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/produits?limit=100").then(r => r.json())
+      .then(d => setProduits((d.produits ?? []).map((p: any) => ({ id: p.id, nom: p.nom })))).catch(() => {});
+  }, []);
+  const perso: Record<string, unknown> = config.productPagesParProduit || {};
+  const nbPerso = Object.keys(perso).length;
+
+  const pp = (cible ? ficheDuProduit(config, cible) : config.productPage) || {};
   const layout: string = pp.layout || "amazon";
   const sections = sectionsFiche(pp);
   const indisponibles = typesIndisponibles(sections);
@@ -1417,9 +1440,20 @@ export function PanelProduit({ config, setProductPage }: any) {
     try {
       const { pp: next, id } = appliquerActionFiche(pp, a);
       setErreur(null);
-      setProductPage(next);
+      if (cible) set((p: ThemeConfig) => ({ ...p, productPagesParProduit: { ...(p.productPagesParProduit || {}), [cible]: next } }));
+      else setProductPage(next);
       return id;
     } catch (e: any) { setErreur(e.message); }
+  };
+  const changerCible = (id: string | null) => { choisir(id); setActiveSection(null); setErreur(null); };
+  const revenirGlobal = () => set((p: ThemeConfig) => {
+    const { [cible as string]: _, ...reste } = p.productPagesParProduit || {};
+    return { ...p, productPagesParProduit: reste };
+  });
+  const appliquerATous = () => {
+    if (!confirm("Appliquer cette fiche à tous les produits ?\n\nLes fiches personnalisées des autres produits seront remplacées.")) return;
+    set((p: ThemeConfig) => ({ ...p, productPage: pp, productPagesParProduit: {} }));
+    choisir(null);
   };
   const updateSection = (id: string, patch: Record<string, any>) => agir({ action: "configurer", section: id, config: patch });
   const updateSectionStyle = (id: string, patch: Record<string, any>) => agir({ action: "styliser", section: id, style: patch });
@@ -1491,6 +1525,31 @@ export function PanelProduit({ config, setProductPage }: any) {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto scrollbar-thin">
+
+        {/* Fiche ciblée : template global ou produit précis */}
+        {produits.length > 0 && (
+          <div className="p-4 border-b border-gray-200 space-y-2">
+            <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">Fiche à modifier</p>
+            <select value={cible ?? ""} onChange={e => changerCible(e.target.value || null)}
+              className="w-full bg-gray-100 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#F5A623]/50">
+              <option value="">Toutes les fiches (template global)</option>
+              {produits.map(p => <option key={p.id} value={p.id}>{p.nom}{perso[p.id] ? " · personnalisée" : ""}</option>)}
+            </select>
+            <p className="text-[12px] text-gray-500 leading-relaxed">
+              {cible
+                ? perso[cible] ? "Fiche personnalisée : vos changements ne concernent que ce produit." : "Ce produit suit le template global. Votre première modification lui crée sa propre fiche."
+                : nbPerso ? `${nbPerso} produit${nbPerso > 1 ? "s ont leur" : " a sa"} propre fiche et ne ${nbPerso > 1 ? "suivent" : "suit"} pas ce template.` : "Ce template s'applique à toutes les fiches produits."}
+            </p>
+            {(cible ? !!perso[cible] : nbPerso > 0) && (
+              <div className="flex flex-wrap gap-1.5">
+                {cible && (
+                  <button onClick={revenirGlobal} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-gray-200 text-gray-700 hover:border-gray-300">Revenir au template global</button>
+                )}
+                <button onClick={appliquerATous} className="px-2.5 py-1.5 rounded-lg text-[12px] font-semibold border border-[#F5A623]/50 text-[#B7791F] hover:bg-[#F5A623]/10">Appliquer à toutes les fiches</button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Layout picker */}
         <div className="p-4 border-b border-gray-200">
@@ -1564,7 +1623,7 @@ export function PanelProduit({ config, setProductPage }: any) {
         </div>
 
         <div className="px-4 pb-4">
-          <p className="text-[13px] text-gray-600 leading-relaxed">Ces réglages s'appliquent à toutes les fiches produits. Survolez l'espace entre deux sections pour en insérer une à cet endroit.</p>
+          <p className="text-[13px] text-gray-600 leading-relaxed">{cible ? "Ces réglages ne s'appliquent qu'à ce produit." : "Ces réglages s'appliquent à toutes les fiches produits non personnalisées."} Survolez l'espace entre deux sections pour en insérer une à cet endroit.</p>
         </div>
       </div>
     </div>

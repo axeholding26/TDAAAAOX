@@ -23,8 +23,14 @@ export const SECTIONS_FICHE: Record<string, Catalogue> = {
   gallery:      { label: "Galerie photos", base: true, defaut: () => ({ style: "vertical-thumbs", zoom: true, sticky: true }) },
   info:         { label: "Infos produit", base: true, defaut: () => ({ breadcrumbs: true, badges: true, stock: true }) },
   variants:     { label: "Variantes", base: true, defaut: () => ({ style: "boutons", taille: "md", espacement: "normal", afficherLibelle: true }) },
-  quantity:     { label: "Quantité & panier", base: true, defaut: () => ({ afficherQuantite: true, texteBouton: "", afficherAcheterMaintenant: true, afficherWhatsApp: true, couleurBouton: "", couleurTexteBouton: "" }) },
+  quantity:     { label: "Quantité & achat", base: true, defaut: () => ({ afficherQuantite: true, texteBouton: "", afficherAcheterMaintenant: true, afficherWhatsApp: true, couleurBouton: "", couleurTexteBouton: "" }) },
+  addToCart:    { label: "Bouton Ajouter au panier", defaut: () => ({ texteBouton: "", couleurBouton: "", couleurTexteBouton: "" }) },
   trust:        { label: "Badges confiance", base: true, defaut: () => ({ disposition: "grille", colonnes: 3, afficherVendeur: true, items: [{ icone: "🔒", texte: "Paiement sécurisé" }, { icone: "🚚", texte: "Livraison rapide" }, { icone: "↩️", texte: "Retour 14 jours" }] }) },
+  // Section de base : diffuse les vidéos rattachées au produit (Produit →
+  // Images & vidéos). Aucune URL à saisir ici — le marchand règle le titre et
+  // la lecture auto, et la section s'affiche d'elle-même dès qu'un produit a
+  // au moins une vidéo. `titre` vide = aucune barre de titre.
+  videoProduit: { label: "Vidéo du produit", base: true, defaut: () => ({ titre: "", autoplay: false }) },
   description:  { label: "Description", base: true, defaut: () => ({ ai: true, afficherLivraison: true, livraison: [{ titre: "Livraison standard", texte: "Préparée sous 24–48h ouvrées." }, { titre: "Politique de retour", texte: "Retours sous 14 jours, produit intact." }, { titre: "Paiement sécurisé", texte: "Mobile money, carte ou paiement à la livraison." }] }) },
   reviews:      { label: "Avis clients", base: true, defaut: () => ({ titre: "Avis clients", disposition: "grille", afficherResume: true, afficherFormulaire: true, afficherVerifie: true, couleurEtoiles: "", max: 20 }) },
   similar:      { label: "Produits similaires", base: true, defaut: () => ({ count: 4, titre: "Vous aimerez aussi" }) },
@@ -49,8 +55,31 @@ export const TYPES_FICHE = Object.keys(SECTIONS_FICHE);
 
 const STYLE_CLES: (keyof ProductPageSectionStyle)[] = ["bgColor", "textColor", "paddingY", "marginY", "maxWidth", "align", "fontScale"];
 
+/** Fiche effective d'un produit : sa fiche personnalisée, sinon le template global. */
+export function ficheDuProduit(cfg: { productPage?: ThemeProductPageConfig; productPagesParProduit?: Record<string, ThemeProductPageConfig> } | null | undefined, produitId?: string | null): ThemeProductPageConfig | undefined {
+  return (produitId && cfg?.productPagesParProduit?.[produitId]) || cfg?.productPage;
+}
+
 export function sectionsFiche(pp?: ThemeProductPageConfig | null): ProductPageSection[] {
-  return pp?.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS.map((s) => ({ ...s, config: { ...s.config } }));
+  return avecVideoProduit(pp?.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS.map((s) => ({ ...s, config: { ...s.config } })));
+}
+
+/**
+ * Garantit la présence de la section « Vidéo du produit » juste avant la
+ * description, y compris pour les fiches enregistrées AVANT son introduction
+ * (toutes les boutiques existantes, dont `sections` ne la contient donc pas).
+ *
+ * Elle est ajoutée une seule fois puis fait partie de la config : si le
+ * marchand la masque (actif: false) ou la déplace, elle n'est jamais réinsérée
+ * ni repositionnée, puisque le test porte sur sa présence et non sur son état.
+ */
+function avecVideoProduit(sections: ProductPageSection[]): ProductPageSection[] {
+  if (sections.some((s) => s.type === "videoProduit")) return sections;
+  const i = sections.findIndex((s) => s.type === "description");
+  const video: ProductPageSection = { id: "videoProduit", type: "videoProduit", actif: true, config: { ...SECTIONS_FICHE.videoProduit.defaut() } };
+  const next = [...sections];
+  next.splice(i >= 0 ? i : next.length, 0, video);
+  return next;
 }
 
 /** Types déjà présents qui ne peuvent plus être ajoutés (sections uniques). */

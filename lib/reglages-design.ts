@@ -3,7 +3,7 @@
 // n'utilisaient que les couleurs et polices. Seulement pour les panneaux que
 // le marchand a réellement modifiés (`reglagesDesign`) : les valeurs par
 // défaut ne doivent jamais écraser l'apparence d'origine d'un design.
-// Sélecteurs vérifiés sur les 15 designs de Templates/ (boutons à classe
+// Sélecteurs vérifiés sur les 18 designs de Templates/ (boutons à classe
 // btn/button/cta, un <header>, grilles *grid*).
 
 type Couleurs = Record<string, any>;

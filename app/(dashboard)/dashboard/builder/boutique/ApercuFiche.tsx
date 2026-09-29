@@ -4,6 +4,15 @@ import { Suspense, useEffect, useState } from "react";
 import type { ThemeConfig } from "@/lib/theme-config";
 import { ProductPageClient, type ProductPageClientProps } from "@/components/storefront/ProductPageClient";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
+import { ficheDuProduit } from "@/lib/fiche-produit";
+import { create } from "zustand";
+
+// Fiche en cours d'édition (null = template global) — partagée entre le
+// panneau « Fiche produit » et cet aperçu.
+export const useFicheCible = create<{ produitId: string | null; choisir: (id: string | null) => void }>((set) => ({
+  produitId: null,
+  choisir: (produitId) => set({ produitId }),
+}));
 
 type Device = "desktop" | "tablet" | "mobile";
 const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobile: "390px" };
@@ -29,12 +38,14 @@ const EXEMPLE: Produit = {
 // que la boutique en ligne, alimenté par la config en cours d'édition.
 export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; tenant: any; device: Device }) {
   const [produit, setProduit] = useState<Produit>(EXEMPLE);
+  const produitId = useFicheCible(s => s.produitId);
 
+  // Produit choisi dans le panneau, sinon le premier de la boutique.
   useEffect(() => {
-    fetch("/api/produits?limit=1").then(r => r.json()).then(async d => {
-      const premier = d.produits?.[0];
-      if (!premier) return;
-      const { produit: p } = await fetch(`/api/produits/${premier.id}`).then(r => r.json());
+    (async () => {
+      const id = produitId ?? (await fetch("/api/produits?limit=1").then(r => r.json())).produits?.[0]?.id;
+      if (!id) return;
+      const { produit: p } = await fetch(`/api/produits/${id}`).then(r => r.json());
       if (!p) return;
       setProduit({
         ...EXEMPLE, id: p.id, nom: p.nom, description: p.description, descriptionIA: p.descriptionIA ?? null,
@@ -44,8 +55,8 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
         variantes: p.variantes?.length ? p.variantes.map((v: any) => ({ id: v.id, nom: v.nom, valeur: v.valeur, prix: v.prix, stock: v.stock }))
           : p.type === "physique" ? EXEMPLE.variantes : [],
       });
-    }).catch(() => {});
-  }, []);
+    })().catch(() => {});
+  }, [produitId]);
 
   const c = config.colors;
   return (
@@ -69,7 +80,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
                 id: tenant?.id ?? "", slug: tenant?.slug ?? "", nomBoutique: tenant?.nomBoutique ?? "", devise: tenant?.devise ?? "XAF",
                 certifie: !!tenant?.certifie, accent: c.accent, fond: c.fond, texte: c.texte, surface: c.surface, radius: config.radius,
                 whatsapp: tenant?.whatsapp ?? null, whatsappNumero: tenant?.whatsappNumero ?? null,
-                productPage: config.productPage ?? null, layout: config.layout ?? null, boutons: config.boutons ?? null,
+                productPage: (produitId ? ficheDuProduit(config, produitId) : config.productPage) ?? null, layout: config.layout ?? null, boutons: config.boutons ?? null,
                 boutiqueDigitale: config.modeBoutique === "digital",
               }}
             />

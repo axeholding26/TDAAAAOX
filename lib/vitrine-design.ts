@@ -145,11 +145,11 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
   const categories = [...new Map(produits.filter((p) => p.categorie?.trim()).map((p) => [slugify(p.categorie!), p.categorie!.trim()])).entries()]
     .map(([slug, label]) => ({ slug, label }))
     .sort((a, b) => rang(a.label) - rang(b.label));
-  // Catégorie sur chaque carte : de quoi filtrer dans le navigateur.
-  const cartes = produits.map((p) => {
-    const prix = prixClient(p.prix, taux);
-    const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(convertirMontant(prix, tenant.devise, devise, tauxChange), devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
-    return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}"`);
+  // Catégorie, prix et rang (nouveautés) sur chaque carte : de quoi filtrer et trier dans le navigateur.
+  const cartes = produits.map((p, rang) => {
+    const prix = convertirMontant(prixClient(p.prix, taux), tenant.devise, devise, tauxChange);
+    const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(prix, devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
+    return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}" data-prix="${prix}" data-rang="${rang}"`);
   }).join("");
   const cat: Catalogue = { cartes, nb: produits.length, categories };
   return {
@@ -162,6 +162,11 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
 
 /** À utiliser par toutes les pages de la vitrine à la place de resolveThemeConfigAsync. */
 export async function resolveConfigVitrine(themeId: string, tenantId: string, savedConfig: Record<string, any> = {}): Promise<ThemeConfig> {
-  const cfg = await resolveThemeConfigAsync(themeId, tenantId, savedConfig);
-  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId)));
+  const [cfg, collections, tenant] = await Promise.all([
+    resolveThemeConfigAsync(themeId, tenantId, savedConfig),
+    // Liens du pied de page vers chaque collection (voir lib/liens-design.ts).
+    prisma.collection.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, select: { slug: true, nom: true } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),
+  ]);
+  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId), { slug: tenant?.slug, collections }));
 }

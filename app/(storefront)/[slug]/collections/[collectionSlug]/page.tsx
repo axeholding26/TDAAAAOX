@@ -8,6 +8,7 @@ import { prixClient } from "@/lib/pricing";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import Link from "next/link";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
+import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import { Package, ArrowLeft } from "lucide-react";
 
@@ -84,25 +85,8 @@ export default async function CollectionPage({ params }: Props) {
     take: 60,
   });
 
-  // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
-  return (
-    <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
-      <StorefrontNavbar
-        slug={slug}
-        nomBoutique={tenant.nomBoutique}
-        logoUrl={tenant.logoUrl}
-        accent={c.accent}
-        fond={c.fond}
-        texte={c.texte}
-        radius={radius}
-        collections={tenant.collections}
-        certifie={tenant.certifie}
-        navStyle={cfg.navigationStyle}
-        showAbout={cfg.aboutPage?.actif}
-        showContact={cfg.contactPage?.actif}
-        sansPanier={cfg.modeBoutique === "digital"}
-      />
-
+  const contenu = (
+    <>
       {/* Hero collection */}
       <div className="relative overflow-hidden" style={{ backgroundColor: c.surface }}>
         {collection.imageUrl && (
@@ -216,6 +200,33 @@ export default async function CollectionPage({ params }: Props) {
           </div>
         )}
       </div>
+    </>
+  );
+
+  // Boutique à design : en-tête et pied de page du design, comme les autres pages.
+  const Habillage = habillageDesign(cfg);
+  if (Habillage) return <Habillage>{contenu}</Habillage>;
+
+  // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
+  return (
+    <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
+      <StorefrontNavbar
+        slug={slug}
+        nomBoutique={tenant.nomBoutique}
+        logoUrl={tenant.logoUrl}
+        accent={c.accent}
+        fond={c.fond}
+        texte={c.texte}
+        radius={radius}
+        collections={tenant.collections}
+        certifie={tenant.certifie}
+        navStyle={cfg.navigationStyle}
+        showAbout={cfg.aboutPage?.actif}
+        showContact={cfg.contactPage?.actif}
+        sansPanier={cfg.modeBoutique === "digital"}
+      />
+
+      {contenu}
 
       <footer className="border-t mt-16 py-8 text-center text-xs" style={{ borderColor: `${c.accent}10`, opacity: 0.4 }}>
         <p>{tenant.nomBoutique} · Propulsé par <span style={{ color: c.accent, opacity: 1 }}>Axso</span></p>

@@ -25,7 +25,8 @@ export interface EntreeLibrairie {
 }
 
 // Figé le 2026-09-12 par app/api/internal/build-library-manifest — 15/15
-// fichiers de Templates/ analysés avec succès.
+// fichiers de Templates/ analysés avec succès. CODEX, NOIR ATELIER et PULSE
+// ajoutés à la main (2026-09-29) : cartes écrites d'après leur CSS.
 export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
   {
     fichier: "aube-site.html", nom: "AUBE", categories: ["jewelry"],
@@ -70,6 +71,14 @@ export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
     couleurs: { fond: "#F4F7F3", accent: "#5B8A6B", texte: "#1F2A22", surface: "#E3ECE2" },
     polices: { titre: "plus-jakarta-sans", corps: "plus-jakarta-sans" },
     ambiance: ["naturelle", "clinique", "apaisante"],
+  },
+  {
+    fichier: "codex-site.html", nom: "CODEX", categories: ["books"],
+    carteTemplate: `<a href="{{LIEN}}" class="product-card" data-id="{{ID}}"><div class="media"><img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;"></div><div class="info"><div class="name">{{NOM}}</div><div class="meta"><span class="price">{{PRIX}}</span></div></div></a>`,
+    selecteurVisuelPdp: "#pdpMain",
+    couleurs: { fond: "#0B0B12", accent: "#D4AF6A", texte: "#F2F1F6", surface: "#15151F" },
+    polices: { titre: "eb-garamond", corps: "inter" },
+    ambiance: ["littéraire", "élégant", "sombre"],
   },
   {
     fichier: "equilibre-site.html", nom: "ÉQUILIBRE", categories: ["health", "services"],
@@ -120,6 +129,14 @@ export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
     ambiance: ["technologique", "moderne"],
   },
   {
+    fichier: "noir-atelier-site.html", nom: "NOIR ATELIER", categories: ["fashion"],
+    carteTemplate: `<a href="{{LIEN}}" class="product-card" data-id="{{ID}}"><div class="media"><img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;"></div><div class="info"><span class="name">{{NOM}}</span><span class="price now">{{PRIX}}</span></div></a>`,
+    selecteurVisuelPdp: ".pdp-main",
+    couleurs: { fond: "#F3F0E9", accent: "#5C1420", texte: "#15131A", surface: "#EAE5D8" },
+    polices: { titre: "fraunces", corps: "archivo-narrow" },
+    ambiance: ["couture", "raffiné", "éditorial"],
+  },
+  {
     fichier: "onze-site.html", nom: "ONZE", categories: ["sport"],
     carteTemplate: `<a class="pcard" href="{{LIEN}}"><div class="media" style="background:var(--panel2);"><img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;"></div><div class="info"><div class="name">{{NOM}}</div><div class="price"><span class="now">{{PRIX}}</span></div></div></a>`,
     selecteurVisuelPdp: "#pdpStage",
@@ -152,6 +169,14 @@ export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
     ambiance: ["ludique", "dynamique"],
   },
   {
+    fichier: "pulse-site.html", nom: "PULSE", categories: ["sport", "fashion"],
+    carteTemplate: `<a href="{{LIEN}}" class="product-card" data-id="{{ID}}"><div class="media"><img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;"></div><div class="info"><span class="name">{{NOM}}</span><span class="price">{{PRIX}}</span></div></a>`,
+    selecteurVisuelPdp: "#pdpMain",
+    couleurs: { fond: "#F4F3EF", accent: "#1440E0", texte: "#0E0E12", surface: "#EAE8E2" },
+    polices: { titre: "space-grotesk", corps: "archivo" },
+    ambiance: ["sportif", "urbain", "dynamique"],
+  },
+  {
     fichier: "ring-site.html", nom: "RING", categories: ["sport"],
     carteTemplate: `<a href="{{LIEN}}" class="pcard" data-id="{{ID}}"><div class="media"><img src="{{IMAGE}}" alt="{{NOM}}" style="width:100%;height:100%;object-fit:cover;"></div><div class="info"><div class="name">{{NOM}}</div><div class="price"><span class="now">{{PRIX}}</span></div></div></a>`,
     selecteurVisuelPdp: "#pdpStage",
@@ -174,7 +199,7 @@ export const MANIFESTE_LIBRAIRIE: EntreeLibrairie[] = [
 
 // Choisit l'entrée de la bibliothèque la plus proche d'une catégorie de
 // boutique — même principe que l'ancien selectThemeId (lib/generate-store-
-// config.ts), réadapté aux 15 designs. Premier match dans l'ordre du
+// config.ts), réadapté aux designs de la bibliothèque. Premier match dans l'ordre du
 // manifeste ; "general" (ou la 1ère entrée) sert de repli.
 export function selectionnerGabaritLibrairie(categorie: string): EntreeLibrairie {
   const type = detectCategory(categorie);
@@ -191,7 +216,8 @@ export function detecterCategorie(vente: string): string {
   const v = vente.toLowerCase();
   const map: { kw: string[]; cat: string }[] = [
     { kw:["mode","vêtement","tissu","kente","wax","pagne","robe","chemise","couture","habit"], cat:"fashion" },
-    { kw:["bijou","bague","collier","bracelet","or","argent","joaillerie","perle","montre"], cat:"jewelry" },
+    { kw:["livre","librairie","papeterie","carnet","stylo","roman","manga","fourniture"], cat:"books" },
+    { kw:["bijou","bague","collier","bracelet","en or","argent","joaillerie","perle","montre"], cat:"jewelry" },
     { kw:["cosmétique","beauté","soin","maquillage","parfum","crème","sérum","skincare","cheveux"], cat:"beauty" },
     { kw:["sport","fitness","gym","training","football","basket","rugby","musculation","running"], cat:"sport" },
     { kw:["tech","électronique","gadget","téléphone","ordinateur","accessoire tech","console"], cat:"tech" },
@@ -201,8 +227,10 @@ export function detecterCategorie(vente: string): string {
     { kw:["formation","cours","ebook","digital","service","conseil","coaching","mentoring"], cat:"services" },
     { kw:["agriculture","bio","naturel","ferme","fruits","légumes","jardinage","herbes"], cat:"agriculture" },
   ];
+  // Début de mot uniquement : « sport » ne doit pas matcher « or » (bijoux), ni « cartes » « art ».
+  const trouve = (k: string) => new RegExp(`(^|[^\\p{L}])${k}`, "u").test(v);
   for (const { kw, cat } of map) {
-    if (kw.some(k => v.includes(k))) return cat;
+    if (kw.some(trouve)) return cat;
   }
   return "general";
 }
@@ -211,17 +239,18 @@ export function detecterCategorie(vente: string): string {
 export function choisir4Themes(vente: string, planThemeId?: string): string[] {
   const cat = detecterCategorie(vente);
   const parCat: Record<string, string[]> = {
-    fashion:     ["ndop-site.html","aube-site.html","halle-site.html","cadran-site.html"],
+    fashion:     ["ndop-site.html","noir-atelier-site.html","aube-site.html","pulse-site.html"],
+    books:       ["codex-site.html","pop-site.html","aube-site.html","halle-site.html"],
     jewelry:     ["aube-site.html","cadran-site.html","halle-site.html","ndop-site.html"],
     beauty:      ["clarte-site.html","aube-site.html","equilibre-site.html","halle-site.html"],
-    sport:       ["grind-site.html","onze-site.html","circuit-site.html","ring-site.html"],
+    sport:       ["grind-site.html","pulse-site.html","onze-site.html","circuit-site.html"],
     tech:        ["nexus-site.html","opal-site.html","circuit-site.html","ignite-site.html"],
     food:        ["ignite-site.html","sentier-site.html","halle-site.html","pop-site.html"],
     artisan:     ["ndop-site.html","halle-site.html","aube-site.html","sentier-site.html"],
     home:        ["halle-site.html","equilibre-site.html","clarte-site.html","aube-site.html"],
     services:    ["opal-site.html","nexus-site.html","equilibre-site.html","cadran-site.html"],
     agriculture: ["sentier-site.html","clarte-site.html","equilibre-site.html","ndop-site.html"],
-    general:     ["ndop-site.html","aube-site.html","halle-site.html","pop-site.html"],
+    general:     ["ndop-site.html","noir-atelier-site.html","halle-site.html","pop-site.html"],
   };
   let themes = [...(parCat[cat] || parCat.general)];
   // Mettre le thème suggéré par l'IA en premier
