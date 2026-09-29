@@ -23,12 +23,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const fichier = typeof body.fichier === "string" ? body.fichier : null;
 
-    // Seuls les designs proposés à l'inscription peuvent être appliqués. Avant de lire le
-    // tenant : peut enregistrer themeConfig.designsOrigine.
-    const origine = await designsOrigine(tenantId);
-    if (fichier && origine.length && !origine.includes(fichier)) {
-      return NextResponse.json({ error: "Ce design n'est pas proposé pour ta boutique" }, { status: 400 });
-    }
+    // Avant de lire le tenant : peut enregistrer themeConfig.designsOrigine
+    // (lu par supprimerThemesDesignInactifs). Les 18 designs restent applicables.
+    await designsOrigine(tenantId);
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
     if (estBoutiqueDigitale(tenant.themeConfig)) return NextResponse.json({ error: DESIGN_RESERVE_PHYSIQUE }, { status: 400 });

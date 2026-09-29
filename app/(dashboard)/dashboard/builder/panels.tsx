@@ -844,11 +844,11 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
   return (
     <div className="p-3 space-y-3">
       <p className="text-[13px] text-gray-500 leading-relaxed px-0.5">
-        Les designs proposés par AXIA à la création de ta boutique — tes vrais produits sont branchés automatiquement.
+        Tous les designs AXSO — tes vrais produits sont branchés automatiquement.
       </p>
       {erreur && <p className="text-[13px] text-red-600 px-0.5">{erreur}</p>}
       <div className="grid grid-cols-2 gap-2.5">
-        {MANIFESTE_LIBRAIRIE.filter((e) => !tenant?.designsOrigine?.length || tenant.designsOrigine.includes(e.fichier)).map((e) => {
+        {MANIFESTE_LIBRAIRIE.map((e) => {
           const actif = estActif(e.fichier);
           const busy = applying === e.fichier;
           return (

@@ -8,8 +8,8 @@ export async function GET() {
     const session = await auth();
     const tenantId = (session?.user as any)?.tenantId;
 
-    // Seuls les 4 designs proposés à l'inscription, et plus de doublons.
-    const origine = tenantId ? await designsOrigine(tenantId) : [];
+    // Tous les designs physiques (pas seulement les 4 proposés à l'inscription), sans doublons.
+    if (tenantId) await designsOrigine(tenantId);
     let digitale = false;
     if (tenantId) {
       const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeId: true, themeConfig: true } });
@@ -35,7 +35,7 @@ export async function GET() {
     // vrais produits déjà branchés) plutôt que d'assigner directement un id
     // partagé comme pour les thèmes classiques/premium ci-dessus.
     // Boutique digitale : aucun design physique proposé.
-    const themesLibrairie = MANIFESTE_LIBRAIRIE.filter((e) => !digitale && (!origine.length || origine.includes(e.fichier))).map((e, i) => ({
+    const themesLibrairie = MANIFESTE_LIBRAIRIE.filter(() => !digitale).map((e, i) => ({
       id: `axso-design:${e.fichier}`,
       slug: e.fichier,
       fichier: e.fichier,
