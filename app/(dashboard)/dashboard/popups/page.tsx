@@ -97,7 +97,7 @@ export default function PopupsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Popups & Bandeaux")}</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Popups & Bandeaux")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Campagnes d'engagement sur ta boutique")}</p>
         </div>
         <button
@@ -113,11 +113,11 @@ export default function PopupsPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Affichages")}</p>
-          <p className="text-2xl font-bold text-[#5E6063]">{totalAffichages.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[#111]">{totalAffichages.toLocaleString()}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Clics")}</p>
-          <p className="text-2xl font-bold text-[#5E6063]">{totalClics.toLocaleString()}</p>
+          <p className="text-2xl font-bold text-[#111]">{totalClics.toLocaleString()}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Taux clics")}</p>
@@ -128,7 +128,7 @@ export default function PopupsPage() {
       {/* Formulaire */}
       {showForm && (
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-4">{t("Nouveau popup")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau popup")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] text-[#888] mb-1">{t("Nom interne *")}</label>
@@ -200,7 +200,7 @@ export default function PopupsPage() {
                   <Megaphone size={16} style={{ color: "#F5A623" }} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-[#5E6063] truncate">{t(p.nom)}</p>
+                  <p className="text-[13px] font-semibold text-[#111] truncate">{t(p.nom)}</p>
                   <p className="text-[11px] text-[#888]">{t(TYPE_LABELS[p.type])} · {t(DECLENCHEUR_LABELS[p.declencheur])}</p>
                 </div>
               </div>

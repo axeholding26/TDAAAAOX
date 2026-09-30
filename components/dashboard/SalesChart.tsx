@@ -28,14 +28,14 @@ function TooltipCustom({ active, payload, label, devise }: any) {
     }}>
       <p style={{ fontSize: "11px", color: "#AAA", marginBottom: "8px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em" }}>{t(label)}</p>
       {payload[0]?.value > 0 && (
-        <p style={{ fontSize: "17px", fontWeight: 800, color: "#5E6063", marginBottom: "3px", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
+        <p style={{ fontSize: "17px", fontWeight: 800, color: "#111", marginBottom: "3px", fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>
           {payload[0].value.toLocaleString(t.loc)}
           <span style={{ fontSize: "11px", color: "#AAA", fontWeight: 500, marginLeft: "3px" }}>{t(devise)}</span>
         </p>
       )}
       {payload[1]?.value > 0 && (
         <div style={{ display: "flex", alignItems: "center", gap: "5px", marginTop: "5px" }}>
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#5E6063" }} />
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#111111" }} />
           <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, margin: 0 }}>
             {t(payload[1].value)} commande{payload[1].value > 1 ? "s" : ""}
           </p>
@@ -72,7 +72,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4 gap-4">
         <div>
-          <h3 className="text-[14px] font-bold text-[#5E6063] tracking-tight">{t("Évolution des ventes")}</h3>
+          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Évolution des ventes")}</h3>
           <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Chiffre d'affaires journalier")}</p>
         </div>
         {/* Period tabs */}
@@ -83,7 +83,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
               className="px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
               style={{
                 background: period === p.key ? "#fff" : "transparent",
-                color: period === p.key ? "#5E6063" : "#AAAAAA",
+                color: period === p.key ? "#111111" : "#AAAAAA",
                 boxShadow: period === p.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
               }}>
               {t(p.label)}
@@ -96,7 +96,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
       <div className="flex items-center gap-5 mb-5 pb-4 border-b border-[#F5F5F7]">
         <div>
           <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">{t("Total période")}</p>
-          <p className="text-[20px] font-bold text-[#5E6063] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>
             {total.toLocaleString(t.loc)}
             <span className="text-[13px] text-[#AAAAAA] font-normal ml-1">{t(devise)}</span>
           </p>
@@ -104,7 +104,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
         <div className="w-px h-8 bg-[#F0F0F0]" />
         <div>
           <p className="text-[11px] text-[#AAAAAA] font-medium uppercase tracking-wide">{t("Commandes")}</p>
-          <p className="text-[20px] font-bold text-[#5E6063] tabular-nums">{t(totalCmds)}</p>
+          <p className="text-[20px] font-bold text-[#111111] tabular-nums">{t(totalCmds)}</p>
         </div>
         {bestDay.montant > 0 && (
           <>
@@ -131,8 +131,8 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
               <stop offset="100%" stopColor="#F5A623" stopOpacity={0}    />
             </linearGradient>
             <linearGradient id="gradCmd" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#5E6063" stopOpacity={0.12} />
-              <stop offset="100%" stopColor="#5E6063" stopOpacity={0}    />
+              <stop offset="0%"   stopColor="#111111" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#111111" stopOpacity={0}    />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="2 4" stroke="#F3F3F3" vertical={false} />
@@ -166,11 +166,11 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
           <Area
             type="monotone"
             dataKey="commandes"
-            stroke="#5E6063"
+            stroke="#111111"
             strokeWidth={1.5}
             fill="url(#gradCmd)"
             dot={false}
-            activeDot={{ r: 4, fill: "#5E6063", stroke: "#fff", strokeWidth: 2 }}
+            activeDot={{ r: 4, fill: "#111111", stroke: "#fff", strokeWidth: 2 }}
             strokeOpacity={0.6}
           />
         </AreaChart>
@@ -183,7 +183,7 @@ export function SalesChart({ donnees, devise = "XOF" }: SalesChartProps) {
           <span className="text-[11px] text-[#AAAAAA] font-medium">{t("CA (")}{t(devise)})</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-1.5 rounded-full" style={{ background: "#5E6063", opacity: 0.6 }} />
+          <div className="w-3 h-1.5 rounded-full" style={{ background: "#111111", opacity: 0.6 }} />
           <span className="text-[11px] text-[#AAAAAA] font-medium">{t("Commandes")}</span>
         </div>
         <div className="flex items-center gap-1.5 ml-auto">

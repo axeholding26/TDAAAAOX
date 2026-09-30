@@ -237,7 +237,7 @@ function FlechesDiaporama({ n, selected, aller, toujoursVisibles = false }: { n:
     <>
       {[-1, 1].map((sens) => (
         <button key={sens} type="button" onClick={(e) => { e.stopPropagation(); aller(selected + sens); }} aria-label={sens < 0 ? tx("Image précédente") : tx("Image suivante")}
-          className={`absolute top-1/2 -translate-y-1/2 ${sens < 0 ? "left-2" : "right-2"} z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/90 text-[#5E6063] shadow-md transition-opacity ${toujoursVisibles ? "" : "sm:opacity-0 sm:group-hover:opacity-100"} focus-visible:opacity-100`}>
+          className={`absolute top-1/2 -translate-y-1/2 ${sens < 0 ? "left-2" : "right-2"} z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/90 text-[#111111] shadow-md transition-opacity ${toujoursVisibles ? "" : "sm:opacity-0 sm:group-hover:opacity-100"} focus-visible:opacity-100`}>
           {sens < 0 ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       ))}
@@ -963,7 +963,7 @@ function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, co
         <label key={c.type} className="block">
           <span className="block text-[13px] font-semibold mb-1.5">{tx(c.label)}</span>
           <input type={c.type} required autoFocus={i === 0} value={c.valeur} onChange={(e) => c.maj(e.target.value)} placeholder={c.ph} autoComplete={c.auto}
-            className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#5E6063] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
+            className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
         </label>
       ))}
       <button type="submit" disabled={!valide || envoi}

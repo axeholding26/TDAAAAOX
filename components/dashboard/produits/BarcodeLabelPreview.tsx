@@ -22,7 +22,7 @@ export function BarcodeLabelPreview({ value, nom, prix }: Props) {
 
   useEffect(() => {
     if (!svgRef.current || !value) return;
-    const options = { width: 2, height: 55, fontSize: 13, margin: 8, background: "#ffffff", lineColor: "#5E6063" };
+    const options = { width: 2, height: 55, fontSize: 13, margin: 8, background: "#ffffff", lineColor: "#111111" };
     try {
       JsBarcode(svgRef.current, value, { ...options, format: "EAN13" });
     } catch {

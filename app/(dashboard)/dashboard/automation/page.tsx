@@ -95,7 +95,7 @@ export default function AutomationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Automation")}</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Automation")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Séquences marketing automatiques")}</p>
         </div>
         <button
@@ -111,11 +111,11 @@ export default function AutomationPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Workflows actifs")}</p>
-          <p className="text-2xl font-bold text-[#5E6063]">{activeCount}</p>
+          <p className="text-2xl font-bold text-[#111]">{activeCount}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Déclenchements")}</p>
-          <p className="text-2xl font-bold text-[#5E6063]">{t(totalDeclenchements)}</p>
+          <p className="text-2xl font-bold text-[#111]">{t(totalDeclenchements)}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Conversions")}</p>
@@ -126,7 +126,7 @@ export default function AutomationPage() {
       {/* Templates disponibles */}
       {!showForm && workflows.length === 0 && (
         <div>
-          <p className="text-[13px] font-semibold text-[#5E6063] mb-3">{t("Workflows disponibles")}</p>
+          <p className="text-[13px] font-semibold text-[#111] mb-3">{t("Workflows disponibles")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {Object.entries(TYPE_CONFIG).map(([type, config]) => (
               <div
@@ -137,7 +137,7 @@ export default function AutomationPage() {
                 <div className="flex items-start gap-3">
                   <config.Icon size={24} className="text-[#F5A623] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[13px] font-semibold text-[#5E6063]">{t(config.label)}</p>
+                    <p className="text-[13px] font-semibold text-[#111]">{t(config.label)}</p>
                     <p className="text-[11px] text-[#888] mt-0.5">{t(config.description)}</p>
                   </div>
                 </div>
@@ -150,7 +150,7 @@ export default function AutomationPage() {
       {/* Formulaire */}
       {showForm && (
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-4">{t("Nouveau workflow")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau workflow")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] text-[#888] mb-1">{t("Nom *")}</label>
@@ -207,7 +207,7 @@ export default function AutomationPage() {
                 <tc.Icon size={24} className="shrink-0 text-[#F5A623]" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-semibold text-[#5E6063] truncate">{t(w.nom)}</p>
+                    <p className="text-[13px] font-semibold text-[#111] truncate">{t(w.nom)}</p>
                     <CanalIcon size={11} className="text-[#888] shrink-0" />
                   </div>
                   <p className="text-[11px] text-[#888]">{t(tc.label)} · {t(w.delaiHeures)}{t("h ·")}{" "}{t(w.declenchements)}{" "}{t("décl. ·")}{" "}{t(cvr)}% conv.</p>

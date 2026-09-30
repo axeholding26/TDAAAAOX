@@ -53,7 +53,7 @@ export default function TransporteursPage() {
       <ModuleTutorial moduleKey="transporteurs" titre={tr("Transporteurs")} sousTitre={tr("Partenaires de livraison")} steps={TRANSPORTEURS_TUTORIAL_STEPS} />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[18px] font-bold text-[#5E6063]">{tr("Transporteurs")}</h1>
+          <h1 className="text-[18px] font-bold text-[#111]">{tr("Transporteurs")}</h1>
           <BoutonRevoirTutoriel moduleKey="transporteurs" />
         </div>
         <p className="text-[12px] text-gray-500">{tr("Activez et configurez vos partenaires de livraison")}</p>
@@ -66,7 +66,7 @@ export default function TransporteursPage() {
               <span className="text-2xl">{tr(t.logo)}</span>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-semibold text-[#5E6063]">{tr(t.nom)}</span>
+                  <span className="text-[13px] font-semibold text-[#111]">{tr(t.nom)}</span>
                   <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t.zones.join(", ")}</span>
                 </div>
                 {t.tarif && <p className="text-[11px] text-gray-400">{tr("Tarif fixe:")}{" "}{tr(t.tarif)} XAF</p>}

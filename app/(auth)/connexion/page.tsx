@@ -85,7 +85,7 @@ function ConnexionForm() {
   }
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#5E6063] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   if (etape === "code" && identifiants) {
@@ -107,7 +107,7 @@ function ConnexionForm() {
           style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
           <Mail size={18} style={{ color: ACCENT }} />
         </div>
-        <h2 className="text-2xl font-bold text-[#5E6063] mb-1">{t("Vérifie ton email")}</h2>
+        <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Vérifie ton email")}</h2>
         <p className="text-[#808080] text-sm mb-7">{t("Code envoyé à")}{" "}<strong>{identifiants.email}</strong>{" "}{t("— valable 10 minutes.")}</p>
 
         {erreur && (
@@ -143,7 +143,7 @@ function ConnexionForm() {
         boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)",
       }}
     >
-      <h2 className="text-2xl font-bold text-[#5E6063] mb-1">{t("Bon retour")}</h2>
+      <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Bon retour")}</h2>
       <p className="text-[#808080] text-sm mb-7">{t("Connectez-vous à votre espace marchand")}</p>
 
       {inscriptionReussie && (
@@ -245,7 +245,7 @@ export default function ConnexionPage() {
             {t("+1 247 boutiques actives en Afrique")}
           </div>
 
-          <h1 className="text-4xl font-bold text-[#5E6063] leading-tight mb-4">
+          <h1 className="text-4xl font-bold text-[#111111] leading-tight mb-4">
             {t("Gérez votre boutique")}<br />
             <span style={{
               background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`,

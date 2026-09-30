@@ -1834,3 +1834,41 @@ model CategorieProduit {
   @@unique([tenantId, slug])
   @@index([tenantId, ordre])
 }
+
+// =====================
+// AXIA PROPOSITION (prises de parole d'AXIA dans la bulle du dashboard :
+// constats sur la boutique et demandes de confirmation d'actions sensibles)
+// =====================
+model AxiaProposition {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String   // ventes_hausse | ventes_baisse | stock_bas | … | confirmation
+  cle       String   // anti-doublon : un même constat n'est créé qu'une fois
+  message   String   @db.Text
+  action    Json?    // { prompt } | { lien } | { outil, args, agent? } (confirmation)
+  statut    String   @default("nouveau") // nouveau | vu | accepte | refuse | execute | echec
+  resultat  String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, cle])
+  @@index([tenantId, statut])
+}
+
+// =====================
+// ADMIN AXIA ACTION (actions demandées à AXIA dans l'administration, en
+// attente de l'accord de l'admin — séparé des propositions marchand)
+// =====================
+model AdminAxiaAction {
+  id        String   @id @default(cuid())
+  adminId   String   // admin qui a fait la demande — le seul à pouvoir l'autoriser
+  outil     String
+  args      Json
+  message   String   @db.Text
+  statut    String   @default("en_attente") // en_attente | accepte | refuse | execute | echec
+  resultat  String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([adminId, statut])
+}

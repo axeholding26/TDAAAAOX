@@ -36,7 +36,7 @@ interface Stats {
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
   ouvert: { label: "Ouvert", color: "#f59e0b" },
-  en_cours: { label: "En cours", color: "#5E6063" },
+  en_cours: { label: "En cours", color: "#111111" },
   accepte: { label: "Accepté", color: "#10b981" },
   rejete: { label: "Rejeté", color: "#ef4444" },
   clos: { label: "Clos", color: "#6b7280" },
@@ -123,9 +123,9 @@ export function RetoursPanel() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total", value: stats.total, color: "#5E6063" },
+          { label: "Total", value: stats.total, color: "#111" },
           { label: "Ouverts", value: stats.ouverts, color: "#f59e0b" },
-          { label: "En cours", value: stats.enCours, color: "#5E6063" },
+          { label: "En cours", value: stats.enCours, color: "#111111" },
           { label: "Acceptés", value: stats.acceptes, color: "#10b981" },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
@@ -138,7 +138,7 @@ export function RetoursPanel() {
       {/* Formulaire création */}
       {showForm && (
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-4">{t("Nouveau retour")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau retour")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] text-[#888] mb-1">{t("ID Commande")}</label>
@@ -201,7 +201,7 @@ export function RetoursPanel() {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-[13px] font-semibold text-[#5E6063]">{t(r.clientNom)}</p>
+                      <p className="text-[13px] font-semibold text-[#111]">{t(r.clientNom)}</p>
                       <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
                       <span className="text-[10px] text-[#AAA]">{t(TYPE_LABELS[r.type]) ?? t(r.type)}</span>
                     </div>
@@ -210,7 +210,7 @@ export function RetoursPanel() {
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    {r.montant && <p className="text-[13px] font-bold text-[#5E6063]">{r.montant.toLocaleString()} {t(r.commande.devise)}</p>}
+                    {r.montant && <p className="text-[13px] font-bold text-[#111]">{r.montant.toLocaleString()} {t(r.commande.devise)}</p>}
                     <p className="text-[10px] text-[#AAA]">{new Date(r.createdAt).toLocaleDateString("fr")}</p>
                   </div>
                   <ChevronDown size={14} className="text-[#CCC] shrink-0" style={{ transform: isExpanded ? "rotate(180deg)" : "none" }} />
@@ -228,7 +228,7 @@ export function RetoursPanel() {
                         </button>
                       )}
                       {r.statut !== "en_cours" && r.statut !== "clos" && (
-                        <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#5E6063" }}>
+                        <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#111111" }}>
                           <Clock size={12} />{" "}{t("En cours")}
                         </button>
                       )}

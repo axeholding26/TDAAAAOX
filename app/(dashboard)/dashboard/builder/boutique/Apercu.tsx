@@ -85,7 +85,7 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
     <div ref={defileur} className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5" onClick={() => onSelect(null)}>
       {nav && (
         <NavigationDesign slug={slug} type={nav.type} favoris={!!nav.showWishlist} collections={collections} apercu={apercuNav}
-          fondEntete={nav.style === "dark" ? "#5E6063" : nav.style === "light" ? "#FFFFFF" : config.colors.fond} accent={config.colors.accent} texte={nav.style === "dark" ? "#FFFFFF" : config.colors.texte} />
+          fondEntete={nav.style === "dark" ? "#111111" : nav.style === "light" ? "#FFFFFF" : config.colors.fond} accent={config.colors.accent} texte={nav.style === "dark" ? "#FFFFFF" : config.colors.texte} />
       )}
       {config.builderCss && reglages.animations && config.animations && <AnimationsDesign animations={config.animations} racine={() => defileur.current} />}
       <div
@@ -118,10 +118,10 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
         <div data-apercu-page className="axs-store" style={{ containerType: "inline-size" }}>
           {visibles.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-3 text-center px-6">
-              <p className="text-[15px] font-semibold text-[#5E6063]">{tr("Ta page d'accueil est vide")}</p>
+              <p className="text-[15px] font-semibold text-[#111111]">{tr("Ta page d'accueil est vide")}</p>
               <p className="text-[14px] text-[#777777]">{tr("Ajoute ta première section pour commencer.")}</p>
               <button onClick={(e) => { e.stopPropagation(); onAjouterSection("template", 0); }}
-                className="mt-1 h-10 px-4 rounded-lg text-[14px] font-semibold bg-[#F5A623] text-[#5E6063] hover:bg-[#E8990F] transition-colors">
+                className="mt-1 h-10 px-4 rounded-lg text-[14px] font-semibold bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] transition-colors">
                 {tr("Ajouter une section")}
               </button>
             </div>
@@ -172,7 +172,7 @@ function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onS
       {/* Cadre + étiquette + insertion : au-dessus du contenu, sans le décaler. */}
       <div className={`pointer-events-none absolute inset-0 transition-opacity ${actif ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
         style={{ boxShadow: `inset 0 0 0 2px ${actif ? "#F5A623" : "rgba(245,166,35,0.55)"}` }}>
-        <span className="absolute left-0 top-0 flex items-center gap-1.5 h-7 px-2.5 rounded-br-md text-[13px] font-semibold bg-[#F5A623] text-[#5E6063]">
+        <span className="absolute left-0 top-0 flex items-center gap-1.5 h-7 px-2.5 rounded-br-md text-[13px] font-semibold bg-[#F5A623] text-[#111111]">
           {nomNoeud(section)}
         </span>
       </div>
@@ -190,7 +190,7 @@ function BoutonInsertion({ position, visible, onClick }: { position: "top" | "bo
       title={tr("Ajouter une section ici")}
       aria-label={tr("Ajouter une section ici")}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full flex items-center justify-center bg-[#F5A623] text-[#5E6063] shadow-md ring-2 ring-white transition-all hover:scale-110 ${
+      className={`absolute left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full flex items-center justify-center bg-[#F5A623] text-[#111111] shadow-md ring-2 ring-white transition-all hover:scale-110 ${
         position === "top" ? "-top-3.5" : "-bottom-3.5"
       } ${visible ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
     >

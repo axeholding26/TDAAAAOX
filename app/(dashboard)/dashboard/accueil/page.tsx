@@ -286,7 +286,7 @@ export default async function DashboardPage() {
             )}
             <a href="/dashboard/produits/nouveau"
               className="flex items-center gap-1.5 text-[12px] font-semibold rounded-2xl px-4 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"
-              style={{ background: "linear-gradient(135deg,#EDA900,#FFD75E)", color: "#5E6063" }}>
+              style={{ background: "linear-gradient(135deg,#EDA900,#FFD75E)", color: "#111111" }}>
               <Plus size={13} />{" "}{t("Nouveau produit")}
             </a>
           </div>
@@ -300,7 +300,7 @@ export default async function DashboardPage() {
       <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-[#F0F0F0] bg-white flex-wrap">
         <div className="flex items-center gap-1.5 text-[11.5px]">
           <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
-          <span className="font-semibold text-[#5E6063]">{t("Aujourd'hui :")}</span>
+          <span className="font-semibold text-[#111]">{t("Aujourd'hui :")}</span>
           <span className="font-bold text-[#F5A623]">{formatMontant(d.today, d.devise)}</span>
         </div>
         {vsHierPct !== null && (
@@ -380,7 +380,7 @@ export default async function DashboardPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10.5px] font-semibold uppercase tracking-[0.06em] text-[#AAAAAA] mb-0.5">{t(ins.title)}</p>
-                <p className="text-[15px] font-bold text-[#5E6063] leading-tight truncate">{t(ins.value)}</p>
+                <p className="text-[15px] font-bold text-[#111111] leading-tight truncate">{t(ins.value)}</p>
                 <p className="text-[11px] text-[#AAAAAA] mt-0.5 leading-tight">{t(ins.sub)}</p>
               </div>
             </div>
@@ -403,11 +403,11 @@ export default async function DashboardPage() {
               <div className="relative flex-shrink-0">
                 <ProgressRing pct={d.goalPct} color={d.goalPct >= 100 ? "#16A34A" : "#F5A623"} />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[13px] font-bold text-[#5E6063]">{Math.min(d.goalPct, 100)}%</span>
+                  <span className="text-[13px] font-bold text-[#111111]">{Math.min(d.goalPct, 100)}%</span>
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-bold text-[#5E6063]">
+                <p className="text-[13px] font-bold text-[#111111]">
                   {d.goalPct >= 100 ? <span className="flex items-center gap-1"><Sparkles size={13} />{t("Objectif atteint !")}</span> : t("En progression")}
                 </p>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{formatMontant(d.month, d.devise)}</p>
@@ -436,12 +436,12 @@ export default async function DashboardPage() {
                   <ShoppingBag size={16} className="text-[#D97706]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-[#5E6063]">{t(d.pending)} commande{d.pending > 1 ? "s" : ""}{" "}{t("en attente")}</p>
+                  <p className="text-[13px] font-semibold text-[#111111]">{t(d.pending)} commande{d.pending > 1 ? "s" : ""}{" "}{t("en attente")}</p>
                   <p className="text-[11.5px] text-[#AAAAAA]">{t("À traiter en priorité")}</p>
                 </div>
               </div>
               <a href="/dashboard/commandes?statut=en_attente"
-                className="flex-shrink-0 text-[11.5px] font-semibold text-[#5E6063] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:bg-[#F5F5F5] transition-all whitespace-nowrap">
+                className="flex-shrink-0 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:bg-[#F5F5F5] transition-all whitespace-nowrap">
                 {t("Traiter →")}
               </a>
             </div>
@@ -453,7 +453,7 @@ export default async function DashboardPage() {
                 <div className="w-7 h-7 rounded-xl bg-[#FEF2F2] border border-[#FECACA]/60 flex items-center justify-center">
                   <AlertTriangle size={13} className="text-[#DC2626]" />
                 </div>
-                <p className="text-[13px] font-semibold text-[#5E6063]">{t("Stock critique")}</p>
+                <p className="text-[13px] font-semibold text-[#111111]">{t("Stock critique")}</p>
                 <span className="ml-auto text-[10.5px] font-bold bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] px-2 py-0.5 rounded-full">
                   {d.lowStock.length}
                 </span>
@@ -469,7 +469,7 @@ export default async function DashboardPage() {
                 ))}
               </div>
               <a href="/dashboard/produits?stock=critique"
-                className="flex items-center gap-1 text-[12px] text-[#666] mt-3 hover:text-[#5E6063] transition-colors group">
+                className="flex items-center gap-1 text-[12px] text-[#666] mt-3 hover:text-[#111] transition-colors group">
                 {t("Gérer les stocks")}{" "}<ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </a>
             </div>
@@ -490,7 +490,7 @@ export default async function DashboardPage() {
                     style={{ background: bg, border: `1px solid ${color}20` }}>
                     <Icon size={14} style={{ color }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-[11px] font-semibold text-[#666] group-hover:text-[#5E6063] transition-colors text-center leading-tight">{t(label)}</span>
+                  <span className="text-[11px] font-semibold text-[#666] group-hover:text-[#111] transition-colors text-center leading-tight">{t(label)}</span>
                 </a>
               ))}
             </div>
@@ -503,11 +503,11 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 ax-card p-5">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[14px] font-bold text-[#5E6063] tracking-tight">{t("Top produits")}</h3>
+              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Top produits")}</h3>
               <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Par chiffre d'affaires ce mois")}</p>
             </div>
             <a href="/dashboard/produits"
-              className="text-[11.5px] font-semibold text-[#666] hover:text-[#5E6063] transition-colors flex items-center gap-1">
+              className="text-[11.5px] font-semibold text-[#666] hover:text-[#111] transition-colors flex items-center gap-1">
               {t("Voir tout")}{" "}<ArrowUpRight size={11} />
             </a>
           </div>
@@ -535,7 +535,7 @@ export default async function DashboardPage() {
                       )}
                       <span className="text-[13px] font-medium text-[#222] truncate flex-1">{t(p.nom)}</span>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[13px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                        <p className="text-[13px] font-bold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>
                           {formatMontant(p.revenue, d.devise)}
                         </p>
                         <p className="text-[10.5px] text-[#AAAAAA]">{t(p.qte)} vente{p.qte > 1 ? "s" : ""}</p>
@@ -557,7 +557,7 @@ export default async function DashboardPage() {
 
         <div className="flex flex-col gap-4">
           <div className="ax-card p-5 flex-1">
-            <h3 className="text-[13px] font-semibold text-[#5E6063] mb-1">{t("Statuts ce mois")}</h3>
+            <h3 className="text-[13px] font-semibold text-[#111111] mb-1">{t("Statuts ce mois")}</h3>
             <p className="text-[11.5px] text-[#AAAAAA] mb-4">{t(totalCmdsMonth)} commandes</p>
             {totalCmdsMonth === 0 ? (
               <div className="py-6 text-center text-[12px] text-[#AAAAAA]">{t("Aucune commande")}</div>
@@ -584,7 +584,7 @@ export default async function DashboardPage() {
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <span className="text-[10.5px] text-[#CCCCCC]">{pct}%</span>
-                          <span className="text-[12px] font-bold text-[#5E6063] w-6 text-right">{n}</span>
+                          <span className="text-[12px] font-bold text-[#111] w-6 text-right">{n}</span>
                         </div>
                       </div>
                     );
@@ -598,7 +598,7 @@ export default async function DashboardPage() {
             <div className="ax-card p-5">
               <div className="flex items-center gap-2 mb-4">
                 <MapPin size={13} className="text-[#AAAAAA]" />
-                <h3 className="text-[13px] font-semibold text-[#5E6063]">{t("Top villes")}</h3>
+                <h3 className="text-[13px] font-semibold text-[#111111]">{t("Top villes")}</h3>
               </div>
               <div className="space-y-3">
                 {d.topVilles.map((v, i) => {
@@ -607,7 +607,7 @@ export default async function DashboardPage() {
                     <div key={v.ville}>
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[12px] font-medium text-[#333] truncate">{t(v.ville) || t("Inconnue")}</span>
-                        <span className="text-[12px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>{v._count.id}</span>
+                        <span className="text-[12px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>{v._count.id}</span>
                       </div>
                       <div className="h-1.5 bg-[#F5F5F7] rounded-full overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, background: i === 0 ? "#F5A623" : "#D0D0D8" }} />
@@ -626,7 +626,7 @@ export default async function DashboardPage() {
         <div className="ax-card p-5 overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-[14px] font-bold text-[#5E6063] tracking-tight">{t("Entonnoir de conversion")}</h3>
+              <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Entonnoir de conversion")}</h3>
               <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Ce mois · de la visite à la livraison")}</p>
             </div>
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]">
@@ -649,7 +649,7 @@ export default async function DashboardPage() {
                   <div className="flex-1 rounded-2xl border p-4 text-center"
                     style={{ background: step.bg, borderColor: `${step.color}20` }}>
                     <div className="flex justify-center mb-1"><step.Icon size={20} style={{ color: step.color }} /></div>
-                    <p className="text-[24px] font-black text-[#5E6063] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <p className="text-[24px] font-black text-[#111111] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {step.value.toLocaleString(t.loc)}
                     </p>
                     <p className="text-[11px] font-semibold mt-1.5" style={{ color: step.color }}>{t(step.label)}</p>
@@ -726,7 +726,7 @@ async function KpiCard({
           <Icon size={14} className={accent ? "text-[#F5A623]" : "text-[#888]"} strokeWidth={1.8} />
         </div>
       </div>
-      <p className="text-[27px] font-extrabold text-[#5E6063] leading-none tabular-nums tracking-tight mb-2.5">{t(value)}</p>
+      <p className="text-[27px] font-extrabold text-[#111111] leading-none tabular-nums tracking-tight mb-2.5">{t(value)}</p>
       <div className="flex items-end justify-between gap-2">
         <div>
           {up && (

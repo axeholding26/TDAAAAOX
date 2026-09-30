@@ -131,7 +131,7 @@ export default function MonEspaceAffiliePage() {
   }, [comptesValides]);
 
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-32 pb-6 px-6 sm:px-10 lg:px-16 xl:px-24">
@@ -144,7 +144,7 @@ export default function MonEspaceAffiliePage() {
             <div className="flex bg-gray-100 rounded-xl p-1">
               {PERIODES.map((pv) => (
                 <button key={pv} onClick={() => setPeriode(pv)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${periode === pv ? "bg-white shadow-sm text-[#5E6063]" : "text-gray-400"}`}>
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${periode === pv ? "bg-white shadow-sm text-[#111]" : "text-gray-400"}`}>
                   {t(pv)}j
                 </button>
               ))}
@@ -166,7 +166,7 @@ export default function MonEspaceAffiliePage() {
               />
               {ajoutErreur && <p className="text-xs text-red-500 mt-1.5">{t(ajoutErreur)}</p>}
             </div>
-            <button type="submit" className="px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2" style={{ background: "#5E6063" }}>
+            <button type="submit" className="px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2" style={{ background: "#111111" }}>
               <Plus size={14} />{" "}{t("Ajouter")}
             </button>
           </form>
@@ -181,7 +181,7 @@ export default function MonEspaceAffiliePage() {
         <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
           <div className="max-w-4xl mx-auto text-center py-20 rounded-3xl border-2 border-dashed" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
             <Inbox size={40} className="mx-auto mb-4" style={{ color: "#D9D9D9" }} />
-            <p className="font-bold text-[#5E6063] mb-2">{t("Aucune affiliation pour l'instant")}</p>
+            <p className="font-bold text-[#111111] mb-2">{t("Aucune affiliation pour l'instant")}</p>
             <p className="text-sm text-[#999999] max-w-sm mx-auto mb-6">
               {t("Rejoignez un programme depuis le marketplace, ou collez ci-dessus le lien de portail que vous avez reçu par email.")}
             </p>
@@ -229,7 +229,7 @@ export default function MonEspaceAffiliePage() {
           {/* Liste des comptes */}
           <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
             <div className="max-w-4xl mx-auto space-y-3">
-              <p className="text-sm font-bold text-[#5E6063] mb-1">{t("Détail par marchand")}</p>
+              <p className="text-sm font-bold text-[#111111] mb-1">{t("Détail par marchand")}</p>
               {comptes.map((c) => (
                 <div key={c.entry.portalToken} className="rounded-2xl border p-4 flex items-center gap-3" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
                   {c.entry.logoUrl ? (

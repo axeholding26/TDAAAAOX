@@ -10,6 +10,7 @@ import { filtrerOutilsParPalier, NOMS_PALIERS } from "@/lib/plans";
 import { z } from "zod";
 import { permissionsSession } from "@/lib/permissions-server";
 import { restreindreAxia, consigneDroits } from "@/lib/axia/droits";
+import { lireStyle, consigneStyle } from "@/lib/axia/style";
 
 const schema = z.object({
   messages: z.array(z.object({
@@ -89,6 +90,10 @@ Quand déléguer (exemples) :
 
 Tu peux enchaîner plusieurs agents pour des tâches complexes : audit produits → campagne marketing → post Instagram.
 
+─── ACTIONS SENSIBLES : ACCORD DU MARCHAND ───────────────────────────────────
+
+Prix, codes promo, envois aux clients (email, WhatsApp, SMS, réseaux sociaux), paiements, publication, retours, livraison : quand tu appelles un de ces outils, l'action n'est PAS exécutée tout de suite. Le marchand reçoit une demande d'autorisation dans ta bulle en bas à droite. Dis-lui en une phrase ce que tu t'apprêtes à faire et que tu attends son feu vert — ne dis jamais que c'est fait.
+
 ─── CE QUE TU NE FAIS JAMAIS ────────────────────────────────────────────────
 
 - Inventer des données, des prix, des stocks ou des numéros de commande
@@ -144,7 +149,8 @@ export async function POST(request: Request) {
       devise: tenant?.devise ?? undefined,
       categorie: tenant?.categorie ?? undefined,
       planNom: NOMS_PALIERS[plan],
-    }) + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "");
+    }) + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "")
+      + (await lireStyle(tenantId).then(consigneStyle).then((c) => (c ? `\n\n${c}` : "")).catch(() => ""));
 
     const enrichedMessages: any[] = imageUrl
       ? messages.map((m, i) =>

@@ -59,7 +59,7 @@ export default async function BlogPage() {
   const [featured, ...rest] = ARTICLES;
   const FeaturedIcon = featured.Icon;
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-16 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -89,7 +89,7 @@ export default async function BlogPage() {
               style={{ background: `${featured.tagColor}15`, color: featured.tagColor, border: `1px solid ${featured.tagColor}30` }}>
               {t("⭐ À la une ·")}{" "}{t(featured.tag)}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-[#5E6063] mb-3 max-w-2xl leading-snug">{t(featured.titre)}</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#111111] mb-3 max-w-2xl leading-snug">{t(featured.titre)}</h2>
             <p className="text-[#666666] leading-relaxed mb-5 max-w-xl">{t(featured.extrait)}</p>
             <div className="flex items-center gap-4 text-sm text-[#8C8C8C]">
               <span>{featured.date}</span>
@@ -114,7 +114,7 @@ export default async function BlogPage() {
                   style={{ background: `${a.tagColor}12`, color: a.tagColor, border: `1px solid ${a.tagColor}25` }}>
                   {t(a.tag)}
                 </span>
-                <h3 className="font-bold text-[#5E6063] mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{t(a.titre)}</h3>
+                <h3 className="font-bold text-[#111111] mb-2 leading-snug group-hover:text-[#F5A623] transition-colors">{t(a.titre)}</h3>
                 <p className="text-[#808080] text-sm leading-relaxed mb-4">{t(a.extrait)}</p>
                 <div className="flex items-center gap-3 text-xs text-[#999999]">
                   <Clock size={10} />

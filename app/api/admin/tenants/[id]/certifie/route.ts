@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { certifierBoutique, reponseErreur } from "@/lib/admin-actions";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getAdminSession();
@@ -9,9 +9,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const { certifie } = await req.json();
-
-  const tenant = await prisma.tenant.update({ where: { id }, data: { certifie: !!certifie } }).catch(() => null);
-  if (!tenant) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
-
-  return NextResponse.json({ success: true, certifie: tenant.certifie });
+  try {
+    return NextResponse.json({ success: true, ...(await certifierBoutique(id, certifie)) });
+  } catch (err) {
+    return reponseErreur(err);
+  }
 }

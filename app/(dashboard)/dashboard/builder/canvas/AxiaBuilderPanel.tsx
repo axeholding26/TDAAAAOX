@@ -89,7 +89,7 @@ function ChatBody({ messages, loading, scrollRef, suggestions, onSuggestion }: {
       )}
       {messages.map((m, i) => (
         <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-[#5E6063] text-white rounded-br-md" : "bg-[#F4F4F5] text-[#5E6063] rounded-bl-md"}`}>
+          <div className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "bg-[#111111] text-white rounded-br-md" : "bg-[#F4F4F5] text-[#111111] rounded-bl-md"}`}>
             {t(m.content)}
           </div>
         </div>
@@ -116,10 +116,10 @@ function ChatInput({ input, setInput, loading, onSubmit }: { input: string; setI
         placeholder={t("Ex : ajoute un bandeau promo en haut…")}
         disabled={loading}
         aria-label={t("Message pour AXIA")}
-        className="flex-1 min-w-0 h-11 px-3.5 text-[14px] rounded-xl border border-[#E0E0E0] bg-white text-[#5E6063] placeholder:text-[#AAAAAA] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none disabled:opacity-50"
+        className="flex-1 min-w-0 h-11 px-3.5 text-[14px] rounded-xl border border-[#E0E0E0] bg-white text-[#111111] placeholder:text-[#AAAAAA] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 outline-none disabled:opacity-50"
       />
       <button type="submit" disabled={loading || !input.trim()} aria-label={t("Envoyer")}
-        className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#F5A623] text-[#5E6063] hover:bg-[#E8990F] disabled:opacity-40 transition-colors">
+        className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:opacity-40 transition-colors">
         <Send size={16} />
       </button>
     </form>
@@ -138,7 +138,7 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
     <div className="fixed bottom-5 z-30 flex flex-col items-end gap-3 transition-[right] duration-300" style={{ right: 20 + decalageDroite }}>
       {open && (
         <div role="dialog" aria-label="AXIA" className="w-[380px] h-[520px] max-h-[calc(100vh-140px)] bg-white rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.18)] border border-[#E8E8E8] flex flex-col overflow-hidden">
-          <div className="px-4 h-14 flex items-center justify-between flex-shrink-0 bg-[#5E6063]">
+          <div className="px-4 h-14 flex items-center justify-between flex-shrink-0 bg-[#111111]">
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="w-8 h-8 rounded-lg bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0"><Sparkles size={16} className="text-[#F5A623]" /></span>
               <div className="min-w-0">
@@ -154,7 +154,7 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
       )}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-14 h-14 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 bg-[#5E6063]"
+        className="w-14 h-14 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 bg-[#111111]"
         title={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
         aria-label={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
       >

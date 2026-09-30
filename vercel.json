@@ -1,5 +1,5 @@
 {
-  "buildCommand": "rm -rf .next/cache && prisma generate && prisma db push --accept-data-loss && next build",
+  "buildCommand": "rm -rf .next/cache && prisma generate && prisma db push && next build",
   "functions": {
     "app/api/ai/axia/**": { "maxDuration": 120 },
     "app/api/ai/**": { "maxDuration": 60 },

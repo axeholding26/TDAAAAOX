@@ -115,7 +115,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight inline-flex items-center gap-2">{t("Veille Concurrentielle")}{" "}<AgentActiveIndicator label={t("Agent Veille actif")} /></h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{t("Veille Concurrentielle")}{" "}<AgentActiveIndicator label={t("Agent Veille actif")} /></h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Surveillez vos concurrents, détectez les opportunités")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
@@ -139,7 +139,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15", border: `1px solid ${s.color}25` }}>
                   <Icone size={16} style={{ color: s.color }} />
                 </div>
-                <p className="text-[20px] font-bold text-[#5E6063] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{t(s.val)}</p>
+                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{t(s.val)}</p>
               </div>
               <p className="text-[12px] text-[#AAAAAA]">{t(s.label)}</p>
             </div>
@@ -153,7 +153,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
       ) : items.length === 0 ? (
         <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
           <Search size={40} className="text-[#CCCCCC] mx-auto mb-4" />
-          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-2">{t("Aucun concurrent dans le radar")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">{t("Aucun concurrent dans le radar")}</h3>
           <p className="text-[12.5px] text-[#AAAAAA] mb-6">{t("L'IA analyse vos concurrents et identifie les opportunités de marché")}</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto"
@@ -169,7 +169,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center"><Eye size={20} className="text-red-400" /></div>
                   <div>
-                    <p className="text-[13px] font-semibold text-[#5E6063]">{t(item.nomConcurrent)}</p>
+                    <p className="text-[13px] font-semibold text-[#111111]">{t(item.nomConcurrent)}</p>
                     {item.categorie && <p className="text-[11.5px] text-[#AAAAAA]">{t(item.categorie)}</p>}
                   </div>
                 </div>
@@ -180,12 +180,12 @@ Format: liste claire avec emojis. Adapté marché africain.`,
               {item.produitNom && (
                 <div className="flex items-center justify-between mb-3 bg-[#F9F9F9] rounded-xl px-3 py-2 border border-[#F3F3F3]">
                   <span className="text-[12px] text-[#666]">{t(item.produitNom)}</span>
-                  {item.prixDetecte && <span className="text-[12px] font-bold text-[#5E6063]">{item.prixDetecte.toLocaleString()} XOF</span>}
+                  {item.prixDetecte && <span className="text-[12px] font-bold text-[#111111]">{item.prixDetecte.toLocaleString()} XOF</span>}
                 </div>
               )}
               {item.urlConcurrent && (
                 <a href={item.urlConcurrent} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs text-[#D4911A] hover:text-[#5E6063] mb-3">
+                  className="flex items-center gap-1.5 text-xs text-[#D4911A] hover:text-[#111111] mb-3">
                   <Globe size={11} /> {item.urlConcurrent.slice(0, 40)}…
                 </a>
               )}
@@ -204,7 +204,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
           onClick={e => { if (e.target === e.currentTarget) { setShowModal(false); setRapport(""); } }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
-              <h2 className="text-[15px] font-bold text-[#5E6063]">{t("Analyser un concurrent")}</h2>
+              <h2 className="text-[15px] font-bold text-[#111111]">{t("Analyser un concurrent")}</h2>
               <button onClick={() => { setShowModal(false); setRapport(""); }} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-5">
@@ -242,14 +242,14 @@ Format: liste claire avec emojis. Adapté marché africain.`,
                     <label className="ax-label block mb-1">{t(f.label)}</label>
                     <input value={(form as any)[f.field]} onChange={e => setForm(p => ({ ...p, [f.field]: e.target.value }))}
                       placeholder={f.placeholder}
-                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
+                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
                   </div>
                 ))}
                 <div>
                   <label className="ax-label block mb-1">{t("Prix observé (XOF)")}</label>
                   <input type="number" value={form.prixDetecte} onChange={e => setForm(f => ({ ...f, prixDetecte: e.target.value }))}
                     placeholder="25000"
-                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
+                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
                 </div>
               </div>
 

@@ -22,7 +22,7 @@ export function AxiaProNotice() {
           <Crown size={15} className="text-[#F5A623]" />
         </div>
         <div className="min-w-0">
-          <p className="text-[13px] font-bold text-[#5E6063]">{t("AXIA plein écran est une fonctionnalité Pro")}</p>
+          <p className="text-[13px] font-bold text-[#111]">{t("AXIA plein écran est une fonctionnalité Pro")}</p>
           <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
             {t("Tu retrouves ici le tableau de bord classique.")}{" "}<Link href="/dashboard/abonnement" className="text-[#F5A623] font-semibold underline">{t("Passer au palier Pro")}</Link>{" "}{t("pour débloquer AXIA en écran d'accueil.")}
           </p>

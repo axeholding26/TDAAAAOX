@@ -61,7 +61,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
           </Link>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-[#5E6063] font-mono">{commande.numero}</h1>
+              <h1 className="text-xl font-bold text-[#111111] font-mono">{commande.numero}</h1>
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
                 style={{ color: statutInfo.color, backgroundColor: statutInfo.bg }}>
                 <StatutIcon size={11} />
@@ -79,7 +79,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
         <div className="lg:col-span-2 space-y-5">
           {/* Articles commandés */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <h2 className="text-[#5E6063] font-semibold text-sm mb-4 flex items-center gap-2">
+            <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <Package size={14} className="text-[#F5A623]" />
               {t("Articles (")}{commande.lignes.length})
             </h2>
@@ -94,7 +94,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#5E6063] font-medium text-sm truncate">{t(ligne.nom)}</p>
+                    <p className="text-[#111111] font-medium text-sm truncate">{t(ligne.nom)}</p>
                     {ligne.variante && <p className="text-gray-500 text-xs">{t(ligne.variante)}</p>}
                     <p className="text-gray-400 text-xs mt-0.5">{t("Qté :")}{" "}{ligne.quantite}{" "}{t("×")}{" "}{formatMontant(ligne.prix, commande.devise)}</p>
                   </div>
@@ -109,12 +109,12 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
             <div className="border-t border-gray-100 mt-5 pt-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{t("Sous-total")}</span>
-                <span className="text-[#5E6063]">{formatMontant(commande.montantSousTotal, commande.devise)}</span>
+                <span className="text-[#111111]">{formatMontant(commande.montantSousTotal, commande.devise)}</span>
               </div>
               {commande.montantLivraison > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">{t("Livraison")}</span>
-                  <span className="text-[#5E6063]">{formatMontant(commande.montantLivraison, commande.devise)}</span>
+                  <span className="text-[#111111]">{formatMontant(commande.montantLivraison, commande.devise)}</span>
                 </div>
               )}
               {commande.montantReduction > 0 && (
@@ -124,7 +124,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 </div>
               )}
               <div className="flex justify-between text-base font-bold pt-2 border-t border-gray-100">
-                <span className="text-[#5E6063]">{t("Total")}</span>
+                <span className="text-[#111111]">{t("Total")}</span>
                 <span className="text-[#F5A623]">{formatMontant(commande.montantTotal, commande.devise)}</span>
               </div>
             </div>
@@ -132,14 +132,14 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
 
           {/* Paiement */}
           <div className="bg-white border border-gray-100 rounded-2xl p-6">
-            <h2 className="text-[#5E6063] font-semibold text-sm mb-4 flex items-center gap-2">
+            <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <CreditCard size={14} className="text-[#F5A623]" />
               {t("Paiement")}
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{t("Méthode")}</span>
-                <span className="text-[#5E6063] capitalize">{t(commande.methodePaiement)}</span>
+                <span className="text-[#111111] capitalize">{t(commande.methodePaiement)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{t("Statut paiement")}</span>
@@ -155,7 +155,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
               {commande.flutterwaveRef && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">{t("Référence")}</span>
-                  <span className="text-[#5E6063] font-mono text-xs">{commande.flutterwaveRef}</span>
+                  <span className="text-[#111111] font-mono text-xs">{commande.flutterwaveRef}</span>
                 </div>
               )}
 
@@ -165,7 +165,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                   <p className="text-gray-400 font-medium">{t("Commission Axso (6%)")}</p>
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t("Commission brute")}</span>
-                    <span className="text-[#5E6063]">{formatMontant(commande.commission.montantCommission, commande.devise)}</span>
+                    <span className="text-[#111111]">{formatMontant(commande.commission.montantCommission, commande.devise)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t("Votre part")}</span>
@@ -189,13 +189,13 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
         <div className="space-y-5">
           {/* Client */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="text-[#5E6063] font-semibold text-sm mb-4 flex items-center gap-2">
+            <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <User size={14} className="text-[#F5A623]" />
               {t("Client")}
             </h2>
             <div className="space-y-3">
               <div>
-                <p className="text-[#5E6063] font-medium">{t(commande.clientNom)}</p>
+                <p className="text-[#111111] font-medium">{t(commande.clientNom)}</p>
                 {commande.client && <p className="text-gray-500 text-xs mt-0.5">{t(commande.client.totalCommandes)} commande(s)</p>}
               </div>
               <a href={`mailto:${commande.clientEmail}`} className="flex items-center gap-2 text-gray-400 hover:text-[#F5A623] text-sm transition-colors">
@@ -211,12 +211,12 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
 
           {/* Livraison */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="text-[#5E6063] font-semibold text-sm mb-4 flex items-center gap-2">
+            <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <MapPin size={14} className="text-[#F5A623]" />
               {t("Adresse de livraison")}
             </h2>
             <div className="space-y-1.5 text-sm">
-              <p className="text-[#5E6063]">{t(commande.adresseLivraison)}</p>
+              <p className="text-[#111111]">{t(commande.adresseLivraison)}</p>
               <p className="text-gray-400">{t(commande.ville)}, {t(commande.pays)}</p>
             </div>
             <a
@@ -230,7 +230,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
 
           {/* Livreur assigné */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="text-[#5E6063] font-semibold text-sm mb-4 flex items-center gap-2">
+            <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <Truck size={14} className="text-[#F5A623]" />
               {t("Livreur")}
             </h2>
@@ -238,7 +238,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
               <div className="space-y-2 mb-3">
                 <div className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${commande.livreur.disponible ? "bg-green-400" : "bg-gray-500"}`} />
-                  <p className="text-[#5E6063] font-medium text-sm">{t(commande.livreur.nom)}</p>
+                  <p className="text-[#111111] font-medium text-sm">{t(commande.livreur.nom)}</p>
                 </div>
                 <p className="text-gray-400 text-xs">{commande.livreur.telephone}</p>
                 <a href={`tel:${commande.livreur.telephone}`} className="flex items-center gap-2 bg-gray-50 border border-gray-200 text-gray-600 py-2 px-3 rounded-xl text-xs hover:border-[#F5A623]/30 transition-all">
@@ -264,16 +264,16 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
           {/* Suivi */}
           {(commande.numeroSuivi || commande.transporteur) && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5">
-              <h2 className="text-[#5E6063] font-semibold text-sm mb-3">{t("Suivi colis")}</h2>
+              <h2 className="text-[#111111] font-semibold text-sm mb-3">{t("Suivi colis")}</h2>
               {commande.transporteur && <p className="text-gray-400 text-xs">{t(commande.transporteur)}</p>}
-              {commande.numeroSuivi && <p className="text-[#5E6063] font-mono text-sm mt-1">{t(commande.numeroSuivi)}</p>}
+              {commande.numeroSuivi && <p className="text-[#111111] font-mono text-sm mt-1">{t(commande.numeroSuivi)}</p>}
             </div>
           )}
 
           {/* ─── Tracking temps réel & Livraison ─── */}
           {(commande as any).trackingToken && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-              <h2 className="text-[#5E6063] font-semibold text-sm flex items-center gap-2">
+              <h2 className="text-[#111111] font-semibold text-sm flex items-center gap-2">
                 <Truck size={14} className="text-[#F5A623]" />
                 {t("Tracking & Livraison")}
               </h2>
@@ -282,7 +282,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
               {((commande as any).latitudeClient || (commande as any).adresseExacte) && (
                 <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
                   <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">{t("Position client GPS")}</p>
-                  {(commande as any).adresseExacte && <p className="text-sm text-[#5E6063]">{t((commande as any).adresseExacte)}</p>}
+                  {(commande as any).adresseExacte && <p className="text-sm text-[#111111]">{t((commande as any).adresseExacte)}</p>}
                   {(commande as any).latitudeClient && (
                     <p className="text-xs text-gray-500 font-mono">{(commande as any).latitudeClient?.toFixed(5)}, {(commande as any).longitudeClient?.toFixed(5)}</p>
                   )}
@@ -319,7 +319,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                   return (
                     <a href={`https://wa.me/?text=${msg}`}
                       target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-[#5E6063]"
+                      className="flex items-center gap-2 w-full py-2.5 px-4 rounded-xl text-sm font-semibold transition-all text-[#111111]"
                       style={{ background:"rgba(37,211,102,0.15)", border:"1px solid rgba(37,211,102,0.25)", color:"#25D366" }}>
                       <Share2 size={14} />{" "}{t("Partager avec le livreur (WhatsApp)")}
                     </a>

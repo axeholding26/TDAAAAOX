@@ -46,7 +46,7 @@ export function SelecteurPage({ page, onChange, labelAccueil }: { page: PageEdit
   return (
     <div ref={racine} className="relative" onKeyDown={clavier}>
       <button type="button" onClick={() => setOuvert((o) => !o)} aria-haspopup="listbox" aria-expanded={ouvert} aria-label={t("Page à modifier")}
-        className={`h-9 flex items-center gap-2 pl-2.5 pr-2 rounded-lg text-[14px] font-medium transition-colors ${ouvert ? "bg-[#F3F3F3] text-[#5E6063]" : "text-[#333333] hover:bg-[#F5F5F5]"}`}>
+        className={`h-9 flex items-center gap-2 pl-2.5 pr-2 rounded-lg text-[14px] font-medium transition-colors ${ouvert ? "bg-[#F3F3F3] text-[#111111]" : "text-[#333333] hover:bg-[#F5F5F5]"}`}>
         <Actuelle size={16} className="text-[#777777] flex-shrink-0" />
         <span className="truncate max-w-[160px]">{t(label(page))}</span>
         <ChevronDown size={15} className={`text-[#999999] transition-transform ${ouvert ? "rotate-180" : ""}`} />
@@ -64,7 +64,7 @@ export function SelecteurPage({ page, onChange, labelAccueil }: { page: PageEdit
                   className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-left transition-colors ${focus === i ? "bg-[#F5F5F5]" : ""}`}>
                   <span className={`w-8 h-8 flex-shrink-0 rounded-lg flex items-center justify-center ${actif ? "bg-[#FFF1D6] text-[#C77C0A]" : "bg-[#F5F5F5] text-[#666666]"}`}><Icon size={16} /></span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[14px] font-medium text-[#5E6063]">{t(label(p.id))}</span>
+                    <span className="block text-[14px] font-medium text-[#111111]">{t(label(p.id))}</span>
                     <span className="block text-[12px] text-[#888888] truncate">{t(desc)}</span>
                   </span>
                   {actif && <Check size={15} className="text-[#C77C0A] flex-shrink-0" />}

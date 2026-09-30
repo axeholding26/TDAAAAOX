@@ -97,7 +97,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
           <button
             onClick={() => setShowForm(s => !s)}
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-xl transition-all"
-            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#5E6063" }}
+            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}
           >
             <ArrowUpFromLine size={14} />{" "}{t("Retirer")}
           </button>
@@ -167,7 +167,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
               />
               <button type="submit" disabled={submitting}
                 className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50"
-                style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#5E6063" }}>
+                style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}>
                 {submitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowUpFromLine size={14} />}
                 {t("Confirmer le retrait")}
               </button>

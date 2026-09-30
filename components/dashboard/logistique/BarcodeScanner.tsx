@@ -175,7 +175,7 @@ export function BarcodeScanner({ open, onClose, onProduitScanne }: Props) {
       <div
         className="relative w-full max-w-md rounded-3xl overflow-hidden"
         style={{
-          background: "linear-gradient(160deg,#1a1a1a 0%,#5E6063 100%)",
+          background: "linear-gradient(160deg,#1a1a1a 0%,#111111 100%)",
           border: "1px solid rgba(255,255,255,0.1)",
           boxShadow: "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,166,35,0.08)",
           fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",

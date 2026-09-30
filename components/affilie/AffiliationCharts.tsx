@@ -35,7 +35,7 @@ export function ClicsConversionsChart({ donnees }: { donnees: Jour[] }) {
   return (
     <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <p style={{ fontSize: 12.5, fontWeight: 700, color: "#5E6063" }}>{t("Clics et conversions par jour")}</p>
+        <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111" }}>{t("Clics et conversions par jour")}</p>
       </div>
       {totalClics === 0 && totalConv === 0 ? (
         <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>{t("Aucune activité sur cette période.")}</p>
@@ -70,7 +70,7 @@ export function CommissionsChart({ donnees, devise }: { donnees: Jour[]; devise:
   const total = donnees.reduce((s, d) => s + d.commissions, 0);
   return (
     <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-      <p style={{ fontSize: 12.5, fontWeight: 700, color: "#5E6063", marginBottom: 16 }}>{t("Commissions par jour (")}{t(devise)})</p>
+      <p style={{ fontSize: 12.5, fontWeight: 700, color: "#111", marginBottom: 16 }}>{t("Commissions par jour (")}{t(devise)})</p>
       {total === 0 ? (
         <p style={{ fontSize: 12, color: "#BBB", textAlign: "center", padding: "32px 0" }}>{t("Aucune commission sur cette période.")}</p>
       ) : (

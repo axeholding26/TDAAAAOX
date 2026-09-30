@@ -42,7 +42,7 @@ function StatCard({ label, value, sub, color = "#F5A623", Icon }: { label: strin
       <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${color}12`, border: `1px solid ${color}20` }}>
         <Icon size={16} style={{ color }} />
       </div>
-      <p className="text-[22px] font-bold text-[#5E6063] leading-none">{tr(value)}</p>
+      <p className="text-[22px] font-bold text-[#111] leading-none">{tr(value)}</p>
       <p className="text-[11px] text-gray-400 mt-1">{tr(label)}</p>
       {sub && <p className="text-[10px] mt-0.5" style={{ color }}>{tr(sub)}</p>}
     </div>
@@ -78,7 +78,7 @@ function MouvementModal({ produit, onClose, onDone }: { produit: Produit; onClos
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl p-5 w-full max-w-sm space-y-4" onClick={e => e.stopPropagation()}>
         <div>
-          <p className="text-[13px] font-bold text-[#5E6063]">{tr(produit.nom)}</p>
+          <p className="text-[13px] font-bold text-[#111]">{tr(produit.nom)}</p>
           <p className="text-[11px] text-gray-400">{tr("Stock actuel :")}{" "}{produit.stock}</p>
         </div>
         <div className="grid grid-cols-4 gap-1.5">
@@ -139,7 +139,7 @@ export default function PosStockPage() {
     <div className="p-5 max-w-5xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <ModuleTutorial moduleKey="pos-stock" titre={tr("Gestion des stocks")} sousTitre={tr("Module Point de vente")} steps={STOCK_TUTORIAL_STEPS} />
       <div className="flex items-center gap-2">
-        <h1 className="text-[18px] font-bold text-[#5E6063]">{tr("Gestion des stocks")}</h1>
+        <h1 className="text-[18px] font-bold text-[#111]">{tr("Gestion des stocks")}</h1>
         <BoutonRevoirTutoriel moduleKey="pos-stock" />
       </div>
       <p className="text-[12px] text-gray-500 -mt-4">{tr("Inventaire, mouvements et alertes de la boutique physique")}</p>
@@ -172,7 +172,7 @@ export default function PosStockPage() {
       ) : produits.length === 0 ? (
         <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
           <Package size={28} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-[13px] font-semibold text-[#5E6063]">{tr("Aucun produit physique")}</p>
+          <p className="text-[13px] font-semibold text-[#111]">{tr("Aucun produit physique")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -180,9 +180,9 @@ export default function PosStockPage() {
             <div key={p.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3">
               {p.images[0] ? <img src={p.images[0]} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" /> : <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={16} className="text-gray-300" /></div>}
               <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-[#5E6063] truncate">{tr(p.nom)}</p>
+                <p className="text-[13px] font-semibold text-[#111] truncate">{tr(p.nom)}</p>
                 <p className="text-[11px] text-gray-400">
-                  {p.sku && `${p.sku} · `}{tr("Stock :")}{" "}<strong style={{ color: p.statutStock === "rupture" ? "#ef4444" : p.statutStock === "bas" ? "#F5A623" : "#5E6063" }}>{p.stock}</strong>
+                  {p.sku && `${p.sku} · `}{tr("Stock :")}{" "}<strong style={{ color: p.statutStock === "rupture" ? "#ef4444" : p.statutStock === "bas" ? "#F5A623" : "#111" }}>{p.stock}</strong>
                   {p.lotsTracabilite.length > 0 && tr(" · {0} lot(s) actif(s)", p.lotsTracabilite.length)}
                 </p>
               </div>
@@ -201,7 +201,7 @@ export default function PosStockPage() {
 
       {mouvements.length > 0 && (
         <div>
-          <p className="text-[12px] font-bold text-[#5E6063] mb-2 flex items-center gap-1.5"><Clock size={13} />{" "}{tr("Mouvements récents")}</p>
+          <p className="text-[12px] font-bold text-[#111] mb-2 flex items-center gap-1.5"><Clock size={13} />{" "}{tr("Mouvements récents")}</p>
           <div className="bg-white border border-gray-100 rounded-2xl divide-y divide-gray-50">
             {mouvements.map(m => {
               const cfg = TYPE_CFG[m.type] ?? TYPE_CFG.ajustement;
@@ -211,7 +211,7 @@ export default function PosStockPage() {
                     <cfg.Icon size={12} style={{ color: cfg.color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-medium text-[#5E6063] truncate">{tr(m.produit.nom)}</p>
+                    <p className="text-[12px] font-medium text-[#111] truncate">{tr(m.produit.nom)}</p>
                     <p className="text-[10.5px] text-gray-400">{tr(cfg.label)} · {tr(m.motif) || "—"} · {new Date(m.createdAt).toLocaleString(tr.loc)}</p>
                   </div>
                   <p className="text-[12px] font-bold flex-shrink-0" style={{ color: cfg.color }}>{tr(m.stockAvant)} → {tr(m.stockApres)}</p>

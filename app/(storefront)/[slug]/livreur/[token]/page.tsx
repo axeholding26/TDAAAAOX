@@ -89,7 +89,7 @@ export default function LivreurPage() {
   }
 
   return (
-    <div style={{ minHeight:"100vh", background:"#5E6063", fontFamily:"system-ui,sans-serif", color:"white", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24 }}>
+    <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"system-ui,sans-serif", color:"white", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24 }}>
       <style>{`@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Logo / boutique */}

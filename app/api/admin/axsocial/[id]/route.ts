@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
-import { getPlatformTenantId } from "@/lib/wallet";
+import { supprimerPostAxsocial, reponseErreur } from "@/lib/admin-actions";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getAdminSession();
@@ -9,13 +8,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Réservé au super-admin" }, { status: 403 });
 
   const { id } = await params;
-  const platformTenantId = await getPlatformTenantId();
-
-  const post = await prisma.postSocial.findUnique({ where: { id } });
-  if (!post || post.tenantId !== platformTenantId) {
-    return NextResponse.json({ error: "Publication introuvable" }, { status: 404 });
+  try {
+    await supprimerPostAxsocial(id);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return reponseErreur(err);
   }
-
-  await prisma.postSocial.delete({ where: { id } });
-  return NextResponse.json({ success: true });
 }

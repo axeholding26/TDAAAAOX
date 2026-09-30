@@ -212,7 +212,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
             </span>
             <button
               onClick={importer} disabled={saving || !importTexte.trim()}
-              className="px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#5E6063] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors ml-auto"
+              className="px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors ml-auto"
             >
               {saving ? t("Import…") : t("Importer")}
             </button>

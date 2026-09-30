@@ -181,7 +181,7 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      <button onClick={sauvegarder} disabled={saving} className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#F5A623", color: "#5E6063" }}>
+      <button onClick={sauvegarder} disabled={saving} className="flex items-center gap-2 px-6 py-4 rounded-xl font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#F5A623", color: "#0a0a0a" }}>
         <Save size={15} />
         {saving ? t("Enregistrement...") : t("Enregistrer les paramètres")}
       </button>

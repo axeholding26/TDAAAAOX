@@ -113,7 +113,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{tr("SMS & WhatsApp")}</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("SMS & WhatsApp")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Envoyez des campagnes SMS à vos clients")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
@@ -151,7 +151,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15", border: `1px solid ${s.color}25` }}>
                   <Icone size={16} style={{ color: s.color }} />
                 </div>
-                <p className="text-[20px] font-bold text-[#5E6063] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{tr(s.val)}</p>
+                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{tr(s.val)}</p>
               </div>
               <p className="text-[12px] text-[#AAAAAA]">{tr(s.label)}</p>
             </div>
@@ -163,7 +163,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
       {histoCampagnes.length > 0 && (
         <div className="ax-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[#F3F3F3]">
-            <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Campagnes récentes")}</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Campagnes récentes")}</h2>
           </div>
           <div className="divide-y divide-[#F9F9F9]">
             {histoCampagnes.slice(0, 5).map((c: any) => (
@@ -190,7 +190,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
-              <h2 className="text-[15px] font-bold text-[#5E6063]">{tr("Nouvelle campagne SMS")}</h2>
+              <h2 className="text-[15px] font-bold text-[#111111]">{tr("Nouvelle campagne SMS")}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-5">
@@ -216,7 +216,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                 <label className="ax-label block mb-1.5">{tr("Nom de la campagne *")}</label>
                 <input value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))}
                   placeholder={tr("Ex: Promo Tabaski 2024")}
-                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]" />
               </div>
 
               {/* Templates */}
@@ -257,7 +257,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                 </div>
                 <textarea value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
                   rows={4} maxLength={160} placeholder={tr("Votre message SMS... ({{nom}} sera remplacé par le prénom du client)")}
-                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                 <p className="text-[11px] text-gray-400 mt-1">{tr("Utilisez")}{" "}<code className="bg-gray-100 px-1 rounded">{tr("{{nom}}")}</code>{" "}{tr("pour personnaliser · 1 SMS = 160 caractères")}</p>
               </div>
 

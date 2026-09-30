@@ -50,7 +50,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
   return (
     <div className="space-y-5 max-w-6xl">
       <div>
-        <h1 className="text-xl font-bold text-[#5E6063]">{tr("Logistique")}</h1>
+        <h1 className="text-xl font-bold text-[#111111]">{tr("Logistique")}</h1>
         <p className="text-sm text-gray-400 mt-0.5">{tr("Livraison, livreurs, retours, factures et caisse — tout en un seul endroit")}</p>
       </div>
 
@@ -58,7 +58,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
       <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 overflow-x-auto">
         {TABS.map(({ id, label, Icon }) => (
           <button key={id} onClick={() => setOnglet(id)}
-            className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#5E6063]" : "text-gray-500 hover:text-gray-700"}`}>
+            className={`flex-1 py-2 px-3 rounded-xl text-[12px] font-semibold whitespace-nowrap transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}>
             <Icon size={13} />
             {tr(label)}
           </button>
@@ -90,7 +90,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-[#5E6063]">{tr(c.label)}</p>
+                    <p className="text-sm font-bold text-[#111111]">{tr(c.label)}</p>
                     <span className="text-lg font-bold" style={{ color: c.accent }}>{tr(c.valeur)}</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">{tr(c.desc)}</p>
@@ -113,7 +113,7 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-[13px] font-bold text-[#5E6063]">{tr(c.label)}</p>
+                      <p className="text-[13px] font-bold text-[#111111]">{tr(c.label)}</p>
                       {c.valeur !== null && <span className="text-[13px] font-bold" style={{ color: c.accent }}>{tr(c.valeur)}</span>}
                     </div>
                     <p className="text-[11px] text-gray-400 mt-0.5">{tr(c.desc)}</p>

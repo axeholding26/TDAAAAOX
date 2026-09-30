@@ -92,7 +92,7 @@ function OngletPopups() {
         <div key={p.id} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3">
           <Megaphone size={14} className="text-[#F5A623] shrink-0"/>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-semibold text-[#5E6063] truncate">{t(p.nom)}</p>
+            <p className="text-[12px] font-semibold text-[#111] truncate">{t(p.nom)}</p>
             <p className="text-[11px] text-gray-400">{t(TYPE_LABELS[p.type])} · {t(DECL_LABELS[p.declencheur])}</p>
           </div>
           <span className="text-[10px] text-gray-400 flex items-center gap-1"><Eye size={10}/> {t(p.affichages)}</span>
@@ -192,7 +192,7 @@ function OngletAutomation() {
           <div key={w.id} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-3">
             <TcIcon size={18} className="text-[#F5A623] shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-[#5E6063] truncate">{t(w.nom)}</p>
+              <p className="text-[12px] font-semibold text-[#111] truncate">{t(w.nom)}</p>
               <p className="text-[11px] text-gray-400 flex items-center gap-1">
                 <CanalIcon size={10}/> {t(tc.label)} · {t(w.delaiHeures)}{t("h ·")}{" "}{t(w.declenchements)}{" "}{t("déclenchements")}
               </p>
@@ -228,13 +228,13 @@ function OngletBadges() {
   return (
     <div className="space-y-5">
       {nouveaux.length > 0 && (
-        <div className="bg-gradient-to-r from-[#F5A623]/10 to-[#5E6063]/10 border border-[#F5A623]/20 rounded-2xl p-4">
-          <p className="text-[13px] font-bold text-[#5E6063] mb-2 flex items-center gap-1.5"><Sparkles size={14} className="text-[#F5A623]" />{" "}{t("Nouveaux badges !")}</p>
+        <div className="bg-gradient-to-r from-[#F5A623]/10 to-[#111111]/10 border border-[#F5A623]/20 rounded-2xl p-4">
+          <p className="text-[13px] font-bold text-[#111] mb-2 flex items-center gap-1.5"><Sparkles size={14} className="text-[#F5A623]" />{" "}{t("Nouveaux badges !")}</p>
           <div className="flex gap-2 flex-wrap">
             {nouveaux.map(b=>(
               <div key={b.type} className="bg-white rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm">
                 <span className="text-xl">{t(b.emoji)}</span>
-                <div><p className="text-[12px] font-bold text-[#5E6063]">{t(b.titre)}</p></div>
+                <div><p className="text-[12px] font-bold text-[#111]">{t(b.titre)}</p></div>
               </div>
             ))}
           </div>
@@ -248,7 +248,7 @@ function OngletBadges() {
             {obtenus.map(b=>(
               <div key={b.type} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3">
                 <span className="text-2xl">{t(b.emoji)}</span>
-                <div><p className="text-[12px] font-semibold text-[#5E6063]">{t(b.titre)}</p><p className="text-[10px] text-gray-400">{t(b.description)}</p></div>
+                <div><p className="text-[12px] font-semibold text-[#111]">{t(b.titre)}</p><p className="text-[10px] text-gray-400">{t(b.description)}</p></div>
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ export default function CampagnesPage() {
       <ModuleTutorial moduleKey="campagnes" titre={t("Campagnes")} sousTitre={t("Notifications & relances")} steps={CAMPAGNES_TUTORIAL_STEPS} />
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-[18px] font-bold text-[#5E6063]">{t("Campagnes")}</h1>
+          <h1 className="text-[18px] font-bold text-[#111]">{t("Campagnes")}</h1>
           <BoutonRevoirTutoriel moduleKey="campagnes" />
         </div>
         <p className="text-[12px] text-gray-500">{t("Popups, workflows automatisés et badges marchands")}</p>
@@ -293,7 +293,7 @@ export default function CampagnesPage() {
       <div className="flex gap-1 bg-gray-100 rounded-2xl p-1">
         {TABS.map(({id,label})=>(
           <button key={id} onClick={()=>setOnglet(id)}
-            className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all ${onglet===id?"bg-white shadow-sm text-[#5E6063]":"text-gray-500 hover:text-gray-700"}`}>
+            className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all ${onglet===id?"bg-white shadow-sm text-[#111]":"text-gray-500 hover:text-gray-700"}`}>
             {t(label)}
           </button>
         ))}

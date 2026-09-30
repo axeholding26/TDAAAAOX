@@ -35,7 +35,7 @@ export function IconAccueil({ size = 32 }: IconProps) {
       <defs>
         <linearGradient id="gHome" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#333333"/>
-          <stop offset="100%" stopColor="#5E6063"/>
+          <stop offset="100%" stopColor="#111111"/>
         </linearGradient>
       </defs>
       <rect width="32" height="32" rx="8" fill="url(#gHome)"/>

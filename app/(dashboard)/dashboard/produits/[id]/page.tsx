@@ -351,7 +351,7 @@ export default function EditProduitPage() {
     else { toast.error(tr("Erreur lors de la suppression")); setDeleting(false); }
   }
 
-  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-64">
@@ -367,11 +367,11 @@ export default function EditProduitPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Link href="/dashboard/produits"
-            className="w-9 h-9 rounded-xl bg-white border border-[#E8E8E8] flex items-center justify-center text-[#888] hover:text-[#5E6063] hover:border-[#CCC] transition-all">
+            className="w-9 h-9 rounded-xl bg-white border border-[#E8E8E8] flex items-center justify-center text-[#888] hover:text-[#111] hover:border-[#CCC] transition-all">
             <ArrowLeft size={16} />
           </Link>
           <div>
-            <h1 className="text-[18px] font-bold text-[#5E6063] tracking-tight line-clamp-1">{tr(form.nom) || tr("Éditer le produit")}</h1>
+            <h1 className="text-[18px] font-bold text-[#111111] tracking-tight line-clamp-1">{tr(form.nom) || tr("Éditer le produit")}</h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-[11px] text-[#AAAAAA]">{tr(stats.ventes)} ventes</span>
               <span className="text-[#DDDDDD]">·</span>
@@ -444,7 +444,7 @@ export default function EditProduitPage() {
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Package size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Informations générales")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Informations générales")}</h2>
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Nom du produit *")}</label>
@@ -474,7 +474,7 @@ export default function EditProduitPage() {
           <div className="ax-card p-6 space-y-6">
             <div className="flex items-center gap-2">
               <BarChart2 size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Prix & Stock")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Prix & Stock")}</h2>
             </div>
 
             {/* Tarification */}
@@ -527,7 +527,7 @@ export default function EditProduitPage() {
               </div>
             ) : (
               <div className="space-y-4 pt-5 border-t border-gray-100">
-                <p className="text-[12px] font-semibold text-[#5E6063]">{tr("Inventaire")}</p>
+                <p className="text-[12px] font-semibold text-[#111111]">{tr("Inventaire")}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="ax-label block mb-1.5">{tr("Stock disponible")}</label>
@@ -569,7 +569,7 @@ export default function EditProduitPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap size={15} className="text-[#F5A623]" />
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Programme d'affiliation")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Programme d'affiliation")}</h2>
               </div>
               <button type="button" onClick={() => set("affiliationActive", !form.affiliationActive)}
                 className="w-9 h-5 rounded-full relative transition-all flex-shrink-0"
@@ -594,7 +594,7 @@ export default function EditProduitPage() {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <Truck size={15} className="text-emerald-500" />
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Informations fournisseur")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Informations fournisseur")}</h2>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -627,7 +627,7 @@ export default function EditProduitPage() {
             <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <FileText size={15} className="text-purple-500" />
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Fichier digital")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Fichier digital")}</h2>
               </div>
               {!form.fichierUrl ? (
                 <div
@@ -674,7 +674,7 @@ export default function EditProduitPage() {
           <div className="ax-card p-6 space-y-5">
             <div className="flex items-center gap-2 mb-1">
               <ImageIcon size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Images & Vidéos")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Images & Vidéos")}</h2>
             </div>
             {/* Images */}
             <div className="space-y-3">
@@ -753,7 +753,7 @@ export default function EditProduitPage() {
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("SEO & Open Graph")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("SEO & Open Graph")}</h2>
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Titre méta")}</label>
@@ -805,7 +805,7 @@ export default function EditProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2 px-5 pt-5 pb-1">
               <HelpCircle size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">FAQ</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">FAQ</h2>
             </div>
             <FaqManager
               produitId={id}
@@ -819,7 +819,7 @@ export default function EditProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
             <div className="flex items-center gap-2 px-5 pt-5 pb-1">
               <ListOrdered size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Champs personnalisés à la commande")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Champs personnalisés à la commande")}</h2>
             </div>
             <ChampsCommandeManager
               produitId={id}
@@ -833,7 +833,7 @@ export default function EditProduitPage() {
 
           {/* Stats */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5">
-            <h2 className="text-[13px] font-semibold text-[#5E6063] mb-3">{tr("Statistiques")}</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-3">{tr("Statistiques")}</h2>
             <div className="space-y-3">
               {[
                 { label: "Ventes totales", value: stats.ventes, color: "text-[#F5A623]" },
@@ -853,7 +853,7 @@ export default function EditProduitPage() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag size={14} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Catégorie & Tags")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Catégorie & Tags")}</h2>
             </div>
             <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
@@ -885,7 +885,7 @@ export default function EditProduitPage() {
           {!estDigital && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Variantes")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Variantes")}</h2>
                 <span className="flex-shrink-0 whitespace-nowrap text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
               </div>
               {/* Existantes */}
@@ -894,7 +894,7 @@ export default function EditProduitPage() {
                   {variantes.map((v, idx) => (
                     <div key={idx} className="flex items-center gap-2 bg-[#FAFAFA] rounded-xl px-3 py-2">
                       <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{tr(v.nom)}</span>
-                      <span className="text-[12px] font-semibold text-[#5E6063] flex-1">{tr(v.valeur)}</span>
+                      <span className="text-[12px] font-semibold text-[#111] flex-1">{tr(v.valeur)}</span>
                       {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{tr(v.sku)}</span>}
                       <span className="text-[12px] text-[#F5A623] font-bold">{fmt(Number(v.prix || form.prix) || 0)}</span>
                       <span className="text-[11px] text-[#888]">{tr("S:")}{v.stock}</span>
@@ -930,7 +930,7 @@ export default function EditProduitPage() {
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="text-[13px] font-semibold text-[#5E6063] mb-1">{tr("Options")}</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-1">{tr("Options")}</h2>
             {[
               { label: "Produit actif", desc: "Accessible et visible sur la boutique", key: "actif", icon: <Eye size={12} /> },
               { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured", icon: null },

@@ -232,7 +232,7 @@ function PlatformCard({
           {/* Name + subtitle + badge */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-[#5E6063] text-sm">{tr(nom)}</span>
+              <span className="font-bold text-[#111111] text-sm">{tr(nom)}</span>
               {isActif ? (
                 <span
                   className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full"
@@ -362,7 +362,7 @@ function PlatformCard({
                 style={{
                   borderColor: valeur.trim() ? couleur + "55" : "#E0E0E0",
                   ["--tw-ring-color" as any]: `${couleur}35`,
-                  color: "#5E6063",
+                  color: "#111",
                 }}
               />
               {valeur.trim() && (
@@ -469,7 +469,7 @@ function CustomScriptsCard({ valeurInitiale }: { valeurInitiale: string | null }
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#5E6063] text-sm">{tr("Scripts personnalisés")}</span>
+              <span className="font-bold text-[#111111] text-sm">{tr("Scripts personnalisés")}</span>
               {isActif ? (
                 <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-gray-900/5 text-gray-700 border border-gray-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-pulse" />

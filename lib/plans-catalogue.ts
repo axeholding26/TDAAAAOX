@@ -56,7 +56,7 @@ export const PLANS_CATALOGUE = [
     palier: "Palier 2",
     prixXAF: 20000,
     description: "Aucune limite — puissance totale",
-    couleur: "#5E6063",
+    couleur: "#111111",
     bg: "rgba(17,17,17,0.08)",
     border: "rgba(17,17,17,0.25)",
     icone: Crown as LucideIcon,

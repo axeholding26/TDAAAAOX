@@ -84,7 +84,7 @@ export function ImageUpload({ value, onChange, onRemove, label, hint, className 
                 onClick={e => { e.stopPropagation(); onRemove(); }}
                 className="absolute top-2 right-2 w-7 h-7 bg-white/90 hover:bg-red-500 shadow-sm rounded-full flex items-center justify-center transition-colors z-10 opacity-0 group-hover:opacity-100"
               >
-                <X size={12} className="text-[#5E6063] group-hover:text-white" />
+                <X size={12} className="text-[#111111] group-hover:text-white" />
               </button>
             )}
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">

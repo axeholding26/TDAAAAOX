@@ -97,7 +97,7 @@ export default async function CommissionsPage() {
               ) : commissions.map((c) => {
                 const st = STATUT_COMMISSION[c.statut] || STATUT_COMMISSION.pending;
                 return (
-                  <tr key={c.id} className="border-b border-[#5E6063] hover:bg-[#151515]">
+                  <tr key={c.id} className="border-b border-[#111] hover:bg-[#151515]">
                     <td className="px-5 py-4 text-[#F5A623] font-mono text-xs">{c.commande.numero}</td>
                     <td className="px-5 py-4 text-gray-700">{formatMontant(c.montantCommande, tenant.devise)}</td>
                     <td className="px-5 py-4 text-red-400 font-semibold">{formatMontant(c.montantCommission, tenant.devise)}</td>

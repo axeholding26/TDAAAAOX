@@ -57,8 +57,8 @@ const THINKING_VOICE_FILLERS = [
 const WAVE_HEIGHTS = Array.from({ length: 20 }, () => 8 + Math.floor(Math.random() * 28));
 
 const PHASE_CONFIG: Record<VoicePhase, { orbGrad: string; orbShadow: string; ringColor: string }> = {
-  idle:      { orbGrad: "radial-gradient(circle at 35% 35%, #333333, #5E6063)", orbShadow: "0 0 40px rgba(17,17,17,0.5), inset 0 1px 1px rgba(255,255,255,0.12)", ringColor: "#666666" },
-  listening: { orbGrad: "radial-gradient(circle at 35% 35%, #444444, #5E6063)", orbShadow: "0 0 90px rgba(17,17,17,0.75), 0 0 180px rgba(17,17,17,0.35), inset 0 1px 1px rgba(255,255,255,0.2)", ringColor: "#F5A623" },
+  idle:      { orbGrad: "radial-gradient(circle at 35% 35%, #333333, #111111)", orbShadow: "0 0 40px rgba(17,17,17,0.5), inset 0 1px 1px rgba(255,255,255,0.12)", ringColor: "#666666" },
+  listening: { orbGrad: "radial-gradient(circle at 35% 35%, #444444, #111111)", orbShadow: "0 0 90px rgba(17,17,17,0.75), 0 0 180px rgba(17,17,17,0.35), inset 0 1px 1px rgba(255,255,255,0.2)", ringColor: "#F5A623" },
   thinking:  { orbGrad: "radial-gradient(circle at 35% 35%, #F5A623, #D4911A)", orbShadow: "0 0 60px rgba(245,166,35,0.45)", ringColor: "#F5A623" },
   speaking:  { orbGrad: "radial-gradient(circle at 35% 35%, #10b981, #059669)", orbShadow: "0 0 90px rgba(16,185,129,0.55)", ringColor: "#10b981" },
 };
@@ -290,6 +290,8 @@ export function AxiaHomeClient() {
     } finally {
       setLoading(false);
       abortRef.current = null;
+      // Une action sensible a pu créer une demande d'accord : la bulle la montre tout de suite.
+      window.dispatchEvent(new Event("axia:rafraichir"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speakThenListen]);
@@ -312,6 +314,19 @@ export function AxiaHomeClient() {
   }, [callAI, speakThinkingFiller, creerConversation]);
 
   useEffect(() => { sendRef.current = (t) => sendMessage(t); }, [sendMessage]);
+
+  // Demandes venues de la bulle AXIA (components/dashboard/AxiaBulle.tsx) :
+  // événement si on est déjà ici, sinon ?axia=… dans l'URL.
+  useEffect(() => {
+    const demande = new URLSearchParams(window.location.search).get("axia");
+    if (demande) {
+      window.history.replaceState(null, "", window.location.pathname);
+      setTimeout(() => sendRef.current(demande), 0);
+    }
+    const ecouter = (e: Event) => sendRef.current((e as CustomEvent<string>).detail);
+    window.addEventListener("axia:demander", ecouter);
+    return () => window.removeEventListener("axia:demander", ecouter);
+  }, []);
 
   const stopGeneration = useCallback(() => {
     abortRef.current?.abort();
@@ -498,7 +513,7 @@ export function AxiaHomeClient() {
                 )}
               {voicePhase === "listening" && (
                 <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg">
-                  <Mic size={14} className="text-[#5E6063]" />
+                  <Mic size={14} className="text-[#111111]" />
                 </div>
               )}
               {voicePhase === "speaking" && (
@@ -568,7 +583,7 @@ export function AxiaHomeClient() {
         </div>
       )}
 
-      <div className="flex-1 min-w-0 h-full flex flex-col min-h-0" style={{ background: "linear-gradient(160deg,#5E6063 0%,#1a1a1a 55%,#5E6063 100%)" }}>
+      <div className="flex-1 min-w-0 h-full flex flex-col min-h-0" style={{ background: "linear-gradient(160deg,#111111 0%,#1a1a1a 55%,#0a0a0a 100%)" }}>
         {/* Barre supérieure */}
         <div className="flex-shrink-0 flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 gap-2">
           <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
@@ -605,7 +620,7 @@ export function AxiaHomeClient() {
             </Link>
             <Link href="/dashboard/accueil" title={tr("Tableau de bord")}
               className="flex items-center gap-1.5 text-[11.5px] font-bold rounded-full px-2.5 sm:px-3.5 py-1.5 transition-all hover:opacity-90 flex-shrink-0"
-              style={{ background: "#F5A623", color: "#5E6063" }}>
+              style={{ background: "#F5A623", color: "#111111" }}>
               <LayoutDashboard size={12} /> <span className="hidden sm:inline">{tr("Tableau de bord")}</span>
             </Link>
           </div>
@@ -655,7 +670,7 @@ export function AxiaHomeClient() {
                       style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.08)" }}>
                       {m.role === "assistant"
                         ? <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
-                        : <span className="text-[11px] font-bold text-[#5E6063]">{tr((nomBoutique ?? "M")[0])}</span>}
+                        : <span className="text-[11px] font-bold text-[#111111]">{tr((nomBoutique ?? "M")[0])}</span>}
                     </div>
                     <div className="flex flex-col gap-1.5" style={{ maxWidth: "85%" }}>
                       {m.imageUrl && (
@@ -665,7 +680,7 @@ export function AxiaHomeClient() {
                       )}
                       {text && (
                         <div className="relative group">
-                          <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "text-[#5E6063] font-medium" : "text-white/90"}`}
+                          <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "text-[#111111] font-medium" : "text-white/90"}`}
                             style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
                             {m.role === "assistant"
                               ? <div className="axia-md" dangerouslySetInnerHTML={{ __html: renderMarkdown(text || (m.streaming ? "" : m.content)) }} />
@@ -806,7 +821,7 @@ function ChatInput({
           <button onClick={onSend} disabled={!input.trim() && !pendingImage}
             className="w-8 h-8 rounded-xl flex items-center justify-center transition-all disabled:opacity-40 flex-shrink-0 mb-0.5"
             style={{ background: input.trim() || pendingImage ? "#F5A623" : "rgba(255,255,255,0.06)" }}>
-            <Send size={13} className={input.trim() || pendingImage ? "text-[#5E6063]" : "text-white/40"} />
+            <Send size={13} className={input.trim() || pendingImage ? "text-[#111111]" : "text-white/40"} />
           </button>
         )}
       </div>

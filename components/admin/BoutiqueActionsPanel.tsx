@@ -100,7 +100,7 @@ export function BoutiqueActionsPanel({ tenantId, statut, planType, certifie, dev
           <input type="number" placeholder={t("Durée (jours)")} value={jours} onChange={e => setJours(e.target.value)} className={inputCls} style={inputStyle} />
         )}
         <button disabled={loading !== null} onClick={() => appel("plan", `/api/admin/tenants/${tenantId}/plan`, { plan, jours }, "Plan mis à jour")}
-          className={btnBase} style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#5E6063" }}>
+          className={btnBase} style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}>
           {loading === "plan" ? <Loader2 size={14} className="animate-spin" /> : <Crown size={14} />}{" "}{t("Appliquer le plan")}
         </button>
       </div>
@@ -119,7 +119,7 @@ export function BoutiqueActionsPanel({ tenantId, statut, planType, certifie, dev
           <input placeholder={t("Emoji")} value={bonus.emoji} onChange={e => setBonus(b => ({ ...b, emoji: e.target.value }))} className={inputCls} style={inputStyle} />
         </div>
         <button disabled={loading !== null} onClick={() => appel("recompense", `/api/admin/tenants/${tenantId}/recompense`, bonus, "Récompense envoyée")}
-          className={btnBase} style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#5E6063" }}>
+          className={btnBase} style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}>
           {loading === "recompense" ? <Loader2 size={14} className="animate-spin" /> : <Gift size={14} />}{" "}{t("Envoyer la récompense")}
         </button>
       </div>

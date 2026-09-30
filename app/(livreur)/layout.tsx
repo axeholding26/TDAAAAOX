@@ -27,7 +27,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
 
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("livreur")}>
-    <div className="min-h-screen bg-[#5E6063] text-white">
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Fond étoilé subtil */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#F5A623]/5 to-transparent" />
@@ -35,7 +35,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
       </div>
 
       {/* Header premium */}
-      <header className="sticky top-0 z-50 bg-[#5E6063]/90 backdrop-blur-xl border-b border-white/5">
+      <header className="sticky top-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
@@ -65,7 +65,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
       </main>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#5E6063]/95 backdrop-blur-xl border-t border-white/5 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 safe-area-bottom">
         <div className="max-w-2xl mx-auto px-4 py-3 grid grid-cols-3">
           <Link href="/livreur" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
             <Home size={20} />

@@ -67,7 +67,7 @@ export function RejoindreForm(p: Props) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#FAFAFA", fontFamily: "'Poppins',system-ui,sans-serif" }}>
-      <div style={{ background: "linear-gradient(135deg,#5E6063,#1a1a1a)", padding: "40px 20px 80px", color: "white", textAlign: "center" }}>
+      <div style={{ background: "linear-gradient(135deg,#111111,#1a1a1a)", padding: "40px 20px 80px", color: "white", textAlign: "center" }}>
         {p.tenant.logoUrl && <img src={p.tenant.logoUrl} alt="" style={{ height: 36, margin: "0 auto 16px", borderRadius: 8 }} />}
         <p style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
           {t("Programme partenaires ·")}{" "}{t(p.tenant.nomBoutique)}
@@ -81,14 +81,14 @@ export function RejoindreForm(p: Props) {
         <div style={{ background: "white", borderRadius: 20, padding: 20, boxShadow: "0 8px 30px rgba(0,0,0,0.08)", marginBottom: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
           <div style={{ textAlign: "center" }}>
             <Percent size={18} color="#F5A623" style={{ margin: "0 auto 6px" }} />
-            <p style={{ fontSize: 16, fontWeight: 800, color: "#5E6063" }}>
+            <p style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>
               {p.tiersActifs ? `${p.tier1Commission}–${p.tier3Commission}%` : p.typeCommission === "fixe" ? `${p.valeurCommission} ${p.tenant.devise}` : `${p.valeurCommission}%`}
             </p>
             <p style={{ fontSize: 10.5, color: "#999" }}>{p.tiersActifs ? t("Par palier") : t("Commission")}</p>
           </div>
           <div style={{ textAlign: "center" }}>
             <Clock size={18} color="#3b82f6" style={{ margin: "0 auto 6px" }} />
-            <p style={{ fontSize: 16, fontWeight: 800, color: "#5E6063" }}>{t(p.dureeCookie)}j</p>
+            <p style={{ fontSize: 16, fontWeight: 800, color: "#111" }}>{t(p.dureeCookie)}j</p>
             <p style={{ fontSize: 10.5, color: "#999" }}>{t("Fenêtre d'attribution")}</p>
           </div>
         </div>
@@ -105,7 +105,7 @@ export function RejoindreForm(p: Props) {
         {/* Formulaire ou confirmation */}
         {!resultat ? (
           <form onSubmit={soumettre} style={{ background: "white", borderRadius: 20, padding: 22, boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}>
-            <p style={{ fontSize: 13, fontWeight: 700, color: "#5E6063", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#111", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
               <Users size={15} color="#F5A623" />{" "}{t("Devenez partenaire")}
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -123,7 +123,7 @@ export function RejoindreForm(p: Props) {
             <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#10b98115", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 14px" }}>
               <CheckCircle2 size={26} color="#10b981" />
             </div>
-            <p style={{ fontSize: 15, fontWeight: 800, color: "#5E6063", marginBottom: 6 }}>
+            <p style={{ fontSize: 15, fontWeight: 800, color: "#111", marginBottom: 6 }}>
               {resultat.statut === "actif" ? t("Bienvenue dans le programme !") : t("Candidature envoyée !")}
             </p>
             <p style={{ fontSize: 12.5, color: "#888", marginBottom: 18 }}>
@@ -132,7 +132,7 @@ export function RejoindreForm(p: Props) {
                 : t("Le marchand va examiner votre candidature. Gardez ce lien précieusement, il deviendra actif dès l'approbation.")}
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FAFAFA", border: "1px solid #F0F0F0", borderRadius: 14, padding: "10px 14px", marginBottom: 14 }}>
-              <span style={{ flex: 1, fontSize: 12, fontFamily: "monospace", color: "#5E6063", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{portalUrl}</span>
+              <span style={{ flex: 1, fontSize: 12, fontFamily: "monospace", color: "#111", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{portalUrl}</span>
               <button onClick={() => { navigator.clipboard.writeText(portalUrl); setCopie(true); toast.success(t("Copié !")); setTimeout(() => setCopie(false), 2000); }}
                 style={{ flexShrink: 0, background: "#F5A623", border: "none", borderRadius: 10, padding: "8px 12px", cursor: "pointer" }}>
                 {copie ? <Check size={13} color="white" /> : <Copy size={13} color="white" />}

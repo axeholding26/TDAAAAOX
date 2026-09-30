@@ -4,7 +4,7 @@
 /* ── Design System Axso — Ultra Minimal ─────────────────────────────────── */
 :root {
   --background: #ffffff;
-  --foreground: #5E6063;
+  --foreground: #111111;
 
   /* Surfaces */
   --bg:      #F5F5F5;
@@ -15,7 +15,7 @@
   --border-light: #F3F3F3;
 
   /* Text hierarchy */
-  --text-1: #5E6063;
+  --text-1: #111111;
   --text-2: #666666;
   --text-3: #AAAAAA;
 
@@ -36,7 +36,7 @@
   --axso-amber: #F5A623;
   --axso-amber-dark: #D4911A;
   --axso-amber-light: #FFD280;
-  --axso-navy: #5E6063;
+  --axso-navy: #111111;
   --axso-or: #F5A623;
 
   /* Police principale : Poppins */
@@ -516,7 +516,7 @@ main > section, main > div > section {
   select:disabled { opacity: .6; cursor: not-allowed; }
 }
 /* Place réservée au chevron, quel que soit le padding posé ailleurs. */
-select:not([multiple]):not([size]) { padding-inline-end: 2.4rem !important; }
+select:not([multiple]):not([size]):not(.ax-langue) { padding-inline-end: 2.4rem !important; }
 
 /* Liste ouverte personnalisable (Chrome/Edge 135+) ; ailleurs, liste native. */
 @supports (appearance: base-select) {
@@ -529,7 +529,7 @@ select:not([multiple]):not([size]) { padding-inline-end: 2.4rem !important; }
     border: 1px solid #ECECEC;
     border-radius: 14px;
     background: #fff;
-    color: #5E6063;
+    color: #111;
     box-shadow: 0 16px 40px -12px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.05);
     max-height: min(360px, 60vh);
     opacity: 1;
@@ -564,7 +564,7 @@ select:not([multiple]):not([size]) { padding-inline-end: 2.4rem !important; }
 }
 .ax-pays-panneau {
   z-index: 10000; display: flex; flex-direction: column; max-height: 360px;
-  background: #fff; color: #5E6063; border: 1px solid #ECECEC; border-radius: 16px;
+  background: #fff; color: #111; border: 1px solid #ECECEC; border-radius: 16px;
   box-shadow: 0 20px 48px -12px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.06);
   overflow: hidden; animation: ax-pays-in .16s var(--ax-ease-decel);
 }
@@ -575,7 +575,7 @@ select:not([multiple]):not([size]) { padding-inline-end: 2.4rem !important; }
 }
 .ax-pays-recherche input {
   flex: 1; min-width: 0; padding: 9px 0; border: 0; outline: none; background: transparent;
-  font-size: 14px; color: #5E6063;
+  font-size: 14px; color: #111;
 }
 .ax-pays-panneau ul { list-style: none; margin: 0; padding: 0 6px 6px; overflow-y: auto; overscroll-behavior: contain; }
 .ax-pays-option {

@@ -86,7 +86,7 @@ export function NotificationsPanel() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative w-11 h-11 rounded-2xl bg-[#5E6063] border border-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#F5A623]/30 transition-all"
+        className="relative w-11 h-11 rounded-2xl bg-[#111] border border-[#1a1a1a] flex items-center justify-center text-gray-400 hover:text-white hover:border-[#F5A623]/30 transition-all"
       >
         <Bell size={18} />
         {nonLues > 0 && (
@@ -99,7 +99,7 @@ export function NotificationsPanel() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-14 w-80 bg-[#5E6063] border border-[#F5A623]/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-14 w-80 bg-[#111] border border-[#F5A623]/20 rounded-2xl shadow-2xl z-50 overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-[#1a1a1a]">
               <div className="flex items-center gap-2">
                 <Bell size={14} className="text-[#F5A623]" />

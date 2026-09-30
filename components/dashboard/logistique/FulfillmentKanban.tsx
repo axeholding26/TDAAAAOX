@@ -99,7 +99,7 @@ export function FulfillmentKanban() {
           >
             <div className="flex items-center gap-2 px-4 py-3 border-b" style={{ borderColor: "#F0F0F0" }}>
               <col.Icon size={14} style={{ color: col.color }} />
-              <span className="text-[12.5px] font-bold text-[#5E6063]">{t(col.label)}</span>
+              <span className="text-[12.5px] font-bold text-[#111111]">{t(col.label)}</span>
               <span className="ml-auto text-[11px] font-semibold text-gray-400">{cartes.length}</span>
             </div>
 
@@ -123,7 +123,7 @@ export function FulfillmentKanban() {
                     </div>
                     <GripVertical size={13} className="text-gray-300 flex-shrink-0 mt-0.5" />
                   </div>
-                  <p className="text-[12px] font-bold text-[#5E6063] mt-2">{formatMontant(c.montantTotal, c.devise)}</p>
+                  <p className="text-[12px] font-bold text-[#111111] mt-2">{formatMontant(c.montantTotal, c.devise)}</p>
                 </div>
               ))}
             </div>

@@ -47,7 +47,7 @@ function CardResume({ label, value, Icon, color, sub }: { label: string; value: 
           <Icon size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-[20px] font-bold text-[#5E6063] leading-none">{t(value)}</p>
+      <p className="text-[20px] font-bold text-[#111] leading-none">{t(value)}</p>
       <p className="text-[11px] text-gray-400 mt-1">{t(label)}</p>
       {sub && <p className="text-[10px] mt-0.5" style={{ color }}>{t(sub)}</p>}
     </div>
@@ -82,7 +82,7 @@ export default function ComptabilitePage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[18px] font-bold text-[#5E6063] inline-flex items-center gap-2"><BarChart3 size={17} className="text-[#F5A623]" />{" "}{t("Comptabilité boutique")}</h1>
+            <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2"><BarChart3 size={17} className="text-[#F5A623]" />{" "}{t("Comptabilité boutique")}</h1>
             <BoutonRevoirTutoriel moduleKey="pos-comptabilite" />
           </div>
           <p className="text-[12px] text-gray-500">{t("Rentabilité, entrées, charges et fonds généraux de la vente physique")}</p>
@@ -90,7 +90,7 @@ export default function ComptabilitePage() {
         <div className="flex items-center gap-1.5 bg-gray-100 rounded-2xl p-1">
           {PERIODES.map(p => (
             <button key={p.v} onClick={() => setPeriode(p.v)}
-              className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold flex items-center gap-1 ${periode === p.v ? "bg-white shadow-sm text-[#5E6063]" : "text-gray-500"}`}>
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold flex items-center gap-1 ${periode === p.v ? "bg-white shadow-sm text-[#111]" : "text-gray-500"}`}>
               <Calendar size={10} /> {t(p.l)}
             </button>
           ))}
@@ -119,7 +119,7 @@ export default function ComptabilitePage() {
 
       {/* Fonds généraux cumulés */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-[12.5px] font-bold text-[#5E6063] mb-4 flex items-center gap-1.5"><PiggyBank size={14} className="text-[#F5A623]" />{" "}{t("Fonds généraux (tout historique)")}</p>
+        <p className="text-[12.5px] font-bold text-[#111] mb-4 flex items-center gap-1.5"><PiggyBank size={14} className="text-[#F5A623]" />{" "}{t("Fonds généraux (tout historique)")}</p>
         <div className="grid grid-cols-3 gap-3">
           <div>
             <p className="text-[16px] font-bold text-green-600">{fmt(data.fondsGeneraux.entreesTotales)}</p>
@@ -130,7 +130,7 @@ export default function ComptabilitePage() {
             <p className="text-[10.5px] text-gray-400">{t("Charges totales")}</p>
           </div>
           <div>
-            <p className="text-[16px] font-bold text-[#5E6063]">{fmt(data.fondsGeneraux.soldeNet)}</p>
+            <p className="text-[16px] font-bold text-[#111]">{fmt(data.fondsGeneraux.soldeNet)}</p>
             <p className="text-[10.5px] text-gray-400">{t("Solde net")}</p>
           </div>
         </div>
@@ -138,7 +138,7 @@ export default function ComptabilitePage() {
 
       {/* Rentabilité par produit */}
       <div>
-        <p className="text-[12.5px] font-bold text-[#5E6063] mb-1">{t("Rentabilité par produit")}</p>
+        <p className="text-[12.5px] font-bold text-[#111] mb-1">{t("Rentabilité par produit")}</p>
         <p className="text-[11px] text-gray-400 mb-2">{t("Bénéfice net = bénéfice brut − quote-part des charges d'exploitation, répartie au prorata du revenu de chaque produit")}</p>
         {data.parProduit.length === 0 ? (
           <div className="py-8 text-center text-sm text-gray-400 bg-white border border-dashed border-gray-200 rounded-2xl">{t("Aucune vente sur cette période")}</div>
@@ -149,7 +149,7 @@ export default function ComptabilitePage() {
                 <div className="flex items-center gap-3">
                   {p.image ? <img src={p.image} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[12.5px] font-semibold text-[#5E6063] truncate">{t(p.nom)}</p>
+                    <p className="text-[12.5px] font-semibold text-[#111] truncate">{t(p.nom)}</p>
                     <p className="text-[10.5px] text-gray-400">{t(p.quantiteVendue)}{" "}{t("vendu(s) ·")}{" "}{fmt(p.revenu)}{" "}{t("de revenu ·")}{" "}{fmt(p.cout)}{" "}{t("de coût d'achat")}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
@@ -170,7 +170,7 @@ export default function ComptabilitePage() {
       {/* Charges par catégorie */}
       {Object.keys(data.parCategorieCharge).length > 0 && (
         <div>
-          <p className="text-[12.5px] font-bold text-[#5E6063] mb-2">{t("Charges par catégorie")}</p>
+          <p className="text-[12.5px] font-bold text-[#111] mb-2">{t("Charges par catégorie")}</p>
           <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-2.5">
             {Object.entries(data.parCategorieCharge).map(([cat, montant]: [string, any]) => {
               const pct = r.chargesExploitation > 0 ? Math.round((montant / r.chargesExploitation) * 100) : 0;
@@ -178,7 +178,7 @@ export default function ComptabilitePage() {
                 <div key={cat}>
                   <div className="flex items-center justify-between text-[12px] mb-1">
                     <span className="capitalize text-gray-600">{t(cat)}</span>
-                    <span className="font-bold text-[#5E6063]">{fmt(montant)}</span>
+                    <span className="font-bold text-[#111]">{fmt(montant)}</span>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className="h-full bg-[#F5A623] rounded-full" style={{ width: `${pct}%` }} />

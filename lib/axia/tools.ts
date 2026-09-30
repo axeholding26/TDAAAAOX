@@ -17,6 +17,7 @@ import { agentConstructeurLibre } from "@/lib/gemini";
 import { validerActions, applyAgentActions } from "@/lib/agent-actions";
 import { SECTIONS_FICHE, TYPES_FICHE, LAYOUTS_FICHE, appliquerActionFiche, resumerFiche, type ActionFiche } from "@/lib/fiche-produit";
 import { BLOCS_PAGE, appliquerActionPage, resumerPage, type ActionPage, type CleePage } from "@/lib/pages-annexes";
+import { estSensible, demanderConfirmation } from "./confirmation";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -881,7 +882,8 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
 ];
 
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
-export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
+/** Exécute l'outil sans contrôle de confirmation — à n'appeler qu'après accord du marchand (app/api/axia/propositions). */
+export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => {
   try {
     switch (nom) {
 
@@ -1698,3 +1700,7 @@ export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) => {
     return { succes: false, resultat: `Erreur: ${err.message}` };
   }
 };
+
+/** Point d'entrée des outils AXIA : les actions sensibles attendent l'accord du marchand. */
+export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) =>
+  estSensible(nom) ? demanderConfirmation(tenantId, nom, args) : executerOutilDirect(nom, args, tenantId);

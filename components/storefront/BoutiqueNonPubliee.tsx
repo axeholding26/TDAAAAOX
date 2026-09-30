@@ -13,12 +13,12 @@ export async function BoutiqueNonPubliee({ nomBoutique }: { nomBoutique: string 
         <div className="mx-auto w-14 h-14 rounded-2xl bg-[#FFF1D6] flex items-center justify-center mb-5">
           <Rocket size={26} className="text-[#C77C0A]" />
         </div>
-        <h1 className="text-[20px] font-semibold text-[#5E6063]">{t(nomBoutique)}{" "}{t("n'est pas encore publiée")}</h1>
+        <h1 className="text-[20px] font-semibold text-[#111111]">{t(nomBoutique)}{" "}{t("n'est pas encore publiée")}</h1>
         <p className="mt-2.5 text-[15px] leading-relaxed text-[#666666]">
           {t("Publie ta boutique pour la visualiser en ligne. Tu pourras ensuite la voir exactement comme tes clients.")}
         </p>
         <div className="mt-7 flex flex-col gap-2.5">
-          <Link href="/dashboard/builder" className="h-11 flex items-center justify-center rounded-xl bg-[#F5A623] text-[15px] font-semibold text-[#5E6063] hover:bg-[#E8990F] transition-colors">
+          <Link href="/dashboard/builder" className="h-11 flex items-center justify-center rounded-xl bg-[#F5A623] text-[15px] font-semibold text-[#111111] hover:bg-[#E8990F] transition-colors">
             {t("Publier depuis le Constructeur")}
           </Link>
           <Link href="/dashboard" className="h-11 flex items-center justify-center rounded-xl text-[15px] font-medium text-[#555555] hover:bg-[#F5F5F5] transition-colors">

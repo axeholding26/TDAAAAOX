@@ -1001,7 +1001,7 @@ function SectionStylePanel({ section, updateStyle }: { section: ProductPageSecti
         </button>
       </div>
       {bgActive && <FCol label={tr("Couleur de fond")} value={st.bgColor || "#F8F8F6"} onChange={v => up({ bgColor: v })} />}
-      <FCol label={tr("Couleur du texte")} value={st.textColor || "#5E6063"} onChange={v => up({ textColor: v })} />
+      <FCol label={tr("Couleur du texte")} value={st.textColor || "#111111"} onChange={v => up({ textColor: v })} />
       <div className="grid grid-cols-2 gap-2">
         <FSel label={tr("Espacement interne")} value={st.paddingY || "none"} onChange={v => up({ paddingY: v })} opts={[
           { v: "none", l: "Aucun" }, { v: "sm", l: "Petit" }, { v: "md", l: "Moyen" }, { v: "lg", l: "Grand" }, { v: "xl", l: "Très grand" },

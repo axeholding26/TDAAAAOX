@@ -44,7 +44,7 @@ export default async function EncaissementsPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-xl font-bold text-[#5E6063] flex items-center gap-2"><Wallet size={20} className="text-[#F5A623]" />{" "}{t("Encaissements COD")}</h1>
+        <h1 className="text-xl font-bold text-[#111111] flex items-center gap-2"><Wallet size={20} className="text-[#F5A623]" />{" "}{t("Encaissements COD")}</h1>
         <p className="text-sm text-gray-400 mt-0.5">{t("Cash collecté par vos livreurs, en attente de remise")}</p>
       </div>
 
@@ -70,12 +70,12 @@ export default async function EncaissementsPage() {
                       <Bike size={16} className="text-[#F5A623]" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-[#5E6063]">{t(g.nom)}</p>
+                      <p className="text-sm font-bold text-[#111111]">{t(g.nom)}</p>
                       <p className="text-xs text-gray-400">{g.telephone}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-[#5E6063]">{formatMontant(total, devise)}</p>
+                    <p className="text-lg font-bold text-[#111111]">{formatMontant(total, devise)}</p>
                     <p className="text-xs text-gray-400">{g.commandes.length} commande{g.commandes.length > 1 ? "s" : ""}</p>
                   </div>
                 </div>
@@ -85,7 +85,7 @@ export default async function EncaissementsPage() {
                     <div key={c.id} className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
                       <span className="font-mono text-gray-500">{c.numero}</span>
                       <span className="text-gray-500 truncate flex-1 mx-3">{t(c.clientNom)}</span>
-                      <span className="font-semibold text-[#5E6063]">{formatMontant(c.montantTotal, c.devise)}</span>
+                      <span className="font-semibold text-[#111111]">{formatMontant(c.montantTotal, c.devise)}</span>
                     </div>
                   ))}
                 </div>

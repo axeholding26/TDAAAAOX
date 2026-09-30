@@ -183,7 +183,7 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                         onClick={() => update(idx, { requis: !champ.requis })}
                         className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
                           champ.requis
-                            ? "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#5E6063] font-medium"
+                            ? "border-[#F5A623]/30 bg-[#F5A623]/10 text-[#111111] font-medium"
                             : "border-gray-200 text-gray-400"
                         }`}
                       >

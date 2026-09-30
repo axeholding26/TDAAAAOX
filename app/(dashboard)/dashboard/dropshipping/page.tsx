@@ -174,7 +174,7 @@ function OngletAgentIA() {
       if (line.trim() === "") {
         elements.push(<div key={i} className="h-2" />);
       } else if (line.startsWith("## ") || line.startsWith("### ")) {
-        elements.push(<p key={i} className="font-bold text-[13px] text-[#5E6063] mt-3 mb-1">{line.replace(/^#+\s/, "")}</p>);
+        elements.push(<p key={i} className="font-bold text-[13px] text-[#111] mt-3 mb-1">{line.replace(/^#+\s/, "")}</p>);
       } else if (line.startsWith("**") && line.endsWith("**")) {
         elements.push(<p key={i} className="font-semibold text-[12px] text-[#222] mt-1">{line.replace(/\*\*/g, "")}</p>);
       } else if (line.startsWith("- ") || line.startsWith("• ")) {
@@ -211,7 +211,7 @@ function OngletAgentIA() {
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,#5E6063,#FFD280)", boxShadow: "0 4px 16px rgba(17,17,17,0.4)" }}>
+              style={{ background: "linear-gradient(135deg,#111111,#FFD280)", boxShadow: "0 4px 16px rgba(17,17,17,0.4)" }}>
               <Zap size={18} color="#fff" />
             </div>
             <div>
@@ -253,7 +253,7 @@ function OngletAgentIA() {
                 style={{ background: "linear-gradient(135deg,rgba(17,17,17,0.15),rgba(245,166,35,0.1))", border: "1px solid rgba(17,17,17,0.2)" }}>
                 <Sparkles size={24} style={{ color: "#FFD280" }} />
               </div>
-              <h3 className="font-bold text-[14px] text-[#5E6063] mb-1">{tr("Commence par une question")}</h3>
+              <h3 className="font-bold text-[14px] text-[#111] mb-1">{tr("Commence par une question")}</h3>
               <p className="text-[12px] text-gray-400">{tr("L'agent analyse les tendances et te propose des produits gagnants à importer directement.")}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -265,7 +265,7 @@ function OngletAgentIA() {
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(17,17,17,0.12)"; (e.currentTarget as HTMLElement).style.background = "rgba(17,17,17,0.03)"; }}>
                   <div className="flex items-center justify-between">
                     <span className="text-[12px] font-semibold text-gray-700">{tr(s.label)}</span>
-                    <ChevronRight size={13} className="text-gray-300 group-hover:text-[#5E6063] transition-colors" />
+                    <ChevronRight size={13} className="text-gray-300 group-hover:text-[#111111] transition-colors" />
                   </div>
                   <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{tr(s.prompt)}</p>
                 </button>
@@ -278,7 +278,7 @@ function OngletAgentIA() {
           <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
             {msg.role === "assistant" && (
               <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
-                style={{ background: "linear-gradient(135deg,#5E6063,#FFD280)", boxShadow: "0 2px 8px rgba(17,17,17,0.3)" }}>
+                style={{ background: "linear-gradient(135deg,#111111,#FFD280)", boxShadow: "0 2px 8px rgba(17,17,17,0.3)" }}>
                 <Zap size={12} color="#fff" />
               </div>
             )}
@@ -287,7 +287,7 @@ function OngletAgentIA() {
                 ? "text-white rounded-tr-sm"
                 : "bg-white border border-gray-100 rounded-tl-sm shadow-sm"
               }`}
-              style={msg.role === "user" ? { background: "linear-gradient(135deg,#5E6063,#1a1a1a)" } : {}}>
+              style={msg.role === "user" ? { background: "linear-gradient(135deg,#111111,#1a1a1a)" } : {}}>
               {msg.role === "user" ? (
                 <p className="text-[12px] leading-relaxed">{tr(msg.content)}</p>
               ) : (
@@ -297,7 +297,7 @@ function OngletAgentIA() {
                     <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-gray-100">
                       {msg.actions.slice(0, 4).map((a, ai) => (
                         <span key={ai} className="text-[9px] px-2 py-0.5 rounded-full font-mono"
-                          style={{ background: "rgba(17,17,17,0.08)", color: "#5E6063" }}>
+                          style={{ background: "rgba(17,17,17,0.08)", color: "#111111" }}>
                           {tr(a.split("(")[0])}
                         </span>
                       ))}
@@ -315,12 +315,12 @@ function OngletAgentIA() {
         {loading && (
           <div className="flex justify-start">
             <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 mr-2"
-              style={{ background: "linear-gradient(135deg,#5E6063,#FFD280)" }}>
+              style={{ background: "linear-gradient(135deg,#111111,#FFD280)" }}>
               <Zap size={12} color="#fff" />
             </div>
             <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex items-center gap-2">
-                <Loader2 size={13} className="animate-spin" style={{ color: "#5E6063" }} />
+                <Loader2 size={13} className="animate-spin" style={{ color: "#111111" }} />
                 <span className="text-[12px] text-gray-400">{tr("Analyse en cours…")}</span>
               </div>
             </div>
@@ -346,7 +346,7 @@ function OngletAgentIA() {
           onClick={() => sendMessage()}
           disabled={!input.trim() || loading}
           className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40 disabled:scale-95 hover:scale-105"
-          style={{ background: "linear-gradient(135deg,#5E6063,#1a1a1a)", boxShadow: "0 3px 12px rgba(17,17,17,0.35)" }}>
+          style={{ background: "linear-gradient(135deg,#111111,#1a1a1a)", boxShadow: "0 3px 12px rgba(17,17,17,0.35)" }}>
           <Send size={14} color="#fff" />
         </button>
       </div>
@@ -381,7 +381,7 @@ function ProductCard({
               <ShoppingBag size={14} style={{ color: "#F5A623" }} />
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-[12px] text-[#5E6063] truncate">{tr(nom)}</p>
+              <p className="font-bold text-[12px] text-[#111] truncate">{tr(nom)}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold"
                   style={{ background: "rgba(245,166,35,0.12)", color: "#b45309" }}>{tr(categorie)}</span>
@@ -404,7 +404,7 @@ function ProductCard({
               style={{ background: green ? "rgba(34,197,94,0.07)" : accent ? "rgba(245,166,35,0.08)" : "rgba(255,255,255,0.6)", border: `1px solid ${green ? "rgba(34,197,94,0.15)" : accent ? "rgba(245,166,35,0.2)" : "rgba(0,0,0,0.06)"}` }}>
               <p className="text-[10px] text-gray-400">{tr(label)}</p>
               <p className="text-[11px] font-black leading-tight mt-0.5"
-                style={{ color: green ? "#16a34a" : accent ? "#b45309" : "#5E6063" }}>{tr(val)}</p>
+                style={{ color: green ? "#16a34a" : accent ? "#b45309" : "#111" }}>{tr(val)}</p>
               <p className="text-[9px] text-gray-400">{tr(sub)}</p>
             </div>
           ))}
@@ -550,7 +550,7 @@ function OngletFournisseurs() {
                 <div className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center shrink-0"><Globe size={16} className="text-gray-400"/></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[12px] font-semibold text-[#5E6063]">{tr(f.nom)}</p>
+                    <p className="text-[12px] font-semibold text-[#111]">{tr(f.nom)}</p>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-semibold text-white" style={{background:tc.color}}>{tr(tc.label)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -560,7 +560,7 @@ function OngletFournisseurs() {
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="text-[11px] font-bold text-[#5E6063]">+{Math.round(f.margeAuto*100)}{tr("% marge")}</p>
+                  <p className="text-[11px] font-bold text-[#111]">+{Math.round(f.margeAuto*100)}{tr("% marge")}</p>
                   <p className="text-[10px] text-gray-400">{tr(f._count?.produits)??0} produits</p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -614,13 +614,13 @@ function OngletCommandes() {
         {[{label:"Total",v:stats.total},{label:"En attente",v:stats.en_attente},{label:"Expédiés",v:stats.expedie},{label:"Livrés",v:stats.livre}].map(s=>(
           <div key={s.label} className="bg-white border border-gray-100 rounded-xl p-3">
             <p className="text-[10px] text-gray-400">{tr(s.label)}</p>
-            <p className="text-[18px] font-bold text-[#5E6063]">{tr(s.v)}</p>
+            <p className="text-[18px] font-bold text-[#111]">{tr(s.v)}</p>
           </div>
         ))}
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1">
-        <button onClick={()=>setFilterStatut("")} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${!filterStatut?"bg-[#5E6063] text-white":"bg-gray-100 text-gray-500"}`}>{tr("Tous")}</button>
+        <button onClick={()=>setFilterStatut("")} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${!filterStatut?"bg-[#111] text-white":"bg-gray-100 text-gray-500"}`}>{tr("Tous")}</button>
         {STATUTS_CF.map(s=>(
           <button key={s} onClick={()=>setFilterStatut(s)} className={`px-3 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${filterStatut===s?"text-white":"bg-gray-100 text-gray-500"}`}
             style={filterStatut===s?{background:STATUT_COLORS[s]}:{}}>
@@ -636,7 +636,7 @@ function OngletCommandes() {
               <button className="w-full flex items-center gap-3 px-4 py-3 text-left" onClick={()=>setExpanded(expanded===cf.id?null:cf.id)}>
                 <Package size={13} className="text-gray-400 shrink-0"/>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#5E6063] truncate">{cf.commande?.numero} → {tr(cf.fournisseur?.nom)}</p>
+                  <p className="text-[12px] font-semibold text-[#111] truncate">{cf.commande?.numero} → {tr(cf.fournisseur?.nom)}</p>
                   <p className="text-[10px] text-gray-400">{tr(cf.commande?.clientNom)}</p>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white" style={{background:STATUT_COLORS[cf.statut]??"#888"}}>{cf.statut.replace(/_/g," ")}</span>
@@ -762,22 +762,22 @@ export default function DropshippingPage() {
     <div className="p-5 max-w-4xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-[18px] font-bold text-[#5E6063] inline-flex items-center gap-2">{tr("Dropshipping")}{" "}<AgentActiveIndicator label={tr("Agent Dropshipping actif")} /></h1>
+          <h1 className="text-[18px] font-bold text-[#111] inline-flex items-center gap-2">{tr("Dropshipping")}{" "}<AgentActiveIndicator label={tr("Agent Dropshipping actif")} /></h1>
           <p className="text-[12px] text-gray-500">{tr("Agent IA, fournisseurs, commandes et import catalogue")}</p>
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
           style={{ background: "rgba(17,17,17,0.06)", border: "1px solid rgba(17,17,17,0.15)" }}>
-          <Zap size={11} style={{ color: "#5E6063" }} />
-          <span className="text-[11px] font-semibold" style={{ color: "#5E6063" }}>{tr("Propulsé par AXIA")}</span>
+          <Zap size={11} style={{ color: "#111111" }} />
+          <span className="text-[11px] font-semibold" style={{ color: "#111111" }}>{tr("Propulsé par AXIA")}</span>
         </div>
       </div>
 
       <div className="flex gap-1 bg-gray-100 rounded-2xl p-1">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button key={id} onClick={() => setOnglet(id)}
-            className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#5E6063]" : "text-gray-500 hover:text-gray-700"}`}
+            className={`flex-1 py-2 rounded-xl text-[12px] font-semibold transition-all flex items-center justify-center gap-1.5 ${onglet === id ? "bg-white shadow-sm text-[#111]" : "text-gray-500 hover:text-gray-700"}`}
             style={onglet === id && id === "agent" ? { boxShadow: "0 1px 4px rgba(17,17,17,0.15)" } : {}}>
-            <Icon size={13} style={{ color: onglet === id && id === "agent" ? "#5E6063" : "inherit" }} />
+            <Icon size={13} style={{ color: onglet === id && id === "agent" ? "#111111" : "inherit" }} />
             <span className="hidden sm:inline">{tr(label)}</span>
             {id === "agent" && onglet !== "agent" && (
               <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />

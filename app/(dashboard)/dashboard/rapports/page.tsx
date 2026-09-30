@@ -128,7 +128,7 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
             {PERIODES.map(p => (
               <a key={p.v} href={`/dashboard/rapports?periode=${p.v}`}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                style={jours === Number(p.v) ? { background: "white", color: "#5E6063", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" } : { color: "#9ca3af" }}>
+                style={jours === Number(p.v) ? { background: "white", color: "#111", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" } : { color: "#9ca3af" }}>
                 {t(p.l)}
               </a>
             ))}

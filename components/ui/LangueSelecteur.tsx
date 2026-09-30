@@ -20,17 +20,18 @@ export function LangueSelecteur({ flottant = false }: { flottant?: boolean }) {
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         padding: "6px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-        background: "rgba(255,255,255,.97)", border: "1px solid rgba(0,0,0,.1)", color: "#5E6063",
+        background: "rgba(255,255,255,.97)", border: "1px solid rgba(0,0,0,.1)", color: "#111",
         cursor: "pointer", flexShrink: 0,
         ...(flottant && { position: "fixed", left: 16, bottom: 16, zIndex: 60, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }),
       }}
     >
       <Globe size={14} aria-hidden />
       <select
+        className="ax-langue"
         aria-label="Langue / Language"
         value={langue}
         onChange={e => choisirLangue(e.target.value as Langue)}
-        style={{ background: "transparent", border: "none", outline: "none", font: "inherit", color: "inherit", cursor: "pointer" }}
+        style={{ background: "transparent", border: "none", padding: 0, margin: 0, outline: "none", font: "inherit", color: "inherit", cursor: "pointer" }}
       >
         <option value="fr">Français</option>
         <option value="en">English</option>

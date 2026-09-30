@@ -26,7 +26,7 @@ const CHIFFRES = [
 export default async function AboutPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       {/* Hero */}
@@ -65,7 +65,7 @@ export default async function AboutPage() {
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-28">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#F5A623" }}>{t("Notre mission")}</p>
-            <h2 className="text-3xl font-bold text-[#5E6063] mb-5 leading-snug">
+            <h2 className="text-3xl font-bold text-[#111111] mb-5 leading-snug">
               {t("Chaque entrepreneur africain mérite son empire digital")}
             </h2>
             <p className="text-[#666666] leading-relaxed text-lg">
@@ -77,7 +77,7 @@ export default async function AboutPage() {
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-1/2 translate-x-1/2"
               style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.2), transparent)" }} />
             <p className="text-5xl font-black leading-none mb-3" style={{ color: "#F5A623" }}>2023</p>
-            <p className="text-[#5E6063] font-bold text-xl mb-2">{t("Fondée à Dakar")}</p>
+            <p className="text-[#111111] font-bold text-xl mb-2">{t("Fondée à Dakar")}</p>
             <p className="text-[#737373] text-sm leading-relaxed">
               {t("AXSO a été fondée par une équipe d'ingénieurs et d'entrepreneurs africains qui ont vécu les frustrations de vendre en ligne sur le continent.")}
             </p>
@@ -95,7 +95,7 @@ export default async function AboutPage() {
                   style={{ background: `${accent}12`, border: `1px solid ${accent}25` }}>
                   <Icon size={20} style={{ color: accent }} />
                 </div>
-                <h3 className="font-bold text-[#5E6063] text-lg mb-2">{t(titre)}</h3>
+                <h3 className="font-bold text-[#111111] text-lg mb-2">{t(titre)}</h3>
                 <p className="text-[#737373] text-sm leading-relaxed">{t(desc)}</p>
               </div>
             ))}

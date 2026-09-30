@@ -33,7 +33,7 @@ const KIT_ITEMS: { Icon: LucideIcon; titre: string; desc: string; taille: string
 export default async function PressPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -70,7 +70,7 @@ export default async function PressPage() {
               <div key={kit.titre} className="rounded-2xl border p-6 flex flex-col"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
                 <kit.Icon size={30} className="mb-4" style={{ color: "#F5A623" }} />
-                <h3 className="font-bold text-[#5E6063] mb-1">{t(kit.titre)}</h3>
+                <h3 className="font-bold text-[#111111] mb-1">{t(kit.titre)}</h3>
                 <p className="text-[#808080] text-sm flex-1 mb-4">{t(kit.desc)}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[#999999]">{kit.taille}</span>
@@ -104,7 +104,7 @@ export default async function PressPage() {
           {/* Contact presse */}
           <div className="rounded-3xl border p-8 text-center"
             style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.06), rgba(245,166,35,0.02))", borderColor: "rgba(245,166,35,0.2)" }}>
-            <h3 className="text-xl font-bold text-[#5E6063] mb-2">{t("Contact presse")}</h3>
+            <h3 className="text-xl font-bold text-[#111111] mb-2">{t("Contact presse")}</h3>
             <p className="text-[#737373] mb-5">{t("Demandes d'interviews, citations officielles et informations complémentaires.")}</p>
             <a href="mailto:presse@axso.app"
               className="inline-block font-bold px-8 py-3.5 rounded-xl transition-all hover:scale-105"

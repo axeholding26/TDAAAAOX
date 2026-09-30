@@ -118,7 +118,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight inline-flex items-center gap-2">{tx("Clients")}{" "}<AgentActiveIndicator label={tx("Agent Clients actif")} /></h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{tx("Clients")}{" "}<AgentActiveIndicator label={tx("Agent Clients actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="clients" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {tx(totalClients)}
@@ -134,7 +134,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 text-[12px] bg-white border border-[#E8E8E8] rounded-2xl px-3.5 py-2">
             <span className="text-[#AAAAAA]">{tx("Taux actifs")}</span>
-            <span className="font-bold text-[#5E6063]">{tx(tauxActifs)}%</span>
+            <span className="font-bold text-[#111111]">{tx(tauxActifs)}%</span>
           </div>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                   <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                 </div>
               </div>
-              <p className="text-[22px] font-bold text-[#5E6063] leading-none tabular-nums tracking-tight">
+              <p className="text-[22px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
                 {tx(s.value)}
               </p>
             </div>
@@ -169,7 +169,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         {/* Table header */}
         <div className="px-6 py-4 border-b border-[#F3F3F3] flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h2 className="text-[13px] font-semibold text-[#5E6063]">{tx("Liste des clients")}</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111]">{tx("Liste des clients")}</h2>
             <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{tx("Triés par dépenses décroissantes")}</p>
           </div>
           {/* Legend */}
@@ -190,7 +190,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
         {q && (
           <div className="px-4 sm:px-5 py-2.5 border-b border-[#F3F3F3] flex items-center gap-2 text-[12.5px] text-[#666666]">
-            {tx("Filtré sur «")}{" "}<strong className="text-[#5E6063]">{tx(q)}</strong> » · {sorted.length} client{sorted.length > 1 ? "s" : ""}
+            {tx("Filtré sur «")}{" "}<strong className="text-[#111111]">{tx(q)}</strong> » · {sorted.length} client{sorted.length > 1 ? "s" : ""}
             <a href="/dashboard/clients" className="ml-auto font-semibold text-[#F5A623] hover:underline">{tx("Tout afficher")}</a>
           </div>
         )}
@@ -199,10 +199,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
               <Users size={24} className="text-[#CCCCCC]" />
             </div>
-            <p className="text-[14px] font-semibold text-[#5E6063] mb-1">{tx("Aucun client encore")}</p>
+            <p className="text-[14px] font-semibold text-[#111111] mb-1">{tx("Aucun client encore")}</p>
             <p className="text-[12px] text-[#AAAAAA] mb-6">{tx("Vos clients apparaîtront ici dès leur première commande.")}</p>
             <a href="/dashboard/boutique"
-              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#5E6063] text-white hover:bg-[#2a2a2a] transition-colors">
+              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#111111] text-white hover:bg-[#2a2a2a] transition-colors">
               {tx("Voir ma boutique")}{" "}<ArrowUpRight size={13} />
             </a>
           </div>
@@ -248,7 +248,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                           <p className="text-[12px] text-[#888888]">{client.telephone || "—"}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <span className="text-[13px] font-bold text-[#5E6063]">{client.commandes.length}</span>
+                          <span className="text-[13px] font-bold text-[#111]">{client.commandes.length}</span>
                           <span className="text-[11px] text-[#AAAAAA] ml-1">cmd</span>
                         </td>
                         <td className="px-5 py-4">

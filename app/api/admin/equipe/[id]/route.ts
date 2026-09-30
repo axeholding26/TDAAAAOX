@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { revoquerMembreAdmin, reponseErreur } from "@/lib/admin-actions";
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getAdminSession();
@@ -8,13 +8,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Réservé au super-admin" }, { status: 403 });
 
   const { id } = await params;
-  if (id === session.userId) return NextResponse.json({ error: "Impossible de te révoquer toi-même" }, { status: 400 });
-
-  const user = await prisma.user.findUnique({ where: { id } });
-  if (!user || user.role !== "admin_lecteur") {
-    return NextResponse.json({ error: "Seuls les comptes en lecture seule peuvent être révoqués ici" }, { status: 400 });
+  try {
+    await revoquerMembreAdmin(id, session.userId);
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return reponseErreur(err);
   }
-
-  await prisma.user.delete({ where: { id } });
-  return NextResponse.json({ success: true });
 }

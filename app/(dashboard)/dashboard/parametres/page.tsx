@@ -20,7 +20,7 @@ const PARAMETRES_TUTORIAL_STEPS = [
 
 const CATEGORIES = ["Mode & Vêtements", "Électronique", "Alimentation", "Beauté & Cosmétiques", "Maison & Décoration", "Sport & Loisirs", "Livres & Culture", "Artisanat", "Services", "Autre"];
 
-const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
+const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 const labelCls = "block mb-1.5 ax-label";
 
 export default function ParametresPage() {
@@ -135,7 +135,7 @@ export default function ParametresPage() {
       {/* ── Header ── */}
       <div className="pt-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Paramètres")}</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Paramètres")}</h1>
           <BoutonRevoirTutoriel moduleKey="parametres" />
         </div>
         <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">
@@ -151,11 +151,11 @@ export default function ParametresPage() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="ax-label mb-0.5">{t("Votre boutique en ligne")}</p>
-            <p className="text-[13px] font-mono font-semibold text-[#5E6063] truncate">{boutiquUrl}</p>
+            <p className="text-[13px] font-mono font-semibold text-[#111111] truncate">{boutiquUrl}</p>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={() => copier(boutiquUrl)}
-              className="w-8 h-8 rounded-xl border border-[#EBEBEB] flex items-center justify-center text-[#888] hover:text-[#5E6063] hover:border-[#CCC] transition-all">
+              className="w-8 h-8 rounded-xl border border-[#EBEBEB] flex items-center justify-center text-[#888] hover:text-[#111] hover:border-[#CCC] transition-all">
               {copied ? <Check size={13} className="text-[#16A34A]" /> : <Copy size={13} />}
             </button>
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer"
@@ -182,7 +182,7 @@ export default function ParametresPage() {
                 <Icon size={15} style={{ color: s.iconColor }} />
               </div>
               <div className="flex-1">
-                <p className="text-[13px] font-semibold text-[#5E6063] group-hover:text-[#F5A623] transition-colors">{t(s.label)}</p>
+                <p className="text-[13px] font-semibold text-[#111111] group-hover:text-[#F5A623] transition-colors">{t(s.label)}</p>
                 <p className="text-[11.5px] text-[#AAAAAA]">{t(s.desc)}</p>
               </div>
               <ChevronRight size={14} className="text-[#CCCCCC] group-hover:text-[#888] transition-colors" />
@@ -195,7 +195,7 @@ export default function ParametresPage() {
       <form onSubmit={sauvegarder} className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <Settings size={14} className="text-[#F5A623]" />
-          <h2 className="text-[13px] font-semibold text-[#5E6063]">{t("Informations générales")}</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("Informations générales")}</h2>
         </div>
 
         <div>
@@ -268,7 +268,7 @@ export default function ParametresPage() {
       <form onSubmit={sauvegarderWhatsapp} className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <MessageCircle size={14} className="text-[#25D366]" />
-          <h2 className="text-[13px] font-semibold text-[#5E6063]">{t("WhatsApp Business")}</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("WhatsApp Business")}</h2>
         </div>
         <p className="text-[12px] text-[#AAAAAA]">
           {t("Ce numéro recevra les confirmations de commandes pour vos produits physiques et dropshipping.")}
@@ -298,7 +298,7 @@ export default function ParametresPage() {
       <div className="ax-card p-6 space-y-4">
         <div className="flex items-center gap-2 mb-1">
           <ClipboardList size={14} className="text-[#F5A623]" />
-          <h2 className="text-[13px] font-semibold text-[#5E6063]">{t("Formulaire de commande")}</h2>
+          <h2 className="text-[13px] font-semibold text-[#111111]">{t("Formulaire de commande")}</h2>
         </div>
         <p className="text-[12px] text-[#AAAAAA]">
           {t("Personnalisez les informations demandées à l'acheteur qui choisit \"Commander maintenant\" (sans passer par WhatsApp).")}
@@ -342,7 +342,7 @@ export default function ParametresPage() {
       {tenant && (
         <div className="ax-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[13px] font-semibold text-[#5E6063]">{t("Plan actuel")}</h3>
+            <h3 className="text-[13px] font-semibold text-[#111111]">{t("Plan actuel")}</h3>
             <span className="text-[11px] font-bold text-[#D97706] bg-[#FFFBEB] border border-[#FDE68A] px-2.5 py-0.5 rounded-full">
               {tenant.planType?.toUpperCase()}
             </span>

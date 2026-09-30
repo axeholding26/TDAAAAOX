@@ -78,14 +78,14 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setEnCours(null)}>
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="px-5 py-4 border-b border-[#EEEEEE]">
-          <p className="text-[16px] font-semibold text-[#5E6063]">{tr("Page d'accueil")}</p>
+          <p className="text-[16px] font-semibold text-[#111111]">{tr("Page d'accueil")}</p>
         </div>
 
         {ZONES.map((zone) => {
           const sections = tree.filter((n) => zoneDe(n) === zone);
           return (
             <div key={zone} className="px-3 py-3 border-b border-[#EEEEEE] last:border-b-0">
-              <p className="px-2 pb-1.5 text-[14px] font-semibold text-[#5E6063]">{tr(TITRE_ZONE[zone])}</p>
+              <p className="px-2 pb-1.5 text-[14px] font-semibold text-[#111111]">{tr(TITRE_ZONE[zone])}</p>
               <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-0.5">
                   {sections.map((section) => (
@@ -116,7 +116,7 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
 
       <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}>
         {enCours && (
-          <div className="flex items-center gap-2 h-10 px-3 rounded-lg bg-white text-[14px] font-medium text-[#5E6063] shadow-[0_8px_24px_rgba(0,0,0,0.14)] ring-1 ring-[#F5A623]/40 cursor-grabbing">
+          <div className="flex items-center gap-2 h-10 px-3 rounded-lg bg-white text-[14px] font-medium text-[#111111] shadow-[0_8px_24px_rgba(0,0,0,0.14)] ring-1 ring-[#F5A623]/40 cursor-grabbing">
             <GripVertical size={16} className="text-[#999999]" /> {nomNoeud(enCours)}
           </div>
         )}
@@ -225,7 +225,7 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
     >
       <span className="w-6 flex-shrink-0 flex items-center justify-center">
         {depliable && (
-          <button onClick={onBasculer} aria-label={ouverte ? tr("Replier") : tr("Déplier")} className="w-6 h-6 flex items-center justify-center rounded text-[#888888] hover:text-[#5E6063]">
+          <button onClick={onBasculer} aria-label={ouverte ? tr("Replier") : tr("Déplier")} className="w-6 h-6 flex items-center justify-center rounded text-[#888888] hover:text-[#111111]">
             <ChevronRight size={15} className={`transition-transform duration-200 ${ouverte ? "rotate-90" : ""}`} />
           </button>
         )}
@@ -239,7 +239,7 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
       </span>
 
       <button onClick={onSelect} className={`flex-1 min-w-0 text-left pl-1.5 text-[14px] truncate h-full ${
-        masque ? "text-[#AAAAAA]" : "text-[#5E6063]"} ${selectionne ? "font-semibold" : ""}`}>
+        masque ? "text-[#AAAAAA]" : "text-[#111111]"} ${selectionne ? "font-semibold" : ""}`}>
         {tr(nom)}
       </button>
 
@@ -255,7 +255,7 @@ function Ligne({ niveau, nom, Icone, selectionne, masque, depliable, ouverte, on
 function BoutonIcone({ titre, onClick, danger, children }: { titre: string; onClick: () => void; danger?: boolean; children: React.ReactNode }) {
   return (
     <button type="button" title={titre} aria-label={titre} onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`w-7 h-7 flex items-center justify-center rounded-md text-[#888888] transition-colors ${danger ? "hover:text-[#DC2626] hover:bg-[#FEF2F2]" : "hover:text-[#5E6063] hover:bg-[#EBEBEB]"}`}>
+      className={`w-7 h-7 flex items-center justify-center rounded-md text-[#888888] transition-colors ${danger ? "hover:text-[#DC2626] hover:bg-[#FEF2F2]" : "hover:text-[#111111] hover:bg-[#EBEBEB]"}`}>
       {children}
     </button>
   );

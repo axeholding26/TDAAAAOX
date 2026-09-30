@@ -97,7 +97,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
         onClick={e => e.stopPropagation()}>
 
         {/* Header dégradé */}
-        <div className="relative px-6 pt-6 pb-5 overflow-hidden flex-shrink-0" style={{ background: "linear-gradient(135deg,#5E6063 0%,#333333 100%)" }}>
+        <div className="relative px-6 pt-6 pb-5 overflow-hidden flex-shrink-0" style={{ background: "linear-gradient(135deg,#111111 0%,#333333 100%)" }}>
           <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(circle at 85% -10%, #F5A623 0%, transparent 55%)" }} />
           <div className="relative flex items-start justify-between">
             <div className="flex items-center gap-3">
@@ -148,7 +148,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
                 <button key={label} type="button" onClick={() => setCategorie(label)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
                   style={categorie === label
-                    ? { background: "#5E6063", color: "white" }
+                    ? { background: "#111111", color: "white" }
                     : { background: "#f4f4f6", color: "#6b7280" }}>
                   <Icon size={12} /> {t(label)}
                 </button>
@@ -170,7 +170,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
 
           <button onClick={creer} disabled={loading || !pretAEnvoyer}
             className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: "linear-gradient(135deg,#5E6063,#333333)", boxShadow: pretAEnvoyer ? "0 6px 20px rgba(17,17,17,.35)" : "none" }}>
+            style={{ background: "linear-gradient(135deg,#111111,#333333)", boxShadow: pretAEnvoyer ? "0 6px 20px rgba(17,17,17,.35)" : "none" }}>
             {loading ? <Loader2 size={14} className="animate-spin" /> : <Store size={14} />}
             {t("Créer la boutique")}
           </button>

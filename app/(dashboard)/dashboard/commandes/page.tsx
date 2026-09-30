@@ -136,7 +136,7 @@ export default async function CommandesPage({
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Commandes")}</h1>
+            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Commandes")}</h1>
             <BoutonRevoirTutoriel moduleKey="commandes" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {toutes.length}
@@ -169,7 +169,7 @@ export default async function CommandesPage({
                   <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                 </div>
               </div>
-              <p className="text-[24px] font-bold text-[#5E6063] leading-none tabular-nums tracking-tight">
+              <p className="text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
                 {t(s.value)}
               </p>
             </div>
@@ -190,9 +190,9 @@ export default async function CommandesPage({
               href={tab.key === "all" ? "/dashboard/commandes" : `/dashboard/commandes?statut=${tab.key}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all flex-shrink-0"
               style={isActive ? {
-                background: "#5E6063",
+                background: "#111111",
                 color: "#FFFFFF",
-                border: "1px solid #5E6063",
+                border: "1px solid #111111",
               } : {
                 background: "#FFFFFF",
                 color: "#888888",
@@ -219,21 +219,21 @@ export default async function CommandesPage({
           <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
             <Package size={24} className="text-[#CCCCCC]" />
           </div>
-          <p className="text-[14px] font-semibold text-[#5E6063] mb-1">{t("Aucune commande")}{filtreStatut ? t(" dans ce statut") : ""}</p>
+          <p className="text-[14px] font-semibold text-[#111111] mb-1">{t("Aucune commande")}{filtreStatut ? t(" dans ce statut") : ""}</p>
           <p className="text-[12px] text-[#AAAAAA] mb-6">
             {filtreStatut
               ? t("Essayez un autre filtre ou attendez de nouvelles commandes")
               : t("Les commandes passées par vos clients apparaîtront ici en temps réel")}
           </p>
           <Link href="/dashboard/boutique"
-            className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#5E6063] text-white hover:bg-[#2a2a2a] transition-colors">
+            className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#111111] text-white hover:bg-[#2a2a2a] transition-colors">
             {t("Voir ma boutique")}{" "}<ArrowUpRight size={13} />
           </Link>
         </div>
       ) : (
         <div className="ax-card overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F3F3F3] flex items-center justify-between">
-            <p className="text-[13px] font-semibold text-[#5E6063]">
+            <p className="text-[13px] font-semibold text-[#111111]">
               {commandes.length} commande{commandes.length > 1 ? "s" : ""}
               {filtreStatut && filtreStatut !== "all" && (
                 <span className="ml-2 text-[#AAAAAA] font-normal">{t("— filtrées")}</span>
@@ -290,7 +290,7 @@ export default async function CommandesPage({
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="text-[13.5px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                      <span className="text-[13.5px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>
                         {formatMontant(c.montantTotal, c.devise)}
                       </span>
                     </td>
@@ -329,7 +329,7 @@ export default async function CommandesPage({
                   <p className="text-[11px] text-[#BBBBBB] mt-0.5">{dateRelative(c.createdAt)}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-[13.5px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  <p className="text-[13.5px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>
                     {formatMontant(c.montantTotal, c.devise)}
                   </p>
                   <ChevronRight size={14} className="text-[#DDD] ml-auto mt-1" />

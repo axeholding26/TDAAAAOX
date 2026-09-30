@@ -12,7 +12,6 @@ import { WidgetsDesign } from "@/components/storefront/WidgetsDesign";
 import { NavigationDesign } from "@/components/storefront/NavigationDesign";
 import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
-import { AxiaStorefront } from "@/components/storefront/AxiaStorefront";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
 import { MetaPixel } from "@/components/storefront/MetaPixel";
 import { TikTokPixel } from "@/components/storefront/TikTokPixel";
@@ -94,13 +93,12 @@ async function ContenuVitrine({ children, params }: Props) {
       {cfg.builderCss && <PastillePaysDesign />}
       {navDesign && (
         <NavigationDesign slug={slug} type={navDesign.type} favoris={!!navDesign.showWishlist} collections={collectionsMega}
-          fondEntete={navDesign.style === "dark" ? "#5E6063" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
+          fondEntete={navDesign.style === "dark" ? "#111111" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
       )}
       {animDesign && <AnimationsDesign animations={animDesign} />}
       {!apercu && (
         <>
           <StorefrontPageView slug={slug} />
-          <AxiaStorefront slug={slug} nomBoutique={tenant.nomBoutique} accentColor={accent} />
           <StorefrontPopups slug={slug} accentColor={accent} />
           {tenant.metaPixelId && <MetaPixel pixelId={tenant.metaPixelId} />}
           {tenant.tiktokPixelId && <TikTokPixel pixelId={tenant.tiktokPixelId} />}

@@ -142,7 +142,7 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
         {current.imageUrl && (
           <img src={current.imageUrl} alt={current.titre} className="w-full h-36 object-cover rounded-xl mb-4" />
         )}
-        <h3 className="text-[17px] font-bold text-[#5E6063] mb-2">{t(current.titre)}</h3>
+        <h3 className="text-[17px] font-bold text-[#111] mb-2">{t(current.titre)}</h3>
         <p className="text-[13px] text-[#666] mb-3">{t(current.message)}</p>
         {current.codePromo && (
           <div className="bg-[#FFF8EC] border border-[#F5A623]/30 rounded-xl px-4 py-2.5 text-center mb-3">

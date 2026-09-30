@@ -146,21 +146,21 @@ export default function EmailMarketingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{tr("Email Marketing")}</h1>
+          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("Email Marketing")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Envoyez des campagnes directement depuis Axso")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setOnglet("composer")}
             className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all"
             style={onglet === "composer"
-              ? { background: "#5E6063", color: "#FFFFFF", border: "1px solid #5E6063" }
+              ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
               : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
             {tr("Composer")}
           </button>
           <button onClick={() => { setOnglet("historique"); charger(); }}
             className="px-3.5 py-2 rounded-full text-[12px] font-semibold transition-all"
             style={onglet === "historique"
-              ? { background: "#5E6063", color: "#FFFFFF", border: "1px solid #5E6063" }
+              ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
               : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
             {tr("Historique (")}{historique.length})
           </button>
@@ -254,7 +254,7 @@ export default function EmailMarketingPage() {
                   value={sujet}
                   onChange={(e) => setSujet(e.target.value)}
                   placeholder={tr("Ex: 🔥 Offre spéciale pour vous !")}
-                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all"
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all"
                 />
               </div>
 
@@ -265,7 +265,7 @@ export default function EmailMarketingPage() {
                   onChange={(e) => setCorps(e.target.value)}
                   placeholder={tr("Bonjour {prenom},&#10;&#10;Votre message ici...")}
                   rows={8}
-                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all resize-none"
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all resize-none"
                 />
               </div>
 

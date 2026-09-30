@@ -185,7 +185,7 @@ export function VariantesPrixManager({
         {!showForm && (
           <button
             onClick={() => { setEditId(null); setForm(FORM_VIDE); setShowForm(true); }}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-[#F5A623] text-[#5E6063] rounded-lg hover:bg-[#F5A623]/90 transition-all"
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-[#F5A623] text-[#111111] rounded-lg hover:bg-[#F5A623]/90 transition-all"
           >
             <Plus size={12} />{" "}{t("Ajouter")}
           </button>
@@ -196,7 +196,7 @@ export function VariantesPrixManager({
       {showForm && (
         <div className="border border-[#F5A623]/30 rounded-2xl p-4 bg-[#F5A623]/5 space-y-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-semibold text-[#5E6063]">
+            <span className="text-sm font-semibold text-[#111111]">
               {editId ? t("Modifier la variante") : t("Nouvelle variante")}
             </span>
             <button onClick={annulerForm} className="text-gray-400 hover:text-gray-600">
@@ -271,7 +271,7 @@ export function VariantesPrixManager({
           <button
             onClick={sauvegarder}
             disabled={saving}
-            className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-[#5E6063] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/90 transition-all disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-[#F5A623] text-[#111111] py-2.5 rounded-xl text-sm font-semibold hover:bg-[#F5A623]/90 transition-all disabled:opacity-60"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
             {editId ? t("Enregistrer les modifications") : t("Créer l'offre")}
@@ -300,7 +300,7 @@ export function VariantesPrixManager({
                     : <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">{t("Inactif")}</span>
                   }
                   {v.renouvAuto && (
-                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#F5A623]/12 text-[#5E6063] flex items-center gap-0.5">
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-[#F5A623]/12 text-[#111111] flex items-center gap-0.5">
                       <RefreshCw size={8} />{" "}{t("Auto")}
                     </span>
                   )}

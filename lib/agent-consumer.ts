@@ -6,6 +6,7 @@
 // utilisateur, incompatible avec une exécution cron).
 import { consommerTaches, marquerComplete, marquerEchec, type AgentId } from "./agent-bus";
 import { runAgent, type AgentTool, type ToolExecutor } from "./agent-runner";
+import { estSensible, demanderConfirmation } from "./axia/confirmation";
 
 import { SYSTEM_PROMPT as PROMPT_REVENUE, OUTILS as OUTILS_REVENUE, executeOutil as executeOutilRevenue } from "@/app/api/ai/agent-revenue/route";
 import { SYSTEM_PROMPT as PROMPT_VEILLE, OUTILS as OUTILS_VEILLE, executeOutil as executeOutilVeille } from "@/app/api/ai/agent-veille/route";
@@ -44,7 +45,7 @@ function messageDepuisTache(type: string, payload: object): string {
   return `Tâche déléguée par l'orchestrateur Axso — type : "${type}".
 Contexte : ${JSON.stringify(payload)}
 
-Agis maintenant avec les outils à ta disposition, sans demander de confirmation. Sois concret et chiffré dans ta réponse.`;
+Agis maintenant avec les outils à ta disposition. Les actions sensibles (prix, envois, codes promo…) sont automatiquement soumises au marchand pour accord : propose-les quand elles sont justifiées. Sois concret et chiffré dans ta réponse.`;
 }
 
 export interface ResultatTraitement {
@@ -69,7 +70,10 @@ export async function traiterTachesEnAttente(tenantId: string, limitParAgent = 5
     for (const tache of taches) {
       try {
         const message = messageDepuisTache(tache.type, tache.payload as object);
-        const executor = config.buildExecutor(tenantId);
+        const direct = config.buildExecutor(tenantId);
+        // Tâche autonome (cron) : une action sensible devient une demande d'accord dans la bulle AXIA.
+        const executor: ToolExecutor = (nom, args, tid) =>
+          estSensible(nom) ? demanderConfirmation(tid, nom, args, agentId) : direct(nom, args, tid);
         const result = await runAgent(
           config.prompt,
           [{ role: "user", content: message }],
@@ -95,4 +99,11 @@ export async function traiterTachesEnAttente(tenantId: string, limitParAgent = 5
   }
 
   return resultats;
+}
+
+/** Exécute une action d'agent autonome après accord du marchand (app/api/axia/propositions). */
+export async function executerOutilAgent(agentId: string, tenantId: string, nom: string, args: Record<string, any>) {
+  const config = AGENTS[agentId as AgentId];
+  if (!config || !config.outils.some((o) => o.name === nom)) return { succes: false, resultat: "Action inconnue." };
+  return config.buildExecutor(tenantId)(nom, args, tenantId);
 }

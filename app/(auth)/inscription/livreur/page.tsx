@@ -154,7 +154,7 @@ export default function InscriptionLivreurPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full bg-[#F5A623] text-[#5E6063] font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95"
+              className="w-full bg-[#F5A623] text-[#111111] font-bold py-3.5 rounded-xl hover:bg-[#D4911A] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#F5A623]/25 hover:scale-[1.02] active:scale-95"
             >
               {loading ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Création du compte...")}</> : t("Créer mon compte livreur")}
             </button>

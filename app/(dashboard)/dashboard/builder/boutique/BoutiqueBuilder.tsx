@@ -182,7 +182,7 @@ export function BoutiqueBuilder(p: Props) {
   const reglage = p.reglages.find((r) => r.id === reglageOuvert);
 
   return (
-    <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F1F2F4] text-[#5E6063] overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="ax-constructeur fixed inset-0 z-[9999] flex flex-col bg-[#F1F2F4] text-[#111111] overflow-hidden" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <StyleCss css={CSS_MENUS_DEROULANTS} />
       <PCOnlyGate label={tr("Le Constructeur de boutique")} />
 
@@ -190,20 +190,20 @@ export function BoutiqueBuilder(p: Props) {
       <header className="h-[60px] flex-shrink-0 grid grid-cols-[1fr_auto_1fr] items-center gap-4 px-3 bg-white border-b border-[#E5E5E5]">
         <div className="flex items-center gap-1.5 min-w-0">
           <Link href="/dashboard" title={tr("Quitter le constructeur")} aria-label={tr("Quitter le constructeur")}
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors">
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
             <LogOut size={18} className="rotate-180" />
           </Link>
           <span className="w-px h-6 bg-[#E5E5E5] mx-1" />
           {([["sections", LayoutList, "Sections"], ["parametres", Settings2, "Paramètres du thème"], ["modeles", LayoutTemplate, "Modèles"]] as [Onglet, LucideIcon, string][]).map(([id, Icon, label]) => (
             <button key={id} onClick={() => { setOnglet(id); setReglageOuvert(null); setAjout(null); }} title={label} aria-label={label} aria-pressed={onglet === id}
-              className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${onglet === id ? "bg-[#FFF1D6] text-[#C77C0A]" : "text-[#555555] hover:text-[#5E6063] hover:bg-[#F5F5F5]"}`}>
+              className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${onglet === id ? "bg-[#FFF1D6] text-[#C77C0A]" : "text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5]"}`}>
               <Icon size={18} />
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-3 text-[14px] min-w-0">
-          <span className="flex items-center gap-2 font-medium text-[#5E6063] truncate">
+          <span className="flex items-center gap-2 font-medium text-[#111111] truncate">
             <LayoutTemplate size={16} className="text-[#777777] flex-shrink-0" />
             {tr(design?.nom) ?? tr("Mon thème")}
           </span>
@@ -223,7 +223,7 @@ export function BoutiqueBuilder(p: Props) {
           <div className="flex items-center rounded-lg bg-[#F3F3F3] p-0.5">
             {([["desktop", Monitor, "Ordinateur"], ["tablet", Tablet, "Tablette"], ["mobile", Smartphone, "Mobile"]] as [Device, LucideIcon, string][]).map(([d, Icon, label]) => (
               <button key={d} onClick={() => p.setDevice(d)} title={label} aria-label={label} aria-pressed={device === d}
-                className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${device === d ? "bg-white text-[#5E6063] shadow-sm" : "text-[#777777] hover:text-[#5E6063]"}`}>
+                className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${device === d ? "bg-white text-[#111111] shadow-sm" : "text-[#777777] hover:text-[#111111]"}`}>
                 <Icon size={16} />
               </button>
             ))}
@@ -232,13 +232,13 @@ export function BoutiqueBuilder(p: Props) {
           <BoutonBarre titre={tr("Rétablir (Ctrl+Y)")} onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={17} /></BoutonBarre>
           {tenant.statut === "active" && (
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" title={tr("Voir la boutique")} aria-label={tr("Voir la boutique")}
-              className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors">
+              className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
               <ExternalLink size={17} />
             </a>
           )}
           <button onClick={p.handleSave} disabled={p.saving || (!p.hasChanges && !p.saved)}
             className={`h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold transition-colors disabled:cursor-not-allowed ${
-              p.saved ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F5A623] text-[#5E6063] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA]"}`}>
+              p.saved ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA]"}`}>
             {p.saving ? <RefreshCw size={15} className="animate-spin" /> : p.saved ? <Check size={15} /> : <Save size={15} />}
             {p.saving ? tr("Enregistrement…") : p.saved ? tr("Enregistré") : tr("Enregistrer")}
           </button>
@@ -251,7 +251,7 @@ export function BoutiqueBuilder(p: Props) {
           ) : (
             <button onClick={p.publier} disabled={p.publishing || p.criteresManquants.length > 0}
               title={p.criteresManquants.length ? tr("Complète d'abord : {0}", p.criteresManquants.map((c) => c.label).join(", ")) : undefined}
-              className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold bg-[#5E6063] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              className="h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               {p.publishing ? <RefreshCw size={15} className="animate-spin" /> : <Rocket size={15} />}
               {p.publishing ? tr("Publication…") : tr("Publier")}
             </button>
@@ -310,7 +310,7 @@ export function BoutiqueBuilder(p: Props) {
           {onglet === "parametres" && reglage && (
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-3 h-14 border-b border-[#EEEEEE] flex-shrink-0">
-                <button onClick={() => setReglageOuvert(null)} aria-label={tr("Retour")} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#5E6063] hover:bg-[#F5F5F5]"><ArrowLeft size={17} /></button>
+                <button onClick={() => setReglageOuvert(null)} aria-label={tr("Retour")} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5]"><ArrowLeft size={17} /></button>
                 <p className="text-[15px] font-semibold">{tr(reglage.label)}</p>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{tr(reglage.contenu)}</div>
@@ -395,7 +395,7 @@ export function BoutiqueBuilder(p: Props) {
 function BoutonBarre({ titre, onClick, disabled, children }: { titre: string; onClick: () => void; disabled?: boolean; children: ReactNode }) {
   return (
     <button onClick={onClick} disabled={disabled} title={titre} aria-label={titre}
-      className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#5E6063] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors">
+      className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] disabled:opacity-30 disabled:hover:bg-transparent transition-colors">
       {children}
     </button>
   );

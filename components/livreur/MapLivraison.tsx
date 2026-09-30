@@ -70,7 +70,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
       if (livreurLat && livreurLng) {
         const iconLivreur = L.divIcon({
           className: "",
-          html: `<div style="background:#5E6063;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-size:14px">●</div>`,
+          html: `<div style="background:#111111;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-size:14px">●</div>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14],
         });
@@ -110,7 +110,7 @@ export function MapLivraison({ adresse, ville, latitude, longitude, livreurLat, 
       <div
         ref={mapRef}
         className="w-full rounded-2xl overflow-hidden border border-[#1a1a1a]"
-        style={{ height: "280px", background: "#5E6063" }}
+        style={{ height: "280px", background: "#111" }}
       />
     </>
   );

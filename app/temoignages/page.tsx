@@ -127,7 +127,7 @@ const LOGOS = [
 export default async function TemoignagesPage() {
   const tr = await getT();
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       {/* ── Hero ── */}
@@ -191,7 +191,7 @@ export default async function TemoignagesPage() {
             <div className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>AK</div>
             <div>
-              <p className="font-bold text-[#5E6063]">{tr("Aminata Koné")}</p>
+              <p className="font-bold text-[#111111]">{tr("Aminata Koné")}</p>
               <p className="text-[#737373] text-sm">{tr("Fondatrice, Wax & Prestige ·")}{" "}<span className="text-[10px] font-bold px-1 py-0.5 rounded" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>CI</span>{" "}{tr("Côte d'Ivoire")}</p>
             </div>
             <div className="ml-auto hidden sm:block text-right">
@@ -206,7 +206,7 @@ export default async function TemoignagesPage() {
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-3">{tr("Toutes les histoires")}</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-3">{tr("Toutes les histoires")}</h2>
             <p className="text-[#808080]">{tr("Résultats réels, vérifiables dans nos données marchands")}</p>
           </div>
 
@@ -223,7 +223,7 @@ export default async function TemoignagesPage() {
                     {tr(t.avatar)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-[#5E6063] text-sm">{tr(t.nom)}</p>
+                    <p className="font-bold text-[#111111] text-sm">{tr(t.nom)}</p>
                     <p className="text-[#808080] text-xs truncate">{tr(t.role)} · <span className="font-bold" style={{ color: t.accentBg }}>{t.code}</span> {tr(t.pays)}</p>
                   </div>
                   <div className="flex gap-0.5 flex-shrink-0">
@@ -279,7 +279,7 @@ export default async function TemoignagesPage() {
           <div className="flex justify-center gap-8 mt-6 flex-wrap">
             {[["Facilité d'utilisation","4,9"],["Support client","4,8"],["Rapport qualité/prix","4,9"],["Fonctionnalités","4,7"]].map(([l, n]) => (
               <div key={l} className="text-center">
-                <p className="text-2xl font-black text-[#5E6063]">{n}</p>
+                <p className="text-2xl font-black text-[#111111]">{n}</p>
                 <p className="text-[#999999] text-xs">{tr(l)}</p>
               </div>
             ))}
@@ -290,7 +290,7 @@ export default async function TemoignagesPage() {
       {/* ── CTA ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-4">{tr("Rejoignez-les aujourd'hui")}</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4">{tr("Rejoignez-les aujourd'hui")}</h2>
           <p className="text-[#737373] text-lg mb-8">{tr("Démarrez gratuitement — aucune carte requise. Votre boutique en ligne en 2 minutes.")}</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <Link href="/inscription"

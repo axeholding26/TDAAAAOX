@@ -40,7 +40,7 @@ function FacturePDF({ facture }: { facture: Facture }) {
 <head>
 <meta charset="UTF-8">
 <style>
-  body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#5E6063;font-size:13px}
+  body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#111;font-size:13px}
   h1{font-size:24px;margin-bottom:4px}
   .header{display:flex;justify-content:space-between;margin-bottom:32px}
   .label{color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -151,7 +151,7 @@ export function FacturesPanel() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Total factures")}</p>
-          <p className="text-2xl font-bold text-[#5E6063]">{factures.length}</p>
+          <p className="text-2xl font-bold text-[#111]">{factures.length}</p>
         </div>
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Factures payées")}</p>
@@ -198,12 +198,12 @@ export function FacturesPanel() {
                 const sc = STATUT_CONFIG[f.statut] ?? { label: f.statut, color: "#888" };
                 return (
                   <tr key={f.id} className="border-b border-[#F8F8F8] hover:bg-[#FAFAFA]">
-                    <td className="px-4 py-3 font-mono text-[#5E6063] font-semibold">{f.numero}</td>
+                    <td className="px-4 py-3 font-mono text-[#111] font-semibold">{f.numero}</td>
                     <td className="px-4 py-3 text-[#444]">
                       <p>{t(f.clientNom)}</p>
                       <p className="text-[10px] text-[#AAA]">{t(f.clientEmail)}</p>
                     </td>
-                    <td className="px-4 py-3 font-bold text-[#5E6063]">{f.montantTTC.toLocaleString()} {t(f.devise)}</td>
+                    <td className="px-4 py-3 font-bold text-[#111]">{f.montantTTC.toLocaleString()} {t(f.devise)}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
                     </td>

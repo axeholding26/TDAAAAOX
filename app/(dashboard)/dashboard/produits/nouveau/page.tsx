@@ -289,7 +289,7 @@ function FormulaireProduit() {
     }
   }
 
-  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";
 
   return (
     <div className="max-w-4xl space-y-6">
@@ -362,7 +362,7 @@ function FormulaireProduit() {
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Package size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Informations générales")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Informations générales")}</h2>
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Nom du produit *")}</label>
@@ -394,7 +394,7 @@ function FormulaireProduit() {
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <BarChart2 size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Prix & Stock")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Prix & Stock")}</h2>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -462,7 +462,7 @@ function FormulaireProduit() {
             <div className="bg-white border border-emerald-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <Truck size={15} className="text-emerald-500" />
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Informations fournisseur")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Informations fournisseur")}</h2>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -495,7 +495,7 @@ function FormulaireProduit() {
             <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
               <div className="flex items-center gap-2 mb-1">
                 <FileText size={15} className="text-purple-500" />
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Fichier digital *")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Fichier digital *")}</h2>
               </div>
 
               {!form.fichierUrl ? (
@@ -546,7 +546,7 @@ function FormulaireProduit() {
           <div className="ax-card p-6 space-y-5">
             <div className="flex items-center gap-2 mb-1">
               <ImageIcon size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Images & Vidéos")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Images & Vidéos")}</h2>
             </div>
 
             {/* Images */}
@@ -628,7 +628,7 @@ function FormulaireProduit() {
           <div className="ax-card p-6 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Globe size={15} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">SEO</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">SEO</h2>
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Titre méta")}</label>
@@ -647,7 +647,7 @@ function FormulaireProduit() {
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
             <div className="flex items-center gap-2 mb-1">
               <Tag size={14} className="text-[#F5A623]" />
-              <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Catégorie & Tags")}</h2>
+              <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Catégorie & Tags")}</h2>
             </div>
             <select value={form.categorie} onChange={e => set("categorie", e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50">
@@ -678,7 +678,7 @@ function FormulaireProduit() {
           {form.type !== "digital" && (
             <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-[13px] font-semibold text-[#5E6063]">{tr("Variantes (taille, couleur, matière…)")}</h2>
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Variantes (taille, couleur, matière…)")}</h2>
                 <span className="flex-shrink-0 whitespace-nowrap text-[11px] bg-[#F5A623]/10 text-[#F5A623] px-2 py-0.5 rounded-full">{variantes.length} variante(s)</span>
               </div>
 
@@ -739,7 +739,7 @@ function FormulaireProduit() {
                   {variantes.map((v, idx) => (
                     <div key={idx} className="flex items-center gap-3 bg-[#FAFAFA] rounded-xl px-3 py-2">
                       <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{tr(v.nom)}</span>
-                      <span className="text-[12px] font-semibold text-[#5E6063] flex-1">{tr(v.valeur)}</span>
+                      <span className="text-[12px] font-semibold text-[#111] flex-1">{tr(v.valeur)}</span>
                       {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{tr(v.sku)}</span>}
                       <span className="text-[12px] text-[#F5A623] font-bold">{v.prix || form.prix} XAF</span>
                       <span className="text-[11px] text-[#888]">{tr("S:")}{v.stock}</span>
@@ -755,7 +755,7 @@ function FormulaireProduit() {
 
           {/* Options */}
           <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-            <h2 className="text-[13px] font-semibold text-[#5E6063] mb-1">{tr("Options")}</h2>
+            <h2 className="text-[13px] font-semibold text-[#111111] mb-1">{tr("Options")}</h2>
             {[
               { label: "Produit actif", desc: "Visible sur la boutique", key: "actif" },
               { label: "Mis en avant", desc: "Affiché en page d'accueil", key: "featured" },

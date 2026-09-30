@@ -17,7 +17,7 @@ const THEMES = MANIFESTE_LIBRAIRIE.map((e, i) => ({
   desc: `Un design ${e.ambiance.join(", ")} — vos vrais produits déjà branchés dès l'activation.`,
   accent: e.couleurs.accent || "#F5A623",
   bg: e.couleurs.fond || "#0a0a0a",
-  surface: e.couleurs.surface || "#5E6063",
+  surface: e.couleurs.surface || "#111",
   tags: e.ambiance.map((a) => a.charAt(0).toUpperCase() + a.slice(1)),
   popular: i === 0,
 }));
@@ -25,7 +25,7 @@ const THEMES = MANIFESTE_LIBRAIRIE.map((e, i) => ({
 export default async function ThemesPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -108,7 +108,7 @@ export default async function ThemesPage() {
                 {/* Info */}
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-bold text-[#5E6063]">{t(theme.nom)}</h3>
+                    <h3 className="font-bold text-[#111111]">{t(theme.nom)}</h3>
                     <div style={{ width: 14, height: 14, borderRadius: "50%", background: theme.accent, marginTop: 2 }} />
                   </div>
                   <p className="text-[#737373] text-sm mb-3">{t(theme.desc)}</p>
