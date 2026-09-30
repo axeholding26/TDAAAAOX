@@ -82,7 +82,7 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
           </div>
           <button type="submit" disabled={submitting}
             className="flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#111111" }}>
+            style={{ background: "linear-gradient(135deg,#F5A623,#D4911A)", color: "#5E6063" }}>
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}{" "}{t("Inviter")}
           </button>
         </form>

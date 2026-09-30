@@ -27,7 +27,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
   return (
     <aside
       className="w-64 flex-shrink-0 flex flex-col border-r"
-      style={{ background: "linear-gradient(180deg,#1A1A1A,#111111)", borderColor: "rgba(245,166,35,0.12)" }}
+      style={{ background: "linear-gradient(180deg,#1A1A1A,#5E6063)", borderColor: "rgba(245,166,35,0.12)" }}
     >
       <div className="p-6 border-b" style={{ borderColor: "rgba(245,166,35,0.12)" }}>
         <div className="flex items-center gap-3">

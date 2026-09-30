@@ -45,7 +45,7 @@ const SECTIONS = [
 export default async function CguPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24">

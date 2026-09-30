@@ -77,7 +77,7 @@ export function RechercheDesign({ slug }: { slug: string }) {
       {ouverte && (
         <div className="fixed inset-0 z-[200] flex items-start justify-center px-4 pt-[12vh]" style={{ background: "rgba(10,10,10,0.55)", backdropFilter: "blur(4px)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setOuverte(false); }}>
-          <div role="dialog" aria-modal="true" aria-label={tr("Rechercher un produit")} className="w-full max-w-xl rounded-2xl overflow-hidden bg-white text-[#111111] shadow-2xl"
+          <div role="dialog" aria-modal="true" aria-label={tr("Rechercher un produit")} className="w-full max-w-xl rounded-2xl overflow-hidden bg-white text-[#5E6063] shadow-2xl"
             style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
             <form onSubmit={(e) => { e.preventDefault(); voirTout(); }} className="flex items-center gap-3 px-5 h-16 border-b border-[#EEEEEE]">
               <Search size={20} className="text-[#999999] flex-shrink-0" />

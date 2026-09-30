@@ -10,7 +10,7 @@ import { useT } from "@/components/I18nProvider";
 
 const GROUPS = [
   {
-    label: "Intelligence IA", color: "#111111",
+    label: "Intelligence IA", color: "#5E6063",
     items: [
       { href: "/dashboard",            label: "Axia — Assistante IA", icon: Zap },
       { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
@@ -153,12 +153,12 @@ export function MobileBottomNav() {
             <div className="w-14 flex-shrink-0 flex flex-col items-center pt-1 pb-0.5">
               <span
                 className="text-[9.5px] font-bold leading-none"
-                style={{ color: axiaActive ? "#111111" : "#CCCCCC" }}
+                style={{ color: axiaActive ? "#5E6063" : "#CCCCCC" }}
               >
                 {t("Axia")}
               </span>
               {axiaActive && (
-                <div className="w-1 h-1 rounded-full bg-[#111111] mt-0.5" />
+                <div className="w-1 h-1 rounded-full bg-[#5E6063] mt-0.5" />
               )}
             </div>
 
@@ -234,7 +234,7 @@ export function MobileBottomNav() {
               <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-4" />
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-[15px] font-bold text-[#111111]">{t("Tous les modules")}</h2>
+                  <h2 className="text-[15px] font-bold text-[#5E6063]">{t("Tous les modules")}</h2>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Accédez à toutes les fonctionnalités")}</p>
                 </div>
                 <button

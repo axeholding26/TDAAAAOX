@@ -72,7 +72,7 @@ export default async function AvisPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Avis clients")}</h1>
+            <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Avis clients")}</h1>
             <BoutonRevoirTutoriel moduleKey="avis" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {avis.length}
@@ -94,7 +94,7 @@ export default async function AvisPage() {
         {/* Note moyenne */}
         <div className="ax-card p-8 flex flex-col items-center justify-center text-center">
           <span className="ax-label mb-3">{t("Note moyenne")}</span>
-          <p className="text-[52px] font-black text-[#111111] leading-none tabular-nums">
+          <p className="text-[52px] font-black text-[#5E6063] leading-none tabular-nums">
             {noteMoyenne > 0 ? noteMoyenne.toFixed(1) : "—"}
           </p>
           <div className="my-3">
@@ -117,7 +117,7 @@ export default async function AvisPage() {
 
         {/* Répartition */}
         <div className="lg:col-span-2 ax-card p-6">
-          <h3 className="text-[13px] font-semibold text-[#111111] mb-4">{t("Répartition des notes")}</h3>
+          <h3 className="text-[13px] font-semibold text-[#5E6063] mb-4">{t("Répartition des notes")}</h3>
           {avis.length === 0 ? (
             <div className="h-32 flex items-center justify-center text-[12px] text-[#AAAAAA]">
               {t("Aucune donnée disponible")}
@@ -163,7 +163,7 @@ export default async function AvisPage() {
       <div className="ax-card overflow-hidden">
         <div className="px-5 py-4 border-b border-[#F3F3F3] flex items-center gap-2">
           <MessageSquare size={15} className="text-[#AAAAAA]" />
-          <h2 className="text-[13px] font-semibold text-[#111111]">{t("Tous les avis")}</h2>
+          <h2 className="text-[13px] font-semibold text-[#5E6063]">{t("Tous les avis")}</h2>
           {avis.length > 0 && (
             <span className="ml-auto text-[11px] font-bold text-[#888] bg-[#F5F5F7] border border-[#EBEBEB] px-2 py-0.5 rounded-full">
               {avis.length}
@@ -177,7 +177,7 @@ export default async function AvisPage() {
               <Star size={24} className="text-[#F5A623]" fill="#F5A623" />
             </div>
             <div>
-              <p className="text-[14px] font-semibold text-[#111111]">{t("Aucun avis client")}</p>
+              <p className="text-[14px] font-semibold text-[#5E6063]">{t("Aucun avis client")}</p>
               <p className="text-[12px] text-[#AAAAAA] mt-1">
                 {t("Les avis apparaîtront ici dès que vos clients auront évalué leurs achats.")}
               </p>

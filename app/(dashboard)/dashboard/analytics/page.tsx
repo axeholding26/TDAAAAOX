@@ -182,13 +182,13 @@ export default async function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">{t("Analytics")}{" "}<AgentActiveIndicator label={t("Agent Analytics actif")} /> <BoutonRevoirTutoriel moduleKey="analytics" /></h1>
+          <h1 className="text-2xl font-bold text-[#5E6063] font-poppins inline-flex items-center gap-2">{t("Analytics")}{" "}<AgentActiveIndicator label={t("Agent Analytics actif")} /> <BoutonRevoirTutoriel moduleKey="analytics" /></h1>
           <p className="text-[#717171] text-sm mt-1">{t("Activité réelle de votre boutique")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
             <Calendar size={14} className="text-[#717171]" />
-            <span className="text-[#111111] text-sm font-medium">{t(fenetre)}{" "}{t("derniers jours")}</span>
+            <span className="text-[#5E6063] text-sm font-medium">{t(fenetre)}{" "}{t("derniers jours")}</span>
             <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
               {t("vs J-")}{t(fenetre)}
             </span>
@@ -219,7 +219,7 @@ export default async function AnalyticsPage() {
                   </div>
                 )}
               </div>
-              <p className="text-2xl font-bold text-[#111111] font-poppins leading-tight">{t(k.valeur)}</p>
+              <p className="text-2xl font-bold text-[#5E6063] font-poppins leading-tight">{t(k.valeur)}</p>
               <p className="text-[#717171] text-xs mt-1">{t(k.label)}</p>
               {d !== null && (
                 <p className="text-[#717171] text-[10px] mt-2 border-t border-[#F3F3F3] pt-2">vs. {t(fenetre)}{" "}{t("jours précédents")}</p>
@@ -233,7 +233,7 @@ export default async function AnalyticsPage() {
       <>
       {/* Graphique des ventes */}
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
-        <h2 className="text-sm font-semibold text-[#111111] mb-1">{t("Évolution du chiffre d'affaires")}</h2>
+        <h2 className="text-sm font-semibold text-[#5E6063] mb-1">{t("Évolution du chiffre d'affaires")}</h2>
         <p className="text-[#717171] text-xs mb-5">{t("Revenus journaliers des")}{" "}{t(fenetre)}{" "}{t("derniers jours (commandes complétées)")}</p>
         <SalesChart donnees={donnees30Jours} devise={tenant?.devise || "XOF"} />
       </div>
@@ -246,7 +246,7 @@ export default async function AnalyticsPage() {
               <TrendingUp size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">{t("Top produits")}</h3>
+              <h3 className="text-sm font-semibold text-[#5E6063]">{t("Top produits")}</h3>
               <p className="text-[#717171] text-xs">{t("Classés par nombre de ventes")}</p>
             </div>
           </div>
@@ -285,13 +285,13 @@ export default async function AnalyticsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#111111] text-sm font-medium truncate">{t(p.nom)}</p>
+                      <p className="text-[#5E6063] text-sm font-medium truncate">{t(p.nom)}</p>
                       <div className="w-full bg-[#F4F4F4] rounded-full h-1.5 mt-1.5">
                         <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: "#F5A623" }} />
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[#111111] text-sm font-bold font-poppins">{t(p.ventes)}</p>
+                      <p className="text-[#5E6063] text-sm font-bold font-poppins">{t(p.ventes)}</p>
                       <p className="text-[#717171] text-[10px]">ventes</p>
                     </div>
                   </div>
@@ -308,7 +308,7 @@ export default async function AnalyticsPage() {
               <BarChart3 size={15} className="text-[#2563EB]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">{t("Statuts des commandes")}</h3>
+              <h3 className="text-sm font-semibold text-[#5E6063]">{t("Statuts des commandes")}</h3>
               <p className="text-[#717171] text-xs">{t(totalCommandes)}{" "}{t("commandes au total")}</p>
             </div>
           </div>
@@ -338,7 +338,7 @@ export default async function AnalyticsPage() {
                           {t(info.label)}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[#111111] text-sm font-bold font-poppins">{t(s._count)}</span>
+                          <span className="text-[#5E6063] text-sm font-bold font-poppins">{t(s._count)}</span>
                           <span className="text-[#717171] text-xs">({pct}%)</span>
                         </div>
                       </div>
@@ -357,12 +357,12 @@ export default async function AnalyticsPage() {
       <div className="bg-white border border-[#E8E8E8] rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-[#111111]">{t("Entonnoir de conversion")}</h3>
+            <h3 className="text-sm font-semibold text-[#5E6063]">{t("Entonnoir de conversion")}</h3>
             <p className="text-[#717171] text-xs mt-0.5">{t("30 derniers jours")}</p>
           </div>
           <div className="flex items-center gap-2 bg-[#F4F4F4] border border-[#E8E8E8] rounded-xl px-4 py-2">
             <span className="text-[#717171] text-sm">{t("Taux global")}</span>
-            <span className="font-bold text-[#111111] font-poppins text-lg">{t(tauxConversion)}%</span>
+            <span className="font-bold text-[#5E6063] font-poppins text-lg">{t(tauxConversion)}%</span>
           </div>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -385,7 +385,7 @@ export default async function AnalyticsPage() {
                     style={{ height: `${heightPct}%`, backgroundColor: step.color, opacity: 0.4 }}
                   />
                 </div>
-                <p className="text-[#111111] font-bold font-poppins text-lg leading-tight">
+                <p className="text-[#5E6063] font-bold font-poppins text-lg leading-tight">
                   {step.val.toLocaleString(t.loc)}
                 </p>
                 <p className="text-[#717171] text-xs text-center">{t(step.label)}</p>
@@ -408,7 +408,7 @@ export default async function AnalyticsPage() {
               <Star size={15} className="text-[#F5A623]" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#111111]">{t("Derniers avis clients")}</h3>
+              <h3 className="text-sm font-semibold text-[#5E6063]">{t("Derniers avis clients")}</h3>
               <p className="text-[#717171] text-xs">{t("Les 5 plus récents")}</p>
             </div>
           </div>

@@ -26,7 +26,7 @@ const TEMOIGNAGES = [
 export default async function CommunityPage() {
   const tr = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -57,7 +57,7 @@ export default async function CommunityPage() {
                 <span className="flex-shrink-0" style={{ color: c.color }}><c.Icon size={30} /></span>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-[#111111] group-hover:text-[#F5A623] transition-colors">{tr(c.nom)}</h3>
+                    <h3 className="font-bold text-[#5E6063] group-hover:text-[#F5A623] transition-colors">{tr(c.nom)}</h3>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: `${c.color}15`, color: c.color }}>{tr(c.membres)}</span>
                   </div>
                   <p className="text-[#737373] text-sm">{tr(c.desc)}</p>
@@ -103,7 +103,7 @@ export default async function CommunityPage() {
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
                     style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>{tr(t.emoji)}</div>
                   <div>
-                    <p className="text-[#111111] text-xs font-bold">{tr(t.nom)}</p>
+                    <p className="text-[#5E6063] text-xs font-bold">{tr(t.nom)}</p>
                     <p className="text-[#8C8C8C] text-xs">{tr(t.ville)}</p>
                   </div>
                 </div>

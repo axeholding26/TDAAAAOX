@@ -211,7 +211,7 @@ export default function EquipePage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[18px] font-bold text-[#111]">{t("Équipe")}</h1>
+            <h1 className="text-[18px] font-bold text-[#5E6063]">{t("Équipe")}</h1>
             <BoutonRevoirTutoriel moduleKey="equipe" />
           </div>
           <p className="text-[12px] text-gray-500">{membres.length}{" "}{t("membre(s) dans votre équipe")}</p>
@@ -222,7 +222,7 @@ export default function EquipePage() {
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex items-center gap-2">
           <Users size={15} className="text-[#F5A623]" />
-          <h2 className="text-[#111] font-semibold text-[13.5px]">{t("Membres de l'équipe")}</h2>
+          <h2 className="text-[#5E6063] font-semibold text-[13.5px]">{t("Membres de l'équipe")}</h2>
         </div>
 
         {loading ? (
@@ -230,7 +230,7 @@ export default function EquipePage() {
         ) : membres.length === 0 ? (
           <div className="py-10 text-center">
             <Users size={28} className="text-gray-200 mx-auto mb-3" />
-            <p className="text-[13px] font-semibold text-[#111]">{t("Aucun membre ajouté")}</p>
+            <p className="text-[13px] font-semibold text-[#5E6063]">{t("Aucun membre ajouté")}</p>
             <p className="text-[11.5px] text-gray-400 mt-1">{t("Invitez des collaborateurs pour gérer votre boutique")}</p>
           </div>
         ) : (
@@ -248,7 +248,7 @@ export default function EquipePage() {
                       <span className="text-[#F5A623] font-bold text-[12px]">{(m.nom || m.email).slice(0, 2).toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-[#111] truncate">{t(m.nom) || m.email}</p>
+                      <p className="text-[13px] font-semibold text-[#5E6063] truncate">{t(m.nom) || m.email}</p>
                       <p className="text-[11.5px] text-gray-400 truncate">{m.email}</p>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ color: "#F5A623", background: "#F5A62315" }}>
@@ -326,7 +326,7 @@ export default function EquipePage() {
 
       {/* Rôles disponibles */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <h3 className="text-[#111] font-semibold text-[13px] mb-3">{t("Rôles disponibles")}</h3>
+        <h3 className="text-[#5E6063] font-semibold text-[13px] mb-3">{t("Rôles disponibles")}</h3>
         <div className="flex flex-wrap gap-2">
           {ROLE_OPTIONS.map((r) => (
             <span key={r} className="text-[11px] font-medium px-2.5 py-1 rounded-lg" style={{ color: "#F5A623", background: "#F5A62312", border: "1px solid #F5A62330" }}>
@@ -340,7 +340,7 @@ export default function EquipePage() {
       <form onSubmit={inviter} className="bg-white border border-gray-100 rounded-2xl p-5 space-y-4">
         <div className="flex items-center gap-2">
           <UserPlus size={15} className="text-[#F5A623]" />
-          <h2 className="text-[#111] font-semibold text-[13.5px]">{t("Inviter un membre")}</h2>
+          <h2 className="text-[#5E6063] font-semibold text-[13.5px]">{t("Inviter un membre")}</h2>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -374,7 +374,7 @@ export default function EquipePage() {
 
         {lastInvite && (
           <div className="rounded-xl p-4 space-y-2" style={{ background: "#F5A62310", border: "1px solid #F5A62330" }}>
-            <p className="text-[12px] font-semibold text-[#111]">{t("Invitation envoyée à")}{" "}{t(lastInvite.nom)}{" "}{t("— partage ce lien :")}</p>
+            <p className="text-[12px] font-semibold text-[#5E6063]">{t("Invitation envoyée à")}{" "}{t(lastInvite.nom)}{" "}{t("— partage ce lien :")}</p>
             <div className="flex items-center gap-2">
               <input readOnly value={lastInvite.lienInvitation} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[11.5px] text-gray-600 truncate" />
               <button type="button" onClick={() => copierLien(lastInvite.lienInvitation)} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0">

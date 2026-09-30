@@ -97,7 +97,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
         }
         .hdr-drop { animation:hdrDropIn .24s cubic-bezier(.34,1.56,.64,1) both; }
         .hdr-btn:hover { background:rgba(0,0,0,.055) !important; }
-        .hdr-item:hover { background:#f5f5f7 !important; color:#111 !important; }
+        .hdr-item:hover { background:#f5f5f7 !important; color:#5E6063 !important; }
         .hdr-item-red:hover { background:#fff0f0 !important; }
         .hdr-shop:hover { background:rgba(245,166,35,.14) !important; }
       `}</style>
@@ -215,7 +215,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                   overflow: "hidden", zIndex: 100,
                 }}>
                   <div style={{ padding: "14px 18px 12px", borderBottom: "1px solid #f2f2f2", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontSize:"13px", fontWeight:700, color:"#111" }}>{t("Notifications")}</span>
+                    <span style={{ fontSize:"13px", fontWeight:700, color:"#5E6063" }}>{t("Notifications")}</span>
                     {nonLues > 0 && (
                       <span style={{ fontSize:"11px", fontWeight:600, color:"#F5A623", background:"rgba(245,166,35,.1)", padding:"3px 9px", borderRadius:"999px" }}>{t(nonLues)} nouvelle{nonLues > 1 ? "s" : ""}</span>
                     )}
@@ -303,7 +303,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                 }}>
                   {/* Header profil */}
                   <div style={{ padding:"10px 13px 12px", borderBottom:"1px solid #f2f2f2", marginBottom:"6px" }}>
-                    <p style={{ fontSize:"13px", fontWeight:700, color:"#111", margin:0 }}>{t(nom)}</p>
+                    <p style={{ fontSize:"13px", fontWeight:700, color:"#5E6063", margin:0 }}>{t(nom)}</p>
                     <p style={{ fontSize:"11px", color:"#bbb", margin:"3px 0 0", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{email}</p>
                   </div>
 

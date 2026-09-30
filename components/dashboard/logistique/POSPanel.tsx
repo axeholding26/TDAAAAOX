@@ -175,7 +175,7 @@ export function POSPanel() {
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Check size={28} className="text-green-600" />
         </div>
-        <h2 className="text-[20px] font-bold text-[#111] mb-1">{t("Vente enregistrée")}</h2>
+        <h2 className="text-[20px] font-bold text-[#5E6063] mb-1">{t("Vente enregistrée")}</h2>
         <p className="text-[13px] text-[#888] mb-1">{t("Commande")}{" "}<strong>{t(derniereCommande)}</strong></p>
         <p className="text-[22px] font-bold text-[#F5A623] my-3">{total.toLocaleString()} XAF</p>
         <p className="text-[12px] text-[#AAA] mb-6">via {t(METHODES.find(m => m.id === methode)?.label)}</p>
@@ -234,7 +234,7 @@ export function POSPanel() {
                 ) : (
                   <div className="w-full h-24 bg-[#F5F5F5] rounded-xl mb-2 flex items-center justify-center"><ShoppingBag size={28} className="text-gray-400" /></div>
                 )}
-                <p className="text-[12px] font-semibold text-[#111] leading-tight line-clamp-2">{t(p.nom)}</p>
+                <p className="text-[12px] font-semibold text-[#5E6063] leading-tight line-clamp-2">{t(p.nom)}</p>
                 <div className="flex items-center justify-between mt-1">
                   <p className="text-[13px] font-bold text-[#F5A623]">{p.prix.toLocaleString()}</p>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${p.stock > 5 ? "bg-green-100 text-green-600" : p.stock > 0 ? "bg-orange-100 text-orange-600" : "bg-red-100 text-red-500"}`}>
@@ -255,7 +255,7 @@ export function POSPanel() {
         <div className="px-4 py-4 border-b border-[#F0F0F0]">
           <div className="flex items-center gap-2">
             <ShoppingCart size={16} className="text-[#F5A623]" />
-            <span className="text-[14px] font-bold text-[#111]">{t("Panier (")}{cart.reduce((s,l)=>s+l.quantite,0)})</span>
+            <span className="text-[14px] font-bold text-[#5E6063]">{t("Panier (")}{cart.reduce((s,l)=>s+l.quantite,0)})</span>
           </div>
         </div>
 
@@ -264,14 +264,14 @@ export function POSPanel() {
           {cart.map((l, idx) => (
             <div key={idx} className="bg-[#FAFAFA] rounded-xl p-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[#111] leading-tight truncate">{t(l.nom)}</p>
+                <p className="text-[12px] font-semibold text-[#5E6063] leading-tight truncate">{t(l.nom)}</p>
                 <p className="text-[12px] text-[#F5A623] font-bold mt-0.5">{(l.prix * l.quantite).toLocaleString()} XAF</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => modifQte(idx, -1)} className="w-6 h-6 rounded-lg bg-white border border-[#E8E8E8] flex items-center justify-center">
                   <Minus size={10} className="text-[#666]" />
                 </button>
-                <span className="text-[12px] font-bold text-[#111] w-5 text-center">{l.quantite}</span>
+                <span className="text-[12px] font-bold text-[#5E6063] w-5 text-center">{l.quantite}</span>
                 <button onClick={() => modifQte(idx, 1)} className="w-6 h-6 rounded-lg bg-white border border-[#E8E8E8] flex items-center justify-center">
                   <Plus size={10} className="text-[#666]" />
                 </button>
@@ -317,7 +317,7 @@ export function POSPanel() {
                 <span>{t("Réduction")}</span><span>−{remise.toLocaleString()} XAF</span>
               </div>
             )}
-            <div className="flex justify-between text-[15px] font-bold text-[#111] border-t border-[#E8E8E8] pt-2 mt-1">
+            <div className="flex justify-between text-[15px] font-bold text-[#5E6063] border-t border-[#E8E8E8] pt-2 mt-1">
               <span>{t("Total")}</span><span style={{ color: "#F5A623" }}>{total.toLocaleString()} XAF</span>
             </div>
           </div>
@@ -338,7 +338,7 @@ export function POSPanel() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={() => setVarianteModal(null)}>
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[15px] font-bold text-[#111]">{t(varianteModal.nom)}</h3>
+              <h3 className="text-[15px] font-bold text-[#5E6063]">{t(varianteModal.nom)}</h3>
               <button onClick={() => setVarianteModal(null)} className="p-1 rounded-lg hover:bg-[#F5F5F5]"><X size={15} className="text-[#888]" /></button>
             </div>
             <p className="text-[12px] text-[#888] mb-3">{t("Choisir une variante :")}</p>
@@ -350,7 +350,7 @@ export function POSPanel() {
                   onClick={() => ajouterAuCart(varianteModal, v.id, `${v.nom}: ${v.valeur}`)}
                   className="w-full flex items-center justify-between p-3 rounded-xl border border-[#E8E8E8] hover:border-[#F5A623]/50 hover:bg-[#FFF8EC] transition-all disabled:opacity-40"
                 >
-                  <span className="text-[13px] font-medium text-[#111]">{t(v.nom)}: {t(v.valeur)}</span>
+                  <span className="text-[13px] font-medium text-[#5E6063]">{t(v.nom)}: {t(v.valeur)}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] font-bold text-[#F5A623]">{((v.prix ?? varianteModal.prix)).toLocaleString()} XAF</span>
                     <span className="text-[10px] text-[#AAA]">{t("S:")}{v.stock}</span>

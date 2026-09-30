@@ -83,7 +83,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
   listings = listings.slice(0, 60);
 
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       {/* ── Hero ── */}
@@ -162,7 +162,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.1)" }}>
                   <Icon size={20} style={{ color: "#F5A623" }} />
                 </div>
-                <p className="font-bold text-[#111111] mb-2">{t(titre)}</p>
+                <p className="font-bold text-[#5E6063] mb-2">{t(titre)}</p>
                 <p className="text-[#666666] text-sm leading-relaxed">{t(texte)}</p>
               </div>
             ))}
@@ -198,7 +198,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
               <option value="commission">{t("Commission la plus élevée")}</option>
               <option value="populaire">{t("Best-sellers")}</option>
             </select>
-            <button type="submit" className="px-6 py-3 text-sm font-bold rounded-xl text-white" style={{ background: "#111111" }}>
+            <button type="submit" className="px-6 py-3 text-sm font-bold rounded-xl text-white" style={{ background: "#5E6063" }}>
               {t("Filtrer")}
             </button>
           </form>
@@ -206,7 +206,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
           {listings.length === 0 ? (
             <div className="text-center py-20 rounded-2xl border-2 border-dashed" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
               <Package size={40} className="mx-auto mb-4" style={{ color: "#D9D9D9" }} />
-              <p className="font-bold text-[#111111] mb-1">{t("Aucun produit trouvé")}</p>
+              <p className="font-bold text-[#5E6063] mb-1">{t("Aucun produit trouvé")}</p>
               <p className="text-sm text-[#999999]">{t("Essayez une autre recherche ou catégorie.")}</p>
             </div>
           ) : (
@@ -237,7 +237,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
                       <p className="text-[11px] truncate" style={{ color: "#999999" }}>{t(l.nomBoutique)}</p>
                       {l.certifie && <BadgeCheck size={11} style={{ color: "#F5A623" }} />}
                     </div>
-                    <p className="font-bold text-sm mb-3" style={{ color: "#111111" }}>{formatMontant(l.prix, l.devise)}</p>
+                    <p className="font-bold text-sm mb-3" style={{ color: "#5E6063" }}>{formatMontant(l.prix, l.devise)}</p>
                     <DevenirAffilieButton programmeId={l.programmeId} nomBoutique={l.nomBoutique} logoUrl={l.logoUrl} nomProgramme={l.nomProgramme} />
                   </div>
                 </div>
@@ -260,7 +260,7 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
               <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.12)" }}>
                 <Icon size={20} style={{ color: "#F5A623" }} />
               </div>
-              <p className="font-bold text-[#111111] mb-2">{t(titre)}</p>
+              <p className="font-bold text-[#5E6063] mb-2">{t(titre)}</p>
               <p className="text-[#666666] text-sm leading-relaxed">{t(texte)}</p>
             </div>
           ))}

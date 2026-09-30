@@ -87,7 +87,7 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
       style={{ background: "rgba(6,10,20,0.72)", backdropFilter: "blur(6px)", animation: "axtFadeIn 0.3s ease" }}>
       <div className="relative w-full max-w-md rounded-3xl overflow-hidden"
         style={{
-          background: "linear-gradient(160deg,#1a1a1a 0%,#111111 100%)",
+          background: "linear-gradient(160deg,#1a1a1a 0%,#5E6063 100%)",
           border: "1px solid rgba(255,255,255,0.1)",
           boxShadow: "0 40px 100px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,166,35,0.08)",
           animation: "axtPopIn 0.45s cubic-bezier(0.34,1.56,0.64,1)",
@@ -114,7 +114,7 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
               </p>
               <Link href={offrePalier!.href} onClick={fermer}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-[13px] transition-all hover:scale-105"
-                style={{ background: "#F5A623", color: "#111111" }}>
+                style={{ background: "#F5A623", color: "#5E6063" }}>
                 <LayoutDashboard size={14} /> {tr(offrePalier!.label)}
               </Link>
             </>
@@ -152,13 +152,13 @@ export function ModuleTutorial({ moduleKey, titre, sousTitre, steps, offrePalier
             {step < totalSteps - 1 ? (
               <button onClick={() => setStep(s => s + 1)}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-[12.5px] transition-all hover:opacity-90"
-                style={{ background: "#F5A623", color: "#111111" }}>
+                style={{ background: "#F5A623", color: "#5E6063" }}>
                 {tr("Suivant")}{" "}<ArrowRight size={13} />
               </button>
             ) : (
               <button onClick={fermer}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-[12.5px] transition-all hover:opacity-90"
-                style={{ background: "#F5A623", color: "#111111" }}>
+                style={{ background: "#F5A623", color: "#5E6063" }}>
                 <Check size={13} />{" "}{tr("Compris")}
               </button>
             )}

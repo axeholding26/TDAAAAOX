@@ -27,7 +27,7 @@ const BOUTIQUE_TUTORIAL_STEPS = [
 ];
 
 
-const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] leading-normal outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
+const inputCls = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] leading-normal outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 const labelCls = "flex items-center gap-1.5 mb-1.5 ax-label leading-none";
 
 type Section = "infos" | "apparence" | "seo" | "reseaux" | "livraison" | "boutiques" | "avance";
@@ -66,8 +66,8 @@ const CHAMPS_INFOS = [
 
 const CHAMPS_RESEAUX = [
   { key: "instagram", label: "Instagram",   placeholder: "https://instagram.com/votre_boutique", Icon: Camera,        color: "#E1306C" },
-  { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/votre_boutique",  Icon: Users,         color: "#111111" },
-  { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@votre_boutique",   Icon: Music,         color: "#111111" },
+  { key: "facebook",  label: "Facebook",    placeholder: "https://facebook.com/votre_boutique",  Icon: Users,         color: "#5E6063" },
+  { key: "tiktok",    label: "TikTok",      placeholder: "https://tiktok.com/@votre_boutique",   Icon: Music,         color: "#5E6063" },
   { key: "twitter",   label: "X / Twitter", placeholder: "https://twitter.com/votre_boutique",   Icon: MessageCircle, color: "#0F1419" },
 ];
 
@@ -210,7 +210,7 @@ export default function BoutiquePage() {
   // Aperçu décoratif — palette AXSO jaune & noir (jamais bleu ni marron).
   // Le choix du design réel de la boutique se fait dans Theme Studio
   // (voir bannière ci-dessous).
-  const theme = { fond: "#ffffff", surface: "#FAFAFA", accent: "#F5A623", texte: "#111111", texteMuted: "#888888", bordure: "#F0F0F0" };
+  const theme = { fond: "#ffffff", surface: "#FAFAFA", accent: "#F5A623", texte: "#5E6063", texteMuted: "#888888", bordure: "#F0F0F0" };
   const dirty = !!savedForm && JSON.stringify(form) !== JSON.stringify(savedForm);
   const enLigne = statutLocal === "active";
 
@@ -259,7 +259,7 @@ export default function BoutiquePage() {
               {/* Nouvelle boutique : multi-boutique réservé au Palier 2 (même règle que l'onglet « Mes boutiques »). */}
               {!loadingBoutiques && (peutCreerBoutique ? (
                 <button onClick={() => setModalNouvelleBoutique(true)} title={tr("Créer une nouvelle boutique")}
-                  className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-[#111111] bg-[#F5A623] border border-[#F5A623] px-3 h-8 rounded-full hover:bg-[#E8990F] transition-all">
+                  className="flex items-center gap-1.5 text-[11.5px] font-semibold leading-none text-[#5E6063] bg-[#F5A623] border border-[#F5A623] px-3 h-8 rounded-full hover:bg-[#E8990F] transition-all">
                   <Plus size={13} /> <span className="hidden sm:inline">{tr("Nouvelle boutique")}</span>
                 </button>
               ) : (
@@ -289,7 +289,7 @@ export default function BoutiquePage() {
           <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[19px] sm:text-[21px] font-bold text-[#111111] tracking-tight leading-tight truncate max-w-full">
+                <h1 className="text-[19px] sm:text-[21px] font-bold text-[#5E6063] tracking-tight leading-tight truncate max-w-full">
                   {tr(form.nomBoutique) || tr("Ma Boutique")}
                 </h1>
                 <BoutonRevoirTutoriel moduleKey="boutique" />
@@ -315,7 +315,7 @@ export default function BoutiquePage() {
             <div className="flex items-center gap-2.5 flex-shrink-0">
               <ProgressRing pct={completion} />
               <div className="leading-tight">
-                <p className="text-[11.5px] font-bold text-[#111111] leading-tight">{tr("Profil")}{" "}{tr(completion)}%</p>
+                <p className="text-[11.5px] font-bold text-[#5E6063] leading-tight">{tr("Profil")}{" "}{tr(completion)}%</p>
                 <p className="text-[10.5px] text-[#AAAAAA] leading-tight">{completion === 100 ? tr("Boutique complète") : tr("à compléter")}</p>
               </div>
             </div>
@@ -344,13 +344,13 @@ export default function BoutiquePage() {
             return (
               <button key={s.id} onClick={() => setSection(s.id)} title={s.label}
                 className="flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-all text-left flex-shrink-0"
-                style={active ? { background: "#111111" } : { background: "transparent" }}>
+                style={active ? { background: "#5E6063" } : { background: "transparent" }}>
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={active ? { background: "rgba(245,166,35,0.18)" } : { background: "#F5F5F5" }}>
                   <Icon size={14} style={{ color: active ? "#F5A623" : "#888888" }} />
                 </div>
                 <div className="min-w-0 hidden lg:block">
-                  <p className="text-[12.5px] font-semibold leading-tight truncate" style={{ color: active ? "#FFFFFF" : "#111111" }}>{tr(s.label)}</p>
+                  <p className="text-[12.5px] font-semibold leading-tight truncate" style={{ color: active ? "#FFFFFF" : "#5E6063" }}>{tr(s.label)}</p>
                   <p className="text-[10.5px] leading-tight truncate mt-0.5" style={{ color: active ? "rgba(255,255,255,0.5)" : "#AAAAAA" }}>{tr(s.desc)}</p>
                 </div>
                 {done
@@ -366,7 +366,7 @@ export default function BoutiquePage() {
           {section === "infos" && (
             <div className="ax-card p-6 space-y-5">
               <div>
-                <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Informations générales")}</h2>
+                <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Informations générales")}</h2>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("L'identité et les coordonnées de votre boutique")}</p>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
@@ -399,7 +399,7 @@ export default function BoutiquePage() {
             <div className="space-y-4">
               <div className="ax-card p-6 space-y-4">
                 <div>
-                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Médias de la boutique")}</h2>
+                  <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Médias de la boutique")}</h2>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Le logo et la bannière apparaissent sur votre vitrine")}</p>
                 </div>
                 <div className="grid sm:grid-cols-[160px_1fr] gap-6">
@@ -416,7 +416,7 @@ export default function BoutiquePage() {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <Sparkles size={13} className="text-[#F5A623]" />
-                    <h2 className="text-[13px] font-bold text-[#111111] leading-tight">{tr("Thème visuel — Theme Studio")}</h2>
+                    <h2 className="text-[13px] font-bold text-[#5E6063] leading-tight">{tr("Thème visuel — Theme Studio")}</h2>
                   </div>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-1 leading-tight">{tr("15 designs prêts à l'emploi, vos vrais produits déjà branchés, ou importez le vôtre")}</p>
                 </div>
@@ -428,7 +428,7 @@ export default function BoutiquePage() {
           {section === "seo" && (
             <div className="ax-card p-6 space-y-4">
               <div>
-                <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Référencement naturel (SEO)")}</h2>
+                <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Référencement naturel (SEO)")}</h2>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Comment votre boutique apparaît sur Google")}</p>
               </div>
               <div>
@@ -450,7 +450,7 @@ export default function BoutiquePage() {
               </div>
               <div className="border border-[#E8E8E8] rounded-2xl p-4 bg-[#FAFAFA] space-y-1.5">
                 <p className="ax-label mb-2 flex items-center gap-1.5 leading-none"><Sparkles size={10} />{" "}{tr("Aperçu Google")}</p>
-                <p className="text-[15px] font-semibold text-[#111111] leading-tight">{tr(form.metaTitle) || tr(form.nomBoutique) || tr("Ma Boutique")}</p>
+                <p className="text-[15px] font-semibold text-[#5E6063] leading-tight">{tr(form.metaTitle) || tr(form.nomBoutique) || tr("Ma Boutique")}</p>
                 <p className="text-green-700 text-[11.5px] leading-tight">{tr(urlProd) || "votre-boutique.axso.com"}</p>
                 <p className="text-[#666666] text-[12px] leading-relaxed">{tr(form.metaDescription) || form.description?.slice(0, 160) || tr("Ajoutez une description pour améliorer votre visibilité sur Google.")}</p>
               </div>
@@ -460,7 +460,7 @@ export default function BoutiquePage() {
           {section === "reseaux" && (
             <div className="ax-card p-6 space-y-4">
               <div>
-                <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Vos liens sociaux")}</h2>
+                <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Vos liens sociaux")}</h2>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Affichés dans le pied de page de votre boutique")}</p>
               </div>
               <div className="space-y-3">
@@ -476,7 +476,7 @@ export default function BoutiquePage() {
                       <div className="flex-1 min-w-0">
                         <input value={(form as any)[s.key]} onChange={e => set(s.key, e.target.value)}
                           placeholder={`${s.label} — ${s.placeholder}`}
-                          className="w-full bg-transparent outline-none text-[13px] leading-normal text-[#111111] placeholder:text-[#CCCCCC]" />
+                          className="w-full bg-transparent outline-none text-[13px] leading-normal text-[#5E6063] placeholder:text-[#CCCCCC]" />
                       </div>
                       {filled && (
                         <a href={(form as any)[s.key]} target="_blank" rel="noopener noreferrer"
@@ -494,12 +494,12 @@ export default function BoutiquePage() {
           {section === "livraison" && (
             <div className="ax-card p-6 space-y-5">
               <div>
-                <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Paramètres de livraison")}</h2>
+                <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Paramètres de livraison")}</h2>
                 <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Frais et zones desservies par votre boutique")}</p>
               </div>
               <div className="flex items-center justify-between p-4 bg-[#FAFAFA] border border-[#F0F0F0] rounded-2xl gap-3">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-[#111111] leading-tight">{tr("Livraison gratuite pour tous")}</p>
+                  <p className="text-[13px] font-semibold text-[#5E6063] leading-tight">{tr("Livraison gratuite pour tous")}</p>
                   <p className="text-[11.5px] text-[#AAAAAA] leading-tight mt-0.5">{tr("Offrir la livraison à tous vos clients")}</p>
                 </div>
                 <button onClick={() => set("livraisonGratuite", !form.livraisonGratuite)}
@@ -539,13 +539,13 @@ export default function BoutiquePage() {
             <div className="ax-card p-6 space-y-4">
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Mes boutiques")}</h2>
+                  <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Mes boutiques")}</h2>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Gérez toutes vos boutiques Axso et basculez entre elles")}</p>
                 </div>
                 {peutCreerBoutique && (
                   <button onClick={() => setModalNouvelleBoutique(true)}
                     className="flex items-center gap-1.5 text-[12px] font-bold text-white px-3.5 py-2 rounded-full hover:opacity-90 transition-all flex-shrink-0"
-                    style={{ background: "#111111" }}>
+                    style={{ background: "#5E6063" }}>
                     <Plus size={13} />{" "}{tr("Nouvelle boutique")}
                   </button>
                 )}
@@ -568,13 +568,13 @@ export default function BoutiquePage() {
                           cursor: b.active ? "default" : "pointer",
                         }}>
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden text-[13px] font-black text-white"
-                          style={{ background: b.logoUrl ? "#F4F4F4" : "linear-gradient(135deg,#111111,#333333)" }}>
+                          style={{ background: b.logoUrl ? "#F4F4F4" : "linear-gradient(135deg,#5E6063,#333333)" }}>
                           {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-full h-full object-cover" /> : b.nomBoutique.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-semibold text-[#111111] leading-tight truncate">{tr(b.nomBoutique)}</p>
+                          <p className="text-[13px] font-semibold text-[#5E6063] leading-tight truncate">{tr(b.nomBoutique)}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full leading-none" style={{ background: "#F5A6231F", color: "#111111" }}>
+                            <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded-full leading-none" style={{ background: "#F5A6231F", color: "#5E6063" }}>
                               {tr(NOMS_PALIERS[palierDe(b.planType)])}
                             </span>
                             <span className="text-[10.5px] text-[#AAAAAA] leading-none">{tr(b._count.produits)} produits</span>
@@ -615,7 +615,7 @@ export default function BoutiquePage() {
             <div className="space-y-4">
               <div className="ax-card p-6 space-y-4">
                 <div>
-                  <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Statut de la boutique")}</h2>
+                  <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Statut de la boutique")}</h2>
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Mettez votre boutique en pause pendant vos fermetures")}</p>
                 </div>
                 <div className="flex items-center justify-between gap-3 p-4 rounded-2xl border flex-wrap"
@@ -626,7 +626,7 @@ export default function BoutiquePage() {
                       {enLigne ? <Power size={16} style={{ color: "#16A34A" }} /> : <Pause size={16} style={{ color: "#D97706" }} />}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-[#111111] leading-tight">{enLigne ? tr("Boutique en ligne") : tr("Boutique en pause")}</p>
+                      <p className="text-[13px] font-semibold text-[#5E6063] leading-tight">{enLigne ? tr("Boutique en ligne") : tr("Boutique en pause")}</p>
                       <p className="text-[11.5px] text-[#888888] leading-tight mt-0.5">
                         {enLigne ? tr("Visible et accessible par tous vos clients") : tr("Page indisponible pour vos clients")}
                       </p>
@@ -639,18 +639,18 @@ export default function BoutiquePage() {
               <div className="ax-card p-6 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Domaine personnalisé")}</h2>
+                    <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Domaine personnalisé")}</h2>
                     <p className="text-[11.5px] text-[#AAAAAA] mt-0.5 leading-tight">{tr("Connectez votre propre nom de domaine")}</p>
                   </div>
                   <Link href="/dashboard/parametres/domaine"
-                    className="flex items-center gap-1 text-[11.5px] font-semibold text-[#111111] border border-[#E8E8E8] px-3 py-1.5 rounded-full hover:border-[#F5A623]/50 transition-all flex-shrink-0">
+                    className="flex items-center gap-1 text-[11.5px] font-semibold text-[#5E6063] border border-[#E8E8E8] px-3 py-1.5 rounded-full hover:border-[#F5A623]/50 transition-all flex-shrink-0">
                     {tr("Configurer")}{" "}<ArrowUpRight size={11} />
                   </Link>
                 </div>
                 <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0] flex-wrap">
                   <div className="flex items-center gap-2 min-w-0">
                     <Globe size={13} className="text-[#AAAAAA] flex-shrink-0" />
-                    <span className="text-[12.5px] font-medium text-[#111111] truncate">{tr(tenant?.customDomain) || tr(urlProd) || "votre-boutique.axso.com"}</span>
+                    <span className="text-[12.5px] font-medium text-[#5E6063] truncate">{tr(tenant?.customDomain) || tr(urlProd) || "votre-boutique.axso.com"}</span>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-none flex-shrink-0"
                     style={tenant?.customDomain ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#F5F5F5", color: "#AAAAAA" }}>
@@ -660,7 +660,7 @@ export default function BoutiquePage() {
               </div>
 
               <div className="ax-card p-6 space-y-3">
-                <h2 className="text-[14px] font-bold text-[#111111] leading-tight">{tr("Informations du compte")}</h2>
+                <h2 className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr("Informations du compte")}</h2>
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div className="p-3.5 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0]">
                     <p className="ax-label leading-none mb-1.5">{tr("Plan actuel")}</p>
@@ -668,13 +668,13 @@ export default function BoutiquePage() {
                   </div>
                   <div className="p-3.5 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0]">
                     <p className="ax-label leading-none mb-1.5 flex items-center gap-1"><Calendar size={9} />{" "}{tr("Membre depuis")}</p>
-                    <p className="text-[12.5px] font-semibold text-[#111111] leading-tight">
+                    <p className="text-[12.5px] font-semibold text-[#5E6063] leading-tight">
                       {tenant?.createdAt ? new Date(tenant.createdAt).toLocaleDateString(tr.loc, { month: "long", year: "numeric" }) : "—"}
                     </p>
                   </div>
                   <div className="p-3.5 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0]">
                     <p className="ax-label leading-none mb-1.5">{tr("Identifiant boutique")}</p>
-                    <p className="text-[12.5px] font-semibold text-[#111111] leading-tight font-mono truncate">{tenant?.id ? `${tenant.id.slice(0, 10)}…` : "—"}</p>
+                    <p className="text-[12.5px] font-semibold text-[#5E6063] leading-tight font-mono truncate">{tenant?.id ? `${tenant.id.slice(0, 10)}…` : "—"}</p>
                   </div>
                 </div>
               </div>
@@ -690,13 +690,13 @@ export default function BoutiquePage() {
 
       {/* ── Barre de sauvegarde flottante ── */}
       {dirty && (
-        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-[#111111] text-white pl-4 pr-2 py-2 rounded-full shadow-2xl">
+        <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-[#5E6063] text-white pl-4 pr-2 py-2 rounded-full shadow-2xl">
           <span className="text-[12px] font-medium leading-none flex items-center gap-1.5 whitespace-nowrap">
             <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />{" "}{tr("Modifications non enregistrées")}
           </span>
           <button onClick={sauvegarder} disabled={saving}
             className="flex items-center gap-1.5 font-bold text-[12px] leading-none px-4 py-2 rounded-full hover:opacity-90 disabled:opacity-50 transition-all flex-shrink-0"
-            style={{ background: "#F5A623", color: "#111111" }}>
+            style={{ background: "#F5A623", color: "#5E6063" }}>
             {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             {saving ? tr("Sauvegarde…") : tr("Enregistrer")}
           </button>
@@ -724,7 +724,7 @@ function ProgressRing({ pct }: { pct: number }) {
           strokeDasharray={c} strokeDashoffset={c - (pct / 100) * c} style={{ transition: "stroke-dashoffset .6s ease" }} />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-[10px] font-bold leading-none text-[#111111]">{pct}%</span>
+        <span className="text-[10px] font-bold leading-none text-[#5E6063]">{pct}%</span>
       </div>
     </div>
   );
@@ -739,7 +739,7 @@ function StatCard({ Icon, label, value }: { Icon: any; label: string; value: num
         <Icon size={13} className="text-[#F5A623]" />
       </div>
       <div className="min-w-0 leading-tight">
-        <p className="text-[14px] font-bold text-[#111111] leading-tight">{tr(value)}</p>
+        <p className="text-[14px] font-bold text-[#5E6063] leading-tight">{tr(value)}</p>
         <p className="text-[10px] text-[#AAAAAA] leading-tight truncate">{tr(label)}</p>
       </div>
     </div>
@@ -813,7 +813,7 @@ function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) 
       <div className="flex flex-wrap gap-1.5 mb-2 min-h-[26px]">
         {zones.map(z => (
           <span key={z} className="inline-flex items-center gap-1 leading-none pl-3 pr-1.5 py-1.5 rounded-full text-[11.5px] font-medium"
-            style={{ background: "#F5A6231A", color: "#111111", border: "1px solid #F5A62355" }}>
+            style={{ background: "#F5A6231A", color: "#5E6063", border: "1px solid #F5A62355" }}>
             {tr(z)}
             <button type="button" onClick={() => removeZone(z)} className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-[#FDE68A] transition-colors">
               <X size={9} />
@@ -828,7 +828,7 @@ function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) 
           placeholder={tr("Ex: Dakar, Thiès, Saint-Louis…")} className={inputCls} />
         <button type="button" onClick={addZone}
           className="px-4 rounded-2xl flex items-center justify-center flex-shrink-0 hover:opacity-90 transition-all"
-          style={{ background: "#111111", color: "#fff" }}>
+          style={{ background: "#5E6063", color: "#fff" }}>
           <Plus size={14} />
         </button>
       </div>

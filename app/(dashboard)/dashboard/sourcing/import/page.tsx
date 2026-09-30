@@ -36,7 +36,7 @@ export default function ImportFournisseurPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-5" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div>
-        <h1 className="text-[18px] font-bold text-[#111111]">{t("Import produits fournisseur")}</h1>
+        <h1 className="text-[18px] font-bold text-[#5E6063]">{t("Import produits fournisseur")}</h1>
         <p className="text-[12px] text-[#666666]">{t("Importez un CSV fournisseur pour créer vos produits dropshipping en masse")}</p>
       </div>
 
@@ -93,7 +93,7 @@ export default function ImportFournisseurPage() {
         )}
 
         <button onClick={importer} disabled={!csv || loading}
-          className="w-full py-3 bg-[#F5A623] text-[#111111] rounded-xl text-[13px] font-bold hover:bg-[#D4911A] transition-all disabled:opacity-50 shadow-sm">
+          className="w-full py-3 bg-[#F5A623] text-[#5E6063] rounded-xl text-[13px] font-bold hover:bg-[#D4911A] transition-all disabled:opacity-50 shadow-sm">
           {loading ? t("Import en cours…") : t("Importer les produits")}
         </button>
       </div>

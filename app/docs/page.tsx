@@ -21,7 +21,7 @@ const SECTIONS = [
 export default async function DocsPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -59,12 +59,12 @@ export default async function DocsPage() {
                     style={{ background: `${accent}12`, border: `1px solid ${accent}20` }}>
                     <Icon size={15} style={{ color: accent }} />
                   </div>
-                  <h3 className="font-bold text-[#111111]">{t(titre)}</h3>
+                  <h3 className="font-bold text-[#5E6063]">{t(titre)}</h3>
                 </div>
                 <ul className="space-y-2">
                   {articles.map(a => (
                     <li key={a}>
-                      <a href="#" className="text-sm text-[#737373] hover:text-[#111111] transition-colors flex items-center gap-2 group">
+                      <a href="#" className="text-sm text-[#737373] hover:text-[#5E6063] transition-colors flex items-center gap-2 group">
                         <span className="w-1 h-1 rounded-full flex-shrink-0 transition-colors" style={{ background: "rgba(0,0,0,0.2)" }} />
                         {t(a)}
                       </a>

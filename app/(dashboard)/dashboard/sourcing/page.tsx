@@ -182,7 +182,7 @@ export default function SourcingPage() {
                 {tr("SOURCING MONDIAL")}
               </div>
               <div className="flex items-center gap-2">
-                <h1 className="text-[22px] font-bold text-[#111111] leading-tight tracking-tight">
+                <h1 className="text-[22px] font-bold text-[#5E6063] leading-tight tracking-tight">
                   {tr("Sourcing & Fournisseurs")}
                 </h1>
                 <BoutonRevoirTutoriel moduleKey="sourcing" />
@@ -208,7 +208,7 @@ export default function SourcingPage() {
                     <Ic size={15} style={{ color: "#F5A623" }} />
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-[#111111] leading-none">{tr(s.val)}</p>
+                    <p className="text-lg font-bold text-[#5E6063] leading-none">{tr(s.val)}</p>
                     <p className="text-[#666666] text-[11px] mt-0.5">{tr(s.label)}</p>
                   </div>
                 </div>
@@ -231,7 +231,7 @@ export default function SourcingPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={tr("Rechercher un fournisseur, pays, catégorie…")}
-                className="flex-1 bg-transparent text-sm text-[#111111] placeholder-[#AAAAAA] outline-none"
+                className="flex-1 bg-transparent text-sm text-[#5E6063] placeholder-[#AAAAAA] outline-none"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="text-[#CCCCCC] hover:text-[#666666] text-xs">✕</button>
@@ -242,7 +242,7 @@ export default function SourcingPage() {
                 <button key={c} onClick={() => setCategorie(c)}
                   className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                   style={categorie === c
-                    ? { background: "#F5A623", color: "#111111", boxShadow: "0 2px 8px rgba(245,166,35,0.25)" }
+                    ? { background: "#F5A623", color: "#5E6063", boxShadow: "0 2px 8px rgba(245,166,35,0.25)" }
                     : { background: "#F5F5F5", color: "#666666" }}>
                   {tr(c)}
                 </button>
@@ -287,7 +287,7 @@ export default function SourcingPage() {
                       <f.Logo size={22} style={{ color: f.couleur }} />
                     </div>
                     <div>
-                      <p className="font-bold text-[#111111] text-sm leading-tight">{tr(f.nom)}</p>
+                      <p className="font-bold text-[#5E6063] text-sm leading-tight">{tr(f.nom)}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <MapPin size={9} className="text-[#CCCCCC]" />
                         <p className="text-[#AAAAAA] text-[11px]">{tr(f.pays)}</p>
@@ -338,8 +338,8 @@ export default function SourcingPage() {
                       className="flex flex-col items-center gap-2 text-center px-4 py-3 rounded-xl transition-all hover:opacity-90"
                       style={{ background: "white", border: "1px solid #FDE68A", boxShadow: "0 4px 16px rgba(245,166,35,0.15)" }}>
                       <Lock size={16} className="text-[#F5A623]" />
-                      <span className="text-xs font-bold text-[#111111]">{tr("Sourcing mondial — Palier 2")}</span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#111111] px-3 py-1.5 rounded-full" style={{ background: "#F5A623" }}>
+                      <span className="text-xs font-bold text-[#5E6063]">{tr("Sourcing mondial — Palier 2")}</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#5E6063] px-3 py-1.5 rounded-full" style={{ background: "#F5A623" }}>
                         <Sparkles size={10} />{" "}{tr("Débloquer")}
                       </span>
                     </Link>

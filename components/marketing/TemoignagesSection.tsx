@@ -17,7 +17,7 @@ const temoignages = [
   {
     nom: "Sandrine K.", role: "Alimentation · Douala-Bonamoussadi · Plan Business", pays: "CM", note: 5,
     texte: "Shopify c'était 19 000 FCFA par mois et tout en anglais. AXSO c'est 4 900 FCFA, en français, et mon manager me répond sur WhatsApp en moins d'une heure.",
-    ventes: "3 boutiques actives · 890 000 FCFA de CA en 2 mois", avatar: "S", couleur: "#111111",
+    ventes: "3 boutiques actives · 890 000 FCFA de CA en 2 mois", avatar: "S", couleur: "#5E6063",
   },
 ];
 
@@ -105,7 +105,7 @@ export function TemoignagesSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#111111] text-sm font-semibold uppercase tracking-widest mb-4 block">
+          <span className="text-[#5E6063] text-sm font-semibold uppercase tracking-widest mb-4 block">
             {tr("Témoignages")}
           </span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">

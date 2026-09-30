@@ -78,7 +78,7 @@ export function BlockStylePanel({ node, titre, device, canMoveUp, canMoveDown, o
     <div className="w-[340px] flex-shrink-0 bg-white border-l border-gray-200 flex flex-col overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-shrink-0 gap-2">
         <div className="min-w-0">
-          <p className="text-[15px] font-semibold text-[#111111] truncate max-w-[200px]">{t(titre) || t(LABELS[node.type]) || t(node.type)}</p>
+          <p className="text-[15px] font-semibold text-[#5E6063] truncate max-w-[200px]">{t(titre) || t(LABELS[node.type]) || t(node.type)}</p>
           {titre && <p className="text-[12.5px] text-gray-400">{t(LABELS[node.type]) || t(node.type)}</p>}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">

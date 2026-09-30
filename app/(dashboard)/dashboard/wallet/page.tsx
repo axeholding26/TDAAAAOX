@@ -149,13 +149,13 @@ export default function WalletPage() {
       <div className="flex items-start justify-between gap-4 pt-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("Wallet Axso")}</h1>
+            <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{tr("Wallet Axso")}</h1>
             <BoutonRevoirTutoriel moduleKey="wallet" />
           </div>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Votre compte de paiement sécurisé")}</p>
         </div>
         <button onClick={charger}
-          className="flex items-center gap-1.5 text-[12px] font-medium text-[#888888] border border-[#E8E8E8] rounded-2xl px-3.5 py-2 hover:text-[#111111] hover:border-[#CCCCCC] transition-all">
+          className="flex items-center gap-1.5 text-[12px] font-medium text-[#888888] border border-[#E8E8E8] rounded-2xl px-3.5 py-2 hover:text-[#5E6063] hover:border-[#CCCCCC] transition-all">
           <RefreshCw size={13} />{" "}{tr("Actualiser")}
         </button>
       </div>
@@ -204,7 +204,7 @@ export default function WalletPage() {
           {boutiques.length > 1 && (
             <div className="ax-card p-5">
               <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
-                <p className="text-[13px] font-bold text-[#111111]">{tr("Toutes mes boutiques")}</p>
+                <p className="text-[13px] font-bold text-[#5E6063]">{tr("Toutes mes boutiques")}</p>
                 <p className="text-[12.5px] text-[#888888]">
                   {tr("Total :")}{" "}
                   {Object.entries(boutiques.reduce<Record<string, number>>((acc, b) => ({ ...acc, [b.devise]: (acc[b.devise] ?? 0) + b.solde }), {}))
@@ -216,7 +216,7 @@ export default function WalletPage() {
                   <div key={b.id} className="flex items-center justify-between gap-3 py-2.5">
                     <span className="text-[13px] text-[#333333] truncate">{tr(b.nomBoutique)}</span>
                     <span className="flex items-center gap-3 flex-shrink-0">
-                      <span className="text-[13px] font-semibold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(b.solde, b.devise)}</span>
+                      <span className="text-[13px] font-semibold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>{fmt(b.solde, b.devise)}</span>
                       {b.active
                         ? <span className="text-[11px] text-[#AAAAAA] w-14 text-right">{tr("affichée")}</span>
                         : <button onClick={() => basculerBoutique(b.id, "/dashboard/wallet")} className="text-[11.5px] font-semibold text-[#D97706] hover:underline w-14 text-right">{tr("Ouvrir")}</button>}
@@ -249,7 +249,7 @@ export default function WalletPage() {
                       <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                     </div>
                   </div>
-                  <p className="text-[20px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
+                  <p className="text-[20px] font-bold text-[#5E6063] leading-none tabular-nums tracking-tight">
                     {fmt(s.val, devise)}
                   </p>
                 </div>
@@ -342,7 +342,7 @@ export default function WalletPage() {
                       </p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[14px] font-bold text-[#111] tabular-nums">-{fmt(r.montant, r.devise)}</p>
+                      <p className="text-[14px] font-bold text-[#5E6063] tabular-nums">-{fmt(r.montant, r.devise)}</p>
                       <div className="mt-0.5"><StatutBadge statut={r.statut} /></div>
                       {r.reference && <p className="text-[10px] text-[#CCCCCC] font-mono mt-0.5">{r.reference}</p>}
                     </div>
@@ -364,13 +364,13 @@ export default function WalletPage() {
 
             <div className="px-6 py-5 border-b border-[#F3F3F3] flex items-center justify-between">
               <div>
-                <h2 className="text-[16px] font-bold text-[#111111]">{tr("Retirer des fonds")}</h2>
+                <h2 className="text-[16px] font-bold text-[#5E6063]">{tr("Retirer des fonds")}</h2>
                 <p className="text-[12px] text-[#AAAAAA] mt-0.5">
                   {tr("Disponible :")}{" "}<strong className="text-[#F5A623]">{fmt(wallet?.solde ?? 0, devise)}</strong>
                 </p>
               </div>
               <button onClick={() => setShowRetrait(false)}
-                className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-[#111] rounded-xl hover:bg-[#F5F5F7] transition-all text-[16px]">
+                className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-[#5E6063] rounded-xl hover:bg-[#F5F5F7] transition-all text-[16px]">
                 ✕
               </button>
             </div>
@@ -387,7 +387,7 @@ export default function WalletPage() {
                     placeholder={tr("Ex: 50 000")}
                     min="1000"
                     max={wallet?.solde ?? 0}
-                    className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[18px] font-bold outline-none focus:border-[#F5A623]/50 pr-14 transition-colors"
+                    className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[18px] font-bold outline-none focus:border-[#F5A623]/50 pr-14 transition-colors"
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[#AAAAAA]">{tr(devise)}</span>
@@ -458,7 +458,7 @@ export default function WalletPage() {
                   value={form.destinataire}
                   onChange={e => setForm(f => ({ ...f, destinataire: e.target.value }))}
                   placeholder={form.methode === "mobile_money" ? tr("+237 6XX XXX XXX") : tr("FR76 XXXX XXXX XXXX")}
-                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
+                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
                 />
               </div>
 
@@ -470,7 +470,7 @@ export default function WalletPage() {
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   placeholder={tr("Ex: Virement mensuel…")}
-                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
+                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
                 />
               </div>
 
@@ -487,7 +487,7 @@ export default function WalletPage() {
                     </div>
                   ))}
                   <div className="border-t border-[#EBEBEB] pt-2 flex justify-between text-[13px] font-bold">
-                    <span className="text-[#111111]">{tr("Vous recevrez")}</span>
+                    <span className="text-[#5E6063]">{tr("Vous recevrez")}</span>
                     <span className="text-[#F5A623]" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {fmt(Number(form.montant), devise)}
                     </span>

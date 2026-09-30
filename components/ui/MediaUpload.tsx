@@ -45,7 +45,7 @@ export function MediaUpload({ type, onUrl }: { type: "image" | "video"; onUrl: (
     <>
       <input ref={ref} type="file" accept={ACCEPT[type]} className="hidden" onChange={(e) => envoyer(e.target.files?.[0])} />
       <button type="button" onClick={() => ref.current?.click()} disabled={progression !== null}
-        className="w-full h-9 flex items-center justify-center gap-2 rounded-lg border border-dashed border-[#D8D8D8] text-[13px] font-medium text-[#555555] hover:border-[#F5A623] hover:text-[#111111] hover:bg-[#FFFBF2] disabled:opacity-60 transition-colors">
+        className="w-full h-9 flex items-center justify-center gap-2 rounded-lg border border-dashed border-[#D8D8D8] text-[13px] font-medium text-[#555555] hover:border-[#F5A623] hover:text-[#5E6063] hover:bg-[#FFFBF2] disabled:opacity-60 transition-colors">
         {progression !== null ? <><Loader2 size={14} className="animate-spin" />{" "}{t("Import…")}{" "}{t(progression)} %</> : <><Upload size={14} />{" "}{t("Importer")}{" "}{type === "video" ? t("une vidéo") : t("une image")}{" "}{t("depuis l'appareil")}</>}
       </button>
     </>

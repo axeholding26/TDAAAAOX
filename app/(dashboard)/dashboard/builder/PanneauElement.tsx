@@ -55,25 +55,25 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
   const { Icon: IconeAppareil } = APPAREIL[device];
 
   return (
-    <aside aria-label={t("Réglages : {0}", titre)} className="w-[340px] flex-shrink-0 flex flex-col bg-white border-l border-[#E5E5E5] text-[#111111]">
+    <aside aria-label={t("Réglages : {0}", titre)} className="w-[340px] flex-shrink-0 flex flex-col bg-white border-l border-[#E5E5E5] text-[#5E6063]">
       <div className="flex items-start justify-between gap-2 px-4 py-3.5 border-b border-[#EEEEEE] flex-shrink-0">
         <div className="min-w-0">
           <p className="text-[15px] font-semibold truncate">{t(titre)}</p>
           {sousTitre && <p className="text-[12.5px] text-[#888888] truncate">{t(sousTitre)}</p>}
         </div>
-        <button onClick={onClose} aria-label={t("Fermer")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#888888] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={17} /></button>
+        <button onClick={onClose} aria-label={t("Fermer")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#888888] hover:text-[#5E6063] hover:bg-[#F5F5F5]"><X size={17} /></button>
       </div>
 
       <div className="px-4 py-2.5 border-b border-[#EEEEEE] flex-shrink-0 space-y-2">
         <p className="flex items-center gap-1.5 text-[12.5px] text-[#666666]">
-          <IconeAppareil size={14} />{" "}{t("Réglages pour")}{" "}<strong className="text-[#111111]">{t(APPAREIL[device].label)}</strong>
+          <IconeAppareil size={14} />{" "}{t("Réglages pour")}{" "}<strong className="text-[#5E6063]">{t(APPAREIL[device].label)}</strong>
           {device !== "desktop" && <span className="text-[#999999]">{t("(le reste hérite de l'ordinateur)")}</span>}
         </p>
         {device === "desktop" && (
           <div role="tablist" className="grid grid-cols-2 p-0.5 rounded-lg bg-[#F3F3F3]">
             {[["Normal", false], ["Au survol", true]].map(([label, v]) => (
               <button key={String(label)} role="tab" aria-selected={survol === v} onClick={() => setSurvol(v as boolean)}
-                className={`h-8 rounded-md text-[13px] font-medium transition-all ${survol === v ? "bg-white shadow-sm text-[#111111]" : "text-[#777777] hover:text-[#111111]"}`}>
+                className={`h-8 rounded-md text-[13px] font-medium transition-all ${survol === v ? "bg-white shadow-sm text-[#5E6063]" : "text-[#777777] hover:text-[#5E6063]"}`}>
                 {t(label as string)}
               </button>
             ))}
@@ -84,7 +84,7 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
       <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-6">
         {aContenu && etat === "base" && onContenu && (
           <Groupe titre={t("Contenu")}>
-            {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">{t("Ce texte contient une mise en forme :")}{" "}<strong className="text-[#111111]">{t("clique dessus dans l'aperçu")}</strong> pour le modifier directement.</p>}
+            {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">{t("Ce texte contient une mise en forme :")}{" "}<strong className="text-[#5E6063]">{t("clique dessus dans l'aperçu")}</strong> pour le modifier directement.</p>}
             {contenu!.texte != null && <Champ label={t("Texte")}><textarea value={contenu!.texte} rows={3} onChange={(e) => onContenu({ texte: e.target.value })} className={INPUT + " h-auto py-2 resize-y"} /></Champ>}
             {contenu!.lien != null && <Champ label={t("Lien (URL ou page)")}><input value={contenu!.lien} onChange={(e) => onContenu({ lien: e.target.value })} placeholder="/ma-boutique/produits" className={INPUT} /></Champ>}
             {contenu!.image != null && <>
@@ -125,7 +125,7 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
             <div className="grid grid-cols-4 gap-1 p-0.5 rounded-lg bg-[#F3F3F3]">
               {([["left", AlignLeft, "Gauche"], ["center", AlignCenter, "Centré"], ["right", AlignRight, "Droite"], ["justify", AlignJustify, "Justifié"]] as const).map(([v, Icon, l]) => (
                 <button key={v} title={l} aria-label={l} aria-pressed={s.alignement === v} onClick={() => maj({ alignement: s.alignement === v ? undefined : v })}
-                  className={`h-8 flex items-center justify-center rounded-md transition-all ${s.alignement === v ? "bg-white shadow-sm text-[#111111]" : "text-[#777777] hover:text-[#111111]"}`}>
+                  className={`h-8 flex items-center justify-center rounded-md transition-all ${s.alignement === v ? "bg-white shadow-sm text-[#5E6063]" : "text-[#777777] hover:text-[#5E6063]"}`}>
                   <Icon size={15} />
                 </button>
               ))}
@@ -187,7 +187,7 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
   );
 }
 
-const INPUT = "w-full h-9 px-2.5 text-[14px] rounded-lg border border-[#E0E0E0] bg-white text-[#111111] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20";
+const INPUT = "w-full h-9 px-2.5 text-[14px] rounded-lg border border-[#E0E0E0] bg-white text-[#5E6063] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20";
 
 function Groupe({ titre, children }: { titre: string; children: React.ReactNode }) {
   const t = useT();
@@ -228,7 +228,7 @@ function Couleur({ value, onChange }: { value?: string; onChange: (v: string) =>
         <input type="color" value={/^#[0-9a-f]{6}$/i.test(value ?? "") ? value : "#000000"} onChange={(e) => onChange(e.target.value)} aria-label={t("Choisir une couleur")} className="absolute inset-0 opacity-0 cursor-pointer" />
       </span>
       <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} placeholder={t("Couleur du design")} className={INPUT} />
-      {value && <button onClick={() => onChange("")} aria-label={t("Retirer la couleur")} title={t("Revenir à la couleur du design")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#999999] hover:text-[#111111] hover:bg-[#F5F5F5]"><X size={15} /></button>}
+      {value && <button onClick={() => onChange("")} aria-label={t("Retirer la couleur")} title={t("Revenir à la couleur du design")} className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg text-[#999999] hover:text-[#5E6063] hover:bg-[#F5F5F5]"><X size={15} /></button>}
     </div>
   );
 }

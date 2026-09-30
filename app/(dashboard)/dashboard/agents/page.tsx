@@ -40,9 +40,9 @@ function MdText({ text }: { text: string }) {
           <div key={pi}>
             {lines.map((line, li) => {
               // Header
-              if (line.startsWith("### ")) return <h4 key={li} className="font-bold text-[13px] mt-1 text-[#111]">{line.slice(4)}</h4>;
-              if (line.startsWith("## ")) return <h3 key={li} className="font-bold text-[14px] mt-1 text-[#111]">{line.slice(3)}</h3>;
-              if (line.startsWith("# ")) return <h2 key={li} className="font-bold text-[15px] mt-1 text-[#111]">{line.slice(2)}</h2>;
+              if (line.startsWith("### ")) return <h4 key={li} className="font-bold text-[13px] mt-1 text-[#5E6063]">{line.slice(4)}</h4>;
+              if (line.startsWith("## ")) return <h3 key={li} className="font-bold text-[14px] mt-1 text-[#5E6063]">{line.slice(3)}</h3>;
+              if (line.startsWith("# ")) return <h2 key={li} className="font-bold text-[15px] mt-1 text-[#5E6063]">{line.slice(2)}</h2>;
               // Separator
               if (line.trim() === "---" || line.trim() === "━━━") return <hr key={li} className="border-gray-200 my-1"/>;
               // List item
@@ -100,9 +100,9 @@ function inlineMarkdown(text: string): React.ReactNode {
     if (m.index > last) parts.push(<span key={i++}>{text.slice(last, m.index)}</span>);
     const token = m[0];
     if (token.startsWith("**") && token.endsWith("**")) {
-      parts.push(<strong key={i++} className="font-bold text-[#111]">{token.slice(2, -2)}</strong>);
+      parts.push(<strong key={i++} className="font-bold text-[#5E6063]">{token.slice(2, -2)}</strong>);
     } else if (token.startsWith("`") && token.endsWith("`")) {
-      parts.push(<code key={i++} className="bg-gray-100 text-[#111111] text-[11px] px-1.5 py-0.5 rounded font-mono">{token.slice(1, -1)}</code>);
+      parts.push(<code key={i++} className="bg-gray-100 text-[#5E6063] text-[11px] px-1.5 py-0.5 rounded font-mono">{token.slice(1, -1)}</code>);
     } else if (token.startsWith("*") && token.endsWith("*")) {
       parts.push(<em key={i++} className="italic">{token.slice(1, -1)}</em>);
     } else if (token.startsWith("[")) {
@@ -183,7 +183,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
           <BrainCircuit size={18} className="text-white"/>
         </div>
         <div>
-          <p className="font-bold text-[#111111]">{tr("Mode Autonome")}</p>
+          <p className="font-bold text-[#5E6063]">{tr("Mode Autonome")}</p>
           <p className="text-xs text-purple-600">{tr("AXIA coordonne tous les agents en arrière-plan")}</p>
         </div>
         <button onClick={onClose} className="ml-auto text-xs text-gray-400 hover:text-gray-700 px-3 py-1.5 rounded-xl hover:bg-gray-100 transition-all">
@@ -201,7 +201,7 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
 
         <button onClick={orchestrer} disabled={loading}
           className="w-full py-3.5 rounded-2xl text-white font-bold text-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2 shadow-lg"
-          style={{ background: "linear-gradient(135deg, #111111, #333333)", boxShadow: "0 8px 20px rgba(17,17,17,0.3)" }}>
+          style={{ background: "linear-gradient(135deg, #5E6063, #333333)", boxShadow: "0 8px 20px rgba(17,17,17,0.3)" }}>
           {loading ? <><Loader2 size={14} className="animate-spin"/>{" "}{tr("Orchestration en cours…")}</> : <><Zap size={14}/>{" "}{tr("Activer tous les agents maintenant")}</>}
         </button>
 
@@ -239,10 +239,10 @@ function OrchestratorPanel({ onClose }: { onClose: () => void }) {
               <div key={obj.id} className="ax-card p-3 mb-2">
                 <div className="flex justify-between mb-1.5">
                   <p className="text-sm font-semibold text-gray-800">{tr(obj.titre)}</p>
-                  <span className="text-xs font-bold" style={{ color: pct >= 100 ? "#16a34a" : "#111111" }}>{pct}%</span>
+                  <span className="text-xs font-bold" style={{ color: pct >= 100 ? "#16a34a" : "#5E6063" }}>{pct}%</span>
                 </div>
                 <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#111111,#333333)" }}/>
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#5E6063,#333333)" }}/>
                 </div>
                 <div className="flex justify-between mt-1">
                   <span className="text-[10px] text-gray-400">{obj.actuel?.toLocaleString()} {tr(obj.devise)}</span>
@@ -432,7 +432,7 @@ export default function AgentsPage() {
         </div>
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-[18px] font-bold text-[#111111]">AXIA</h1>
+            <h1 className="text-[18px] font-bold text-[#5E6063]">AXIA</h1>
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full text-white" style={{ background: `linear-gradient(135deg, ${meta.color}, ${meta.color}bb)` }}>
               {tr("Agent IA")}
             </span>
@@ -447,7 +447,7 @@ export default function AgentsPage() {
         <button
           onClick={() => setShowOrchestrator(true)}
           className="ml-auto flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all border hover:shadow-md flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #11111112, #33333312)", borderColor: "#11111130", color: "#111111" }}
+          style={{ background: "linear-gradient(135deg, #11111112, #33333312)", borderColor: "#11111130", color: "#5E6063" }}
         >
           <BrainCircuit size={14}/>
           <span className="hidden sm:inline">{tr("Mode Autonome")}</span>
@@ -525,7 +525,7 @@ export default function AgentsPage() {
                     <div
                       className="rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm"
                       style={estIA
-                        ? { background: "white", border: `1px solid ${meta.color}18`, color: "#111111" }
+                        ? { background: "white", border: `1px solid ${meta.color}18`, color: "#5E6063" }
                         : { background: `linear-gradient(135deg, ${meta.color}, ${meta.color}cc)`, color: "white" }
                       }
                     >

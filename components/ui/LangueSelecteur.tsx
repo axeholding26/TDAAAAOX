@@ -20,7 +20,7 @@ export function LangueSelecteur({ flottant = false }: { flottant?: boolean }) {
       style={{
         display: "inline-flex", alignItems: "center", gap: 6,
         padding: "6px 10px", borderRadius: 999, fontSize: 12, fontWeight: 600,
-        background: "rgba(255,255,255,.97)", border: "1px solid rgba(0,0,0,.1)", color: "#111",
+        background: "rgba(255,255,255,.97)", border: "1px solid rgba(0,0,0,.1)", color: "#5E6063",
         cursor: "pointer", flexShrink: 0,
         ...(flottant && { position: "fixed", left: 16, bottom: 16, zIndex: 60, boxShadow: "0 4px 16px rgba(0,0,0,.12)" }),
       }}

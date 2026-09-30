@@ -60,7 +60,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
   }
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#5E6063] text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   return (
@@ -84,7 +84,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 mx-auto" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)" }}>
                 <XCircle size={18} className="text-red-500" />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1.5">{t("Invitation invalide")}</h2>
+              <h2 className="text-xl font-bold text-[#5E6063] mb-1.5">{t("Invitation invalide")}</h2>
               <p className="text-[#808080] text-sm">{t(erreur)}</p>
             </div>
           )}
@@ -94,7 +94,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <UserPlus size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Rejoindre")}{" "}{t(invitation.boutique)}</h2>
+              <h2 className="text-2xl font-bold text-[#5E6063] mb-1">{t("Rejoindre")}{" "}{t(invitation.boutique)}</h2>
               <p className="text-[#808080] text-sm mb-7">
                 {t("Bonjour")}{" "}{t(invitation.nom)}{t(", tu es invité·e avec le rôle")}{" "}<strong>{t(ROLE_LABELS[invitation.role]) ?? t(invitation.role)}</strong>{t(". Choisis un mot de passe pour créer ton compte.")}
               </p>
@@ -131,7 +131,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4 mx-auto" style={{ background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}>
                 <CheckCircle2 size={18} className="text-green-500" />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1.5">{t("Compte créé !")}</h2>
+              <h2 className="text-xl font-bold text-[#5E6063] mb-1.5">{t("Compte créé !")}</h2>
               <p className="text-[#808080] text-sm">{t("Redirection vers la connexion...")}</p>
             </div>
           )}

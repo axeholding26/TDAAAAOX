@@ -60,10 +60,10 @@ export function BoutiqueSwitcher({ sombre = false }: { sombre?: boolean }) {
         className="w-full rounded-xl px-3 py-2 text-[12.5px] font-semibold border outline-none cursor-pointer disabled:opacity-60"
         style={sombre
           ? { background: "rgba(255,255,255,0.08)", color: "#FFFFFF", borderColor: "rgba(255,255,255,0.15)" }
-          : { background: "#FAFAFA", color: "#111111", borderColor: "#E8E8E8" }}
+          : { background: "#FAFAFA", color: "#5E6063", borderColor: "#E8E8E8" }}
       >
         {boutiques.map(b => (
-          <option key={b.id} value={b.id} style={{ color: "#111111" }}>
+          <option key={b.id} value={b.id} style={{ color: "#5E6063" }}>
             {t(b.nomBoutique)}{!b.active && b.nonLues > 0 ? ` (${b.nonLues})` : ""}
           </option>
         ))}

@@ -109,7 +109,7 @@ export function RechercheDashboard({ permissions, mobile = false }: { permission
               ? <img src={l.image} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
               : <span className="w-8 h-8 rounded-lg bg-[#F5F5F7] flex items-center justify-center flex-shrink-0 text-[#777777]"><l.Icone size={15} /></span>}
             <span className="flex-1 min-w-0">
-              <span className="block text-[13px] font-medium text-[#111111] truncate">{tr(l.titre)}</span>
+              <span className="block text-[13px] font-medium text-[#5E6063] truncate">{tr(l.titre)}</span>
               {l.detail && <span className="block text-[11.5px] text-[#999999] truncate">{tr(l.detail)}</span>}
             </span>
             {i === actif && !mobile && <CornerDownLeft size={13} className="text-[#F5A623] flex-shrink-0" />}

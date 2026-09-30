@@ -76,7 +76,7 @@ export default function EntrepotsPage() {
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <ModuleTutorial moduleKey="entrepots" titre={t("Entrepôts")} sousTitre={t("Tes points de stockage")} steps={ENTREPOTS_TUTORIAL_STEPS} />
       <div>
-        <h1 className="text-[22px] font-bold text-[#111] inline-flex items-center gap-2">
+        <h1 className="text-[22px] font-bold text-[#5E6063] inline-flex items-center gap-2">
           {t("Entrepôts")}{" "}<AgentActiveIndicator label={t("Agent Stock actif")} />
           <BoutonRevoirTutoriel moduleKey="entrepots" />
         </h1>
@@ -91,7 +91,7 @@ export default function EntrepotsPage() {
           { label: "SKUs stockés", v: entrepots.reduce((s, e) => s + e._count.stocks, 0) },
         ].map(s => (
           <div key={s.label} className="bg-white border border-[#F0F0F0] rounded-2xl p-4 text-center">
-            <p className="text-[24px] font-bold text-[#111]">{t(s.v)}</p>
+            <p className="text-[24px] font-bold text-[#5E6063]">{t(s.v)}</p>
             <p className="text-[11px] text-[#AAA] mt-0.5">{t(s.label)}</p>
           </div>
         ))}
@@ -99,7 +99,7 @@ export default function EntrepotsPage() {
 
       {/* Form */}
       <div className="bg-white border border-[#F0F0F0] rounded-2xl p-5 space-y-3">
-        <h2 className="text-[14px] font-bold text-[#111]">{editId ? t("Modifier l'entrepôt") : t("Nouvel entrepôt")}</h2>
+        <h2 className="text-[14px] font-bold text-[#5E6063]">{editId ? t("Modifier l'entrepôt") : t("Nouvel entrepôt")}</h2>
         <div className="grid grid-cols-2 gap-3">
           <input className={inp} placeholder={t("Nom (ex: Entrepôt Douala)")} value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
           <input className={inp} placeholder={t("Ville")} value={form.ville} onChange={e => setForm(f => ({ ...f, ville: e.target.value }))} />
@@ -132,7 +132,7 @@ export default function EntrepotsPage() {
           <div key={e.id} className="bg-white border border-[#F0F0F0] rounded-2xl p-4 flex items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[14px] font-semibold text-[#111]">{t(e.nom)}</span>
+                <span className="text-[14px] font-semibold text-[#5E6063]">{t(e.nom)}</span>
                 {e.principal && <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-bold">{t("Principal")}</span>}
                 {!e.actif && <span className="text-[10px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">{t("Inactif")}</span>}
               </div>

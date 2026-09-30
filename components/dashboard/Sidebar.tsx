@@ -248,7 +248,7 @@ function LienPrincipal({
       </span>
       <span className={cn(
         "flex-1 truncate leading-none font-medium",
-        locked ? "text-gray-400" : active ? "font-semibold text-[#111111]" : "text-gray-600 group-hover:text-[#111111]",
+        locked ? "text-gray-400" : active ? "font-semibold text-[#5E6063]" : "text-gray-600 group-hover:text-[#5E6063]",
       )}>
         {t(item.label)}
       </span>
@@ -313,7 +313,7 @@ function LienEnfant({
       />
       <span className={cn(
         "flex-1 truncate leading-none",
-        locked ? "text-gray-400" : active ? "font-semibold text-[#111111]" : "text-gray-500 group-hover:text-[#111111]",
+        locked ? "text-gray-400" : active ? "font-semibold text-[#5E6063]" : "text-gray-500 group-hover:text-[#5E6063]",
       )}>
         {t(item.label)}
       </span>
@@ -378,7 +378,7 @@ function GroupeRepliable({
         aria-expanded={ouvert}
         className={cn(
           "w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl transition-all duration-150",
-          !contientActif && "text-[#999999] hover:bg-[#FFF7ED] hover:text-[#111111]",
+          !contientActif && "text-[#999999] hover:bg-[#FFF7ED] hover:text-[#5E6063]",
         )}
         style={contientActif ? { color: "#D4911A" } : undefined}
       >
@@ -452,7 +452,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
         <span
           className="text-[15px] font-bold tracking-tight leading-tight"
           style={{
-            background: "linear-gradient(135deg,#111111 0%,#333333 100%)",
+            background: "linear-gradient(135deg,#5E6063 0%,#333333 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -501,7 +501,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl active:scale-[0.98] transition-all group"
             style={{
-              background: "linear-gradient(135deg,#111111,#333333)",
+              background: "linear-gradient(135deg,#5E6063,#333333)",
               boxShadow: "0 2px 12px rgba(17,17,17,0.22)",
             }}
           >
@@ -530,7 +530,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
             {t(userInitials) || "A"}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-semibold text-[#111111] leading-tight">{t("Mon compte")}</div>
+            <div className="text-[13px] font-semibold text-[#5E6063] leading-tight">{t("Mon compte")}</div>
             <div className="text-[11px] text-[#999999] leading-none mt-1">{t("Profil et sécurité")}</div>
           </div>
           <Settings2 size={14} className="text-gray-300 group-hover:text-gray-500 transition-colors" />

@@ -18,7 +18,7 @@ type Cfg = {
 const BOUTONS = `:is(a,button):is([class*="btn"],[class*="button"],[class*="cta"])`;
 
 function cssBoutons(b: NonNullable<Cfg["boutons"]>, c: Couleurs): string {
-  const accent = c.accent || "#111111", fond = c.fond || "#FFFFFF";
+  const accent = c.accent || "#5E6063", fond = c.fond || "#FFFFFF";
   const style: Record<string, string> = {
     filled: `background:${accent}!important;color:${fond}!important;border:1px solid ${accent}!important;text-decoration:none!important;`,
     outlined: `background:transparent!important;color:${accent}!important;border:2px solid ${accent}!important;text-decoration:none!important;`,
@@ -47,8 +47,8 @@ function cssNavigation(n: NonNullable<Cfg["navigationStyle"]>, c: Couleurs): str
   // L'en-tête des designs est une rangée flex (logo · menu · actions) : on n'y
   // touche jamais (display/direction), seulement fond, couleurs et hauteur.
   const apparence: Record<string, string> = {
-    light: `header{background:#FFFFFF!important;color:#111111!important;border-bottom:1px solid rgba(0,0,0,.08)!important}`,
-    dark: `header{background:#111111!important;color:#FFFFFF!important;border-bottom-color:rgba(255,255,255,.08)!important}`,
+    light: `header{background:#FFFFFF!important;color:#5E6063!important;border-bottom:1px solid rgba(0,0,0,.08)!important}`,
+    dark: `header{background:#5E6063!important;color:#FFFFFF!important;border-bottom-color:rgba(255,255,255,.08)!important}`,
     glass: `header{background:${c.fond || "#FFFFFF"}B8!important;backdrop-filter:blur(14px) saturate(1.4)!important;-webkit-backdrop-filter:blur(14px) saturate(1.4)!important}`,
     transparent: `header{background:transparent!important;box-shadow:none!important;border-color:transparent!important;backdrop-filter:none!important}`,
   };

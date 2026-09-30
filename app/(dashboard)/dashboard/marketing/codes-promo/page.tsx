@@ -67,7 +67,7 @@ export default function CodesPromoPage() {
           <h1 className="text-2xl font-bold text-gray-900 font-poppins">{t("Codes Promo")}</h1>
           <p className="text-gray-400 text-sm mt-1">{codes.length}{" "}{t("code(s) au total")}</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ backgroundColor: "#F5A623", color: "#0a0a0a" }}>
+        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90" style={{ backgroundColor: "#F5A623", color: "#5E6063" }}>
           <Plus size={16} />{" "}{t("Créer un code")}
         </button>
       </div>
@@ -97,7 +97,7 @@ export default function CodesPromoPage() {
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={creer} disabled={!form.code || saving} className="px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#F5A623", color: "#0a0a0a" }}>
+            <button onClick={creer} disabled={!form.code || saving} className="px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: "#F5A623", color: "#5E6063" }}>
               {saving ? t("Création...") : t("Créer")}
             </button>
             <button onClick={() => setShowForm(false)} className="px-6 py-3 rounded-xl text-sm text-gray-400 border border-gray-200 hover:border-[#F5A623]/30">
@@ -123,7 +123,7 @@ export default function CodesPromoPage() {
             </thead>
             <tbody>
               {codes.map((code) => (
-                <tr key={code.id} className="border-b border-[#111] hover:bg-[#151515]">
+                <tr key={code.id} className="border-b border-[#5E6063] hover:bg-[#151515]">
                   <td className="px-5 py-4"><code className="text-[#F5A623] bg-[#F5A623]/10 px-2 py-1 rounded font-mono">{code.code}</code></td>
                   <td className="px-5 py-4 text-gray-700">{code.type === "pourcentage" ? `${code.valeur}%` : `${code.valeur} (fixe)`}</td>
                   <td className="px-5 py-4 text-gray-400">{t(code.utilisations)}/{t(code.maxUtilisations) || "8"}</td>

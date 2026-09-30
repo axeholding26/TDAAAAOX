@@ -81,7 +81,7 @@ export default async function ProduitsPage({
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 pt-1">
         <div className="min-w-0">
           <div className="flex items-center gap-2 sm:gap-2.5 mb-1 flex-wrap">
-            <h1 className="text-[18px] sm:text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{t("Produits")}{" "}<AgentActiveIndicator label={t("Agent Produits actif")} /></h1>
+            <h1 className="text-[18px] sm:text-[20px] font-bold text-[#5E6063] tracking-tight inline-flex items-center gap-2">{t("Produits")}{" "}<AgentActiveIndicator label={t("Agent Produits actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="produits" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
               {tous.length}
@@ -95,7 +95,7 @@ export default async function ProduitsPage({
           <p className="text-[12px] sm:text-[12.5px] text-[#AAAAAA]">{t("Gérez votre catalogue et suivez vos ventes")}</p>
         </div>
         <Link href="/dashboard/produits/nouveau"
-          className="flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-3 sm:py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap w-full sm:w-auto flex-shrink-0">
+          className="flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[12px] font-semibold bg-[#5E6063] text-white rounded-2xl px-4 py-3 sm:py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap w-full sm:w-auto flex-shrink-0">
           <Plus size={14} />{" "}{t("Nouveau produit")}
         </Link>
       </div>
@@ -119,7 +119,7 @@ export default async function ProduitsPage({
                     <Icon size={13} style={{ color: s.iconColor }} strokeWidth={1.8} />
                   </div>
                 </div>
-                <p className="text-[20px] sm:text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
+                <p className="text-[20px] sm:text-[24px] font-bold text-[#5E6063] leading-none tabular-nums tracking-tight">
                   {t(s.value)}
                 </p>
               </div>
@@ -139,12 +139,12 @@ export default async function ProduitsPage({
               name="q"
               defaultValue={q}
               placeholder={t("Rechercher un produit...")}
-              className="bg-transparent text-[13.5px] sm:text-[13px] text-[#111111] placeholder:text-[#CCCCCC] outline-none flex-1 min-w-0"
+              className="bg-transparent text-[13.5px] sm:text-[13px] text-[#5E6063] placeholder:text-[#CCCCCC] outline-none flex-1 min-w-0"
             />
           </div>
           {q && (
             <Link href={filtre ? `/dashboard/produits?filtre=${filtre}` : "/dashboard/produits"}
-              className="flex items-center px-3 py-3 sm:py-2.5 rounded-2xl border border-[#E8E8E8] text-[12px] text-[#888] hover:text-[#111] hover:border-[#CCC] transition-all flex-shrink-0">
+              className="flex items-center px-3 py-3 sm:py-2.5 rounded-2xl border border-[#E8E8E8] text-[12px] text-[#888] hover:text-[#5E6063] hover:border-[#CCC] transition-all flex-shrink-0">
               {t("Effacer")}
             </Link>
           )}
@@ -166,7 +166,7 @@ export default async function ProduitsPage({
               <Link key={tab.key} href={href}
                 className="flex items-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-all flex-shrink-0"
                 style={isActive
-                  ? { background: "#111111", color: "#FFFFFF", border: "1px solid #111111" }
+                  ? { background: "#5E6063", color: "#FFFFFF", border: "1px solid #5E6063" }
                   : { background: "#FFFFFF", color: "#888888", border: "1px solid #E8E8E8" }}>
                 {t(tab.label)}
                 {count > 0 && (
@@ -189,7 +189,7 @@ export default async function ProduitsPage({
           <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
             <Package size={24} className="text-[#CCCCCC]" />
           </div>
-          <p className="text-[14px] font-semibold text-[#111111] mb-1">
+          <p className="text-[14px] font-semibold text-[#5E6063] mb-1">
             {q ? t("Aucun résultat pour « {0} »", q) : t("Aucun produit")}
           </p>
           <p className="text-[12px] text-[#AAAAAA] mb-6">
@@ -199,7 +199,7 @@ export default async function ProduitsPage({
           </p>
           {!q && (
             <Link href="/dashboard/produits/nouveau"
-              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#111111] text-white hover:bg-[#2a2a2a] transition-colors">
+              className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold px-4 py-2 rounded-2xl bg-[#5E6063] text-white hover:bg-[#2a2a2a] transition-colors">
               <Plus size={13} />{" "}{t("Ajouter un produit")}
             </Link>
           )}
@@ -262,7 +262,7 @@ export default async function ProduitsPage({
 
                 {/* Info */}
                 <div className="p-2.5 sm:p-4 flex flex-col flex-1">
-                  <h3 className="text-[12px] sm:text-[13px] font-semibold text-[#111111] mb-1.5 sm:mb-2.5 line-clamp-2 leading-snug">
+                  <h3 className="text-[12px] sm:text-[13px] font-semibold text-[#5E6063] mb-1.5 sm:mb-2.5 line-clamp-2 leading-snug">
                     {t(p.nom)}
                   </h3>
 

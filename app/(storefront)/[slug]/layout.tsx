@@ -94,7 +94,7 @@ async function ContenuVitrine({ children, params }: Props) {
       {cfg.builderCss && <PastillePaysDesign />}
       {navDesign && (
         <NavigationDesign slug={slug} type={navDesign.type} favoris={!!navDesign.showWishlist} collections={collectionsMega}
-          fondEntete={navDesign.style === "dark" ? "#111111" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
+          fondEntete={navDesign.style === "dark" ? "#5E6063" : navDesign.style === "light" ? "#FFFFFF" : cfg.colors.fond} accent={accent} texte={navDesign.style === "dark" ? "#FFFFFF" : cfg.colors.texte} />
       )}
       {animDesign && <AnimationsDesign animations={animDesign} />}
       {!apercu && (

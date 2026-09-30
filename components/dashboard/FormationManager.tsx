@@ -33,7 +33,7 @@ type Chapitre = {
 };
 
 const TYPE_LECON = [
-  { id: "texte", label: "Texte / HTML", icon: FileText, color: "#111111" },
+  { id: "texte", label: "Texte / HTML", icon: FileText, color: "#5E6063" },
   { id: "video", label: "Vidéo",        icon: Video,    color: "#F5A623" },
   { id: "audio", label: "Audio",        icon: Music,    color: "#db2777" },
 ] as const;
@@ -186,7 +186,7 @@ function LeconForm({
       <div className="flex gap-2 pt-1">
         <button
           onClick={sauvegarder} disabled={saving || !titre.trim()}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-[#F5A623] text-[#5E6063] text-xs font-medium hover:bg-[#D4911A] disabled:opacity-50 transition-colors"
         >
           {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
           {leconId ? tr("Enregistrer") : tr("Ajouter la leçon")}
@@ -247,7 +247,7 @@ function ChapitreRow({
   const typeIcon = (t: string) => {
     if (t === "video") return <Video size={11} className="text-[#F5A623]" />;
     if (t === "audio") return <Music size={11} className="text-[#db2777]" />;
-    return <FileText size={11} className="text-[#111111]" />;
+    return <FileText size={11} className="text-[#5E6063]" />;
   };
 
   return (
@@ -394,7 +394,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
         </div>
         <button
           onClick={() => setAjoutOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F5A623] text-[#111111] hover:bg-[#D4911A] transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F5A623] text-[#5E6063] hover:bg-[#D4911A] transition-colors"
         >
           <Plus size={12} />{" "}{tr("Chapitre")}
         </button>
@@ -410,7 +410,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
             autoFocus
             className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40"
           />
-          <button onClick={ajouterChapitre} disabled={saving || !newTitre.trim()} className="px-3 py-2 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium disabled:opacity-50 hover:bg-[#D4911A] transition-colors">
+          <button onClick={ajouterChapitre} disabled={saving || !newTitre.trim()} className="px-3 py-2 rounded-lg bg-[#F5A623] text-[#5E6063] text-xs font-medium disabled:opacity-50 hover:bg-[#D4911A] transition-colors">
             {saving ? <Loader2 size={13} className="animate-spin" /> : tr("Ajouter")}
           </button>
           <button onClick={() => { setAjoutOpen(false); setNewTitre(""); }} className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs text-gray-500 hover:text-gray-700 transition-colors">

@@ -17,7 +17,7 @@ interface Boutique { id: string; nomBoutique: string; slug: string; logoUrl: str
 
 const ROLES: Record<string, string> = { owner: "Propriétaire", admin: "Administrateur", superadmin: "Super administrateur", livreur: "Livreur", membre: "Membre d'équipe" };
 const PALIERS: Record<string, string> = { palier0: "Gratuit", palier1: "Palier 1", palier2: "Palier 2" };
-const INPUT = "w-full h-11 px-3.5 rounded-xl border border-[#E8E8E8] bg-white text-[14px] text-[#111111] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition";
+const INPUT = "w-full h-11 px-3.5 rounded-xl border border-[#E8E8E8] bg-white text-[14px] text-[#5E6063] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20 transition";
 
 function initiales(nom: string) {
   return nom.split(/\s+/).filter(Boolean).slice(0, 2).map((m) => m[0]!.toUpperCase()).join("") || "?";
@@ -60,7 +60,7 @@ export default function ProfilPage() {
   return (
     <div className="space-y-5 max-w-3xl w-full mx-auto pb-10" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <div className="pt-1">
-        <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Mon profil")}</h1>
+        <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Mon profil")}</h1>
         <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Ton compte personnel — les réglages de ta boutique sont dans Paramètres.")}</p>
       </div>
 
@@ -68,13 +68,13 @@ export default function ProfilPage() {
       <section className="ax-card overflow-hidden">
         <div className="h-20 sm:h-24 bg-gradient-to-r from-[#FFF3DC] via-[#FDE7B8] to-[#F5A623]/60" />
         <div className="px-5 sm:px-6 pb-5 -mt-10 sm:-mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#111111] flex items-center justify-center flex-shrink-0">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#5E6063] flex items-center justify-center flex-shrink-0">
             {compte.image
               ? <img src={compte.image} alt="" className="w-full h-full object-cover" />
               : <span className="text-[26px] font-bold text-[#F5A623]">{initiales(affiche)}</span>}
           </div>
           <div className="min-w-0 flex-1 sm:pb-1">
-            <p className="text-[18px] font-bold text-[#111111] truncate">{t(affiche)}</p>
+            <p className="text-[18px] font-bold text-[#5E6063] truncate">{t(affiche)}</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[12.5px] text-[#888888]">
               <span className="inline-flex items-center gap-1.5 min-w-0"><Mail size={13} className="flex-shrink-0" /><span className="truncate">{compte.email}</span></span>
               <span className="inline-flex items-center gap-1.5"><CalendarDays size={13} />{t("Membre depuis")}{" "}{new Date(compte.createdAt).toLocaleDateString(t.loc, { month: "long", year: "numeric" })}</span>
@@ -111,7 +111,7 @@ export default function ProfilPage() {
         </div>
         <div className="flex justify-end">
           <button onClick={() => majCompte({ name: nom.trim() }, "Nom mis à jour")} disabled={!nomModifie || enregistrement}
-            className="h-10 px-5 rounded-xl text-[14px] font-semibold bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA] transition-colors inline-flex items-center gap-2">
+            className="h-10 px-5 rounded-xl text-[14px] font-semibold bg-[#F5A623] text-[#5E6063] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA] transition-colors inline-flex items-center gap-2">
             {enregistrement ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}{" "}{t("Enregistrer")}
           </button>
         </div>
@@ -130,13 +130,13 @@ export default function ProfilPage() {
                 {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-full h-full object-cover" /> : b.nomBoutique.slice(0, 1).toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-semibold text-[#111111] truncate">{t(b.nomBoutique)}</p>
+                <p className="text-[14px] font-semibold text-[#5E6063] truncate">{t(b.nomBoutique)}</p>
                 <p className="text-[12px] text-[#999999] truncate">{b.proprietaire ? t("Propriétaire") : t("Membre de l'équipe")} · {t(PALIERS[b.planType]) ?? t(b.planType)}</p>
               </div>
               {b.active
                 ? <span className="flex-shrink-0 text-[12px] font-semibold px-2.5 py-1 rounded-full bg-[#DCFCE7] text-[#15803D]">{t("Active")}</span>
                 : <button onClick={() => basculerBoutique(b.id, "/dashboard/profil")}
-                    className="flex-shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[13px] font-medium border border-[#E5E5E5] text-[#444444] hover:border-[#F5A623] hover:text-[#111111]">
+                    className="flex-shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[13px] font-medium border border-[#E5E5E5] text-[#444444] hover:border-[#F5A623] hover:text-[#5E6063]">
                     <ArrowLeftRight size={14} /> <span className="hidden sm:inline">{t("Basculer")}</span>
                   </button>}
             </li>
@@ -158,7 +158,7 @@ function Titre({ Icon, titre, sousTitre }: { Icon: typeof User; titre: string; s
     <div className="flex items-center gap-3">
       <span className="w-9 h-9 rounded-xl bg-[#FFF8EC] border border-[#FDE68A]/60 flex items-center justify-center flex-shrink-0"><Icon size={16} className="text-[#F5A623]" /></span>
       <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold text-[#111111]">{t(titre)}</h2>
+        <h2 className="text-[15px] font-semibold text-[#5E6063]">{t(titre)}</h2>
         {sousTitre && <p className="text-[12px] text-[#AAAAAA]">{t(sousTitre)}</p>}
       </div>
     </div>
@@ -174,7 +174,7 @@ function ChampSecret({ label, value, onChange, autoComplete }: { label: string; 
       <span className="relative block">
         <input type={visible ? "text" : "password"} value={value} onChange={(e) => onChange(e.target.value)} autoComplete={autoComplete} className={`${INPUT} pr-11`} />
         <button type="button" onClick={() => setVisible((v) => !v)} aria-label={visible ? t("Masquer") : t("Afficher")}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-[#999999] hover:text-[#111111]">
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center text-[#999999] hover:text-[#5E6063]">
           {visible ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>
       </span>
@@ -223,7 +223,7 @@ function MotDePasse({ aMotDePasse }: { aMotDePasse: boolean }) {
           </p>
           <div className="flex justify-end">
             <button type="submit" disabled={!pret || envoi}
-              className="h-10 px-5 rounded-xl text-[14px] font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40 transition-colors inline-flex items-center gap-2">
+              className="h-10 px-5 rounded-xl text-[14px] font-semibold bg-[#5E6063] text-white hover:bg-[#333333] disabled:opacity-40 transition-colors inline-flex items-center gap-2">
               {envoi ? <Loader2 size={15} className="animate-spin" /> : <KeyRound size={15} />}{" "}{t("Modifier le mot de passe")}
             </button>
           </div>

@@ -47,11 +47,11 @@ export function AxiaSection() {
           <div className="order-2 lg:order-1" style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-24px)", transition: "all 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-5 sm:p-6 max-w-md">
               <div className="flex items-center gap-2.5 pb-4 mb-4 border-b border-gray-100">
-                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#111111" }}>
+                <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0" style={{ background: "#5E6063" }}>
                   <img src="/axia-icon.png" alt={t("Axia")} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm text-[#111111]">{t("Axia")}</p>
+                  <p className="font-bold text-sm text-[#5E6063]">{t("Axia")}</p>
                   <p className="text-[11px] text-gray-400">{t("Ton assistante IA")}</p>
                 </div>
                 <Mic size={16} className="ml-auto text-gray-300" />
@@ -80,7 +80,7 @@ export function AxiaSection() {
               <Image src="/axia-icon.png" alt={t("Axia")} width={380} height={380} className="w-full h-full object-contain" />
             </div>
             <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">{t("Assistante IA")}</span>
-            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#5E6063] mb-5 leading-[1.08]">
               {t("Rencontre Axia, ta copilote au quotidien")}
             </h2>
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-lg">
@@ -90,7 +90,7 @@ export function AxiaSection() {
               <Zap size={14} style={{ color: "#F5A623" }} />{" "}{t("Comprend le français, disponible en interface vocale")}
             </div>
             <Link href="/inscription" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-transform hover:scale-[1.03]"
-              style={{ background: "#111111" }}>
+              style={{ background: "#5E6063" }}>
               {t("Parler à Axia →")}
             </Link>
           </div>

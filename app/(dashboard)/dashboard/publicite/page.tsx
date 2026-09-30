@@ -68,7 +68,7 @@ function MetricCard({ icon: Icone, label, value, sub, color }: any) {
           <Icone size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{t(value)}</p>
+      <p className="text-[20px] font-bold text-[#5E6063] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{t(value)}</p>
       <p className="text-[12px] text-[#AAAAAA] mt-0.5">{t(label)}</p>
       {sub && <p className="text-[11.5px] mt-1 font-semibold" style={{ color }}>{t(sub)}</p>}
     </div>
@@ -90,7 +90,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
             {plat?.Icon && <plat.Icon size={20} style={{ color: plat.color }} />}
           </div>
           <div>
-            <p className="text-[13px] font-semibold text-[#111111]">{t(c.nom)}</p>
+            <p className="text-[13px] font-semibold text-[#5E6063]">{t(c.nom)}</p>
             <p className="text-[11.5px] text-[#AAAAAA]">{t(plat?.label)} · {t(c.objectif)}</p>
           </div>
         </div>
@@ -159,7 +159,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
         )}
         {c.statut === "active" && (
           <button onClick={() => onStatut(c.id, "pause")}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#F5A623]/10 border border-[#F5A623]/30 text-[#111111] rounded-xl text-xs font-semibold hover:bg-[#F5A623]/15 transition-colors">
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#F5A623]/10 border border-[#F5A623]/30 text-[#5E6063] rounded-xl text-xs font-semibold hover:bg-[#F5A623]/15 transition-colors">
             <Pause size={11} />{" "}{t("Pauser")}
           </button>
         )}
@@ -313,14 +313,14 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
   const campagnesFiltrees = campagnes.filter(c => filterPlat === "tous" || c.plateforme === filterPlat);
 
-  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
+  const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC]";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Publicité")}</h1>
+          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Publicité")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Gérez vos campagnes Meta, Google et TikTok")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
@@ -359,7 +359,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       ) : campagnesFiltrees.length === 0 ? (
         <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
           <Megaphone size={40} className="text-[#CCCCCC] mx-auto mb-4" />
-          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">{t("Aucune campagne")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-2">{t("Aucune campagne")}</h3>
           <p className="text-[12.5px] text-[#AAAAAA] mb-6">{t("Créez votre première campagne et laissez l'IA générer les créatifs")}</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto"
@@ -380,7 +380,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
         <div className="flex items-start gap-3">
           <BarChart2 size={18} className="text-[#D4911A] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-[#111111]">{t("Pixel Tracking Axso")}</p>
+            <p className="text-sm font-semibold text-[#5E6063]">{t("Pixel Tracking Axso")}</p>
             <p className="text-xs text-[#666666] mt-1">
               {t("Votre pixel de tracking est automatiquement actif sur votre boutique. Consultez l'attribution des ventes dans")}{" "}<a href="/dashboard/analytics" className="underline font-medium">{t("Analytics")}</a>.
             </p>
@@ -395,7 +395,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
               <div>
-                <h2 className="text-[15px] font-bold text-[#111111]">{t("Nouvelle campagne")}</h2>
+                <h2 className="text-[15px] font-bold text-[#5E6063]">{t("Nouvelle campagne")}</h2>
                 <p className="text-[12px] text-[#AAAAAA]">{t("L'IA génère les créatifs automatiquement")}</p>
               </div>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>

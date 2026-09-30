@@ -66,11 +66,11 @@ export default function TrackingPage() {
   const currentStep = statutIdx >= 0 ? statutIdx : 0;
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"'Inter',system-ui,sans-serif", color:"white" }}>
+    <div style={{ minHeight:"100vh", background:"#5E6063", fontFamily:"'Inter',system-ui,sans-serif", color:"white" }}>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}} @keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
       {/* Header */}
-      <div style={{ background:"linear-gradient(135deg,#1A1A1A,#111)", padding:"16px 20px 14px", borderBottom:"1px solid rgba(245,166,35,0.15)" }}>
+      <div style={{ background:"linear-gradient(135deg,#1A1A1A,#5E6063)", padding:"16px 20px 14px", borderBottom:"1px solid rgba(245,166,35,0.15)" }}>
         <div style={{ maxWidth:500, margin:"0 auto" }}>
           {/* Axso logo top-center */}
           <div style={{ textAlign:"center", marginBottom:12 }}>

@@ -46,7 +46,7 @@ const FAQ = [
 export default async function ContactPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       {/* ── Hero ── */}
@@ -82,7 +82,7 @@ export default async function ContactPage() {
                 style={{ background: `${accent}12`, border: `1px solid ${accent}25` }}>
                 <Icon size={22} style={{ color: accent }} />
               </div>
-              <h3 className="font-bold text-[#111111] mb-1.5">{t(titre)}</h3>
+              <h3 className="font-bold text-[#5E6063] mb-1.5">{t(titre)}</h3>
               <p className="text-[#808080] text-sm mb-5 leading-relaxed">{t(desc)}</p>
               <span className="text-xs font-bold px-4 py-2 rounded-full inline-flex items-center gap-1.5 transition-all group-hover:scale-105"
                 style={{ background: `${accent}12`, color: accent, border: `1px solid ${accent}25` }}>
@@ -102,7 +102,7 @@ export default async function ContactPage() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(245,166,35,0.1)" }}>
                   <Clock size={16} style={{ color: "#F5A623" }} />
                 </div>
-                <h3 className="font-bold text-[#111111] text-sm">{t("Horaires d'assistance")}</h3>
+                <h3 className="font-bold text-[#5E6063] text-sm">{t("Horaires d'assistance")}</h3>
               </div>
               <div className="space-y-2 text-sm text-[#666666]">
                 <div className="flex justify-between"><span>{t("Lun – Ven")}</span><span className="text-[#444444]">{t("08h00 – 20h00")}</span></div>
@@ -116,13 +116,13 @@ export default async function ContactPage() {
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)" }}>
                   <MapPin size={16} style={{ color: "#7c3aed" }} />
                 </div>
-                <h3 className="font-bold text-[#111111] text-sm">{t("Localisation")}</h3>
+                <h3 className="font-bold text-[#5E6063] text-sm">{t("Localisation")}</h3>
               </div>
               <p className="text-[#666666] text-sm leading-relaxed">{t("Dakar, Sénégal")}<br />{t("Équipe distribuée sur 12 pays")}</p>
             </div>
 
             <div className="rounded-2xl p-6 border" style={{ background: "rgba(37,211,102,0.04)", borderColor: "rgba(37,211,102,0.15)" }}>
-              <h3 className="font-bold text-[#111111] text-sm mb-2">{t("Partenariats & Presse")}</h3>
+              <h3 className="font-bold text-[#5E6063] text-sm mb-2">{t("Partenariats & Presse")}</h3>
               <p className="text-[#737373] text-xs leading-relaxed mb-3">{t("Pour les demandes médias, partenariats ou investisseurs :")}</p>
               <a href="mailto:hello@axso.app" className="text-xs font-bold" style={{ color: "#F5A623" }}>{t("hello@axso.app →")}</a>
             </div>
@@ -132,11 +132,11 @@ export default async function ContactPage() {
           <div className="lg:col-span-3">
             <div className="rounded-3xl p-8 border"
               style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <h2 className="text-2xl font-black mb-1 text-[#111111]">{t("Envoyer un message")}</h2>
+              <h2 className="text-2xl font-black mb-1 text-[#5E6063]">{t("Envoyer un message")}</h2>
               <p className="text-[#808080] text-sm mb-7">{t("Nous répondons sous 24h en jours ouvrés.")}</p>
 
               <style>{`
-                .axso-input { background:#fff; border:1px solid rgba(0,0,0,0.1); color:#111111; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; font-family:inherit; }
+                .axso-input { background:#fff; border:1px solid rgba(0,0,0,0.1); color:#5E6063; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; font-family:inherit; }
                 .axso-input::placeholder { color:rgba(0,0,0,0.3); }
                 .axso-input:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
               `}</style>
@@ -182,12 +182,12 @@ export default async function ContactPage() {
       {/* ── FAQ ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-black text-[#111111] text-center mb-10">{t("Questions fréquentes")}</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-[#5E6063] text-center mb-10">{t("Questions fréquentes")}</h2>
           <div className="space-y-3">
             {FAQ.map((item, i) => (
               <div key={i} className="rounded-2xl p-6 border"
                 style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
-                <h3 className="font-bold text-[#111111] mb-2 text-sm">{t(item.q)}</h3>
+                <h3 className="font-bold text-[#5E6063] mb-2 text-sm">{t(item.q)}</h3>
                 <p className="text-[#666666] text-sm leading-relaxed">{t(item.r)}</p>
               </div>
             ))}

@@ -44,7 +44,7 @@ export function FooterMarketing() {
   }, []);
 
   return (
-    <footer ref={footerRef} className="bg-[#111111] pt-16 pb-8"
+    <footer ref={footerRef} className="bg-[#5E6063] pt-16 pb-8"
       style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(20px)", transition: "opacity 0.8s cubic-bezier(0.23,1,0.32,1), transform 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-12">

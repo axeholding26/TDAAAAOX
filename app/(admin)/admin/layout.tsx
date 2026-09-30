@@ -10,7 +10,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("admin", "dashboard")}>
-    <div className="min-h-screen flex" style={{ background: "#111111", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <div className="min-h-screen flex" style={{ background: "#5E6063", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <AdminNav email={session.email} role={session.role} />
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto p-8 sm:p-10">

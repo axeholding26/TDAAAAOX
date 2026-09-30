@@ -57,7 +57,7 @@ function NouveauxProduitsSection({ devise }: { devise: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-[#F5A623]" />
-          <h2 className="text-sm font-semibold text-[#111111]">{tr("Nouveau système")}</h2>
+          <h2 className="text-sm font-semibold text-[#5E6063]">{tr("Nouveau système")}</h2>
           <span className="text-xs text-[#AAAAAA] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
             {produits.length}
           </span>
@@ -109,7 +109,7 @@ function NouveauxProduitsSection({ devise }: { devise: string }) {
                 )}
               </div>
               <div className="p-4 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-[#111111] line-clamp-2 mb-1">{tr(p.nom)}</p>
+                <p className="text-sm font-semibold text-[#5E6063] line-clamp-2 mb-1">{tr(p.nom)}</p>
                 {meta && <p className="text-[11px] text-[#AAAAAA] mb-2">{tr(meta)}</p>}
                 <div className="mt-auto flex items-center justify-between">
                   <span className="text-base font-bold text-[#F5A623]">{formatMontant(p.prix, devise)}</span>
@@ -363,13 +363,13 @@ function CustomersModal({
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-[#E8E8E8]">
           <div>
-            <h2 className="text-base font-bold text-[#111111]">{tr(produit.nom)}</h2>
+            <h2 className="text-base font-bold text-[#5E6063]">{tr(produit.nom)}</h2>
             <p className="text-xs text-[#AAAAAA] mt-0.5">
               {tr(produit.ventes)} vente{produit.ventes !== 1 ? "s" : ""} ·{" "}
               {tr(produit._count.telechargements)} lien{produit._count.telechargements !== 1 ? "s" : ""}{" "}{tr("généré")}{produit._count.telechargements !== 1 ? "s" : ""}
             </p>
           </div>
-          <button onClick={onClose} className="text-[#AAAAAA] hover:text-[#111111] transition-colors">
+          <button onClick={onClose} className="text-[#AAAAAA] hover:text-[#5E6063] transition-colors">
             <X size={18} />
           </button>
         </div>
@@ -382,7 +382,7 @@ function CustomersModal({
               onClick={() => setActiveTab(tab)}
               className={`flex items-center gap-2 px-5 py-3 text-xs font-medium border-b-2 transition-colors ${
                 activeTab === tab
-                  ? "border-[#111111] text-[#111111]"
+                  ? "border-[#5E6063] text-[#5E6063]"
                   : "border-transparent text-[#AAAAAA] hover:text-[#666666]"
               }`}
             >
@@ -418,7 +418,7 @@ function CustomersModal({
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm font-semibold text-[#111111]">{tr(c.clientNom)}</p>
+                          <p className="text-sm font-semibold text-[#5E6063]">{tr(c.clientNom)}</p>
                           <p className="text-xs text-[#AAAAAA]">{tr(c.clientEmail)}</p>
                           <p className="text-[11px] text-[#AAAAAA] mt-1">
                             #{tr(c.commandeNumero)} · {formatDate(c.achatDate)}
@@ -447,7 +447,7 @@ function CustomersModal({
                         <button
                           onClick={() => resendLink(c.commandeId)}
                           disabled={!!actionLoading}
-                          className="flex items-center gap-1.5 text-xs bg-white border border-[#E8E8E8] text-[#666666] px-3 py-1.5 rounded-lg hover:border-[#111111] hover:text-[#111111] transition-all disabled:opacity-50"
+                          className="flex items-center gap-1.5 text-xs bg-white border border-[#E8E8E8] text-[#666666] px-3 py-1.5 rounded-lg hover:border-[#5E6063] hover:text-[#5E6063] transition-all disabled:opacity-50"
                         >
                           {actionLoading === `resend-${c.commandeId}` ? (
                             <Loader2 size={11} className="animate-spin" />
@@ -488,11 +488,11 @@ function CustomersModal({
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#F5F5F5] rounded-xl p-4">
                   <p className="text-xs text-[#AAAAAA]">{tr("Téléchargements (30j)")}</p>
-                  <p className="text-2xl font-bold text-[#111111] mt-1">{tr(totalDLs)}</p>
+                  <p className="text-2xl font-bold text-[#5E6063] mt-1">{tr(totalDLs)}</p>
                 </div>
                 <div className="bg-[#F5F5F5] rounded-xl p-4">
                   <p className="text-xs text-[#AAAAAA]">{tr("Total ventes")}</p>
-                  <p className="text-2xl font-bold text-[#111111] mt-1">{tr(produit.ventes)}</p>
+                  <p className="text-2xl font-bold text-[#5E6063] mt-1">{tr(produit.ventes)}</p>
                 </div>
               </div>
 
@@ -519,21 +519,21 @@ function CustomersModal({
                 <p className="text-xs font-medium text-[#666666] mb-3">{tr("Paramètres de livraison")}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs text-[#666666]">
                   <span>{tr("Limite DL")}</span>
-                  <span className="text-[#111111] font-medium">
+                  <span className="text-[#5E6063] font-medium">
                     {produit.meta.limiteTelechargement ? `${produit.meta.limiteTelechargement}x` : tr("Illimité")}
                   </span>
                   <span>{tr("Expiration accès")}</span>
-                  <span className="text-[#111111] font-medium">
+                  <span className="text-[#5E6063] font-medium">
                     {produit.meta.expirationAcces ? `${produit.meta.expirationAcces}j` : tr("Jamais")}
                   </span>
                   <span>{tr("Licence")}</span>
-                  <span className="text-[#111111] font-medium">
+                  <span className="text-[#5E6063] font-medium">
                     {tr(LICENCE_LABELS[produit.meta.typeLicence]) ?? tr(produit.meta.typeLicence)}
                   </span>
                   <span>{tr("Filigrane")}</span>
-                  <span className="text-[#111111] font-medium">{produit.meta.filigrane ? tr("Oui") : tr("Non")}</span>
+                  <span className="text-[#5E6063] font-medium">{produit.meta.filigrane ? tr("Oui") : tr("Non")}</span>
                   <span>{tr("Liens uniques")}</span>
-                  <span className="text-[#111111] font-medium">{produit.meta.liensUniques ? tr("Oui") : tr("Non")}</span>
+                  <span className="text-[#5E6063] font-medium">{produit.meta.liensUniques ? tr("Oui") : tr("Non")}</span>
                 </div>
               </div>
             </div>
@@ -624,7 +624,7 @@ function ProductCard({
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-              className="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-[#666666] hover:text-[#111111] opacity-0 group-hover:opacity-100 transition-all border border-[#E8E8E8]"
+              className="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-[#666666] hover:text-[#5E6063] opacity-0 group-hover:opacity-100 transition-all border border-[#E8E8E8]"
             >
               <MoreHorizontal size={14} />
             </button>
@@ -634,14 +634,14 @@ function ProductCard({
                 <div className="absolute right-0 top-8 z-40 bg-white border border-[#E8E8E8] rounded-xl shadow-lg py-1 min-w-[160px]">
                   <Link
                     href={`/dashboard/produits/${produit.id}`}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors"
                   >
                     <Eye size={13} />{" "}{tr("Modifier")}
                   </Link>
                   <button
                     onClick={handleDuplicate}
                     disabled={duplicating}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors"
                   >
                     {duplicating ? <Loader2 size={13} className="animate-spin" /> : <Copy size={13} />}
                     {tr("Dupliquer")}
@@ -649,7 +649,7 @@ function ProductCard({
                   <button
                     onClick={handleToggle}
                     disabled={toggling}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors"
                   >
                     {toggling ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -663,7 +663,7 @@ function ProductCard({
                   <div className="border-t border-[#E8E8E8] my-1" />
                   <button
                     onClick={() => { setMenuOpen(false); onOpenModal(produit); }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#5E6063] hover:bg-[#F5F5F5] transition-colors"
                   >
                     <Users size={13} />{" "}{tr("Clients & Liens")}
                   </button>
@@ -676,7 +676,7 @@ function ProductCard({
 
       {/* Info */}
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="text-[#111111] font-semibold text-sm leading-snug line-clamp-2 mb-1">
+        <h3 className="text-[#5E6063] font-semibold text-sm leading-snug line-clamp-2 mb-1">
           {tr(produit.nom)}
         </h3>
         <LicenceBadge type={meta.typeLicence} />
@@ -696,11 +696,11 @@ function ProductCard({
         <div className="mt-3 pt-3 border-t border-[#F0F0F0] grid grid-cols-2 gap-2">
           <div className="flex items-center gap-1.5 text-[11px] text-[#AAAAAA]">
             <TrendingUp size={10} className="text-[#16A34A]" />
-            <span className="text-[#111111] font-semibold">{tr(produit.ventes)}</span> vente{produit.ventes !== 1 ? "s" : ""}
+            <span className="text-[#5E6063] font-semibold">{tr(produit.ventes)}</span> vente{produit.ventes !== 1 ? "s" : ""}
           </div>
           <div className="flex items-center gap-1.5 text-[11px] text-[#AAAAAA]">
             <Download size={10} className="text-[#1B2A4A]" />
-            <span className="text-[#111111] font-semibold">{produit.downloadCount}</span> DL
+            <span className="text-[#5E6063] font-semibold">{produit.downloadCount}</span> DL
           </div>
         </div>
 
@@ -734,7 +734,7 @@ function ProductCard({
         {/* CTA */}
         <button
           onClick={() => onOpenModal(produit)}
-          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl border border-[#E8E8E8] text-[#666666] hover:text-[#111111] hover:border-[#D0D0D0] transition-all"
+          className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl border border-[#E8E8E8] text-[#666666] hover:text-[#5E6063] hover:border-[#D0D0D0] transition-all"
         >
           <Users size={12} />{" "}{tr("Clients & Analytiques")}
         </button>
@@ -828,7 +828,7 @@ export default function DigitalProduitsPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl font-bold text-[#111111] font-poppins">{tr("Produits Digitaux")}</h1>
+            <h1 className="text-2xl font-bold text-[#5E6063] font-poppins">{tr("Produits Digitaux")}</h1>
             <BoutonRevoirTutoriel moduleKey="produits-digital" />
             {stats && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]">
@@ -842,7 +842,7 @@ export default function DigitalProduitsPage() {
         </div>
         <Link
           href="/dashboard/produits/digital/nouveau"
-          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-[#111111] text-white whitespace-nowrap hover:bg-[#333333] transition-colors"
+          className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl bg-[#5E6063] text-white whitespace-nowrap hover:bg-[#333333] transition-colors"
         >
           <Plus size={15} />
           {tr("Nouveau produit digital")}
@@ -897,7 +897,7 @@ export default function DigitalProduitsPage() {
                   </div>
                   <p className="text-xs text-[#AAAAAA]">{tr(s.label)}</p>
                 </div>
-                <p className="text-xl font-bold text-[#111111]">{tr(s.value)}</p>
+                <p className="text-xl font-bold text-[#5E6063]">{tr(s.value)}</p>
               </div>
             );
           })}
@@ -913,7 +913,7 @@ export default function DigitalProduitsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={tr("Rechercher un produit...")}
-            className="bg-transparent text-sm text-[#111111] placeholder:text-[#AAAAAA] outline-none flex-1 min-w-0"
+            className="bg-transparent text-sm text-[#5E6063] placeholder:text-[#AAAAAA] outline-none flex-1 min-w-0"
           />
           {search && (
             <button onClick={() => setSearch("")} className="text-[#AAAAAA] hover:text-[#666666]">
@@ -1017,7 +1017,7 @@ export default function DigitalProduitsPage() {
           <div className="w-16 h-16 rounded-2xl bg-[#EEF1F6] border border-[#EDE9FE] flex items-center justify-center mx-auto mb-5">
             <Download size={32} className="text-[#1B2A4A]" />
           </div>
-          <h3 className="text-[#111111] font-semibold text-base mb-2">
+          <h3 className="text-[#5E6063] font-semibold text-base mb-2">
             {search || typeFilter !== "tous" || statutFilter !== "tous"
               ? tr("Aucun produit ne correspond à vos filtres")
               : tr("Votre catalogue digital est vide")}
@@ -1030,7 +1030,7 @@ export default function DigitalProduitsPage() {
           {!search && typeFilter === "tous" && statutFilter === "tous" && (
             <Link
               href="/dashboard/produits/digital/nouveau"
-              className="inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl bg-[#111111] text-white hover:bg-[#333333] transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl bg-[#5E6063] text-white hover:bg-[#333333] transition-colors"
             >
               <Plus size={15} />
               {tr("Créer mon premier produit digital")}

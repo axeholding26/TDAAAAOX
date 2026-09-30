@@ -8,16 +8,16 @@ import { useT } from "@/components/I18nProvider";
 interface OrdersTableProps { commandes: CommandeAvecLignes[] }
 
 const STATUTS: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
-  en_attente:     { label: "En attente",     bg: "#FFF8EC", text: "#111111", dot: "#F5A623", border: "#FDE68A" },
-  confirmee:      { label: "Confirmée",       bg: "#FFF3DC", text: "#111111", dot: "#D4911A", border: "#F3D9A5" },
-  en_preparation: { label: "En prépa.",       bg: "#F5F5F5", text: "#111111", dot: "#999999", border: "#E8E8E8" },
-  expediee:       { label: "Expédiée",        bg: "#EFEFEF", text: "#111111", dot: "#666666", border: "#E0E0E0" },
+  en_attente:     { label: "En attente",     bg: "#FFF8EC", text: "#5E6063", dot: "#F5A623", border: "#FDE68A" },
+  confirmee:      { label: "Confirmée",       bg: "#FFF3DC", text: "#5E6063", dot: "#D4911A", border: "#F3D9A5" },
+  en_preparation: { label: "En prépa.",       bg: "#F5F5F5", text: "#5E6063", dot: "#999999", border: "#E8E8E8" },
+  expediee:       { label: "Expédiée",        bg: "#EFEFEF", text: "#5E6063", dot: "#666666", border: "#E0E0E0" },
   livree:         { label: "Livrée",          bg: "#F0FDF4", text: "#15803D", dot: "#22C55E", border: "#BBF7D0" },
   annulee:        { label: "Annulée",         bg: "#FEF2F2", text: "#DC2626", dot: "#EF4444", border: "#FECACA" },
 };
 
 const AVATAR_COLORS = [
-  ["#FFF8EC","#F5A623"],["#F5F5F5","#111111"],["#F0FDF4","#16A34A"],
+  ["#FFF8EC","#F5A623"],["#F5F5F5","#5E6063"],["#F0FDF4","#16A34A"],
   ["#FFF3DC","#D4911A"],["#FFF1F2","#E11D48"],["#EFEFEF","#666666"],
 ];
 
@@ -54,7 +54,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
         <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
           <Package size={24} className="text-[#AAAAAA]" />
         </div>
-        <p className="text-[14px] font-semibold text-[#111111] mb-1">{t("Aucune commande encore")}</p>
+        <p className="text-[14px] font-semibold text-[#5E6063] mb-1">{t("Aucune commande encore")}</p>
         <p className="text-[12px] text-[#AAAAAA]">{t("Partagez votre boutique pour recevoir vos premières commandes")}</p>
       </div>
     );
@@ -67,11 +67,11 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[#F3F3F3]">
         <div>
-          <h3 className="text-[14px] font-bold text-[#111111] tracking-tight">{t("Commandes récentes")}</h3>
+          <h3 className="text-[14px] font-bold text-[#5E6063] tracking-tight">{t("Commandes récentes")}</h3>
           <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{commandes.length}{" "}{t("dernières transactions")}</p>
         </div>
         <Link href="/dashboard/commandes"
-          className="flex items-center gap-1.5 text-[12px] font-semibold text-[#111111] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:border-[#CCC] hover:bg-[#F9F9F9] transition-all group">
+          className="flex items-center gap-1.5 text-[12px] font-semibold text-[#5E6063] border border-[#E8E8E8] rounded-2xl px-3 py-1.5 hover:border-[#CCC] hover:bg-[#F9F9F9] transition-all group">
           {t("Voir tout")}{" "}<ArrowUpRight size={11} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </Link>
       </div>
@@ -123,7 +123,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
                   </span>
                 </td>
                 <td className="px-5 py-3.5">
-                  <span className="text-[13.5px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                  <span className="text-[13.5px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>
                     {formatMontant(c.montantTotal, c.devise)}
                   </span>
                 </td>
@@ -160,7 +160,7 @@ export function OrdersTable({ commandes }: OrdersTableProps) {
               <p className="text-[11px] text-[#BBBBBB] mt-0.5">{dateRelative(c.createdAt)}</p>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-[13.5px] font-bold text-[#111]" style={{ fontVariantNumeric: "tabular-nums" }}>
+              <p className="text-[13.5px] font-bold text-[#5E6063]" style={{ fontVariantNumeric: "tabular-nums" }}>
                 {formatMontant(c.montantTotal, c.devise)}
               </p>
               <ChevronRight size={14} className="text-[#DDD] ml-auto mt-1" />

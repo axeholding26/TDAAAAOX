@@ -288,7 +288,7 @@ function SimpleThemeCard({
   const colors: ThemeColors = {
     fond:    theme.config?.colors?.fond    || "#fff8f0",
     accent:  theme.config?.colors?.accent  || "#F5A623",
-    texte:   theme.config?.colors?.texte   || "#111111",
+    texte:   theme.config?.colors?.texte   || "#5E6063",
     surface: theme.config?.colors?.surface || "#fef3e8",
   };
 

@@ -45,7 +45,7 @@ interface Commande {
 
 const STATUT_COLORS: Record<string, string> = {
   non_expediee: "#6b7280",
-  en_preparation: "#111111",
+  en_preparation: "#5E6063",
   expediee: "#3b82f6",
   livree: "#10b981",
   retour: "#ef4444",
@@ -153,7 +153,7 @@ export function LivraisonPanel() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Non expédiées", value: stats.nonExpediees, color: "#6b7280", icon: Clock },
-          { label: "En préparation", value: stats.enPrep, color: "#111111", icon: Package },
+          { label: "En préparation", value: stats.enPrep, color: "#5E6063", icon: Package },
           { label: "Expédiées", value: stats.expediees, color: "#3b82f6", icon: Truck },
           { label: "Livrées", value: stats.livrees, color: "#10b981", icon: CheckCircle },
         ].map(({ label, value, color, icon: Icon }) => (
@@ -174,7 +174,7 @@ export function LivraisonPanel() {
             key={t}
             onClick={() => setTab(t)}
             className="px-4 py-2 rounded-lg text-[13px] font-medium transition-all"
-            style={tab === t ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}
+            style={tab === t ? { background: "white", color: "#5E6063", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}
           >
             {t === "commandes" ? tx("Commandes") : tx("Règles tarifaires")}
           </button>
@@ -186,7 +186,7 @@ export function LivraisonPanel() {
         <div className="space-y-4">
           {showForm && (
             <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
-              <h3 className="text-[14px] font-semibold text-[#111] mb-4">{tx("Nouvelle règle de port")}</h3>
+              <h3 className="text-[14px] font-semibold text-[#5E6063] mb-4">{tx("Nouvelle règle de port")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] text-[#888] mb-1">{tx("Nom de la règle")}</label>
@@ -264,7 +264,7 @@ export function LivraisonPanel() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-[13px] font-semibold text-[#111] truncate">{tx(r.nom)}</p>
+                        <p className="text-[13px] font-semibold text-[#5E6063] truncate">{tx(r.nom)}</p>
                         {r.modeLivraison === "agence_voyage" && (
                           <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#4338CA]"><Bus size={9} />{" "}{tx("Agence")}</span>
                         )}
@@ -273,7 +273,7 @@ export function LivraisonPanel() {
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-[13px] font-bold text-[#111]">
+                    <p className="text-[13px] font-bold text-[#5E6063]">
                       {r.gratuit ? tx("Gratuit") : `${r.frais.toLocaleString()} + ${r.fraisKg}/kg`}
                     </p>
                     {r.montantMin && <p className="text-[10px] text-[#AAA]">{tx("dès")}{" "}{r.montantMin.toLocaleString()}</p>}
@@ -303,11 +303,11 @@ export function LivraisonPanel() {
           <div className="flex justify-end">
             <div className="flex gap-1 bg-[#F5F5F5] p-1 rounded-xl w-fit">
               <button onClick={() => setVue("kanban")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
-                style={vue === "kanban" ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
+                style={vue === "kanban" ? { background: "white", color: "#5E6063", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
                 <LayoutGrid size={12} />{" "}{tx("Kanban")}
               </button>
               <button onClick={() => setVue("table")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all"
-                style={vue === "table" ? { background: "white", color: "#111", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
+                style={vue === "table" ? { background: "white", color: "#5E6063", boxShadow: "0 1px 3px rgba(0,0,0,.08)" } : { color: "#888" }}>
                 <TableProperties size={12} />{" "}{tx("Tableau")}
               </button>
             </div>
@@ -338,9 +338,9 @@ export function LivraisonPanel() {
               <tbody>
                 {commandes.map((c) => (
                   <tr key={c.id} className="border-b border-[#F8F8F8] hover:bg-[#FAFAFA] transition-colors">
-                    <td className="px-4 py-3 font-mono text-[#111]">{c.numero}</td>
+                    <td className="px-4 py-3 font-mono text-[#5E6063]">{c.numero}</td>
                     <td className="px-4 py-3 text-[#444]">{tx(c.clientNom)}</td>
-                    <td className="px-4 py-3 font-semibold text-[#111]">{c.montantTotal.toLocaleString()} {tx(c.devise)}</td>
+                    <td className="px-4 py-3 font-semibold text-[#5E6063]">{c.montantTotal.toLocaleString()} {tx(c.devise)}</td>
                     <td className="px-4 py-3">
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: STATUT_COLORS[c.livraisonStatut] ?? "#999" }}>
                         {c.livraisonStatut.replace(/_/g, " ")}

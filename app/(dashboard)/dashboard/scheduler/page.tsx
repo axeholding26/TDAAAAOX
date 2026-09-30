@@ -215,7 +215,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Scheduler Social")}</h1>
+          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Scheduler Social")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…")}</p>
         </div>
         <button onClick={() => setShowModal(true)}
@@ -271,7 +271,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       ) : postsFiltres.length === 0 ? (
         <div className="bg-[#F9F9F9] border border-dashed border-[#E8E8E8] rounded-[20px] p-16 text-center">
           <Calendar size={40} className="text-[#CCCCCC] mx-auto mb-4" />
-          <h3 className="text-[14px] font-semibold text-[#111111] mb-2">{t("Aucun post planifié")}</h3>
+          <h3 className="text-[14px] font-semibold text-[#5E6063] mb-2">{t("Aucun post planifié")}</h3>
           <p className="text-[12.5px] text-[#AAAAAA] mb-6">{t("L'IA peut générer et planifier vos posts en quelques secondes")}</p>
           <button onClick={() => setShowModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm text-white mx-auto transition-all"
@@ -293,7 +293,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
           onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
-              <h2 className="text-[15px] font-bold text-[#111111]">{t("Nouveau post planifié")}</h2>
+              <h2 className="text-[15px] font-bold text-[#5E6063]">{t("Nouveau post planifié")}</h2>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
 
@@ -302,7 +302,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               <div className="flex gap-1 p-1 bg-[#F5F5F7] rounded-xl">
                 {[{ id: true, label: "Générer avec l'IA", Icon: Sparkles }, { id: false, label: "Manuel", Icon: Edit3 }].map(m => (
                   <button key={String(m.id)} onClick={() => setAiMode(m.id)}
-                    className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${aiMode === m.id ? "bg-white text-[#111111] shadow-sm" : "text-[#AAAAAA]"}`}>
+                    className={`flex-1 py-2 rounded-lg text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${aiMode === m.id ? "bg-white text-[#5E6063] shadow-sm" : "text-[#AAAAAA]"}`}>
                     <m.Icon size={13} /> {t(m.label)}
                   </button>
                 ))}
@@ -329,7 +329,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                     <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Que voulez-vous promouvoir ?")}</label>
                     <textarea value={form.aiPrompt} onChange={e => setForm(f => ({ ...f, aiPrompt: e.target.value }))}
                       rows={3} placeholder={t("Ex: Nouvelle collection de robes wax printemps 2024, promo -20% ce weekend...")}
-                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
+                      className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                   </div>
                   <button onClick={genererAvecIA} disabled={generating || !form.aiPrompt.trim()}
                     className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
@@ -347,7 +347,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                   )}
                   <div className="space-y-2">
                     <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
-                      rows={6} className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-all resize-none" />
+                      rows={6} className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-3 py-2 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 transition-all resize-none" />
                     {form.hashtags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {form.hashtags.slice(0, 6).map(h => (
@@ -365,7 +365,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
                   <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Contenu du post")}</label>
                   <textarea value={form.contenu} onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
                     rows={5} placeholder={t("Rédigez votre post...")}
-                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
+                    className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all placeholder:text-[#CCCCCC] resize-none" />
                 </div>
               )}
 
@@ -373,7 +373,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               <div>
                 <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Date et heure de publication")}</label>
                 <input type="datetime-local" value={form.planifieLe} onChange={e => setForm(f => ({ ...f, planifieLe: e.target.value }))}
-                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all" />
+                  className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#5E6063] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all" />
               </div>
 
               <div className="flex gap-2">

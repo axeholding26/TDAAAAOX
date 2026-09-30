@@ -33,7 +33,7 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
           <div className="flex items-center gap-2 mt-1">
             <p className="text-gray-400 text-sm">{t("Choisissez votre palier Axso")}</p>
             {devise !== "XAF" && devise !== "XOF" && (
-              <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#111111] border border-[#F5A623]/25">
+              <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#5E6063] border border-[#F5A623]/25">
                 <Globe size={9} />{" "}{t("Prix en")}{" "}{t(devise)}
               </span>
             )}

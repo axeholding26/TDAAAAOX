@@ -148,7 +148,7 @@ export default function JournalAxiaPage() {
                                 </span>
                               )}
                               {d.impactReel != null && (
-                                <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#111111] border border-[#F5A623]/25">
+                                <span className="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-[#F5A623]/10 text-[#5E6063] border border-[#F5A623]/25">
                                   {t("Impact réel :")}{" "}{fmt(d.impactReel)}
                                 </span>
                               )}

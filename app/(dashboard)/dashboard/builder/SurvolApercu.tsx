@@ -23,7 +23,7 @@ export function useSurvol(racine: RefObject<HTMLElement | null>, trouver: (t: Ev
   const survol = (
     <div ref={cadre} aria-hidden className="pointer-events-none absolute z-30 rounded-[2px]"
       style={{ display: "none", outline: "1.5px dashed #F5A623", outlineOffset: 1 }}>
-      <span className="absolute -top-6 left-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11.5px] font-semibold bg-[#111111] text-white"
+      <span className="absolute -top-6 left-0 whitespace-nowrap px-1.5 py-0.5 rounded text-[11.5px] font-semibold bg-[#5E6063] text-white"
         style={{ fontFamily: "'Poppins',system-ui,sans-serif" }} />
     </div>
   );

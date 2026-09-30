@@ -91,7 +91,7 @@ export function NavbarMarketing() {
           style={{
             alignItems: "center",
             pointerEvents: "auto",
-            background: "#111111",
+            background: "#5E6063",
             borderRadius: "999px",
             padding: isExpanded ? "8px 10px 8px 18px" : "7px 12px",
             width: isExpanded
@@ -203,7 +203,7 @@ export function NavbarMarketing() {
           style={{
             flexDirection: "column",
             pointerEvents: "auto",
-            background: "#111111",
+            background: "#5E6063",
             borderRadius: mobileOpen ? "28px" : "999px",
             width: "calc(100vw - 28px)",
             overflow: "hidden",

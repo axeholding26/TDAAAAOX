@@ -12,7 +12,7 @@ type Option = { nom: string; valeurs: string[] };
 type Categorie = { id: string; nom: string; options: Option[]; ordre: number; nbProduits: number };
 
 const SUGGESTIONS = ["Taille", "Couleur", "Pointure", "Matière", "Contenance", "Poids", "Modèle", "Parfum"];
-const INPUT = "w-full h-10 px-3 rounded-xl border border-[#E8E8E8] bg-white text-[14px] text-[#111111] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20";
+const INPUT = "w-full h-10 px-3 rounded-xl border border-[#E8E8E8] bg-white text-[14px] text-[#5E6063] placeholder:text-[#BBBBBB] outline-none focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/20";
 
 export default function CategoriesPage() {
   const t = useT();
@@ -40,11 +40,11 @@ export default function CategoriesPage() {
     <div className="space-y-5 max-w-3xl w-full" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <div className="flex flex-wrap items-end justify-between gap-3 pt-1">
         <div>
-          <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Catégories")}</h1>
+          <h1 className="text-[20px] font-bold text-[#5E6063] tracking-tight">{t("Catégories")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5 max-w-lg">{t("Les catégories de ta boutique (filtres du catalogue) et les options proposées pour leurs produits : tailles, couleurs, pointures…")}</p>
         </div>
         <button onClick={() => setEdition("nouvelle")} disabled={edition === "nouvelle"}
-          className="h-10 px-4 rounded-xl inline-flex items-center gap-2 text-[14px] font-semibold bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:opacity-50">
+          className="h-10 px-4 rounded-xl inline-flex items-center gap-2 text-[14px] font-semibold bg-[#F5A623] text-[#5E6063] hover:bg-[#E8990F] disabled:opacity-50">
           <Plus size={16} />{" "}{t("Nouvelle catégorie")}
         </button>
       </div>
@@ -56,7 +56,7 @@ export default function CategoriesPage() {
       ) : !categories.length && edition !== "nouvelle" ? (
         <div className="ax-card p-8 text-center">
           <Tags size={28} className="mx-auto text-[#F5A623]" />
-          <p className="text-[15px] font-semibold text-[#111111] mt-3">{t("Aucune catégorie pour l'instant")}</p>
+          <p className="text-[15px] font-semibold text-[#5E6063] mt-3">{t("Aucune catégorie pour l'instant")}</p>
           <p className="text-[13px] text-[#888888] mt-1">{t("Crée tes catégories (Jeans, Chemises…) : elles serviront de filtres dans ton catalogue.")}</p>
         </div>
       ) : (
@@ -70,7 +70,7 @@ export default function CategoriesPage() {
                 <button onClick={() => deplacer(i, 1)} disabled={i === categories.length - 1} aria-label={t("Descendre")} className="w-7 h-7 rounded-lg flex items-center justify-center text-[#999999] hover:bg-[#F5F5F5] disabled:opacity-25"><ArrowDown size={14} /></button>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-semibold text-[#111111] truncate">{t(c.nom)}</p>
+                <p className="text-[15px] font-semibold text-[#5E6063] truncate">{t(c.nom)}</p>
                 <p className="text-[12px] text-[#999999]">{t(c.nbProduits)} produit{c.nbProduits > 1 ? "s" : ""}</p>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {c.options.length ? c.options.map((o) => (
@@ -81,7 +81,7 @@ export default function CategoriesPage() {
                 </div>
               </div>
               <div className="flex gap-1 flex-shrink-0">
-                <button onClick={() => setEdition(c.id)} aria-label={t("Modifier {0}", c.nom)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[#666666] hover:bg-[#F5F5F5] hover:text-[#111111]"><Pencil size={15} /></button>
+                <button onClick={() => setEdition(c.id)} aria-label={t("Modifier {0}", c.nom)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[#666666] hover:bg-[#F5F5F5] hover:text-[#5E6063]"><Pencil size={15} /></button>
                 <button onClick={() => supprimer(c)} aria-label={t("Supprimer {0}", c.nom)} className="w-9 h-9 rounded-lg flex items-center justify-center text-[#999999] hover:bg-[#FEF2F2] hover:text-[#DC2626]"><Trash2 size={15} /></button>
               </div>
             </li>
@@ -155,17 +155,17 @@ function Editeur({ categorie, onFini }: { categorie?: Categorie; onFini: () => v
         <div className="flex flex-wrap gap-1.5">
           {SUGGESTIONS.filter((s) => !options.some((o) => o.nom.toLowerCase() === s.toLowerCase())).map((s) => (
             <button key={s} type="button" onClick={() => setOptions((l) => [...l, { nom: s, valeurs: [] }])}
-              className="text-[12.5px] px-2.5 py-1 rounded-full border border-dashed border-[#D8D8D8] text-[#666666] hover:border-[#F5A623] hover:text-[#111111]">+ {t(s)}</button>
+              className="text-[12.5px] px-2.5 py-1 rounded-full border border-dashed border-[#D8D8D8] text-[#666666] hover:border-[#F5A623] hover:text-[#5E6063]">+ {t(s)}</button>
           ))}
           <button type="button" onClick={() => setOptions((l) => [...l, { nom: "", valeurs: [] }])}
-            className="text-[12.5px] px-2.5 py-1 rounded-full border border-dashed border-[#D8D8D8] text-[#666666] hover:border-[#F5A623] hover:text-[#111111]">{t("+ Autre option")}</button>
+            className="text-[12.5px] px-2.5 py-1 rounded-full border border-dashed border-[#D8D8D8] text-[#666666] hover:border-[#F5A623] hover:text-[#5E6063]">{t("+ Autre option")}</button>
         </div>
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
         <button type="button" onClick={onFini} className="h-10 px-4 rounded-xl text-[14px] font-medium text-[#555555] border border-[#E8E8E8] hover:bg-[#F7F7F7]">{t("Annuler")}</button>
         <button type="submit" disabled={!nom.trim() || envoi}
-          className="h-10 px-5 rounded-xl inline-flex items-center justify-center gap-2 text-[14px] font-semibold bg-[#111111] text-white hover:bg-[#333333] disabled:opacity-40">
+          className="h-10 px-5 rounded-xl inline-flex items-center justify-center gap-2 text-[14px] font-semibold bg-[#5E6063] text-white hover:bg-[#333333] disabled:opacity-40">
           {envoi ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}{" "}{t("Enregistrer")}
         </button>
       </div>

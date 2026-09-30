@@ -104,7 +104,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
       <div className={`flex items-center justify-center px-4 ${habille ? "py-20" : "min-h-screen bg-[#FAFAFA]"}`}>
         <div className="bg-white rounded-2xl border border-[#F0F0F0] p-8 w-full max-w-sm shadow-sm">
           <div className="mb-6 text-center">
-            <p className="text-xl font-bold text-[#111]">{t("Mon compte")}</p>
+            <p className="text-xl font-bold text-[#5E6063]">{t("Mon compte")}</p>
             <p className="text-[12px] text-[#888] mt-1">{view === "login" ? t("Connecte-toi pour suivre tes commandes") : t("Crée ton compte acheteur")}</p>
           </div>
 
@@ -157,7 +157,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
           </p>
 
           <div className="mt-4 text-center">
-            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111]">{t("← Retour à la boutique")}</Link>
+            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#5E6063]">{t("← Retour à la boutique")}</Link>
           </div>
         </div>
       </div>
@@ -175,12 +175,12 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
               <User size={18} className="text-white" />
             </div>
             <div>
-              <p className="text-[15px] font-semibold text-[#111]">{t(compte?.nom)}</p>
+              <p className="text-[15px] font-semibold text-[#5E6063]">{t(compte?.nom)}</p>
               <p className="text-[12px] text-[#888]">{compte?.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111] px-3 py-1.5 rounded-lg border border-[#E5E5E5]">
+            <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#5E6063] px-3 py-1.5 rounded-lg border border-[#E5E5E5]">
               {t("Boutique")}
             </Link>
             <button onClick={logout} className="flex items-center gap-1.5 text-[12px] text-[#888] hover:text-red-500 px-3 py-1.5 rounded-lg border border-[#E5E5E5]">
@@ -193,11 +193,11 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-white rounded-xl border border-[#F0F0F0] p-4">
             <p className="text-[11px] text-[#888]">{t("Commandes")}</p>
-            <p className="text-2xl font-bold text-[#111]">{commandes.length}</p>
+            <p className="text-2xl font-bold text-[#5E6063]">{commandes.length}</p>
           </div>
           <div className="bg-white rounded-xl border border-[#F0F0F0] p-4">
             <p className="text-[11px] text-[#888]">{t("Total dépensé")}</p>
-            <p className="text-2xl font-bold text-[#111]">
+            <p className="text-2xl font-bold text-[#5E6063]">
               {commandes
                 .filter((c) => !["annulee", "remboursee"].includes(c.statut))
                 .reduce((s, c) => s + c.montantTotal, 0)
@@ -207,7 +207,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
         </div>
 
         {/* Commandes */}
-        <h2 className="text-[14px] font-semibold text-[#111] mb-3">{t("Mes commandes")}</h2>
+        <h2 className="text-[14px] font-semibold text-[#5E6063] mb-3">{t("Mes commandes")}</h2>
         {commandes.length === 0 ? (
           <div className="bg-white border border-dashed border-[#E5E5E5] rounded-xl p-10 text-center">
             <Package size={28} className="mx-auto mb-3 text-[#DDD]" />
@@ -224,12 +224,12 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                 <div key={c.id} className="bg-white border border-[#F0F0F0] rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-[13px] font-semibold text-[#111] font-mono">{c.numero}</p>
+                      <p className="text-[13px] font-semibold text-[#5E6063] font-mono">{c.numero}</p>
                       <p className="text-[11px] text-[#888]">{new Date(c.createdAt).toLocaleDateString("fr")}</p>
                     </div>
                     <div className="text-right">
                       <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold text-white" style={{ background: sc.color }}>{t(sc.label)}</span>
-                      <p className="text-[13px] font-bold text-[#111] mt-1">{c.montantTotal.toLocaleString()} {t(c.devise)}</p>
+                      <p className="text-[13px] font-bold text-[#5E6063] mt-1">{c.montantTotal.toLocaleString()} {t(c.devise)}</p>
                     </div>
                   </div>
 

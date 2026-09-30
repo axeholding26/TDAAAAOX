@@ -32,7 +32,7 @@ export function PCOnlyGate({ label = "Cette fonctionnalité" }: Props) {
   return createPortal((
     <div style={{
       position: "fixed", inset: 0, zIndex: 9999,
-      background: "linear-gradient(160deg, #080808 0%, #111 60%, #0a0a0a 100%)",
+      background: "linear-gradient(160deg, #080808 0%, #5E6063 60%, #5E6063 100%)",
       display: "flex", flexDirection: "column", alignItems: "center",
       justifyContent: "center", padding: "32px 24px",
       fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif",

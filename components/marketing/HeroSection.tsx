@@ -108,7 +108,7 @@ export function HeroSection() {
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>
               <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">{tr("Revenus")}</p>
-              <p className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: "#111111" }}>+24%</p>
+              <p className="text-2xl sm:text-3xl font-extrabold mt-1" style={{ color: "#5E6063" }}>+24%</p>
               <p className="text-[11px] text-gray-400 mt-0.5">{tr("vs le mois dernier")}</p>
             </div>
             <div className="flex items-end gap-1 h-14">
@@ -138,8 +138,8 @@ export function HeroSection() {
         <div className="ax-tile ax-tile-desktop" style={{ gridArea: "detail" }}>
           <div className="w-full h-full bg-white flex flex-col justify-between p-4 sm:p-5">
             <div>
-              <p className="text-base sm:text-lg font-extrabold" style={{ color: "#111111" }}>{tr("XOF 24 900")}</p>
-              <div className="mt-3 h-9 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold text-white" style={{ background: "#111111" }}>
+              <p className="text-base sm:text-lg font-extrabold" style={{ color: "#5E6063" }}>{tr("XOF 24 900")}</p>
+              <div className="mt-3 h-9 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-bold text-white" style={{ background: "#5E6063" }}>
                 <ShoppingBag size={12} />{" "}{tr("Ajouter au panier")}
               </div>
             </div>
@@ -167,7 +167,7 @@ export function HeroSection() {
             transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)",
           }}>
             <div className="bg-white rounded-[24px] shadow-2xl px-7 py-6 sm:px-9 sm:py-7 text-center">
-              <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#111111" }}>
+              <h1 className="text-[26px] sm:text-[32px] font-extrabold leading-[1.1] tracking-tight" style={{ color: "#5E6063" }}>
                 {tr("Ton business démarre avec Axso")}
               </h1>
               <p className="text-[13.5px] sm:text-[14.5px] text-gray-500 mt-3 leading-relaxed">
@@ -178,19 +178,19 @@ export function HeroSection() {
 
             <form onSubmit={demarrer}
               className="w-full rounded-[22px] shadow-2xl px-6 py-5 -mt-1 relative"
-              style={{ background: "#111111" }}>
+              style={{ background: "#5E6063" }}>
               <p className="text-white font-bold text-[15px]">{tr("Commencer gratuitement")}</p>
               <p className="text-white/40 text-[11px] mt-0.5 mb-3.5">{tr("En t'inscrivant, tu acceptes de recevoir nos emails.")}</p>
               <div className="flex items-center bg-white rounded-full pl-4 pr-1.5 py-1.5">
                 <input
                   type="email" required value={email} onChange={e => setEmail(e.target.value)}
                   placeholder={tr("Entre ton email")}
-                  className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#111111] placeholder:text-gray-400"
+                  className="flex-1 min-w-0 bg-transparent outline-none text-[13.5px] text-[#5E6063] placeholder:text-gray-400"
                 />
                 <button type="submit"
                   className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform hover:scale-105"
                   style={{ background: "#F5A623" }}>
-                  <ArrowRight size={16} style={{ color: "#111111" }} />
+                  <ArrowRight size={16} style={{ color: "#5E6063" }} />
                 </button>
               </div>
             </form>

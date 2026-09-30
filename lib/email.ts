@@ -79,7 +79,7 @@ export async function envoyerAlerteNouvelleCommande(params: {
         <p>Bonjour,</p>
         <p><strong>${params.clientNom}</strong> vient de passer une commande sur <strong>${params.boutique}</strong>.</p>
         <p>Commande <strong>${params.numeroCommande}</strong> — <strong>${params.montantTotal} ${params.devise}</strong></p>
-        <p><a href="${params.lien}" style="display:inline-block;padding:10px 20px;background:#F5A623;color:#111;border-radius:8px;text-decoration:none;font-weight:bold;">Voir la commande</a></p>
+        <p><a href="${params.lien}" style="display:inline-block;padding:10px 20px;background:#F5A623;color:#5E6063;border-radius:8px;text-decoration:none;font-weight:bold;">Voir la commande</a></p>
       </div>
     `,
   });
@@ -145,7 +145,7 @@ export async function envoyerInvitationEquipe(params: {
         <h2>Invitation à rejoindre l'équipe</h2>
         <p>Bonjour ${params.nom},</p>
         <p><strong>${params.boutique}</strong> t'invite à rejoindre son équipe sur Axso, avec le rôle <strong>${params.role}</strong>.</p>
-        <p><a href="${params.lien}" style="display:inline-block;padding:10px 20px;background:#F5A623;color:#111;border-radius:8px;text-decoration:none;font-weight:bold;">Rejoindre l'équipe</a></p>
+        <p><a href="${params.lien}" style="display:inline-block;padding:10px 20px;background:#F5A623;color:#5E6063;border-radius:8px;text-decoration:none;font-weight:bold;">Rejoindre l'équipe</a></p>
         <p style="color: #666; font-size: 13px;">Ce lien expire dans 7 jours. Si tu ne t'attendais pas à cette invitation, ignore cet email.</p>
       </div>
     `,

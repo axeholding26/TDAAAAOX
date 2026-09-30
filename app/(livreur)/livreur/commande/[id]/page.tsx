@@ -86,7 +86,7 @@ export default function CommandeLivreurPage() {
       </button>
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#111] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
+      <div className="bg-gradient-to-br from-[#5E6063] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <div className="flex items-start justify-between mb-1">
           <div>
             <p className="text-gray-500 text-xs font-mono">{commande.numero}</p>
@@ -183,7 +183,7 @@ export default function CommandeLivreurPage() {
 
       {/* CTA Confirmer */}
       {peutLivrer && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5">
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-[#5E6063]/95 backdrop-blur-xl border-t border-white/5">
           <div className="max-w-2xl mx-auto">
             <button onClick={marquerLivre} disabled={isPending}
               className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold py-4 rounded-2xl text-lg hover:from-green-400 hover:to-green-300 transition-all disabled:opacity-50 shadow-xl shadow-green-500/20">

@@ -20,7 +20,7 @@ export default function MotDePasseOubliePage() {
   const [erreur, setErreur] = useState("");
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#5E6063] text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   async function demanderCode(e: React.FormEvent) {
@@ -98,7 +98,7 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <Mail size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Mot de passe oublié")}</h2>
+              <h2 className="text-2xl font-bold text-[#5E6063] mb-1">{t("Mot de passe oublié")}</h2>
               <p className="text-[#808080] text-sm mb-7">{t("On t'envoie un code de vérification par email.")}</p>
               <form onSubmit={demanderCode} className="space-y-4">
                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
@@ -118,7 +118,7 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
                 <KeyRound size={18} style={{ color: ACCENT }} />
               </div>
-              <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Nouveau mot de passe")}</h2>
+              <h2 className="text-2xl font-bold text-[#5E6063] mb-1">{t("Nouveau mot de passe")}</h2>
               <p className="text-[#808080] text-sm mb-7">{t("Code envoyé à")}{" "}<strong>{email}</strong>{" "}{t("— valable 10 minutes.")}</p>
               <form onSubmit={reinitialiser} className="space-y-4">
                 <input
@@ -151,7 +151,7 @@ export default function MotDePasseOubliePage() {
                 style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.25)" }}>
                 <ShieldCheck size={24} style={{ color: "#22c55e" }} />
               </div>
-              <h2 className="text-xl font-bold text-[#111111] mb-1">{t("Mot de passe mis à jour")}</h2>
+              <h2 className="text-xl font-bold text-[#5E6063] mb-1">{t("Mot de passe mis à jour")}</h2>
               <p className="text-[#808080] text-sm">{t("Redirection vers la connexion...")}</p>
             </div>
           )}

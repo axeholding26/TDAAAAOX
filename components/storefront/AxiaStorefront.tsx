@@ -133,7 +133,7 @@ export function AxiaStorefront({ slug, nomBoutique, accentColor = "#F5A623" }: P
                   style={
                     msg.role === "user"
                       ? { background: accentColor, color: "white", borderBottomRightRadius: 4 }
-                      : { background: "#F5F5F5", color: "#111", borderBottomLeftRadius: 4 }
+                      : { background: "#F5F5F5", color: "#5E6063", borderBottomLeftRadius: 4 }
                   }
                 >
                   {t(msg.content)}

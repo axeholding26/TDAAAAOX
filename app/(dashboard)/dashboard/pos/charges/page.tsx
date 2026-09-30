@@ -81,7 +81,7 @@ export default function ChargesPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[18px] font-bold text-[#111]">{t("Charges d'exploitation")}</h1>
+            <h1 className="text-[18px] font-bold text-[#5E6063]">{t("Charges d'exploitation")}</h1>
             <BoutonRevoirTutoriel moduleKey="pos-charges" />
           </div>
           <p className="text-[12px] text-gray-500">{t("Loyer, salaires, énergie... les coûts fixes de votre boutique physique")}</p>
@@ -94,7 +94,7 @@ export default function ChargesPage() {
       {stats && (
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold text-[#111]">{stats.total.toLocaleString()} XAF</p>
+            <p className="text-[20px] font-bold text-[#5E6063]">{stats.total.toLocaleString()} XAF</p>
             <p className="text-[10.5px] text-gray-400 mt-0.5">{t("Total enregistré")}</p>
           </div>
           <div className="bg-white border border-gray-100 rounded-2xl p-4">
@@ -149,7 +149,7 @@ export default function ChargesPage() {
       ) : charges.length === 0 ? (
         <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
           <Receipt size={28} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-[13px] font-semibold text-[#111]">{t("Aucune charge enregistrée")}</p>
+          <p className="text-[13px] font-semibold text-[#5E6063]">{t("Aucune charge enregistrée")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -161,13 +161,13 @@ export default function ChargesPage() {
                   <Receipt size={14} className="text-[#F5A623]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-[#111] truncate">{t(c.description)}</p>
+                  <p className="text-[13px] font-semibold text-[#5E6063] truncate">{t(c.description)}</p>
                   <p className="text-[11px] text-gray-400">
                     {t(CATEGORIES.find(x => x.v === c.categorie)?.l)} · {t(FREQUENCES.find(x => x.v === c.frequence)?.l)} · {new Date(c.dateEnregistrement).toLocaleDateString(t.loc)}
                     {c.fournisseur && ` · ${c.fournisseur}`}
                   </p>
                 </div>
-                <p className="text-[13px] font-bold text-[#111] flex-shrink-0">{c.montant.toLocaleString()} {t(c.devise)}</p>
+                <p className="text-[13px] font-bold text-[#5E6063] flex-shrink-0">{c.montant.toLocaleString()} {t(c.devise)}</p>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1 ${cfg.cls}`}>
                   <cfg.Icon size={9} /> {t(cfg.label)}
                 </span>

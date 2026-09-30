@@ -19,7 +19,7 @@ import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/ax
 import { useT } from "@/components/I18nProvider";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
-const NAVY    = "#111111";   // noir AXSO (--axso-navy)
+const NAVY    = "#5E6063";   // noir AXSO (--axso-navy)
 const YELLOW  = "#F5A623";   // ambre jaune — accent principal (--accent)
 const YELLOW_D= "#D4911A";   // ambre foncé (--accent-dark)
 const YELLOW_L= "#FFD280";   // ambre clair (--axso-amber-light)

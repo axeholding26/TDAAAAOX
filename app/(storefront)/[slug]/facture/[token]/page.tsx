@@ -43,7 +43,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
 
       <div className="page">
         {/* Header gradient */}
-        <div style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 50%, #111 100%)", padding: "48px 48px 40px", position: "relative", overflow: "hidden" }}>
+        <div style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 50%, #5E6063 100%)", padding: "48px 48px 40px", position: "relative", overflow: "hidden" }}>
           {/* Decorative circles */}
           <div style={{ position:"absolute", top:-60, right:-60, width:200, height:200, borderRadius:"50%", background:"rgba(245,166,35,0.08)" }}/>
           <div style={{ position:"absolute", bottom:-40, left:-20, width:140, height:140, borderRadius:"50%", background:"rgba(245,166,35,0.05)" }}/>

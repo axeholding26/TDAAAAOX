@@ -27,7 +27,7 @@ const NIVEAUX = ["Tous", "Débutant", "Intermédiaire", "Avancé"];
 export default async function TutorialsPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       <section className="pt-36 pb-24 px-6 sm:px-10 lg:px-16 xl:px-24 relative overflow-hidden">
@@ -80,7 +80,7 @@ export default async function TutorialsPage() {
                       style={{ background: `${v.tag}12`, color: v.tag, border: `1px solid ${v.tag}25` }}>{t(v.niveau)}</span>
                     <span className="text-xs text-[#A6A6A6]">{t(v.views)} vues</span>
                   </div>
-                  <h3 className="font-bold text-[#111111] text-sm leading-snug group-hover:text-[#F5A623] transition-colors">{t(v.titre)}</h3>
+                  <h3 className="font-bold text-[#5E6063] text-sm leading-snug group-hover:text-[#F5A623] transition-colors">{t(v.titre)}</h3>
                 </div>
               </div>
             ))}

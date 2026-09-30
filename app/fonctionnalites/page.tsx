@@ -36,7 +36,7 @@ const AGENTS = [
 export default async function FonctionnalitesPage() {
   const t = await getT();
   return (
-    <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
+    <main className="bg-white text-[#5E6063] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
@@ -95,7 +95,7 @@ export default async function FonctionnalitesPage() {
               <ShoppingBag size={16} style={{ color: "#F5A623" }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#F5A623" }}>{t("Catalogue")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-5 leading-snug">
               {t("Physique, digital ou dropshipping —")}<br />{t("un seul catalogue")}
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
@@ -139,11 +139,11 @@ export default async function FonctionnalitesPage() {
                   style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)" }}>
                   <div className="w-10 h-10 rounded-lg flex-shrink-0" style={{ background: `${p.accent}15`, border: `1px solid ${p.accent}25` }} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#111111] text-sm font-semibold truncate">{t(p.nom)}</p>
+                    <p className="text-[#5E6063] text-sm font-semibold truncate">{t(p.nom)}</p>
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${p.accent}12`, color: p.accent }}>{t(p.type)}</span>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[#111111] font-bold text-sm">{p.prix} XOF</p>
+                    <p className="text-[#5E6063] font-bold text-sm">{p.prix} XOF</p>
                     <p className="text-[#8C8C8C] text-xs">{t("Stock :")}{" "}{p.stock}</p>
                   </div>
                 </div>
@@ -196,7 +196,7 @@ export default async function FonctionnalitesPage() {
               <div className="rounded-xl p-4" style={{ background: "rgba(0,185,241,0.08)", border: "1px solid rgba(0,185,241,0.2)" }}>
                 <div className="flex justify-between mb-2">
                   <span className="text-[#666666] text-sm">{t("Total commande")}</span>
-                  <span className="text-[#111111] font-bold">{t("24 500 XOF")}</span>
+                  <span className="text-[#5E6063] font-bold">{t("24 500 XOF")}</span>
                 </div>
                 <div className="w-full h-10 rounded-xl flex items-center justify-center font-bold text-sm"
                   style={{ background: "linear-gradient(135deg,#00B9F1,#0080B0)", color: "#fff" }}>
@@ -212,7 +212,7 @@ export default async function FonctionnalitesPage() {
               <CreditCard size={16} style={{ color: "#10b981" }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>{t("Paiements Africa-first")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-5 leading-snug">
               {t("Tous les paiements africains,")}<br />{t("nativement intégrés")}
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
@@ -253,7 +253,7 @@ export default async function FonctionnalitesPage() {
               <Zap size={16} style={{ color: "#7c3aed" }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#7c3aed" }}>{t("Axia — IA intégrée")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-5 leading-snug">
               {t("Un agent IA qui gère")}<br />{t("votre boutique à votre place")}
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
@@ -284,7 +284,7 @@ export default async function FonctionnalitesPage() {
                 <Zap size={14} color="#fff" />
               </div>
               <div>
-                <p className="text-[#111111] font-bold text-sm">{t("Axia")}</p>
+                <p className="text-[#5E6063] font-bold text-sm">{t("Axia")}</p>
                 <p className="text-[#808080] text-xs">{t("Agent e-commerce · En ligne")}</p>
               </div>
               <div className="ml-auto w-2 h-2 rounded-full bg-green-400" />
@@ -339,12 +339,12 @@ export default async function FonctionnalitesPage() {
             style={{ background: "#fff", borderColor: "rgba(59,130,246,0.2)", boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)", background: "#FAFAFA" }}>
               <p className="text-[#666666] text-xs font-bold uppercase tracking-wider">{t("Suivi commande #AX-2847")}</p>
-              <p className="text-[#111111] font-bold mt-0.5">{t("En cours de livraison")}</p>
+              <p className="text-[#5E6063] font-bold mt-0.5">{t("En cours de livraison")}</p>
             </div>
             <div className="p-5">
               {/* Fausse carte */}
               <div className="rounded-xl overflow-hidden mb-4 relative h-32"
-                style={{ background: "linear-gradient(135deg, #111111 0%, #1a1a1a 100%)", border: "1px solid rgba(245,166,35,0.2)" }}>
+                style={{ background: "linear-gradient(135deg, #5E6063 0%, #1a1a1a 100%)", border: "1px solid rgba(245,166,35,0.2)" }}>
                 <div className="absolute inset-0 opacity-20"
                   style={{ backgroundImage: "repeating-linear-gradient(0deg,rgba(245,166,35,0.3) 0,rgba(245,166,35,0.3) 1px,transparent 1px,transparent 40px),repeating-linear-gradient(90deg,rgba(245,166,35,0.3) 0,rgba(245,166,35,0.3) 1px,transparent 1px,transparent 40px)" }} />
                 <div className="absolute top-6 left-8 w-3 h-3 rounded-full bg-[#F5A623] ring-4 ring-[#F5A623]/25 animate-pulse" />
@@ -387,7 +387,7 @@ export default async function FonctionnalitesPage() {
               <Truck size={16} style={{ color: "#3b82f6" }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#3b82f6" }}>{t("Logistique avancée")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-5 leading-snug">
               {t("De l'entrepôt à votre client,")}<br />{t("suivi GPS en temps réel")}
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
@@ -421,7 +421,7 @@ export default async function FonctionnalitesPage() {
               <TrendingUp size={16} style={{ color: "#ef4444" }} />
               <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>{t("Marketing & Croissance")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-5 leading-snug">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-5 leading-snug">
               {t("Automatisez votre croissance")}<br />{t("pendant que vous dormez")}
             </h2>
             <p className="text-[#666666] text-lg leading-relaxed mb-8">
@@ -459,7 +459,7 @@ export default async function FonctionnalitesPage() {
                   { label: "Taux conversion", val: "4,2%", delta: "+0.8pt", up: true },
                 ].map(m => (
                   <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)" }}>
-                    <p className="text-[#111111] font-black text-lg">{t(m.val)}</p>
+                    <p className="text-[#5E6063] font-black text-lg">{t(m.val)}</p>
                     <p className="text-[#8C8C8C] text-[10px] mb-1">{t(m.label)}</p>
                     <span className="text-xs font-bold" style={{ color: "#22c55e" }}>{t(m.delta)}</span>
                   </div>
@@ -476,7 +476,7 @@ export default async function FonctionnalitesPage() {
                     style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.05)" }}>
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: a.color }} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#111111] text-xs font-semibold truncate">{t(a.nom)}</p>
+                      <p className="text-[#5E6063] text-xs font-semibold truncate">{t(a.nom)}</p>
                       <p className="text-[#8C8C8C] text-[10px]">{t(a.envois)}</p>
                     </div>
                     <span className="text-xs font-bold flex-shrink-0" style={{ color: "#22c55e" }}>{t(a.taux)}</span>
@@ -497,7 +497,7 @@ export default async function FonctionnalitesPage() {
               style={{ color: "#7c3aed", background: "rgba(124,58,237,0.1)", border: "1px solid rgba(124,58,237,0.2)" }}>
               <Cpu size={11} />{" "}{t("11 agents spécialisés")}
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4">{t("L'équipe IA qui ne dort jamais")}</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-4">{t("L'équipe IA qui ne dort jamais")}</h2>
             <p className="text-[#737373] text-lg max-w-2xl mx-auto">
               {t("Chaque agent Axia maîtrise un domaine précis et travaille en coordination avec les autres — comme une équipe complète sans les charges salariales.")}
             </p>
@@ -511,7 +511,7 @@ export default async function FonctionnalitesPage() {
                   style={{ background: "rgba(124,58,237,0.15)", border: "1px solid rgba(124,58,237,0.25)" }}>
                   <Icon size={18} style={{ color: "#a78bfa" }} />
                 </div>
-                <h3 className="font-bold text-[#111111] mb-2">{t(nom)}</h3>
+                <h3 className="font-bold text-[#5E6063] mb-2">{t(nom)}</h3>
                 <p className="text-[#737373] text-sm leading-relaxed">{t(desc)}</p>
               </div>
             ))}
@@ -525,7 +525,7 @@ export default async function FonctionnalitesPage() {
           style={{ background: "linear-gradient(135deg, rgba(245,166,35,0.08) 0%, rgba(245,166,35,0.03) 100%)", borderColor: "rgba(245,166,35,0.25)" }}>
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 pointer-events-none"
             style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.15), transparent)" }} />
-          <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4 relative">{t("Prêt à bâtir votre empire ?")}</h2>
+          <h2 className="text-3xl sm:text-4xl font-black text-[#5E6063] mb-4 relative">{t("Prêt à bâtir votre empire ?")}</h2>
           <p className="text-[#666666] text-lg mb-8 relative">{t("Créez votre boutique en 2 minutes. Gratuit, sans carte bancaire.")}</p>
           <Link href="/inscription"
             className="inline-flex items-center gap-2 font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105 relative"

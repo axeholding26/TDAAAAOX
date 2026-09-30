@@ -46,7 +46,7 @@ export function FaqSection() {
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          <span className="text-[#111111] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
+          <span className="text-[#5E6063] text-sm font-semibold uppercase tracking-widest mb-4 block">FAQ</span>
           <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">{t("Questions fréquentes")}</h2>
         </div>
 
@@ -68,12 +68,12 @@ export function FaqSection() {
                 onClick={() => setOuvert(ouvert === i ? null : i)}
                 className="w-full flex items-center justify-between p-6 text-left"
               >
-                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#111111]" : "text-gray-800"}`}>
+                <span className={`font-semibold transition-colors duration-200 ${ouvert === i ? "text-[#5E6063]" : "text-gray-800"}`}>
                   {t(faq.q)}
                 </span>
                 <div
                   className={`flex-shrink-0 ml-4 w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                    ouvert === i ? "bg-[#111111] border-[#111111] scale-110 shadow-md shadow-[#111111]/25" : "border-gray-200 hover:border-[#F5A623]/50"
+                    ouvert === i ? "bg-[#5E6063] border-[#5E6063] scale-110 shadow-md shadow-[#5E6063]/25" : "border-gray-200 hover:border-[#F5A623]/50"
                   }`}
                   style={{
                     transform: ouvert === i ? "rotate(0deg) scale(1.1)" : "rotate(0deg) scale(1)",

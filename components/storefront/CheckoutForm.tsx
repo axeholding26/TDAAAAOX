@@ -892,7 +892,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
         <div className="flex items-center gap-3 p-4 rounded-2xl border" style={{ borderColor: `${theme.accent}15`, background: `${theme.accent}05` }}>
           <CreditCard size={16} style={{ color: theme.accent }} className="flex-shrink-0" />
           <p className="text-xs opacity-60 leading-relaxed">
-            {t("Paiement sécurisé par")}{" "}<span className="font-bold" style={{ color: "#111111" }}>NotchPay</span>{" "}{t("· Orange Money, MTN MoMo, carte bancaire · Chiffrement SSL 256-bit")}
+            {t("Paiement sécurisé par")}{" "}<span className="font-bold" style={{ color: "#5E6063" }}>NotchPay</span>{" "}{t("· Orange Money, MTN MoMo, carte bancaire · Chiffrement SSL 256-bit")}
           </p>
         </div>
       </div>

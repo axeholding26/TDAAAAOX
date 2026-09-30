@@ -19,10 +19,10 @@ const STATUT_LABEL: Record<string, string> = {
 };
 
 const STATUT_COLOR: Record<string, { dot: string; text: string; bg: string }> = {
-  en_attente:     { dot: "#F5A623", text: "#111111", bg: "rgba(245,166,35,0.12)" },
-  confirmee:      { dot: "#D4911A", text: "#111111", bg: "rgba(212,145,26,0.12)" },
-  en_preparation: { dot: "#999999", text: "#111111", bg: "rgba(153,153,153,0.12)" },
-  expediee:       { dot: "#666666", text: "#111111", bg: "rgba(102,102,102,0.10)" },
+  en_attente:     { dot: "#F5A623", text: "#5E6063", bg: "rgba(245,166,35,0.12)" },
+  confirmee:      { dot: "#D4911A", text: "#5E6063", bg: "rgba(212,145,26,0.12)" },
+  en_preparation: { dot: "#999999", text: "#5E6063", bg: "rgba(153,153,153,0.12)" },
+  expediee:       { dot: "#666666", text: "#5E6063", bg: "rgba(102,102,102,0.10)" },
   livree:         { dot: "#34d399", text: "#064e3b", bg: "rgba(52,211,153,0.1)" },
   annulee:        { dot: "#f87171", text: "#7f1d1d", bg: "rgba(248,113,113,0.1)" },
 };

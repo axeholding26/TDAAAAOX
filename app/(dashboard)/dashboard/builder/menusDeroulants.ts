@@ -12,7 +12,7 @@ export const CSS_MENUS_DEROULANTS = `
   border: 1px solid #E2E2E5;
   border-radius: 10px;
   background: #FFFFFF url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
-  color: #111111;
+  color: #5E6063;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.2;
@@ -49,7 +49,7 @@ export const CSS_MENUS_DEROULANTS = `
   .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) option::checkmark { display: none; }
   .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) option:hover,
   .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) option:focus-visible { background: #FFF6E5; outline: none; }
-  .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) option:checked { background: #FFEFD2; color: #111111; font-weight: 600; }
+  .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) option:checked { background: #FFEFD2; color: #5E6063; font-weight: 600; }
   .ax-constructeur select:not([data-apercu-page] select, .axs-digital-store select) optgroup {
     padding-top: 4px;
     font-size: 11.5px;

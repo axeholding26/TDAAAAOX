@@ -55,7 +55,7 @@ function NouveauLotForm({ produits, onDone }: { produits: Produit[]; onDone: () 
 
   return (
     <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-      <p className="text-[13px] font-bold text-[#111]">{t("Réceptionner un nouveau lot")}</p>
+      <p className="text-[13px] font-bold text-[#5E6063]">{t("Réceptionner un nouveau lot")}</p>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Produit *")}</label>
@@ -124,7 +124,7 @@ export default function TracabilitePage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[18px] font-bold text-[#111]">{t("Traçabilité")}</h1>
+            <h1 className="text-[18px] font-bold text-[#5E6063]">{t("Traçabilité")}</h1>
             <BoutonRevoirTutoriel moduleKey="pos-tracabilite" />
           </div>
           <p className="text-[12px] text-gray-500">{t("Lots reçus, péremption et rappel produit")}</p>
@@ -156,7 +156,7 @@ export default function TracabilitePage() {
       <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 w-fit">
         {["all", "actif", "epuise", "perime", "rappele"].map(f => (
           <button key={f} onClick={() => setFiltre(f)}
-            className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold ${filtre === f ? "bg-white shadow-sm text-[#111]" : "text-gray-500"}`}>
+            className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold ${filtre === f ? "bg-white shadow-sm text-[#5E6063]" : "text-gray-500"}`}>
             {f === "all" ? t("Tous") : t(STATUT_CFG[f]?.label) ?? t(f)}
           </button>
         ))}
@@ -167,7 +167,7 @@ export default function TracabilitePage() {
       ) : lots.length === 0 ? (
         <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
           <Boxes size={28} className="text-gray-200 mx-auto mb-3" />
-          <p className="text-[13px] font-semibold text-[#111]">{t("Aucun lot enregistré")}</p>
+          <p className="text-[13px] font-semibold text-[#5E6063]">{t("Aucun lot enregistré")}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -177,7 +177,7 @@ export default function TracabilitePage() {
                 {l.produit.images[0] ? <img src={l.produit.images[0]} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" /> : <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={16} className="text-gray-300" /></div>}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[13px] font-semibold text-[#111]">{t(l.produit.nom)}</p>
+                    <p className="text-[13px] font-semibold text-[#5E6063]">{t(l.produit.nom)}</p>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUT_CFG[l.statut]?.cls}`}>{t(STATUT_CFG[l.statut]?.label)}</span>
                     {l.expireBientot && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1"><AlertTriangle size={9} />{" "}{t("Expire bientôt")}</span>}
                     {l.expire && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 flex items-center gap-1"><XCircle size={9} />{" "}{t("Expiré")}</span>}

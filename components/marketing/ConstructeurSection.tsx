@@ -35,7 +35,7 @@ export function ConstructeurSection() {
 
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-24px)", transition: "all 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
             <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">{tr("Constructeur")}</span>
-            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
+            <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#5E6063] mb-5 leading-[1.08]">
               {tr("Crée une boutique sur-mesure en quelques secondes")}
             </h2>
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-lg">
@@ -52,7 +52,7 @@ export function ConstructeurSection() {
               ))}
             </ul>
             <Link href="/inscription" className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-bold text-white transition-transform hover:scale-[1.03]"
-              style={{ background: "#111111" }}>
+              style={{ background: "#5E6063" }}>
               {tr("Essayer le constructeur →")}
             </Link>
           </div>

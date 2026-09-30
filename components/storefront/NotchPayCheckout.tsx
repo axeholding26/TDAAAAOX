@@ -64,7 +64,7 @@ export function NotchPayCheckout({
         type="button"
         onClick={payer}
         disabled={loading}
-        className="w-full bg-[#111111] hover:bg-[#333333] text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+        className="w-full bg-[#5E6063] hover:bg-[#333333] text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
       >
         {loading ? (
           <><Loader2 size={16} className="animate-spin" />{" "}{t("Redirection en cours...")}</>

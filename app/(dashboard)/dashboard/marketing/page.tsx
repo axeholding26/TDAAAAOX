@@ -97,7 +97,7 @@ export default async function MarketingPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-[#111111] font-poppins inline-flex items-center gap-2">{t("Marketing")}{" "}<AgentActiveIndicator label={t("Agent Marketing actif")} /></h1>
+            <h1 className="text-2xl font-bold text-[#5E6063] font-poppins inline-flex items-center gap-2">{t("Marketing")}{" "}<AgentActiveIndicator label={t("Agent Marketing actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="marketing" />
           </div>
           <p className="text-[#717171] text-sm mt-1">{t("Boostez vos ventes avec des outils ciblés")}</p>
@@ -122,7 +122,7 @@ export default async function MarketingPage() {
               <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4] mb-3">
                 <Icone size={15} style={{ color: stat.accent }} />
               </div>
-              <p className="text-[#111111] text-xl font-bold font-poppins">{t(stat.value)}</p>
+              <p className="text-[#5E6063] text-xl font-bold font-poppins">{t(stat.value)}</p>
               <p className="text-[#717171] text-xs mt-0.5">{t(stat.label)}</p>
             </div>
           );
@@ -142,11 +142,11 @@ export default async function MarketingPage() {
                   </div>
                   <ArrowRight
                     size={16}
-                    className="text-[#717171] group-hover:text-[#111111] group-hover:translate-x-0.5 transition-all duration-200 mt-1"
+                    className="text-[#717171] group-hover:text-[#5E6063] group-hover:translate-x-0.5 transition-all duration-200 mt-1"
                   />
                 </div>
 
-                <p className="text-[#111111] font-semibold text-sm">{t(tool.titre)}</p>
+                <p className="text-[#5E6063] font-semibold text-sm">{t(tool.titre)}</p>
                 <p className="text-[#717171] text-sm mt-1 leading-relaxed flex-1">{t(tool.description)}</p>
 
                 <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
@@ -172,7 +172,7 @@ export default async function MarketingPage() {
                 <Tag size={15} className="text-[#F5A623]" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-[#111111]">{t("Codes promo récents")}</h2>
+                <h2 className="text-sm font-semibold text-[#5E6063]">{t("Codes promo récents")}</h2>
                 <p className="text-[#717171] text-xs">{t(codesActifs)} actif{codesActifs > 1 ? "s" : ""} sur {codesPromo.length}</p>
               </div>
             </div>
@@ -224,12 +224,12 @@ export default async function MarketingPage() {
           <div className="w-14 h-14 rounded-2xl bg-[#F4F4F4] border border-[#E8E8E8] flex items-center justify-center mx-auto mb-4">
             <Megaphone size={24} className="text-[#717171]" />
           </div>
-          <p className="text-[#111111] font-semibold text-base mb-2">{t("Prêt à booster vos ventes ?")}</p>
+          <p className="text-[#5E6063] font-semibold text-base mb-2">{t("Prêt à booster vos ventes ?")}</p>
           <p className="text-[#717171] text-sm mb-6 max-w-sm mx-auto">
             {t("Commencez par créer un code promo pour attirer vos premiers clients.")}
           </p>
           <Link href="/dashboard/marketing/codes-promo">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#111111] text-white">
+            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#5E6063] text-white">
               <Tag size={14} />
               {t("Créer un code promo")}
             </span>
