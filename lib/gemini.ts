@@ -301,7 +301,9 @@ function resumerArbrePourPrompt(tree: any[]): string {
     id: n.id,
     type: n.type,
     ...(n.actif === false ? { actif: false } : {}),
-    ...(n.config ? { config: JSON.stringify(n.config).slice(0, 300) } : {}),
+    // Section de design (HTML importé) : son contenu se modifie par modifier_design_accueil, jamais ici.
+    ...(n.type === "embed-html" ? { config: "section de design — ne pas modifier son contenu" }
+      : n.config ? { config: JSON.stringify(n.config).slice(0, 300) } : {}),
     ...(n.style ? { style: n.style } : {}),
     ...(n.children?.length ? { children: n.children.map(alleger) } : {}),
   });

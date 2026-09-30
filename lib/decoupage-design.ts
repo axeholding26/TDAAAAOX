@@ -3,12 +3,28 @@
 // déplaçables/masquables/supprimables une à une, comme dans Shopify — au lieu
 // d'un seul bloc "embed-html" monolithique. Chaque section reste un bloc
 // embed-html (HTML d'origine intact) ; le CSS du design est commun, injecté
-// une fois (lib/scope-css.ts::cssSectionsDesign). Navigateur uniquement
-// (DOMParser).
+// une fois (lib/scope-css.ts::cssSectionsDesign). Le Constructeur l'utilise
+// dans le navigateur (DOMParser) ; AXIA côté serveur avec node-html-parser.
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import { genBlockId, type Zone } from "@/lib/block-tree";
 
-function nomSection(el: Element): string {
+// Le strict nécessaire commun à un Element du DOM et à node-html-parser.
+export interface ElementDesign {
+  tagName: string;
+  id: string;
+  outerHTML: string;
+  children: ArrayLike<ElementDesign>;
+  classList: { contains(c: string): boolean };
+  getAttribute(nom: string): string | null | undefined;
+  querySelector(sel: string): { textContent: string | null } | null;
+}
+/** Éléments de premier niveau d'un fragment HTML. */
+export type Analyseur = (html: string) => ElementDesign[];
+
+const analyseurNavigateur: Analyseur = (html) =>
+  Array.from(new DOMParser().parseFromString(`<!doctype html><html><body>${html}</body></html>`, "text/html").body.children);
+
+function nomSection(el: ElementDesign): string {
   const tag = el.tagName.toLowerCase();
   const cls = String(el.getAttribute("class") || "").toLowerCase();
   if (tag === "header") return "En-tête";
@@ -33,9 +49,8 @@ function sectionDesign(zone: Zone, nom: string, html: string): BlockNode {
   };
 }
 
-export function decouperDesign(builderHtml: string): BlockNode[] {
-  const doc = new DOMParser().parseFromString(`<!doctype html><html><body>${builderHtml}</body></html>`, "text/html");
-  const enfants = Array.from(doc.body.children);
+export function decouperDesign(builderHtml: string, analyser: Analyseur = analyseurNavigateur): BlockNode[] {
+  const enfants = analyser(builderHtml);
   const iVue = enfants.findIndex((e) => e.classList.contains("view"));
   if (iVue < 0) return [];
 
@@ -71,11 +86,11 @@ export function decouperDesign(builderHtml: string): BlockNode[] {
  * renvoie `p` inchangé s'il n'y a rien à convertir — à appeler DANS un
  * setter fonctionnel (état le plus frais, jamais de double conversion).
  */
-export function convertirDesignEnSections(p: ThemeConfig): ThemeConfig {
+export function convertirDesignEnSections(p: ThemeConfig, analyser: Analyseur = analyseurNavigateur): ThemeConfig {
   const arbre = p.builderTree ?? [];
   if (arbre.length === 0) {
     if (!p.builderHtml) return p;
-    const sections = decouperDesign(p.builderHtml);
+    const sections = decouperDesign(p.builderHtml, analyser);
     return sections.length ? { ...p, builderTree: sections } : p;
   }
 
@@ -86,7 +101,7 @@ export function convertirDesignEnSections(p: ThemeConfig): ThemeConfig {
   if (iAncien < 0) return p;
 
   const embed = arbre[iAncien].children![0].children![0].children![0];
-  const sections = decouperDesign(embed.config!.html || "");
+  const sections = decouperDesign(embed.config!.html || "", analyser);
   if (!sections.length) return p;
   return {
     ...p,

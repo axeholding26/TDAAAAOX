@@ -11,6 +11,7 @@ import { AXIA_TOOLS, executerOutilDirect } from "@/lib/axia/tools";
 import { executerOutilAgent } from "@/lib/agent-consumer";
 import { filtrerOutilsParPalier } from "@/lib/plans";
 import { planActif } from "@/lib/abonnement";
+import { palierAuMoins } from "@/lib/plans";
 import { logDecision } from "@/lib/agent-memory";
 import { getLangue } from "@/lib/i18n/serveur";
 import type { GrillePermissions } from "@/lib/permissions";
@@ -42,6 +43,8 @@ export async function GET() {
   const ctx = await contexte();
   if (!ctx) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const { tenantId, droits, complet } = ctx;
+  // AXIA (prises de parole et demandes d'accord) : Palier Pro et plus, comme AXIA plein écran.
+  if (!palierAuMoins((await planActif(tenantId)).plan, "palier1")) return NextResponse.json({ propositions: [] });
 
   if (complet) {
     const cle = { tenantId_agentId_cle: { tenantId, agentId: "axia", cle: "derniere_detection" } };
@@ -81,6 +84,10 @@ export async function PATCH(req: Request) {
   const ctx = await contexte();
   if (!ctx) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const { tenantId, droits, complet } = ctx;
+
+  if (!palierAuMoins((await planActif(tenantId)).plan, "palier1")) {
+    return NextResponse.json({ error: "AXIA est disponible à partir du Palier Pro." }, { status: 403 });
+  }
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Format invalide" }, { status: 400 });

@@ -57,6 +57,8 @@ interface NavItem {
   excludePrefix?: string[]; // sous-pages qui ont leur propre entrée
   /** Palier minimum requis — sinon l'item est cadenassé et ouvre l'upsell. */
   requiresPalier?: Palier;
+  /** Message affiché dans l'overlay abonnement quand l'item est cadenassé. */
+  messageVerrou?: string;
   /** Ouvre l'overlay abonnement au lieu de naviguer. */
   opensAbonnement?: boolean;
   /** Module de permissions : l'item disparaît entièrement si le niveau est "aucun". */
@@ -118,7 +120,8 @@ function estActif(item: NavItem, pathname: string, searchParams: URLSearchParams
 
 /** Raccourcis hors groupe — toujours visibles, en tête de sidebar. */
 const PRIMAIRES: NavItem[] = [
-  { href: "/dashboard",         label: "AXIA",            Icon: Sparkles, exact: true },
+  // AXIA plein écran : Palier Pro (app/(dashboard)/dashboard/page.tsx redirige un compte Essentiel).
+  { href: "/dashboard",         label: "AXIA",            Icon: Sparkles, exact: true, requiresPalier: "palier1", messageVerrou: "AXIA, ton assistante personnelle, est disponible à partir du Palier Pro." },
   { href: "/dashboard/accueil", label: "Tableau de bord", Icon: Home,     exact: true },
   // Hub du module Boutique (profil, médias, SEO, réseaux, livraison,
   // multi-boutique) — remplace l'ancienne sous-sidebar dédiée.
@@ -267,7 +270,7 @@ function LienPrincipal({
 
   if (locked) {
     return (
-      <button type="button" onClick={() => openAbonnement(item.requiresPalier)} className={cn(className, "w-full text-left")}>
+      <button type="button" onClick={() => openAbonnement(item.requiresPalier, item.messageVerrou)} className={cn(className, "w-full text-left")}>
         {t(contenu)}
       </button>
     );
@@ -332,7 +335,7 @@ function LienEnfant({
 
   if (locked) {
     return (
-      <button type="button" onClick={() => openAbonnement(item.requiresPalier)} className={cn(className, "text-left")}>
+      <button type="button" onClick={() => openAbonnement(item.requiresPalier, item.messageVerrou)} className={cn(className, "text-left")}>
         {t(contenu)}
       </button>
     );

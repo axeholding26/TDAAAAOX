@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { X, Volume2, VolumeX, MessageCircle, Check, Loader2 } from "lucide-react";
 import { IconAxia } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
-import { jouerSonNotification } from "@/components/ui/NotificationSound";
+import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { palierAuMoins } from "@/lib/plans";
 
 // Bulle AXIA en bas à droite du dashboard : AXIA y prend la parole d'elle-même
 // (constats sur la boutique, rappels) et y demande l'accord du marchand avant
@@ -15,7 +16,33 @@ type Action = { prompt?: string; lien?: string; libelle?: string; confirmation?:
 interface Proposition { id: string; type: string; message: string; action: Action; statut: string }
 
 const ACCENT = "#F5A623";
+const MESSAGE_PRO = "AXIA, ton associée qui surveille ta boutique et te propose des actions, est disponible à partir du Palier Pro.";
 const CLE_MUET = "axia_muet";
+
+// Son propre à AXIA (trois notes montantes, douces), distinct du carillon
+// des notifications et du son de commande.
+function sonAxia() {
+  try {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    [1047, 1319, 1568].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + i * 0.09;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(0.16, t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+      osc.start(t);
+      osc.stop(t + 0.4);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 1200);
+  } catch { /* audio indisponible ou bloqué avant toute interaction */ }
+}
 
 function lireMuet() {
   try { return localStorage.getItem(CLE_MUET) === "1"; } catch { return false; }
@@ -34,6 +61,9 @@ export function AxiaBulle() {
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
+  const { palier, openAbonnement } = useAbonnementOverlay();
+  // Palier Essentiel : AXIA est réservé au Pro — la bulle ne fait qu'inviter à passer au Pro.
+  const pro = palierAuMoins(palier, "palier1");
   const [liste, setListe] = useState<Proposition[]>([]);
   const [bulle, setBulle] = useState<Proposition | null>(null); // prise de parole affichée
   const [panneau, setPanneau] = useState(false);
@@ -41,6 +71,11 @@ export function AxiaBulle() {
   const [enCours, setEnCours] = useState<string | null>(null);
   const [retour, setRetour] = useState<{ succes: boolean; texte: string } | null>(null);
   const annonces = useRef(new Set<string>());
+  // Le Constructeur a sa propre bulle AXIA au même endroit : ici, seules les demandes
+  // d'accord s'affichent (au-dessus d'elle) ; les constats attendent la sortie du Constructeur.
+  const surConstructeur = !!pathname?.startsWith("/dashboard/builder");
+  const constructeurRef = useRef(surConstructeur);
+  useEffect(() => { constructeurRef.current = surConstructeur; }, [surConstructeur]);
 
   useEffect(() => { setMuet(lireMuet()); }, []);
 
@@ -50,12 +85,13 @@ export function AxiaBulle() {
       if (!res.ok) return;
       const { propositions } = (await res.json()) as { propositions: Proposition[] };
       setListe(propositions);
-      const nouvelle = propositions.find((p) => p.statut === "nouveau" && !annonces.current.has(p.id));
+      const nouvelle = propositions.find((p) => p.statut === "nouveau" && !annonces.current.has(p.id)
+        && (!constructeurRef.current || p.type === "confirmation"));
       if (!nouvelle) return;
-      propositions.forEach((p) => annonces.current.add(p.id));
+      propositions.forEach((p) => { if (!constructeurRef.current || p.type === "confirmation") annonces.current.add(p.id); });
       setRetour(null);
       setBulle(nouvelle);
-      if (!lireMuet()) jouerSonNotification();
+      if (!lireMuet()) sonAxia();
       decider(nouvelle.id, "vu").catch(() => {});
     } catch { /* réseau : prochain tour */ }
   }, []);
@@ -109,7 +145,7 @@ export function AxiaBulle() {
     const v = !muet;
     setMuet(v);
     try { localStorage.setItem(CLE_MUET, v ? "1" : "0"); } catch { /* stockage indisponible */ }
-    if (!v) jouerSonNotification();
+    if (!v) sonAxia();
   }
 
   const carte = (p: Proposition) => {
@@ -141,6 +177,18 @@ export function AxiaBulle() {
     );
   };
 
+  if (surConstructeur) {
+    if (!(retour || bulle?.action?.confirmation)) return null;
+    return (
+      <div className="fixed right-5 bottom-24 z-[60] w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-2xl border border-[#F0F0F0] p-2" role="status" aria-live="polite">
+        <button onClick={() => { setBulle(null); setRetour(null); }} className="absolute top-2 right-2 p-1 rounded-md text-[#AAA] hover:bg-black/5 z-10" aria-label={t("Fermer")}><X size={12} /></button>
+        {retour
+          ? <p className={`text-[13px] p-2 pr-6 ${retour.succes ? "text-green-600" : "text-red-600"}`}>{retour.texte}</p>
+          : bulle && carte(bulle)}
+      </div>
+    );
+  }
+
   return (
     <div className="fixed right-4 md:right-6 bottom-24 md:bottom-6 z-[60] flex flex-col items-end gap-3">
       {panneau ? (
@@ -159,7 +207,7 @@ export function AxiaBulle() {
             {liste.length ? liste.map(carte) : <p className="text-[12px] text-[#888] px-1 py-2">{t("Rien à signaler pour le moment. Je te préviens dès que je vois quelque chose.")}</p>}
           </div>
           {pathname !== "/dashboard" && (
-            <button onClick={() => { setPanneau(false); router.push("/dashboard"); }}
+            <button onClick={() => { setPanneau(false); if (pro) router.push("/dashboard"); else openAbonnement("palier1", MESSAGE_PRO); }}
               className="flex items-center justify-center gap-2 px-4 py-3 text-[12px] font-semibold border-t border-[#F0F0F0] hover:bg-black/[.03] text-[#111]">
               <MessageCircle size={13} /> {t("Parler à AXIA")}
             </button>
@@ -175,7 +223,7 @@ export function AxiaBulle() {
         </div>
       )}
 
-      <button onClick={() => { setPanneau((v) => !v); setBulle(null); }}
+      <button onClick={() => { if (!pro) return openAbonnement("palier1", MESSAGE_PRO); setPanneau((v) => !v); setBulle(null); }}
         className="relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
         style={{ background: ACCENT }} aria-label={t("Ouvrir AXIA")}>
         <IconAxia size={48} />

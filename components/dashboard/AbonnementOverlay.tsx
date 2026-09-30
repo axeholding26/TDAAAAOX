@@ -17,7 +17,7 @@ interface Etat {
 // Prend le dessus sur tout le dashboard (sidebar comprise) via un portail —
 // c'est le point d'entrée unique déclenché par chaque cadenas de fonctionnalité
 // hors plan, ainsi que par le lien "Abonnement" de la sidebar.
-export function AbonnementOverlay({ palierRequis, onClose }: { palierRequis?: Palier; onClose: () => void }) {
+export function AbonnementOverlay({ palierRequis, message, onClose }: { palierRequis?: Palier; message?: string; onClose: () => void }) {
   const t = useT();
   const [etat, setEtat] = useState<Etat | null>(null);
   const [erreur, setErreur] = useState(false);
@@ -51,6 +51,7 @@ export function AbonnementOverlay({ palierRequis, onClose }: { palierRequis?: Pa
               <Lock size={10} />{" "}{t("Réservé au Palier")}{" "}{t(NOMS_PALIERS[palierRequis])}
             </span>
           )}
+          {message && <p className="text-[13px] font-semibold text-[#111]">{t(message)}</p>}
         </div>
         <button onClick={onClose}
           className="w-9 h-9 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"

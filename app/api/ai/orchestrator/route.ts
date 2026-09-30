@@ -1,6 +1,7 @@
 // Orchestrateur central AXIA — coordonne tous les agents vers les objectifs
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { planActif } from "@/lib/abonnement";
 import { z } from "zod";
 import {
   creerObjectif,
@@ -36,6 +37,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "orchestrer") {
+    // Agents autonomes : Palier Pro et plus (lib/plans-catalogue.ts), comme la tâche horaire.
+    if ((await planActif(tenantId)).plan === "palier0") {
+      return NextResponse.json({ error: "Les agents autonomes sont disponibles à partir du Palier Pro." }, { status: 403 });
+    }
     await majProgressObjectif(tenantId);
     const actions = await orchestrerAutonomie(tenantId);
     return NextResponse.json({ actions, message: `${actions.length} agent(s) activé(s) automatiquement` });

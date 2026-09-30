@@ -32,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("dashboard", "boutique")}>
-    <AbonnementOverlayProvider>
+    <AbonnementOverlayProvider palier={palier}>
       <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse}>
         <DeviseProvider devise={boutique?.devise || "XAF"}>{children}</DeviseProvider>
       </DashboardShell>

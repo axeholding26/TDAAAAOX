@@ -4,11 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, MessageCircle, X } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
-import { jouerSonNotification } from "@/components/ui/NotificationSound";
 
 // Alerte « nouvelle commande » — distincte des autres notifications (qui
 // passent par un toast + le carillon de NotificationSound) : son de caisse
-// son de notification (public/son-notification.mp3), carte bien visible et notification système si la page est en
+// son de commande (public/son-commande.mp3 : no.wav terminé par un son d'argent), carte bien visible et notification système si la page est en
 // arrière-plan. Montée une fois pour tout le dashboard (DashboardShell).
 const TYPES_COMMANDE = new Set(["nouvelle_commande", "commande_whatsapp"]);
 
@@ -24,6 +23,10 @@ export function ecouterNotifications(cb: (d: Donnees) => void) {
   abonnes.add(cb);
   if (derniere) cb(derniere);
   return () => { abonnes.delete(cb); };
+}
+
+function sonCaisse() {
+  new Audio("/son-commande.mp3").play().catch(() => { /* lecture bloquée ou audio indisponible */ });
 }
 
 export function AlerteCommande() {
@@ -46,7 +49,7 @@ export function AlerteCommande() {
         const nouvelles = liste.filter((n) => !vues.current!.has(n.id) && !n.lu && TYPES_COMMANDE.has(n.type));
         liste.forEach((n) => vues.current!.add(n.id));
         if (!nouvelles.length) return;
-        jouerSonNotification();
+        sonCaisse();
         setAlertes((a) => [...nouvelles, ...a].slice(0, 3));
         if (document.hidden && "Notification" in window && Notification.permission === "granted") {
           for (const n of nouvelles) new Notification(`🛒 ${n.titre}`, { body: n.message, tag: n.id });

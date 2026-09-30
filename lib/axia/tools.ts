@@ -18,6 +18,10 @@ import { validerActions, applyAgentActions } from "@/lib/agent-actions";
 import { SECTIONS_FICHE, TYPES_FICHE, LAYOUTS_FICHE, appliquerActionFiche, resumerFiche, type ActionFiche } from "@/lib/fiche-produit";
 import { BLOCS_PAGE, appliquerActionPage, resumerPage, type ActionPage, type CleePage } from "@/lib/pages-annexes";
 import { estSensible, demanderConfirmation } from "./confirmation";
+import { assurerSections, decrireAccueil, appliquerActionDesign, type ActionDesign } from "@/lib/design-accueil";
+import { reglagesTheme } from "./reglages-theme";
+import { findNode } from "@/lib/block-tree";
+import { FONTS } from "@/lib/theme-fonts";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -215,6 +219,7 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
       type: "object" as const,
       properties: {
         accent: { type: "string", description: "Couleur principale, ex : #E11D48" },
+        accentSecondaire: { type: "string", description: "Couleur secondaire" },
         fond: { type: "string", description: "Fond des pages" },
         texte: { type: "string", description: "Texte principal" },
         surface: { type: "string", description: "Fond des cartes et blocs" },
@@ -233,6 +238,53 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
         instruction: { type: "string", description: "La demande du marchand reformulée clairement, avec tout le contexte utile (ex: \"mets le titre principal en plus grand et centré\", \"ajoute une section avec 3 avantages : livraison rapide, paiement sécurisé, support 24/7\")" },
       },
       required: ["instruction"],
+    },
+  },
+  {
+    name: "modifier_design_accueil",
+    tier: "palier1",
+    // Mêmes gestes que le clic dans l'aperçu du Constructeur (lib/design-accueil.ts).
+    description: "Modifie les SECTIONS DU DESIGN de la page d'accueil, exactement comme le marchand dans le Constructeur : réécrire un titre, un texte ou un bouton, changer un lien ou une image, styler un élément (police, taille, graisse, couleur, fond, dégradé, bordure, arrondi, marges, alignement, masquer — pour l'état base, hover, tablet ou mobile), masquer/afficher/supprimer/dupliquer/déplacer une section. Appelle-le d'abord avec actions vides pour lire la page (sections et éléments avec leurs identifiants el_…). Pour AJOUTER un nouveau bloc, utilise personnaliser_page_boutique.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        actions: {
+          type: "array",
+          description: "Actions à appliquer (vide = lire la page).",
+          items: {
+            type: "object",
+            properties: {
+              action: { type: "string", enum: ["texte", "lien", "image", "style", "masquer_section", "afficher_section", "supprimer_section", "dupliquer_section", "deplacer_section"] },
+              element: { type: "string", description: "Identifiant el_… de l'élément (texte, lien, image, style)" },
+              section: { type: "string", description: "Identifiant de la section (actions *_section)" },
+              valeur: { type: "string", description: "Nouveau texte, lien ou URL d'image" },
+              alt: { type: "string", description: "Texte alternatif de l'image" },
+              index: { type: "number", description: "Nouvelle position dans sa zone, 0-based (deplacer_section)" },
+              etat: { type: "string", enum: ["base", "hover", "tablet", "mobile"] },
+              style: { type: "object", description: "Champs : police (id de police), taille, graisse, interligne, espacementLettres, casse (none|uppercase|lowercase|capitalize), alignement (left|center|right|justify), couleur, fond, degrade, imageFond, bordureEpaisseur, bordureCouleur, rayon, paddingHaut/Droite/Bas/Gauche, margeHaut/Droite/Bas/Gauche, largeur, largeurMax, hauteur, masque (booléen). Valeurs CSS (ex \"24px\", \"#E11D48\")." },
+            },
+            required: ["action"],
+          },
+        },
+      },
+      required: ["actions"],
+    },
+  },
+  {
+    name: "modifier_theme",
+    tier: "palier1",
+    // Panneaux Typographie, Mise en page, Boutons & navigation, Animations du Constructeur.
+    description: `Modifie les réglages GLOBAUX du thème, comme les panneaux du Constructeur (appel sans paramètre = lire les réglages actuels) : polices (${FONTS.map((f) => f.v).join(", ")}), arrondi, mise en page, boutons, barre de navigation, animations. Pour les couleurs, utilise modifier_couleurs.`,
+    parameters: {
+      type: "object" as const,
+      properties: {
+        polices: { type: "object", description: "titre, corps (id de police), poidsTitre (400-900), tailleBase (13px-18px), lettreEspacement, hauteurLigne, transformTitre (none|uppercase|capitalize)" },
+        arrondi: { type: "string", enum: ["0px", "4px", "8px", "12px", "16px", "24px", "9999px"] },
+        miseEnPage: { type: "object", description: "largeurContainer (1024px|1280px|1440px|1600px|100%), paddingSection (sm|md|lg|xl), colonnesProduits (2-5), colonnesMobile (1-2), styleCarte (shadow|bordered|flat|lifted), ombre (none|sm|md|lg|xl)" },
+        boutons: { type: "object", description: "style (filled|outlined|ghost|pill|square), taille (sm|md|lg|xl), hover (lighten|darken|scale|glow|slide)" },
+        navigation: { type: "object", description: "type (classic|centered|floating|minimal|mega|transparent-scroll), style (light|dark|glass|transparent), hauteur (48px|64px|80px), sticky, showSearch, showWishlist (booléens)" },
+        animations: { type: "object", description: "preset (luxury|dynamic|elegant|playful|none) OU global (none|fade-in|slide-up|slide-left|zoom-in|flip|blur-in), vitesse (fast|normal|slow), stagger, parallax, smoothScroll (booléens)" },
+      },
     },
   },
   {
@@ -1015,7 +1067,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "modifier_couleurs": {
-        const maj = Object.fromEntries(["accent", "fond", "texte", "surface", "texteMuted", "bordure"]
+        const maj = Object.fromEntries(["accent", "accentSecondaire", "fond", "texte", "surface", "texteMuted", "bordure"]
           .filter((k) => typeof args[k] === "string" && /^#[0-9a-f]{6}$/i.test(args[k].trim()))
           .map((k) => [k, args[k].trim()]));
         if (!Object.keys(maj).length) return { succes: false, resultat: "Aucune couleur valide reçue (format attendu : #RRGGBB)." };
@@ -1112,20 +1164,65 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         // un thème de la bibliothèque AXSO Design — la quasi-totalité des
         // boutiques réelles — alors que le marchand pouvait éditer exactement
         // le même builderTree à la main sans restriction.
-        const config = (tenant.themeConfig as any) || {};
+        const config: any = assurerSections((tenant.themeConfig as any) || {});
         const arbreActuel = config.builderTree ?? [];
         const { actions, resume } = await agentConstructeurLibre({
           instruction: args.instruction,
           tree: arbreActuel,
           boutique: { nom: tenant.nomBoutique, categorie: tenant.categorie || "", couleurs: config.colors },
         });
-        const actionsValidees = validerActions(actions);
+        // Le HTML d'une section de design ne se réécrit jamais en bloc (l'agent n'en voit qu'un extrait) :
+        // ses textes, liens, images et styles passent par modifier_design_accueil.
+        const actionsValidees = validerActions(actions).filter((a) =>
+          !(a.op === "updateConfig" && findNode(arbreActuel, a.nodeId)?.type === "embed-html" && ("html" in a.config || "css" in a.config)));
         if (!actionsValidees.length) {
           return { succes: false, resultat: resume || "Je n'ai pas identifié de changement concret à appliquer sur la page — peux-tu préciser ta demande ?" };
         }
         const nouvelArbre = applyAgentActions(arbreActuel, actionsValidees);
         await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...config, builderTree: nouvelArbre } } });
         return { succes: true, resultat: `✅ ${resume}` };
+      }
+
+      case "modifier_design_accueil": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeConfig: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const config: any = assurerSections((tenant.themeConfig as any) || {});
+        let arbre = config.builderTree ?? [];
+        const actions: ActionDesign[] = Array.isArray(args.actions) ? args.actions : [];
+        try {
+          for (const a of actions) arbre = appliquerActionDesign(arbre, a);
+        } catch (e: any) {
+          // Rien n'est enregistré si une action échoue : état toujours cohérent.
+          return { succes: false, resultat: `${e.message} (aucune modification enregistrée)` };
+        }
+        const { tree, resume } = decrireAccueil(arbre);
+        await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: { ...config, builderTree: tree } } });
+        return { succes: true, resultat: `${actions.length ? `✅ ${actions.length} modification(s) enregistrée(s).\n\n` : ""}Page d'accueil :\n${resume}` };
+      }
+
+      case "modifier_theme": {
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { themeConfig: true } });
+        if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
+        const cfg = (tenant.themeConfig as any) || {};
+        const { patch, refus } = reglagesTheme(args);
+        if (refus.length && !Object.keys(patch).length) return { succes: false, resultat: `Valeurs refusées : ${refus.join(", ")}` };
+        const suivant = {
+          ...cfg,
+          ...(patch.fonts && { fonts: { ...cfg.fonts, ...patch.fonts } }),
+          ...(patch.radius && { radius: patch.radius }),
+          ...(patch.layout && { layout: { ...cfg.layout, ...patch.layout } }),
+          ...(patch.boutons && { boutons: { ...cfg.boutons, ...patch.boutons } }),
+          ...(patch.navigationStyle && { navigationStyle: { ...cfg.navigationStyle, ...patch.navigationStyle } }),
+          ...(patch.animations && { animations: { ...cfg.animations, ...patch.animations } }),
+          // Comme dans le Constructeur : ces panneaux s'appliquent aussi au design importé (lib/reglages-design.ts).
+          ...((patch.boutons || patch.navigationStyle || patch.animations) && { reglagesDesign: {
+            ...cfg.reglagesDesign,
+            ...(patch.boutons && { boutons: true }), ...(patch.navigationStyle && { navigation: true }), ...(patch.animations && { animations: true }),
+          } }),
+        };
+        if (Object.keys(patch).length) await prisma.tenant.update({ where: { id: tenantId }, data: { themeConfig: suivant } });
+        const actuel = { polices: suivant.fonts, arrondi: suivant.radius, miseEnPage: suivant.layout, boutons: suivant.boutons, navigation: suivant.navigationStyle, animations: suivant.animations, couleurs: suivant.colors };
+        return { succes: true, resultat: `${Object.keys(patch).length ? "✅ Réglages enregistrés." : "Réglages actuels :"}${refus.length ? ` Ignoré (valeur invalide) : ${refus.join(", ")}.` : ""}\n${JSON.stringify(actuel)}` };
       }
 
       case "modifier_fiche_produit": {

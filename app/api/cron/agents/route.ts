@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { orchestrerAutonomie, majProgressObjectif } from "@/lib/orchestrator";
 import { traiterTachesEnAttente } from "@/lib/agent-consumer";
+import { planActif } from "@/lib/abonnement";
 
 export async function GET(req: NextRequest) {
   // Sécurité basique — secret cron
@@ -23,6 +24,8 @@ export async function GET(req: NextRequest) {
 
   for (const tenant of tenants) {
     try {
+      // Agents autonomes et automatisations : Palier Pro et plus (lib/plans-catalogue.ts).
+      if ((await planActif(tenant.id)).plan === "palier0") continue;
       await majProgressObjectif(tenant.id);
       const actions = await orchestrerAutonomie(tenant.id);
       // Exécute réellement les tâches que orchestrerAutonomie vient de publier

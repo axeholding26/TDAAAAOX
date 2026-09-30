@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { IconAxia } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
+import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { palierAuMoins } from "@/lib/plans";
 
 interface Msg { role: "user" | "assistant"; content: string }
 
@@ -18,18 +20,20 @@ interface Props {
   defaultOpen?: boolean;
   // Décale la bulle vers la gauche quand un panneau occupe le bord droit.
   decalageDroite?: number;
+  // Où en est le marchand (page ouverte, section/élément sélectionnés) — transmis à AXIA.
+  contexte?: string;
 }
 
 const SUGGESTIONS_BOUTIQUE = [
+  "Analyse mon design et dis-moi ce que tu améliorerais",
+  "Propose-moi 3 palettes de couleurs adaptées à ma boutique",
+  "Réécris les textes de ma page d'accueil pour qu'ils donnent envie d'acheter",
+  "Quelles polices iraient le mieux avec ma boutique ?",
   "Ajoute une section avec 3 avantages : livraison rapide, paiement sécurisé, support réactif",
-  "Mets le titre principal plus grand et centré",
-  "Ajoute une grille de nos produits en bas de page",
-  "Sur la fiche produit, affiche les avis en liste avec des étoiles rouges",
-  "Sur la page À propos, ajoute une section de chiffres clés",
 ];
 
 
-function useAxiaChat(onSyncWithServer: () => Promise<void>) {
+function useAxiaChat(onSyncWithServer: () => Promise<void>, contexte: string) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,7 +52,7 @@ function useAxiaChat(onSyncWithServer: () => Promise<void>) {
       await onSyncWithServer();
       const messagesEnvoyes = historique.map((m, i) =>
         i === historique.length - 1
-          ? { ...m, content: `[Contexte : le marchand est dans le Constructeur libre, en train de composer la page d'accueil de sa boutique.] ${m.content}` }
+          ? { ...m, content: `[Contexte : le marchand est dans le Constructeur de sa boutique — ${contexte || "page d'accueil"}. « Ça », « ce titre », « cette section » désignent ce qui est sélectionné.] ${m.content}` }
           : m
       );
       const res = await fetch("/api/ai/axia", {
@@ -59,6 +63,7 @@ function useAxiaChat(onSyncWithServer: () => Promise<void>) {
       const data = await res.json();
       setMessages((m) => [...m, { role: "assistant", content: data.reponse || "Je n'ai pas pu traiter cette demande." }]);
       await onSyncWithServer();
+      window.dispatchEvent(new Event("axia:rafraichir"));
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: "AXIA a rencontré une erreur momentanée — réessaie dans un instant." }]);
     } finally {
@@ -75,7 +80,7 @@ function ChatBody({ messages, loading, scrollRef, suggestions, onSuggestion }: {
     <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-3">
       {messages.length === 0 && (
         <div className="space-y-3">
-          <p className="text-[14px] text-[#666666] leading-relaxed">{t("Décris ce que tu veux changer sur ta page : AXIA ajoute, modifie ou réorganise les sections à ta place.")}</p>
+          <p className="text-[14px] text-[#666666] leading-relaxed">{t("Décris ce que tu veux changer, ou demande-moi des idées : textes, couleurs, polices, sections… Je peux faire tout ce que tu fais à la main dans le Constructeur.")}</p>
           <p className="text-[12px] font-semibold uppercase tracking-wide text-[#999999] pt-1">{t("Suggestions")}</p>
           <div className="space-y-2">
             {suggestions.map((s) => (
@@ -128,11 +133,14 @@ function ChatInput({ input, setInput, loading, onSubmit }: { input: string; setI
 
 // Bulle flottante repliable — l'IA est un coup de pouce ponctuel, le
 // constructeur reste centré sur l'aperçu et le plan de page façon Shopify.
-function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 }: { onSyncWithServer: () => Promise<void>; defaultOpen: boolean; decalageDroite?: number }) {
+function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0, contexte = "" }: { onSyncWithServer: () => Promise<void>; defaultOpen: boolean; decalageDroite?: number; contexte?: string }) {
   const t = useT();
-  const [open, setOpen] = useState(defaultOpen);
+  const { palier, openAbonnement } = useAbonnementOverlay();
+  // Les outils de design d'AXIA (couleurs, thème, sections, textes…) sont réservés au Palier Pro.
+  const pro = palierAuMoins(palier, "palier1");
+  const [open, setOpen] = useState(defaultOpen && pro);
   const suggestions = SUGGESTIONS_BOUTIQUE;
-  const { messages, input, setInput, loading, scrollRef, envoyer } = useAxiaChat(onSyncWithServer);
+  const { messages, input, setInput, loading, scrollRef, envoyer } = useAxiaChat(onSyncWithServer, contexte);
 
   return (
     <div className="fixed bottom-5 z-30 flex flex-col items-end gap-3 transition-[right] duration-300" style={{ right: 20 + decalageDroite }}>
@@ -153,7 +161,7 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
         </div>
       )}
       <button
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (pro ? setOpen((v) => !v) : openAbonnement("palier1", "Personnaliser ta boutique avec AXIA (design, textes, couleurs, idées) est disponible à partir du Palier Pro."))}
         className="w-14 h-14 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.22)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 bg-[#111111]"
         title={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
         aria-label={open ? t("Fermer AXIA") : t("Ouvrir AXIA")}
@@ -171,6 +179,6 @@ function AxiaFloatingBubble({ onSyncWithServer, defaultOpen, decalageDroite = 0 
 // découvre. Repliable en rail étroit (icône seule) pour rendre de la place
 // au canevas sans revenir à une bulle superposée.
 
-export function AxiaBuilderPanel({ onSyncWithServer, defaultOpen = false, decalageDroite }: Props) {
-  return <AxiaFloatingBubble onSyncWithServer={onSyncWithServer} defaultOpen={defaultOpen} decalageDroite={decalageDroite} />;
+export function AxiaBuilderPanel({ onSyncWithServer, defaultOpen = false, decalageDroite, contexte }: Props) {
+  return <AxiaFloatingBubble onSyncWithServer={onSyncWithServer} defaultOpen={defaultOpen} decalageDroite={decalageDroite} contexte={contexte} />;
 }

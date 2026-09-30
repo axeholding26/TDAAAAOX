@@ -22,7 +22,7 @@ import { PanneauPage } from "../pages/PanneauPage";
 import { SelecteurPage } from "../pages/SelecteurPage";
 import { PAGES, type PageEditee } from "../pages/pages";
 import { nomNoeud } from "./libelles";
-import { convertirDesignEnSections } from "./decoupage";
+import { convertirDesignEnSections } from "@/lib/decoupage-design";
 import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement } from "./elements-dom";
 import { PanneauElement } from "../PanneauElement";
 import { StyleCss } from "@/components/storefront/StyleCss";
@@ -387,7 +387,11 @@ export function BoutiqueBuilder(p: Props) {
         )}
       </div>
 
-      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection ? 340 : 0} />
+      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection ? 340 : 0} contexte={[
+        `page « ${PAGES.find((pg) => pg.id === page)!.label} »`,
+        selection && `section sélectionnée « ${nomNoeud(selection)} » (id ${selection.id})`,
+        selectedEl && `élément sélectionné ${selectedEl}${infoEl ? ` (${infoEl.nom}${infoEl.texte ? ` « ${infoEl.texte.slice(0, 60)} »` : ""})` : ""}`,
+      ].filter(Boolean).join(", ")} />
     </div>
   );
 }

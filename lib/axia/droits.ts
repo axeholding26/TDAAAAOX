@@ -16,7 +16,7 @@ const REGLES: Record<string, Regle> = {
   // Boutique
   lire_boutique: L("boutique"), lister_regles_livraison: L("boutique"), calculer_frais_livraison: L("boutique"), verifier_badges: L("boutique"),
   publier_boutique: E("boutique"), modifier_boutique: E("boutique"), configurer_livraison: E("boutique"), ajouter_regle_livraison: E("boutique"),
-  personnaliser_page_boutique: E("boutique"), modifier_page: E("boutique"), modifier_couleurs: E("boutique"), creer_popup: E("boutique"),
+  personnaliser_page_boutique: E("boutique"), modifier_design_accueil: E("boutique"), modifier_theme: E("boutique"), modifier_page: E("boutique"), modifier_couleurs: E("boutique"), creer_popup: E("boutique"),
   // Commandes
   statut_commande: L("commandes"), dashboard_livraison: L("commandes"), lister_retours: L("commandes"), lister_commandes_fournisseur: L("commandes"), verifier_retards_fournisseurs: L("commandes"),
   assigner_livreur: E("commandes"), initier_retour: E("commandes"), creer_retour: E("commandes"), mettre_a_jour_retour: E("commandes"),
