@@ -5,8 +5,9 @@ import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 import { useT } from "@/components/I18nProvider";
 
-const HIGHFIELD_VIDEO_URL = "";
+const HIGHFIELD_VIDEO_URL = "https://res.cloudinary.com/mn6mspfb/video/upload/v1791232862/axso-video.mp4";
 const HIGHFIELD_IFRAME_URL = "";
+const HIGHFIELD_POSTER_URL = "/axso-video-poster.jpg";
 
 const VIDEO_CARTS = [
   { size: 600, top: "5%",  duration: 20, delay: 0,  opacity: 0.05, direction: "rtl" as const },
@@ -18,18 +19,12 @@ export function VideoSection() {
   const t = useT();
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
       ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          if (videoRef.current && HIGHFIELD_VIDEO_URL) {
-            videoRef.current.play().catch(() => {});
-          }
-        }
+        if (e.isIntersecting) setVisible(true);
       },
       { threshold: 0.2 }
     );
@@ -167,10 +162,10 @@ export function VideoSection() {
             <div className="relative bg-gray-950" style={{ aspectRatio: "16/9" }}>
               {hasVideo && (
                 <video
-                  ref={videoRef}
                   className="w-full h-full object-cover"
                   src={HIGHFIELD_VIDEO_URL}
-                  muted loop playsInline autoPlay
+                  poster={HIGHFIELD_POSTER_URL || undefined}
+                  controls playsInline preload="metadata"
                 />
               )}
               {hasIframe && !hasVideo && (
@@ -226,12 +221,12 @@ export function VideoSection() {
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-white/30 text-xs">0:00</span>
                       <span className="text-white/30 text-xs inline-flex items-center gap-1"><Rocket size={12} />{" "}{t("Empire en construction")}</span>
-                      <span className="text-white/30 text-xs">1:00</span>
+                      <span className="text-white/30 text-xs">3:00</span>
                     </div>
                   </div>
                 </div>
               )}
-              {(hasVideo || hasIframe) && (
+              {hasIframe && !hasVideo && (
                 <div
                   className="absolute bottom-0 left-0 right-0 h-24 pointer-events-none"
                   style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4), transparent)" }}

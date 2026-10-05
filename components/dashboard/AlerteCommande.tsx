@@ -6,8 +6,8 @@ import { ShoppingBag, MessageCircle, X } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 // Alerte « nouvelle commande » — distincte des autres notifications (qui
-// passent par un toast + le carillon de NotificationSound) : son de caisse
-// son de commande (public/son-commande.mp3 : no.wav terminé par un son d'argent), carte bien visible et notification système si la page est en
+// passent par un toast + le carillon de NotificationSound) : son de commande
+// (public/son-commande.mp3), carte bien visible et notification système si la page est en
 // arrière-plan. Montée une fois pour tout le dashboard (DashboardShell).
 const TYPES_COMMANDE = new Set(["nouvelle_commande", "commande_whatsapp"]);
 

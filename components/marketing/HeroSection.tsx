@@ -13,14 +13,14 @@ const PRODUIT_DETAILS = [
 
 // 8 photos pour 8 emplacements photo de la mosaïque — permutées en continu (cf. useShuffle).
 const PHOTOS = [
-  { src: "/hero-bags.jpg",       alt: "Maroquinerie artisanale vendue sur Axso" },
-  { src: "/hero-kente.jpg",      alt: "Textile Kente et cosmétiques vendus sur Axso" },
-  { src: "/hero-headphones.jpg", alt: "Accessoires audio artisanaux vendus sur Axso" },
-  { src: "/hero-argan.jpg",      alt: "Huile d'argan cosmétique vendue sur Axso" },
-  { src: "/hero-market.jpg",     alt: "Paiement mobile accepté sur un marché africain" },
-  { src: "/hero-stand.jpg",      alt: "Accessoires tech vendus sur Axso" },
-  { src: "/hero-coffee.jpg",     alt: "Épicerie fine vendue sur Axso" },
-  { src: "/hero-moto.jpg",       alt: "Livraison rapide en ville avec Axso" },
+  { src: "/hero-bags.webp",       alt: "Maroquinerie artisanale vendue sur Axso" },
+  { src: "/hero-kente.webp",      alt: "Textile Kente et cosmétiques vendus sur Axso" },
+  { src: "/hero-headphones.webp", alt: "Accessoires audio artisanaux vendus sur Axso" },
+  { src: "/hero-argan.webp",      alt: "Huile d'argan cosmétique vendue sur Axso" },
+  { src: "/hero-market.webp",     alt: "Paiement mobile accepté sur un marché africain" },
+  { src: "/hero-stand.webp",      alt: "Accessoires tech vendus sur Axso" },
+  { src: "/hero-coffee.webp",     alt: "Épicerie fine vendue sur Axso" },
+  { src: "/hero-moto.webp",       alt: "Livraison rapide en ville avec Axso" },
 ];
 const SLOT_AREAS = ["bags", "kente", "headphones", "argan", "market", "stand", "coffee", "moto"];
 
@@ -125,7 +125,8 @@ export function HeroSection() {
           const isDesktopOnly = area === "headphones" || area === "argan" || area === "coffee";
           return (
             <div key={area} className={`ax-tile${isDesktopOnly ? " ax-tile-desktop" : ""}`} style={{ gridArea: area }}>
-              <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover"
+              {/* lazy : tuiles masquées sur mobile → pas téléchargées tant qu'invisibles */}
+              <img src={photo.src} alt={photo.alt} className="w-full h-full object-cover" loading={isDesktopOnly ? "lazy" : undefined}
                 style={{
                   opacity: isFading ? 0 : 1,
                   transform: isFading ? "scale(1.06)" : "scale(1)",
