@@ -68,6 +68,17 @@ function corrigerEntete(header: El, slug: string) {
   header.querySelectorAll(`a[href="/${slug}/produits"]`).slice(1).forEach(retirer);
 }
 
+// Pas de bouton Panier dans l'en-tête (le panier s'ouvre depuis la
+// notification « ajouté au panier » de la fiche produit). Remplacé par un
+// repère masqué qui garde les id du bouton (les scripts du design les
+// cherchent) et sert d'ancre au lien Favoris (NavigationDesign).
+function retirerPanier(racine: El, slug: string) {
+  for (const a of racine.querySelectorAll(`header a[href="/${slug}/panier"], header [onclick="go('panier')"]`)) {
+    const ids = a.querySelectorAll("[id]").map((el) => `<span id="${el.id}"></span>`).join("");
+    a.replaceWith(`<span data-axs-panier-retire style="display:none">${ids}</span>`);
+  }
+}
+
 export interface CollectionLien { slug: string; nom: string }
 
 const MENTIONS = /Confidentialit[ée]\s*[—–-]\s*Conditions g[ée]n[ée]rales/;
@@ -172,16 +183,21 @@ export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, c
   const racine = parse(html);
   racine.querySelectorAll("header").forEach((h) => corrigerEntete(h, slug));
   racine.querySelectorAll("footer").forEach((f) => corrigerPied(f, slug, collections));
-  if (digital) adapterDigital(racine, slug);
+  // Boutique digitale : le bouton devient « Mes achats » (adapterDigital), il reste.
+  if (digital) adapterDigital(racine, slug); else retirerPanier(racine, slug);
   return racine.toString();
 }
 
 /** Aperçu brut d'un design (/api/preview-theme) : seul le <body> est retouché, le document (doctype, scripts) reste intact. */
-export function adapterDocumentDigital(doc: string): string {
+export function adapterDocument(doc: string, digital: boolean): string {
   const debut = doc.search(/<body\b/i), fin = doc.search(/<\/body>/i);
   if (debut < 0 || fin < 0) return doc;
   const racine = parse(doc.slice(debut, fin));
-  adapterDigital(racine, "apercu");
+  if (digital) adapterDigital(racine, "apercu"); else retirerPanier(racine, "apercu");
+  // Fiche produit de démonstration : pas de panier, on commande (ou on achète, en digital) directement.
+  for (const el of racine.querySelectorAll("button, a")) {
+    if (/ajouter au panier/i.test(el.text)) el.set_content(el.innerHTML.replace(/ajouter au panier/i, digital ? "Acheter" : "Commander"));
+  }
   return doc.slice(0, debut) + racine.toString() + doc.slice(fin);
 }
 

@@ -79,7 +79,7 @@ export async function POST(request: Request) {
       const imagePrompt = p.imagePrompt || buildProductImagePrompt(p.nom, p.categorie);
       return {
         ...p,
-        imageUrl: await generateProductImageUrl(imagePrompt),
+        imageUrl: await generateProductImageUrl(imagePrompt, tenantId),
         imagePrompt,
         slug: slugify(p.nom) + "-" + Date.now().toString(36) + i,
         devise,

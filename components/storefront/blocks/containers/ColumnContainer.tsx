@@ -1,6 +1,6 @@
 import type { BlockNode } from "@/lib/theme-config";
 import type { TreeRenderCtx } from "../context";
-import { blockStyleToCss } from "../styleUtils";
+import { blockStyleToCss, POSITION_CONTENU } from "../styleUtils";
 import { ResponsiveStyleTag } from "../ResponsiveStyleTag";
 import { BlockTreeRenderer } from "../BlockTreeRenderer";
 
@@ -10,7 +10,7 @@ export function ColumnContainer({ node, ctx }: { node: BlockNode; ctx: TreeRende
     <div
       data-axs-id={node.id}
       style={blockStyleToCss(node.style)}
-      className={["flex-1 flex flex-col gap-4 min-w-0", node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
+      className={["flex-1 flex flex-col gap-4 min-w-0", POSITION_CONTENU[node.config?.position ?? ""], node.style?.customClass, selectionne ? "ax-libre-selected" : "", ctx.editable ? "ax-libre-hoverable" : ""].filter(Boolean).join(" ")}
       onClick={ctx.editable ? (e) => { e.stopPropagation(); ctx.onSelect?.(node.id); } : undefined}
     >
       <ResponsiveStyleTag nodeId={node.id} style={node.style} />

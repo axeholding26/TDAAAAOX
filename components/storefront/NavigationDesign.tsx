@@ -75,7 +75,7 @@ export function NavigationDesign({ slug, type, favoris, fondEntete, accent, text
       carte.setAttribute("data-axs-coeur-carte", "");
       carte.appendChild(b);
     });
-    const panier = document.querySelector<HTMLElement>(`${EMBED} header :is(a[href$="/panier"],[data-axs-achats])`);
+    const panier = document.querySelector<HTMLElement>(`${EMBED} header :is(a[href$="/panier"],[data-axs-achats],[data-axs-panier-retire])`);
     if (panier && !document.querySelector(`${EMBED} header [data-axs-favoris]`)) {
       const lien = document.createElement("a");
       lien.href = `/${slug}/wishlist`;
@@ -174,7 +174,8 @@ export function NavigationDesign({ slug, type, favoris, fondEntete, accent, text
     favoris && apercu && `${portee}${EMBED} a[href*="/produits/"]:is([class*="card"],:has(img,svg,[class*="media"])){position:relative}`
       + `${portee}${EMBED} a[href*="/produits/"]:is([class*="card"],:has(img,svg,[class*="media"]))::after{content:"";position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:999px;background:rgba(255,255,255,.92) center/18px no-repeat;background-image:${masque(COEUR).replace("black", "%23111")};box-shadow:0 2px 10px rgba(0,0,0,.12);z-index:2}`
       + `${portee}${EMBED} header :is(a[href$="/panier"],[data-axs-achats]){position:relative;margin-left:34px}`
-      + `${portee}${EMBED} header :is(a[href$="/panier"],[data-axs-achats])::before{content:"";position:absolute;right:calc(100% + 12px);top:50%;width:20px;height:20px;transform:translateY(-50%);background:currentColor;-webkit-mask:${masque(COEUR)} center/contain no-repeat;mask:${masque(COEUR)} center/contain no-repeat;color:${texte}}`,
+      + `${portee}${EMBED} header [data-axs-panier-retire]{display:inline-block !important;position:relative;width:0;height:20px;margin-left:34px}`
+      + `${portee}${EMBED} header :is(a[href$="/panier"],[data-axs-achats],[data-axs-panier-retire])::before{content:"";position:absolute;right:calc(100% + 12px);top:50%;width:20px;height:20px;transform:translateY(-50%);background:currentColor;-webkit-mask:${masque(COEUR)} center/contain no-repeat;mask:${masque(COEUR)} center/contain no-repeat;color:${texte}}`,
     // Minimal : bouton menu.
     type === "minimal" && `[data-axs-burger]{width:40px;height:40px;border:0;background:transparent;color:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;-webkit-mask:none}`
       + `[data-axs-burger]::before{content:"";width:22px;height:22px;background:currentColor;-webkit-mask:url("data:image/svg+xml,${encodeURIComponent(BURGER)}") center/contain no-repeat;mask:url("data:image/svg+xml,${encodeURIComponent(BURGER)}") center/contain no-repeat}`

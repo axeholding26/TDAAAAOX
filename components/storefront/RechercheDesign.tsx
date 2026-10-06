@@ -10,7 +10,7 @@ import { useT } from "@/components/I18nProvider";
 
 // Recherche des designs AXSO importés : leur en-tête n'a qu'un lien texte
 // « Recherche(r) » sans action. Monté une fois par le layout de la vitrine
-// (comme PanierVitrine) : délégation de clic + icône loupe en CSS — le HTML
+// (comme NavigationDesign) : délégation de clic + icône loupe en CSS — le HTML
 // du design n'est jamais modifié (React le compare à l'hydratation).
 export const SELECTEUR = "[data-axs-embed-html] a, [data-axs-embed-html] button";
 export const estLienRecherche = (el: Element) => !el.getAttribute("href") && /^\s*recherche(r)?\s*$/i.test(el.textContent || "");

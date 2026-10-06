@@ -3,14 +3,13 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { urlVideoIntegree } from "@/lib/utils";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
-import { useCartStore } from "@/store/cartStore";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { WishlistHeartButton } from "./WishlistHeartButton";
 import { SECTIONS_FICHE } from "@/lib/fiche-produit";
 import {
   Package, AlertTriangle, Lock, RotateCcw, Check, Loader2, ChevronLeft,
-  Star, Minus, Plus, ShoppingCart, Truck, ZoomIn,
+  Star, Minus, Plus, Truck, ZoomIn,
   MessageCircle, Download, ChevronRight, ShoppingBag,
   ChevronDown, Share2, PlayCircle, Headphones, FileText,
 } from "lucide-react";
@@ -40,7 +39,8 @@ const DEFAULT_SECTIONS: ProdSection[] = [
   { id: "similar",     type: "similar",     actif: true, config: { count: 4, titre: "Vous aimerez aussi" } },
 ];
 
-const RIGHT_COL = new Set(["info", "variants", "quantity", "addToCart", "trust"]);
+// "addToCart" (ancien bloc « Ajouter au panier ») n'est plus rendu : il n'y a pas de panier.
+const RIGHT_COL = new Set(["info", "variants", "quantity", "trust"]);
 // Types de produits digitaux — pas de stock physique, bouton "télécharger/accéder"
 // plutôt que "panier". Garder en phase avec TYPES_PRODUIT_DIGITAL (lib/affiliation.ts).
 const TYPES_DIGITAUX = new Set(["digital", "fichier", "formation", "licence"]);
@@ -852,7 +852,7 @@ function BundleSection({ config, accent, surface, slug }: { config: Record<strin
         ))}
       </div>
       {config.ctaTexte && (
-        <Link href={`/${slug}/checkout`} className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm"
+        <Link href={`/${slug}/produits`} className="inline-flex items-center gap-2 px-8 py-3 rounded-2xl font-bold text-sm"
           style={{ background: accent, color: "#fff" }}>{tx(config.ctaTexte)}</Link>
       )}
     </div>
@@ -1214,8 +1214,6 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   const rightSections = sections.filter(s => RIGHT_COL.has(s.type) && s.actif);
   const countdownSec  = sections.find(s => s.type === "countdown" && s.actif);
-  // Bloc « Ajouter au panier » ajouté par le marchand (jamais en boutique digitale ni pour un produit digital).
-  const avecBoutonPanier = !tenant.boutiqueDigitale && !TYPES_DIGITAUX.has(produit.type) && rightSections.some(s => s.type === "addToCart");
   const belowSections = sections.filter(s => BELOW_TYPES.has(s.type) && s.actif);
 
   // State
@@ -1224,7 +1222,6 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const [tab, setTab] = useState<"description" | "livraison" | "avis">("description");
   const [variantePrix, setVariantePrix] = useState<{ id: string; nom: string; prix: number; prixPromo: number | null } | null>(null);
 
-  const { ajouterItem, setTenant } = useCartStore();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1251,21 +1248,14 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const stockEffectif = selectedVariante !== null ? selectedVariante.stock : produit.stock;
   const enRupture     = !estDigital && stockEffectif === 0;
 
-  function doAddToCart() {
+  // Pas de panier : on commande ce produit directement — formulaire de commande
+  // puis WhatsApp du marchand (physique) ou paiement en ligne (dropshipping).
+  function commander() {
     if (enRupture) return;
-    setTenant(slug);
-    ajouterItem({
-      produitId: produit.id, nom: produit.nom, prix: prixEffectif,
-      imageUrl: produit.images[0] ?? undefined,
-      stock: produit.type === "digital" ? 9999 : stockEffectif,
-      quantite, type: produit.type as any,
-      fichierUrl: produit.fichierUrl ?? undefined, fichierNom: produit.fichierNom ?? undefined,
-      variante: selectedVariante ? `${selectedVariante.nom}: ${selectedVariante.valeur}` : undefined,
-    });
-    toast.success(tx("{0} ajouté au panier", produit.nom));
+    const q = new URLSearchParams({ produit: produit.id, quantite: String(quantite) });
+    if (selectedVariante) q.set("variante", `${selectedVariante.nom}: ${selectedVariante.valeur}`);
+    router.push(`/${slug}/checkout?${q}`);
   }
-
-  function buyNow() { doAddToCart(); router.push(`/${slug}/checkout`); }
 
   const waNum = (whatsappNumero || whatsapp || "").replace(/\D/g, "");
   const waMsg = encodeURIComponent(`Bonjour, je suis intéressé par : ${produit.nom}`);
@@ -1394,14 +1384,20 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   texte={cfg.texteBouton || produit.texteBoutonAchat || tx("Acheter")} fond={btnFond} couleurTexte={btnTexte} radius={btnRadiusPx} desactive={enRupture} />
               ) : (
               <div className="space-y-2.5">
-                {/* Toujours présent sans bloc « Ajouter au panier » : sinon aucun moyen d'acheter. */}
-                {(cfg.afficherAcheterMaintenant !== false || !avecBoutonPanier) && (
-                  <button onClick={buyNow} disabled={enRupture}
-                    className="w-full py-3.5 rounded-2xl font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-35 border-2 flex items-center justify-center gap-2"
-                    style={{ borderColor: btnFond, color: btnFond, background: `${btnFond}08`, borderRadius: btnRadiusPx }}>
-                    <ShoppingBag size={16} />{" "}{tx("Acheter maintenant")}
-                  </button>
-                )}
+                <button onClick={commander} disabled={enRupture}
+                  className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
+                  style={{
+                    ...btnAchatSizing,
+                    background: enRupture ? "#E0E0E0" : (btnRempli ? btnFond : "transparent"),
+                    color: enRupture ? "#999" : (btnRempli ? btnTexte : btnFond),
+                    border: !btnRempli ? `2px solid ${btnFond}` : "none",
+                    textDecoration: btnStyle === "ghost" ? "underline" : "none",
+                    boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${btnFond}40`,
+                    ["--ax-accent-glow" as any]: `${btnFond}80`,
+                  }}>
+                  <ShoppingBag size={18} />
+                  {enRupture ? tx("Indisponible") : (tx(cfg.texteBouton) || tx(produit.texteBoutonAchat) || tx("Commander"))}
+                </button>
                 {cfg.afficherWhatsApp !== false && waNum && (
                   <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] border-2 transition-all hover:opacity-80"
@@ -1412,22 +1408,6 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
               </div>
               )}
             </div>
-          )}
-          {sec.type === "addToCart" && avecBoutonPanier && (
-            <button onClick={doAddToCart} disabled={enRupture}
-              className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
-              style={{
-                ...btnAchatSizing,
-                background: enRupture ? "#E0E0E0" : (btnRempli ? (cfg.couleurBouton ? btnFond : `linear-gradient(135deg, ${accent} 0%, ${accent}CC 100%)`) : "transparent"),
-                color: enRupture ? "#999" : (btnRempli ? btnTexte : btnFond),
-                border: !btnRempli ? `2px solid ${btnFond}` : "none",
-                textDecoration: btnStyle === "ghost" ? "underline" : "none",
-                boxShadow: enRupture || !btnRempli ? "none" : `0 6px 24px ${btnFond}40`,
-                ["--ax-accent-glow" as any]: `${btnFond}80`,
-              }}>
-              <ShoppingCart size={18} />
-              {enRupture ? tx("Indisponible") : (tx(cfg.texteBouton) || tx(produit.texteBoutonAchat) || tx("Ajouter au panier"))}
-            </button>
           )}
           {sec.type === "trust" && (
             <div className="space-y-3">

@@ -35,7 +35,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   const commande = await prisma.commande.findUnique({
     where: { id: commandeId },
     include: {
-      tenant: { select: { id: true, commissionRate: true, nomBoutique: true, email: true } },
+      tenant: { select: { id: true, commissionRate: true, nomBoutique: true, email: true, slug: true } },
       lignes: { include: { produit: { select: { id: true, type: true, fichierUrl: true } } } },
     },
   });
@@ -68,8 +68,12 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     commandeId: commande.id,
   });
 
+  const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+
   if (commande.clientEmail) {
     await envoyerConfirmationCommande({
+      lienAcces: hasDigital ? `${appUrl}/${commande.tenant.slug}/confirmation/${commande.id}` : undefined,
       email: commande.clientEmail,
       nom: commande.clientNom,
       numeroCommande: commande.numero,
@@ -87,11 +91,9 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
       devise: commande.devise,
       clientNom: commande.clientNom,
       boutique: commande.tenant.nomBoutique,
-      lien: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app"}/dashboard/commandes/${commande.id}`,
+      lien: `${appUrl}/dashboard/commandes/${commande.id}`,
     }).catch(() => {});
   }
-
-  const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
 
   if (hasDigital) {
     await traiterPaiementDigital({

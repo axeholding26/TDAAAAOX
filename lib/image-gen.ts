@@ -8,20 +8,23 @@
 
 import { put } from "@vercel/blob";
 import { generateImageGemini } from "./llm-client";
+import { dossierBoutique } from "./fichiers-boutique";
 
 export interface ImageGenOptions {
   prompt: string;
+  tenantId?: string; // rangement dans les Fichiers de la boutique
 }
 
 /** Upload une image générée (data: URL) vers Vercel Blob si configuré, sinon la garde en data: URL. */
-async function persistGeneratedImage(dataUrl: string): Promise<string> {
+async function persistGeneratedImage(dataUrl: string, tenantId?: string): Promise<string> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) return dataUrl;
   try {
     const [meta, base64] = dataUrl.split(",");
     const mimeType = meta.match(/data:(.*?);base64/)?.[1] ?? "image/png";
     const ext = mimeType.split("/")[1]?.split("+")[0] ?? "png";
     const buffer = Buffer.from(base64, "base64");
-    const blob = await put(`ia-generation/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`, buffer, {
+    const dossier = tenantId ? `${dossierBoutique(tenantId)}images/` : "ia-generation/";
+    const blob = await put(`${dossier}ia-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`, buffer, {
       access: "public",
       contentType: mimeType,
     });
@@ -37,7 +40,7 @@ export async function generateProductImage(opts: ImageGenOptions): Promise<strin
   try {
     const dataUrl = await generateImageGemini(opts.prompt);
     if (!dataUrl) return null;
-    return await persistGeneratedImage(dataUrl);
+    return await persistGeneratedImage(dataUrl, opts.tenantId);
   } catch (err) {
     console.error("[image-gen/gemini]", (err as any)?.message ?? err);
     return null;
@@ -45,8 +48,8 @@ export async function generateProductImage(opts: ImageGenOptions): Promise<strin
 }
 
 /** Version historique attendue par les appelants existants — retourne "" plutôt que null en cas d'échec (pas d'image cassée dans l'UI). */
-export async function generateProductImageUrl(prompt: string): Promise<string> {
-  const url = await generateProductImage({ prompt });
+export async function generateProductImageUrl(prompt: string, tenantId?: string): Promise<string> {
+  const url = await generateProductImage({ prompt, tenantId });
   return url ?? "";
 }
 

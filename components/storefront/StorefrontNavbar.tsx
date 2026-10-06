@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { ShoppingBag, Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package } from "lucide-react";
+import { Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
 import { usePrix, PastillePays } from "@/components/storefront/DeviseVitrine";
@@ -22,7 +21,6 @@ interface Props {
   navStyle?: ThemeNavigationCfg;
   showAbout?: boolean;
   showContact?: boolean;
-  sansPanier?: boolean; // boutique digitale : achat direct, jamais de panier
 }
 
 interface RechercheProduit {
@@ -34,10 +32,9 @@ interface RechercheProduit {
 
 const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
 
-export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact, sansPanier }: Props) {
+export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact }: Props) {
   const t = useT();
   const { fmt } = usePrix();
-  const totalItems = useCartStore((s) => s.totalItems());
   const wishlistCount = useWishlistStore((s) => s.produitIds.length);
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
@@ -289,19 +286,6 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       )}
 
       <PastillePays couleur={txt} className="hidden sm:inline-flex" />
-      {!sansPanier && <Link
-        href={`/${slug}/panier`}
-        className="relative flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90 active:scale-95"
-        style={{ backgroundColor: accent, color: fond, borderRadius: radius }}
-      >
-        <ShoppingBag size={16} />
-        <span className="hidden sm:inline">{t("Panier")}</span>
-        {totalItems > 0 && (
-          <span className="flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold" style={{ backgroundColor: fond, color: accent }}>
-            {totalItems > 99 ? "99+" : t(totalItems)}
-          </span>
-        )}
-      </Link>}
 
       <button
         onClick={() => setMenuOuvert(!menuOuvert)}
@@ -378,17 +362,6 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         <div className="flex items-center justify-between px-3 py-3 text-sm font-medium" style={{ color: texte }}>
           {t("Pays et devise")}{" "}<PastillePays couleur={texte} />
         </div>
-        {!sansPanier && <div className="pt-2">
-          <Link
-            href={`/${slug}/panier`}
-            onClick={() => setMenuOuvert(false)}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold w-full justify-center"
-            style={{ backgroundColor: accent, color: fond }}
-          >
-            <ShoppingBag size={16} />
-            {t("Voir mon panier")}{totalItems > 0 && ` (${totalItems})`}
-          </Link>
-        </div>}
       </div>
     </div>
   );

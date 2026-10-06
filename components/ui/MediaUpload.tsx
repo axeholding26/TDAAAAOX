@@ -5,6 +5,7 @@ import { upload } from "@vercel/blob/client";
 import { Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useT } from "@/components/I18nProvider";
+import { cheminImport } from "@/lib/televerser";
 
 const ACCEPT = { image: "image/jpeg,image/png,image/webp,image/gif,image/avif", video: "video/mp4,video/webm,video/quicktime" };
 
@@ -20,7 +21,7 @@ export function MediaUpload({ type, onUrl }: { type: "image" | "video"; onUrl: (
     if (file.size > 100 * 1024 * 1024) return void toast.error(t("Fichier trop lourd (100 Mo maximum)"));
     setProgression(0);
     try {
-      const blob = await upload(`${type}s/${file.name}`, file, {
+      const blob = await upload(await cheminImport(`${type}s`, file.name), file, {
         access: "public",
         handleUploadUrl: "/api/upload/client",
         onUploadProgress: (e) => setProgression(Math.round(e.percentage)),

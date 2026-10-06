@@ -941,8 +941,7 @@ const PRODUIT_SECTION_META: Record<string, { Icon: any; desc: string }> = {
   gallery:      { Icon: ImageIcon,     desc: "Photos du produit" },
   info:         { Icon: FileText,      desc: "Nom, prix, stock, fil d'Ariane" },
   variants:     { Icon: Layers,        desc: "Tailles, couleurs…" },
-  quantity:     { Icon: ShoppingCart,  desc: "Quantité, Acheter maintenant, WhatsApp" },
-  addToCart:    { Icon: ShoppingCart,  desc: "Ajoute la variante choisie au panier" },
+  quantity:     { Icon: ShoppingCart,  desc: "Quantité, bouton Commander, WhatsApp" },
   trust:        { Icon: Shield,        desc: "Badges de réassurance" },
   description:  { Icon: BookOpen,      desc: "Description et livraison" },
   reviews:      { Icon: Star,          desc: "Avis clients" },
@@ -1168,22 +1167,12 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
     case "quantity": return (
       <Bloc>
         <Bascule label={tr("Sélecteur de quantité")} value={c.afficherQuantite !== false} onChange={v => up({ afficherQuantite: v })} />
-        <p className="text-[11.5px] text-gray-400">{tr("Le bouton « Ajouter au panier » est un bloc à part : « Ajouter » → « Bouton Ajouter au panier ».")}</p>
-        <FInp label={tr("Texte du bouton d'achat (produit digital)")} value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
+        <p className="text-[11.5px] text-gray-400">{tr("Pas de panier : « Commander » mène au formulaire puis au WhatsApp de la boutique (produit physique) ; un produit digital se paie en ligne.")}</p>
+        <FInp label={tr("Texte du bouton (vide = « Commander » / « Acheter »)")} value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
         <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
         <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
         {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
-        <Bascule label={tr("Bouton « Acheter maintenant »")} value={c.afficherAcheterMaintenant !== false} onChange={v => up({ afficherAcheterMaintenant: v })} />
         <Bascule label={tr("Bouton WhatsApp")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
-      </Bloc>
-    );
-    case "addToCart": return (
-      <Bloc>
-        <FInp label={tr("Texte du bouton (vide = « Ajouter au panier »)")} value={c.texteBouton || ""} onChange={v => up({ texteBouton: v })} />
-        <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
-        <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
-        {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
-        <p className="text-[11.5px] text-gray-400 leading-relaxed">{tr("Ajoute la variante et la quantité choisies au panier. Masqué pour les produits digitaux et en boutique digitale (achat direct).")}</p>
       </Bloc>
     );
     case "trust": return (

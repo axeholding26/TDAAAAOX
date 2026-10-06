@@ -230,7 +230,6 @@ export default async function ProduitPage({ params }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
-        sansPanier={cfg.modeBoutique === "digital"}
       />
       <ProductPageClient
         produit={produitProps}

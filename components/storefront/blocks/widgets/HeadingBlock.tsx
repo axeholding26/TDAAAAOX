@@ -16,7 +16,7 @@ export function HeadingBlock({ config, colors, container, editable, onEditText }
   const texte = config.texte || "Titre";
 
   return (
-    <div className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
+    <div data-axs-align="" className={`py-2 ${container} mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 ${align === "center" ? "text-center" : align === "right" ? "text-right" : "text-left"}`}>
       <InlineEditable
         as={niveau as any}
         value={texte}

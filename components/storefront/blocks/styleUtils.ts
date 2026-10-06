@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { BlockStyleOverrides } from "@/lib/theme-config";
+import type { BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
 import { fontEntry } from "@/lib/theme-fonts";
 import { importPolices } from "@/lib/element-styles";
 
@@ -90,13 +90,12 @@ export function blockStyleToCss(style?: BlockStyleOverrides, cible = false): CSS
   if (flat["border-radius"]) css.borderRadius = flat["border-radius"];
   if (flat["border"]) css.border = flat["border"];
   if (style?.width) {
-    // Colonne redimensionnée (vague 3, glisser-déposer sur la poignée) —
-    // largeur figée : sans forcer grow/shrink à 0, la classe Tailwind
-    // "flex-1" des colonnes continuerait à étirer/comprimer au-delà de
-    // cette base, rendant le redimensionnement invisible.
+    // Colonne à largeur choisie : grow à 0 sinon "flex-1" l'étirerait au-delà
+    // de cette base. Shrink reste à 1 : des largeurs qui totalisent 100 %
+    // plus l'espace entre colonnes (gap) se resserrent au lieu de déborder.
     css.flexBasis = style.width;
     css.flexGrow = 0;
-    css.flexShrink = 0;
+    css.flexShrink = 1;
   }
   return css;
 }
@@ -129,11 +128,11 @@ export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides, 
   if (cible) regle(partager(flattenStyleKebab(style)).visuels);
 
   const tabletProps = flattenStyleKebab(style.responsive?.tablet);
-  if (style.responsive?.tablet?.width) { tabletProps["flex-basis"] = style.responsive.tablet.width; tabletProps["flex-grow"] = "0"; tabletProps["flex-shrink"] = "0"; }
+  if (style.responsive?.tablet?.width) { tabletProps["flex-basis"] = style.responsive.tablet.width; tabletProps["flex-grow"] = "0"; tabletProps["flex-shrink"] = "1"; }
   regle(tabletProps, (css) => `@container (max-width:${BREAKPOINT_TABLET_MAX}){${css}}`);
 
   const mobileProps = flattenStyleKebab(style.responsive?.mobile);
-  if (style.responsive?.mobile?.width) { mobileProps["flex-basis"] = style.responsive.mobile.width; mobileProps["flex-grow"] = "0"; mobileProps["flex-shrink"] = "0"; }
+  if (style.responsive?.mobile?.width) { mobileProps["flex-basis"] = style.responsive.mobile.width; mobileProps["flex-grow"] = "0"; mobileProps["flex-shrink"] = "1"; }
   regle(mobileProps, (css) => `@container (max-width:${BREAKPOINT_MOBILE_MAX}){${css}}`);
 
   // Survol : couleurs de texte/fond ; !important pour passer devant le style inline.
@@ -148,4 +147,60 @@ export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides, 
   // Polices choisies (base + tablette/mobile) : chargées en tête de cette feuille.
   const polices = [style.typography?.police, style.responsive?.tablet?.typography?.police, style.responsive?.mobile?.typography?.police].filter(Boolean) as string[];
   return importPolices(polices) + rules.join("");
+}
+
+// Schéma de couleurs d'une section (comme les « color schemes » de Shopify) :
+// fond, texte et boutons propres à la section, transmis à tous ses blocs à la
+// place des couleurs du thème. Champ vide = couleur du thème.
+export function couleursSection<C extends { accent: string; texte: string; fond: string }>(node: BlockNode, colors: C): C {
+  const c = (node.config?.couleurs ?? {}) as Partial<C>;
+  return { ...colors, ...Object.fromEntries(Object.entries(c).filter(([, v]) => v)) };
+}
+export function fondSection(node: BlockNode): CSSProperties {
+  const c = node.config?.couleurs ?? {};
+  return { backgroundColor: c.fond || undefined, color: c.texte || undefined };
+}
+
+// Position verticale du contenu d'une colonne (« Position du contenu » Shopify).
+export const POSITION_CONTENU: Record<string, string> = { haut: "justify-start", milieu: "justify-center", bas: "justify-end" };
+
+// Section « Texte + Image » : ligne à deux colonnes dont l'une ne contient
+// qu'une image. null pour toute autre section.
+const estColImage = (c: BlockNode) => c.children?.length === 1 && c.children[0].type === "image";
+export function texteImage(section: BlockNode) {
+  const ligne = (section.children ?? []).find((l) => l.type === "row" && l.children?.length === 2 && l.children.some(estColImage));
+  if (!ligne) return null;
+  const i = ligne.children!.findIndex(estColImage);
+  return { ligne, colImage: ligne.children![i], colTexte: ligne.children![1 - i], imageAvant: i === 0 };
+}
+
+// CSS d'une section Texte + Image, calqué sur « Image avec texte » de Dawn :
+// image toujours au-dessus sur mobile, alignement mobile propre, et
+// chevauchement (contenu décalé de 4rem sur l'image, 3rem plus court ; sur
+// mobile remonté de 3rem sur l'image, à 90 % de largeur).
+const HAUTEUR_IMAGE: Record<string, [string, string]> = { adapter: ["auto", "auto"], petite: ["31rem", "20rem"], moyenne: ["40rem", "30rem"], grande: ["44rem", "44rem"] };
+const FLEX_ALIGN: Record<string, string> = { left: "flex-start", center: "center", right: "flex-end" };
+export function cssSection(section: BlockNode): string {
+  const ti = texteImage(section);
+  if (!ti) return "";
+  const c = section.config ?? {};
+  const sel = (id: string) => `[data-axs-id="${id}"]`;
+  const mobile = [`${sel(ti.colImage.id)}{order:-1}`];
+  if (FLEX_ALIGN[c.alignMobile]) mobile.push(`${sel(section.id)} [data-axs-align]{text-align:${c.alignMobile} !important;justify-content:${FLEX_ALIGN[c.alignMobile]} !important}`);
+  let css = "";
+  // Hauteur de l'image (Dawn : adapter à l'image, petite, moyenne, grande).
+  // Absente (sections créées avant ce réglage) : le ratio du bloc Image s'applique.
+  const hauteur = HAUTEUR_IMAGE[c.hauteurImage];
+  if (hauteur) {
+    const img = `${sel(ti.colImage.id)} img[data-axs-cible]`;
+    css += `${img}{aspect-ratio:auto !important;height:${hauteur[0]} !important}`;
+    mobile.push(`${img}{height:${hauteur[1]} !important}`);
+  }
+  if (c.chevauchement) {
+    const t = sel(ti.colTexte.id), w = ti.colTexte.style?.width;
+    // Débords mesurés depuis l'image : + 1.5rem pour absorber l'espace (gap-6) entre colonnes, absent chez Dawn.
+    css += `${t}{position:relative;z-index:1;margin-top:3rem !important;margin-bottom:3rem !important;${ti.imageAvant ? "margin-left" : "margin-right"}:-5.5rem !important;${w ? `flex-basis:calc(${w} + 5.5rem) !important;` : ""}}`;
+    mobile.push(`${t}{margin:-4.5rem auto 0 !important;width:90%;flex-basis:auto !important}`);
+  }
+  return css + `@container (max-width:${BREAKPOINT_MOBILE_MAX}){${mobile.join("")}}`;
 }

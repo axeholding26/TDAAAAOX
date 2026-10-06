@@ -130,7 +130,6 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
-        sansPanier={cfg.modeBoutique === "digital"}
       />
 
       <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-10`}>

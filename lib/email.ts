@@ -34,6 +34,29 @@ export async function envoyerCodeVerification(email: string, code: string, nom?:
   });
 }
 
+// Code de connexion à l'espace client d'une boutique (acheteur, sans mot de passe).
+export async function envoyerCodeAcheteur(email: string, code: string, boutique: string) {
+  const resend = getResendClient();
+  if (!resend) {
+    console.warn("Resend non configuré — code acheteur non envoyé");
+    return;
+  }
+  const nom = boutique.replace(/[&<>"]/g, "");
+  await resend.emails.send({
+    from: "Axso <noreply@axso.com>",
+    to: email,
+    subject: `${code} — Votre code d'accès ${nom}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>Accédez à vos achats</h2>
+        <p>Voici votre code pour ouvrir votre espace client sur ${nom} :</p>
+        <p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; text-align: center; padding: 16px; background: #f5f5f5; border-radius: 12px;">${code}</p>
+        <p style="color: #666; font-size: 13px;">Ce code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
+      </div>
+    `,
+  });
+}
+
 // Code de réinitialisation de mot de passe
 export async function envoyerCodeReinitialisation(email: string, code: string, nom?: string) {
   const resend = getResendClient();
@@ -94,10 +117,35 @@ export async function envoyerConfirmationCommande(params: {
   devise: string;
   produits: Array<{ nom: string; quantite: number; prix: number }>;
   boutique: string;
+  // Achat digital payé : lien vers la page d'accès (fichiers, formation, clés) — comme Chariow.
+  lienAcces?: string;
 }) {
   const resend = getResendClient();
   if (!resend) {
     console.warn("Resend non configuré — email non envoyé");
+    return;
+  }
+
+  if (params.lienAcces) {
+    const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+    await resend.emails.send({
+      from: "Axso <noreply@axso.com>",
+      to: params.email,
+      subject: `Votre achat est disponible — ${params.boutique}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+          <h2>Merci pour votre achat !</h2>
+          <p>Bonjour ${e(params.nom)},</p>
+          <p>Votre paiement est confirmé (commande <strong>${e(params.numeroCommande)}</strong>). Votre achat est disponible dès maintenant :</p>
+          <ul>${params.produits.map((p) => `<li>${e(p.nom)}</li>`).join("")}</ul>
+          <p style="text-align: center; margin: 28px 0;">
+            <a href="${e(params.lienAcces)}" style="display: inline-block; padding: 14px 28px; background: #111; color: #fff; border-radius: 10px; text-decoration: none; font-weight: bold;">Accéder à mon achat</a>
+          </p>
+          <p style="color: #666; font-size: 13px;">Votre accès est à vie : gardez cet email. Vous retrouvez aussi tous vos achats dans « Mon compte » de la boutique, avec votre adresse email.</p>
+          <p>L'équipe ${e(params.boutique)} via Axso</p>
+        </div>
+      `,
+    });
     return;
   }
 

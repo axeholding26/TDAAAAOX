@@ -587,3 +587,26 @@ select:not([multiple]):not([size]):not(.ax-langue) { padding-inline-end: 2.4rem 
 .ax-pays-devise { font-size: 11px; font-weight: 600; letter-spacing: .03em; color: #999; }
 .ax-pays-check { color: var(--accent); flex-shrink: 0; }
 .ax-pays-vide { padding: 18px 10px; text-align: center; font-size: 13px; color: #999; }
+
+/* Vitrine : le pied de page touche toujours le bas de l'écran, même sur une
+   page courte. La racine de chaque page (enfant de .axs-store, posé en
+   display:contents par le layout de la boutique) remplit la hauteur de
+   l'écran, et le bloc qui contient le <footer> est poussé tout en bas.
+   « body > » : jamais l'aperçu du Constructeur, qui réutilise .axs-store. */
+body > .axs-store > div {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+/* En colonne flex, un bloc centré par marges auto (max-w + mx-auto) se
+   réduirait à la largeur de son contenu : « stretch » lui rend la largeur
+   d'un bloc normal (tout l'espace, moins les marges, borné par max-width). */
+body > .axs-store > div > * {
+  width: -moz-available;
+  width: -webkit-fill-available;
+  width: stretch;
+}
+body > .axs-store > div > :is(footer, :has(footer)) {
+  margin-top: auto;
+}

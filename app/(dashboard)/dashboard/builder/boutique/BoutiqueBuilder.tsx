@@ -15,6 +15,7 @@ import { AxiaBuilderPanel } from "../canvas/AxiaBuilderPanel";
 import { createDefaultNode, STARTER_TEMPLATES } from "../canvas/blockDefaults";
 import { PanneauSections } from "./PanneauSections";
 import { MenuAjout, type ChoixAjout } from "./MenuAjout";
+import { ReglagesSection } from "./ReglagesSection";
 import { Apercu } from "./Apercu";
 import { ApercuFiche } from "./ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
@@ -371,6 +372,9 @@ export function BoutiqueBuilder(p: Props) {
           <BlockStylePanel
             key={selection.id}
             node={selection}
+            collections={tenant.collections ?? []}
+            bibliotheque={imagesUtilisees(tree)}
+            reglagesSection={estSection ? <ReglagesSection section={selection} setTree={setTree} /> : undefined}
             titre={nomNoeud(selection)}
             device={device}
             canMoveUp={!!position && position.index > 0}
@@ -411,6 +415,15 @@ function envelopperEnSection(widget: BlockNode): BlockNode {
     type: "section",
     children: [{ id: genBlockId("row"), type: "row", children: [{ id: genBlockId("col"), type: "column", children: [widget] }] }],
   };
+}
+
+// Images déjà utilisées dans l'arbre (blocs Image, fonds) : la bibliothèque du sélecteur d'image.
+function imagesUtilisees(liste: BlockNode[]): string[] {
+  return liste.flatMap((n) => [
+    n.type === "image" ? n.config?.url : undefined,
+    n.style?.background?.image,
+    ...imagesUtilisees(n.children ?? []),
+  ]).filter((u): u is string => !!u && !u.startsWith("data:"));
 }
 
 function premiereColonne(node: BlockNode): BlockNode | null {

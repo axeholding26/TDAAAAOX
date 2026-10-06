@@ -345,7 +345,9 @@ RÈGLES :
 - Cible toujours des "nodeId" qui existent réellement dans l'arbre actuel ci-dessus — jamais un id inventé.
 - Pour "products", ne mets JAMAIS de faux produits dans "config" : les vrais produits de la boutique s'affichent automatiquement.
 - Les couleurs sont des hex (#RRGGBB). Les espacements/tailles sont du CSS (ex "24px", "2rem", "50%").
-- "ctaLien"/"lien" sont des chemins relatifs de la boutique (ex "produits", "a-propos", "contact"), jamais une URL complète.
+- "ctaLien"/"lien" sont des chemins relatifs de la boutique (ex "produits", "a-propos", "contact", "collections/<slug>", "produits/<id>", "/" pour l'accueil) ; une URL complète seulement pour un site externe.
+- Couleurs d'une section entière (fond, textes, boutons) : updateConfig sur la SECTION avec "couleurs":{"fond","texte","accent" (fond des boutons),"texteBouton","contourBouton"} — pas updateStyle, que ses blocs n'héritent pas.
+- Section texte + image (ligne à 2 colonnes dont une ne contient qu'une image) : updateConfig sur la SECTION avec "chevauchement":true|false, "alignMobile":"left"|"center"|"right", "hauteurImage":"adapter"|"petite"|"moyenne"|"grande" ; et sur la colonne de texte "position":"haut"|"milieu"|"bas". Image à gauche/droite = action move de la colonne image.
 - Si la demande est ambiguë ou déjà satisfaite, renvoie un tableau d'actions vide plutôt que d'inventer un changement non demandé.
 - Reste dans la limite de ~15 actions par réponse.
 

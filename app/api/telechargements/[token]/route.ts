@@ -13,7 +13,6 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     // Token existant (système legacy)
     const dl = await prisma.telechargement.findUnique({ where: { token } });
     if (!dl) return NextResponse.json({ error: "Lien invalide ou expiré" }, { status: 404 });
-    if (dl.expireAt < new Date()) return NextResponse.json({ error: "Lien expiré" }, { status: 410 });
 
     // Identifier quel fichier servir
     const url = new URL(req.url);
@@ -32,9 +31,11 @@ export async function GET(req: NextRequest, { params }: Ctx) {
       }),
       prisma.commande.findUnique({
         where: { id: dl.commandeId },
-        select: { clientNom: true, clientEmail: true, createdAt: true },
+        select: { clientNom: true, clientEmail: true, createdAt: true, paiementStatut: true },
       }),
     ]);
+    // Accès à vie (comme Chariow) : seul un achat non payé (annulé, remboursé) est refusé.
+    if (commande?.paiementStatut !== "completed") return NextResponse.json({ error: "Achat non payé" }, { status: 403 });
 
     if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
 

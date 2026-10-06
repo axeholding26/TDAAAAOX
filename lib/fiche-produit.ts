@@ -23,8 +23,7 @@ export const SECTIONS_FICHE: Record<string, Catalogue> = {
   gallery:      { label: "Galerie photos", base: true, defaut: () => ({ style: "vertical-thumbs", zoom: true, sticky: true }) },
   info:         { label: "Infos produit", base: true, defaut: () => ({ breadcrumbs: true, badges: true, stock: true }) },
   variants:     { label: "Variantes", base: true, defaut: () => ({ style: "boutons", taille: "md", espacement: "normal", afficherLibelle: true }) },
-  quantity:     { label: "Quantité & achat", base: true, defaut: () => ({ afficherQuantite: true, texteBouton: "", afficherAcheterMaintenant: true, afficherWhatsApp: true, couleurBouton: "", couleurTexteBouton: "" }) },
-  addToCart:    { label: "Bouton Ajouter au panier", defaut: () => ({ texteBouton: "", couleurBouton: "", couleurTexteBouton: "" }) },
+  quantity:     { label: "Quantité & achat", base: true, defaut: () => ({ afficherQuantite: true, texteBouton: "", afficherWhatsApp: true, couleurBouton: "", couleurTexteBouton: "" }) },
   trust:        { label: "Badges confiance", base: true, defaut: () => ({ disposition: "grille", colonnes: 3, afficherVendeur: true, items: [{ icone: "🔒", texte: "Paiement sécurisé" }, { icone: "🚚", texte: "Livraison rapide" }, { icone: "↩️", texte: "Retour 14 jours" }] }) },
   // Section de base : diffuse les vidéos rattachées au produit (Produit →
   // Images & vidéos). Aucune URL à saisir ici — le marchand règle le titre et
@@ -61,7 +60,8 @@ export function ficheDuProduit(cfg: { productPage?: ThemeProductPageConfig; prod
 }
 
 export function sectionsFiche(pp?: ThemeProductPageConfig | null): ProductPageSection[] {
-  return avecVideoProduit(pp?.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS.map((s) => ({ ...s, config: { ...s.config } })));
+  return avecVideoProduit(pp?.sections?.length ? pp.sections : DEFAULT_PRODUCT_SECTIONS.map((s) => ({ ...s, config: { ...s.config } })))
+    .filter((s) => s.type !== "addToCart"); // ancien bloc : il n'y a plus de panier
 }
 
 /**

@@ -8,7 +8,7 @@ import type { ThemeColors } from "@/lib/theme-config";
 export interface BlockRenderProps {
   id: string;
   config: Record<string, any>;
-  colors: Pick<ThemeColors, "accent" | "texte" | "fond">;
+  colors: Pick<ThemeColors, "accent" | "texte" | "fond"> & { texteBouton?: string; contourBouton?: string }; // schéma de couleurs de la section
   slug: string;
   container: string;
   sectionPy: string;

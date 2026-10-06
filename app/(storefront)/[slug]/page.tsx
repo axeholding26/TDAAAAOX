@@ -712,7 +712,6 @@ export default async function StorefrontPage({ params }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
-        sansPanier={cfg.modeBoutique === "digital"}
       />
 
       {ordre.map((id) => SECTION_NODES[id] ? <div key={id} data-axs-id={id}>{t(SECTION_NODES[id])}</div> : null)}
@@ -776,7 +775,6 @@ export default async function StorefrontPage({ params }: Props) {
                   { label: "Produits", href: `/${slug}/produits` },
                   ...(cfg.aboutPage?.actif ? [{ label: "À propos", href: `/${slug}/a-propos` }] : []),
                   ...(cfg.contactPage?.actif ? [{ label: "Contact", href: `/${slug}/contact` }] : []),
-                  { label: "Mon panier", href: `/${slug}/panier` },
                   { label: "Suivi commande", href: `/suivi` },
                 ].map((l) => (
                   <Link key={l.href} href={l.href} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>

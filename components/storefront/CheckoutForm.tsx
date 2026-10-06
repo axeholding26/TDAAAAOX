@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { useCartStore } from "@/store/cartStore";
+import { reductionPromo } from "@/lib/pricing";
 import { formatMontant } from "@/lib/utils";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
 import { useSearchParams } from "next/navigation";
@@ -122,7 +122,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT PHYSIQUE — Paiement à la livraison → WhatsApp
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique }: any) {
+function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique, onCommandee }: any) {
   const t = useT();
   const { fmt } = usePrix();
   const searchParams = useSearchParams();
@@ -306,6 +306,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       try { localStorage.removeItem("axso_ref"); } catch {}
       viderPanier();
       setDone(data);
+      onCommandee?.();
       if (canal === "whatsapp" && data.whatsappUrl) {
         if (onglet) { onglet.opener = null; onglet.location.href = data.whatsappUrl; }
         else window.location.href = data.whatsappUrl; // onglet refusé : on y va directement
@@ -927,90 +928,49 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT MIXTE — Avertissement + deux sections
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutMixte({ theme, slug, devise, tenantId, nomBoutique, logoUrl, items, parametresCommande, paysBoutique }: any) {
-  const t = useT();
-  const itemsPhysiques = items.filter((i: any) => i.type === "physique");
-  const itemsDigitaux  = items.filter((i: any) => i.type === "digital" || i.type === "dropshipping");
-  const totalPhysique  = itemsPhysiques.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
-  const totalDigital   = itemsDigitaux.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
-  const [section, setSection] = useState<"physique" | "digital">("physique");
-
-  return (
-    <div className="space-y-6">
-      {/* Bandeau mixte */}
-      <div className="flex items-start gap-3 p-4 rounded-2xl border" style={{ background: "rgba(245,158,11,0.06)", borderColor: "rgba(245,158,11,0.3)" }}>
-        <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-bold text-amber-600">{t("Panier mixte détecté")}</p>
-          <p className="text-xs text-amber-700 opacity-80 mt-0.5 leading-relaxed">
-            {t("Votre panier contient des produits physiques et des produits digitaux. Ils nécessitent deux processus distincts.")}
-          </p>
-        </div>
-      </div>
-
-      {/* Onglets */}
-      <div className="flex rounded-2xl border p-1 gap-1" style={{ borderColor: `${theme.accent}20`, backgroundColor: theme.surface }}>
-        <button onClick={() => setSection("physique")}
-          className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-          style={{ background: section === "physique" ? theme.accent : "transparent", color: section === "physique" ? theme.fond : theme.texte, opacity: section === "physique" ? 1 : 0.6 }}>
-          <Package size={14} />{" "}{t("Physiques (")}{itemsPhysiques.length})
-        </button>
-        <button onClick={() => setSection("digital")}
-          className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
-          style={{ background: section === "digital" ? theme.accent : "transparent", color: section === "digital" ? theme.fond : theme.texte, opacity: section === "digital" ? 1 : 0.6 }}>
-          <Zap size={14} />{" "}{t("Digitaux (")}{itemsDigitaux.length})
-        </button>
-      </div>
-
-      {section === "physique" && itemsPhysiques.length > 0 && (
-        <CheckoutPhysique theme={theme} slug={slug} devise={devise} tenantId={tenantId} items={itemsPhysiques} total={totalPhysique} codePromo={null} viderPanier={() => {}} parametresCommande={parametresCommande} paysBoutique={paysBoutique} />
-      )}
-      {section === "digital" && itemsDigitaux.length > 0 && (
-        <CheckoutDigital theme={theme} slug={slug} devise={devise} tenantId={tenantId} nomBoutique={nomBoutique} logoUrl={logoUrl} items={itemsDigitaux} total={totalDigital} codePromo={null} viderPanier={() => {}} paysBoutique={paysBoutique} />
-      )}
-    </div>
-  );
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
-export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande, paysBoutique }: Props) {
-  const t = useT();
-  const { items, totalAvecReduction, viderPanier, codePromo } = useCartStore();
-  const total = totalAvecReduction();
+export interface ArticleCommande {
+  produitId: string; nom: string; prix: number; quantite: number;
+  imageUrl?: string; type: string; variante?: string;
+}
 
-  // Détecter le type du panier
-  // digital + dropshipping → paiement en ligne Stripe
-  // physique → COD livraison
-  const typePanier = useMemo(() => {
-    if (items.length === 0) return "vide";
-    const aEnLigne  = items.some(i => i.type === "digital" || i.type === "dropshipping");
-    const aPhysique = items.some(i => i.type === "physique");
-    if (aEnLigne && aPhysique) return "mixte";
-    if (aEnLigne) return "digital"; // même flow Stripe pour digital + dropshipping
-    return "physique";
-  }, [items]);
+// Pas de panier : on commande UN produit, choisi sur sa fiche (Commander →
+// /checkout?produit=…). L'article et son prix viennent du serveur (page
+// checkout), jamais du navigateur ; le serveur les recalcule de toute façon.
+export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande, paysBoutique, article }: Props & { article: ArticleCommande | null }) {
+  const t = useT();
+  const items = useMemo(() => (article ? [article] : []), [article]);
+  const sousTotal = article ? article.prix * article.quantite : 0;
+  const [promo, setPromo] = useState<{ code: string; reduction: number } | null>(null);
+  const total = sousTotal - (promo?.reduction ?? 0);
+  const codePromo = promo?.code ?? null;
+  const viderPanier = () => {};
+  const [commandee, setCommandee] = useState(false); // écran de confirmation : plus de badge ni de code promo
+
+  // digital + dropshipping → paiement en ligne ; physique → WhatsApp / paiement à la livraison
+  const typePanier = !article ? "vide" : article.type === "physique" ? "physique" : "digital";
 
   useEffect(() => {
-    if (items.length === 0) return;
+    if (!article) return;
     trackPixelEvent("InitiateCheckout", {
-      content_ids: items.map((i: any) => i.produitId),
-      contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
+      content_ids: [article.produitId],
+      contents: [{ id: article.produitId, quantity: article.quantite }],
       value: total,
       currency: devise,
-      num_items: items.length,
+      num_items: 1,
     });
     trackTikTokEvent("InitiateCheckout", { value: total, currency: devise });
     trackSnapchatEvent("START_CHECKOUT", { price: total, currency: devise });
-    if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "initiate_checkout", value: total, currency: devise, num_items: items.length });
+    if (typeof window !== "undefined") (window as any).dataLayer?.push({ event: "initiate_checkout", value: total, currency: devise, num_items: 1 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (items.length === 0) {
+  if (!article) {
     return (
       <div className="text-center py-20">
-        <p className="opacity-60">{t("Votre panier est vide")}</p>
+        <p className="opacity-60">{t("Aucun produit sélectionné")}</p>
         <a href={`/${slug}/produits`} className="text-sm mt-3 inline-block" style={{ color: theme.accent }}>{t("← Voir les produits")}</a>
       </div>
     );
@@ -1021,7 +981,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
   return (
     <>
       {/* Badge type en haut */}
-      <div className="mb-6">
+      {!commandee && <div className="max-w-xl mx-auto mb-5">
         {typePanier === "physique" && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>
             <Package size={14} />{" "}{t("Commande physique · Paiement à la livraison")}
@@ -1029,19 +989,60 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
         )}
         {typePanier === "digital" && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: `${theme.accent}15`, color: theme.accent, border: `1px solid ${theme.accent}30` }}>
-            <Zap size={14} /> {items.some((i:any) => i.type === "dropshipping") ? t("Expédition directe · Paiement en ligne sécurisé") : t("Livraison instantanée · Paiement en ligne sécurisé")}
+            <Zap size={14} /> {article.type === "dropshipping" ? t("Expédition directe · Paiement en ligne sécurisé") : t("Livraison instantanée · Paiement en ligne sécurisé")}
           </div>
         )}
-        {typePanier === "mixte" && (
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: "rgba(245,158,11,0.1)", color: "#D97706", border: "1px solid rgba(245,158,11,0.3)" }}>
-            <AlertCircle size={14} />{" "}{t("Panier mixte · Deux processus distincts")}
-          </div>
-        )}
-      </div>
+      </div>}
 
-      {typePanier === "physique" && <CheckoutPhysique {...commonProps} />}
+      {!commandee && <CodePromo theme={theme} slug={slug} devise={devise} sousTotal={sousTotal} promo={promo} onChange={setPromo} />}
+
+      {typePanier === "physique" && <CheckoutPhysique {...commonProps} onCommandee={() => setCommandee(true)} />}
       {typePanier === "digital"  && <CheckoutDigital {...commonProps} />}
-      {typePanier === "mixte"    && <CheckoutMixte {...commonProps} />}
     </>
+  );
+}
+
+// Code promo (vérifié ici pour l'affichage ; le serveur le revérifie à la commande).
+function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
+  theme: Props["theme"]; slug: string; devise: string; sousTotal: number;
+  promo: { code: string; reduction: number } | null; onChange: (p: { code: string; reduction: number } | null) => void;
+}) {
+  const t = useT();
+  const { fmt } = usePrix();
+  const [code, setCode] = useState("");
+  const [verif, setVerif] = useState(false);
+  const appliquer = async () => {
+    if (!code.trim()) return;
+    setVerif(true);
+    try {
+      const res = await fetch(`/api/codes-promo/verifier?code=${encodeURIComponent(code.trim())}&slug=${slug}`);
+      const p = await res.json();
+      if (!res.ok) throw new Error(p.error || "Code promo invalide ou expiré");
+      if (p.minCommande && sousTotal < p.minCommande) throw new Error(t("Ce code s'applique dès {0} d'achat", fmt(p.minCommande, devise)));
+      const reduction = reductionPromo(p, sousTotal);
+      if (reduction <= 0) throw new Error("Code promo invalide ou expiré");
+      onChange({ code: code.trim().toUpperCase(), reduction });
+      toast.success(t("Code appliqué : -{0}", fmt(reduction, devise)));
+    } catch (e) {
+      toast.error(e instanceof Error ? t(e.message) : t("Code promo invalide ou expiré"));
+    } finally { setVerif(false); }
+  };
+  if (promo) {
+    return (
+      <div className="max-w-xl mx-auto mb-5 flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
+        <span className="flex items-center gap-2 text-green-600 font-semibold"><Check size={15} />{" "}{t("Code {0} : -{1}", promo.code, fmt(promo.reduction, devise))}</span>
+        <button type="button" onClick={() => onChange(null)} className="text-xs opacity-60 hover:opacity-100">{t("Retirer")}</button>
+      </div>
+    );
+  }
+  return (
+    <div className="max-w-xl mx-auto mb-5 flex gap-2">
+      <input value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && appliquer()} placeholder={t("Code promo")}
+        className="flex-1 h-11 px-4 rounded-xl border bg-transparent text-sm outline-none" style={{ borderColor: `${theme.accent}30` }} />
+      <button type="button" onClick={appliquer} disabled={verif || !code.trim()} className="h-11 px-5 rounded-xl text-sm font-semibold disabled:opacity-50"
+        style={{ background: `${theme.accent}15`, color: theme.accent }}>
+        {verif ? <Loader2 size={15} className="animate-spin" /> : t("Appliquer")}
+      </button>
+    </div>
   );
 }

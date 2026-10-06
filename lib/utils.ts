@@ -101,3 +101,15 @@ export function urlVideoIntegree(url: string, autoplay = false): string | null {
   if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}${autoplay ? "?autoplay=1&muted=1" : ""}`;
   return null;
 }
+
+// Lien d'un bloc (bouton, image, bandeau CTA) → adresse réelle. Comme
+// Shopify, le bloc garde une destination de la boutique (« a-propos »,
+// « collections/ete », « / » pour l'accueil) qui suit le slug ; une URL
+// complète, un chemin absolu, une ancre, mailto: ou tel: restent tels quels.
+export function hrefBoutique(slug: string, lien?: string | null): string | undefined {
+  const l = lien?.trim();
+  if (!l) return undefined;
+  if (l === "/") return `/${slug}`;
+  if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(l)) return l;
+  return `/${slug}/${l}`;
+}

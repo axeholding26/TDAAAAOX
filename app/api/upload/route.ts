@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { categorieFichier, TAILLE_MAX } from "@/lib/types-fichiers";
+import { dossierBoutique } from "@/lib/fichiers-boutique";
 
 // Types et tailles : source unique partagée avec l'envoi direct (lib/televerser.ts).
 // ⚠ Sur Vercel, une fonction serveur accepte 4,5 Mo maximum par requête : l'interface
@@ -14,7 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "blob_not_configured" }, { status: 503 });
     }
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    const tenantId = (session?.user as any)?.tenantId as string | undefined;
+    if (!session || !tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
     const ext = file.name.split(".").pop() || (
       categorie === "image" ? "jpg" : categorie === "video" ? "mp4" : "bin"
     );
-    const dossier = `${categorie}s`;
+    const dossier = `${dossierBoutique(tenantId)}${categorie}s`;
     const filename = `${dossier}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const blob = await put(filename, file, {

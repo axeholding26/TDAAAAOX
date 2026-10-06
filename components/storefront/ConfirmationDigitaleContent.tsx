@@ -65,7 +65,7 @@ export async function ConfirmationDigitaleContent({
           </div>
           <h1 className="text-2xl font-bold font-playfair mb-2 text-red-400">{t("Paiement échoué")}</h1>
           <p className="opacity-60 mb-6">{t("Une erreur est survenue. Votre commande n'a pas été confirmée.")}</p>
-          <Link href={`/${slug}/panier`}
+          <Link href={commande.lignes[0]?.produit ? `/${slug}/produits/${commande.lignes[0].produit.id}` : `/${slug}/produits`}
             className="px-8 py-3 rounded-xl font-semibold text-sm inline-block"
             style={{ backgroundColor: theme.accent, color: theme.fond }}>
             {t("Réessayer")}

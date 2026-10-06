@@ -7,7 +7,7 @@ import type { ThemeColors } from "@/lib/theme-config";
 // SSR public).
 export interface TreeRenderCtx {
   slug: string;
-  colors: Pick<ThemeColors, "accent" | "texte" | "fond">;
+  colors: Pick<ThemeColors, "accent" | "texte" | "fond"> & { texteBouton?: string; contourBouton?: string };
   container: string;
   sectionPy: string;
   // Nécessaire côté SSR pour que le widget ProductsBlock interroge Prisma.

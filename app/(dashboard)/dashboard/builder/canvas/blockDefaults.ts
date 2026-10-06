@@ -36,14 +36,14 @@ export const BLOCK_LIBRARY_ITEMS: Array<{ type: BlockNodeType; label: string; Ic
   { type: "products", label: "Produits", Icon: ShoppingBag, desc: "Grille de produits de la boutique", categorie: "widget" },
 ];
 
-function colonne(children: BlockNode[], style?: BlockNode["style"]): BlockNode {
-  return { id: genBlockId("col"), type: "column", children, style };
+function colonne(children: BlockNode[], style?: BlockNode["style"], config?: BlockNode["config"]): BlockNode {
+  return { id: genBlockId("col"), type: "column", children, style, config };
 }
 function ligne(children: BlockNode[]): BlockNode {
   return { id: genBlockId("row"), type: "row", children };
 }
-function section(children: BlockNode[]): BlockNode {
-  return { id: genBlockId("section"), type: "section", children };
+function section(children: BlockNode[], style?: BlockNode["style"], config?: BlockNode["config"]): BlockNode {
+  return { id: genBlockId("section"), type: "section", children, style, config };
 }
 function widget(type: BlockNodeType, config: Record<string, any>): BlockNode {
   return { id: genBlockId(type), type, config };
@@ -76,12 +76,12 @@ export const STARTER_TEMPLATES: Array<{ id: string; label: string; Icon: LucideI
       ligne([
         colonne([
           widget("heading", { texte: "Notre histoire", niveau: "h2", align: "left" }),
-          widget("text", { texte: "Racontez votre histoire, vos valeurs, ce qui vous distingue.", align: "left" }),
+          widget("text", { texte: "Racontez votre histoire, vos valeurs, ce qui vous distingue.", style: "corps", align: "left" }),
           widget("button", { texte: "En savoir plus", lien: "a-propos", style: "outline", taille: "md", align: "left" }),
-        ], { width: "50%" }),
-        colonne([widget("image", { url: "", alt: "", ratio: "square" })], { width: "50%" }),
+        ], { width: "calc(50% - 12px)" }, { position: "milieu" }),
+        colonne([widget("image", { url: "", alt: "", ratio: "auto" })], { width: "calc(50% - 12px)" }),
       ]),
-    ]),
+    ], { spacing: { pt: "36px", pb: "36px", pl: "24px", pr: "24px" } }, { hauteurImage: "adapter", alignMobile: "left" }), // valeurs par défaut de Shopify
   },
   {
     id: "grille-avantages",

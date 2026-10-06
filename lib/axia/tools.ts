@@ -941,7 +941,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
       case "generer_image": {
         const prompt = buildProductImagePrompt(args.description, args.categorie, args.style || "product_white");
-        const url = await generateProductImage({ prompt });
+        const url = await generateProductImage({ prompt, tenantId });
         if (!url) return { succes: false, resultat: "Génération d'image indisponible pour le moment (quota Gemini atteint) — réessaie dans quelques instants." };
         return { succes: true, resultat: `IMAGE:${url}` };
       }

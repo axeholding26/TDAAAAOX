@@ -86,8 +86,8 @@ export const BLOCK_CATALOG: BlockCatalogEntry[] = [
   },
   {
     type: "text", label: "Texte", categorie: "widget",
-    champs: `{ texte: string, align: "left"|"center"|"right" }`,
-    defaultConfig: { texte: "Votre texte ici.", align: "left" },
+    champs: `{ texte: string, style: "corps"|"sous-titre"|"majuscules", align: "left"|"center"|"right" }`,
+    defaultConfig: { texte: "Votre texte ici.", style: "corps", align: "left" },
   },
   {
     type: "image", label: "Image", categorie: "widget",

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { Plus } from "lucide-react";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
-import { blockStyleToCss, TYPES_A_CIBLE } from "@/components/storefront/blocks/styleUtils";
+import { blockStyleToCss, TYPES_A_CIBLE, couleursSection, cssSection, fondSection, POSITION_CONTENU } from "@/components/storefront/blocks/styleUtils";
 import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveStyleTag";
 import { cssSectionsDesign, scoperCss } from "@/lib/scope-css";
 import { zoneDe, type Zone } from "@/lib/block-tree";
@@ -214,12 +214,15 @@ function Noeud({ node, ctx, selectedId, sectionActive, onSelect, onChangeConfig,
 
   if (node.type === "section" || node.type === "row" || node.type === "column") {
     const Tag = node.type === "section" ? "section" : "div";
-    const flex = node.type === "row" ? "flex flex-col @min-[640px]:flex-row gap-6" : node.type === "column" ? "flex-1 flex flex-col gap-4 min-w-0" : "";
+    const flex = node.type === "row" ? "flex flex-col @min-[640px]:flex-row gap-6" : node.type === "column" ? `flex-1 flex flex-col gap-4 min-w-0 ${POSITION_CONTENU[node.config?.position ?? ""] ?? ""}` : "";
+    const section = node.type === "section";
+    const ctxEnfants = section ? { ...ctx, colors: couleursSection(node, ctx.colors) } : ctx;
     return (
-      <Tag data-axs-id={node.id} style={style} className={`${flex} ${classe}`}>
+      <Tag data-axs-id={node.id} style={section ? { ...fondSection(node), ...style } : style} className={`${flex} ${classe}`}>
         <ResponsiveStyleTag nodeId={node.id} style={node.style} />
+        {section && cssSection(node) && <StyleCss css={cssSection(node)} />}
         {(node.children ?? []).map((c) => (
-          <Noeud key={c.id} node={c} ctx={ctx} selectedId={selectedId} sectionActive={sectionActive} onSelect={onSelect} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />
+          <Noeud key={c.id} node={c} ctx={ctxEnfants} selectedId={selectedId} sectionActive={sectionActive} onSelect={onSelect} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />
         ))}
       </Tag>
     );

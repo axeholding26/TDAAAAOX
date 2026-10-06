@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Copy, Trash2, X, Monitor, Tablet, Smartphone, ArrowUp, ArrowDown, Plus } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Copy, Trash2, X, Monitor, Tablet, Smartphone, ArrowUp, ArrowDown, Plus, Link2, FileText, FolderOpen, Search, ShoppingBag } from "lucide-react";
 import type { BlockNode, BlockStyleOverrides } from "@/lib/theme-config";
 import { genBlockId } from "@/lib/block-tree";
 import { FONTS } from "@/lib/theme-fonts";
 import { MediaUpload } from "@/components/ui/MediaUpload";
 import { useT } from "@/components/I18nProvider";
+import { PAGES } from "../pages/pages";
 
 type Tab = "contenu" | "style" | "avance";
 type Device = "desktop" | "tablet" | "mobile";
@@ -33,6 +34,7 @@ const CHAMPS_LONG_TEXTE = new Set(["texte", "description", "sousTitre"]);
 const CHAMPS_ENUM: Record<string, Array<{ value: string; label: string }>> = {
   "heading.niveau": [{ value: "h1", label: "H1 — très grand" }, { value: "h2", label: "H2 — grand" }, { value: "h3", label: "H3 — moyen" }, { value: "h4", label: "H4 — petit" }],
   "heading.align": [{ value: "left", label: "Gauche" }, { value: "center", label: "Centré" }, { value: "right", label: "Droite" }],
+  "text.style": [{ value: "corps", label: "Corps de texte" }, { value: "sous-titre", label: "Sous-titre" }, { value: "majuscules", label: "Légende en majuscules" }],
   "text.align": [{ value: "left", label: "Gauche" }, { value: "center", label: "Centré" }, { value: "right", label: "Droite" }],
   "button.style": [{ value: "primary", label: "Plein" }, { value: "outline", label: "Contour" }, { value: "ghost", label: "Discret" }],
   "button.taille": [{ value: "sm", label: "Petit" }, { value: "md", label: "Moyen" }, { value: "lg", label: "Grand" }],
@@ -55,9 +57,12 @@ interface Props {
   onDuplicate: () => void;
   onDelete: () => void;
   onClose: () => void;
+  collections?: { slug: string; nom: string }[]; // destinations du sélecteur de lien
+  bibliotheque?: string[]; // images déjà utilisées dans la boutique
+  reglagesSection?: ReactNode; // réglages propres à une section (couleurs, Texte + Image…), en tête de Style
 }
 
-export function BlockStylePanel({ node, titre, device, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onChangeStyle, onChangeResponsiveStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
+export function BlockStylePanel({ collections = [], bibliotheque = [], reglagesSection, node, titre, device, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onChangeStyle, onChangeResponsiveStyle, onChangeConfig, onDuplicate, onDelete, onClose }: Props) {
   const t = useT();
   const [tab, setTab] = useState<Tab>(node.type === "section" || node.type === "row" || node.type === "column" ? "style" : "contenu");
   const estConteneur = node.type === "section" || node.type === "row" || node.type === "column";
@@ -109,9 +114,10 @@ export function BlockStylePanel({ node, titre, device, canMoveUp, canMoveDown, o
             {t("Section issue de ton design.")}{" "}<strong>{t("Clique sur un texte dans l'aperçu")}</strong>{" "}{t("pour le modifier directement. Utilise l'onglet")}{" "}<strong>{t("Style")}</strong>{" "}{t("pour l'espacement et la visibilité, et le panneau de gauche pour la déplacer, la masquer ou la supprimer.")}
           </p>
         )}
-        {tab === "contenu" && !estConteneur && node.type !== "embed-html" && <ContentEditor nodeType={node.type} config={node.config || {}} onChange={onChangeConfig} />}
+        {tab === "contenu" && !estConteneur && node.type !== "embed-html" && <ContentEditor nodeType={node.type} config={node.config || {}} onChange={onChangeConfig} collections={collections} bibliotheque={bibliotheque} />}
         {tab === "style" && (
           <>
+            {reglagesSection}
             {device !== "desktop" && (
               <p className="text-[13px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-2">
                 {t("Modification pour")}{" "}<strong>{t(DEVICE_LABEL[device])}</strong>{" "}{t("uniquement — hérite du style Desktop pour tout ce qui n'est pas changé ici. Bascule l'aperçu en Desktop pour éditer le style de base.")}
@@ -183,9 +189,13 @@ function labelChamp(key: string): string {
   return LABELS_CHAMPS[key] || key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, " $1");
 }
 
-function ContentEditor({ nodeType, config, onChange }: { nodeType: string; config: Record<string, any>; onChange: (patch: Record<string, any>) => void }) {
+function ContentEditor({ nodeType, config, onChange, collections, bibliotheque }: { nodeType: string; config: Record<string, any>; onChange: (patch: Record<string, any>) => void; collections: { slug: string; nom: string }[]; bibliotheque: string[] }) {
   const t = useT();
-  const simples = Object.entries(config).filter(([, v]) => typeof v === "string" || typeof v === "number" || typeof v === "boolean");
+  // Choix fermés absents d'un bloc créé avant leur ajout : affichés avec leur
+  // première valeur (celle du rendu par défaut).
+  const manquants = Object.entries(CHAMPS_ENUM).filter(([k]) => k.startsWith(`${nodeType}.`) && !(k.slice(nodeType.length + 1) in config))
+    .map(([k, opts]) => [k.slice(nodeType.length + 1), opts[0].value] as [string, string]);
+  const simples = [...Object.entries(config), ...manquants].filter(([, v]) => typeof v === "string" || typeof v === "number" || typeof v === "boolean");
   const complexes = Object.entries(config).filter(([, v]) => typeof v === "object" && v !== null);
 
   return (
@@ -194,7 +204,11 @@ function ContentEditor({ nodeType, config, onChange }: { nodeType: string; confi
         const options = CHAMPS_ENUM[`${nodeType}.${key}`];
         return (
           <Field key={key} label={labelChamp(key)}>
-            {typeof value === "boolean" ? (
+            {nodeType === "image" && key === "url" ? (
+              <ChampImage value={value as string} onChange={(url) => onChange({ url })} bibliotheque={bibliotheque} />
+            ) : (key === "lien" || key === "ctaLien") && typeof value === "string" ? (
+              <ChampLien value={value} onChange={(v) => onChange({ [key]: v })} collections={collections} />
+            ) : typeof value === "boolean" ? (
               <button onClick={() => onChange({ [key]: !value })} className={`w-10 h-6 rounded-full relative transition-colors ${value ? "bg-[#F5A623]" : "bg-gray-200"}`}>
                 <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all ${value ? "left-4" : "left-0.5"}`} />
               </button>
@@ -297,6 +311,141 @@ function ArrayField({ fieldKey, value, onChange }: { fieldKey: string; value: an
   );
 }
 
+// Image façon Shopify : aperçu + « Importer » depuis l'appareil, l'URL
+// collée reste possible pour une image déjà en ligne.
+function ChampImage({ value, onChange, bibliotheque }: { value: string; onChange: (url: string) => void; bibliotheque: string[] }) {
+  const t = useT();
+  return (
+    <div className="space-y-2">
+      {value && (
+        <div className="relative rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+          <img src={value} alt="" className="w-full h-36 object-contain" />
+          <button type="button" onClick={() => onChange("")} className="absolute top-1.5 right-1.5 text-[12px] px-2 py-1 rounded-md bg-white/90 text-red-500 shadow-sm hover:bg-white">{t("Retirer")}</button>
+        </div>
+      )}
+      <MediaUpload type="image" onUrl={onChange} />
+      <Bibliotheque images={bibliotheque} actuelle={value} onChoisir={onChange} />
+      <input type="text" value={value.startsWith("data:") ? "" : value} onChange={(e) => onChange(e.target.value)} placeholder={t("ou colle l'URL d'une image")}
+        className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
+    </div>
+  );
+}
+
+// « Bibliothèque » façon Shopify : les images de Fichiers (dossier de la
+// boutique), celles des produits et celles déjà utilisées dans le constructeur
+// (dont les imports antérieurs au rangement par boutique).
+function Bibliotheque({ images, actuelle, onChoisir }: { images: string[]; actuelle: string; onChoisir: (url: string) => void }) {
+  const t = useT();
+  const [ouverte, setOuverte] = useState(false);
+  const [produits, setProduits] = useState<string[]>([]);
+  const [fichiers, setFichiers] = useState<string[]>([]);
+  useEffect(() => {
+    if (!ouverte) return;
+    fetch("/api/fichiers?type=image").then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setFichiers((d.fichiers ?? []).map((f: { url: string }) => f.url))).catch(() => {});
+    fetch("/api/produits?limit=50").then((r) => (r.ok ? r.json() : null))
+      .then((d) => d && setProduits((d.produits ?? []).flatMap((p: { images?: string[] }) => p.images ?? []))).catch(() => {});
+  }, [ouverte]);
+  const toutes = [...new Set([...fichiers, ...images, ...produits])].filter(Boolean);
+  return (
+    <div>
+      <button type="button" onClick={() => setOuverte((o) => !o)}
+        className="w-full h-9 rounded-lg border border-[#D8D8D8] text-[13px] font-medium text-[#555555] hover:border-[#F5A623] hover:text-[#111111] transition-colors">
+        {ouverte ? t("Fermer la bibliothèque") : t("Choisir dans la bibliothèque")}
+      </button>
+      {ouverte && (
+        toutes.length
+          ? <div className="mt-2 grid grid-cols-3 gap-1.5 max-h-56 overflow-y-auto">
+              {toutes.map((url) => (
+                <button key={url} type="button" onClick={() => { onChoisir(url); setOuverte(false); }}
+                  className={`aspect-square rounded-md overflow-hidden border-2 ${url === actuelle ? "border-[#F5A623]" : "border-transparent hover:border-gray-300"}`}>
+                  <img src={url} alt="" loading="lazy" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          : <p className="mt-2 text-[13px] text-gray-400">{t("Aucune image dans la boutique pour l'instant.")}</p>
+      )}
+    </div>
+  );
+}
+
+// Sélecteur de lien façon Shopify : une destination de la boutique choisie
+// dans la liste (page, collection) s'affiche en pastille ; sinon on colle une
+// URL. La valeur stockée est relative au slug (voir hrefBoutique).
+function ChampLien({ value, onChange, collections }: { value: string; onChange: (v: string) => void; collections: { slug: string; nom: string }[] }) {
+  const t = useT();
+  const [saisie, setSaisie] = useState<string | null>(null); // null = liste fermée
+  const [produits, setProduits] = useState<{ id: string; nom: string }[]>([]);
+  // Recherche dans tout le catalogue, côté serveur, à chaque frappe (après une courte pause).
+  const recherche = (saisie ?? "").trim();
+  useEffect(() => {
+    if (saisie === null) return;
+    const ctrl = new AbortController();
+    const minuteur = setTimeout(() => {
+      fetch(`/api/produits?limit=20&actif=true&search=${encodeURIComponent(recherche)}`, { signal: ctrl.signal })
+        .then((r) => (r.ok ? r.json() : null)).then((d) => d && setProduits(d.produits ?? [])).catch(() => {});
+    }, 250);
+    return () => { clearTimeout(minuteur); ctrl.abort(); };
+  }, [recherche, saisie === null]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Nom du produit lié, pour la pastille, même s'il n'est pas dans les résultats.
+  const idProduit = value.startsWith("produits/") ? value.slice("produits/".length) : "";
+  const [produitLie, setProduitLie] = useState<{ id: string; nom: string } | null>(null);
+  useEffect(() => {
+    if (!idProduit || produitLie?.id === idProduit) return;
+    fetch(`/api/produits/${encodeURIComponent(idProduit)}`).then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.produit && setProduitLie({ id: d.produit.id, nom: d.produit.nom })).catch(() => {});
+  }, [idProduit]); // eslint-disable-line react-hooks/exhaustive-deps
+  const destinations = [
+    ...PAGES.filter((pg) => pg.id !== "produit" && pg.id !== "commande").map((pg) => ({ lien: pg.chemin.slice(1) || "/", label: pg.label, Icon: FileText })),
+    ...collections.map((c) => ({ lien: `collections/${c.slug}`, label: c.nom, Icon: FolderOpen })),
+    ...[...produits, ...(produitLie && !produits.some((pr) => pr.id === produitLie.id) ? [produitLie] : [])]
+      .map((pr) => ({ lien: `produits/${pr.id}`, label: pr.nom, Icon: ShoppingBag })),
+  ];
+  const choisie = destinations.find((d) => d.lien === value);
+  const q = (saisie ?? "").trim().toLowerCase();
+  // Produits déjà filtrés par le serveur ; pages et collections filtrées ici.
+  const filtrees = destinations.filter((d) => !q || d.Icon === ShoppingBag || t(d.label).toLowerCase().includes(q) || d.lien.includes(q));
+  const valider = (v: string) => { onChange(v); setSaisie(null); };
+
+  if (choisie && saisie === null) {
+    return (
+      <div className="flex items-center gap-2 h-10 pl-2.5 pr-1 rounded-md border border-gray-200">
+        <choisie.Icon size={15} className="text-gray-500 flex-shrink-0" />
+        <button type="button" onClick={() => setSaisie("")} className="flex-1 min-w-0 text-left text-[14px] text-[#111111] truncate">{t(choisie.label)}</button>
+        <button type="button" onClick={() => onChange("")} aria-label={t("Retirer le lien")} className="w-8 h-8 flex items-center justify-center rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100"><X size={14} /></button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <label className="flex items-center gap-2 h-10 px-2.5 rounded-md border border-gray-200 focus-within:border-[#F5A623]">
+        {saisie === null ? <Link2 size={15} className="text-gray-400" /> : <Search size={15} className="text-gray-400" />}
+        <input type="text" value={saisie ?? value} placeholder={t("Rechercher ou coller un lien")}
+          onFocus={() => setSaisie(choisie ? "" : value)}
+          onChange={(e) => setSaisie(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") setSaisie(null); }}
+          onBlur={() => { if (saisie !== null) valider(saisie.trim()); }}
+          className="flex-1 min-w-0 text-[14px] outline-none bg-transparent" />
+      </label>
+      {saisie !== null && (
+        <ul className="absolute z-20 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] py-1">
+          {filtrees.map((d) => (
+            <li key={d.lien}>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => valider(d.lien)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-[14px] hover:bg-[#FFF7EA] ${d.lien === value ? "font-semibold" : ""}`}>
+                <d.Icon size={15} className="text-gray-500 flex-shrink-0" />
+                <span className="truncate">{t(d.label)}</span>
+              </button>
+            </li>
+          ))}
+          {!filtrees.length && <li className="px-3 py-2 text-[13px] text-gray-400">{t("Entrée pour utiliser ce lien")}</li>}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function JsonField({ fieldKey, value, onChange }: { fieldKey: string; value: any; onChange: (patch: Record<string, any>) => void }) {
   const t = useT();
   const [raw, setRaw] = useState(() => JSON.stringify(value, null, 2));
@@ -332,9 +481,12 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
         <p className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-2.5">{t("Espacement")}</p>
         <div className="grid grid-cols-2 gap-2.5">
           {(["pt", "pb", "pl", "pr", "mt", "mb", "ml", "mr"] as const).map((k) => (
-            <Field key={k} label={{ pt: "Haut (padding)", pb: "Bas (padding)", pl: "Gauche (padding)", pr: "Droite (padding)", mt: "Haut (marge)", mb: "Bas (marge)", ml: "Gauche (marge)", mr: "Droite (marge)" }[k]}>
+            <Field key={k} label={{ pt: "Haut (remplissage)", pb: "Bas (remplissage)", pl: "Gauche (remplissage)", pr: "Droite (remplissage)", mt: "Haut (marge)", mb: "Bas (marge)", ml: "Gauche (marge)", mr: "Droite (marge)" }[k]}>
+              {/* Curseur en px comme Shopify ; le champ accepte toute unité (%, rem…). */}
+              <input type="range" min={0} max={100} step={4} value={parseInt(spacing[k] || "") || 0} aria-label={t("Valeur en pixels")}
+                onChange={(e) => onChange({ spacing: { ...spacing, [k]: `${e.target.value}px` } })} className="w-full accent-[#F5A623]" />
               <input type="text" value={spacing[k] || ""} onChange={(e) => onChange({ spacing: { ...spacing, [k]: e.target.value } })}
-                placeholder="24px" className="w-full px-2.5 py-2 text-[14px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
+                placeholder="24px" className="w-full px-2 py-1 text-[13px] rounded-md border border-gray-200 focus:border-[#F5A623] outline-none" />
             </Field>
           ))}
         </div>
@@ -444,7 +596,7 @@ function StyleEditor({ style, onChange }: { style: BlockStyleOverrides; onChange
 
 // Couleur facultative : vide = valeur héritée (un <input type="color"> seul ne
 // peut pas être vide et affichait une fausse valeur par défaut).
-function CouleurEffacable({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
+export function CouleurEffacable({ value, onChange }: { value?: string; onChange: (v: string) => void }) {
   const t = useT();
   return (
     <div className="flex items-center gap-2">

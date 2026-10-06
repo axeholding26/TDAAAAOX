@@ -5,7 +5,6 @@ import { BoutiqueNonPubliee } from "@/components/storefront/BoutiqueNonPubliee";
 import { prisma } from "@/lib/prisma";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
-import { PanierVitrine } from "@/components/storefront/PanierVitrine";
 import { FiltresCatalogue } from "@/components/storefront/FiltresCatalogue";
 import { RechercheDesign } from "@/components/storefront/RechercheDesign";
 import { WidgetsDesign } from "@/components/storefront/WidgetsDesign";
@@ -84,7 +83,6 @@ async function ContenuVitrine({ children, params }: Props) {
       <Suspense fallback={null}>
         <AffiliationRefCapture />
       </Suspense>
-      <PanierVitrine />
       <Suspense fallback={null}>
         <FiltresCatalogue />
       </Suspense>

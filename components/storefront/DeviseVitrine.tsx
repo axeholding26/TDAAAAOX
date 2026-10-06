@@ -69,7 +69,7 @@ export function PastillePaysDesign() {
   useEffect(() => {
     const header = document.querySelector<HTMLElement>("[data-axs-embed-html] header");
     if (!header) { setHote(null); return; }
-    const avant = header.querySelector<HTMLElement>('[data-axs-favoris], a[href$="/panier"], [data-axs-achats]');
+    const avant = header.querySelector<HTMLElement>('[data-axs-favoris], a[href$="/panier"], [data-axs-achats], [data-axs-panier-retire]');
     const span = document.createElement("span");
     span.setAttribute("data-axs-pays", "");
     span.style.display = "inline-flex";

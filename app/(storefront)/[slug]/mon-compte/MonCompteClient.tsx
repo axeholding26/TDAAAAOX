@@ -27,9 +27,10 @@ interface Commande {
     nom: string;
     quantite: number;
     prix: number;
-    produit: { id: string; nom: string; images: string[]; type: string; fichierUrl: string | null };
+    produit: { id: string; nom: string; images: string[]; type: string };
   }>;
   facture: { numero: string; statut: string } | null;
+  accesDigital: boolean; // achat digital payé : page d'accès aux fichiers / formation / clés
 }
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
@@ -49,12 +50,14 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
   const params = useParams();
   const slug = params?.slug as string;
 
-  const [view, setView] = useState<"login" | "register" | "compte">("login");
+  // Connexion sans mot de passe (comme Chariow) : email → code reçu par email.
+  const [view, setView] = useState<"email" | "code" | "compte">("email");
   const [compte, setCompte] = useState<Compte | null>(null);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ email: "", password: "", nom: "", telephone: "" });
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
 
   const loadData = useCallback(async (token: string) => {
     const res = await fetch(`/api/clients-acheteurs/commandes?token=${token}&slug=${slug}`);
@@ -73,20 +76,20 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
     if (token) loadData(token);
   }, [slug, loadData]);
 
-  async function submit(action: "connexion" | "inscription") {
+  async function envoyer(avecCode: boolean) {
     setLoading(true);
     setError("");
     const res = await fetch("/api/clients-acheteurs/connexion", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, action, ...form }),
+      body: JSON.stringify({ slug, email, ...(avecCode ? { code } : {}) }),
     });
-    const data = await res.json();
-    if (res.ok && data.token) {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) setError(data.error ?? "Erreur inconnue");
+    else if (!avecCode) { setView("code"); setCode(""); }
+    else if (data.token) {
       localStorage.setItem(`axso_buyer_token_${slug}`, data.token);
       await loadData(data.token);
-    } else {
-      setError(data.error ?? "Erreur inconnue");
     }
     setLoading(false);
   }
@@ -95,7 +98,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
     localStorage.removeItem(`axso_buyer_token_${slug}`);
     setCompte(null);
     setCommandes([]);
-    setView("login");
+    setView("email");
   }
 
   // Login / register form
@@ -105,56 +108,41 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
         <div className="bg-white rounded-2xl border border-[#F0F0F0] p-8 w-full max-w-sm shadow-sm">
           <div className="mb-6 text-center">
             <p className="text-xl font-bold text-[#111]">{t("Mon compte")}</p>
-            <p className="text-[12px] text-[#888] mt-1">{view === "login" ? t("Connecte-toi pour suivre tes commandes") : t("Crée ton compte acheteur")}</p>
+            <p className="text-[12px] text-[#888] mt-1">
+              {view === "email" ? t("Vos achats et vos téléchargements, avec votre email") : t("Code envoyé à {0}", email)}
+            </p>
           </div>
 
           {error && (
             <div className="mb-4 px-3 py-2 bg-red-50 border border-red-100 rounded-lg text-[12px] text-red-600">{t(error)}</div>
           )}
 
-          <div className="space-y-3">
-            {view === "register" && (
-              <>
-                <div>
-                  <label className="block text-[11px] text-[#888] mb-1">{t("Nom complet")}</label>
-                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder={t("Jean Dupont")} value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-[#888] mb-1">{t("Téléphone (optionnel)")}</label>
-                  <input className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" placeholder={t("+237 6XX XXX XXX")} value={form.telephone} onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))} />
-                </div>
-              </>
-            )}
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("Email")}</label>
-              <input type="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
-            </div>
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("Mot de passe")}</label>
-              <input type="password" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
-            </div>
-          </div>
-
-          <button
-            onClick={() => submit(view === "login" ? "connexion" : "inscription")}
-            disabled={loading}
-            className="w-full mt-5 py-3 rounded-xl text-white font-semibold text-[14px] disabled:opacity-50"
-            style={{ background: "#F5A623" }}
-          >
-            {loading ? "..." : view === "login" ? t("Se connecter") : t("Créer mon compte")}
-          </button>
-
-          <p className="text-center text-[12px] text-[#888] mt-4">
-            {view === "login" ? (
-              <>{t("Pas encore de compte ?")}{" "}
-                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("register"); setError(""); }}>{t("Créer un compte")}</button>
-              </>
+          <form onSubmit={(e) => { e.preventDefault(); envoyer(view === "code"); }} className="space-y-3">
+            {view === "email" ? (
+              <div>
+                <label className="block text-[11px] text-[#888] mb-1">{t("Email utilisé lors de l'achat")}</label>
+                <input type="email" required autoFocus autoComplete="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
             ) : (
-              <>{t("Déjà un compte ?")}{" "}
-                <button className="text-[#F5A623] font-semibold" onClick={() => { setView("login"); setError(""); }}>{t("Se connecter")}</button>
-              </>
+              <div>
+                <label className="block text-[11px] text-[#888] mb-1">{t("Code à 6 chiffres")}</label>
+                <input inputMode="numeric" required autoFocus autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}"
+                  className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[18px] tracking-[0.5em] text-center font-semibold" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
+              </div>
             )}
-          </p>
+            <button type="submit" disabled={loading}
+              className="w-full mt-2 py-3 rounded-xl text-white font-semibold text-[14px] disabled:opacity-50" style={{ background: "#F5A623" }}>
+              {loading ? "..." : view === "email" ? t("Recevoir mon code") : t("Accéder à mes achats")}
+            </button>
+          </form>
+
+          {view === "code" && (
+            <p className="text-center text-[12px] text-[#888] mt-4">
+              <button className="text-[#F5A623] font-semibold" onClick={() => envoyer(false)} disabled={loading}>{t("Renvoyer le code")}</button>
+              {" · "}
+              <button className="hover:text-[#111]" onClick={() => { setView("email"); setError(""); }}>{t("Changer d'email")}</button>
+            </p>
+          )}
 
           <div className="mt-4 text-center">
             <Link href={`/${slug}`} className="text-[12px] text-[#888] hover:text-[#111]">{t("← Retour à la boutique")}</Link>
@@ -244,20 +232,16 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
                           <p className="text-[12px] text-[#444] truncate">{t(l.nom)}</p>
                           <p className="text-[10px] text-[#888]">x{l.quantite} · {l.prix.toLocaleString()} {t(c.devise)}</p>
                         </div>
-                        {l.produit.type === "digital" && l.produit.fichierUrl && c.statut === "livree" && (
-                          <a
-                            href={l.produit.fichierUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white"
-                            style={{ background: "#7c3aed" }}
-                          >
-                            <Download size={11} />{" "}{t("Télécharger")}
-                          </a>
-                        )}
                       </div>
                     ))}
                   </div>
+
+                  {c.accesDigital && (
+                    <Link href={`/${slug}/confirmation/${c.id}`}
+                      className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[13px] font-semibold text-white" style={{ background: "#111" }}>
+                      <Download size={14} />{" "}{t("Accéder à mon achat")}
+                    </Link>
+                  )}
 
                   {/* Footer */}
                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#F0F0F0]">

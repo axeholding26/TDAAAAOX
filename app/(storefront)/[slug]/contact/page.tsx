@@ -128,7 +128,6 @@ export default async function ContactPage({ params }: Props) {
         navStyle={cfg.navigationStyle}
         showAbout={cfg.aboutPage?.actif}
         showContact={cfg.contactPage?.actif}
-        sansPanier={cfg.modeBoutique === "digital"}
       />
 
       {t(contenu)}

@@ -202,8 +202,9 @@ export type ProductPageSectionType =
   // recoller un lien produit par produit. Sans vidéo sur le produit, la
   // section ne rend rien.
   | "videoProduit"
-  // Bouton « Ajouter au panier » — plus présent d'office : bloc facultatif
-  // que le marchand ajoute depuis la bibliothèque, dans la colonne d'achat.
+  // Ancien bloc « Ajouter au panier » : il n'y a plus de panier (commande
+  // directe). Gardé dans le type pour lire les fiches déjà enregistrées, qui
+  // le retirent (sectionsFiche).
   | "addToCart";
 
 // Style personnalisable par section de fiche produit (fond, couleurs, espacement, largeur)

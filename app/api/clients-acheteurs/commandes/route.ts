@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 
 // GET /api/clients-acheteurs/commandes?token=xxx&slug=xxx
 export async function GET(req: Request) {
@@ -27,7 +28,7 @@ export async function GET(req: Request) {
     include: {
       lignes: {
         include: {
-          produit: { select: { id: true, nom: true, images: true, type: true, fichierUrl: true } },
+          produit: { select: { id: true, nom: true, images: true, type: true } },
         },
       },
       facture: { select: { numero: true, statut: true } },
@@ -38,6 +39,11 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     compte: { id: compte.id, email: compte.email, nom: compte.nom, telephone: compte.telephone },
-    commandes,
+    // Achat digital payé : accès (fichiers, formation, clés) par sa page d'accès — jamais
+    // l'adresse brute du fichier, qui se partagerait sans contrôle.
+    commandes: commandes.map((c) => ({
+      ...c,
+      accesDigital: c.paiementStatut === "completed" && c.lignes.some((l) => TYPES_LIVRAISON_DIGITALE.has(l.produit.type)),
+    })),
   });
 }

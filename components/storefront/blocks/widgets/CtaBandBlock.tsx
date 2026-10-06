@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { BlockRenderProps } from "../types";
+import { hrefBoutique } from "@/lib/utils";
 
 export function CtaBandBlock({ id, config, colors: c, slug }: BlockRenderProps) {
   return (
@@ -8,7 +9,7 @@ export function CtaBandBlock({ id, config, colors: c, slug }: BlockRenderProps) 
         <h2 className="text-3xl font-bold font-playfair mb-4" style={{ color: c.fond }}>{config?.titre}</h2>
         {config?.texte && <p className="text-lg mb-8" style={{ color: c.fond, opacity: 0.85 }}>{config.texte}</p>}
         {config?.ctaTexte && (
-          <Link href={config.ctaLien ?? `/${slug}/produits`}
+          <Link href={hrefBoutique(slug, config.ctaLien || "produits")!}
             className="inline-flex px-8 py-4 rounded-2xl font-bold text-sm"
             style={{ background: c.fond, color: c.accent }}>
             {config.ctaTexte}

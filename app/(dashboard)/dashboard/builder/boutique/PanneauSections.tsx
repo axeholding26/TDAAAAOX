@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import {
-  DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors,
+  DndContext, DragOverlay, KeyboardSensor, PointerSensor, closestCenter, useDroppable, useSensor, useSensors,
   type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
 import { SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -68,10 +68,12 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
     setEnCours(null);
     const { active, over } = e;
     if (!over || active.id === over.id) return;
-    const conteneur = active.data.current?.conteneur as string | undefined;
-    // Jamais d'une zone/colonne à une autre : l'en-tête reste l'en-tête.
-    if (!conteneur || conteneur !== over.data.current?.conteneur) return;
-    onDeplacer(String(active.id), conteneur, over.data.current?.sortable?.index ?? 0);
+    const de = active.data.current, vers = over.data.current;
+    // Une section reste dans sa zone (l'en-tête reste l'en-tête) ; un bloc
+    // peut passer d'une colonne à l'autre, mais pas changer de section.
+    const memeSection = !!de?.section && de.section === vers?.section;
+    if (!de?.conteneur || (de.conteneur !== vers?.conteneur && !memeSection)) return;
+    onDeplacer(String(active.id), vers!.conteneur, vers!.sortable?.index ?? 0);
   };
 
   return (
@@ -125,8 +127,8 @@ export function PanneauSections({ tree, selectedId, onSelect, onDeplacer, onTogg
   );
 }
 
-function useLigneTriable(id: string, conteneur: string) {
-  const s = useSortable({ id, data: { conteneur } });
+function useLigneTriable(id: string, conteneur: string, section?: string) {
+  const s = useSortable({ id, data: { conteneur, section } });
   return {
     ...s,
     styleTri: { transform: CSS.Translate.toString(s.transform), transition: s.transition } as React.CSSProperties,
@@ -170,11 +172,12 @@ function LigneSection({ section, zone, ouverte, onBasculer, selectedId, onSelect
               <SortableContext items={(col.children ?? []).map((b) => b.id)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-0.5">
                   {(col.children ?? []).map((bloc) => (
-                    <LigneBloc key={bloc.id} bloc={bloc} colonneId={col.id} selectedId={selectedId} onSelect={onSelect}
+                    <LigneBloc key={bloc.id} bloc={bloc} colonneId={col.id} sectionId={section.id} selectedId={selectedId} onSelect={onSelect}
                       onToggleActif={onToggleActif} onDupliquer={onDupliquer} onSupprimer={onSupprimer} />
                   ))}
                 </ul>
               </SortableContext>
+              {!col.children?.length && <ColonneVide colonneId={col.id} sectionId={section.id} />}
             </div>
           ))}
           <button onClick={onAjouterBloc}
@@ -187,11 +190,23 @@ function LigneSection({ section, zone, ouverte, onBasculer, selectedId, onSelect
   );
 }
 
-function LigneBloc({ bloc, colonneId, selectedId, onSelect, onToggleActif, onDupliquer, onSupprimer }: {
-  bloc: BlockNode; colonneId: string; selectedId: string | null; onSelect: (id: string) => void;
+// Cible de dépôt d'une colonne sans bloc (sinon aucune ligne où lâcher).
+function ColonneVide({ colonneId, sectionId }: { colonneId: string; sectionId: string }) {
+  const tr = useT();
+  const { setNodeRef, isOver } = useDroppable({ id: `vide-${colonneId}`, data: { conteneur: colonneId, section: sectionId } });
+  return (
+    <div ref={setNodeRef} className={`ml-11 mr-2 my-0.5 h-9 flex items-center justify-center rounded-lg border border-dashed text-[12.5px] transition-colors ${
+      isOver ? "border-[#F5A623] bg-[#FFF7EA] text-[#C77C0A]" : "border-[#DDDDDD] text-[#AAAAAA]"}`}>
+      {tr("Glisser un bloc ici")}
+    </div>
+  );
+}
+
+function LigneBloc({ bloc, colonneId, sectionId, selectedId, onSelect, onToggleActif, onDupliquer, onSupprimer }: {
+  bloc: BlockNode; colonneId: string; sectionId: string; selectedId: string | null; onSelect: (id: string) => void;
   onToggleActif: (id: string) => void; onDupliquer: (id: string) => void; onSupprimer: (id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, styleTri, isDragging } = useLigneTriable(bloc.id, colonneId);
+  const { attributes, listeners, setNodeRef, styleTri, isDragging } = useLigneTriable(bloc.id, colonneId, sectionId);
   return (
     <li ref={setNodeRef} style={styleTri} className={isDragging ? "opacity-40" : ""}>
       <Ligne

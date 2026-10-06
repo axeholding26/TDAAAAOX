@@ -27,7 +27,7 @@ import {
   Settings2, ExternalLink, UserCheck, LayoutGrid, Plug, Link2,
   Bell, ChevronDown, ChevronRight, RotateCcw, FileText, Lock,
   Target, FileBarChart, Sparkles, Boxes, Receipt, Calculator, Store,
-  Tags,
+  Tags, FolderOpen,
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
@@ -175,6 +175,7 @@ const GROUPES: NavGroupe[] = [
     items: [
       { href: "/dashboard/themes",        label: "Thèmes",        Icon: LayoutGrid, moduleKey: "boutique" },
       { href: "/dashboard/builder",       label: "Constructeur",  Icon: Sparkles,   moduleKey: "boutique" },
+      { href: "/dashboard/fichiers",      label: "Fichiers",      Icon: FolderOpen, moduleKey: "boutique" },
       { href: "/dashboard/transporteurs", label: "Transporteurs", Icon: Truck,      moduleKey: "boutique" },
       { href: "/dashboard/connecteurs",   label: "Connecteurs",   Icon: Plug,       moduleKey: "boutique" },
       { href: "/dashboard/feeds",         label: "Flux produits", Icon: Link2,      moduleKey: "boutique" },
