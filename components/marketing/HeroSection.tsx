@@ -15,7 +15,7 @@ const PRODUITS = [
 const PAIEMENTS = [
   { nom: "Orange Money", couleur: "#FF7900" },
   { nom: "MTN MoMo",     couleur: "#FFCC00" },
-  { nom: "Wave",         couleur: "#1DC3F1" },
+  { nom: "À la livraison", couleur: "#111111" },
   { nom: "WhatsApp",     couleur: "#25D366" },
 ];
 
@@ -46,7 +46,7 @@ export function HeroSection() {
         <div className="ax-nappe ax-nappe-2" />
         <div className="ax-nappe ax-nappe-3" />
         <div className="ax-lueur" />
-        <div className="ax-grille" />
+        <div className="ax-grille"><div className="ax-grille-motif" /></div>
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
       </div>
 
@@ -149,9 +149,9 @@ export function HeroSection() {
 
           {/* Paiement reçu */}
           <div className="ax-float ax-float-2 absolute z-20 right-0 sm:right-[-2%] top-[42%] w-[200px] sm:w-[220px] rounded-2xl bg-white/95 backdrop-blur border border-gray-100 shadow-2xl p-3 flex gap-3 items-center">
-            <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#1DC3F1" }}><Check size={16} className="text-white" strokeWidth={3} /></span>
+            <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FF7900" }}><Check size={16} className="text-white" strokeWidth={3} /></span>
             <div>
-              <p className="text-[12px] font-extrabold text-[#111111]">{tr("Paiement Wave reçu")}</p>
+              <p className="text-[12px] font-extrabold text-[#111111]">{tr("Orange Money reçu")}</p>
               <p className="text-[11px] text-gray-500">+24 900 XOF</p>
             </div>
           </div>
@@ -188,13 +188,15 @@ export function HeroSection() {
           background: conic-gradient(from 0deg, rgba(245,166,35,0.00), rgba(245,166,35,0.16), rgba(255,255,255,0), rgba(255,170,60,0.14), rgba(245,166,35,0.00));
           filter: blur(40px); animation: axTourne 40s linear infinite; will-change: transform; }
         @keyframes axTourne { to { transform: rotate(360deg) } }
-        .ax-grille { position: absolute; inset: 0; opacity: 0.5;
-          background-image: linear-gradient(#11111109 1px, transparent 1px), linear-gradient(90deg, #11111109 1px, transparent 1px);
-          background-size: 56px 56px; animation: axGlisse 30s linear infinite;
+        .ax-grille { position: absolute; inset: 0; opacity: 0.5; overflow: hidden;
           mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black 25%, transparent 75%);
           -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black 25%, transparent 75%); }
-        @keyframes axGlisse { to { background-position: 56px 56px } }
-        @media (prefers-reduced-motion: reduce) { .ax-float, .ax-nappe, .ax-lueur, .ax-grille { animation: none; } }
+        /* Le motif glisse par transform (carte graphique) — animer background-position redessinait toute la zone à chaque image. */
+        .ax-grille-motif { position: absolute; inset: -56px 0 0 -56px;
+          background-image: linear-gradient(#11111109 1px, transparent 1px), linear-gradient(90deg, #11111109 1px, transparent 1px);
+          background-size: 56px 56px; animation: axGlisse 30s linear infinite; will-change: transform; }
+        @keyframes axGlisse { to { transform: translate(56px, 56px) } }
+        @media (prefers-reduced-motion: reduce) { .ax-float, .ax-nappe, .ax-lueur, .ax-grille-motif { animation: none; } }
       `}</style>
     </section>
   );

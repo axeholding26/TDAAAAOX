@@ -22,7 +22,7 @@ const SECTIONS = [
   },
   {
     titre: "2. Facturation",
-    contenu: `Les abonnements payants sont facturés mensuellement, par anticipation, via Mobile Money (Wave, Orange Money, MTN MoMo) ou carte bancaire (Stripe). La facture est émise le 1er de chaque mois et disponible dans votre espace marchand.`,
+    contenu: `Les abonnements payants sont facturés mensuellement, par anticipation, via NotchPay : Mobile Money (Orange Money, MTN MoMo) ou carte bancaire. La facture est émise le 1er de chaque mois et disponible dans votre espace marchand.`,
   },
   {
     titre: "3. Résiliation",

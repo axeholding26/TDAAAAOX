@@ -404,7 +404,7 @@ const DEFAULT_FAQ: ThemeSectionFaq = {
   items: [
     { question: "Quels sont vos délais de livraison ?", reponse: "Nous livrons sous 24 à 48h pour les commandes passées avant 14h." },
     { question: "Comment retourner un article ?", reponse: "Vous disposez de 14 jours pour retourner un article. Contactez-nous par WhatsApp pour initier le retour." },
-    { question: "Quels modes de paiement acceptez-vous ?", reponse: "Nous acceptons Orange Money, Wave, Moov Money et les virements bancaires." },
+    { question: "Quels modes de paiement acceptez-vous ?", reponse: "Nous acceptons Orange Money, MTN Mobile Money et le paiement à la livraison." },
   ],
 };
 

@@ -301,6 +301,19 @@ main > section, main > div > section {
   100% { background-position: 200% center; }
 }
 
+/* Animations « carte graphique » (transform / opacity seulement) */
+@keyframes axRespire {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.12); }
+}
+@keyframes axReflet {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* Sections de la page d'accueil hors de l'écran : animations en pause (voir PauseHorsEcran). */
+.ax-hors-ecran, .ax-hors-ecran * { animation-play-state: paused !important; }
+
 @keyframes glowPulse {
   0%, 100% { box-shadow: 0 0 20px 0px rgba(245,166,35,0.25); }
   50%       { box-shadow: 0 0 50px 8px rgba(245,166,35,0.5), 0 0 100px 20px rgba(245,166,35,0.12); }

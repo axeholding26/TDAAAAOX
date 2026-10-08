@@ -2,13 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 
-// En attendant les vrais logos partenaires (Orange Money, MTN, Wave, Visa, Mastercard…),
+// En attendant les vrais logos partenaires (Orange Money, MTN, Visa, Mastercard…),
 // chaque entrée affiche son nom en attendant `logoUrl`. Il suffira de renseigner
 // `logoUrl` pour basculer automatiquement sur le logo réel.
 const PARTENAIRES: { nom: string; logoUrl?: string }[] = [
   { nom: "Orange Money" },
   { nom: "MTN MoMo" },
-  { nom: "Wave" },
   { nom: "Visa" },
   { nom: "Mastercard" },
   { nom: "M-Pesa" },

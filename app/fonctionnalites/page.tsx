@@ -17,7 +17,8 @@ const STATS = [
   { n: "1 247+", label: "boutiques actives" },
 ];
 
-const PAIEMENTS = ["Wave", "Orange Money", "MTN MoMo", "M-Pesa", "Stripe", "CinetPay", "CampPay", "Flutterwave"];
+// Modes réellement encaissés par Axso (NotchPay) + paiement à la livraison
+const PAIEMENTS = ["Orange Money", "MTN MoMo", "Carte bancaire", "Paiement à la livraison"];
 
 const AGENTS = [
   { icon: Package,        nom: "Agent Produits",   desc: "Crée, optimise et audite votre catalogue automatiquement" },
@@ -172,12 +173,10 @@ export default async function FonctionnalitesPage() {
               <p className="text-[#666666] text-xs font-bold uppercase tracking-wider mb-4">{t("Choisissez votre mode de paiement")}</p>
               <div className="grid grid-cols-2 gap-2 mb-5">
                 {[
-                  { nom: "Wave", color: "#00B9F1", active: true },
-                  { nom: "Orange Money", color: "#FF7900", active: false },
+                  { nom: "Orange Money", color: "#FF7900", active: true },
                   { nom: "MTN MoMo", color: "#FFC200", active: false },
-                  { nom: "Stripe", color: "#635BFF", active: false },
-                  { nom: "CinetPay", color: "#E83E8C", active: false },
-                  { nom: "M-Pesa", color: "#00A550", active: false },
+                  { nom: "Carte bancaire", color: "#635BFF", active: false },
+                  { nom: "À la livraison", color: "#111111", active: false },
                 ].map(p => (
                   <div key={p.nom}
                     className="rounded-xl p-3 flex items-center gap-2 cursor-pointer transition-all"
@@ -193,14 +192,14 @@ export default async function FonctionnalitesPage() {
                   </div>
                 ))}
               </div>
-              <div className="rounded-xl p-4" style={{ background: "rgba(0,185,241,0.08)", border: "1px solid rgba(0,185,241,0.2)" }}>
+              <div className="rounded-xl p-4" style={{ background: "rgba(255,121,0,0.08)", border: "1px solid rgba(255,121,0,0.2)" }}>
                 <div className="flex justify-between mb-2">
                   <span className="text-[#666666] text-sm">{t("Total commande")}</span>
                   <span className="text-[#111111] font-bold">{t("24 500 XOF")}</span>
                 </div>
                 <div className="w-full h-10 rounded-xl flex items-center justify-center font-bold text-sm"
-                  style={{ background: "linear-gradient(135deg,#00B9F1,#0080B0)", color: "#fff" }}>
-                  {t("Payer via Wave →")}
+                  style={{ background: "linear-gradient(135deg,#FF7900,#CC6100)", color: "#fff" }}>
+                  {t("Payer via Orange Money →")}
                 </div>
               </div>
             </div>

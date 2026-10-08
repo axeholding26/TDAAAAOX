@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const VIDEOS: { Icon: LucideIcon; titre: string; duree: string; niveau: string; views: string; tag: string }[] = [
   { Icon: Rocket,     titre: "Créer sa boutique en 3 minutes",       duree: "3:42",  niveau: "Débutant",      views: "12.4K", tag: "#F5A623" },
-  { Icon: CreditCard, titre: "Configurer Wave & Orange Money",        duree: "5:18",  niveau: "Débutant",      views: "8.9K",  tag: "#25D366" },
+  { Icon: CreditCard, titre: "Configurer Orange Money & MTN MoMo",        duree: "5:18",  niveau: "Débutant",      views: "8.9K",  tag: "#25D366" },
   { Icon: Package,    titre: "Ajouter et gérer ses produits",         duree: "7:55",  niveau: "Débutant",      views: "7.2K",  tag: "#F5A623" },
   { Icon: Bot,        titre: "Axia IA — onboarding automatique",      duree: "6:20",  niveau: "Intermédiaire", views: "5.1K",  tag: "#7c3aed" },
   { Icon: Truck,      titre: "Livraison GPS et suivi temps réel",     duree: "8:44",  niveau: "Intermédiaire", views: "4.3K",  tag: "#0ea5e9" },

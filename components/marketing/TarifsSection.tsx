@@ -266,14 +266,16 @@ function PlanCard({
       >
         {/* Shimmer on hover */}
         {isActive && (
-          <div
-            className="absolute inset-0 pointer-events-none rounded-3xl"
-            style={{
-              background: `linear-gradient(105deg, transparent 40%, ${plan.couleur}10 50%, transparent 60%)`,
-              backgroundSize: "200% 100%",
-              animation: "shimmer 2s linear infinite",
-            }}
-          />
+          <div className="absolute inset-0 pointer-events-none rounded-3xl overflow-hidden">
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(105deg, transparent 40%, ${plan.couleur}10 50%, transparent 60%)`,
+                animation: "axReflet 2s linear infinite",
+                willChange: "transform",
+              }}
+            />
+          </div>
         )}
 
         {/* Top gradient bar */}

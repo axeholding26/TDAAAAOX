@@ -5,7 +5,7 @@ import { Lock, Rocket, Zap, Bot, Globe, Play, Pause } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 import { useT } from "@/components/I18nProvider";
 
-const HIGHFIELD_VIDEO_URL = "https://res.cloudinary.com/mn6mspfb/video/upload/v1791232862/axso-video.mp4";
+const HIGHFIELD_VIDEO_URL = "https://res.cloudinary.com/mn6mspfb/video/upload/v1791498714/axso-video-3min-web.mp4";
 const HIGHFIELD_IFRAME_URL = "";
 const HIGHFIELD_POSTER_URL = "/axso-video-poster.jpg";
 
@@ -106,7 +106,6 @@ export function VideoSection() {
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",
-                animation: "shimmer 3s linear infinite",
               }}
             >
               {t("C'est tout ce qu'il faut.")}

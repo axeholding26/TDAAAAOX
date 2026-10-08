@@ -5,7 +5,7 @@ import { useT } from "@/components/I18nProvider";
 
 const faqs = [
   { q: "Est-ce vraiment gratuit ?", r: "Oui ! Le plan Essentiel est gratuit à vie et suffit largement pour lancer votre boutique, la gérer et commencer à vendre. Et quand vos ventes décollent, les plans Pro et Illimité vont encore plus loin : commandes illimitées, IA pour vos visuels pub, statistiques avancées, plusieurs boutiques, équipe et pub Meta & TikTok intégrée." },
-  { q: "Comment mes clients paient-ils ?", r: "Tous les modes de paiement africains sont intégrés : MTN Mobile Money, Orange Money, Wave, Visa/Mastercard, et plus encore selon votre pays. La configuration prend 2 minutes." },
+  { q: "Comment mes clients paient-ils ?", r: "Orange Money, MTN Mobile Money et carte bancaire (via NotchPay), ou paiement à la livraison. La configuration prend 2 minutes." },
   { q: "Puis-je utiliser mon propre nom de domaine ?", r: "Oui ! Vous obtenez d'abord une URL gratuite (votre-boutique.axso.com), puis vous pouvez connecter votre propre domaine depuis les paramètres." },
   { q: "L'assistant IA parle-t-il français ?", r: "Absolument. L'IA d'Axso est configurée pour comprendre et répondre en français (et en anglais). Elle connaît les marchés africains et peut vous aider à rédiger vos fiches produits." },
   { q: "Ai-je besoin de compétences techniques ?", r: "Aucune. Le constructeur Axso fonctionne par glisser-déposer, sans code. Décrivez votre boutique à Axia et elle configure l'essentiel à votre place en 3 minutes." },

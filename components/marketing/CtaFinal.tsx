@@ -103,7 +103,7 @@ export function CtaFinal() {
         />
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#F5A623]/5 rounded-full blur-3xl"
-          style={{ animation: "glowPulse 4s ease-in-out infinite" }}
+          style={{ animation: "axRespire 4s ease-in-out infinite" }}
         />
         {/* Grid */}
         <div
@@ -155,10 +155,7 @@ export function CtaFinal() {
           <br />
           <span
             className="text-transparent bg-clip-text bg-gradient-to-r from-[#F5A623] via-[#FFD280] to-[#E09015]"
-            style={{
-              backgroundSize: "200% auto",
-              animation: "shimmer 3s linear infinite",
-            }}
+            style={{ backgroundSize: "200% auto" }}
           >
             {tr("Ta boutique professionnelle t'attend.")}
           </span>
@@ -202,8 +199,6 @@ export function CtaFinal() {
               className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               style={{
                 background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)",
-                backgroundSize: "200% 100%",
-                animation: "shimmer 1.5s linear infinite",
               }}
             />
             <Sparkles size={22} className="relative z-10" />

@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | Axso",
   },
   description:
-    "Crée ta boutique en ligne en 3 minutes. 100% gratuit, 3% par vente seulement. Paiements Mobile Money, Orange Money, Wave, carte bancaire.",
+    "Crée ta boutique en ligne en 3 minutes. 100% gratuit, 3% par vente seulement. Paiements Orange Money, MTN Mobile Money, carte bancaire ou à la livraison.",
   keywords: ["e-commerce", "boutique en ligne", "mobile money", "vendre en ligne", "axso"],
   openGraph: {
     title: "Axso — Ta boutique en ligne en 3 minutes",

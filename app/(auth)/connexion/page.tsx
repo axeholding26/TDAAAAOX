@@ -14,7 +14,7 @@ type FormConnexion = z.infer<typeof schemaConnexion>;
 
 const FEATURES = [
   { icon: Zap,        text: "Lancez votre boutique en 3 minutes" },
-  { icon: Globe,      text: "Acceptez Orange Money, Wave & MTN MoMo" },
+  { icon: Globe,      text: "Acceptez Orange Money, MTN MoMo et la livraison" },
   { icon: ShieldCheck, text: "Gestion complète de votre activité" },
 ];
 
@@ -199,13 +199,6 @@ function ConnexionForm() {
             : t("Se connecter →")}
         </button>
       </form>
-
-      <div className="mt-5 p-4 rounded-xl border"
-        style={{ background: "rgba(245,166,35,0.06)", borderColor: "rgba(245,166,35,0.15)" }}>
-        <p className="text-xs font-bold uppercase tracking-wider mb-1.5" style={{ color: ACCENT }}>{t("Comptes de démo")}</p>
-        <p className="text-[#666666] text-xs font-mono">aminata@modeaminata.sn / axso2024</p>
-        <p className="text-[#666666] text-xs font-mono">grace@beautegrace.ci / axso2024</p>
-      </div>
 
       <p className="text-center text-[#808080] text-sm mt-6">
         {t("Pas encore de boutique ?")}{" "}

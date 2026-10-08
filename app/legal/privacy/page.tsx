@@ -27,7 +27,7 @@ const SECTIONS = [
   },
   {
     titre: "5. Partage des données",
-    contenu: `Vos données peuvent être partagées avec : nos partenaires de paiement (Wave, Orange Money, Stripe) pour le traitement des transactions, nos partenaires logistiques pour la gestion des livraisons, nos prestataires techniques (hébergement, IA) dans le cadre de contrats conformes au RGPD. Aucune vente de données à des tiers.`,
+    contenu: `Vos données peuvent être partagées avec : nos partenaires de paiement (NotchPay, Orange Money, MTN Mobile Money) pour le traitement des transactions, nos partenaires logistiques pour la gestion des livraisons, nos prestataires techniques (hébergement, IA) dans le cadre de contrats conformes au RGPD. Aucune vente de données à des tiers.`,
   },
   {
     titre: "6. Conservation des données",
