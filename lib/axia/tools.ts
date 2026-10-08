@@ -1,9 +1,14 @@
 // Axia — surface d'outils complète (actions boutique + connecteurs MCP + délégation experte)
 import { prisma } from "@/lib/prisma";
+import { synchroniserFournisseurs } from "@/lib/sync-fournisseurs";
+import { creerRetour, mettreAJourRetour } from "@/lib/remboursement";
+import { AVEC_EMAIL_REEL } from "@/lib/email";
 import { Resend } from "resend";
 import type { AgentTool, ToolExecutor } from "@/lib/agent-runner";
 import { getAxiaAgentById, AXIA_AGENTS } from "./agents";
 import { notifierMarchand } from "@/lib/notifications-marchand";
+import { changerStatutCommande, assignerLivreurCommande, marquerEspecesRemises } from "@/lib/cycle-livraison";
+import { PAIEMENT, STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
 import { executerOutilMcp } from "@/lib/mcp/executor";
 import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
 import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib/llm-client";
@@ -456,16 +461,62 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   // ─── LIVRAISON ────────────────────────────────────────────────────────────
   {
     name: "dashboard_livraison",
-    description: "Vue d'ensemble livraisons : commandes à assigner, en cours, livreurs disponibles",
+    description: "Vue d'ensemble des livraisons : commandes confirmées sans livreur, courses en route (et celles en route depuis plus d'une heure), échecs à replanifier, espèces non remises par les livreurs",
+    parameters: { type: "object" as const, properties: {}, required: [] },
+  },
+  {
+    name: "lister_commandes",
+    description: "Liste les commandes de la boutique avec statut, client, ville, montant, livreur, départ et échec. Filtre par statut, ou sans_livreur pour celles à assigner. Donne le numéro de chaque commande, nécessaire pour agir dessus.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        statut: { type: "string", enum: ["en_attente", "confirmee", "en_preparation", "expediee", "tentative_echouee", "livree", "annulee"] },
+        sans_livreur: { type: "boolean", description: "true = seulement les commandes sans livreur assigné" },
+        limite: { type: "number", description: "10 par défaut, 30 maximum" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "lister_livreurs",
+    description: "Livreurs assignables par la boutique (les siens + indépendants) : disponibilité, zone, véhicule, courses en cours, espèces non remises. Donne l'id de chaque livreur, nécessaire pour assigner.",
     parameters: { type: "object" as const, properties: {}, required: [] },
   },
   {
     name: "assigner_livreur",
-    description: "Assigne automatiquement le meilleur livreur disponible à une commande",
+    description: "Assigne un livreur à une commande (ou le retire avec livreurId vide). Le livreur et le client sont prévenus par WhatsApp. Choisis de préférence un livreur disponible, de la bonne zone, avec peu de courses en cours.",
     parameters: {
       type: "object" as const,
-      properties: { commandeId: { type: "string" }, livreurId: { type: "string" } },
-      required: ["commandeId", "livreurId"],
+      properties: {
+        commande: { type: "string", description: "Numéro de la commande (ou son id)" },
+        livreurId: { type: "string", description: "id donné par lister_livreurs ; vide pour retirer le livreur" },
+      },
+      required: ["commande"],
+    },
+  },
+  {
+    name: "changer_statut_commande",
+    description: "Fait avancer une commande comme le marchand à la main : confirmee, en_preparation, expediee (la livraison démarre, le client reçoit son code de livraison), livree, tentative_echouee (avec raison), annulee. Le client est prévenu par WhatsApp.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        commande: { type: "string", description: "Numéro de la commande (ou son id)" },
+        statut: { type: "string", enum: ["confirmee", "en_preparation", "expediee", "livree", "tentative_echouee", "annulee"] },
+        raison: { type: "string", description: "Raison de l'échec (obligatoire pour tentative_echouee)" },
+      },
+      required: ["commande", "statut"],
+    },
+  },
+  {
+    name: "marquer_especes_remises",
+    description: "Confirme que la boutique a bien reçu l'argent liquide encaissé par un livreur (paiement à la livraison) : toutes ses commandes livrées non remises, ou seulement celles listées.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        livreurId: { type: "string", description: "id du livreur (lister_livreurs)" },
+        commandes: { type: "array", items: { type: "string" }, description: "Numéros de commandes précis (optionnel)" },
+      },
+      required: ["livreurId"],
     },
   },
   // ─── CONNECTEURS MCP ──────────────────────────────────────────────────────
@@ -621,7 +672,7 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   },
   {
     name: "statut_commande",
-    description: "Donne le statut d'une commande à partir de son numéro ou ID",
+    description: "Détail d'une commande à partir de son numéro ou ID : statut, livreur, départ, position du livreur, échecs, paiement, lien de suivi client",
     parameters: {
       type: "object" as const,
       properties: { numero: { type: "string", description: "Numéro de commande (ex: CMD-2024-001) ou ID" } },
@@ -1285,7 +1336,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const resendKey = process.env.RESEND_API_KEY;
         if (!resendKey) return { succes: false, resultat: "RESEND_API_KEY manquante" };
         const [clients, tenant] = await Promise.all([
-          prisma.client.findMany({ where: { tenantId }, select: { email: true, nom: true }, take: 50 }),
+          prisma.client.findMany({ where: { tenantId, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 }),
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
         ]);
         if (!clients.length) return { succes: false, resultat: "Aucun client enregistré" };
@@ -1293,7 +1344,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         let envoyes = 0;
         for (const c of clients) {
           try {
-            await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
+            await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
             envoyes++;
           } catch { /* continue */ }
         }
@@ -1363,35 +1414,116 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         if (args.destinataires === "inactifs_30j") where.createdAt = { lt: new Date(Date.now() - 30 * 86400000) };
         else if (args.destinataires === "vip") { const agg = await prisma.client.aggregate({ where: { tenantId }, _avg: { totalDepense: true } }); where.totalDepense = { gte: (agg._avg.totalDepense ?? 0) * 2 }; }
         else if (args.destinataires === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
-        const clients = await prisma.client.findMany({ where, select: { email: true, nom: true }, take: 50 });
+        const clients = await prisma.client.findMany({ where: { ...where, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 });
         if (!clients.length) return { succes: false, resultat: "Aucun client dans ce segment" };
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
         const resend = new Resend(resendKey);
         let envoyes = 0;
         for (const c of clients) {
-          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
+          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
         }
         return { succes: true, resultat: `✅ ${envoyes}/${clients.length} emails envoyés (segment: ${args.destinataires})` };
       }
 
       case "dashboard_livraison": {
-        const [aAssigner, enCours, livreurs] = await Promise.all([
-          prisma.commande.count({ where: { tenantId, statut: "confirmee", livreurId: null } }),
-          prisma.commande.count({ where: { tenantId, livraisonStatut: { in: ["en_transit", "en_livraison"] } } }),
-          prisma.livreur.count({ where: { tenantId, disponible: true, actif: true } }),
+        const uneHeure = new Date(Date.now() - 3_600_000);
+        const [aAssigner, enRoute, enRouteLongtemps, echecs, especes, dispos] = await Promise.all([
+          prisma.commande.findMany({ where: { tenantId, statut: { in: ["confirmee", "en_preparation"] }, livreurId: null }, select: { numero: true, ville: true }, orderBy: { createdAt: "asc" }, take: 10 }),
+          prisma.commande.count({ where: { tenantId, statut: "expediee" } }),
+          prisma.commande.findMany({ where: { tenantId, statut: "expediee", expedieeAt: { lt: uneHeure } }, select: { numero: true, livreurNom: true, expedieeAt: true }, take: 5 }),
+          prisma.commande.findMany({ where: { tenantId, statut: "tentative_echouee" }, select: { numero: true, echecRaison: true, echecCount: true }, take: 5 }),
+          prisma.commande.aggregate({ where: { tenantId, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false }, _sum: { montantTotal: true }, _count: true }),
+          // Livreurs disponibles avec leur charge : de quoi proposer une assignation sans autre appel
+          prisma.livreur.findMany({
+            where: { actif: true, disponible: true, OR: [{ tenantId }, { tenantId: null }] },
+            select: { id: true, nom: true, zone: true, tenantId: true, _count: { select: { commandes: { where: { statut: { in: STATUTS_COURSE_ACTIVE } } } } } },
+            take: 15,
+          }),
         ]);
-        return { succes: true, resultat: JSON.stringify({ commandes_a_assigner: aAssigner, en_cours: enCours, livreurs_disponibles: livreurs }) };
+        const dev = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } }))?.devise ?? "XAF";
+        const lignes = [
+          `Commandes à assigner (confirmées ou en préparation, sans livreur) : ${aAssigner.length}${aAssigner.length ? ` — ${aAssigner.map(c => `#${c.numero} (${c.ville || "ville ?"})`).join(", ")}` : ""}`,
+          `Livreurs disponibles : ${dispos.length ? dispos.sort((a, b) => a._count.commandes - b._count.commandes).map(l => `${l.nom} (id ${l.id}, ${l.tenantId ? "de la boutique" : "indépendant"}${l.zone ? `, zone ${l.zone}` : ""}, ${l._count.commandes} course(s) en cours)`).join(" ; ") : "aucun"}`,
+          `Courses en route : ${enRoute}`,
+          enRouteLongtemps.length && `En route depuis plus d'une heure : ${enRouteLongtemps.map(c => `#${c.numero} (${c.livreurNom ?? "livreur"}, parti à ${c.expedieeAt!.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })})`).join(", ")}`,
+          echecs.length && `Échecs à replanifier : ${echecs.map(c => `#${c.numero}${c.echecRaison ? ` (${c.echecRaison})` : ""}${c.echecCount > 1 ? ` ×${c.echecCount}` : ""}`).join(", ")}`,
+          especes._count && `Espèces encaissées par les livreurs, pas encore remises : ${especes._sum.montantTotal ?? 0} ${dev} sur ${especes._count} commande(s)`,
+        ].filter(Boolean);
+        return { succes: true, resultat: lignes.join("\n") };
+      }
+
+      case "lister_commandes": {
+        const commandes = await prisma.commande.findMany({
+          where: { tenantId, ...(args.statut && { statut: args.statut }), ...(args.sans_livreur && { livreurId: null, statut: args.statut ?? { in: ["confirmee", "en_preparation"] } }) },
+          orderBy: { createdAt: args.sans_livreur ? "asc" : "desc" },
+          take: Math.min(Number(args.limite) || 10, 30),
+          select: { numero: true, statut: true, clientNom: true, ville: true, montantTotal: true, devise: true, methodePaiement: true, livreurNom: true, expedieeAt: true, echecRaison: true, createdAt: true },
+        });
+        if (!commandes.length) return { succes: true, resultat: "Aucune commande ne correspond." };
+        return { succes: true, resultat: commandes.map(c => [
+          `#${c.numero} — ${c.statut} — ${c.clientNom}, ${c.ville} — ${c.montantTotal} ${c.devise ?? "XAF"}${c.methodePaiement.includes("cod") ? " (paiement à la livraison)" : ""}`,
+          c.livreurNom ? `livreur ${c.livreurNom}` : "sans livreur",
+          c.expedieeAt && c.statut === "expediee" && `parti à ${c.expedieeAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
+          c.echecRaison && c.statut === "tentative_echouee" && `échec : ${c.echecRaison}`,
+          `passée le ${c.createdAt.toLocaleDateString("fr-FR")}`,
+        ].filter(Boolean).join(" — ")).join("\n") };
+      }
+
+      case "lister_livreurs": {
+        const livreurs = await prisma.livreur.findMany({
+          where: { actif: true, OR: [{ tenantId }, { tenantId: null }] },
+          orderBy: [{ disponible: "desc" }, { nom: "asc" }],
+          take: 40,
+          select: {
+            id: true, nom: true, vehicule: true, zone: true, disponible: true, tenantId: true, positionAt: true,
+            _count: { select: { commandes: { where: { statut: { in: STATUTS_COURSE_ACTIVE } } } } },
+          },
+        });
+        if (!livreurs.length) return { succes: true, resultat: "Aucun livreur assignable. Le marchand peut en créer dans Logistique → Livreurs." };
+        const especes = await prisma.commande.groupBy({
+          by: ["livreurId"],
+          where: { tenantId, livreurId: { in: livreurs.map(l => l.id) }, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false },
+          _sum: { montantTotal: true },
+        });
+        const du = new Map(especes.map(e => [e.livreurId, e._sum.montantTotal ?? 0]));
+        return { succes: true, resultat: livreurs.map(l => [
+          `${l.nom} (id ${l.id})`,
+          l.tenantId ? "livreur de la boutique" : "indépendant",
+          l.disponible ? "disponible" : "indisponible",
+          l.vehicule, l.zone && `zone ${l.zone}`,
+          `${l._count.commandes} course(s) en cours`,
+          du.get(l.id) && `${du.get(l.id)} en espèces à remettre`,
+        ].filter(Boolean).join(" — ")).join("\n") };
       }
 
       case "assigner_livreur": {
-        const [commande, livreur] = await Promise.all([
-          prisma.commande.findFirst({ where: { id: args.commandeId, tenantId }, select: { numero: true, adresseLivraison: true, clientNom: true } }),
-          prisma.livreur.findFirst({ where: { id: args.livreurId }, select: { nom: true } }),
-        ]);
-        if (!commande || !livreur) return { succes: false, resultat: "Commande ou livreur introuvable" };
-        await prisma.commande.update({ where: { id: args.commandeId }, data: { livreurId: args.livreurId, livraisonStatut: "en_transit" } });
-        await prisma.notification.create({ data: { livreurId: args.livreurId, type: "nouvelle_livraison", titre: "Nouvelle livraison", message: `Commande ${commande.numero} — ${commande.clientNom}`, commandeId: args.commandeId } });
-        return { succes: true, resultat: `✅ Commande ${commande.numero} assignée à ${livreur.nom}` };
+        const ref = String(args.commande ?? args.commandeId ?? "").replace(/^#/, "");
+        const commande = await prisma.commande.findFirst({ where: { tenantId, OR: [{ id: ref }, { numero: ref }] }, select: { id: true } });
+        if (!commande) return { succes: false, resultat: `Commande « ${ref} » introuvable : utilise lister_commandes pour obtenir son numéro exact.` };
+        const r = await assignerLivreurCommande({ commandeId: commande.id, tenantId, livreurId: args.livreurId || null, source: "axia" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: r.livreurNom ? `✅ Commande #${r.numero} assignée à ${r.livreurNom}. Le livreur et le client sont prévenus.` : `✅ Livreur retiré de la commande #${r.numero}.` };
+      }
+
+      case "changer_statut_commande": {
+        const ref = String(args.commande ?? "").replace(/^#/, "");
+        const commande = await prisma.commande.findFirst({ where: { tenantId, OR: [{ id: ref }, { numero: ref }] }, select: { id: true } });
+        if (!commande) return { succes: false, resultat: `Commande « ${ref} » introuvable : utilise lister_commandes pour obtenir son numéro exact.` };
+        if (args.statut === "tentative_echouee" && !args.raison) return { succes: false, resultat: "Indique la raison de l'échec (client absent, injoignable, refus, adresse introuvable…)." };
+        const r = await changerStatutCommande({ commandeId: commande.id, statut: args.statut, echecRaison: args.raison, acteur: { type: "marchand", tenantId, source: "axia" } });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Commande #${r.numero} passée à « ${r.statut} ». ${r.envoyeAuto ? "Le client a été prévenu par WhatsApp." : "Le WhatsApp au client n'est pas parti automatiquement : un lien pour l'envoyer est dans les notifications du marchand."}` };
+      }
+
+      case "marquer_especes_remises": {
+        const numeros = Array.isArray(args.commandes) ? args.commandes.map((n: string) => String(n).replace(/^#/, "")) : [];
+        const ids = numeros.length
+          ? (await prisma.commande.findMany({ where: { tenantId, livreurId: args.livreurId, numero: { in: numeros } }, select: { id: true } })).map(c => c.id)
+          : undefined;
+        if (numeros.length && !ids?.length) return { succes: false, resultat: "Aucune de ces commandes n'appartient à ce livreur." };
+        const r = await marquerEspecesRemises({ tenantId, userId: null, livreurId: args.livreurId, commandeIds: ids });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: r.count ? `✅ ${r.count} commande(s) marquée(s) comme remise(s).` : "Rien à marquer : ce livreur n'a pas d'espèces en attente de remise." };
       }
 
       case "rechercher_produits": {
@@ -1416,11 +1548,29 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
       case "statut_commande": {
         const commande = await prisma.commande.findFirst({
-          where: { tenantId, OR: [{ numero: { contains: args.numero, mode: "insensitive" } }, { id: args.numero }] },
-          select: { numero: true, statut: true, livraisonStatut: true, montantTotal: true, devise: true, clientNom: true, createdAt: true, adresseLivraison: true },
+          where: { tenantId, OR: [{ numero: { contains: String(args.numero).replace(/^#/, ""), mode: "insensitive" } }, { id: args.numero }] },
+          select: {
+            numero: true, statut: true, montantTotal: true, devise: true, methodePaiement: true, paiementStatut: true, codRemis: true,
+            clientNom: true, clientTelephone: true, adresseLivraison: true, ville: true, createdAt: true,
+            livreurNom: true, livreurTelephone: true, expedieeAt: true, livreeAt: true, livreurPosition: true,
+            echecRaison: true, echecCount: true, trackingToken: true, tenant: { select: { slug: true } },
+          },
         });
         if (!commande) return { succes: false, resultat: `Commande "${args.numero}" introuvable. Vérifie le numéro.` };
-        return { succes: true, resultat: `Commande ${commande.numero} — Client: ${commande.clientNom} | Statut: ${commande.statut} | Livraison: ${commande.livraisonStatut ?? "non assignée"} | Montant: ${commande.montantTotal} ${commande.devise ?? "XAF"} | Date: ${commande.createdAt.toLocaleDateString("fr-FR")}` };
+        const heure = (d: Date) => d.toLocaleString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        const pos = commande.livreurPosition as { updatedAt?: string } | null;
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+        return { succes: true, resultat: [
+          `Commande #${commande.numero} — ${commande.statut} — ${commande.montantTotal} ${commande.devise ?? "XAF"} — passée le ${heure(commande.createdAt)}`,
+          `Client : ${commande.clientNom} (${commande.clientTelephone}) — ${commande.adresseLivraison}, ${commande.ville}`,
+          `Paiement : ${commande.methodePaiement.includes("cod") ? "à la livraison" : "en ligne"} — ${commande.paiementStatut}${commande.methodePaiement.includes("cod") && commande.statut === "livree" ? (commande.codRemis ? " — espèces remises à la boutique" : " — espèces pas encore remises par le livreur") : ""}`,
+          commande.livreurNom ? `Livreur : ${commande.livreurNom}${commande.livreurTelephone ? ` (${commande.livreurTelephone})` : ""}` : "Aucun livreur assigné",
+          commande.expedieeAt && `Départ : ${heure(commande.expedieeAt)}`,
+          pos?.updatedAt && commande.statut === "expediee" && `Dernière position du livreur : ${heure(new Date(pos.updatedAt))}`,
+          commande.livreeAt && `Livrée : ${heure(commande.livreeAt)}`,
+          commande.echecCount > 0 && `Échecs de livraison : ${commande.echecCount}${commande.echecRaison ? ` (dernier : ${commande.echecRaison})` : ""}`,
+          commande.trackingToken && `Lien de suivi client : ${appUrl}/${commande.tenant.slug}/tracking/${commande.trackingToken}`,
+        ].filter(Boolean).join("\n") };
       }
 
       case "recommandations_client": {
@@ -1453,19 +1603,11 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "initier_retour": {
-        const commande = await prisma.commande.findFirst({
-          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId, mode: "insensitive" } }] },
-          select: { id: true, numero: true, statut: true, clientNom: true, montantTotal: true, devise: true },
-        });
-        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
-        if (!["confirmee", "livree"].includes(commande.statut)) {
-          return { succes: false, resultat: `La commande ${commande.numero} a le statut "${commande.statut}" — un retour n'est possible que sur les commandes confirmées ou livrées.` };
-        }
-        const typeLabel = args.type === "echange" ? "échange" : "retour";
-        await prisma.commande.update({ where: { id: commande.id }, data: { statut: "retour_demande" } });
-        return { succes: true, resultat: `✅ Procédure de ${typeLabel} initiée pour la commande ${commande.numero} (${commande.clientNom}, ${commande.montantTotal} ${commande.devise ?? "XAF"}). Motif : ${args.raison}. Le statut a été mis à "retour_demande".` };
+        // Ouvre un vrai retour (RMA) — la commande garde son statut ; l'accepter la remboursera.
+        const r = await creerRetour({ tenantId, commande: String(args.commandeId), raison: args.raison, type: args.type === "echange" ? "echange" : "remboursement" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour ouvert pour la commande ${r.numero} (${args.type === "echange" ? "échange" : "remboursement"}). Motif : ${args.raison}. Accepte-le dans Logistique → Retours pour déclencher le remboursement.` };
       }
-
       case "escalader_vers_humain": {
         const urgenceLabel = args.urgence === "haute" ? "🔴 HAUTE" : args.urgence === "basse" ? "🟢 BASSE" : "🟡 NORMALE";
         await notifierMarchand({
@@ -1506,21 +1648,10 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "creer_retour": {
-        const commande = await prisma.commande.findFirst({
-          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
-          select: { id: true, numero: true, clientNom: true, clientEmail: true, montantTotal: true, devise: true },
-        });
-        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
-        const retour = await (prisma as any).retourRMA.create({
-          data: {
-            tenantId, commandeId: commande.id, clientNom: commande.clientNom, clientEmail: commande.clientEmail,
-            raison: args.raison, description: args.description ?? null, type: args.type ?? "remboursement", montant: commande.montantTotal,
-          },
-        }).catch(() => null);
-        if (!retour) return { succes: false, resultat: "Erreur lors de la création du retour." };
-        return { succes: true, resultat: `✅ Retour créé pour la commande ${commande.numero} (${commande.clientNom}) — Type: ${args.type ?? "remboursement"} — Raison: ${args.raison}` };
+        const r = await creerRetour({ tenantId, commande: String(args.commandeId), raison: args.raison, description: args.description ?? null, type: args.type ?? "remboursement" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour créé pour la commande ${r.numero} — Type: ${args.type ?? "remboursement"} — Raison: ${args.raison}` };
       }
-
       case "lister_retours": {
         const where: any = { tenantId };
         if (args.statut) where.statut = args.statut;
@@ -1531,17 +1662,11 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "mettre_a_jour_retour": {
-        const retour = await (prisma as any).retourRMA.findFirst({ where: { id: args.retourId, tenantId } }).catch(() => null);
-        if (!retour) return { succes: false, resultat: "Retour introuvable." };
-        await (prisma as any).retourRMA.update({ where: { id: args.retourId }, data: { statut: args.statut, notes: args.notes ?? retour.notes } }).catch(() => null);
-        if (args.statut === "accepte" && retour.type === "remboursement") {
-          const lignes = await prisma.ligneCommande.findMany({ where: { commandeId: retour.commandeId } });
-          for (const l of lignes) await prisma.produit.update({ where: { id: l.produitId }, data: { stock: { increment: l.quantite } } }).catch(() => null);
-          await prisma.commande.update({ where: { id: retour.commandeId }, data: { statut: "remboursee" } }).catch(() => null);
-        }
-        return { succes: true, resultat: `✅ Retour mis à jour : statut → ${args.statut}${args.statut === "accepte" && retour.type === "remboursement" ? " (stock restauré, commande marquée remboursée)" : ""}` };
+        // Même chemin que l'interface : accepter un remboursement rend l'argent, le stock et coupe les accès.
+        const r = await mettreAJourRetour({ tenantId, retourId: args.retourId, statut: args.statut, notes: args.notes });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour mis à jour : statut → ${r.retour.statut}${args.statut === "accepte" && r.retour.type === "remboursement" ? " (commande remboursée, stock et accès mis à jour)" : ""}` };
       }
-
       case "generer_facture": {
         const commande = await prisma.commande.findFirst({
           where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
@@ -1560,7 +1685,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
             tenantId, commandeId: commande.id, numero, clientNom: commande.clientNom, clientEmail: commande.clientEmail, clientAdresse: commande.adresseLivraison,
             lignes: commande.lignes.map((l: any) => ({ nom: l.nom, quantite: l.quantite, prixHT: l.prix, tauxTVA, prixTTC: l.prix })),
             montantHT, tauxTVA, montantTVA: commande.montantSousTotal - montantHT, montantTTC: commande.montantTotal, devise: commande.devise,
-            statut: commande.paiementStatut === "paid" ? "payee" : "emise",
+            statut: commande.paiementStatut === PAIEMENT.PAYE ? "payee" : "emise",
           },
         }).catch(() => null);
         if (!facture) return { succes: false, resultat: "Erreur lors de la génération de la facture." };
@@ -1608,8 +1733,8 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
       case "verifier_badges": {
         const [nbCommandes, caTotal, nbProduits, avisStats] = await Promise.all([
-          prisma.commande.count({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } } }),
-          prisma.commande.aggregate({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } }, _sum: { montantTotal: true } }),
+          prisma.commande.count({ where: { tenantId, paiementStatut: PAIEMENT.PAYE } }),
+          prisma.commande.aggregate({ where: { tenantId, paiementStatut: PAIEMENT.PAYE }, _sum: { montantTotal: true } }),
           prisma.produit.count({ where: { tenantId, actif: true } }),
           prisma.avis.aggregate({ where: { tenantId, approuve: true }, _avg: { note: true }, _count: true }),
         ]);
@@ -1727,9 +1852,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "sync_fournisseurs": {
-        const result = await fetch(`${process.env.NEXTAUTH_URL ?? "https://axso.vercel.app"}/api/cron/sync-fournisseurs`, {
-          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tenantId }),
-        }).then(r => r.json()).catch(() => null);
+        const result = await synchroniserFournisseurs(tenantId).catch(() => null);
         if (!result) return { succes: false, resultat: "Erreur lors de la synchronisation." };
         return { succes: true, resultat: `Sync terminée — ${result.produitsAnalyses} produits analysés\n• Prix recalculés: ${result.majPrix}\n• Alertes stock bas: ${result.alertesStock}\n• Commandes fournisseur en retard: ${result.commandesEnRetard}` };
       }

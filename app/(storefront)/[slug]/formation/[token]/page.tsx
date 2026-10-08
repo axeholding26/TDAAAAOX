@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
+import { accesDigitalOuvert } from "@/lib/commandes";
 import { notFound } from "next/navigation";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { FormationPlayer } from "@/components/storefront/FormationPlayer";
@@ -33,6 +34,9 @@ export default async function FormationAccessPage({ params }: Props) {
     },
   });
   if (!acces || !acces.produit.formation) notFound();
+  // Accès à vie tant que l'achat est payé : un remboursement le coupe.
+  const commande = await prisma.commande.findUnique({ where: { id: acces.commandeId }, select: { paiementStatut: true } });
+  if (!accesDigitalOuvert(null, commande?.paiementStatut)) notFound();
 
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || tenant.id !== acces.produit.tenantId) notFound();

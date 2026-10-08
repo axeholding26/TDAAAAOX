@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande } from "@/lib/utils";
 import { prixClient, reductionPromo } from "@/lib/pricing";
+import { fraisLivraisonServeur } from "@/lib/livraison";
+import { randomBytes } from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
     // Prix, total et devise NE viennent JAMAIS du navigateur : recalculés depuis la
     // base (même formule que la vitrine) — sinon on pouvait payer le prix de son choix.
-    const { tenantId, client, items, codeAffiliation, codePromo: codeSaisi } = await req.json();
+    // Commande payée en ligne : produits digitaux et dropshipping (expédié par le fournisseur).
+    const { tenantId, client, items, codeAffiliation, codePromo: codeSaisi, zone } = await req.json();
 
     if (!tenantId || !items?.length || !client?.nom?.trim() || !client?.email?.trim() || !client?.telephone?.trim()) {
       return NextResponse.json({ error: "Nom, email et téléphone obligatoires" }, { status: 400 });
@@ -32,15 +35,24 @@ export async function POST(req: NextRequest) {
     if (produits.length !== new Set(items.map((i: any) => String(i.produitId))).size) {
       return NextResponse.json({ error: "Produit introuvable dans cette boutique" }, { status: 400 });
     }
+    if (produits.some((p) => p.type === "physique")) {
+      return NextResponse.json({ error: "Ce produit se paie à la livraison" }, { status: 400 });
+    }
+    // Dropshipping : une vraie adresse de livraison est obligatoire.
+    const aExpedier = produits.some((p) => p.type === "dropshipping");
+    if (aExpedier && (!client?.adresse?.trim() || !(zone || client?.ville)?.trim())) {
+      return NextResponse.json({ error: "Adresse et ville de livraison obligatoires" }, { status: 400 });
+    }
     const taux = tenant.commissionRate ?? 0.06;
     const lignes = items.map((item: any) => {
       const p = produits.find((x) => x.id === String(item.produitId))!;
-      return { produitId: p.id, nom: p.nom, prix: prixClient(p.prix, taux), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: item.variante || null };
+      return { produitId: p.id, nom: p.nom, prix: prixClient(p.prix, taux, p.type), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: item.variante || null };
     });
     const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
     const reduction = reductionPromo(promo, sousTotal);
-    const total = sousTotal - reduction;
+    const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, zone, montantCommande: sousTotal - reduction }) : 0;
+    const total = sousTotal - reduction + montantLivraison;
     const devise = tenant.devise;
 
     for (const p of produits) {
@@ -81,8 +93,11 @@ export async function POST(req: NextRequest) {
         clientNom: client.nom,
         clientEmail: client.email,
         clientTelephone: client.telephone || "",
-        adresseLivraison: "Digital",
-        ville: "Digital",
+        adresseLivraison: aExpedier ? client.adresse.trim() : "Digital",
+        ville: aExpedier ? (zone || client.ville).trim() : "Digital",
+        montantLivraison,
+        // Suivi de l'expédition (page /tracking) et facture, comme une commande physique.
+        trackingToken: aExpedier ? randomBytes(20).toString("hex") : null,
         pays: client.pays || "—",
         montantSousTotal: sousTotal,
         montantReduction: reduction,
@@ -97,7 +112,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ commandeId: commande.id, numero: commande.numero, total, devise });
+    return NextResponse.json({ commandeId: commande.id, numero: commande.numero, total, montantLivraison, devise });
   } catch (err) {
     console.error("[digital-creer]", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

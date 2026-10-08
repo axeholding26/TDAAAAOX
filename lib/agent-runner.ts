@@ -24,7 +24,9 @@ function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 function buildSynthesisUserMessage(originalQuestion: string, toolResults: string[]): string {
   if (toolResults.length === 0) return originalQuestion;
   const ctx = toolResults.join("\n\n");
-  return `${originalQuestion}\n\n---\nContexte (utilise-le pour répondre, ne le répète pas) :\n${ctx}`;
+  // Sans cette précision, le modèle (qui n'a plus d'outils ici) relit la demande et
+  // « rejoue » l'appel d'outil en texte : JSON, nom d'outil et ids affichés à l'utilisateur.
+  return `${originalQuestion}\n\n---\nLes outils ont DÉJÀ été appelés ; voici leurs résultats (utilise-les pour répondre, ne les répète pas) :\n${ctx}\n\n---\nRédige uniquement ta réponse, en langage naturel. N'écris aucun appel d'outil, aucun JSON, aucun identifiant technique.`;
 }
 
 // ─── runAgent (non-streaming) ─────────────────────────────────────────────────
@@ -43,16 +45,16 @@ export async function runAgent(
 
   try {
     const conversation: any[] = [{ role: "system", content: systemPrompt }, ...messages];
-    let toolsUsed = false;
 
     for (let i = 0; i < maxIterations; i++) {
       const result = await completionWithToolsAuto(conversation, tools, 4000, false);
       if (result.stopReason === "end_turn") {
-        if (!toolsUsed) return { reponse: result.text ?? "", actions: actionsEffectuees };
+        // Réponse rédigée en voyant les résultats des outils : on la garde telle quelle,
+        // la re-synthèse ci-dessous ne sert qu'à combler une réponse vide.
+        if (result.text?.trim()) return { reponse: result.text, actions: actionsEffectuees };
         break;
       }
       if (result.stopReason === "tool_use" && result.toolCalls?.length) {
-        toolsUsed = true;
         conversation.push({ role: "assistant", content: null, tool_calls: result.toolCalls.map(tc => ({ id: tc.id, type: "function", function: { name: tc.name, arguments: JSON.stringify(tc.arguments) }, signature: tc.signature })) });
         for (const tc of result.toolCalls) {
           const { resultat } = await executeOutil(tc.name, tc.arguments, tenantId);
@@ -147,11 +149,8 @@ export function runAgentStream(
               toolResults.push(resultat);
               conversation.push({ role: "tool", tool_call_id: tc.id, content: resultat });
             }
-            const origQ = messages[messages.length - 1];
-            if (origQ) {
-              const q = typeof origQ.content === "string" ? origQ.content : JSON.stringify(origQ.content);
-              conversation.push({ role: "user", content: `Réponds directement à ma question : "${q}"` });
-            }
+            // Pas de relance « réponds directement » ici : elle coupait les enchaînements
+            // (trouver l'id puis agir) — la boucle reste bornée par maxIterations.
             continue;
           }
           break;
@@ -167,8 +166,8 @@ export function runAgentStream(
         return typeof last.content === "string" ? last.content : JSON.stringify(last.content);
       })();
 
-      // Si Phase 1 a répondu sans utiliser d'outil → streamer directement, pas besoin de re-synthèse
-      if (phase1Text && toolResults.length === 0) {
+      // Réponse déjà rédigée par le modèle (avec ou sans outils) → on la stream telle quelle
+      if (phase1Text.trim()) {
         const chunks = phase1Text.match(/\S+\s*/g) ?? [];
         for (const chunk of chunks) { send({ type: "token", text: chunk }); await sleep(2); }
         finish(actionsEffectuees);

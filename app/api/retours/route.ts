@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { creerRetour, mettreAJourRetour } from "@/lib/remboursement";
+import { requireNiveau } from "@/lib/permissions-server";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function GET(req: Request) {
@@ -39,35 +41,19 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
+  const refus = await requireNiveau(session, "commandes", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { commandeId, clientNom, clientEmail, raison, description, type, montant, preuveUrls } = body;
+  const { commande, commandeId, raison, description, type, preuveUrls } = await req.json();
+  if (!(commande || commandeId) || !raison) return NextResponse.json({ error: "Commande et raison requises" }, { status: 400 });
 
-  if (!commandeId || !clientNom || !clientEmail || !raison) {
-    return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
-  }
-
-  // Verify the order belongs to this tenant
-  const commande = await prisma.commande.findFirst({ where: { id: commandeId, tenantId } });
-  if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
-
-  const retour = await prisma.retourRMA.create({
-    data: {
-      tenantId,
-      commandeId,
-      clientNom,
-      clientEmail,
-      raison,
-      description: description ?? null,
-      type: type ?? "remboursement",
-      montant: montant ?? commande.montantTotal,
-      preuveUrls: preuveUrls ?? [],
-    },
-  });
-
+  const r = await creerRetour({ tenantId, commande: String(commande || commandeId).trim(), raison, description, type, preuveUrls });
+  if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
+  const retour = await prisma.retourRMA.findUnique({ where: { id: r.retour.id }, include: { commande: { select: { numero: true, montantTotal: true, devise: true } } } });
   return NextResponse.json({ retour }, { status: 201 });
 }
 
@@ -76,44 +62,17 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
+  const refus = await requireNiveau(session, "commandes", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { id, statut, notes, montant } = body;
+  const { id, statut, notes } = await req.json();
   if (!id) return NextResponse.json({ error: "ID requis" }, { status: 400 });
 
-  const existing = await prisma.retourRMA.findFirst({ where: { id, tenantId } });
-  if (!existing) return NextResponse.json({ error: "Retour introuvable" }, { status: 404 });
-
-  const retour = await prisma.retourRMA.update({
-    where: { id },
-    data: {
-      ...(statut ? { statut } : {}),
-      ...(notes !== undefined ? { notes } : {}),
-      ...(montant !== undefined ? { montant } : {}),
-    },
-  });
-
-  // If accepted and refund: restore stock for items in the order
-  if (statut === "accepte" && existing.type === "remboursement") {
-    const lignes = await prisma.ligneCommande.findMany({ where: { commandeId: existing.commandeId } });
-    for (const ligne of lignes) {
-      await prisma.produit.update({
-        where: { id: ligne.produitId },
-        data: { stock: { increment: ligne.quantite } },
-      }).catch(() => null);
-    }
-    // Marquer la commande en retour (Commande.statut garde sa valeur légitime
-    // — livrée/expédiée — le "remboursee" n'existe dans aucune des transitions
-    // valides de statut/route.ts et cassait le state machine ; on utilise
-    // livraisonStatut, prévu pour ce cas)
-    await prisma.commande.update({
-      where: { id: existing.commandeId },
-      data: { livraisonStatut: "retour" },
-    }).catch(() => null);
-  }
-
-  return NextResponse.json({ retour });
+  const r = await mettreAJourRetour({ tenantId, retourId: id, statut, notes });
+  if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
+  return NextResponse.json({ retour: r.retour });
 }

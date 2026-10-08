@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
+import { PAIEMENT } from "@/lib/commandes";
 import { redirect } from "next/navigation";
 import { formatMontant } from "@/lib/utils";
 import {
@@ -64,11 +65,11 @@ export default async function RapportsPage({ searchParams }: { searchParams: Pro
     lignesPeriode,
   ] = await Promise.all([
     prisma.commande.aggregate({
-      where: { tenantId, createdAt: { gte: debutPeriode }, statut: { not: "annulee" } },
+      where: { tenantId, createdAt: { gte: debutPeriode }, paiementStatut: PAIEMENT.PAYE },
       _sum: { montantTotal: true }, _count: true,
     }),
     prisma.commande.aggregate({
-      where: { tenantId, createdAt: { gte: debutPrecedente, lt: debutPeriode }, statut: { not: "annulee" } },
+      where: { tenantId, createdAt: { gte: debutPrecedente, lt: debutPeriode }, paiementStatut: PAIEMENT.PAYE },
       _sum: { montantTotal: true }, _count: true,
     }),
     prisma.client.count({ where: { tenantId, createdAt: { gte: debutPeriode } } }),

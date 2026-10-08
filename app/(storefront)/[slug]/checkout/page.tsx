@@ -29,7 +29,7 @@ async function articleCommande(tenantId: string, taux: number, q: { produit?: st
   const variante = q.variante ? p.variantes.find((v) => `${v.nom}: ${v.valeur}` === q.variante) : undefined;
   return {
     produitId: p.id, nom: p.nom, type: p.type, imageUrl: p.images[0],
-    prix: prixClient(variante?.prix ?? p.prix, taux),
+    prix: prixClient(variante?.prix ?? p.prix, taux, p.type),
     quantite: p.type === "physique" || p.type === "dropshipping" ? Math.min(Math.max(Math.floor(Number(q.quantite) || 1), 1), 999) : 1,
     variante: variante ? q.variante : undefined,
   };

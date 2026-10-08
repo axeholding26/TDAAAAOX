@@ -362,6 +362,13 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
               <MapPin size={16} />{" "}{t("Suivre ma livraison en temps réel")}
             </a>
           )}
+          {done.trackingToken && (
+            <a href={`/${slug}/mon-compte?lien=${done.trackingToken}`}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-semibold text-sm hover:opacity-80 transition-all opacity-80"
+              style={{ color: theme.accent }}>
+              <User size={16} />{" "}{t("Mon compte — toutes mes commandes")}
+            </a>
+          )}
         </div>
       </div>
     );
@@ -744,8 +751,12 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
   const [phase, setPhase] = useState<"form" | "paiement">("form");
   const [loading, setLoading] = useState(false);
   const [commandeId, setCommandeId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nom: "", email: "", telephone: "", pays: paysParDefaut(paysBoutique) });
+  const [form, setForm] = useState({ nom: "", email: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique) });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  // Dropshipping : payé en ligne mais expédié (adresse requise, suivi au lieu d'un téléchargement).
+  const expedier = items[0]?.type === "dropshipping";
+  // Montant réel calculé par le serveur (frais de livraison inclus), affiché à l'étape de paiement.
+  const [aRegler, setARegler] = useState<{ total: number; livraison: number } | null>(null);
 
   // Code d'affiliation depuis l'URL (?ref=CODE) ou localStorage
   const codeRef = useMemo(() => {
@@ -762,7 +773,11 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
 
   async function creerCommande() {
     if (!form.nom.trim() || !form.email.trim() || !form.telephone.trim()) {
-      toast.error(t("Nom, email et téléphone obligatoires pour les produits digitaux"));
+      toast.error(t("Nom, email et téléphone obligatoires"));
+      return;
+    }
+    if (expedier && (!form.adresse.trim() || !form.ville.trim())) {
+      toast.error(t("Adresse et ville de livraison obligatoires"));
       return;
     }
     setLoading(true);
@@ -776,10 +791,12 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
           total, devise, codePromo,
           codeAffiliation: codeRef || null,
+          zone: expedier ? form.ville : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      setARegler({ total: data.total, livraison: data.montantLivraison ?? 0 });
       setCommandeId(data.commandeId);
       setPhase("paiement");
     } catch (e: any) {
@@ -803,9 +820,9 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
           <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: `${theme.accent}10`, border: `1px solid ${theme.accent}30` }}>
             <Zap size={18} style={{ color: theme.accent }} className="flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold" style={{ color: theme.accent }}>{t("Livraison instantanée")}</p>
+              <p className="text-sm font-bold" style={{ color: theme.accent }}>{expedier ? t("Expédition directe") : t("Livraison instantanée")}</p>
               <p className="text-xs opacity-70 mt-0.5 leading-relaxed">
-                {t("Vos fichiers seront disponibles immédiatement après le paiement.")}
+                {expedier ? t("Votre commande part chez le fournisseur dès le paiement. Vous recevrez un lien de suivi.") : t("Vos fichiers seront disponibles immédiatement après le paiement.")}
               </p>
             </div>
           </div>
@@ -815,7 +832,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
             <h2 className="font-bold font-playfair text-base mb-4 flex items-center gap-2"><CreditCard size={16} />{" "}{t("Paiement sécurisé")}</h2>
             <NotchPayCheckout
               commandeId={commandeId}
-              montant={total}
+              montant={aRegler?.total ?? total}
               devise={devise}
               clientEmail={form.email}
               clientNom={form.nom}
@@ -827,14 +844,14 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
 
         <div className="lg:col-span-2">
           <div className="lg:sticky lg:top-24 space-y-4">
-            <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Produits digitaux")} />
+            <Recap theme={theme} devise={devise} items={items} total={aRegler ? aRegler.total - aRegler.livraison : total} codePromo={codePromo} label={expedier ? t("Votre commande") : t("Produits digitaux")} fraisLivraison={expedier ? aRegler?.livraison ?? null : null} />
             {codeRef && (
               <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl" style={{ background: `${theme.accent}10`, color: theme.accent }}>
                 <CheckCircle2 size={12} />{" "}{t("Code affiliation")}{" "}<span className="font-mono font-bold">{codeRef}</span>{" "}{t("appliqué")}
               </div>
             )}
             <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
-              <Download size={10} />{" "}{t("Téléchargement disponible immédiatement après paiement")}
+              <Download size={10} />{" "}{expedier ? t("Lien de suivi envoyé après paiement") : t("Téléchargement disponible immédiatement après paiement")}
             </div>
           </div>
         </div>
@@ -850,9 +867,11 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
         <div className="flex items-start gap-3 p-4 rounded-2xl" style={{ background: `${theme.accent}10`, border: `1px solid ${theme.accent}30` }}>
           <Zap size={18} style={{ color: theme.accent }} className="flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold" style={{ color: theme.accent }}>{t("Livraison instantanée")}</p>
+            <p className="text-sm font-bold" style={{ color: theme.accent }}>{expedier ? t("Expédition directe") : t("Livraison instantanée")}</p>
             <p className="text-xs opacity-70 mt-0.5 leading-relaxed">
-              {t("Votre fichier sera disponible immédiatement après la confirmation du paiement. Un lien de téléchargement vous sera envoyé par email.")}
+              {expedier
+                ? t("Payez en ligne : votre commande part chez le fournisseur et vous recevez un lien de suivi. Les frais de livraison de votre ville s'ajoutent à l'étape suivante.")
+                : t("Votre fichier sera disponible immédiatement après la confirmation du paiement. Un lien de téléchargement vous sera envoyé par email.")}
             </p>
           </div>
         </div>
@@ -869,7 +888,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
                 </div>
               </Field>
             </div>
-            <Field label={t("Email (recevez votre fichier ici)")} required>
+            <Field label={expedier ? t("Email") : t("Email (recevez votre fichier ici)")} required>
               <div className="relative">
                 <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
                 <input type="email" value={form.email} onChange={e => set("email", e.target.value)} placeholder="email@exemple.com" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
@@ -886,6 +905,18 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
                 {PAYS_AFRIQUE.map(p => <option key={p} style={{ backgroundColor: theme.surface }}>{t(p)}</option>)}
               </select>
             </Field>
+            {expedier && (
+              <>
+                <div className="sm:col-span-2">
+                  <Field label={t("Adresse de livraison")} required>
+                    <input value={form.adresse} onChange={e => set("adresse", e.target.value)} placeholder={t("Rue, quartier, numéro, point de repère…")} className={inp} style={inpStyle} />
+                  </Field>
+                </div>
+                <Field label={t("Ville")} required>
+                  <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={t("Dakar")} className={inp} style={inpStyle} />
+                </Field>
+              </>
+            )}
           </div>
         </div>
 
@@ -901,7 +932,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
       {/* Récap + CTA */}
       <div className="lg:col-span-2">
         <div className="lg:sticky lg:top-24 space-y-4">
-          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Produits digitaux")} />
+          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={expedier ? t("Votre commande") : t("Produits digitaux")} />
 
           {codeRef && (
             <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl" style={{ background: `${theme.accent}10`, color: theme.accent }}>
@@ -913,11 +944,11 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
             style={{ backgroundColor: "#635BFF", color: "#fff", boxShadow: "0 4px 20px rgba(99,91,255,0.4)" }}>
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Shield size={16} />}
-            {loading ? t("Préparation du paiement…") : t("Payer {0}", aPayer(total, devise))}
+            {loading ? t("Préparation du paiement…") : expedier ? t("Continuer vers le paiement") : t("Payer {0}", aPayer(total, devise))}
           </button>
 
           <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
-            <Download size={10} />{" "}{t("Téléchargement disponible immédiatement après paiement")}
+            <Download size={10} />{" "}{expedier ? t("Lien de suivi envoyé après paiement") : t("Téléchargement disponible immédiatement après paiement")}
           </div>
         </div>
       </div>

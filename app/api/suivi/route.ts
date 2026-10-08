@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cleTelephone } from "@/lib/utils";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const numero = searchParams.get("numero")?.trim();
+  // Même numéro saisi avec ou sans indicatif (+237, 00237…)
+  const tel = cleTelephone(searchParams.get("telephone"));
 
-  if (!numero) {
-    return NextResponse.json({ error: "Numéro de commande manquant" }, { status: 400 });
+  if (!numero || tel.length < 9) {
+    return NextResponse.json({ error: "Numéro de commande et téléphone requis" }, { status: 400 });
   }
 
   const commande = await prisma.commande.findUnique({
@@ -23,7 +26,13 @@ export async function GET(req: Request) {
       devise: true,
       numeroSuivi: true,
       transporteur: true,
-      trackingToken: true,
+      // Jamais trackingToken : /api/tracking/[token] montre le code de livraison au client,
+      // et le livreur connaît numéro + téléphone. La carte part de ces champs-ci.
+      clientTelephone: true,
+      livreurNom: true,
+      livreurPosition: true,
+      latitudeClient: true,
+      longitudeClient: true,
       createdAt: true,
       updatedAt: true,
       tenant: {
@@ -38,9 +47,11 @@ export async function GET(req: Request) {
     },
   });
 
-  if (!commande) {
+  // Même réponse si le téléphone ne correspond pas : pas de parcours des numéros pour lire les adresses
+  if (!commande || cleTelephone(commande.clientTelephone) !== tel) {
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
   }
 
-  return NextResponse.json({ commande });
+  const { clientTelephone, ...reste } = commande;
+  return NextResponse.json({ commande: reste });
 }

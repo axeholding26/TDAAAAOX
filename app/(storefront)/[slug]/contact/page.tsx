@@ -154,6 +154,7 @@ export default async function ContactPage({ params }: Props) {
                   { label: "Produits", href: `/${slug}/produits` },
                   ...(cfg.aboutPage?.actif ? [{ label: "À propos", href: `/${slug}/a-propos` }] : []),
                   { label: "Suivi commande", href: `/suivi` },
+                  { label: "Mon compte", href: `/${slug}/mon-compte` },
                 ].map((l) => (
                   <Link key={l.href} href={l.href} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.55 }}>
                     {t(l.label)}

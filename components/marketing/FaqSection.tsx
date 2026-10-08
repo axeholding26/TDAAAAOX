@@ -8,7 +8,7 @@ const faqs = [
   { q: "Comment mes clients paient-ils ?", r: "Tous les modes de paiement africains sont intégrés : MTN Mobile Money, Orange Money, Wave, Visa/Mastercard, et plus encore selon votre pays. La configuration prend 2 minutes." },
   { q: "Puis-je utiliser mon propre nom de domaine ?", r: "Oui ! Vous obtenez d'abord une URL gratuite (votre-boutique.axso.com), puis vous pouvez connecter votre propre domaine depuis les paramètres." },
   { q: "L'assistant IA parle-t-il français ?", r: "Absolument. L'IA d'Axso est configurée pour comprendre et répondre en français (et en anglais). Elle connaît les marchés africains et peut vous aider à rédiger vos fiches produits." },
-  { q: "Ai-je besoin de compétences techniques ?", r: "Aucune. Le constructeur Axso fonctionne par glisser-déposer, sans code. Décrivez votre boutique à Axia et elle configure l'essentiel à votre place en quelques minutes." },
+  { q: "Ai-je besoin de compétences techniques ?", r: "Aucune. Le constructeur Axso fonctionne par glisser-déposer, sans code. Décrivez votre boutique à Axia et elle configure l'essentiel à votre place en 3 minutes." },
   { q: "Puis-je importer mes produits depuis un fichier Excel ?", r: "Oui, Axso accepte l'import CSV avec un template téléchargeable. Importez des centaines de produits en quelques secondes." },
   { q: "Comment gérer plusieurs vendeurs sur ma boutique ?", r: "Depuis la section Équipe du dashboard, vous pouvez inviter des collaborateurs avec des rôles différents : Admin, Éditeur ou Livreur." },
   { q: "Les notifications WhatsApp sont-elles automatiques ?", r: "Oui ! Chaque nouvelle commande vous est notifiée sur WhatsApp. Vos clients reçoivent automatiquement la confirmation et le numéro de suivi." },

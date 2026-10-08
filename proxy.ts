@@ -3,6 +3,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { slugPourDomaine } from "@/lib/domaines";
+import { auth } from "@/lib/auth";
+import { requireNiveau } from "@/lib/permissions-server";
+import { moduleApi } from "@/lib/permissions-api";
 
 const DOMAINE_APP = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "localhost:3000";
 
@@ -10,10 +13,23 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get("host") || "";
 
-  // Ignorer les fichiers statiques et les API (appelées en /api/... depuis
-  // une vitrine sur sous-domaine ou domaine custom — ne pas les préfixer du slug)
+  // API : jamais préfixées du slug (appelées en /api/... depuis une vitrine sur
+  // sous-domaine ou domaine custom). Un membre d'équipe connecté n'atteint que
+  // les modules que sa grille lui ouvre (lib/permissions-api.ts).
+  if (pathname.startsWith("/api/")) {
+    const module = moduleApi(pathname);
+    if (module) {
+      const session = await auth();
+      if ((session?.user as any)?.tenantId) {
+        const refus = await requireNiveau(session, module, request.method === "GET" || request.method === "HEAD" ? "lecture" : "ecriture");
+        if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // Ignorer les fichiers statiques
   if (
-    pathname.startsWith("/api/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname.includes(".")

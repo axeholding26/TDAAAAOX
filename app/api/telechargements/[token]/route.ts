@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { accesDigitalOuvert, metaDigital } from "@/lib/commandes";
 
 type Ctx = { params: Promise<{ token: string }> };
 
@@ -34,10 +35,21 @@ export async function GET(req: NextRequest, { params }: Ctx) {
         select: { clientNom: true, clientEmail: true, createdAt: true, paiementStatut: true },
       }),
     ]);
-    // Accès à vie (comme Chariow) : seul un achat non payé (annulé, remboursé) est refusé.
-    if (commande?.paiementStatut !== "completed") return NextResponse.json({ error: "Achat non payé" }, { status: 403 });
+    // Accès à vie par défaut (comme Chariow) — refusé si l'achat n'est pas payé
+    // (ou remboursé), si le marchand a révoqué le lien ou si la durée qu'il a fixée est passée.
+    if (!accesDigitalOuvert(dl.expireAt, commande?.paiementStatut)) {
+      return NextResponse.json({ error: "Lien expiré ou révoqué, ou achat non payé" }, { status: 403 });
+    }
 
     if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
+
+    // Limite de téléchargements fixée par le marchand sur le produit.
+    const limite = metaDigital(produit.instructionsTelechargement).limiteTelechargement as number | null | undefined;
+    if (limite) {
+      const faits = await prisma.analytics.count({ where: { tenantId: produit.tenantId, type: "telechargement", metadata: { path: ["token"], equals: token } } });
+      if (faits >= limite) return NextResponse.json({ error: "Limite de téléchargements atteinte" }, { status: 403 });
+      await prisma.analytics.create({ data: { tenantId: produit.tenantId, type: "telechargement", valeur: 1, metadata: { token, produitId: produit.id, commandeId: dl.commandeId } } });
+    }
 
     let fileUrl: string;
     let fileName: string;

@@ -36,14 +36,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     },
     orderBy: { ventes: "desc" },
     take: 8,
-    select: { id: true, nom: true, prix: true, images: true },
+    select: { id: true, nom: true, type: true, prix: true, images: true },
   });
 
   return NextResponse.json({
     produits: produits.map((p) => ({
       id: p.id,
       nom: p.nom,
-      prix: prixClient(p.prix, taux),
+      prix: prixClient(p.prix, taux, p.type),
       image: p.images[0] ?? null,
     })),
     devise: tenant.devise,

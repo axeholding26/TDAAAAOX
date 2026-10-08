@@ -88,6 +88,18 @@ export async function retirerWalletPlateforme(r: { montant: number; methode: str
 }
 
 /** Réponse JSON d'erreur pour les routes admin. */
+/**
+ * Valider (activer) ou suspendre un livreur. La première activation fixe valideAt :
+ * un livreur désactivé ensuite est « suspendu », plus « en attente de validation ».
+ * Les livreurs actifs d'avant valideAt (null) le reçoivent à leur suspension.
+ */
+export async function changerActivationLivreur(id: string, actif: boolean) {
+  const livreur = await prisma.livreur.findUnique({ where: { id }, select: { actif: true, valideAt: true } });
+  if (!livreur) throw new ErreurAdmin("Livreur introuvable", 404);
+  await prisma.livreur.update({ where: { id }, data: { actif, ...((actif || livreur.actif) && !livreur.valideAt ? { valideAt: new Date() } : {}) } });
+  return { actif };
+}
+
 export function reponseErreur(err: unknown) {
   if (err instanceof ErreurAdmin) return Response.json({ error: err.message }, { status: err.status });
   throw err;

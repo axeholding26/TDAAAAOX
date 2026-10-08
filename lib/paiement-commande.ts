@@ -8,6 +8,25 @@ import { notifierMarchand } from "./notifications-marchand";
 import { formatMontant } from "./utils";
 import { verifierPaiementNotchPay } from "./notchpay";
 import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "./email";
+import { PAIEMENT } from "./commandes";
+import { compterVentes } from "./stock";
+
+// Dropshipping : la commande payée part chez chaque fournisseur concerné.
+async function routerVersFournisseurs(commandeId: string, tenantId: string) {
+  const lignes = await prisma.ligneCommande.findMany({
+    where: { commandeId, produit: { fournisseurId: { not: null } } },
+    select: { prix: true, quantite: true, produit: { select: { fournisseurId: true, prixFournisseur: true } } },
+  });
+  const parFournisseur = new Map<string, number>();
+  for (const l of lignes) {
+    const f = l.produit.fournisseurId!;
+    parFournisseur.set(f, (parFournisseur.get(f) ?? 0) + (l.produit.prixFournisseur ?? l.prix * 0.5) * l.quantite);
+  }
+  for (const [fournisseurId, montantFournisseur] of parFournisseur) {
+    const deja = await prisma.commandeFournisseur.findFirst({ where: { commandeId, fournisseurId } });
+    if (!deja) await prisma.commandeFournisseur.create({ data: { tenantId, commandeId, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true } });
+  }
+}
 
 // NotchPay prélève son propre frais de traitement sur chaque paiement — jamais
 // déduit du vendeur, seulement de la commission Axso (voir lib/wallet.ts). On le
@@ -40,7 +59,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     },
   });
   if (!commande) return;
-  if (commande.paiementStatut === "completed") return; // déjà traité (idempotence)
+  if (commande.paiementStatut !== PAIEMENT.ATTENTE && commande.paiementStatut !== PAIEMENT.ECHOUE) return; // déjà traité (idempotence) ou remboursé
 
   const tauxCommission = commande.tenant.commissionRate ?? 0.06;
   const fraisPasserelle = await fraisNotchPay(reference);
@@ -49,10 +68,11 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   // peuvent appeler cette fonction en même temps — un seul des deux continue,
   // sinon le wallet serait crédité deux fois.
   const pris = await prisma.commande.updateMany({
-    where: { id: commandeId, paiementStatut: { not: "completed" } },
-    data: { paiementStatut: "completed", paiementReference: reference },
+    where: { id: commandeId, paiementStatut: { in: [PAIEMENT.ATTENTE, PAIEMENT.ECHOUE] } },
+    data: { paiementStatut: PAIEMENT.PAYE, paiementReference: reference },
   });
   if (pris.count === 0) return;
+  await prisma.$transaction((tx) => compterVentes(tx, commandeId, 1));
 
   // Code promo : compté quand le paiement est réellement reçu (un paiement abandonné ne consomme pas le code).
   if (commande.codePromoId) {
@@ -100,7 +120,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
       commande: {
         id: commande.id,
         tenantId: commande.tenantId,
-        clientEmail: commande.clientEmail,
+        clientEmail: commande.clientEmail ?? "", // digital : email obligatoire à la commande
         clientNom: commande.clientNom,
         montantTotal: commande.montantTotal,
         devise: commande.devise,
@@ -111,7 +131,9 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
       fraisPasserelle,
     });
   } else {
+    // Dropshipping payé : confirmé, puis expédié par le fournisseur (cycle de livraison normal).
     await prisma.commande.update({ where: { id: commandeId }, data: { statut: "confirmee" } });
+    await routerVersFournisseurs(commandeId, commande.tenantId).catch((e) => console.error("[routerVersFournisseurs]", e));
     await crediterWallet({
       tenantId: commande.tenantId,
       montantBrut: commande.montantTotal,

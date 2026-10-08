@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     const produitsPourClone = produitsBruts.map((p) => ({
       id: p.id,
       nom: p.nom,
-      prixAffiche: formatMontant(prixClient(p.prix, taux), tenant.devise),
+      prixAffiche: formatMontant(prixClient(p.prix, taux, p.type), tenant.devise),
       image: p.images[0] ?? null,
     }));
 

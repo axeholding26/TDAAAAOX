@@ -43,7 +43,7 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
       {config.titre && <h2 className="text-2xl @min-[640px]:text-3xl font-bold font-playfair mb-6" style={{ color: colors.texte }}>{t(config.titre)}</h2>}
       <div className={`grid ${colonnes} gap-4 @min-[640px]:gap-6`}>
         {produits.map((p) => {
-          const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06);
+          const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06, p.type);
           return (
             <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
               <div className="rounded-2xl overflow-hidden border transition-all duration-300 group-hover:shadow-lg" style={{ backgroundColor: colors.fond, borderColor: `${colors.accent}20` }}>

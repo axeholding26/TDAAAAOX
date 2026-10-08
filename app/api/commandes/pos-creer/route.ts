@@ -2,6 +2,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PAIEMENT } from "@/lib/commandes";
+import { RuptureStock, compterVentes, sortirStock } from "@/lib/stock";
+import { genererNumeroCommande } from "@/lib/utils";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function POST(req: Request) {
@@ -14,11 +17,32 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { clientNom, clientTelephone, items, methode, montantTotal, montantReduction = 0 } = body;
-  if (!items?.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
+  const { clientNom, clientTelephone, items: itemsClient, methode } = body;
+  if (!itemsClient?.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, slug: true } });
   const devise = tenant?.devise ?? "XAF";
+
+  // Prix recalculés depuis la base (prix du marchand, sans commission : la vente
+  // se fait en main propre) — seule la remise manuelle vient de la caisse.
+  const produits = await prisma.produit.findMany({
+    where: { id: { in: itemsClient.map((i: any) => String(i.produitId)) }, tenantId },
+    select: { id: true, nom: true, prix: true, images: true, variantes: { select: { nom: true, valeur: true, prix: true } } },
+  });
+  const items: { produitId: string; nom: string; prix: number; quantite: number; imageUrl: string | null; variante: string | null }[] = [];
+  for (const i of itemsClient) {
+    const p = produits.find((x) => x.id === String(i.produitId));
+    if (!p) return NextResponse.json({ error: "Produit introuvable dans cette boutique" }, { status: 400 });
+    const variante = i.variante ? p.variantes.find((v) => `${v.nom}: ${v.valeur}` === i.variante) : null;
+    if (i.variante && !variante) return NextResponse.json({ error: `Variante « ${i.variante} » introuvable pour ${p.nom}` }, { status: 400 });
+    items.push({
+      produitId: p.id, nom: p.nom + (variante ? ` — ${i.variante}` : ""), prix: variante?.prix ?? p.prix,
+      quantite: Math.max(1, Math.floor(Number(i.quantite) || 1)), imageUrl: p.images[0] ?? null, variante: variante ? i.variante : null,
+    });
+  }
+  const sousTotal = items.reduce((s, i) => s + i.prix * i.quantite, 0);
+  const montantReduction = Math.min(Math.max(Number(body.montantReduction) || 0, 0), sousTotal);
+  const montantTotal = sousTotal - montantReduction;
 
   // Auto-create or find client
   let client = await prisma.client.findFirst({ where: { tenantId, OR: [{ email: "pos@local" }] } });
@@ -26,85 +50,41 @@ export async function POST(req: Request) {
     client = await prisma.client.create({ data: { tenantId, nom: clientNom, email: "pos@local", telephone: clientTelephone } });
   }
 
-  const sousTotal = items.reduce((s: number, i: any) => s + i.prix * i.quantite, 0);
-  const count = await prisma.commande.count({ where: { tenantId } });
-  const numero = `CMD-${new Date().getFullYear()}-${String(count + 1).padStart(5, "0")}`;
-
-  const commande = await prisma.commande.create({
-    data: {
-      tenantId,
-      numero,
-      clientId: client.id,
-      clientNom,
-      clientEmail: "pos@local",
-      clientTelephone,
-      adresseLivraison: "Vente en boutique",
-      ville: "Local",
-      pays: "CM",
-      montantSousTotal: sousTotal,
-      montantLivraison: 0,
-      montantReduction,
-      montantTotal,
-      devise,
-      statut: "livree",
-      paiementStatut: "paid",
-      methodePaiement: methode,
-      livraisonStatut: "livree",
-      lignes: {
-        create: items.map((i: any) => ({
-          produitId: i.produitId,
-          nom: i.nom,
-          prix: i.prix,
-          quantite: i.quantite,
-          imageUrl: i.imageUrl || null,
-          variante: i.variante || null,
-        })),
-      },
-    },
-  });
-
-  // Déduit le stock + journalise chaque ligne dans StockMouvement (traçabilité)
-  // — consomme en FIFO le lot actif le plus ancien du produit s'il en existe,
-  // pour pouvoir remonter de toute vente jusqu'à son lot d'origine.
-  for (const item of items) {
-    try {
-      const produit = await prisma.produit.findUnique({ where: { id: item.produitId }, select: { stock: true } });
-      if (!produit) continue;
-      const stockAvant = produit.stock;
-      const stockApres = Math.max(0, stockAvant - item.quantite);
-
-      const lot = await prisma.lotTracabilite.findFirst({
-        where: { tenantId, produitId: item.produitId, statut: "actif", quantiteRestante: { gt: 0 } },
-        orderBy: { dateReception: "asc" },
+  let commande;
+  try {
+    commande = await prisma.$transaction(async (tx) => {
+      const c = await tx.commande.create({
+        data: {
+          tenantId,
+          numero: genererNumeroCommande(),
+          clientId: client.id,
+          clientNom,
+          clientEmail: "pos@local",
+          clientTelephone,
+          adresseLivraison: "Vente en boutique",
+          ville: "Local",
+          pays: "CM",
+          montantSousTotal: sousTotal,
+          montantLivraison: 0,
+          montantReduction,
+          montantTotal,
+          devise,
+          statut: "livree",
+          paiementStatut: PAIEMENT.PAYE,
+          methodePaiement: methode,
+          livraisonStatut: "livree",
+          livreeAt: new Date(),
+          lignes: { create: items },
+        },
       });
-
-      await prisma.$transaction([
-        prisma.produit.update({ where: { id: item.produitId }, data: { stock: stockApres, ventes: { increment: item.quantite } } }),
-        prisma.stockMouvement.create({
-          data: {
-            tenantId, produitId: item.produitId, type: "vente",
-            quantite: item.quantite, stockAvant, stockApres,
-            motif: `Vente caisse #${commande.numero}`, lotId: lot?.id ?? null,
-            commandeId: commande.id, creePar: (session?.user as any)?.id,
-          },
-        }),
-        ...(lot
-          ? [prisma.lotTracabilite.update({
-              where: { id: lot.id },
-              data: { quantiteRestante: Math.max(0, lot.quantiteRestante - item.quantite) },
-            })]
-          : []),
-      ]);
-
-      if (lot) {
-        await prisma.ligneCommande.updateMany({
-          where: { commandeId: commande.id, produitId: item.produitId },
-          data: { lotId: lot.id },
-        });
-      }
-    } catch {
-      // Ne bloque jamais la vente déjà enregistrée pour un souci de journalisation
-    }
+      // Stock (lots FIFO + journal) et compteur de ventes : mêmes règles que la vitrine.
+      await sortirStock(tx, { tenantId, commandeId: c.id, motif: `Vente caisse #${c.numero}`, creePar: (session?.user as any)?.id });
+      await compterVentes(tx, c.id, 1);
+      return c;
+    });
+  } catch (err) {
+    if (err instanceof RuptureStock) return NextResponse.json({ error: err.message }, { status: err.status });
+    throw err;
   }
 
   // Generate invoice automatically for POS sales

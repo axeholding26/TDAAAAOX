@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package } from "lucide-react";
+import { Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package, User } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
 import { usePrix, PastillePays } from "@/components/storefront/DeviseVitrine";
@@ -285,6 +285,15 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         </Link>
       )}
 
+      <Link
+        href={`/${slug}/mon-compte`}
+        className="flex items-center justify-center w-9 h-9 rounded-xl transition-all hover:opacity-80"
+        style={{ backgroundColor: `${accent}12`, color: txt }}
+        aria-label={t("Mon compte")}
+      >
+        <User size={16} />
+      </Link>
+
       <PastillePays couleur={txt} className="hidden sm:inline-flex" />
 
       <button
@@ -354,6 +363,9 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             <Heart size={14} />{" "}{t("Liste de souhaits")}{" "}{wishlistCount > 0 && `(${wishlistCount})`}
           </Link>
         )}
+        <Link href={`/${slug}/mon-compte`} onClick={() => setMenuOuvert(false)} className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+          <User size={14} />{" "}{t("Mon compte")}
+        </Link>
         {collections.map((col) => (
           <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
             {t(col.nom)}

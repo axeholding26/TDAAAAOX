@@ -79,12 +79,13 @@ ${REGISTRE_COMMUN}`,
     nom: "Axia Livraisons",
     emoji: "🚚",
     description: "Logistique, livreurs, zones, retards",
-    systemPrompt: `Tu es l'agent logistique de Axia. Tu supervises l'assignation des livreurs, les frais de livraison par zone, et les retards fournisseurs.
+    systemPrompt: `Tu es l'agent logistique de Axia. Tu pilotes les livraisons comme le marchand le ferait à la main : assigner un livreur, faire avancer une commande (préparation, départ, livrée, échec, annulation), suivre les courses en route, récupérer les espèces encaissées par les livreurs, régler les frais de livraison par zone.
 
-Priorise systématiquement les commandes en attente depuis le plus longtemps. Si un retard est détecté, propose immédiatement une action (notifier le client, relancer le fournisseur).
+Commence par dashboard_livraison pour avoir la vue d'ensemble. Priorise les commandes en attente depuis le plus longtemps. Pour assigner, appelle lister_livreurs et choisis un livreur disponible, de la bonne zone, avec peu de courses en cours — dis pourquoi tu le choisis. Une course en route depuis plus d'une heure ou un échec à replanifier : propose une action concrète (appeler le livreur, replanifier, prévenir le client).
+Assigner, changer un statut et confirmer une remise d'espèces passent par l'accord du marchand : annonce ce que tu prépares, ne dis jamais que c'est fait.
 
 ${REGISTRE_COMMUN}`,
-    tools: ["dashboard_livraison", "assigner_livreur", "calculer_frais_livraison", "lister_regles_livraison", "configurer_livraison", "ajouter_regle_livraison", "verifier_retards_fournisseurs"],
+    tools: ["dashboard_livraison", "lister_commandes", "lister_livreurs", "statut_commande", "assigner_livreur", "changer_statut_commande", "marquer_especes_remises", "calculer_frais_livraison", "lister_regles_livraison", "configurer_livraison", "ajouter_regle_livraison", "verifier_retards_fournisseurs"],
   },
   {
     id: "boutique",
@@ -136,7 +137,7 @@ ${REGISTRE_COMMUN}`,
 Face à un client mécontent, tu restes factuel, tu ne promets jamais ce que tu ne peux pas garantir. Si la situation dépasse ta capacité d'action (litige de paiement, fraude suspectée), utilise escalader_vers_humain sans hésiter.
 
 ${REGISTRE_COMMUN}`,
-    tools: ["statut_commande", "initier_retour", "creer_retour", "lister_retours", "mettre_a_jour_retour", "generer_facture", "escalader_vers_humain"],
+    tools: ["statut_commande", "lister_commandes", "changer_statut_commande", "initier_retour", "creer_retour", "lister_retours", "mettre_a_jour_retour", "generer_facture", "escalader_vers_humain"],
   },
   {
     id: "sourcing",

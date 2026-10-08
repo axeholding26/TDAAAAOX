@@ -36,20 +36,23 @@ const NEXT_ACTION: Record<string, { label: string; nextStatut: string; icon: any
 };
 
 const TERMINAL = new Set(["livree", "annulee"]);
-const ANNULABLE = new Set(["en_attente", "confirmee", "en_preparation", "expediee"]);
+const ANNULABLE = new Set(["en_attente", "confirmee", "en_preparation", "expediee", "tentative_echouee"]);
 
 interface Props {
   commandeId: string;
   statutActuel: string;
+  /** Payée en ligne : l'annulation rembourse le client (NotchPay) et reprend la vente au portefeuille. */
+  payeeEnLigne?: boolean;
 }
 
-export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
+export function StatutCommandeSelector({ commandeId, statutActuel, payeeEnLigne = false }: Props) {
   const t = useT();
   const router = useRouter();
   const [statut, setStatut] = useState(statutActuel);
   const [loading, setLoading] = useState(false);
   const [whatsappUrl, setWhatsappUrl] = useState<string | null>(null);
   const [notifEnvoyee, setNotifEnvoyee] = useState(false);
+  const [confirmerAnnulation, setConfirmerAnnulation] = useState(false);
 
   const colors = STATUT_COLOR[statut] ?? STATUT_COLOR.en_attente;
   const nextAction = NEXT_ACTION[statut];
@@ -110,14 +113,19 @@ export function StatutCommandeSelector({ commandeId, statutActuel }: Props) {
       )}
 
       {/* Bouton annuler */}
+      {ANNULABLE.has(statut) && confirmerAnnulation && (
+        <span className="text-xs text-red-500">
+          {payeeEnLigne ? t("Le client sera remboursé et la vente reprise sur ton portefeuille.") : t("Le stock sera remis en vente.")}
+        </span>
+      )}
       {ANNULABLE.has(statut) && (
         <button
-          onClick={() => changerStatut("annulee")}
+          onClick={() => (confirmerAnnulation ? (setConfirmerAnnulation(false), changerStatut("annulee")) : setConfirmerAnnulation(true))}
           disabled={loading}
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all hover:bg-red-50 disabled:opacity-40"
           style={{ border: "1px solid rgba(248,113,113,0.35)", color: "#f87171" }}
         >
-          <XCircle size={12} />{" "}{t("Annuler")}
+          <XCircle size={12} />{" "}{confirmerAnnulation ? t("Confirmer l'annulation") : t("Annuler")}
         </button>
       )}
 

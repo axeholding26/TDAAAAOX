@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { emailReel } from "@/lib/email";
 import { permissionsSession } from "@/lib/permissions-server";
 
 export async function GET(req: NextRequest) {
@@ -41,6 +42,6 @@ export async function GET(req: NextRequest) {
     devise: tenant?.devise ?? "XAF",
     produits: produits.map((p) => ({ ...p, image: p.images[0] ?? null, images: undefined })),
     commandes,
-    clients: clients.map((c) => ({ ...c, email: c.email.endsWith("@axso.com") ? null : c.email })), // adresse générée depuis le téléphone : pas une vraie adresse
+    clients: clients.map((c) => ({ ...c, email: emailReel(c.email) ? c.email : null })), // anciennes adresses générées depuis le téléphone : pas de vraies adresses
   });
 }

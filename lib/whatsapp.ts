@@ -18,24 +18,30 @@ async function tokenGenukaTenant(tenantId?: string): Promise<string | null> {
   return typeof token === "string" && token ? token : null;
 }
 
-const MESSAGES: Record<string, (params: { numero: string; boutique: string; lien: string }) => string> = {
+const MESSAGES: Record<string, (params: { numero: string; boutique: string; lien: string; code?: string | null }) => string> = {
   confirmee: ({ numero, boutique, lien }) =>
     `✅ *Bonne nouvelle !*\n\nVotre commande *#${numero}* a bien été confirmée par *${boutique}*.\n\nNous préparons vos articles avec soin.\n\n🔍 Suivre ma commande : ${lien}`,
 
   en_preparation: ({ numero, boutique }) =>
     `📦 *Votre commande est en cours de préparation !*\n\nCommande *#${numero}* — *${boutique}*\n\nNos équipes s'occupent de vos articles. Vous serez notifié dès l'expédition.`,
 
-  expediee: ({ numero, boutique, lien }) =>
-    `🚚 *Votre commande est en route !*\n\nCommande *#${numero}* — *${boutique}*\n\nVotre colis a été expédié et est en chemin.\n\n🔍 Suivre ma commande : ${lien}`,
+  expediee: ({ numero, boutique, lien, code }) =>
+    `🚚 *Votre commande est en route !*\n\nCommande *#${numero}* — *${boutique}*\n\nVotre colis a été expédié et est en chemin.${code ? `\n\n🔑 Code de livraison : *${code}*\nDonnez-le au livreur uniquement quand vous avez reçu votre colis.` : ""}\n\n🔍 Suivre ma commande : ${lien}`,
 
   livree: ({ numero, boutique, lien }) =>
-    `🎉 *Votre commande est arrivée !*\n\nCommande *#${numero}* — *${boutique}*\n\nVotre colis a été livré. Confirmez la réception pour finaliser la transaction.\n\n✅ Confirmer : ${lien}`,
+    `🎉 *Votre commande est arrivée !*\n\nCommande *#${numero}* — *${boutique}*\n\nVotre colis a été livré. Merci pour votre confiance !\n\n🔍 Détail de la commande : ${lien}`,
 
   tentative_echouee: ({ numero, boutique, lien }) =>
     `⚠️ *Tentative de livraison manquée*\n\nNotre livreur n'a pas pu vous joindre pour la commande *#${numero}* — *${boutique}*.\n\nUne nouvelle tentative sera planifiée. Vous pouvez aussi contacter la boutique pour convenir d'un horaire.\n\n🔍 Suivre ma commande : ${lien}`,
 
   annulee: ({ numero, boutique }) =>
     `❌ *Commande annulée*\n\nVotre commande *#${numero}* — *${boutique}* a été annulée.\n\nContactez la boutique pour plus d'informations.`,
+
+  rembourse_en_ligne: ({ numero, boutique }) =>
+    `💸 *Remboursement effectué*\n\nVotre commande *#${numero}* — *${boutique}* a été remboursée sur le moyen de paiement utilisé (Mobile Money ou carte). Le délai d'arrivée dépend de votre opérateur.`,
+
+  rembourse_especes: ({ numero, boutique }) =>
+    `💸 *Remboursement accordé*\n\nLa boutique *${boutique}* rembourse votre commande *#${numero}*. Elle vous rend la somme directement.`,
 };
 
 export function buildWhatsAppMessage(params: {
@@ -43,6 +49,7 @@ export function buildWhatsAppMessage(params: {
   numero: string;
   boutique: string;
   lien: string;
+  code?: string | null;
 }): string | null {
   const template = MESSAGES[params.statut];
   if (!template) return null;
@@ -110,6 +117,7 @@ export async function notifierClientWhatsApp(params: {
   slug: string;
   trackingToken: string | null;
   tenantId?: string;
+  codeLivraison?: string | null;
 }): Promise<{ envoyeAuto: boolean; whatsappUrl: string | null }> {
   if (!params.telephone) return { envoyeAuto: false, whatsappUrl: null };
   // WhatsApp fait partie des fonctionnalités verrouillées au quota Palier 0 —
@@ -123,7 +131,7 @@ export async function notifierClientWhatsApp(params: {
   // Suivi live (position GPS, étapes) — consolidé sur /tracking/[token], le lien
   // /suivi/[orderId] legacy (sans géoloc, id de commande exposé) est retiré.
   const lien = params.trackingToken ? `${appUrl}/${params.slug}/tracking/${params.trackingToken}` : `${appUrl}/${params.slug}`;
-  const message = buildWhatsAppMessage({ statut: params.statut, numero: params.numero, boutique: params.boutique, lien });
+  const message = buildWhatsAppMessage({ statut: params.statut, numero: params.numero, boutique: params.boutique, lien, code: params.codeLivraison });
   if (!message) return { envoyeAuto: false, whatsappUrl: null };
 
   // Tente envoi automatique (Genuka de la boutique, puis plateforme, puis Meta direct)
@@ -160,4 +168,22 @@ export async function notifierLivreurAssigneWhatsApp(params: {
 
   const whatsappUrl = buildWhatsAppLink(params.telephone, message);
   return { envoyeAuto: false, whatsappUrl };
+}
+
+// Prévient le livreur d'une nouvelle course : la notification dans l'appli ne
+// suffit pas, il ne la voit que s'il a l'appli ouverte. Lien direct vers la fiche.
+export async function notifierLivreurNouvelleCourse(params: {
+  telephone: string;
+  numero: string;
+  boutique: string;
+  adresse: string;
+  ville: string;
+  commandeId: string;
+  tenantId: string;
+}): Promise<{ envoyeAuto: boolean; whatsappUrl: string | null }> {
+  if (await quotaCommandesAtteint(params.tenantId)) return { envoyeAuto: false, whatsappUrl: null };
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+  const message = `🛵 *Nouvelle livraison assignée*\n\nCommande *#${params.numero}* — *${params.boutique}*\n📍 ${params.adresse}, ${params.ville}\n\n👉 Ouvrir la course : ${appUrl}/livreur/commande/${params.commandeId}`;
+  if (await envoyerMessage(params.telephone, message, params.tenantId)) return { envoyeAuto: true, whatsappUrl: null };
+  return { envoyeAuto: false, whatsappUrl: buildWhatsAppLink(params.telephone, message) };
 }

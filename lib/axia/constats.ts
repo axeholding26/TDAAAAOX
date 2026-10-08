@@ -258,6 +258,91 @@ async function messagesSansReponse(ctx: Ctx): Promise<Constat | null> {
   };
 }
 
+// ─── Livraisons ──────────────────────────────────────────────────────────────
+
+const HEURE = 3_600_000;
+const COD = { in: ["whatsapp_cod", "direct_cod"] };
+
+// Livreur bloqué devant le client (5 codes refusés) : le plus urgent, quelqu'un attend sur le trottoir.
+async function codeBloque(ctx: Ctx): Promise<Constat | null> {
+  const c = await prisma.commande.findFirst({
+    where: { tenantId: ctx.tenantId, statut: "expediee", codeEssais: { gte: 5 } },
+    select: { id: true, numero: true, livreurNom: true, clientNom: true },
+  });
+  if (!c) return null;
+  return {
+    type: "livraison_code_bloque", cle: `code_bloque:${c.id}`, priorite: 10,
+    texte: `${c.livreurNom ?? "Le livreur"} n'arrive pas à confirmer la commande #${c.numero} : le code de ${c.clientNom} a été refusé 5 fois. Vérifie avec le client par téléphone ; si tout est bon, je la marque livrée ?`,
+    action: { prompt: `Le livreur de la commande #${c.numero} est bloqué (code de livraison refusé 5 fois). J'ai vérifié avec le client : marque la commande comme livrée.` },
+  };
+}
+
+async function aAssigner(ctx: Ctx): Promise<Constat | null> {
+  const commandes = await prisma.commande.findMany({
+    where: { tenantId: ctx.tenantId, statut: { in: ["confirmee", "en_preparation"] }, livreurId: null, updatedAt: { lt: new Date(Date.now() - 2 * HEURE) }, createdAt: { gte: il_y_a(14) } },
+    select: { numero: true },
+    orderBy: { createdAt: "asc" },
+    take: 10,
+  });
+  if (!commandes.length) return null;
+  const n = commandes.length;
+  return {
+    type: "livraison_a_assigner", cle: `a_assigner:${jourCle()}`, priorite: 8, cooldownJours: 1,
+    texte: `${n} commande${n > 1 ? "s attendent" : " attend"} un livreur depuis plus de 2 heures (${commandes.slice(0, 3).map((c) => `#${c.numero}`).join(", ")}). Je te propose qui assigner ?`,
+    action: { prompt: `Ces commandes attendent un livreur : ${commandes.map((c) => `#${c.numero}`).join(", ")}. Regarde mes livreurs disponibles et propose-moi la meilleure répartition, puis prépare les assignations.` },
+  };
+}
+
+async function courseLongue(ctx: Ctx): Promise<Constat | null> {
+  const c = await prisma.commande.findFirst({
+    where: { tenantId: ctx.tenantId, statut: "expediee", expedieeAt: { lt: new Date(Date.now() - 1.5 * HEURE), gte: il_y_a(2) } },
+    select: { id: true, numero: true, livreurNom: true, livreurTelephone: true, expedieeAt: true },
+    orderBy: { expedieeAt: "asc" },
+  });
+  if (!c) return null;
+  const heures = Math.floor((Date.now() - c.expedieeAt!.getTime()) / HEURE);
+  return {
+    type: "livraison_longue", cle: `course_longue:${c.id}`, priorite: 8,
+    texte: `La commande #${c.numero} est en route depuis plus de ${heures} h avec ${c.livreurNom ?? "le livreur"}. Un appel pour savoir où il en est ?`,
+    action: c.livreurTelephone ? { lien: `tel:${c.livreurTelephone}`, libelle: "Appeler le livreur" } : { prompt: `Où en est la commande #${c.numero}, en route depuis plus de ${heures} h ?` },
+  };
+}
+
+async function echecsAReplanifier(ctx: Ctx): Promise<Constat | null> {
+  const commandes = await prisma.commande.findMany({
+    where: { tenantId: ctx.tenantId, statut: "tentative_echouee", updatedAt: { lt: new Date(Date.now() - 3 * HEURE) } },
+    select: { numero: true, echecRaison: true },
+    take: 5,
+  });
+  if (!commandes.length) return null;
+  const n = commandes.length;
+  return {
+    type: "livraison_echecs", cle: `echecs:${jourCle()}`, priorite: 7, cooldownJours: 1,
+    texte: `${n} livraison${n > 1 ? "s ont" : " a"} échoué et n'${n > 1 ? "ont" : "a"} pas été replanifiée${n > 1 ? "s" : ""} (${commandes.slice(0, 3).map((c) => `#${c.numero}${c.echecRaison ? ` : ${c.echecRaison.toLowerCase()}` : ""}`).join(", ")}). On s'en occupe ?`,
+    action: { prompt: `Ces livraisons ont échoué : ${commandes.map((c) => `#${c.numero}${c.echecRaison ? ` (${c.echecRaison})` : ""}`).join(", ")}. Propose-moi pour chacune quoi faire : relancer la livraison, prévenir le client ou annuler.` },
+  };
+}
+
+async function especesNonRemises(ctx: Ctx): Promise<Constat | null> {
+  const r = await prisma.commande.groupBy({
+    by: ["livreurId"],
+    where: { tenantId: ctx.tenantId, livreurId: { not: null }, methodePaiement: COD, statut: "livree", codRemis: false, livreeAt: { lt: il_y_a(2) } },
+    _sum: { montantTotal: true },
+    _count: true,
+    orderBy: { _sum: { montantTotal: "desc" } },
+    take: 3,
+  });
+  if (!r.length) return null;
+  const livreurs = await prisma.livreur.findMany({ where: { id: { in: r.map((x) => x.livreurId!) } }, select: { id: true, nom: true } });
+  const nom = (id: string | null) => livreurs.find((l) => l.id === id)?.nom ?? "un livreur";
+  const total = r.reduce((s, x) => s + (x._sum.montantTotal ?? 0), 0);
+  return {
+    type: "especes_non_remises", cle: `especes:${semaineCle()}`, priorite: 6, cooldownJours: 3,
+    texte: `${ctx.fmt(total)} encaissés en espèces par tes livreurs depuis plus de 2 jours ne t'ont pas encore été remis (${r.map((x) => `${nom(x.livreurId)} : ${ctx.fmt(x._sum.montantTotal ?? 0)}`).join(", ")}).`,
+    action: { lien: "/dashboard/logistique/encaissements", libelle: "Voir les encaissements" },
+  };
+}
+
 // ─── Objectifs, abonnement, boutique, rappels ────────────────────────────────
 
 async function objectifs(ctx: Ctx): Promise<Constat | null> {
@@ -356,6 +441,7 @@ async function fetes(): Promise<Constat | null> {
 
 const DETECTEURS: ((ctx: Ctx) => Promise<Constat | null>)[] = [
   ventes, stockBas, topFlop, fichesIncompletes, paiementsNonFinalises, commandesBloquees,
+  codeBloque, aAssigner, courseLongue, echecsAReplanifier, especesNonRemises,
   clientsInactifs, avisNegatifs, messagesSansReponse, objectifs, abonnement, boutiqueBrouillon, rappels, fetes,
 ];
 
@@ -368,7 +454,7 @@ async function formuler(constats: Constat[], tenantId: string, nomBoutique: stri
     const { text } = await completionAuto([
       {
         role: "system",
-        content: `Tu es AXIA, l'associée du marchand de la boutique « ${nomBoutique} ». Tu prends la parole de toi-même dans une petite bulle. Reformule chaque constat en un message de 2 phrases maximum (220 caractères maximum), en ${langue === "en" ? "anglais" : "français"}, sans salutation. Garde exactement les chiffres et les noms ; n'ajoute aucune information. Si le constat se termine par une question, garde la question.
+        content: `Tu es AXIA, l'associée du marchand de la boutique « ${nomBoutique} ». Tu prends la parole de toi-même dans une petite bulle. Reformule chaque constat en un message de 2 phrases maximum (220 caractères maximum), en ${langue === "en" ? "anglais" : "français"}, sans salutation. Garde exactement les chiffres et les noms ; n'ajoute aucune information. Ne change jamais qui fait l'action : ce que le marchand doit faire lui-même (appeler, vérifier) reste à sa charge — tu ne peux ni téléphoner ni te déplacer. Si le constat se termine par une question, garde la question.
 Réponds uniquement en JSON : {"messages": ["…", "…"]}, dans le même ordre.${style ? `\n\n${consigneStyle(style)}` : ""}`,
       },
       { role: "user", content: constats.map((c, i) => `${i + 1}. ${c.texte}`).join("\n") },

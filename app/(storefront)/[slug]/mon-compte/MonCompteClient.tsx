@@ -8,7 +8,7 @@ import { useT } from "@/components/I18nProvider";
 
 interface Compte {
   id: string;
-  email: string;
+  email: string | null; // null : compte ouvert par le lien personnel (commandes retrouvées par le téléphone)
   nom: string;
   telephone: string | null;
 }
@@ -45,13 +45,14 @@ const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
 
 // Dans une boutique à design, la page est entourée de l'en-tête et du pied de
 // page du design (voir page.tsx) : plus de plein écran gris, juste le contenu.
-export function MonCompteClient({ habille = false }: { habille?: boolean }) {
+// `lien` : jeton du lien de suivi (/mon-compte?lien=…), qui ouvre le compte sans code.
+export function MonCompteClient({ habille = false, lien }: { habille?: boolean; lien?: string }) {
   const t = useT();
   const params = useParams();
   const slug = params?.slug as string;
 
-  // Connexion sans mot de passe (comme Chariow) : email → code reçu par email.
-  const [view, setView] = useState<"email" | "code" | "compte">("email");
+  // Connexion sans mot de passe : lien personnel (depuis le suivi de commande), ou email → code par email.
+  const [view, setView] = useState<"identifiant" | "code" | "compte">("identifiant");
   const [compte, setCompte] = useState<Compte | null>(null);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,9 +73,22 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
   }, [slug]);
 
   useEffect(() => {
+    if (lien) {
+      // Jeton retiré de l'adresse (historique, partage d'écran) dès qu'il a servi.
+      window.history.replaceState(null, "", `/${slug}/mon-compte`);
+      setLoading(true);
+      fetch("/api/clients-acheteurs/connexion", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug, lien }) })
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.token) { localStorage.setItem(`axso_buyer_token_${slug}`, data.token); await loadData(data.token); }
+          else setError(data.error ?? "Lien invalide ou expiré");
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
     const token = localStorage.getItem(`axso_buyer_token_${slug}`);
     if (token) loadData(token);
-  }, [slug, loadData]);
+  }, [slug, lien, loadData]);
 
   async function envoyer(avecCode: boolean) {
     setLoading(true);
@@ -98,7 +112,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
     localStorage.removeItem(`axso_buyer_token_${slug}`);
     setCompte(null);
     setCommandes([]);
-    setView("email");
+    setView("identifiant");
   }
 
   // Login / register form
@@ -109,7 +123,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
           <div className="mb-6 text-center">
             <p className="text-xl font-bold text-[#111]">{t("Mon compte")}</p>
             <p className="text-[12px] text-[#888] mt-1">
-              {view === "email" ? t("Vos achats et vos téléchargements, avec votre email") : t("Code envoyé à {0}", email)}
+              {view === "identifiant" ? t("Vos achats et vos téléchargements, avec votre email") : t("Code envoyé à {0}", email)}
             </p>
           </div>
 
@@ -118,7 +132,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); envoyer(view === "code"); }} className="space-y-3">
-            {view === "email" ? (
+            {view === "identifiant" ? (
               <div>
                 <label className="block text-[11px] text-[#888] mb-1">{t("Email utilisé lors de l'achat")}</label>
                 <input type="email" required autoFocus autoComplete="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -132,15 +146,21 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
             )}
             <button type="submit" disabled={loading}
               className="w-full mt-2 py-3 rounded-xl text-white font-semibold text-[14px] disabled:opacity-50" style={{ background: "#F5A623" }}>
-              {loading ? "..." : view === "email" ? t("Recevoir mon code") : t("Accéder à mes achats")}
+              {loading ? "..." : view === "identifiant" ? t("Recevoir mon code") : t("Accéder à mes achats")}
             </button>
           </form>
+
+          {view === "identifiant" && (
+            <p className="text-center text-[12px] text-[#888] mt-4 leading-relaxed">
+              {t("Commandé sans email ? Ouvrez le lien de suivi reçu sur WhatsApp après votre commande, puis touchez « Voir toutes mes commandes ».")}
+            </p>
+          )}
 
           {view === "code" && (
             <p className="text-center text-[12px] text-[#888] mt-4">
               <button className="text-[#F5A623] font-semibold" onClick={() => envoyer(false)} disabled={loading}>{t("Renvoyer le code")}</button>
               {" · "}
-              <button className="hover:text-[#111]" onClick={() => { setView("email"); setError(""); }}>{t("Changer d'email")}</button>
+              <button className="hover:text-[#111]" onClick={() => { setView("identifiant"); setError(""); }}>{t("Changer d'email")}</button>
             </p>
           )}
 
@@ -164,7 +184,7 @@ export function MonCompteClient({ habille = false }: { habille?: boolean }) {
             </div>
             <div>
               <p className="text-[15px] font-semibold text-[#111]">{t(compte?.nom)}</p>
-              <p className="text-[12px] text-[#888]">{compte?.email}</p>
+              <p className="text-[12px] text-[#888]">{compte?.email ?? compte?.telephone}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

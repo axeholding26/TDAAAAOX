@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Search, Package, Truck, CheckCircle, Clock, MapPin, Phone,
   ArrowLeft, AlertCircle, ShoppingBag, RefreshCw,
-  Navigation, Bike, Check, X, ChevronRight,
+  Bike, Check, X,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -31,27 +31,27 @@ function formatMontant(val: number, devise = "FCFA") {
 export default function SuiviPage() {
   const t = useT();
   const [numero, setNumero]           = useState("");
+  const [telephone, setTelephone]     = useState("");
   const [commande, setCommande]       = useState<any>(null);
-  const [liveData, setLiveData]       = useState<any>(null); // polling /api/tracking/[token]
   const [erreur, setErreur]           = useState("");
   const [recherche, setRecherche]     = useState(false);
   const [refresh, setRefresh]         = useState(false);
   const [lastUpdate, setLastUpdate]   = useState<Date | null>(null);
   const intervalSuivi                 = useRef<NodeJS.Timeout | null>(null);
-  const intervalTracking              = useRef<NodeJS.Timeout | null>(null);
   const numeroRef                     = useRef("");
-  const tokenRef                      = useRef("");
+  const telRef                        = useRef("");
 
-  const charger = useCallback(async (num: string, silent = false) => {
-    if (!num) return;
+  // Numéro + téléphone : le numéro seul se devine (10 000 par jour) et exposait les adresses.
+  const charger = useCallback(async (num: string, tel: string, silent = false) => {
+    if (!num || !tel) return;
     if (!silent) setRecherche(true);
     else setRefresh(true);
     setErreur("");
     try {
-      const res  = await fetch(`/api/suivi?numero=${encodeURIComponent(num.trim())}`);
+      const res  = await fetch(`/api/suivi?numero=${encodeURIComponent(num.trim())}&telephone=${encodeURIComponent(tel)}`);
       const data = await res.json();
       if (!res.ok || !data.commande) {
-        if (!silent) setErreur("Commande introuvable. Vérifiez le numéro (format : AX-YYYYMMDD-XXXX).");
+        if (!silent) setErreur("Commande introuvable. Vérifiez le numéro (format : AX-YYYYMMDD-XXXX) et le téléphone utilisé pour commander.");
       } else {
         setCommande(data.commande);
         setLastUpdate(new Date());
@@ -64,56 +64,31 @@ export default function SuiviPage() {
     }
   }, []);
 
-  const chargerTracking = useCallback(async (token: string) => {
-    if (!token) return;
-    try {
-      const res = await fetch(`/api/tracking/${token}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.commande) {
-          setLiveData(data.commande);
-          setLastUpdate(new Date());
-        }
-      }
-    } catch { /* silent */ }
-  }, []);
-
-  // Auto-refresh order status every 20s
+  // Statut et position du livreur rafraîchis toutes les 10 s
   useEffect(() => {
     if (!commande) return;
     numeroRef.current = commande.numero;
-    intervalSuivi.current = setInterval(() => charger(numeroRef.current, true), 20000);
+    intervalSuivi.current = setInterval(() => charger(numeroRef.current, telRef.current, true), 10000);
     return () => { if (intervalSuivi.current) clearInterval(intervalSuivi.current); };
   }, [commande?.numero, charger]);
-
-  // Poll live tracking (livreur position) every 10s when trackingToken available
-  useEffect(() => {
-    if (!commande?.trackingToken) return;
-    tokenRef.current = commande.trackingToken;
-    chargerTracking(tokenRef.current); // immediate first load
-    intervalTracking.current = setInterval(() => chargerTracking(tokenRef.current), 10000);
-    return () => { if (intervalTracking.current) clearInterval(intervalTracking.current); };
-  }, [commande?.trackingToken, chargerTracking]);
 
   function chercher(e: React.FormEvent) {
     e.preventDefault();
     if (intervalSuivi.current) clearInterval(intervalSuivi.current);
-    if (intervalTracking.current) clearInterval(intervalTracking.current);
     setCommande(null);
-    setLiveData(null);
-    charger(numero);
+    telRef.current = telephone;
+    charger(numero, telephone);
   }
 
   const etapeActuelle = commande ? ORDRE.indexOf(commande.statut) : -1;
   const annulee       = commande?.statut === "annulee";
   const livree        = commande?.statut === "livree";
 
-  // Live position from tracking poll, fall back to suivi data
-  const livePos       = liveData?.livreurPosition as any;
+  const livePos       = commande?.livreurPosition as any;
   const livreurLat    = livePos?.lat ?? null;
   const livreurLng    = livePos?.lng ?? null;
-  const clientLat     = liveData?.latitudeClient ?? null;
-  const clientLng     = liveData?.longitudeClient ?? null;
+  const clientLat     = commande?.latitudeClient ?? null;
+  const clientLng     = commande?.longitudeClient ?? null;
   const showMap       = !annulee && (livreurLat || clientLat);
 
   return (
@@ -169,7 +144,7 @@ export default function SuiviPage() {
             />
             <button
               type="submit"
-              disabled={recherche || !numero.trim()}
+              disabled={recherche || !numero.trim() || telephone.replace(/\D/g, "").length < 9}
               className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-[13px] transition-all disabled:opacity-40"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808" }}>
               {recherche
@@ -178,6 +153,14 @@ export default function SuiviPage() {
               {recherche ? "…" : t("Suivre")}
             </button>
           </div>
+          <input
+            value={telephone}
+            onChange={e => setTelephone(e.target.value)}
+            type="tel" inputMode="tel" autoComplete="tel"
+            placeholder={t("Téléphone utilisé pour commander")}
+            className="w-full rounded-xl px-4 py-3 text-white text-[13px] outline-none"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+          />
           <p className="text-white/20 text-[11px]">{t("Le numéro figure sur votre confirmation de commande.")}</p>
         </form>
 
@@ -226,7 +209,7 @@ export default function SuiviPage() {
                     </span>
                   )}
                   {/* Refresh */}
-                  <button onClick={() => charger(commande.numero, true)}
+                  <button onClick={() => charger(commande.numero, telRef.current, true)}
                     className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors">
                     <RefreshCw size={10} className={refresh ? "animate-spin" : ""} />
                     {lastUpdate ? `${lastUpdate.toLocaleTimeString("fr", { hour: "2-digit", minute: "2-digit" })}` : ""}
@@ -290,38 +273,18 @@ export default function SuiviPage() {
                   livreurLng={livreurLng}
                   clientLat={clientLat}
                   clientLng={clientLng}
-                  livreurNom={liveData?.livreurNom ?? null}
+                  livreurNom={commande?.livreurNom ?? null}
                 />
                 {livreurLat && (
                   <div style={{ position:"absolute", bottom:10, left:10, right:10, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", borderRadius:10, padding:"7px 12px", display:"flex", alignItems:"center", gap:8, pointerEvents:"none" }}>
                     <div style={{ width:7, height:7, borderRadius:"50%", background:"#22c55e", animation:"pulse 1.2s ease-in-out infinite", flexShrink:0 }} />
                     <span style={{ fontSize:12, color:"white" }}>
-                      {liveData?.livreurNom ? `${liveData.livreurNom} — ` : t("Livreur — ")}
+                      {commande?.livreurNom ? `${commande.livreurNom} — ` : t("Livreur — ")}
                       {t("mis à jour")}{" "}{livePos?.updatedAt ? new Date(livePos.updatedAt).toLocaleTimeString("fr", { hour:"2-digit", minute:"2-digit" }) : t("récemment")}
                     </span>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Full-page tracking link when no live pos yet */}
-            {commande.trackingToken && !showMap && !annulee && commande.tenant?.slug && (
-              <Link
-                href={`/${commande.tenant.slug}/tracking/${commande.trackingToken}`}
-                className="flex items-center justify-between rounded-2xl p-5 transition-all hover:border-[rgba(245,166,35,0.35)] group"
-                style={{ background: "rgba(245,166,35,0.06)", border: "1px solid rgba(245,166,35,0.18)" }}>
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: "rgba(245,166,35,0.12)" }}>
-                    <Navigation size={16} style={{ color: "#F5A623" }} />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-semibold text-white">{t("Suivi GPS en temps réel")}</p>
-                    <p className="text-[11px] text-white/35 mt-0.5">{t("La carte s'affichera dès que le livreur partagera sa position")}</p>
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-white/25 group-hover:text-[#F5A623] transition-colors" />
-              </Link>
             )}
 
             {/* Delivery info */}

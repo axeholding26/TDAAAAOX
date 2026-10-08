@@ -187,7 +187,7 @@ type Client = {
   telechargements: Array<{
     token: string;
     telecharge: boolean;
-    expireAt: string;
+    expireAt: string | null; // null = accès à vie
     createdAt: string;
   }>;
 };
@@ -408,7 +408,7 @@ function CustomersModal({
               <div className="space-y-3">
                 {clients.map((c) => {
                   const hasExpiredToken = c.telechargements.some(
-                    (t) => new Date(t.expireAt) < new Date()
+                    (t) => !!t.expireAt && new Date(t.expireAt) < new Date()
                   );
                   const hasTelecharge = c.telechargements.some((t) => t.telecharge);
                   return (
@@ -460,7 +460,7 @@ function CustomersModal({
                         </button>
 
                         {c.telechargements.map((t) =>
-                          new Date(t.expireAt) > new Date() ? (
+                          !t.expireAt || new Date(t.expireAt) > new Date() ? (
                             <button
                               key={t.token}
                               onClick={() => revokeAccess(t.token)}

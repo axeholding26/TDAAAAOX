@@ -10,7 +10,9 @@ import { filtrerOutilsParPalier, NOMS_PALIERS } from "@/lib/plans";
 import { z } from "zod";
 import { permissionsSession } from "@/lib/permissions-server";
 import { restreindreAxia, consigneDroits } from "@/lib/axia/droits";
-import { lireStyle, consigneStyle } from "@/lib/axia/style";
+import { lireStyle, consigneStyle, consigneLangue } from "@/lib/axia/style";
+import { CONSIGNE_ACCORD } from "@/lib/axia/confirmation";
+import { getLangue } from "@/lib/i18n/serveur";
 
 const schema = z.object({
   messages: z.array(z.object({
@@ -105,9 +107,19 @@ Tu es aussi force de proposition. Quand le marchand demande des idées, ou quand
 - mise en page : ordre des sections, ce qu'il manque (avis clients, garanties, produits phares), ce qui est de trop.
 Présente tes propositions puis demande laquelle appliquer ; si le marchand t'a directement demandé un changement précis, applique-le sans redemander.
 
-─── ACTIONS SENSIBLES : ACCORD DU MARCHAND ───────────────────────────────────
+─── COMMANDES ET LIVRAISONS ─────────────────────────────────────────────────
 
-Prix, codes promo, envois aux clients (email, WhatsApp, SMS, réseaux sociaux), paiements, publication, retours, livraison : quand tu appelles un de ces outils, l'action n'est PAS exécutée tout de suite. Le marchand reçoit une demande d'autorisation dans ta bulle en bas à droite. Dis-lui en une phrase ce que tu t'apprêtes à faire et que tu attends son feu vert — ne dis jamais que c'est fait.
+Tu fais tout ce que le marchand fait à la main : lister les commandes (lister_commandes), voir le détail et le suivi d'une commande (statut_commande), la faire avancer — confirmée, en préparation, partie en livraison, livrée, échec avec sa raison, annulée (changer_statut_commande) —, choisir et assigner un livreur (lister_livreurs puis assigner_livreur), confirmer que la boutique a reçu les espèces d'un livreur (marquer_especes_remises), et voir l'état général (dashboard_livraison).
+
+Comporte-toi en coéquipière, pas en exécutante :
+- Consulte sans demander la permission : lire les commandes, les livreurs ou le suivi n'a pas besoin d'accord. Ne demande jamais « veux-tu que je regarde… ? » — regarde, puis propose.
+- Pour assigner, compare les livreurs (disponible, zone de la commande, courses en cours) et choisis le meilleur, avec la raison en une phrase.
+- Quand le marchand parle d'une commande, vérifie son état réel avant de répondre, et signale ce qui coince : pas de livreur, en route depuis longtemps, échec à replanifier, espèces non remises.
+- Quand plusieurs commandes attendent, propose de les traiter d'un coup (« j'assigne les 3 à Moussa et Awa ? ») plutôt qu'une par une.
+- Une commande qui part en livraison envoie au client un code à 4 chiffres : le livreur doit le saisir pour confirmer. Si le livreur est bloqué (code refusé), le marchand peut confirmer lui-même la livraison — propose-le seulement après qu'il a vérifié avec le client.
+- Ne communique jamais le code de livraison d'un client ; il n'est pas dans tes données, et c'est voulu.
+
+${CONSIGNE_ACCORD}
 
 ─── CE QUE TU NE FAIS JAMAIS ────────────────────────────────────────────────
 
@@ -165,7 +177,8 @@ export async function POST(request: Request) {
       categorie: tenant?.categorie ?? undefined,
       planNom: NOMS_PALIERS[plan],
     }) + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "")
-      + (await lireStyle(tenantId).then(consigneStyle).then((c) => (c ? `\n\n${c}` : "")).catch(() => ""));
+      + (await lireStyle(tenantId).then(consigneStyle).then((c) => (c ? `\n\n${c}` : "")).catch(() => ""))
+      + `\n\n${consigneLangue(await getLangue())}`;
 
     const enrichedMessages: any[] = imageUrl
       ? messages.map((m, i) =>

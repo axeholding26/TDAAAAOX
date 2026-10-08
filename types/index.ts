@@ -8,7 +8,6 @@ import type {
   Commande,
   LigneCommande,
   Commission,
-  Escrow,
   CodePromo,
   Avis,
   Wishlist,
@@ -25,7 +24,6 @@ export type {
   Commande,
   LigneCommande,
   Commission,
-  Escrow,
   CodePromo,
   Avis,
   Wishlist,
@@ -43,7 +41,6 @@ export type CommandeAvecLignes = Commande & {
   lignes: LigneCommande[];
   client?: Client | null;
   commission?: Commission | null;
-  escrow?: Escrow | null;
 };
 
 export type ClientAvecCommandes = Client & {
@@ -85,9 +82,6 @@ export type StatutLivraison =
   | "en_cours"
   | "livree"
   | "retournee";
-
-// Statuts escrow
-export type StatutEscrow = "held" | "released" | "disputed";
 
 // Métriques dashboard
 export interface MetriquesDashboard {

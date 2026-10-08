@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
     const commande = await prisma.commande.findUnique({ where: { id: commandeId }, include: { tenant: { select: { slug: true } } } });
     if (!commande) return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
-    if (commande.paiementStatut === "completed") return NextResponse.json({ error: "Commande déjà payée" }, { status: 409 });
+    if (commande.paiementStatut !== "pending" && commande.paiementStatut !== "failed") return NextResponse.json({ error: "Commande déjà payée ou remboursée" }, { status: 409 });
+    // Une commande à payer à la livraison (prix sans commission) ne se paie pas en ligne.
+    if (commande.methodePaiement.includes("cod") || commande.statut === "annulee") return NextResponse.json({ error: "Cette commande ne se paie pas en ligne" }, { status: 409 });
     // Montant, devise et client : ceux de la commande enregistrée, jamais ceux envoyés par le navigateur.
     const clientEmail = commande.clientEmail || body.clientEmail;
     if (!clientEmail && !commande.clientTelephone) return NextResponse.json({ error: "Email ou téléphone du client requis" }, { status: 400 });

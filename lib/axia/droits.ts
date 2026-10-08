@@ -18,8 +18,8 @@ const REGLES: Record<string, Regle> = {
   publier_boutique: E("boutique"), modifier_boutique: E("boutique"), configurer_livraison: E("boutique"), ajouter_regle_livraison: E("boutique"),
   personnaliser_page_boutique: E("boutique"), modifier_design_accueil: E("boutique"), modifier_theme: E("boutique"), modifier_page: E("boutique"), modifier_couleurs: E("boutique"), creer_popup: E("boutique"),
   // Commandes
-  statut_commande: L("commandes"), dashboard_livraison: L("commandes"), lister_retours: L("commandes"), lister_commandes_fournisseur: L("commandes"), verifier_retards_fournisseurs: L("commandes"),
-  assigner_livreur: E("commandes"), initier_retour: E("commandes"), creer_retour: E("commandes"), mettre_a_jour_retour: E("commandes"),
+  statut_commande: L("commandes"), dashboard_livraison: L("commandes"), lister_commandes: L("commandes"), lister_livreurs: L("commandes"), lister_retours: L("commandes"), lister_commandes_fournisseur: L("commandes"), verifier_retards_fournisseurs: L("commandes"),
+  assigner_livreur: E("commandes"), changer_statut_commande: E("commandes"), marquer_especes_remises: E("commandes"), initier_retour: E("commandes"), creer_retour: E("commandes"), mettre_a_jour_retour: E("commandes"),
   // Clients
   lister_clients: L("clients"), contexte_client: L("clients"), recommandations_client: L("clients"), analyser_avis: L("clients"),
   envoyer_email_client: E("clients"), whatsapp_envoyer_message: E("clients"), gmail_envoyer: E("clients"),

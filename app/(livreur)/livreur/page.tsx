@@ -6,11 +6,13 @@ import { MapPin, Phone, Package, ChevronRight, TrendingUp, Zap, Bike, Car, Perso
 import { formatMontant } from "@/lib/utils";
 import { MapLivraisonClient } from "@/components/livreur/MapLivraisonClient";
 import { getT } from "@/lib/i18n/serveur";
+import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
 
 const STATUT: Record<string, { label: string; color: string; bg: string }> = {
   confirmee:      { label: "À récupérer",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   en_preparation: { label: "Préparation",   color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
   expediee:       { label: "En livraison",  color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
+  tentative_echouee: { label: "À retenter", color: "#f87171", bg: "rgba(248,113,113,0.1)" },
   livree:         { label: "Livré ✓",       color: "#34d399", bg: "rgba(52,211,153,0.1)" },
 };
 
@@ -29,15 +31,29 @@ export default async function LivreurDashboard() {
   const debutJour = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const debutSemaine = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
 
-  const [commandesActives, livraisonsJour, livraisonsSemaine] = await Promise.all([
+  const [commandesActives, livraisonsJour, livraisonsSemaine, especesNonRemises] = await Promise.all([
     prisma.commande.findMany({
-      where: { livreurId: livreur.id, statut: { in: ["confirmee", "en_preparation", "expediee"] } },
+      where: { livreurId: livreur.id, statut: { in: STATUTS_COURSE_ACTIVE } },
       include: { lignes: { take: 3 } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutJour } } }),
     prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutSemaine } } }),
+    // Même filtre que /api/livreurs/[id]/encaissements (côté marchand) : livré en COD, pas encore remis
+    prisma.commande.findMany({
+      where: { livreurId: livreur.id, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false },
+      select: { montantTotal: true, devise: true, tenant: { select: { nomBoutique: true } } },
+    }),
   ]);
+
+  // Un livreur plateforme peut travailler pour plusieurs boutiques : on regroupe par boutique (et devise)
+  const aReverser = Object.values(especesNonRemises.reduce<Record<string, { boutique: string; devise: string; total: number; nb: number }>>((acc, c) => {
+    const k = `${c.tenant.nomBoutique}|${c.devise}`;
+    acc[k] ??= { boutique: c.tenant.nomBoutique, devise: c.devise, total: 0, nb: 0 };
+    acc[k].total += c.montantTotal;
+    acc[k].nb += 1;
+    return acc;
+  }, {}));
 
   // Commande en cours (prioritaire = expediée, sinon première active)
   const commandePrioritaire = commandesActives.find((c) => c.statut === "expediee") || commandesActives[0];
@@ -54,9 +70,9 @@ export default async function LivreurDashboard() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 lg:items-start">
       {/* Hero card */}
-      <div className="relative rounded-3xl overflow-hidden">
+      <div className="relative rounded-3xl overflow-hidden lg:col-span-2">
         <div className="absolute inset-0 bg-gradient-to-br from-[#1B4FD8]/20 via-[#1B4FD8]/5 to-transparent" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#1B4FD820,_transparent_60%)]" />
         <div className="relative p-6">
@@ -104,9 +120,25 @@ export default async function LivreurDashboard() {
         </div>
       </div>
 
+      {/* Espèces à reverser */}
+      {aReverser.length > 0 && (
+        <div className="lg:col-span-2 rounded-3xl border border-[#F5A623]/25 bg-[#F5A623]/[0.07] p-5">
+          <p className="text-[#F5A623] font-semibold text-sm">{t("Espèces à reverser")}</p>
+          <div className="mt-3 space-y-2">
+            {aReverser.map(r => (
+              <div key={`${r.boutique}|${r.devise}`} className="flex items-center justify-between gap-3">
+                <span className="text-gray-300 text-sm truncate">{t(r.boutique)}{" "}<span className="text-gray-500 text-xs">· {t("{0} livraison(s)", r.nb)}</span></span>
+                <span className="text-white font-bold whitespace-nowrap">{formatMontant(r.total, r.devise)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-gray-500 text-xs mt-3">{t("Le montant disparaît dès que la boutique confirme avoir reçu l'argent.")}</p>
+        </div>
+      )}
+
       {/* Commande prioritaire avec carte */}
       {commandePrioritaire && (
-        <div className="space-y-3">
+        <div className={`space-y-3 ${commandesActives.length === 1 ? "lg:col-span-2" : ""}`}>
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold flex items-center gap-2">
               <Zap size={16} className="text-[#1B4FD8]" />
@@ -206,7 +238,7 @@ export default async function LivreurDashboard() {
 
       {/* Aucune commande */}
       {commandesActives.length === 0 && (
-        <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-10 text-center">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-10 text-center">
           <div className="w-16 h-16 rounded-2xl bg-[#1B4FD8]/10 flex items-center justify-center mx-auto mb-4">
             <Package size={28} className="text-[#1B4FD8]" />
           </div>
@@ -222,7 +254,7 @@ export default async function LivreurDashboard() {
       )}
 
       {/* Lien vers historique */}
-      <Link href="/livreur/commandes" className="flex items-center justify-center gap-2 w-full text-gray-500 hover:text-gray-300 text-sm py-3 transition-colors">
+      <Link href="/livreur/commandes" className="lg:col-span-2 flex items-center justify-center gap-2 w-full text-gray-500 hover:text-gray-300 text-sm py-3 transition-colors">
         <TrendingUp size={14} />
         {t("Voir tout l'historique (")}{t(livraisonsSemaine)}{" "}{t("cette semaine)")}
       </Link>

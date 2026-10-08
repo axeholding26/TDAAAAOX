@@ -1,7 +1,9 @@
-// Prix affiché au client = prix vendeur majoré de la commission Axso.
-// Le vendeur ne perd jamais d'argent : c'est le client qui paie la commission en plus,
-// pas le vendeur qui la voit déduite de sa vente.
-export function prixClient(prixVendeur: number, tauxCommission: number): number {
+// Prix affiché au client = prix vendeur majoré de la commission Axso, prélevée
+// sur les paiements en ligne. Le vendeur ne perd jamais d'argent : c'est le client
+// qui paie la commission en plus. Un produit physique se paie à la livraison, en
+// espèces au marchand : Axso n'y touche pas, donc aucune commission (modèle Shopify).
+export function prixClient(prixVendeur: number, tauxCommission: number, typeProduit: string): number {
+  if (typeProduit === "physique") return prixVendeur;
   return Math.round(prixVendeur * (1 + tauxCommission));
 }
 

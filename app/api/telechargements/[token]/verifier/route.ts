@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { accesDigitalOuvert } from "@/lib/commandes";
 
 type Ctx = { params: Promise<{ token: string }> };
 
@@ -14,9 +15,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
     const dl = await prisma.telechargement.findUnique({ where: { token } });
     if (!dl) return NextResponse.json({ ok: false, error: "Lien invalide ou expiré" }, { status: 404 });
-    // Accès à vie (comme Chariow) : seul un achat non payé (annulé, remboursé) est refusé.
-    const paye = await prisma.commande.findFirst({ where: { id: dl.commandeId, paiementStatut: "completed" }, select: { id: true } });
-    if (!paye) return NextResponse.json({ ok: false, error: "Achat non payé" }, { status: 403 });
+    const commande = await prisma.commande.findUnique({ where: { id: dl.commandeId }, select: { paiementStatut: true } });
+    if (!accesDigitalOuvert(dl.expireAt, commande?.paiementStatut)) return NextResponse.json({ ok: false, error: "Lien expiré ou révoqué, ou achat non payé" }, { status: 403 });
 
     const produit = await prisma.produit.findUnique({
       where: { id: dl.produitId },

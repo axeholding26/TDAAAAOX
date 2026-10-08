@@ -88,7 +88,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
-        (session.user as any).tenantId = token.tenantId;
+        // Un livreur créé par un marchand a User.tenantId renseigné : sans ce garde,
+        // toutes les routes marchand qui ne vérifient que tenantId (commandes, export…)
+        // lui seraient ouvertes. Son espace n'utilise jamais tenantId de session.
+        (session.user as any).tenantId = token.role === "livreur" ? null : token.tenantId;
         (session.user as any).role = token.role;
       }
       return session;

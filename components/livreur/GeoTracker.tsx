@@ -1,38 +1,45 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 interface Props {
   livreurId: string;
+  // true quand le livreur a une course "expediee" : suivi continu pour le traceur client
+  enLivraison: boolean;
 }
 
-// Envoi de la position GPS toutes les 30 secondes en arrière-plan
-export function GeoTracker({ livreurId }: Props) {
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+const INTERVALLE_REPOS_MS = 30_000;     // hors livraison : position pour la carte de flotte, économise la batterie
+const INTERVALLE_LIVRAISON_MS = 5_000;  // en livraison : au plus un envoi toutes les 5 s
 
+export function GeoTracker({ livreurId, enLivraison }: Props) {
   useEffect(() => {
     if (!("geolocation" in navigator)) return;
 
-    const envoyer = () => {
-      navigator.geolocation.getCurrentPosition(
-        async ({ coords }) => {
-          await fetch(`/api/livreurs/${livreurId}/position`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
-          }).catch(() => {});
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+    let dernierEnvoi = 0;
+    const envoyer = ({ coords }: GeolocationPosition) => {
+      dernierEnvoi = Date.now();
+      fetch(`/api/livreurs/${livreurId}/position`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latitude: coords.latitude, longitude: coords.longitude }),
+      }).catch(() => {});
     };
+    const lire = () => navigator.geolocation.getCurrentPosition(envoyer, () => {}, { enableHighAccuracy: true, timeout: 10000 });
 
-    envoyer();
-    intervalRef.current = setInterval(envoyer, 30000);
+    lire();
+    if (!enLivraison) {
+      const intervalle = setInterval(lire, INTERVALLE_REPOS_MS);
+      return () => clearInterval(intervalle);
+    }
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [livreurId]);
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => { if (Date.now() - dernierEnvoi >= INTERVALLE_LIVRAISON_MS) envoyer(pos); },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+    // Filet : certains iOS suspendent watchPosition à l'arrêt (feu rouge)
+    const filet = setInterval(lire, INTERVALLE_REPOS_MS);
+    return () => { navigator.geolocation.clearWatch(watchId); clearInterval(filet); };
+  }, [livreurId, enLivraison]);
 
   return null;
 }

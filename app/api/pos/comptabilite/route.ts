@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PAIEMENT } from "@/lib/commandes";
 
 // Marqueur des commandes créées par la caisse POS (voir /api/commandes/pos-creer)
 const POS_CLIENT_EMAIL = "pos@local";
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
         where: { tenantId, dateEnregistrement: { gte: debut, lte: fin } },
       }),
       prisma.commande.aggregate({
-        where: { tenantId, clientEmail: POS_CLIENT_EMAIL },
+        where: { tenantId, clientEmail: POS_CLIENT_EMAIL, paiementStatut: PAIEMENT.PAYE },
         _sum: { montantTotal: true },
       }),
       prisma.chargeExploitation.aggregate({

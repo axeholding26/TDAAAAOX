@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AVEC_EMAIL_REEL } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Construire le filtre segment
-  const whereClients: any = { tenantId, email: { not: "" } };
+  const whereClients: any = { tenantId, ...AVEC_EMAIL_REEL };
   if (segment === "vip") whereClients.totalDepense = { gte: 50000 };
   if (segment === "inactifs") {
     whereClients.createdAt = { lte: new Date(Date.now() - 30 * 86400000) };

@@ -9,6 +9,7 @@ import { totalCommissionsXAF } from "@/lib/finances-admin";
 import {
   ErreurAdmin, STATUTS_BOUTIQUE, PLANS, changerStatutBoutique, changerPlanBoutique, certifierBoutique,
   recompenserBoutique, publierPostAxsocial, supprimerPostAxsocial, revoquerMembreAdmin, retirerWalletPlateforme,
+  changerActivationLivreur,
 } from "@/lib/admin-actions";
 
 const filtreBoutiques = { slug: { not: PLATFORM_TENANT_SLUG } };
@@ -23,7 +24,8 @@ export const OUTILS_LECTURE: AgentTool[] = [
   { name: "wallet_plateforme", description: "Solde et dernières opérations du wallet de la plateforme", parameters: obj({}) },
   { name: "lister_posts_axsocial", description: "Dernières publications officielles Axso sur AxSocial (avec leur id)", parameters: obj({}) },
   { name: "lister_equipe_admin", description: "Membres de l'équipe d'administration (avec leur id et rôle)", parameters: obj({}) },
-  { name: "lister_livreurs", description: "Livreurs de la plateforme (actifs, disponibles)", parameters: obj({}) },
+  { name: "lister_livreurs", description: "Livreurs de la plateforme avec leur id et leur état : en attente de validation, actif, suspendu ; boutique, livraisons réussies et échecs, dernière position. filtre = a_valider pour ne voir que les inscriptions à valider.", parameters: obj({ filtre: { type: "string", enum: ["tous", "a_valider", "suspendus"] } }) },
+  { name: "livraisons_en_cours", description: "Courses en route ou en échec sur toute la plateforme : boutique, livreur, heure de départ, fraîcheur de la position — les plus anciennes d'abord", parameters: obj({}) },
 ];
 
 // Chaque action ci-dessous est exactement ce que l'admin peut faire à la main dans l'administration.
@@ -35,6 +37,8 @@ export const OUTILS_ACTION: (AgentTool & { libelle: string })[] = [
   { name: "publier_post_axsocial", libelle: "Publier sur AxSocial", description: "Publier un message officiel Axso sur AxSocial", parameters: obj({ contenu: { type: "string" } }, ["contenu"]) },
   { name: "supprimer_post_axsocial", libelle: "Supprimer une publication AxSocial", description: "Supprimer une publication officielle Axso", parameters: obj({ post_id: { type: "string" } }, ["post_id"]) },
   { name: "revoquer_membre_admin", libelle: "Révoquer un membre de l'équipe admin", description: "Supprimer un compte admin en lecture seule", parameters: obj({ user_id: { type: "string" } }, ["user_id"]) },
+  { name: "valider_livreur", libelle: "Valider un livreur", description: "Activer un livreur en attente de validation (ou réactiver un livreur suspendu) : il pourra recevoir des livraisons", parameters: obj({ livreur_id: { type: "string", description: "id donné par lister_livreurs" } }, ["livreur_id"]) },
+  { name: "suspendre_livreur", libelle: "Suspendre un livreur", description: "Suspendre un livreur : il ne peut plus être assigné à une commande", parameters: obj({ livreur_id: { type: "string", description: "id donné par lister_livreurs" } }, ["livreur_id"]) },
   { name: "retrait_wallet_plateforme", libelle: "Retirer de l'argent du wallet de la plateforme", description: "Retrait du wallet plateforme vers mobile money ou virement", parameters: obj({ montant: { type: "number" }, methode: { type: "string", enum: ["mobile_money", "virement_bancaire"] }, destinataire: { type: "string", description: "Numéro ou IBAN" }, operateur: { type: "string" }, notes: { type: "string" } }, ["montant", "methode", "destinataire"]) },
 ];
 
@@ -117,9 +121,43 @@ export const executerLecture: ToolExecutor = async (name, args) => {
       return ok(membres.map((m) => `• ${m.name ?? m.email} (${m.email}, id ${m.id}) — ${m.role === "admin" ? "admin complet" : "lecture seule"}`).join("\n"));
     }
     case "lister_livreurs": {
-      const livreurs = await prisma.livreur.findMany({ orderBy: { nom: "asc" }, take: 30, select: { nom: true, telephone: true, actif: true, disponible: true } });
-      if (!livreurs.length) return ok("Aucun livreur.");
-      return ok(livreurs.map((l) => `• ${l.nom} — ${l.telephone} — ${l.actif ? (l.disponible ? "disponible" : "occupé") : "inactif"}`).join("\n"));
+      const where = args.filtre === "a_valider" ? { actif: false, valideAt: null } : args.filtre === "suspendus" ? { actif: false, valideAt: { not: null } } : {};
+      const livreurs = await prisma.livreur.findMany({
+        where, orderBy: [{ actif: "asc" }, { createdAt: "desc" }], take: 40,
+        select: { id: true, nom: true, telephone: true, vehicule: true, zone: true, actif: true, valideAt: true, disponible: true, positionAt: true, createdAt: true, user: { select: { email: true } }, tenant: { select: { nomBoutique: true } } },
+      });
+      if (!livreurs.length) return ok(args.filtre === "a_valider" ? "Aucun livreur en attente de validation." : "Aucun livreur.");
+      const [livrees, echecs] = await Promise.all([
+        prisma.commande.groupBy({ by: ["livreurId"], where: { livreurId: { in: livreurs.map((l) => l.id) }, statut: "livree" }, _count: true }),
+        prisma.commande.groupBy({ by: ["livreurId"], where: { livreurId: { in: livreurs.map((l) => l.id) }, echecCount: { gt: 0 } }, _sum: { echecCount: true } }),
+      ]);
+      const nbL = new Map(livrees.map((g) => [g.livreurId, g._count])), nbE = new Map(echecs.map((g) => [g.livreurId, g._sum.echecCount ?? 0]));
+      return ok(livreurs.map((l) => [
+        `• ${l.nom} (id ${l.id}) — ${l.user.email} — ${l.telephone}`,
+        l.actif ? (l.disponible ? "actif, disponible" : "actif, indisponible") : l.valideAt ? "SUSPENDU" : "EN ATTENTE DE VALIDATION",
+        l.tenant ? `boutique ${l.tenant.nomBoutique}` : "indépendant",
+        `${l.vehicule}${l.zone ? `, zone ${l.zone}` : ""}`,
+        `${nbL.get(l.id) ?? 0} livrée(s), ${nbE.get(l.id) ?? 0} échec(s)`,
+        l.positionAt ? `position du ${l.positionAt.toLocaleString("fr-FR")}` : "position jamais partagée",
+        `inscrit le ${l.createdAt.toLocaleDateString("fr-FR")}`,
+      ].join(" — ")).join("\n"));
+    }
+    case "livraisons_en_cours": {
+      const commandes = await prisma.commande.findMany({
+        where: { livreurId: { not: null }, statut: { in: ["expediee", "tentative_echouee"] } },
+        orderBy: [{ expedieeAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }], take: 40,
+        select: { numero: true, statut: true, ville: true, expedieeAt: true, echecCount: true, echecRaison: true, livreurPosition: true, livreurNom: true, tenant: { select: { nomBoutique: true } } },
+      });
+      if (!commandes.length) return ok("Aucune livraison en route.");
+      return ok(commandes.map((c) => {
+        const maj = (c.livreurPosition as { updatedAt?: string } | null)?.updatedAt;
+        return [
+          `• #${c.numero} — ${c.tenant.nomBoutique} — ${c.ville} — ${c.livreurNom ?? "livreur"}`,
+          c.statut === "expediee" ? "en route" : `échec ×${c.echecCount}${c.echecRaison ? ` (${c.echecRaison})` : ""}`,
+          c.expedieeAt ? `parti le ${c.expedieeAt.toLocaleString("fr-FR")}` : "heure de départ inconnue",
+          maj ? `dernière position le ${new Date(maj).toLocaleString("fr-FR")}` : "position jamais partagée",
+        ].join(" — ");
+      }).join("\n"));
     }
   }
   return { succes: false, resultat: "Outil inconnu." };
@@ -140,6 +178,8 @@ export async function executerAction(nom: string, a: Record<string, any>, adminI
       case "supprimer_post_axsocial": await supprimerPostAxsocial(a.post_id); return ok("Publication supprimée.");
       case "revoquer_membre_admin": await revoquerMembreAdmin(a.user_id, adminId); return ok("Accès révoqué.");
       case "retrait_wallet_plateforme": await retirerWalletPlateforme(a as any); return ok("Retrait initié.");
+      case "valider_livreur": await changerActivationLivreur(a.livreur_id, true); return ok("Livreur validé : il peut recevoir des livraisons.");
+      case "suspendre_livreur": await changerActivationLivreur(a.livreur_id, false); return ok("Livreur suspendu.");
     }
     return { succes: false, resultat: "Action inconnue." };
   } catch (err: any) {
@@ -150,8 +190,9 @@ export async function executerAction(nom: string, a: Record<string, any>, adminI
 /** Texte lisible de la carte d'accord (les ids sont remplacés par les noms). */
 export async function decrireAction(nom: string, a: Record<string, any>): Promise<string> {
   const boutique = a.boutique_id ? await prisma.tenant.findUnique({ where: { id: a.boutique_id }, select: { nomBoutique: true } }) : null;
+  const livreur = a.livreur_id ? await prisma.livreur.findUnique({ where: { id: a.livreur_id }, select: { nom: true, telephone: true } }) : null;
   const details = Object.entries(a)
-    .filter(([k, v]) => k !== "boutique_id" && v !== undefined && v !== null && v !== "")
+    .filter(([k, v]) => k !== "boutique_id" && k !== "livreur_id" && v !== undefined && v !== null && v !== "")
     .map(([k, v]) => `${k.replace(/_/g, " ")} : ${String(v).slice(0, 120)}`);
-  return [LIBELLES[nom], boutique && `« ${boutique.nomBoutique} »`, ...details].filter(Boolean).join(" — ");
+  return [LIBELLES[nom], boutique && `« ${boutique.nomBoutique} »`, livreur && `${livreur.nom} (${livreur.telephone})`, ...details].filter(Boolean).join(" — ");
 }

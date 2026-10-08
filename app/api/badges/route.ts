@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PAIEMENT } from "@/lib/commandes";
 
 const BADGES_CONFIG = [
   { type: "premiere_vente", titre: "Première vente", emoji: "🎉", description: "Tu as réalisé ta toute première vente !" },
@@ -25,8 +26,8 @@ export async function GET() {
 
   // Check and auto-award new badges
   const [nbCommandes, caTotal, nbProduits, avisStats] = await Promise.all([
-    prisma.commande.count({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } } }),
-    prisma.commande.aggregate({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } }, _sum: { montantTotal: true } }),
+    prisma.commande.count({ where: { tenantId, paiementStatut: PAIEMENT.PAYE } }),
+    prisma.commande.aggregate({ where: { tenantId, paiementStatut: PAIEMENT.PAYE }, _sum: { montantTotal: true } }),
     prisma.produit.count({ where: { tenantId, actif: true } }),
     prisma.avis.aggregate({ where: { tenantId, approuve: true }, _avg: { note: true }, _count: true }),
   ]);

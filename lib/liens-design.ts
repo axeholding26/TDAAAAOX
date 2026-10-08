@@ -2,7 +2,7 @@
 // livrent un 3ᵉ lien d'en-tête qui double « Collection » (Sur-mesure, Drops,
 // Bracelets…) et un pied de page plein de liens morts (Presse, Nos riders,
 // Livraison, Contact… sans destination). On les remplace par les pages qui
-// existent vraiment : À propos et Contact (toujours rendues, avec repli).
+// existent vraiment : À propos, Contact et Mon compte (toujours rendues, avec repli).
 // Pied de page : chaque page de la boutique y a son lien (catalogue,
 // collections, À propos, Contact, Mon compte, CGU, confidentialité), une
 // seule fois — doublons, Panier (déjà dans l'en-tête) et Commander (panier
@@ -49,7 +49,7 @@ function ajouterApres(ref: El, texte: string, href: string): El {
 
 const hrefDe = (a: El) => a.getAttribute("href") ?? "";
 
-function corrigerEntete(header: El, slug: string) {
+function corrigerEntete(header: El, slug: string, digital?: boolean) {
   const liens = header.querySelectorAll("a[href]").filter((a) => {
     const h = a.getAttribute("href")!;
     return (h === `/${slug}` || h.startsWith(`/${slug}/`)) && !/\/(panier|wishlist|mon-compte)$/.test(h);
@@ -62,8 +62,11 @@ function corrigerEntete(header: El, slug: string) {
     if (doublon) { doublon.setAttribute("href", `/${slug}/a-propos`); doublon.set_content("À propos"); dernier = doublon; }
     else { const n = lienVers(dernier, "À propos", `/${slug}/a-propos`); dernier.insertAdjacentHTML("afterend", n.outerHTML); dernier = dernier.nextElementSibling as El; }
   } else dernier = aPropos;
-  if (!liens.some((a) => a.getAttribute("href")!.endsWith("/contact")))
-    dernier.insertAdjacentHTML("afterend", lienVers(dernier, "Contact", `/${slug}/contact`).outerHTML);
+  let contact = liens.find((a) => a.getAttribute("href")!.endsWith("/contact"));
+  if (!contact) { dernier.insertAdjacentHTML("afterend", lienVers(dernier, "Contact", `/${slug}/contact`).outerHTML); contact = dernier.nextElementSibling as El; }
+  // Espace client, après Contact. Digital : le bouton « Mes achats » y mène déjà (adapterDigital).
+  if (!digital && !header.querySelector(`a[href="/${slug}/mon-compte"]`))
+    contact.insertAdjacentHTML("afterend", lienVers(contact, "Mon compte", `/${slug}/mon-compte`).outerHTML);
   // Un seul lien vers le catalogue (les autres portaient une catégorie inventée menant à la même page).
   header.querySelectorAll(`a[href="/${slug}/produits"]`).slice(1).forEach(retirer);
 }
@@ -181,7 +184,7 @@ export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, c
   const slug = slugConnu || html.match(/href="\/([^/"?#]+)\/(?:produits|panier)"/)?.[1];
   if (!slug) return html;
   const racine = parse(html);
-  racine.querySelectorAll("header").forEach((h) => corrigerEntete(h, slug));
+  racine.querySelectorAll("header").forEach((h) => corrigerEntete(h, slug, digital));
   racine.querySelectorAll("footer").forEach((f) => corrigerPied(f, slug, collections));
   // Boutique digitale : le bouton devient « Mes achats » (adapterDigital), il reste.
   if (digital) adapterDigital(racine, slug); else retirerPanier(racine, slug);

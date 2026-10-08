@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AVEC_EMAIL_REEL } from "@/lib/email";
 import { Resend } from "resend";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
 import { executerOutilMcp } from "@/lib/mcp/executor";
@@ -218,7 +219,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (!resendKey) return { succes: false, resultat: "RESEND_API_KEY manquante — email non envoyé" };
 
         const [clients, tenant] = await Promise.all([
-          prisma.client.findMany({ where: { tenantId }, select: { email: true, nom: true }, take: 50 }),
+          prisma.client.findMany({ where: { tenantId, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 }),
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
         ]);
         if (!clients.length) return { succes: false, resultat: "Aucun client enregistré" };
@@ -229,7 +230,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           try {
             await resend.emails.send({
               from: `${tenant?.nomBoutique} <onboarding@resend.dev>`,
-              to: client.email,
+              to: client.email!,
               subject: args.sujet,
               html: args.html.replace(/\{\{nom\}\}/g, client.nom),
             });

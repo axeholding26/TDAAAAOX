@@ -6,9 +6,9 @@ import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
 
 const RETOURS_TUTORIAL_STEPS = [
-  { Icon: Plus,         titre: "Crée un retour",       description: "Renseigne l'ID commande, la raison et le type de résolution (remboursement, échange, avoir)." },
+  { Icon: Plus,         titre: "Crée un retour",       description: "Renseigne le numéro d'une commande livrée, la raison et le type de résolution (remboursement, échange, avoir)." },
   { Icon: Clock,        titre: "Suis la progression",  description: "Fais passer un retour de \"Ouvert\" à \"En cours\" pendant qu'il est traité." },
-  { Icon: CheckCircle,  titre: "Accepte ou rejette",   description: "Décide du sort du retour : accepter, rejeter ou clore une fois la décision prise." },
+  { Icon: CheckCircle,  titre: "Accepte ou rejette",   description: "Accepter un remboursement rembourse toute la commande (argent, stock, accès digitaux). Sinon, rejette ou clos." },
   { Icon: ChevronDown,  titre: "Consulte les détails", description: "Clique sur une ligne pour voir la description, l'email du client et les notes internes." },
 ];
 
@@ -16,7 +16,7 @@ interface Retour {
   id: string;
   commandeId: string;
   clientNom: string;
-  clientEmail: string;
+  clientEmail: string | null;
   raison: string;
   description: string | null;
   type: string;
@@ -64,8 +64,7 @@ export function RetoursPanel() {
   const [showForm, setShowForm] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [form, setForm] = useState({
-    commandeId: "", clientNom: "", clientEmail: "",
-    raison: "defaut", description: "", type: "remboursement", montant: "",
+    commande: "", raison: "defaut", description: "", type: "remboursement",
   });
   const [saving, setSaving] = useState(false);
 
@@ -84,6 +83,7 @@ export function RetoursPanel() {
     });
     const data = await res.json();
     if (data.retour) setRetours((prev) => prev.map((r) => r.id === id ? { ...r, statut } : r));
+    else alert(t(data.error || "Erreur"));
   }
 
   async function createRetour() {
@@ -91,13 +91,13 @@ export function RetoursPanel() {
     const res = await fetch("/api/retours", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, montant: form.montant ? Number(form.montant) : undefined }),
+      body: JSON.stringify(form),
     });
     const data = await res.json();
     if (data.retour) {
       setRetours((prev) => [data.retour, ...prev]);
       setShowForm(false);
-    }
+    } else alert(t(data.error || "Erreur"));
     setSaving(false);
   }
 
@@ -140,17 +140,9 @@ export function RetoursPanel() {
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-5">
           <h3 className="text-[14px] font-semibold text-[#111] mb-4">{t("Nouveau retour")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("ID Commande")}</label>
-              <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="cuid..." value={form.commandeId} onChange={(e) => setForm((f) => ({ ...f, commandeId: e.target.value }))} />
-            </div>
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("Nom client")}</label>
-              <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.clientNom} onChange={(e) => setForm((f) => ({ ...f, clientNom: e.target.value }))} />
-            </div>
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("Email client")}</label>
-              <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.clientEmail} onChange={(e) => setForm((f) => ({ ...f, clientEmail: e.target.value }))} />
+            <div className="sm:col-span-2">
+              <label className="block text-[11px] text-[#888] mb-1">{t("N° de commande (livrée)")}</label>
+              <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder="AX-20261007-1234" value={form.commande} onChange={(e) => setForm((f) => ({ ...f, commande: e.target.value }))} />
             </div>
             <div>
               <label className="block text-[11px] text-[#888] mb-1">{t("Raison")}</label>
@@ -163,10 +155,6 @@ export function RetoursPanel() {
               <select className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
                 {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
               </select>
-            </div>
-            <div>
-              <label className="block text-[11px] text-[#888] mb-1">{t("Montant à rembourser (optionnel)")}</label>
-              <input type="number" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" value={form.montant} onChange={(e) => setForm((f) => ({ ...f, montant: e.target.value }))} />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-[11px] text-[#888] mb-1">{t("Description (optionnel)")}</label>
@@ -219,7 +207,8 @@ export function RetoursPanel() {
                 {isExpanded && (
                   <div className="border-t border-[#F0F0F0] p-4 bg-[#FAFAFA]">
                     {r.description && <p className="text-[12px] text-[#555] mb-3">{t(r.description)}</p>}
-                    <p className="text-[11px] text-[#888] mb-3">{t("Email client :")}{" "}{t(r.clientEmail)}</p>
+                    {r.clientEmail && <p className="text-[11px] text-[#888] mb-3">{t("Email client :")}{" "}{r.clientEmail}</p>}
+                    {r.statut === "accepte" && r.type === "remboursement" && <p className="text-[11px] text-[#10b981] mb-3">{t("Commande remboursée.")}</p>}
                     {r.notes && <p className="text-[11px] text-[#666] mb-3 italic">{t("Note :")}{" "}{t(r.notes)}</p>}
                     <div className="flex gap-2 flex-wrap">
                       {r.statut !== "accepte" && (
@@ -227,12 +216,12 @@ export function RetoursPanel() {
                           <CheckCircle size={12} />{" "}{t("Accepter")}
                         </button>
                       )}
-                      {r.statut !== "en_cours" && r.statut !== "clos" && (
+                      {r.statut !== "accepte" && r.statut !== "en_cours" && r.statut !== "clos" && (
                         <button onClick={() => updateStatut(r.id, "en_cours")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#111111" }}>
                           <Clock size={12} />{" "}{t("En cours")}
                         </button>
                       )}
-                      {r.statut !== "rejete" && (
+                      {r.statut !== "accepte" && r.statut !== "rejete" && (
                         <button onClick={() => updateStatut(r.id, "rejete")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-white text-[12px] font-semibold" style={{ background: "#ef4444" }}>
                           <XCircle size={12} />{" "}{t("Rejeter")}
                         </button>

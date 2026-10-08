@@ -3,22 +3,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { finAcces, metaDigital } from "@/lib/commandes";
 import { randomUUID } from "crypto";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function parseMeta(raw: string | null | undefined): Record<string, any> {
-  if (!raw) return {};
-  try {
-    if (raw.startsWith("{")) return JSON.parse(raw);
-  } catch {}
-  return {};
-}
-
-function calcExpireAt(expirationJours: number | null): Date {
-  if (!expirationJours) return new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 1 an par défaut
-  return new Date(Date.now() + expirationJours * 24 * 60 * 60 * 1000);
-}
 
 // ─── POST /api/livraison-digitale ─────────────────────────────────────────────
 // Body: { orderId, productId }
@@ -69,12 +57,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Aucun fichier associé à ce produit" }, { status: 404 });
     }
 
-    const meta = parseMeta(produit.instructionsTelechargement);
+    const meta = metaDigital(produit.instructionsTelechargement);
     const expirationJours = meta.expirationAcces as number | null ?? null;
     const limiteTelechargement = meta.limiteTelechargement as number | null ?? null;
-    const liensUniques = meta.liensUniques !== false;
 
-    const expireAt = calcExpireAt(expirationJours);
+    const expireAt = finAcces(expirationJours);
     const token = randomUUID();
 
     await prisma.telechargement.create({
@@ -88,9 +75,7 @@ export async function POST(req: NextRequest) {
     });
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const url = liensUniques
-      ? `${baseUrl}/${produit.tenant.slug}/telecharger?token=${token}&pid=${productId}`
-      : `${baseUrl}/api/livraison-digitale?token=${token}`;
+    const url = `${baseUrl}/api/telechargements/${token}`;
 
     return NextResponse.json({
       url,
@@ -110,99 +95,10 @@ export async function POST(req: NextRequest) {
 // Valide le token, comptabilise le téléchargement, redirige vers le fichier
 
 export async function GET(req: NextRequest) {
-  try {
-    const token = req.nextUrl.searchParams.get("token");
-    if (!token) {
-      return NextResponse.json({ message: "Token manquant" }, { status: 400 });
-    }
-
-    // Trouver l'enregistrement de téléchargement
-    const telechargement = await prisma.telechargement.findUnique({
-      where: { token },
-    });
-
-    if (!telechargement) {
-      return NextResponse.json({ message: "Lien de téléchargement invalide" }, { status: 404 });
-    }
-
-    // Vérifier l'expiration
-    if (new Date() > telechargement.expireAt) {
-      return NextResponse.json(
-        { message: "Ce lien de téléchargement a expiré", expiredAt: telechargement.expireAt },
-        { status: 410 }
-      );
-    }
-
-    // Récupérer le produit
-    const produit = await prisma.produit.findUnique({
-      where: { id: telechargement.produitId },
-      select: {
-        id: true,
-        nom: true,
-        fichierUrl: true,
-        fichierNom: true,
-        type: true,
-        tenantId: true,
-        instructionsTelechargement: true,
-      },
-    });
-
-    if (!produit || produit.type !== "digital" || !produit.fichierUrl) {
-      return NextResponse.json({ message: "Fichier introuvable" }, { status: 404 });
-    }
-
-    const meta = parseMeta(produit.instructionsTelechargement);
-    const limiteTelechargement = meta.limiteTelechargement as number | null ?? null;
-
-    // Vérifier la limite de téléchargements si elle est définie
-    if (limiteTelechargement !== null) {
-      const countDL = await prisma.analytics.count({
-        where: {
-          tenantId: produit.tenantId,
-          type: "telechargement",
-          metadata: { path: ["token"], equals: token },
-        },
-      });
-
-      if (countDL >= limiteTelechargement) {
-        return NextResponse.json(
-          {
-            message: "Limite de téléchargements atteinte",
-            limit: limiteTelechargement,
-            count: countDL,
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    // Enregistrer le téléchargement dans Analytics
-    await Promise.all([
-      prisma.analytics.create({
-        data: {
-          tenantId: produit.tenantId,
-          type: "telechargement",
-          valeur: 1,
-          metadata: {
-            token,
-            produitId: produit.id,
-            produitNom: produit.nom,
-            commandeId: telechargement.commandeId,
-          },
-        },
-      }),
-      prisma.telechargement.update({
-        where: { token },
-        data: { telecharge: true },
-      }),
-    ]);
-
-    // Rediriger vers le fichier
-    return NextResponse.redirect(produit.fichierUrl);
-  } catch (err) {
-    console.error("[livraison-digitale GET]", err);
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
-  }
+  // Anciens liens : mêmes contrôles que partout (paiement, révocation, limite).
+  const token = req.nextUrl.searchParams.get("token");
+  if (!token) return NextResponse.json({ message: "Token manquant" }, { status: 400 });
+  return NextResponse.redirect(new URL(`/api/telechargements/${encodeURIComponent(token)}`, req.url));
 }
 
 // ─── PATCH /api/livraison-digitale ────────────────────────────────────────────
@@ -257,11 +153,11 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ message: "Aucun fichier associé" }, { status: 404 });
       }
 
-      const meta = parseMeta(produit.instructionsTelechargement);
+      const meta = metaDigital(produit.instructionsTelechargement);
       const expirationJours = meta.expirationAcces as number | null ?? null;
       const limiteTelechargement = meta.limiteTelechargement as number | null ?? null;
 
-      const expireAt = calcExpireAt(expirationJours);
+      const expireAt = finAcces(expirationJours);
       const newToken = randomUUID();
 
       await prisma.telechargement.create({
@@ -275,7 +171,7 @@ export async function PATCH(req: NextRequest) {
       });
 
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      const url = `${baseUrl}/${produit.tenant.slug}/telecharger?token=${newToken}&pid=${productId}`;
+      const url = `${baseUrl}/api/telechargements/${newToken}`;
 
       return NextResponse.json({
         success: true,

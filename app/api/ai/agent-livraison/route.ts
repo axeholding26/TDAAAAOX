@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
+import { changerStatutCommande, assignerLivreurCommande } from "@/lib/cycle-livraison";
+import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
+import { estSensible, demanderConfirmation } from "@/lib/axia/confirmation";
+import { requireNiveau } from "@/lib/permissions-server";
 import { z } from "zod";
 
 const schema = z.object({
@@ -78,8 +82,8 @@ const OUTILS: AgentTool[] = [
       type: "object" as const,
       properties: {
         commandeId: { type: "string", description: "ID de la commande" },
-        statut: { type: "string", enum: ["en_attente", "confirmee", "en_preparation", "expediee", "en_livraison", "livree", "annulee"], description: "Nouveau statut" },
-        livraisonStatut: { type: "string", enum: ["non_expediee", "en_transit", "en_livraison", "livree", "echec"], description: "Statut livraison spécifique" },
+        statut: { type: "string", enum: ["confirmee", "en_preparation", "expediee", "livree", "tentative_echouee", "annulee"], description: "Nouveau statut" },
+        raison: { type: "string", description: "Raison de l'échec (pour tentative_echouee)" },
         numeroSuivi: { type: "string", description: "Numéro de suivi transporteur" },
       },
       required: ["commandeId", "statut"],
@@ -103,10 +107,10 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
     switch (nom) {
       case "lire_dashboard_livraison": {
         const [aAssigner, enCours, livrees, livreurs] = await Promise.all([
-          prisma.commande.count({ where: { tenantId, statut: "confirmee", livreurId: null } }),
-          prisma.commande.count({ where: { tenantId, livraisonStatut: { in: ["en_transit", "en_livraison"] } } }),
+          prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "en_preparation"] }, livreurId: null } }),
+          prisma.commande.count({ where: { tenantId, statut: "expediee" } }),
           prisma.commande.count({ where: { tenantId, statut: "livree" } }),
-          prisma.livreur.count({ where: { tenantId, disponible: true, actif: true } }),
+          prisma.livreur.count({ where: { OR: [{ tenantId }, { tenantId: null }], disponible: true, actif: true } }),
         ]);
         return {
           succes: true,
@@ -116,7 +120,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
 
       case "lister_commandes_a_assigner": {
         const commandes = await prisma.commande.findMany({
-          where: { tenantId, statut: "confirmee", livreurId: null },
+          where: { tenantId, statut: { in: ["confirmee", "en_preparation"] }, livreurId: null },
           orderBy: { createdAt: "asc" },
           take: args.limite ?? 10,
           select: {
@@ -129,11 +133,11 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
 
       case "lister_livreurs_disponibles": {
         const livreurs = await prisma.livreur.findMany({
-          where: { tenantId, disponible: true, actif: true },
+          where: { OR: [{ tenantId }, { tenantId: null }], disponible: true, actif: true },
           select: {
             id: true, nom: true, telephone: true, vehicule: true, zone: true,
             latitude: true, longitude: true,
-            commandes: { where: { livraisonStatut: { in: ["en_transit", "en_livraison"] } }, select: { id: true } },
+            commandes: { where: { statut: { in: STATUTS_COURSE_ACTIVE } }, select: { id: true } },
           },
         });
         const avecCharge = livreurs.map((l) => ({
@@ -144,42 +148,20 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         return { succes: true, resultat: JSON.stringify(avecCharge) };
       }
 
+      // Mêmes contrôles et effets que l'interface (lib/cycle-livraison.ts) ; jamais exécuté sans
+      // l'accord du marchand (assigner_livreur et mettre_a_jour_statut sont des actions sensibles).
       case "assigner_livreur": {
-        const [commande, livreur] = await Promise.all([
-          prisma.commande.findFirst({ where: { id: args.commandeId, tenantId }, select: { numero: true, clientNom: true, adresseLivraison: true } }),
-          prisma.livreur.findFirst({ where: { id: args.livreurId }, select: { nom: true } }),
-        ]);
-        if (!commande) return { succes: false, resultat: "Commande introuvable" };
-        if (!livreur) return { succes: false, resultat: "Livreur introuvable" };
-
-        await prisma.commande.update({
-          where: { id: args.commandeId },
-          data: { livreurId: args.livreurId, livraisonStatut: "en_transit" },
-        });
-
-        await prisma.notification.create({
-          data: {
-            livreurId: args.livreurId,
-            type: "nouvelle_livraison",
-            titre: "Nouvelle livraison assignée",
-            message: `Commande ${commande.numero} — ${commande.clientNom} — ${commande.adresseLivraison}`,
-            commandeId: args.commandeId,
-          },
-        });
-
-        return { succes: true, resultat: `✅ Commande ${commande.numero} assignée à ${livreur.nom}` };
+        const r = await assignerLivreurCommande({ commandeId: args.commandeId, tenantId, livreurId: args.livreurId || null, source: "axia" });
+        return r.ok
+          ? { succes: true, resultat: `✅ Commande ${r.numero} assignée à ${r.livreurNom}` }
+          : { succes: false, resultat: r.error };
       }
 
       case "mettre_a_jour_statut": {
-        const commande = await prisma.commande.findFirst({ where: { id: args.commandeId, tenantId }, select: { numero: true } });
-        if (!commande) return { succes: false, resultat: "Commande introuvable" };
-
-        const data: any = { statut: args.statut };
-        if (args.livraisonStatut) data.livraisonStatut = args.livraisonStatut;
-        if (args.numeroSuivi) data.numeroSuivi = args.numeroSuivi;
-
-        await prisma.commande.update({ where: { id: args.commandeId }, data });
-        return { succes: true, resultat: `✅ Commande ${commande.numero} → statut: ${args.statut}` };
+        const r = await changerStatutCommande({ commandeId: args.commandeId, statut: args.statut, echecRaison: args.raison, acteur: { type: "marchand", tenantId, source: "axia" } });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        if (args.numeroSuivi) await prisma.commande.update({ where: { id: args.commandeId }, data: { numeroSuivi: args.numeroSuivi } });
+        return { succes: true, resultat: `✅ Commande ${r.numero} → statut : ${r.statut}` };
       }
 
       case "lire_commande": {
@@ -212,8 +194,13 @@ export async function POST(request: Request) {
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
 
+    // Mêmes droits qu'à la main, et actions sensibles soumises à l'accord du marchand
+    const refus = await requireNiveau(session, "commandes", "lecture");
+    if (refus) return NextResponse.json({ message: refus.error }, { status: refus.status });
     const { messages } = schema.parse(await request.json());
-    const result = await runAgent(PROMPT, messages, OUTILS, tenantId, executeOutil);
+    const executer: ToolExecutor = (nom, args, tid) =>
+      estSensible(nom) ? demanderConfirmation(tid, nom, args, "agent-livraison", true) : executeOutil(nom, args, tid);
+    const result = await runAgent(PROMPT, messages, OUTILS, tenantId, executer);
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Format invalide" }, { status: 400 });

@@ -171,7 +171,7 @@ model Telechargement {
   produitId  String
   commandeId String
   token      String   @unique
-  expireAt   DateTime
+  expireAt   DateTime? // null = accès à vie (tant que la commande est payée) ; date passée = lien révoqué par le marchand
   telecharge Boolean  @default(false)
   createdAt  DateTime @default(now())
 
@@ -222,7 +222,7 @@ model Client {
   id             String   @id @default(cuid())
   tenantId       String
   nom            String
-  email          String
+  email          String? // facultatif (commande par téléphone) — plusieurs NULL autorisés par l'unique
   telephone      String?
   adresse        String?
   ville          String?
@@ -249,7 +249,7 @@ model Commande {
   clientId         String?
   livreurId        String?
   clientNom        String
-  clientEmail      String
+  clientEmail      String?
   clientTelephone  String
   adresseLivraison String
   ville            String
@@ -283,6 +283,10 @@ model Commande {
   trackingToken    String?  @unique
   livreurToken     String?  @unique
   livreurPosition  Json?
+  expedieeAt       DateTime? // départ de la tentative de livraison en cours (passage à "expediee")
+  livreeAt         DateTime? // passage à "livree" — updatedAt bouge encore ensuite (remise COD, réception)
+  codeLivraison    String?   // 4 chiffres envoyés au client au départ, exigés du livreur pour marquer "livree"
+  codeEssais       Int       @default(0) // codes faux saisis par le livreur ; bloqué à 5, le marchand confirme alors lui-même
   livreurNom       String?
   livreurTelephone String?
   // Échec de livraison / replanification
@@ -300,7 +304,6 @@ model Commande {
   livreur    Livreur?        @relation(fields: [livreurId], references: [id])
   lignes     LigneCommande[]
   commission Commission?
-  escrow     Escrow?
   codePromo  CodePromo?      @relation(fields: [codePromoId], references: [id])
   affiliationCommission AffiliationCommission?
   retours              RetourRMA[]
@@ -343,6 +346,7 @@ model Livreur {
   latitude     Float?
   longitude    Float?
   positionAt   DateTime?
+  valideAt     DateTime? // null + inactif = en attente de validation ; renseigné + inactif = suspendu
   createdAt    DateTime @default(now())
 
   user          User           @relation(fields: [userId], references: [id])
@@ -405,23 +409,6 @@ model Commission {
 
   commande Commande @relation(fields: [commandeId], references: [id])
   tenant   Tenant   @relation(fields: [tenantId], references: [id])
-}
-
-// =====================
-// ESCROW (Séquestre)
-// =====================
-model Escrow {
-  id           String    @id @default(cuid())
-  commandeId   String    @unique
-  tenantId     String
-  montant      Float
-  statut       String    @default("held")
-  raisonLitige String?
-  heldAt       DateTime  @default(now())
-  releaseAt    DateTime
-  releasedAt   DateTime?
-
-  commande Commande @relation(fields: [commandeId], references: [id])
 }
 
 // =====================
@@ -1161,7 +1148,7 @@ model RetourRMA {
   tenantId    String
   commandeId  String
   clientNom   String
-  clientEmail String
+  clientEmail String?  // facultatif : une commande payée à la livraison n'a pas toujours d'email
   raison      String   // defaut | erreur_commande | change_avis | endommage | non_recu
   description String?
   type        String   @default("remboursement") // remboursement | echange | avoir
@@ -1254,7 +1241,7 @@ model PopupCampagne {
 model CompteAcheteur {
   id           String   @id @default(cuid())
   tenantId     String
-  email        String
+  email        String?  // null : compte ouvert par téléphone (code WhatsApp) ; telephone = 9 derniers chiffres
   nom          String
   telephone    String?
   adresse      String?

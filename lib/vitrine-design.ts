@@ -151,7 +151,7 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
     .sort((a, b) => rang(a.label) - rang(b.label));
   // Catégorie, prix et rang (nouveautés) sur chaque carte : de quoi filtrer et trier dans le navigateur.
   const cartes = produits.map((p, rang) => {
-    const prix = convertirMontant(prixClient(p.prix, taux), tenant.devise, devise, tauxChange);
+    const prix = convertirMontant(prixClient(p.prix, taux, p.type), tenant.devise, devise, tauxChange);
     const html = remplacerTokensCarte(carte, { id: p.id, nom: p.nom, prixAffiche: formatMontant(prix, devise), image: p.images[0] ?? null, description: p.description }, tenant.slug);
     return html.replace(/^(\s*<[a-zA-Z0-9]+)/, `$1 data-cat="${esc(slugify(p.categorie ?? ""))}" data-prix="${prix}" data-rang="${rang}"`);
   });

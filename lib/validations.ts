@@ -32,6 +32,15 @@ export const schemaProduit = z.object({
   prixFournisseur: z.number().positive().optional(),
   urlFournisseur: z.string().url().optional(),
   nomFournisseur: z.string().optional(),
+  // Variantes saisies à la création (sans ce champ, Zod les retirait en silence).
+  variantes: z.array(z.object({
+    nom: z.string().min(1),
+    valeur: z.string().min(1),
+    sku: z.string().optional(),
+    prix: z.number().positive().optional(),
+    stock: z.number().int().min(0).default(0),
+    image: z.string().optional(),
+  })).optional(),
 });
 
 // Connexion

@@ -30,15 +30,21 @@ export async function planActif(tenantId: string): Promise<{ plan: Palier; actif
 }
 
 // Nombre de commandes créées depuis le début du mois calendaire courant —
-// base du quota Palier 0 (30/mois). Compte TOUTES les commandes reçues, y
+// base du quota Palier 0 (30/mois). Compte toutes les commandes reçues, y
 // compris au-delà du quota (elles continuent d'arriver, voir
-// quotaCommandesAtteint pour ce que le quota bloque réellement).
+// quotaCommandesAtteint pour ce que le quota bloque réellement) — sauf les
+// paiements en ligne jamais aboutis : la commande est créée avant le paiement,
+// un visiteur qui abandonne ne doit pas consommer le quota du marchand.
 export async function commandesCeMois(tenantId: string): Promise<number> {
   const debutDuMois = new Date();
   debutDuMois.setDate(1);
   debutDuMois.setHours(0, 0, 0, 0);
   return prisma.commande.count({
-    where: { tenantId, createdAt: { gte: debutDuMois } },
+    where: {
+      tenantId,
+      createdAt: { gte: debutDuMois },
+      NOT: { methodePaiement: { in: ["en_attente", "notchpay"] }, paiementStatut: { in: ["pending", "failed"] } },
+    },
   });
 }
 

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const taux = tenant.commissionRate ?? 0.06;
     const produits = await prisma.produit.findMany({
       where: { tenantId: tenant.id, id: { in: ids }, actif: true },
-      select: { id: true, nom: true, images: true, prix: true, prixCompare: true, stock: true, categorie: true, ventes: true },
+      select: { id: true, nom: true, type: true, images: true, prix: true, prixCompare: true, stock: true, categorie: true, ventes: true },
     });
 
     const result = produits.map((p) => ({
@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
       categorie: p.categorie,
       stock: p.stock,
       ventes: p.ventes,
-      prixAffiche: prixClient(p.prix, taux),
-      prixCompareAffiche: p.prixCompare ? prixClient(p.prixCompare, taux) : null,
+      prixAffiche: prixClient(p.prix, taux, p.type),
+      prixCompareAffiche: p.prixCompare ? prixClient(p.prixCompare, taux, p.type) : null,
     }));
 
     return NextResponse.json({ produits: result });

@@ -9,6 +9,7 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");

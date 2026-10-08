@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useTransition } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, Navigation, MessageCircle } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Package, Clock, CheckCircle, Navigation, MessageCircle, XCircle } from "lucide-react";
 import { formatMontant } from "@/lib/utils";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
@@ -13,9 +13,9 @@ type Commande = {
   id: string; numero: string; clientNom: string; clientTelephone: string;
   adresseLivraison: string; ville: string; pays: string;
   montantTotal: number; montantLivraison: number; devise: string;
-  statut: string; noteClient: string | null;
+  statut: string; noteClient: string | null; aCodeLivraison?: boolean;
   lignes: { nom: string; prix: number; quantite: number; imageUrl: string | null }[];
-  livreur?: { latitude: number | null; longitude: number | null };
+  livreur?: { id: string; latitude: number | null; longitude: number | null };
 };
 
 const ETAPES = [
@@ -24,6 +24,9 @@ const ETAPES = [
   { statut: "expediee",       label: "En livraison",   icon: Navigation },
   { statut: "livree",         label: "Livré",           icon: CheckCircle },
 ];
+
+// Raisons proposées au livreur — texte libre stocké tel quel dans Commande.echecRaison
+const RAISONS_ECHEC = ["Client absent", "Client injoignable", "Refus du colis", "Adresse introuvable"];
 
 const STATUT_COLOR: Record<string, string> = {
   confirmee: "#f59e0b", en_preparation: "#a78bfa", expediee: "#60a5fa", livree: "#34d399",
@@ -37,6 +40,9 @@ export default function CommandeLivreurPage() {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [livreurPos, setLivreurPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [echecOuvert, setEchecOuvert] = useState(false);
+  const [codeOuvert, setCodeOuvert] = useState(false);
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     fetch(`/api/commandes/${id}`).then(r => r.json()).then(d => { setCommande(d.commande); setLoading(false); });
@@ -50,20 +56,35 @@ export default function CommandeLivreurPage() {
     }
   }, [id]);
 
-  async function marquerLivre() {
+  function changerStatut(statut: "expediee" | "livree" | "tentative_echouee", echecRaison?: string) {
     startTransition(async () => {
       const res = await fetch(`/api/commandes/${id}/statut`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ statut: "livree" }),
+        body: JSON.stringify({ statut, echecRaison, code: statut === "livree" ? code : undefined }),
       });
-      if (res.ok) {
-        toast.success(t("Livraison confirmée !"), { description: t("Les fonds sont libérés automatiquement.") });
-        router.push("/livreur");
-        router.refresh();
-      } else {
+      if (!res.ok) {
         const d = await res.json();
         toast.error(t(d.error) || t("Erreur"));
+        if (d.code === "code_incorrect") setCode("");
+        return;
       }
+      if (statut === "expediee") {
+        // Position envoyée tout de suite : le client voit le livreur sans attendre le prochain envoi du GeoTracker (30 s)
+        if (livreurPos && commande?.livreur?.id) {
+          await fetch(`/api/livreurs/${commande.livreur.id}/position`, {
+            method: "PATCH", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ latitude: livreurPos.lat, longitude: livreurPos.lng }),
+          }).catch(() => {});
+        }
+        toast.success(t("Livraison démarrée !"), { description: t("Le client peut suivre votre position.") });
+        setCommande(c => c ? { ...c, statut: "expediee" } : c);
+        router.refresh(); // le layout repasse le GeoTracker en suivi continu
+        return;
+      }
+      if (statut === "tentative_echouee") toast.info(t("Échec signalé"), { description: t("Le client et la boutique sont prévenus.") });
+      else toast.success(t("Livraison confirmée !"), { description: t("Les fonds sont libérés automatiquement.") });
+      router.push("/livreur");
+      router.refresh();
     });
   }
 
@@ -76,17 +97,18 @@ export default function CommandeLivreurPage() {
 
   const etapeActuelle = ETAPES.findIndex(e => e.statut === commande.statut);
   const peutLivrer = commande.statut === "expediee";
+  const peutDemarrer = ["confirmee", "en_preparation", "tentative_echouee"].includes(commande.statut);
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${commande.adresseLivraison}, ${commande.ville}`)}`;
   const waUrl = `https://wa.me/${commande.clientTelephone.replace(/\D/g, "")}`;
 
   return (
-    <div className="space-y-4 pb-28">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm">
+    <div className="space-y-4 pb-44 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 lg:items-start">
+      <button onClick={() => router.back()} className="lg:col-span-2 flex items-center gap-2 text-gray-400 hover:text-white text-sm">
         <ArrowLeft size={16} />{" "}{t("Retour")}
       </button>
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-[#111] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
+      <div className="lg:col-span-2 bg-gradient-to-br from-[#111] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <div className="flex items-start justify-between mb-1">
           <div>
             <p className="text-gray-500 text-xs font-mono">{commande.numero}</p>
@@ -151,7 +173,7 @@ export default function CommandeLivreurPage() {
       </div>
 
       {/* Articles */}
-      <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
+      <div className="lg:col-span-2 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <h2 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
           <Package size={14} className="text-[#1B4FD8]" />{" "}{t("Articles")}
         </h2>
@@ -181,16 +203,56 @@ export default function CommandeLivreurPage() {
         )}
       </div>
 
-      {/* CTA Confirmer */}
-      {peutLivrer && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5">
+      {/* CTA Démarrer / Confirmer */}
+      {(peutDemarrer || peutLivrer) && (
+        <div className="fixed bottom-16 lg:bottom-0 left-0 right-0 p-4 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5">
           <div className="max-w-2xl mx-auto">
-            <button onClick={marquerLivre} disabled={isPending}
-              className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold py-4 rounded-2xl text-lg hover:from-green-400 hover:to-green-300 transition-all disabled:opacity-50 shadow-xl shadow-green-500/20">
-              <CheckCircle size={22} />
-              {isPending ? t("Confirmation...") : t("Confirmer la livraison")}
-            </button>
-            <p className="text-center text-gray-500 text-xs mt-2">{t("La commande sera marquée comme livrée")}</p>
+            {peutDemarrer ? (
+              <button onClick={() => changerStatut("expediee")} disabled={isPending}
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-[#1B4FD8] to-[#3b82f6] text-white font-bold py-4 rounded-2xl text-lg transition-all disabled:opacity-50 shadow-xl shadow-blue-500/20">
+                <Navigation size={22} />
+                {isPending ? t("Démarrage...") : t("Démarrer la livraison")}
+              </button>
+            ) : codeOuvert ? (
+              <form onSubmit={e => { e.preventDefault(); changerStatut("livree"); }} className="space-y-2">
+                <p className="text-center text-gray-400 text-xs">{t("Demandez au client son code de livraison (reçu par WhatsApp)")}</p>
+                <div className="flex gap-2">
+                  <input value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    inputMode="numeric" autoComplete="one-time-code" autoFocus placeholder="• • • •"
+                    className="flex-1 min-w-0 bg-[#161616] border border-white/10 rounded-2xl px-4 py-3.5 text-center text-2xl tracking-[0.5em] font-mono text-white outline-none focus:border-green-500/50" />
+                  <button type="submit" disabled={isPending || code.length !== 4}
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold px-5 rounded-2xl disabled:opacity-40">
+                    <CheckCircle size={20} />{isPending ? "…" : t("Valider")}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              // Commandes parties avant l'ajout du code : confirmation directe
+              <button onClick={() => commande.aCodeLivraison ? setCodeOuvert(true) : changerStatut("livree")} disabled={isPending}
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-500 to-green-400 text-white font-bold py-4 rounded-2xl text-lg hover:from-green-400 hover:to-green-300 transition-all disabled:opacity-50 shadow-xl shadow-green-500/20">
+                <CheckCircle size={22} />
+                {isPending ? t("Confirmation...") : t("Confirmer la livraison")}
+              </button>
+            )}
+            {peutLivrer && (echecOuvert ? (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {RAISONS_ECHEC.map(r => (
+                  <button key={r} onClick={() => changerStatut("tentative_echouee", r)} disabled={isPending}
+                    className="py-2.5 rounded-xl text-xs font-medium bg-red-500/10 border border-red-500/20 text-red-400 disabled:opacity-50">
+                    {t(r)}
+                  </button>
+                ))}
+                <button onClick={() => setEchecOuvert(false)} className="col-span-2 py-1.5 text-xs text-gray-500">{t("Annuler")}</button>
+              </div>
+            ) : (
+              <button onClick={() => setEchecOuvert(true)} disabled={isPending}
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm text-red-400 border border-red-500/20 hover:bg-red-500/10 transition-colors">
+                <XCircle size={15} />{" "}{t("Signaler un échec")}
+              </button>
+            ))}
+            {peutDemarrer && (
+              <p className="text-center text-gray-500 text-xs mt-2">{t("Le client sera prévenu et pourra suivre votre position")}</p>
+            )}
           </div>
         </div>
       )}

@@ -1,5 +1,17 @@
 // Service d'envoi d'emails avec Resend
 import { Resend } from "resend";
+import type { Prisma } from "@prisma/client";
+
+// Client joignable par email. Exclus : pas d'email (commande par téléphone) et les
+// adresses générées qui n'existent pas — anciennes « <téléphone>@axso.com », leads Meta,
+// clients de démonstration. Y écrire faisait rebondir les campagnes et abîmait la
+// réputation d'envoi (jusqu'au Gmail du marchand).
+const FAUSSES = ["@axso.com", "@meta.lead", "@axso-avis.local"];
+export const emailReel = (e?: string | null): e is string => !!e && e.includes("@") && !FAUSSES.some((f) => e.endsWith(f));
+export const AVEC_EMAIL_REEL = {
+  email: { contains: "@" },
+  NOT: FAUSSES.map((f) => ({ email: { endsWith: f } })),
+} satisfies Prisma.ClientWhereInput;
 
 export function hasResend(): boolean {
   return !!process.env.RESEND_API_KEY;

@@ -8,13 +8,14 @@ import { habillageDesign } from "@/components/storefront/templates/HabillageDesi
 import { MonCompteClient } from "./MonCompteClient";
 
 // Espace client : entouré de l'en-tête et du pied de page du design, comme les autres pages.
-export default async function MonComptePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function MonComptePage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ lien?: string }> }) {
   const { slug } = await params;
+  const { lien } = await searchParams; // lien personnel depuis le suivi de commande
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const Habillage = habillageDesign(cfg);
-  if (Habillage) return <Habillage><MonCompteClient habille /></Habillage>;
-  return <MonCompteClient />;
+  if (Habillage) return <Habillage><MonCompteClient habille lien={lien} /></Habillage>;
+  return <MonCompteClient lien={lien} />;
 }

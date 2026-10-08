@@ -1,3 +1,4 @@
+import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -64,6 +65,9 @@ const schemaExecuter = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Public (avant la création du compte) mais payant à chaque appel : limité par IP.
+    const rl = aiLimiter.check(getClientIp(request));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     const body = await request.json();
 
     if (body.phase === "analyser") {

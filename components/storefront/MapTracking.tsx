@@ -242,9 +242,9 @@ export function MapTracking({ livreurLat, livreurLng, clientLat, clientLng, livr
 
   return (
     <>
-      <style>{`@keyframes pingMap{75%,100%{transform:scale(2);opacity:0}}`}</style>
+      <style>{`@keyframes pingMap{75%,100%{transform:scale(2);opacity:0}} .axs-map{height:280px} @media(min-width:1024px){.axs-map{height:480px}}`}</style>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-      <div ref={containerRef} style={{ width: "100%", height: 280, background: "#1a1a1a" }} />
+      <div ref={containerRef} className="axs-map" style={{ width: "100%", background: "#1a1a1a" }} />
     </>
   );
 }

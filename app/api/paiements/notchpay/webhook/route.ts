@@ -56,7 +56,9 @@ async function traiterEvenementCommande(type: string, merchantRef: string, notch
   const commandeId = merchantRef.slice(4);
 
   if (type === "payment.failed" || type === "payment.canceled" || type === "payment.expired") {
-    await prisma.commande.update({ where: { id: commandeId }, data: { paiementStatut: "failed" } }).catch(() => {});
+    // Seule une commande encore en attente passe en échec : un événement en retard
+    // ne doit jamais écraser un paiement déjà reçu ou remboursé.
+    await prisma.commande.updateMany({ where: { id: commandeId, paiementStatut: "pending" }, data: { paiementStatut: "failed" } }).catch(() => {});
     return;
   }
 

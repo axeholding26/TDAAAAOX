@@ -1,13 +1,15 @@
-// Créer une commande physique (paiement à la livraison) + générer lien WhatsApp + tokens tracking/facture
+// Créer une commande physique (paiement à la livraison) + générer lien WhatsApp + tokens tracking/facture.
+// Le dropshipping et le digital se paient en ligne (digital-creer) : refusés ici.
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande, formatMontant } from "@/lib/utils";
 import { notifierMarchand } from "@/lib/notifications-marchand";
-import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "@/lib/email";
+import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande, emailReel } from "@/lib/email";
 import { fraisLivraisonServeur } from "@/lib/livraison";
 import { enregistrerConversionAffiliation } from "@/lib/affiliation";
 import { randomBytes } from "crypto";
 import { prixClient, reductionPromo } from "@/lib/pricing";
+import { RuptureStock, sortirStock } from "@/lib/stock";
 
 function genToken() { return randomBytes(20).toString("hex"); }
 
@@ -28,23 +30,22 @@ export async function POST(req: NextRequest) {
 
     const produits = await prisma.produit.findMany({
       where: { id: { in: itemsClient.map((i: any) => String(i.produitId)) }, tenantId, actif: true },
-      select: { id: true, nom: true, type: true, prix: true, images: true, fournisseurId: true, prixFournisseur: true, variantes: { where: { actif: true }, select: { nom: true, valeur: true, prix: true } } },
+      select: { id: true, nom: true, type: true, prix: true, images: true, variantes: { where: { actif: true }, select: { nom: true, valeur: true, prix: true } } },
     });
     const taux = tenant.commissionRate ?? 0.06;
-    const items: { produitId: string; nom: string; prix: number; quantite: number; imageUrl: string | null; variante: string | null; fournisseurId: string | null; prixFournisseur: number | null }[] = [];
+    const items: { produitId: string; nom: string; prix: number; quantite: number; imageUrl: string | null; variante: string | null }[] = [];
     for (const item of itemsClient) {
       const p = produits.find((x) => x.id === String(item.produitId));
       if (!p) return NextResponse.json({ error: "Produit introuvable dans cette boutique" }, { status: 400 });
-      if (p.type !== "physique" && p.type !== "dropshipping") {
-        return NextResponse.json({ error: "Les produits digitaux nécessitent un paiement en ligne" }, { status: 400 });
+      if (p.type !== "physique") {
+        return NextResponse.json({ error: "Ce produit se paie en ligne" }, { status: 400 });
       }
       const variante = item.variante ? p.variantes.find((v) => `${v.nom}: ${v.valeur}` === item.variante) : null;
       if (item.variante && !variante) return NextResponse.json({ error: `Variante « ${item.variante} » introuvable pour ${p.nom}` }, { status: 400 });
       items.push({
-        produitId: p.id, nom: p.nom, prix: prixClient(variante?.prix ?? p.prix, taux),
+        produitId: p.id, nom: p.nom, prix: prixClient(variante?.prix ?? p.prix, taux, p.type),
         quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 999),
         imageUrl: p.images[0] ?? null, variante: variante ? item.variante : null,
-        fournisseurId: p.fournisseurId, prixFournisseur: p.prixFournisseur,
       });
     }
     const sousTotal = items.reduce((s, i) => s + i.prix * i.quantite, 0);
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
       clientRecord = await prisma.client.create({
         data: {
           tenantId, nom: client.nom,
-          email: client.email || `${client.telephone.replace(/\D/g, "")}@axso.com`,
+          email: client.email?.trim() || null, // facultatif : le client se retrouve par son téléphone
           telephone: client.telephone, ville: client.ville || null, pays: client.pays || null,
         },
       });
@@ -80,12 +81,14 @@ export async function POST(req: NextRequest) {
     const montantLivraison = await fraisLivraisonServeur({ tenantId, zone, montantCommande: total });
     const montantTotalAvecLivraison = total + montantLivraison;
 
-    const commande = await prisma.commande.create({
+    // Création + sortie du stock dans la même transaction : une rupture annule tout.
+    const commande = await prisma.$transaction(async (tx) => {
+      const c = await tx.commande.create({
       data: {
         tenantId, numero: genererNumeroCommande(),
         clientId: clientRecord.id,
         clientNom: client.nom,
-        clientEmail: client.email || clientRecord.email,
+        clientEmail: client.email?.trim() || (emailReel(clientRecord.email) ? clientRecord.email : null),
         clientTelephone: client.telephone,
         adresseLivraison: localisation?.adresseExacte || client.adresse || "À préciser",
         ville: zone || client.ville || "—",
@@ -107,10 +110,13 @@ export async function POST(req: NextRequest) {
         adresseExacte: localisation?.adresseExacte || client.adresse || null,
         mapsLienClient: mapsLien,
         lignes: {
-          create: items.map(({ fournisseurId, prixFournisseur, ...ligne }) => ligne),
+          create: items,
         },
       },
       include: { lignes: true },
+      });
+      await sortirStock(tx, { tenantId, commandeId: c.id, motif: `Commande #${c.numero}` });
+      return c;
     });
     if (promoValide) await prisma.codePromo.update({ where: { id: promo.id }, data: { utilisations: { increment: 1 } } });
 
@@ -130,21 +136,6 @@ export async function POST(req: NextRequest) {
         lignes: items.map((i) => ({ produitId: i.produitId, prix: i.prix, quantite: i.quantite })),
       }).catch(() => {});
     }
-
-    // Auto-routing dropshipping
-    try {
-      const dropItems = items.filter((i) => i.fournisseurId);
-      if (dropItems.length > 0) {
-        const fournisseurIds = [...new Set(dropItems.map((i) => i.fournisseurId as string))];
-        for (const fId of fournisseurIds) {
-          const lf = dropItems.filter((i) => i.fournisseurId === fId);
-          const montantFournisseur = lf.reduce((s: number, i) => s + ((i.prixFournisseur ?? i.prix * 0.5) * i.quantite), 0);
-          await (prisma as any).commandeFournisseur.create({
-            data: { tenantId: tenant.id, commandeId: commande.id, fournisseurId: fId, montantFournisseur, statut: "envoye", envoiAuto: true },
-          }).catch(() => null);
-        }
-      }
-    } catch {}
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
     const factureUrl  = `${appUrl}/${slug}/facture/${trackingToken}`;
@@ -201,8 +192,7 @@ export async function POST(req: NextRequest) {
         lien: `${appUrl}/dashboard/commandes/${commande.id}`,
       }).catch(() => {});
     }
-    // client.email brut uniquement — commande.clientEmail peut être un placeholder
-    // généré (téléphone@axso.com) quand le client n'a pas fourni de vraie adresse.
+    // Email saisi à cette commande uniquement (celui d'une fiche ancienne peut être une adresse générée).
     if (client.email) {
       await envoyerConfirmationCommande({
         email: client.email,
@@ -252,6 +242,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (err) {
+    if (err instanceof RuptureStock) return NextResponse.json({ error: err.message }, { status: err.status });
     console.error("[whatsapp-creer]", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

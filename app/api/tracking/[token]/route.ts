@@ -12,8 +12,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
       clientNom: true, adresseExacte: true, adresseLivraison: true, ville: true,
       latitudeClient: true, longitudeClient: true, mapsLienClient: true,
       livreurPosition: true, livreurNom: true, livreurTelephone: true,
-      trackingToken: true, livreurToken: true,
-      lignes: { select: { nom: true, quantite: true, prix: true, imageUrl: true } },
+      trackingToken: true, livreurToken: true, codeLivraison: true, expedieeAt: true, livreeAt: true, echecRaison: true,
+      lignes: { select: { nom: true, quantite: true, prix: true, imageUrl: true, produitId: true } },
       tenant: { select: { nomBoutique: true, logoUrl: true, slug: true } },
     },
   });
@@ -26,6 +26,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
     commande: {
       ...commande,
       livreurToken: isLivreurToken ? commande.livreurToken : undefined,
+      // Le code prouve la remise au client : jamais exposé au lien livreur, et inutile une fois livrée
+      codeLivraison: !isLivreurToken && ["expediee", "tentative_echouee"].includes(commande.statut) ? commande.codeLivraison : undefined,
     },
   });
 }

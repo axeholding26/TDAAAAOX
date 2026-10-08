@@ -268,7 +268,7 @@ export function LivreursPanel() {
 
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
                 <span className="text-[#F5A623] font-bold text-sm">{t(l._count.commandes)}</span>
-                <span className="text-gray-500 text-xs">livraisons</span>
+                <span className="text-gray-500 text-xs">{onglet === "plateforme" ? t("en cours") : t("livraisons")}</span>
               </div>
             </div>
           ))}

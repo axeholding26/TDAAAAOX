@@ -30,6 +30,7 @@ export default async function AdminDashboard() {
     dernieresBoutiques,
     dernieresCommandes,
     commissionsPending,
+    livreursAValider,
   ] = await Promise.all([
     prisma.tenant.count({ where: filtreBoutiques }),
     prisma.tenant.count({ where: { statut: "active", ...filtreBoutiques } }),
@@ -47,6 +48,7 @@ export default async function AdminDashboard() {
       include: { tenant: { select: { nomBoutique: true, slug: true } }, commission: { select: { montantCommission: true } } },
     }),
     totalCommissionsXAF({ statut: "pending" }),
+    prisma.livreur.count({ where: { actif: false, valideAt: null } }),
   ]);
 
   const revenuTotal = commissionsTotal;
@@ -59,7 +61,7 @@ export default async function AdminDashboard() {
     { label: "Commandes payées", value: totalCommandes, sub: `${commandesMois} ce mois`, icon: ShoppingCart, color: "#AAAAAA", href: null },
     { label: "Clients totaux", value: totalClients.toLocaleString(t.loc), icon: Users, color: "#AAAAAA", href: null },
     { label: "En attente capture", value: formatMontant(revenuPending, "XAF"), sub: "Commandes non finalisées", icon: Clock, color: "#D97706", href: "/admin/finances" },
-    { label: "Livreurs actifs", value: totalLivreurs, icon: Truck, color: "#AAAAAA", href: "/admin/livreurs" },
+    { label: "Livreurs actifs", value: totalLivreurs, sub: livreursAValider ? `${livreursAValider} à valider` : undefined, icon: Truck, color: livreursAValider ? "#D97706" : "#AAAAAA", href: "/admin/livreurs" },
   ];
 
   return (

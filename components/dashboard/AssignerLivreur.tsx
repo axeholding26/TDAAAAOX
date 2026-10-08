@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { UserCheck, ChevronDown, Bike, Car, User, Check } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
-type Livreur = { id: string; nom: string; vehicule: string; zone: string | null; disponible?: boolean };
+type Livreur = { id: string; nom: string; vehicule: string; zone: string | null; disponible?: boolean; coursesEnCours?: number };
 
 interface Props {
   commandeId: string;
@@ -24,6 +24,8 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
   const [loading, setLoading] = useState(false);
   const [livreurId, setLivreurId] = useState(livreurActuelId);
   const [livreurNom, setLivreurNom] = useState(livreurActuelNom);
+  // Messages WhatsApp que l'envoi automatique n'a pas pu faire partir (boutique sans WhatsApp connecté)
+  const [aEnvoyer, setAEnvoyer] = useState<{ livreur: string | null; client: string | null }>({ livreur: null, client: null });
 
   // Pas d'assignation possible si déjà livré ou annulé
   if (statut && ["livree", "annulee"].includes(statut)) {
@@ -47,12 +49,14 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ livreurId: id }),
       });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error);
       setLivreurId(id);
       setLivreurNom(nom);
+      setAEnvoyer({ livreur: data.whatsappLivreurUrl ?? null, client: data.whatsappClientUrl ?? null });
       toast.success(id ? t("Assigné à {0}", nom) : t("Livreur retiré"));
-    } catch {
-      toast.error(t("Erreur lors de l'assignation"));
+    } catch (err: any) {
+      toast.error(t(err?.message) || t("Erreur lors de l'assignation"));
     } finally {
       setLoading(false);
     }
@@ -75,6 +79,13 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
         )}
         <ChevronDown size={10} className="flex-shrink-0 ml-auto" />
       </button>
+
+      {(aEnvoyer.livreur || aEnvoyer.client) && (
+        <div className="mt-1.5 flex flex-col gap-1">
+          {aEnvoyer.livreur && <a href={aEnvoyer.livreur} target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-600 underline">{t("Prévenir le livreur sur WhatsApp")}</a>}
+          {aEnvoyer.client && <a href={aEnvoyer.client} target="_blank" rel="noopener noreferrer" className="text-[10px] text-green-600 underline">{t("Prévenir le client sur WhatsApp")}</a>}
+        </div>
+      )}
 
       {open && (
         <div className="absolute left-0 top-full mt-1 w-52 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
@@ -100,7 +111,17 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
                 )}
                 {l.id === livreurId && <Check size={10} className="ml-auto text-[#F5A623]" />}
               </p>
-              {l.zone && <p className="text-gray-500 text-[10px] mt-0.5 ml-5">{t(l.zone)}</p>}
+              {(l.zone || l.coursesEnCours !== undefined) && (
+                <p className="text-gray-500 text-[10px] mt-0.5 ml-5">
+                  {l.zone && t(l.zone)}
+                  {l.zone && l.coursesEnCours !== undefined && " · "}
+                  {l.coursesEnCours !== undefined && (
+                    <span className={l.coursesEnCours >= 3 ? "text-red-500 font-semibold" : ""}>
+                      {l.coursesEnCours === 0 ? t("Libre") : t("{0} course(s) en cours", l.coursesEnCours)}
+                    </span>
+                  )}
+                </p>
+              )}
             </button>
           ))}
         </div>

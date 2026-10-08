@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { emailReel } from "@/lib/email";
 import { Resend } from "resend";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
 import { writeMemory, readAllMemory, logDecision } from "@/lib/agent-memory";
@@ -155,7 +156,7 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
 
         if (process.env.RESEND_API_KEY) {
           for (const client of clientsVIP) {
-            if (!client.email) continue;
+            if (!emailReel(client.email)) continue;
             await resend.emails.send({
               from: `${tenant.nomBoutique} <noreply@axso.app>`,
               to: client.email,
@@ -225,7 +226,7 @@ ${args.remise_exclusive ? `<div style="background:#f0f7ff;padding:15px;border-ra
       if (tenant && process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         for (const client of clients) {
-          if (!client.email) continue;
+          if (!emailReel(client.email)) continue;
           await resend.emails.send({
             from: `${tenant.nomBoutique} <noreply@axso.app>`,
             to: client.email,

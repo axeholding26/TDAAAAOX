@@ -273,8 +273,8 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
             ) : (
               <div className={`grid ${GRID_PRODUITS} gap-4 sm:gap-5`}>
                 {produits.map((p) => {
-                  const prixAffiche = prixClient(p.prix, taux);
-                  const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, taux) : null;
+                  const prixAffiche = prixClient(p.prix, taux, p.type);
+                  const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, taux, p.type) : null;
                   const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
                     ? Math.round(((prixCompareAffiche - prixAffiche) / prixCompareAffiche) * 100)
                     : 0;

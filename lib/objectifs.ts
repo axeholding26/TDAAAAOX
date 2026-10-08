@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { PAIEMENT } from "./commandes";
 
 export type TypeObjectif = "ca" | "commandes" | "clients" | "panier_moyen";
 
@@ -17,7 +18,7 @@ export async function calculerProgression(params: {
   }
 
   const agg = await prisma.commande.aggregate({
-    where: { tenantId, createdAt: { gte: depuis }, statut: { not: "annulee" } },
+    where: { tenantId, createdAt: { gte: depuis }, paiementStatut: PAIEMENT.PAYE },
     _sum: { montantTotal: true },
     _count: true,
   });

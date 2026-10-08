@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { changerStatutCommande } from "@/lib/cycle-livraison";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -70,11 +71,15 @@ export async function POST(req: Request) {
 
 export async function PATCH(req: Request) {
   const session = await auth();
-  if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const tenantId = (session?.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const body = await req.json();
 
-  const cf = await (prisma as any).commandeFournisseur.update({
-    where: { id: body.id },
+  const existante = await prisma.commandeFournisseur.findFirst({ where: { id: body.id, tenantId } });
+  if (!existante) return NextResponse.json({ error: "Commande fournisseur introuvable" }, { status: 404 });
+
+  const cf = await prisma.commandeFournisseur.update({
+    where: { id: existante.id },
     data: {
       statut: body.statut,
       trackingNo: body.trackingNo,
@@ -83,18 +88,17 @@ export async function PATCH(req: Request) {
     },
   });
 
-  // If expedie, push tracking to parent order
-  if (body.statut === "expedie" && body.trackingNo) {
-    await prisma.commande.update({
-      where: { id: cf.commandeId },
-      data: { numeroSuivi: body.trackingNo, livraisonStatut: "expediee" },
-    });
+  // La commande client suit le cycle de livraison normal (transitions, WhatsApp, CA).
+  if (body.trackingNo) {
+    await prisma.commande.update({ where: { id: cf.commandeId }, data: { numeroSuivi: body.trackingNo } });
   }
-  if (body.statut === "livre") {
-    await prisma.commande.update({
-      where: { id: cf.commandeId },
-      data: { livraisonStatut: "livree", statut: "livree" },
-    });
+  // « Livré » sans passage par « expédié » : on enchaîne les deux étapes.
+  const etapes = body.statut === "expedie" ? ["expediee"] : body.statut === "livre" ? ["expediee", "livree"] : [];
+  for (const [i, statut] of etapes.entries()) {
+    const commande = await prisma.commande.findUnique({ where: { id: cf.commandeId }, select: { statut: true } });
+    if (commande?.statut === statut || (statut === "expediee" && commande?.statut === "livree")) continue;
+    const r = await changerStatutCommande({ commandeId: cf.commandeId, statut, acteur: { type: "marchand", tenantId, source: "interface" } });
+    if (!r.ok && i === etapes.length - 1) return NextResponse.json({ error: r.error }, { status: r.status });
   }
 
   return NextResponse.json({ commandeFournisseur: cf });

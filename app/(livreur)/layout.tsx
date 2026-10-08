@@ -25,6 +25,8 @@ export default async function LivreurLayout({ children }: { children: React.Reac
 
   if (!livreur) redirect("/connexion");
 
+  const enLivraison = (await prisma.commande.count({ where: { livreurId: livreur.id, statut: "expediee" } })) > 0;
+
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("livreur")}>
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -36,7 +38,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
 
       {/* Header premium */}
       <header className="sticky top-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img
               src="/logo-dark.png" alt={t("Axso")}
@@ -50,6 +52,19 @@ export default async function LivreurLayout({ children }: { children: React.Reac
             </div>
           </div>
 
+          {/* Navigation PC (la barre du bas est réservée au mobile) */}
+          <nav className="hidden lg:flex items-center gap-1 text-sm">
+            <Link href="/livreur" className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-[#F5A623] hover:bg-white/5 transition-colors">
+              <Home size={16} />{t("Accueil")}
+            </Link>
+            <Link href="/livreur/commandes" className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-[#F5A623] hover:bg-white/5 transition-colors">
+              <List size={16} />{t("Livraisons")}
+            </Link>
+            <Link href="/connexion" className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-500 hover:text-red-400 hover:bg-white/5 transition-colors">
+              <LogOut size={16} />{t("Quitter")}
+            </Link>
+          </nav>
+
           <div className="flex items-center gap-2">
             <DisponibiliteToggle livreurId={livreur.id} disponible={livreur.disponible} />
             <NotificationsPanel />
@@ -58,14 +73,21 @@ export default async function LivreurLayout({ children }: { children: React.Reac
       </header>
 
       {/* Tracker GPS silencieux */}
-      <GeoTracker livreurId={livreur.id} />
+      <GeoTracker livreurId={livreur.id} enLivraison={enLivraison} />
 
-      <main className="max-w-2xl mx-auto px-4 py-5 pb-24">
+      <main className="max-w-2xl lg:max-w-5xl mx-auto px-4 py-5 pb-24 lg:pb-10">
+        {!livreur.actif && (
+          <div className="mb-5 rounded-2xl border border-[#F5A623]/25 bg-[#F5A623]/10 px-4 py-3 text-sm text-[#F5A623]">
+            {livreur.valideAt
+              ? t("Votre compte est suspendu. Contactez l'équipe Axso pour le réactiver.")
+              : t("Votre compte est en attente de validation par l'équipe Axso. Vous recevrez des livraisons dès qu'il sera validé.")}
+          </div>
+        )}
         {children}
       </main>
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 safe-area-bottom">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0A0A0A]/95 backdrop-blur-xl border-t border-white/5 safe-area-bottom">
         <div className="max-w-2xl mx-auto px-4 py-3 grid grid-cols-3">
           <Link href="/livreur" className="flex flex-col items-center gap-1 text-gray-400 hover:text-[#F5A623] transition-colors py-1">
             <Home size={20} />

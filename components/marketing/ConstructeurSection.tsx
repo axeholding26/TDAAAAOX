@@ -4,11 +4,12 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
+// Captures réelles des designs de Templates/ (accueil, 1440×900).
 const THEMES_PREVIEW = [
-  { nom: "Noir Obsidien", fond: "#0a0a0a", accent: "#F5A623", texte: "#F5F5F0" },
-  { nom: "Or Royal",      fond: "#FFFBF2", accent: "#F5A623", texte: "#111111" },
-  { nom: "Encre & Or",    fond: "#111111", accent: "#FFD280", texte: "#FFF6E0" },
-  { nom: "Kente Royal",   fond: "#141414", accent: "#F5A623", texte: "#FFF8E8" },
+  { nom: "Ignite",       image: "/theme-ignite.webp" },
+  { nom: "Noir Atelier", image: "/theme-noir-atelier.webp" },
+  { nom: "Pop!",         image: "/theme-pop.webp" },
+  { nom: "Codex",        image: "/theme-codex.webp" },
 ];
 
 const POINTS = [
@@ -36,7 +37,7 @@ export function ConstructeurSection() {
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(-24px)", transition: "all 0.8s cubic-bezier(0.23,1,0.32,1)" }}>
             <span className="text-[#F5A623] text-sm font-bold uppercase tracking-widest mb-4 block">{tr("Constructeur")}</span>
             <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#111111] mb-5 leading-[1.08]">
-              {tr("Crée une boutique sur-mesure en quelques secondes")}
+              {tr("Crée une boutique sur-mesure en 3 minutes")}
             </h2>
             <p className="text-lg text-gray-500 leading-relaxed mb-8 max-w-lg">
               {tr("Des thèmes prêts à vendre, personnalisables jusqu'au moindre détail — sans une ligne de code.")}
@@ -60,16 +61,14 @@ export function ConstructeurSection() {
           <div style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateX(24px)", transition: "all 0.8s 0.1s cubic-bezier(0.23,1,0.32,1)" }}>
             <div className="grid grid-cols-2 gap-4">
               {THEMES_PREVIEW.map((t, i) => (
-                <div key={t.nom} className="rounded-2xl overflow-hidden shadow-lg border border-gray-100"
+                <Link key={t.nom} href="/themes" className="group rounded-2xl overflow-hidden shadow-lg border border-gray-100 bg-white"
                   style={{ animation: visible ? `flip3dIn 0.7s ${i * 100}ms cubic-bezier(0.23,1,0.32,1) both` : "none" }}>
-                  <div className="h-24 flex items-center justify-center" style={{ backgroundColor: t.fond }}>
-                    <span className="font-bold text-sm" style={{ color: t.accent }}>{tr(t.nom)}</span>
+                  <div className="aspect-[16/10] overflow-hidden">
+                    <img src={t.image} alt={`${tr("Thème")} ${t.nom}`} loading="lazy"
+                      className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                   </div>
-                  <div className="p-3 space-y-1.5" style={{ backgroundColor: t.fond }}>
-                    <div className="h-2 w-3/4 rounded-full" style={{ background: `${t.texte}25` }} />
-                    <div className="h-2 w-1/2 rounded-full" style={{ background: `${t.texte}18` }} />
-                  </div>
-                </div>
+                  <p className="px-3 py-2.5 text-sm font-bold text-[#111111]">{t.nom}</p>
+                </Link>
               ))}
             </div>
           </div>

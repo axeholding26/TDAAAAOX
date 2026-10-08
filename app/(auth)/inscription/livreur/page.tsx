@@ -54,7 +54,7 @@ export default function InscriptionLivreurPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 font-playfair mb-3">{t("Compte créé !")}</h1>
           <p className="text-gray-400 text-sm mb-6">
-            {t("Votre compte livreur a été créé avec succès. Vous pouvez maintenant vous connecter et accéder à votre espace dédié.")}
+            {t("Votre compte livreur a été créé. Il sera validé par l'équipe Axso avant que vous puissiez recevoir des livraisons. Vous pouvez déjà vous connecter à votre espace.")}
           </p>
           <button
             onClick={() => router.push("/connexion")}

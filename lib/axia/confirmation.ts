@@ -23,6 +23,8 @@ const SENSIBLES: Record<string, string> = {
   creer_retour: "Créer un retour",
   mettre_a_jour_retour: "Modifier un retour",
   assigner_livreur: "Assigner un livreur",
+  changer_statut_commande: "Changer le statut d'une commande",
+  marquer_especes_remises: "Confirmer la remise des espèces d'un livreur",
   // Outils des agents autonomes (app/api/ai/agent-*)
   ajuster_prix_produit: "Changer un prix",
   creer_offre_flash: "Créer une offre flash",
@@ -41,8 +43,31 @@ const SENSIBLES: Record<string, string> = {
 const PREFIXES_ENVOI = /^(meta|whatsapp|gmail|sms|tiktok|google_ads)_/;
 const LECTURE = /(^|_)(lister|lire|stats|statut)(_|$)/;
 
+/** Consigne à ajouter au prompt de tout assistant qui passe par demanderConfirmation. */
+export const CONSIGNE_ACCORD = `─── ACTIONS SENSIBLES : ACCORD DU MARCHAND ───
+Prix, codes promo, envois aux clients (email, WhatsApp, SMS, réseaux sociaux), paiements, publication, retours, livraisons (assigner un livreur, changer le statut d'une commande, confirmer une remise d'espèces) : quand tu appelles un de ces outils, l'action n'est PAS exécutée tout de suite. Le marchand reçoit une demande d'autorisation dans la bulle AXIA en bas à droite. Dis-lui en une phrase ce que tu t'apprêtes à faire et que tu attends son feu vert — ne dis jamais que c'est fait.
+- Quand le marchand te demande explicitement une de ces actions (« assigne… », « passe la commande en… », « envoie… »), appelle l'outil tout de suite : la bulle EST la demande d'accord. Ne lui redemande pas « tu valides ? » dans le texte, sinon il doit dire oui deux fois.
+- Si c'est toi qui as l'idée (il ne l'a pas demandée), propose-la d'abord en une phrase et attends sa réponse avant d'appeler l'outil.
+- Ne parle JAMAIS de la bulle ni d'une validation en attente si tu n'as pas appelé l'outil dans cette réponse et reçu « EN ATTENTE DE CONFIRMATION ».`;
+
 export function estSensible(nom: string): boolean {
   return nom in SENSIBLES || (PREFIXES_ENVOI.test(nom) && !LECTURE.test(nom));
+}
+
+// Les ids techniques ne disent rien au marchand qui doit décider : on les remplace par des noms.
+async function lisibles(tenantId: string, args: Record<string, any>): Promise<Record<string, any>> {
+  const a = { ...(args ?? {}) };
+  if (a.livreurId) {
+    const l = await prisma.livreur.findUnique({ where: { id: String(a.livreurId) }, select: { nom: true, telephone: true } }).catch(() => null);
+    delete a.livreurId;
+    if (l) a.livreur = `${l.nom} (${l.telephone})`;
+  }
+  if (a.commandeId) {
+    const c = await prisma.commande.findFirst({ where: { tenantId, OR: [{ id: String(a.commandeId) }, { numero: String(a.commandeId) }] }, select: { numero: true } }).catch(() => null);
+    delete a.commandeId;
+    if (c) a.commande = `#${c.numero}`;
+  }
+  return a;
 }
 
 function resumerArgs(args: Record<string, any>): string {
@@ -61,11 +86,12 @@ function semaine() {
 }
 
 /** Enregistre l'action en attente et renvoie au modèle la consigne à suivre. */
-export async function demanderConfirmation(tenantId: string, outil: string, args: Record<string, any>, agent?: string) {
+export async function demanderConfirmation(tenantId: string, outil: string, args: Record<string, any>, agent?: string, interactif = false) {
   const libelle = SENSIBLES[outil] ?? outil.replace(/_/g, " ");
-  const details = resumerArgs(args);
+  const details = resumerArgs(await lisibles(tenantId, args));
   // Agent autonome (cron horaire) : la même action n'est proposée qu'une fois par semaine.
-  const cle = agent
+  // En conversation (interactif), chaque demande compte : le marchand peut redemander après un refus.
+  const cle = agent && !interactif
     ? `confirmation:${agent}:${semaine()}:${createHash("sha1").update(outil + JSON.stringify(args)).digest("hex")}`
     : `confirmation:${randomUUID()}`;
   await prisma.axiaProposition.createMany({

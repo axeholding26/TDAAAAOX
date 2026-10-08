@@ -46,7 +46,7 @@ export default async function CommandeConfirmeePage({ params, searchParams }: Pr
         montantTotal: commande.montantTotal,
         devise: commande.devise,
         clientNom: commande.clientNom,
-        clientEmail: commande.clientEmail,
+        clientEmail: commande.clientEmail ?? "",
         lignes: commande.lignes.map((l) => ({
           id: l.id,
           nom: l.nom,

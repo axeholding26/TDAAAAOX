@@ -1208,7 +1208,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const showBadges      = isOn("info") && infoCfg.badges !== false;
   // Produits digitaux : pas de stock, de quantité ni de livraison physique.
   const estDigital      = TYPES_DIGITAUX.has(produit.type);
-  const showStock       = isOn("info") && infoCfg.stock !== false && !estDigital;
+  // Stock suivi seulement pour le physique (dropshipping : stock chez le fournisseur ; packs : pas de stock).
+  const stockSuivi      = produit.type === "physique";
+  const showStock       = isOn("info") && infoCfg.stock !== false && stockSuivi;
   const showAiDesc      = descCfg.ai !== false;
   const similarTitre    = simCfg.titre || "Vous aimerez aussi";
 
@@ -1246,7 +1248,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   const prixEffectif = variantePrix?.prix ?? selectedVariante?.prix ?? produit.prixAffiche;
   const stockEffectif = selectedVariante !== null ? selectedVariante.stock : produit.stock;
-  const enRupture     = !estDigital && stockEffectif === 0;
+  const enRupture     = stockSuivi && stockEffectif <= 0;
 
   // Pas de panier : on commande ce produit directement — formulaire de commande
   // puis WhatsApp du marchand (physique) ou paiement en ligne (dropshipping).
@@ -1374,7 +1376,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
                     <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={15} /></button>
                     <span className="w-10 text-center text-base font-bold tabular-nums">{quantite}</span>
-                    <button onClick={() => setQuantite(q => Math.min(enRupture ? 1 : stockEffectif, q + 1))} disabled={enRupture} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={15} /></button>
+                    <button onClick={() => setQuantite(q => Math.min(stockSuivi ? Math.max(1, stockEffectif) : 99, q + 1))} disabled={enRupture} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={15} /></button>
                   </div>
                 </div>
               )}

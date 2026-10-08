@@ -2,6 +2,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { synchroniserFournisseurs } from "@/lib/sync-fournisseurs";
+import { assignerLivreurCommande } from "@/lib/cycle-livraison";
+import { creerRetour, mettreAJourRetour } from "@/lib/remboursement";
+import { PAIEMENT } from "@/lib/commandes";
+import { AVEC_EMAIL_REEL } from "@/lib/email";
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { Resend } from "resend";
 import { runAgent, runAgentStream, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
@@ -13,6 +18,14 @@ import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { permissionsSession } from "@/lib/permissions-server";
 import { restreindreAxia, consigneDroits } from "@/lib/axia/droits";
+import { estSensible, demanderConfirmation, CONSIGNE_ACCORD } from "@/lib/axia/confirmation";
+import { executerOutilDirect } from "@/lib/axia/tools";
+import { consigneLangue } from "@/lib/axia/style";
+import { getLangue } from "@/lib/i18n/serveur";
+
+// Livraisons : implémentation unique d'AXIA (lib/axia/tools.ts → lib/cycle-livraison.ts),
+// la copie locale ci-dessous ne passait ni par les contrôles ni par les notifications.
+const OUTILS_DELEGUES_AXIA = new Set(["dashboard_livraison", "assigner_livreur", "statut_commande"]);
 import { planActif } from "@/lib/abonnement";
 import { filtrerOutilsParPalier, type Palier } from "@/lib/plans";
 import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
@@ -1017,7 +1030,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         const resendKey = process.env.RESEND_API_KEY;
         if (!resendKey) return { succes: false, resultat: "RESEND_API_KEY manquante" };
         const [clients, tenant] = await Promise.all([
-          prisma.client.findMany({ where: { tenantId }, select: { email: true, nom: true }, take: 50 }),
+          prisma.client.findMany({ where: { tenantId, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 }),
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } }),
         ]);
         if (!clients.length) return { succes: false, resultat: "Aucun client enregistré" };
@@ -1025,7 +1038,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         let envoyes = 0;
         for (const c of clients) {
           try {
-            await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
+            await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
             envoyes++;
           } catch { /* continue */ }
         }
@@ -1095,13 +1108,13 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (args.destinataires === "inactifs_30j") where.createdAt = { lt: new Date(Date.now() - 30 * 86400000) };
         else if (args.destinataires === "vip") { const agg = await prisma.client.aggregate({ where: { tenantId }, _avg: { totalDepense: true } }); where.totalDepense = { gte: (agg._avg.totalDepense ?? 0) * 2 }; }
         else if (args.destinataires === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
-        const clients = await prisma.client.findMany({ where, select: { email: true, nom: true }, take: 50 });
+        const clients = await prisma.client.findMany({ where: { ...where, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 });
         if (!clients.length) return { succes: false, resultat: "Aucun client dans ce segment" };
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
         const resend = new Resend(resendKey);
         let envoyes = 0;
         for (const c of clients) {
-          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
+          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
         }
         return { succes: true, resultat: `✅ ${envoyes}/${clients.length} emails envoyés (segment: ${args.destinataires})` };
       }
@@ -1109,23 +1122,18 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       case "dashboard_livraison": {
         const [aAssigner, enCours, livreurs] = await Promise.all([
           prisma.commande.count({ where: { tenantId, statut: "confirmee", livreurId: null } }),
-          prisma.commande.count({ where: { tenantId, livraisonStatut: { in: ["en_transit", "en_livraison"] } } }),
+          prisma.commande.count({ where: { tenantId, statut: { in: ["expediee", "tentative_echouee"] } } }),
           prisma.livreur.count({ where: { tenantId, disponible: true, actif: true } }),
         ]);
         return { succes: true, resultat: JSON.stringify({ commandes_a_assigner: aAssigner, en_cours: enCours, livreurs_disponibles: livreurs }) };
       }
 
       case "assigner_livreur": {
-        const [commande, livreur] = await Promise.all([
-          prisma.commande.findFirst({ where: { id: args.commandeId, tenantId }, select: { numero: true, adresseLivraison: true, clientNom: true } }),
-          prisma.livreur.findFirst({ where: { id: args.livreurId }, select: { nom: true } }),
-        ]);
-        if (!commande || !livreur) return { succes: false, resultat: "Commande ou livreur introuvable" };
-        await prisma.commande.update({ where: { id: args.commandeId }, data: { livreurId: args.livreurId, livraisonStatut: "en_transit" } });
-        await prisma.notification.create({ data: { livreurId: args.livreurId, type: "nouvelle_livraison", titre: "Nouvelle livraison", message: `Commande ${commande.numero} — ${commande.clientNom}`, commandeId: args.commandeId } });
-        return { succes: true, resultat: `✅ Commande ${commande.numero} assignée à ${livreur.nom}` };
+        // Même chemin que l'interface : livreur de la boutique ou indépendant, notifications WhatsApp, quota.
+        const r = await assignerLivreurCommande({ commandeId: args.commandeId, tenantId, livreurId: args.livreurId, source: "axia" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Commande ${r.numero} assignée à ${r.livreurNom}` };
       }
-
       case "rechercher_produits": {
         const where: any = { tenantId, actif: true };
         if (args.q) where.OR = [
@@ -1199,22 +1207,11 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "initier_retour": {
-        const commande = await prisma.commande.findFirst({
-          where: {
-            tenantId,
-            OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId, mode: "insensitive" } }],
-          },
-          select: { id: true, numero: true, statut: true, clientNom: true, montantTotal: true, devise: true },
-        });
-        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
-        if (!["confirmee", "livree"].includes(commande.statut)) {
-          return { succes: false, resultat: `La commande ${commande.numero} a le statut "${commande.statut}" — un retour n'est possible que sur les commandes confirmées ou livrées.` };
-        }
-        const typeLabel = args.type === "echange" ? "échange" : "retour";
-        await prisma.commande.update({ where: { id: commande.id }, data: { statut: "retour_demande" } });
-        return { succes: true, resultat: `✅ Procédure de ${typeLabel} initiée pour la commande ${commande.numero} (${commande.clientNom}, ${commande.montantTotal} ${commande.devise ?? "XAF"}). Motif : ${args.raison}. Le statut a été mis à "retour_demande".` };
+        // Ouvre un vrai retour (RMA) — la commande garde son statut ; l'accepter la remboursera.
+        const r = await creerRetour({ tenantId, commande: String(args.commandeId), raison: args.raison, type: args.type === "echange" ? "echange" : "remboursement" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour ouvert pour la commande ${r.numero} (${args.type === "echange" ? "échange" : "remboursement"}). Motif : ${args.raison}. Accepte-le dans Logistique → Retours pour déclencher le remboursement.` };
       }
-
       case "escalader_vers_humain": {
         const urgenceLabel = args.urgence === "haute" ? "🔴 HAUTE" : args.urgence === "basse" ? "🟢 BASSE" : "🟡 NORMALE";
         try {
@@ -1259,25 +1256,10 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "creer_retour": {
-        // Find the order
-        const commande = await prisma.commande.findFirst({
-          where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
-          select: { id: true, numero: true, clientNom: true, clientEmail: true, montantTotal: true, devise: true },
-        });
-        if (!commande) return { succes: false, resultat: `Commande introuvable : "${args.commandeId}"` };
-        const retour = await (prisma as any).retourRMA.create({
-          data: {
-            tenantId, commandeId: commande.id,
-            clientNom: commande.clientNom, clientEmail: commande.clientEmail,
-            raison: args.raison, description: args.description ?? null,
-            type: args.type ?? "remboursement",
-            montant: commande.montantTotal,
-          },
-        }).catch(() => null);
-        if (!retour) return { succes: false, resultat: "Erreur lors de la création du retour." };
-        return { succes: true, resultat: `✅ Retour créé pour la commande ${commande.numero} (${commande.clientNom}) — Type: ${args.type ?? "remboursement"} — Raison: ${args.raison}` };
+        const r = await creerRetour({ tenantId, commande: String(args.commandeId), raison: args.raison, description: args.description ?? null, type: args.type ?? "remboursement" });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour créé pour la commande ${r.numero} — Type: ${args.type ?? "remboursement"} — Raison: ${args.raison}` };
       }
-
       case "lister_retours": {
         const where: any = { tenantId };
         if (args.statut) where.statut = args.statut;
@@ -1288,18 +1270,11 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "mettre_a_jour_retour": {
-        const retour = await (prisma as any).retourRMA.findFirst({ where: { id: args.retourId, tenantId } }).catch(() => null);
-        if (!retour) return { succes: false, resultat: "Retour introuvable." };
-        await (prisma as any).retourRMA.update({ where: { id: args.retourId }, data: { statut: args.statut, notes: args.notes ?? retour.notes } }).catch(() => null);
-        // Restore stock if accepted
-        if (args.statut === "accepte" && retour.type === "remboursement") {
-          const lignes = await prisma.ligneCommande.findMany({ where: { commandeId: retour.commandeId } });
-          for (const l of lignes) await prisma.produit.update({ where: { id: l.produitId }, data: { stock: { increment: l.quantite } } }).catch(() => null);
-          await prisma.commande.update({ where: { id: retour.commandeId }, data: { statut: "remboursee" } }).catch(() => null);
-        }
-        return { succes: true, resultat: `✅ Retour mis à jour : statut → ${args.statut}${args.statut === "accepte" && retour.type === "remboursement" ? " (stock restauré, commande marquée remboursée)" : ""}` };
+        // Même chemin que l'interface : accepter un remboursement rend l'argent, le stock et coupe les accès.
+        const r = await mettreAJourRetour({ tenantId, retourId: args.retourId, statut: args.statut, notes: args.notes });
+        if (!r.ok) return { succes: false, resultat: r.error };
+        return { succes: true, resultat: `✅ Retour mis à jour : statut → ${r.retour.statut}${args.statut === "accepte" && r.retour.type === "remboursement" ? " (commande remboursée, stock et accès mis à jour)" : ""}` };
       }
-
       case "generer_facture": {
         const commande = await prisma.commande.findFirst({
           where: { tenantId, OR: [{ id: args.commandeId }, { numero: { contains: args.commandeId } }] },
@@ -1319,7 +1294,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
             clientNom: commande.clientNom, clientEmail: commande.clientEmail, clientAdresse: commande.adresseLivraison,
             lignes: commande.lignes.map((l: any) => ({ nom: l.nom, quantite: l.quantite, prixHT: l.prix, tauxTVA, prixTTC: l.prix })),
             montantHT, tauxTVA, montantTVA: commande.montantSousTotal - montantHT, montantTTC: commande.montantTotal, devise: commande.devise,
-            statut: commande.paiementStatut === "paid" ? "payee" : "emise",
+            statut: commande.paiementStatut === PAIEMENT.PAYE ? "payee" : "emise",
           },
         }).catch(() => null);
         if (!facture) return { succes: false, resultat: "Erreur lors de la génération de la facture." };
@@ -1380,8 +1355,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
 
       case "verifier_badges": {
         const [nbCommandes, caTotal, nbProduits, avisStats] = await Promise.all([
-          prisma.commande.count({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } } }),
-          prisma.commande.aggregate({ where: { tenantId, statut: { notIn: ["annulee", "remboursee"] } }, _sum: { montantTotal: true } }),
+          prisma.commande.count({ where: { tenantId, paiementStatut: PAIEMENT.PAYE } }),
+          prisma.commande.aggregate({ where: { tenantId, paiementStatut: PAIEMENT.PAYE }, _sum: { montantTotal: true } }),
           prisma.produit.count({ where: { tenantId, actif: true } }),
           prisma.avis.aggregate({ where: { tenantId, approuve: true }, _avg: { note: true }, _count: true }),
         ]);
@@ -1515,11 +1490,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "sync_fournisseurs": {
-        const result = await fetch(`${process.env.NEXTAUTH_URL ?? "https://axso.vercel.app"}/api/cron/sync-fournisseurs`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tenantId }),
-        }).then(r => r.json()).catch(() => null);
+        const result = await synchroniserFournisseurs(tenantId).catch(() => null);
         if (!result) return { succes: false, resultat: "Erreur lors de la synchronisation." };
         return {
           succes: true,
@@ -1634,8 +1605,15 @@ export async function POST(request: Request) {
 
     const { plan } = await planActif(tenantId);
     const droits = await permissionsSession(session);
-    const { outils, executer } = restreindreAxia(filtrerOutilsParPalier(OUTILS, plan), executeOutil, droits);
-    const promptFinal = SYSTEM_PROMPT + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "");
+    // Actions sensibles : demande d'accord dans la bulle AXIA, comme pour AXIA plein écran.
+    // Une fois autorisées, elles sont exécutées par l'implémentation d'AXIA (mêmes noms d'outils).
+    const avecAccord: ToolExecutor = (nom, args, tid) =>
+      estSensible(nom) ? demanderConfirmation(tid, nom, args)
+      : OUTILS_DELEGUES_AXIA.has(nom) ? executerOutilDirect(nom, args, tid)
+      : executeOutil(nom, args, tid);
+    const { outils, executer } = restreindreAxia(filtrerOutilsParPalier(OUTILS, plan), avecAccord, droits);
+    const promptFinal = SYSTEM_PROMPT + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "")
+      + `\n\n${CONSIGNE_ACCORD}\n\n${consigneLangue(await getLangue())}`;
 
     // If an image was attached, append it as an OpenAI vision content block
     const enrichedMessages: any[] = imageUrl

@@ -74,8 +74,8 @@ export default async function ProduitPage({ params }: Props) {
   const { colors: c, radius } = cfg;
 
   const taux = tenant.commissionRate ?? 0.06;
-  const prixAffiche = prixClient(produit.prix, taux);
-  const prixCompareAffiche = produit.prixCompare ? prixClient(produit.prixCompare, taux) : null;
+  const prixAffiche = prixClient(produit.prix, taux, produit.type);
+  const prixCompareAffiche = produit.prixCompare ? prixClient(produit.prixCompare, taux, produit.type) : null;
   const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
     ? pourcentageRemise(prixAffiche, prixCompareAffiche)
     : 0;
@@ -107,7 +107,7 @@ export default async function ProduitPage({ params }: Props) {
     id: p.id,
     nom: p.nom,
     images: p.images,
-    prixAffiche: prixClient(p.prix, taux),
+    prixAffiche: prixClient(p.prix, taux, p.type),
   }));
 
   // Socle de repli — voir le commentaire équivalent dans page.tsx (accueil).
@@ -165,7 +165,7 @@ export default async function ProduitPage({ params }: Props) {
       id: v.id,
       nom: v.nom,
       valeur: v.valeur,
-      prix: v.prix ? prixClient(v.prix, taux) : null,
+      prix: v.prix ? prixClient(v.prix, taux, produit.type) : null,
       stock: v.stock,
     })),
     avis: produit.avis.map(a => ({

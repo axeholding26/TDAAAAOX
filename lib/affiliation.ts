@@ -1,3 +1,4 @@
+import { finAcces, metaDigital } from "./commandes";
 import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
 import { initierTransfertNotchPay } from "./notchpay";
@@ -110,7 +111,7 @@ export function calculerCommissionLigne(params: {
 
 function estAutoReferencement(
   affilie: { email: string; telephone: string | null },
-  commande: { clientEmail: string; clientTelephone: string }
+  commande: { clientEmail: string | null; clientTelephone: string }
 ): boolean {
   if (affilie.email && commande.clientEmail && affilie.email.toLowerCase() === commande.clientEmail.toLowerCase()) {
     return true;
@@ -130,7 +131,7 @@ export async function enregistrerConversionAffiliation(params: {
   commande: {
     id: string;
     tenantId: string;
-    clientEmail: string;
+    clientEmail: string | null;
     clientTelephone: string;
     montantTotal: number;
     codeAffiliation?: string | null;
@@ -367,7 +368,7 @@ export async function traiterPaiementDigital(params: {
   const produits = await prisma.produit.findMany({
     where: { id: { in: lignes.map((l) => l.produitId) }, type: { in: [...TYPES_LIVRAISON_DIGITALE] } },
     select: {
-      id: true, type: true, fichierUrl: true,
+      id: true, type: true, fichierUrl: true, instructionsTelechargement: true,
       produitFichier: true,
       licenceProduit: true,
     },
@@ -386,23 +387,23 @@ export async function traiterPaiementDigital(params: {
 
   // Livraison — un mécanisme distinct par type de produit digital.
   const crypto = await import("crypto");
-  const EXPIRE_FICHIER_JOURS = 365; // achat = accès longue durée, pas 48h comme le legacy
+  // Accès à vie par défaut ; seule une durée choisie par le marchand sur le produit le limite.
 
   for (const produit of produits) {
     try {
       if (produit.type === "digital") {
-        // Legacy — un seul fichier direct, accès court (comportement historique conservé).
+        // Legacy — un seul fichier direct.
         if (!produit.fichierUrl) continue;
         const token = crypto.randomBytes(32).toString("hex");
         await prisma.telechargement.create({
-          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: new Date(Date.now() + 48 * 3600 * 1000) },
+          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: finAcces(metaDigital(produit.instructionsTelechargement).expirationAcces) },
         });
       } else if (produit.type === "fichier" && produit.produitFichier) {
         // Nouveau système multi-fichiers — un token couvre tous les fichiers du produit
         // (voir app/api/telechargements/[token] qui liste via ?fichier=<id>).
         const token = crypto.randomBytes(32).toString("hex");
         await prisma.telechargement.create({
-          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: new Date(Date.now() + EXPIRE_FICHIER_JOURS * 86400 * 1000) },
+          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: null },
         });
       } else if (produit.type === "formation") {
         // Accès à vie au contenu de la formation, via token self-service.
@@ -441,6 +442,6 @@ export async function traiterPaiementDigital(params: {
 
   await prisma.commande.update({
     where: { id: commande.id },
-    data: { paiementStatut: "completed", statut: "livree" },
+    data: { paiementStatut: "completed", statut: "livree", livraisonStatut: "livree", livreeAt: new Date() },
   });
 }

@@ -133,7 +133,8 @@ export function AxiaBulle() {
     retirer(p.id);
     setPanneau(false);
     if (p.action?.prompt) demanderAxia(p.action.prompt);
-    else if (p.action?.lien) router.push(p.action.lien);
+    // tel:, wa.me… : hors de l'application, le routeur ne sait pas les ouvrir
+    else if (p.action?.lien) p.action.lien.startsWith("/") ? router.push(p.action.lien) : window.open(p.action.lien, "_blank", "noopener");
   }
 
   function refuser(p: Proposition) {

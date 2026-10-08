@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
           telephone: data.telephone,
           vehicule: data.vehicule,
           zone: data.zone,
+          valideAt: new Date(), // créé par le marchand : pas de validation admin
         },
       });
 

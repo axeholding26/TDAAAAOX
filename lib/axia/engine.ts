@@ -68,12 +68,18 @@ function withDeadline<T>(promise: Promise<T>, ms: number, label: string): Promis
 function buildSynthesisUserMessage(originalQuestion: string, toolResults: string[]): string {
   if (toolResults.length === 0) return originalQuestion;
   const ctx = toolResults.join("\n\n");
-  return `${originalQuestion}\n\n---\nContexte (utilise-le pour répondre, ne le répète pas) :\n${ctx}`;
+  // Sans cette précision, le modèle (qui n'a plus d'outils ici) relit la demande et
+  // « rejoue » l'appel d'outil en texte : JSON, nom d'outil et ids affichés au marchand.
+  return `${originalQuestion}\n\n---\nLes outils ont DÉJÀ été appelés ; voici leurs résultats (utilise-les pour répondre, ne les répète pas) :\n${ctx}\n\n---\nRédige uniquement ta réponse au marchand, en langage naturel. N'écris aucun appel d'outil, aucun JSON, aucun identifiant technique.`;
 }
 
 function fallbackReponse(toolResults: string[], phase1Text: string): string {
   if (phase1Text.trim()) return phase1Text;
-  if (toolResults.length > 0) return toolResults.join("\n\n");
+  // Modèle indisponible (503…) : les résultats bruts partent au marchand — sans la consigne
+  // interne des actions à autoriser (« Dis-lui… ne dis jamais que c'est fait »).
+  if (toolResults.length > 0) return toolResults
+    .map(r => r.replace(/^EN ATTENTE DE CONFIRMATION : « (.+?) »[\s\S]*$/, "« $1 » attend ton autorisation dans la bulle AXIA, en bas à droite."))
+    .join("\n\n");
   return "Je n'ai pas pu traiter ta demande à l'instant — réessaie dans un instant.";
 }
 
@@ -159,8 +165,9 @@ export async function runAxia(
   const opts = { ...DEFAULTS, ...options };
   const { actionsEffectuees, toolResults, phase1Text } = await toolPhase(systemPrompt, messages, tools, tenantId, executeOutil, opts);
 
-  // Réponse directe sans outil : pas besoin de re-synthèse
-  if (phase1Text && toolResults.length === 0) {
+  // Le modèle a déjà rédigé sa réponse en voyant les résultats des outils : on la garde,
+  // la re-synthèse ne sert qu'à combler une réponse vide.
+  if (phase1Text.trim()) {
     return { reponse: phase1Text, actions: actionsEffectuees };
   }
 
@@ -224,8 +231,8 @@ export function runAxiaStream(
 
       const { actionsEffectuees, toolResults, phase1Text } = await toolPhase(systemPrompt, flatMessages, tools, tenantId, executeOutil, opts);
 
-      // Réponse directe sans outil → on la stream mot par mot
-      if (phase1Text && toolResults.length === 0) {
+      // Réponse déjà rédigée par le modèle (avec ou sans outils) → on la stream mot par mot
+      if (phase1Text.trim()) {
         const chunks = phase1Text.match(/\S+\s*/g) ?? [];
         for (const chunk of chunks) { send({ type: "token", text: chunk }); await sleep(2); }
         finish(actionsEffectuees);

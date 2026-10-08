@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PAIEMENT } from "@/lib/commandes";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 function genNumero(_tenantId: string, count: number) {
@@ -78,7 +79,7 @@ export async function POST(req: Request) {
       commandeId,
       numero,
       clientNom: commande.clientNom,
-      clientEmail: commande.clientEmail,
+      clientEmail: commande.clientEmail ?? "",
       clientAdresse: commande.adresseLivraison,
       lignes,
       montantHT,
@@ -86,7 +87,7 @@ export async function POST(req: Request) {
       montantTVA,
       montantTTC: commande.montantTotal,
       devise: commande.devise,
-      statut: commande.paiementStatut === "paid" ? "payee" : "emise",
+      statut: commande.paiementStatut === PAIEMENT.PAYE ? "payee" : "emise",
     },
   });
 

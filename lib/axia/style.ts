@@ -63,3 +63,15 @@ export function consigneStyle(style: string): string {
     ? `─── STYLE DU MARCHAND ───\nAdapte ta façon de parler à la sienne (cette consigne prime sur le registre par défaut) :\n${style}`
     : "";
 }
+
+/**
+ * Langue de réponse = langue choisie sur la plateforme (cookie "langue"), pas celle
+ * du prompt système (écrit en français). Placée en fin de prompt pour primer.
+ */
+export function consigneLangue(langue: "fr" | "en"): string {
+  return langue === "en"
+    ? `─── LANGUAGE ───
+The platform is set to English. Always answer in clear, natural English, even though these instructions are written in French and even if your tools return French text: translate statuses, labels and tool results. Keep proper names, order numbers, product names and amounts exactly as they are.`
+    : `─── LANGUE ───
+Réponds toujours en français clair, même si l'utilisateur glisse quelques mots d'une autre langue.`;
+}

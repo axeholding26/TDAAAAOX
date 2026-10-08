@@ -3,9 +3,8 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-const EXPIRE_DEFAULT_JOURS = 365;
-
-function expireAt(jours = EXPIRE_DEFAULT_JOURS) {
+// Fichiers : accès à vie (tant que la commande est payée). Licences : durée du produit.
+function expireAt(jours: number) {
   return new Date(Date.now() + jours * 86_400_000);
 }
 
@@ -43,7 +42,7 @@ export async function livrerBundle(commandeId: string, bundleProduitId: string) 
       for (const _f of p.produitFichier.fichiers) {
         const token = randomUUID();
         await prisma.telechargement.create({
-          data: { token, produitId: p.id, commandeId, expireAt: expireAt(), telecharge: false },
+          data: { token, produitId: p.id, commandeId, expireAt: null, telecharge: false },
         });
         tokens.push(token);
       }
@@ -53,7 +52,7 @@ export async function livrerBundle(commandeId: string, bundleProduitId: string) 
       // Produit digital legacy (un seul fichier)
       const token = randomUUID();
       await prisma.telechargement.create({
-        data: { token, produitId: p.id, commandeId, expireAt: expireAt(), telecharge: false },
+        data: { token, produitId: p.id, commandeId, expireAt: null, telecharge: false },
       });
       resultats.push({ produitId: p.id, type: "digital", data: { token } });
 

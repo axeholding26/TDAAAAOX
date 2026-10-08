@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
+import { commandesParTelephone } from "@/lib/compte-acheteur";
 
 // GET /api/clients-acheteurs/commandes?token=xxx&slug=xxx
 export async function GET(req: Request) {
@@ -23,8 +24,13 @@ export async function GET(req: Request) {
 
   if (!compte) return NextResponse.json({ error: "Session expirée" }, { status: 401 });
 
+  // Uniquement l'identifiant prouvé à la connexion : l'email, ou le téléphone (compte sans email).
+  const parIdentifiant = compte.email
+    ? { clientEmail: compte.email }
+    : { id: { in: (await commandesParTelephone(tenant.id, compte.telephone ?? "")).map((c) => c.id) } };
   const commandes = await prisma.commande.findMany({
-    where: { tenantId: tenant.id, clientEmail: compte.email },
+    where: { tenantId: tenant.id, ...parIdentifiant },
+    omit: { livreurToken: true }, // accès livreur au suivi GPS : jamais côté client
     include: {
       lignes: {
         include: {

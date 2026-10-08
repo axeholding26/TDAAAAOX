@@ -145,7 +145,7 @@ export async function provisionerThemeInitial(params: {
   const produits: ProduitPourClone[] = produitsDb.map((p) => ({
     id: p.id,
     nom: p.nom,
-    prixAffiche: formatMontant(prixClient(p.prix, taux), devise),
+    prixAffiche: formatMontant(prixClient(p.prix, taux, p.type), devise),
     image: p.images[0] ?? null,
     description: p.description,
   }));

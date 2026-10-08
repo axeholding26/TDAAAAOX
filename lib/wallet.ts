@@ -249,6 +249,44 @@ export async function crediterWallet(
   return { montantNet, montantCommission };
 }
 
+// ─── Reprendre une vente en ligne remboursée ──────────────────────────────────
+// Modèle Shopify/Stripe : le marchand rend ce qui lui avait été crédité pour cette
+// commande (son solde peut passer en négatif — les retraits sont alors bloqués et
+// la dette se résorbe sur ses ventes suivantes), Axso rend sa commission. NotchPay
+// ne rend pas ses frais : Axso les absorbe. Idempotent par commande.
+export async function reprendreVenteRemboursee(p: { tenantId: string; commandeId: string; numero: string; reference?: string }) {
+  const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
+  await prisma.$transaction(async (tx) => {
+    const wallet = await tx.wallet.findUnique({ where: { tenantId: p.tenantId } });
+    if (!wallet) return;
+    const deja = await tx.walletTransaction.findFirst({ where: { walletId: wallet.id, commandeId: p.commandeId, type: "REMBOURSEMENT" } });
+    if (deja) return;
+
+    const credits = await tx.walletTransaction.findMany({ where: { walletId: wallet.id, commandeId: p.commandeId, type: "CREDIT" } });
+    const net = Math.round(credits.reduce((s, c) => s + c.montant, 0) * 100) / 100;
+    const commission = await tx.commission.findUnique({ where: { commandeId: p.commandeId } });
+    if (net > 0) {
+      // totalRecu avait été augmenté du montant payé par le client (brut), pas du net.
+      await tx.wallet.update({ where: { id: wallet.id }, data: { solde: { decrement: net }, totalRecu: { decrement: commission?.montantCommande ?? net } } });
+      await tx.walletTransaction.create({
+        data: { walletId: wallet.id, type: "REMBOURSEMENT", montant: -net, devise: wallet.devise, description: `Remboursement client #${p.numero}`, reference: p.reference, commandeId: p.commandeId, statut: "completed" },
+      });
+    }
+
+    if (commission && commission.statut !== "remboursee") {
+      await tx.commission.update({ where: { commandeId: p.commandeId }, data: { statut: "remboursee" } });
+      await tx.wallet.update({ where: { id: wallet.id }, data: { totalCommission: { decrement: commission.montantCommission } } });
+      const { montant, devise, description } = enXAF(commission.montantCommission, commission.devise, `Commission rendue · remboursement #${p.numero}`, taux);
+      const platformTenantId = await getOrCreatePlatformTenantId(tx);
+      const plateforme = await tx.wallet.upsert({ where: { tenantId: platformTenantId }, create: { tenantId: platformTenantId, devise }, update: {} });
+      await tx.wallet.update({ where: { id: plateforme.id }, data: { solde: { decrement: montant }, totalRecu: { decrement: montant } } });
+      await tx.walletTransaction.create({
+        data: { walletId: plateforme.id, type: "REMBOURSEMENT", montant: -montant, devise, description, reference: p.reference, commandeId: p.commandeId, statut: "completed" },
+      });
+    }
+  });
+}
+
 // ─── Initier un retrait ───────────────────────────────────────────────────────
 // Sécurité : le débit du solde et sa vérification sont une SEULE opération atomique
 // (updateMany conditionnel) pour éliminer toute race condition entre deux retraits

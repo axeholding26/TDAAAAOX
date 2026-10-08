@@ -113,3 +113,11 @@ export function hrefBoutique(slug: string, lien?: string | null): string | undef
   if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(l)) return l;
   return `/${slug}/${l}`;
 }
+
+// Clé d'un numéro de téléphone : ses 9 derniers chiffres. Même numéro avec ou sans
+// indicatif, espaces ou tirets (+237 6 99 12 34 56 = 699123456 ; +33 6… = 06…).
+// ponytail: 9 chiffres = numéros nationaux de 9 chiffres (CM, SN, FR…) ; un pays à 8 chiffres
+// saisi sans indicatif ne correspondrait pas — passer à une table d'indicatifs si besoin.
+export function cleTelephone(tel?: string | null): string {
+  return (tel ?? "").replace(/\D/g, "").slice(-9);
+}

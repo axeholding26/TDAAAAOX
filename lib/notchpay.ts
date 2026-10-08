@@ -64,6 +64,13 @@ export async function verifierPaiementNotchPay(reference: string): Promise<{ tra
   return { transaction: data.transaction };
 }
 
+// ─── Remboursements (API Refunds : renvoi sur le moyen de paiement d'origine) ──
+
+export async function rembourserPaiementNotchPay(payment: string, reason: string): Promise<{ refund: any }> {
+  const data = await notchpayFetch("/refunds", { method: "POST", withGrant: true, body: { payment, reason } });
+  return { refund: data.refund ?? data };
+}
+
 // ─── Transferts (retraits wallet) ───────────────────────────────────────────
 
 export async function initierTransfertNotchPay(params: {

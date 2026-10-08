@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
 import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
@@ -40,8 +41,11 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
       },
     }),
     prisma.livreur.findMany({
-      where: { actif: true },
-      include: { user: { select: { email: true } } },
+      where: { actif: true, OR: [{ tenantId }, { tenantId: null }] },
+      include: {
+        user: { select: { email: true } },
+        _count: { select: { commandes: { where: { statut: { in: STATUTS_COURSE_ACTIVE } } } } },
+      },
       orderBy: { disponible: "desc" },
     }),
   ]);
@@ -71,7 +75,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
             <p className="text-gray-500 text-xs mt-0.5">{dateRelative(commande.createdAt)}</p>
           </div>
         </div>
-        <StatutCommandeSelector commandeId={commande.id} statutActuel={commande.statut} />
+        <StatutCommandeSelector commandeId={commande.id} statutActuel={commande.statut} payeeEnLigne={commande.methodePaiement === "notchpay" && commande.paiementStatut === "completed"} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -139,7 +143,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{t("Méthode")}</span>
-                <span className="text-[#111111] capitalize">{t(commande.methodePaiement)}</span>
+                <span className="text-[#111111]">{t(({ whatsapp_cod: "À la livraison (WhatsApp)", direct_cod: "À la livraison", notchpay: "En ligne (NotchPay)", en_attente: "En ligne — non finalisé" } as Record<string, string>)[commande.methodePaiement] ?? commande.methodePaiement)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">{t("Statut paiement")}</span>
@@ -148,8 +152,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                   commande.paiementStatut === "pending" ? "bg-yellow-500/20 text-yellow-400" :
                   "bg-red-500/20 text-red-400"
                 }`}>
-                  {commande.paiementStatut === "completed" ? t("Payé") :
-                   commande.paiementStatut === "pending" ? t("En attente") : t(commande.paiementStatut)}
+                  {t(({ completed: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé" } as Record<string, string>)[commande.paiementStatut] ?? commande.paiementStatut)}
                 </span>
               </div>
               {commande.flutterwaveRef && (
@@ -257,6 +260,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 vehicule: l.vehicule,
                 zone: l.zone,
                 disponible: l.disponible,
+                coursesEnCours: l._count.commandes,
               }))}
             />
           </div>

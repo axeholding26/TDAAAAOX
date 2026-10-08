@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { AVEC_EMAIL_REEL } from "@/lib/email";
 import { Resend } from "resend";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
 import { z } from "zod";
@@ -178,7 +179,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           whereClients.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
         }
 
-        const clients = await prisma.client.findMany({ where: whereClients, select: { email: true, nom: true }, take: 50 });
+        const clients = await prisma.client.findMany({ where: { ...whereClients, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 });
         if (!clients.length) return { succes: false, resultat: "Aucun client dans ce segment" };
 
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
@@ -189,7 +190,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
           try {
             await resend.emails.send({
               from: `${tenant?.nomBoutique} <onboarding@resend.dev>`,
-              to: client.email,
+              to: client.email!,
               subject: args.sujet,
               html: args.html.replace(/\{\{nom\}\}/g, client.nom),
             });

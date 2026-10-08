@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
           vehicule: data.vehicule,
           zone: data.zone || data.ville || null,
           disponible: true,
-          actif: true,
+          actif: false, // validé par un admin (/admin/livreurs) avant de pouvoir être assigné
         },
       });
 

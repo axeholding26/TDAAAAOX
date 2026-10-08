@@ -30,6 +30,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     if (!livreur || commande.livreurId !== livreur.id) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
     }
+    // Le code de livraison est la preuve que le client a reçu son colis : le livreur ne doit jamais le lire,
+    // ni directement ni via la page de suivi client (trackingToken → /api/tracking affiche le code).
+    const { codeLivraison, trackingToken, ...reste } = commande;
+    return NextResponse.json({ commande: { ...reste, aCodeLivraison: !!codeLivraison } });
   } else {
     if (commande.tenantId !== tenantId) {
       return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
