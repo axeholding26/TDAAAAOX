@@ -47,7 +47,7 @@ export function retirerAffiliationLocale(portalToken: string): void {
 }
 
 // Extrait un token depuis soit un token brut, soit une URL de portail collée
-// par l'utilisateur (ex: https://axso.vercel.app/affilie/abc123).
+// par l'utilisateur (ex: https://axsoafrica.com/affilie/abc123).
 export function extraireTokenPortail(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;

@@ -129,7 +129,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
             <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Adresse de la boutique")}</label>
             <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5 border transition-colors"
               style={{ borderColor: statutSlug === "pris" ? "#f87171" : statutSlug === "disponible" ? "#34d399" : "#e5e7eb", background: "#fafafa" }}>
-              <span className="text-gray-400 text-sm whitespace-nowrap">axso.vercel.app/</span>
+              <span className="text-gray-400 text-sm whitespace-nowrap">axsoafrica.com/</span>
               <input value={slug} onChange={e => { verifierSlug(slugify(e.target.value)); setSlugTouche(true); }}
                 className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none min-w-0" />
               <div className="flex-shrink-0">

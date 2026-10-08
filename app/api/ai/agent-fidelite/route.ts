@@ -158,7 +158,7 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
           for (const client of clientsVIP) {
             if (!emailReel(client.email)) continue;
             await resend.emails.send({
-              from: `${tenant.nomBoutique} <noreply@axso.app>`,
+              from: `${tenant.nomBoutique} <noreply@axsoafrica.com>`,
               to: client.email,
               subject: `${client.nom}, vous êtes notre client(e) d'exception 👑`,
               html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px">
@@ -228,7 +228,7 @@ ${args.remise_exclusive ? `<div style="background:#f0f7ff;padding:15px;border-ra
         for (const client of clients) {
           if (!emailReel(client.email)) continue;
           await resend.emails.send({
-            from: `${tenant.nomBoutique} <noreply@axso.app>`,
+            from: `${tenant.nomBoutique} <noreply@axsoafrica.com>`,
             to: client.email,
             subject: client.nom ? `${client.nom}, vous nous avez manqué 💙` : "Vous nous manquez 💙",
             html: `<p>Bonjour ${client.nom ?? ""},</p>

@@ -92,7 +92,7 @@ export default async function CookiesPage() {
                 {t("Vous pouvez gérer vos préférences cookies à tout moment depuis les paramètres de votre navigateur. La désactivation des cookies essentiels peut affecter le fonctionnement de la plateforme.")}
               </p>
               <p className="text-[#595959] leading-relaxed text-sm">
-                {t("Pour plus d'informations :")}{" "}<a href="mailto:privacy@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>privacy@axso.app</a>
+                {t("Pour plus d'informations :")}{" "}<a href="mailto:privacy@axsoafrica.com" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>privacy@axsoafrica.com</a>
               </p>
             </div>
           </div>

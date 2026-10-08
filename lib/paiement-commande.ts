@@ -90,7 +90,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   });
 
   const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
 
   if (commande.clientEmail) {
     await envoyerConfirmationCommande({

@@ -179,7 +179,7 @@ export async function notifierLivreurNouvelleCourse(params: {
   tenantId: string;
 }): Promise<{ envoyeAuto: boolean; whatsappUrl: string | null }> {
   if (await quotaCommandesAtteint(params.tenantId)) return { envoyeAuto: false, whatsappUrl: null };
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
   const message = `🛵 *Nouvelle livraison assignée*\n\nCommande *#${params.numero}* — *${params.boutique}*\n📍 ${params.adresse}, ${params.ville}\n\n👉 Ouvrir la course : ${appUrl}/livreur/commande/${params.commandeId}`;
   if (await envoyerMessage(params.telephone, message, params.tenantId)) return { envoyeAuto: true, whatsappUrl: null };
   return { envoyeAuto: false, whatsappUrl: buildWhatsAppLink(params.telephone, message) };

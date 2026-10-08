@@ -229,7 +229,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         for (const client of clients) {
           try {
             await resend.emails.send({
-              from: `${tenant?.nomBoutique} <onboarding@resend.dev>`,
+              from: `${tenant?.nomBoutique} <noreply@axsoafrica.com>`,
               to: client.email!,
               subject: args.sujet,
               html: args.html.replace(/\{\{nom\}\}/g, client.nom),

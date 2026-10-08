@@ -1351,7 +1351,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         let envoyes = 0;
         for (const c of clients) {
           try {
-            await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
+            await resend.emails.send({ from: `${tenant?.nomBoutique} <noreply@axsoafrica.com>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) });
             envoyes++;
           } catch { /* continue */ }
         }
@@ -1427,7 +1427,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const resend = new Resend(resendKey);
         let envoyes = 0;
         for (const c of clients) {
-          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <onboarding@resend.dev>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
+          try { await resend.emails.send({ from: `${tenant?.nomBoutique} <noreply@axsoafrica.com>`, to: c.email!, subject: args.sujet, html: args.html.replace(/\{\{nom\}\}/g, c.nom) }); envoyes++; } catch { /* continue */ }
         }
         return { succes: true, resultat: `✅ ${envoyes}/${clients.length} emails envoyés (segment: ${args.destinataires})` };
       }

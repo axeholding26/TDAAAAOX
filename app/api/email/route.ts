@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
             method: "POST",
             headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
-              from: `${tenant.nomBoutique} <noreply@axso.com>`,
+              from: `${tenant.nomBoutique} <noreply@axsoafrica.com>`,
               to: [client.email!],
               subject: sujet,
               html,

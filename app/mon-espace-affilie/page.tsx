@@ -161,7 +161,7 @@ export default function MonEspaceAffiliePage() {
               <input
                 value={nouveauLien}
                 onChange={(e) => setNouveauLien(e.target.value)}
-                placeholder={t("Coller un lien de portail (ex: https://axso.vercel.app/affilie/xxxx)")}
+                placeholder={t("Coller un lien de portail (ex: https://axsoafrica.com/affilie/xxxx)")}
                 className={inp} style={inpStyle}
               />
               {ajoutErreur && <p className="text-xs text-red-500 mt-1.5">{t(ajoutErreur)}</p>}

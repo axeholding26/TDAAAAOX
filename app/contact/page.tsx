@@ -21,8 +21,8 @@ const CHANNELS = [
   {
     Icon: Mail,
     titre: "Email support",
-    desc: "support@axso.app · Réponse garantie en 24h",
-    lien: "mailto:support@axso.app",
+    desc: "support@axsoafrica.com · Réponse garantie en 24h",
+    lien: "mailto:support@axsoafrica.com",
     label: "Envoyer un email",
     accent: "#7c3aed",
   },
@@ -124,7 +124,7 @@ export default async function ContactPage() {
             <div className="rounded-2xl p-6 border" style={{ background: "rgba(37,211,102,0.04)", borderColor: "rgba(37,211,102,0.15)" }}>
               <h3 className="font-bold text-[#111111] text-sm mb-2">{t("Partenariats & Presse")}</h3>
               <p className="text-[#737373] text-xs leading-relaxed mb-3">{t("Pour les demandes médias, partenariats ou investisseurs :")}</p>
-              <a href="mailto:hello@axso.app" className="text-xs font-bold" style={{ color: "#F5A623" }}>{t("hello@axso.app →")}</a>
+              <a href="mailto:hello@axsoafrica.com" className="text-xs font-bold" style={{ color: "#F5A623" }}>{t("hello@axsoafrica.com →")}</a>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export default async function ContactPage() {
                 .axso-input:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
               `}</style>
 
-              <form className="space-y-4" action="mailto:support@axso.app" method="get">
+              <form className="space-y-4" action="mailto:support@axsoafrica.com" method="get">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Prénom")}</label>

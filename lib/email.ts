@@ -31,7 +31,7 @@ export async function envoyerCodeVerification(email: string, code: string, nom?:
     return;
   }
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Ton code de connexion Axso`,
     html: `
@@ -55,7 +55,7 @@ export async function envoyerCodeAcheteur(email: string, code: string, boutique:
   }
   const nom = boutique.replace(/[&<>"]/g, "");
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Votre code d'accès ${nom}`,
     html: `
@@ -77,7 +77,7 @@ export async function envoyerCodeReinitialisation(email: string, code: string, n
     return;
   }
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Réinitialisation de ton mot de passe Axso`,
     html: `
@@ -105,7 +105,7 @@ export async function envoyerAlerteNouvelleCommande(params: {
   const resend = getResendClient();
   if (!resend) return;
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Nouvelle commande ${params.numeroCommande} — ${params.montantTotal} ${params.devise}`,
     html: `
@@ -141,7 +141,7 @@ export async function envoyerConfirmationCommande(params: {
   if (params.lienAcces) {
     const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
     await resend.emails.send({
-      from: "Axso <noreply@axso.com>",
+      from: "Axso <noreply@axsoafrica.com>",
       to: params.email,
       subject: `Votre achat est disponible — ${params.boutique}`,
       html: `
@@ -166,7 +166,7 @@ export async function envoyerConfirmationCommande(params: {
     .join("\n");
 
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Confirmation commande ${params.numeroCommande} — ${params.boutique}`,
     html: `
@@ -197,7 +197,7 @@ export async function envoyerInvitationEquipe(params: {
     return;
   }
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Tu es invité·e à rejoindre l'équipe de ${params.boutique}`,
     html: `
@@ -228,7 +228,7 @@ export async function envoyerMessageContact(params: {
     return;
   }
   await resend.emails.send({
-    from: "Axso <noreply@axso.com>",
+    from: "Axso <noreply@axsoafrica.com>",
     to: params.emailMarchand,
     replyTo: params.emailClient,
     subject: `Nouveau message via la page Contact — ${params.boutique}`,

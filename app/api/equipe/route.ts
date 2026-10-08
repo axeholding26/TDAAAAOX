@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       : await prisma.membreEquipe.create({ data });
 
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
     const lienInvitation = `${appUrl}/rejoindre-equipe/${inviteToken}`;
 
     await envoyerInvitationEquipe({

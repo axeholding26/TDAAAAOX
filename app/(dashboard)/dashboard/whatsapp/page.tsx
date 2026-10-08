@@ -71,7 +71,8 @@ const TEMPLATES = [
 ];
 
 // ─── Modal Config ─────────────────────────────────────────────────────────────
-const WEBHOOK_URL    = "https://axso.vercel.app/api/webhooks/whatsapp";
+const APP_URL        = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
+const WEBHOOK_URL    = `${APP_URL}/api/webhooks/whatsapp`;
 const WEBHOOK_TOKEN  = process.env.NEXT_PUBLIC_META_WEBHOOK_TOKEN ?? "axso_meta_2026";
 
 function CopyBox({ label, value }: { label: string; value: string }) {
@@ -103,7 +104,7 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
   const [webhookSecret, setWebhookSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [showToken, setShowToken] = useState(false);
-  const genukaWebhookUrl = tenantId ? `https://axso.vercel.app/api/webhooks/genuka/${tenantId}` : "";
+  const genukaWebhookUrl = tenantId ? `${APP_URL}/api/webhooks/genuka/${tenantId}` : "";
 
   async function connecter() {
     if (!form.phone_number_id || !form.access_token) { toast.error(tr("Remplissez tous les champs")); return; }

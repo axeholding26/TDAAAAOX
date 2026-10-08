@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
       }).catch(() => {});
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
     const factureUrl  = await lienBoutique(tenant.slug, `/facture/${trackingToken}`);
     const trackingUrl = await lienBoutique(tenant.slug, `/tracking/${trackingToken}`);
     const adresseLivraison = [localisation?.adresseExacte || client.adresse, client.ville, client.pays].filter(Boolean).join(", ");

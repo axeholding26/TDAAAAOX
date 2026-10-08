@@ -18,7 +18,7 @@ export async function GET() {
     orderBy: { createdAt: "asc" },
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
   const enrichis = membres.map((m) => ({
     ...m,
     lienInvitation: m.statut === "invite" && m.inviteToken ? `${appUrl}/rejoindre-equipe/${m.inviteToken}` : null,

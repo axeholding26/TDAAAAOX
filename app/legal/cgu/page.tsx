@@ -22,7 +22,7 @@ const SECTIONS = [
   },
   {
     titre: "4. Obligations de l'utilisateur",
-    contenu: `L'utilisateur s'engage à : fournir des informations exactes lors de l'inscription, ne pas utiliser la plateforme à des fins illicites, respecter les droits de propriété intellectuelle, ne pas tenter de nuire au fonctionnement de la plateforme, signaler tout incident de sécurité à security@axso.app.`,
+    contenu: `L'utilisateur s'engage à : fournir des informations exactes lors de l'inscription, ne pas utiliser la plateforme à des fins illicites, respecter les droits de propriété intellectuelle, ne pas tenter de nuire au fonctionnement de la plateforme, signaler tout incident de sécurité à security@axsoafrica.com.`,
   },
   {
     titre: "5. Tarification et facturation",
@@ -30,7 +30,7 @@ const SECTIONS = [
   },
   {
     titre: "6. Données personnelles",
-    contenu: `AXSO traite les données personnelles conformément au RGPD et aux législations africaines applicables. Pour toute demande relative à vos données, contactez privacy@axso.app. Consultez notre Politique de Confidentialité pour plus d'informations.`,
+    contenu: `AXSO traite les données personnelles conformément au RGPD et aux législations africaines applicables. Pour toute demande relative à vos données, contactez privacy@axsoafrica.com. Consultez notre Politique de Confidentialité pour plus d'informations.`,
   },
   {
     titre: "7. Limitation de responsabilité",
@@ -68,7 +68,7 @@ export default async function CguPage() {
           <div className="mt-14 rounded-2xl p-6 border"
             style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
             <p className="text-[#666666] text-sm">{t("Des questions sur ces conditions ? Contactez-nous à")}{" "}
-              <a href="mailto:legal@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>legal@axso.app</a>
+              <a href="mailto:legal@axsoafrica.com" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>legal@axsoafrica.com</a>
             </p>
           </div>
         </div>

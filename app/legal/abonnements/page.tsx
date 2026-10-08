@@ -92,7 +92,7 @@ export default async function AbonnementsPage() {
           <div className="mt-14 flex flex-col sm:flex-row gap-4">
             <div className="flex-1 rounded-2xl p-6 border"
               style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <p className="text-[#666666] text-sm">{t("Questions sur votre abonnement ?")}{" "}<a href="mailto:facturation@axso.app" className="font-bold" style={{ color: "#F5A623" }}>facturation@axso.app</a></p>
+              <p className="text-[#666666] text-sm">{t("Questions sur votre abonnement ?")}{" "}<a href="mailto:facturation@axsoafrica.com" className="font-bold" style={{ color: "#F5A623" }}>facturation@axsoafrica.com</a></p>
             </div>
             <Link href="/#tarifs"
               className="flex-1 rounded-2xl p-6 flex items-center justify-center font-bold text-center transition-all hover:scale-[1.02]"

@@ -18,7 +18,7 @@ export async function origineSite(): Promise<string> {
 export async function origineAxso(): Promise<string> {
   const env = process.env.NEXT_PUBLIC_APP_URL;
   if (env && !env.includes("xxxx")) return env.replace(/\/$/, "");
-  try { return await origineSite(); } catch { return "https://axso.vercel.app"; }
+  try { return await origineSite(); } catch { return "https://axsoafrica.com"; }
 }
 
 /**

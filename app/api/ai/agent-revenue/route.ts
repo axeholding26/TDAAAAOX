@@ -239,7 +239,7 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
       for (const client of clients) {
         if (!emailReel(client.email)) continue;
         await resend.emails.send({
-          from: `${tenant.nomBoutique} <noreply@axso.app>`,
+          from: `${tenant.nomBoutique} <noreply@axsoafrica.com>`,
           to: client.email,
           subject: client.nom ? `${client.nom}, on pense à toi 🌟` : "Une offre spéciale pour toi 🌟",
           html: `<p>Bonjour ${client.nom ?? "cher(e) client(e)"},</p>

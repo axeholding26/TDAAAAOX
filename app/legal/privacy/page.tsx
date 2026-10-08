@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const SECTIONS = [
   {
     titre: "1. Responsable du traitement",
-    contenu: `AXSO Technologies SAS, dont le siège social est situé à Dakar, Sénégal, est responsable du traitement de vos données personnelles. Contact : privacy@axso.app`,
+    contenu: `AXSO Technologies SAS, dont le siège social est situé à Dakar, Sénégal, est responsable du traitement de vos données personnelles. Contact : privacy@axsoafrica.com`,
   },
   {
     titre: "2. Données collectées",
@@ -35,7 +35,7 @@ const SECTIONS = [
   },
   {
     titre: "7. Vos droits",
-    contenu: `Conformément au RGPD, vous disposez des droits suivants : accès, rectification, effacement, portabilité, opposition et limitation du traitement. Pour exercer ces droits, contactez privacy@axso.app. Vous pouvez également adresser une réclamation à l'autorité de protection des données compétente.`,
+    contenu: `Conformément au RGPD, vous disposez des droits suivants : accès, rectification, effacement, portabilité, opposition et limitation du traitement. Pour exercer ces droits, contactez privacy@axsoafrica.com. Vous pouvez également adresser une réclamation à l'autorité de protection des données compétente.`,
   },
   {
     titre: "8. Cookies et traceurs",
@@ -69,7 +69,7 @@ export default async function PrivacyPage() {
           <div className="mt-14 rounded-2xl p-6 border"
             style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
             <p className="text-[#666666] text-sm">{t("Pour toute question relative à vos données personnelles :")}{" "}
-              <a href="mailto:privacy@axso.app" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>privacy@axso.app</a>
+              <a href="mailto:privacy@axsoafrica.com" className="font-bold hover:opacity-80" style={{ color: "#F5A623" }}>privacy@axsoafrica.com</a>
             </p>
           </div>
         </div>
