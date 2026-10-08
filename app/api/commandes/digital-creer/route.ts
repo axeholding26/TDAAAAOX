@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande } from "@/lib/utils";
 import { prixClient, reductionPromo } from "@/lib/pricing";
 import { fraisLivraisonServeur } from "@/lib/livraison";
+import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
     const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
     const reduction = reductionPromo(promo, sousTotal);
-    const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, zone, montantCommande: sousTotal - reduction }) : 0;
+    const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, pays: codePays(client?.pays), zone, montantCommande: sousTotal - reduction }) : 0;
     const total = sousTotal - reduction + montantLivraison;
     const devise = tenant.devise;
 

@@ -1,4 +1,5 @@
 // Agent Universel AXIA — tous les outils fusionnés + connecteurs MCP
+import { calculerOptionsLivraison, paysDepuisTexte, decrireRegle } from "@/lib/livraison";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -602,7 +603,7 @@ const OUTILS: OutilDef[] = [
     parameters: {
       type: "object" as const,
       properties: {
-        zone: { type: "string", description: "Pays ou zone de destination (ex: Cameroun, UEMOA)" },
+        zone: { type: "string", description: "Pays de destination (ex: Cameroun, Nigeria) ou quartier/ville du pays de la boutique (ex: Akwa)" },
         poids: { type: "number", description: "Poids total en kg (optionnel)" },
         montantCommande: { type: "number", description: "Montant total de la commande" },
       },
@@ -1228,30 +1229,25 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "calculer_frais_livraison": {
-        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
+        const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, pays: true } });
         const dev = tenant?.devise ?? "XAF";
-        const regles = await (prisma as any).reglePort.findMany({ where: { tenantId, actif: true }, orderBy: { frais: "asc" } }).catch(() => []);
-        if (!regles.length) return { succes: true, resultat: "Aucune règle tarifaire configurée. Accède à Livraison → Règles tarifaires pour en créer." };
+        // Même calcul que le checkout (lib/livraison.ts) : « zone » peut être un pays ou un quartier du pays de la boutique.
         const poids = args.poids ?? 0;
         const montantCommande = args.montantCommande ?? 0;
         const zone = args.zone ?? "";
-        const matching = regles.filter((r: any) => {
-          const zm = r.zone.toLowerCase().includes(zone.toLowerCase()) || zone.toLowerCase().includes(r.zone.toLowerCase());
-          const pm = poids >= r.poidsMin && (r.poidsMax === null || poids <= r.poidsMax);
-          const mm = (r.montantMin === null || montantCommande >= r.montantMin);
-          return zm && pm && mm;
-        });
-        if (!matching.length) return { succes: true, resultat: `Aucune règle pour la zone "${zone}". Configure une règle internationale ou spécifique.` };
-        const options = matching.map((r: any) => `• ${r.nom} (${r.transporteur ?? "Standard"}) : ${r.gratuit ? "Gratuit" : `${r.frais + Math.max(0, poids - r.poidsMin) * r.fraisKg} ${dev}`} — ${r.delai}`).join("\n");
-        return { succes: true, resultat: `Frais de livraison pour ${zone} (${poids}kg, ${montantCommande} ${dev}):\n${options}` };
+        const paysZone = paysDepuisTexte(zone);
+        const pays = paysZone?.length === 1 ? paysZone[0] : (paysZone ? "" : tenant?.pays ?? "");
+        const options = await calculerOptionsLivraison({ tenantId, pays, zone: paysZone ? "" : zone, poids, montantCommande });
+        const lignes = options.map((o) => `• ${o.nom} (${o.transporteur ?? "Standard"}) : ${o.gratuit ? "Gratuit" : `${o.frais} ${dev}`} — ${o.delai}`).join("\n");
+        return { succes: true, resultat: `Frais de livraison pour ${zone} (${poids}kg, ${montantCommande} ${dev}):\n${lignes}` };
       }
 
       case "lister_regles_livraison": {
-        const regles = await (prisma as any).reglePort.findMany({ where: { tenantId }, orderBy: { zone: "asc" } }).catch(() => []);
+        const regles = await (prisma as any).reglePort.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" } }).catch(() => []);
         if (!regles.length) return { succes: true, resultat: "Aucune règle configurée. Va dans Livraison → Règles tarifaires." };
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true } });
         const dev = tenant?.devise ?? "XAF";
-        const lines = regles.map((r: any) => `• ${r.nom} | Zone: ${r.zone} | ${r.gratuit ? "Gratuit" : `${r.frais} ${dev} (+${r.fraisKg}/kg)`} | ${r.delai} | ${r.actif ? "Actif" : "Inactif"}`).join("\n");
+        const lines = regles.map((r: any) => `• ${r.nom} | Zone: ${decrireRegle(r)} | ${r.gratuit ? "Gratuit" : `${r.frais} ${dev} (+${r.fraisKg}/kg)`} | ${r.delai} | ${r.actif ? "Actif" : "Inactif"}`).join("\n");
         return { succes: true, resultat: `${regles.length} règle(s) de livraison:\n${lines}` };
       }
 

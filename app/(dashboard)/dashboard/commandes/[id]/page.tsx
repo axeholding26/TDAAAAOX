@@ -9,6 +9,8 @@ import { formatMontant, dateRelative } from "@/lib/utils";
 import { StatutCommandeSelector } from "@/components/dashboard/StatutCommandeSelector";
 import { AssignerLivreur } from "@/components/dashboard/AssignerLivreur";
 import { getT } from "@/lib/i18n/serveur";
+import { qrSvg } from "@/lib/qr";
+import { lienBoutique } from "@/lib/origine-site";
 
 const STATUT_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
   en_attente:    { label: "En attente",      icon: Clock,        color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
@@ -55,6 +57,11 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
   const statutInfo = STATUT_CONFIG[commande.statut] || STATUT_CONFIG.en_attente;
   const StatutIcon = statutInfo.icon;
 
+
+  // Lien livreur : QR affiché à l'écran du marchand pendant la course seulement,
+  // à scanner par le livreur au départ (jamais imprimé ni glissé dans le colis).
+  const lienLivreur = (commande as any).livreurToken ? await lienBoutique((commande as any).tenant?.slug ?? "", `/livreur/${(commande as any).livreurToken}`) : null;
+  const qrLivreur = lienLivreur && STATUTS_COURSE_ACTIVE.includes(commande.statut) ? await qrSvg(lienLivreur) : null;
   return (
     <div className="max-w-4xl space-y-6">
       {/* Header */}
@@ -316,9 +323,17 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 </a>
 
                 {/* Lien livreur */}
-                {(commande as any).livreurToken && (() => {
-                  const slug = (commande as any).tenant?.slug ?? "";
-                  const livreurUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/${slug}/livreur/${(commande as any).livreurToken}`;
+                {qrLivreur && (
+                  <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white">
+                    <div className="w-24 h-24 flex-shrink-0" dangerouslySetInnerHTML={{ __html: qrLivreur }} />
+                    <div className="text-[12px] text-gray-500 leading-relaxed">
+                      <p className="font-semibold text-[#111111] text-[13px] mb-1">{t("QR du livreur")}</p>
+                      {t("À faire scanner par le livreur depuis cet écran, au départ. Ne l'imprime pas et ne le mets pas dans le colis. Le lien s'arrête quand la commande est livrée ou annulée, et change si tu changes de livreur.")}
+                    </div>
+                  </div>
+                )}
+                {lienLivreur && STATUTS_COURSE_ACTIVE.includes(commande.statut) && (() => {
+                  const livreurUrl = lienLivreur;
                   const msg = encodeURIComponent(`🚚 *Livraison — ${(commande as any).tenant?.nomBoutique}*\n\nBonjour ! Vous êtes assigné à la livraison de la commande #${commande.numero}.\n\n👤 Client : ${commande.clientNom}\n📞 Tél : ${commande.clientTelephone}\n📍 Adresse : ${(commande as any).adresseExacte || commande.adresseLivraison}, ${commande.ville}\n${(commande as any).mapsLienClient ? `\n🗺️ Google Maps : ${(commande as any).mapsLienClient}\n` : ""}\n📡 Activez votre tracking GPS :\n${livreurUrl}\n\nMerci !`);
                   return (
                     <a href={`https://wa.me/?text=${msg}`}

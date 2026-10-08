@@ -1,6 +1,7 @@
 // Confirmation d'un paiement de commande storefront — appelé par le webhook NotchPay
 // et, en secours, par la page de confirmation si le webhook n'est pas encore arrivé.
 // Idempotent : ne fait rien si la commande est déjà marquée payée.
+import { lienBoutique } from "./origine-site";
 import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
 import { traiterPaiementDigital, enregistrerConversionAffiliation, capturerCommissionAffiliation, TYPES_LIVRAISON_DIGITALE } from "./affiliation";
@@ -93,7 +94,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
 
   if (commande.clientEmail) {
     await envoyerConfirmationCommande({
-      lienAcces: hasDigital ? `${appUrl}/${commande.tenant.slug}/confirmation/${commande.id}` : undefined,
+      lienAcces: hasDigital ? await lienBoutique(commande.tenant.slug, `/confirmation/${commande.id}`) : undefined,
       email: commande.clientEmail,
       nom: commande.clientNom,
       numeroCommande: commande.numero,

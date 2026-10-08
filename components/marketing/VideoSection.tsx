@@ -1,7 +1,7 @@
 "use client";
 // v4 — lucide icons only, no emoji
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Lock, Rocket, Zap, Bot, Globe } from "lucide-react";
+import { Lock, Rocket, Zap, Bot, Globe, Play, Pause } from "lucide-react";
 import { CartParallax } from "./CartParallax";
 import { useT } from "@/components/I18nProvider";
 
@@ -20,6 +20,9 @@ export function VideoSection() {
   const [visible, setVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [lancee, setLancee] = useState(false);
+  const [enLecture, setEnLecture] = useState(false);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -159,14 +162,30 @@ export function VideoSection() {
             </div>
 
             {/* Zone vidéo */}
-            <div className="relative bg-gray-950" style={{ aspectRatio: "16/9" }}>
+            <div className="group relative bg-gray-950" style={{ aspectRatio: "16/9" }}>
               {hasVideo && (
                 <video
+                  ref={videoRef}
                   className="w-full h-full object-cover"
                   src={HIGHFIELD_VIDEO_URL}
                   poster={HIGHFIELD_POSTER_URL || undefined}
-                  controls playsInline preload="metadata"
+                  controls={lancee} playsInline preload="metadata"
+                  onPlay={() => { setLancee(true); setEnLecture(true); }}
+                  onPause={() => setEnLecture(false)}
+                  onEnded={() => setEnLecture(false)}
                 />
+              )}
+              {/* Play/pause central — visible à l'arrêt, au survol pendant la lecture (comme YouTube). */}
+              {hasVideo && (
+                <button type="button" aria-label={t(enLecture ? "Mettre en pause" : "Lancer la vidéo")}
+                  onClick={() => { const v = videoRef.current; if (!v) return; if (v.paused) v.play(); else v.pause(); }}
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 ${enLecture ? "opacity-0 group-hover:opacity-100 focus-visible:opacity-100" : "opacity-100"}`}
+                  style={{ background: "linear-gradient(135deg, #F5A623, #e8950f)", boxShadow: "0 0 50px rgba(245,166,35,0.55)" }}>
+                  {!lancee && <span className="absolute inset-0 rounded-full bg-[#F5A623]/40 animate-ping" />}
+                  {enLecture
+                    ? <Pause size={32} className="relative text-white" fill="white" />
+                    : <Play size={34} className="relative text-white ml-1" fill="white" />}
+                </button>
               )}
               {hasIframe && !hasVideo && (
                 <iframe
@@ -240,7 +259,7 @@ export function VideoSection() {
                 <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center text-[#F5A623]"><Bot size={16} /></div>
                 <div>
                   <p className="text-xs font-semibold text-gray-700">{t("Agent Onboarding")}</p>
-                  <p className="text-[10px] text-gray-400">{t("Empire créé en 58 secondes")}</p>
+                  <p className="text-[10px] text-gray-400">{t("Boutique créée en 3 minutes")}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">

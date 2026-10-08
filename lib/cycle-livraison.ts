@@ -3,7 +3,8 @@
 // les agents IA et les actions autorisées depuis la bulle AXIA — mêmes contrôles
 // (transitions, code de remise, périmètre des livreurs, quota) et mêmes effets
 // (WhatsApp, notifications, commission, analytics) quel que soit l'acteur.
-import { randomInt } from "crypto";
+import { randomBytes, randomInt } from "crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { TRANSITIONS_VALIDES, livraisonStatutPour } from "@/lib/commandes";
 import { capturerCommissionAffiliation } from "@/lib/affiliation";
@@ -213,9 +214,14 @@ export async function assignerLivreurCommande(p: {
     if (!livreur) return { ok: false, status: 404, error: "Livreur introuvable, inactif ou rattaché à une autre boutique" };
   }
 
+  // Nouveau livreur (ou retrait) : nouveau lien livreur, l'ancien cesse de fonctionner.
+  const changement = (livreur?.id ?? null) !== commande.livreurId;
   await prisma.commande.update({
     where: { id: commande.id },
-    data: { livreurId: livreur?.id ?? null, livreurNom: livreur?.nom ?? null, livreurTelephone: livreur?.telephone ?? null },
+    data: {
+      livreurId: livreur?.id ?? null, livreurNom: livreur?.nom ?? null, livreurTelephone: livreur?.telephone ?? null,
+      ...(changement && commande.livreurToken ? { livreurToken: randomBytes(20).toString("hex"), livreurPosition: Prisma.DbNull } : {}),
+    },
   });
 
   let whatsappLivreurUrl: string | null = null;

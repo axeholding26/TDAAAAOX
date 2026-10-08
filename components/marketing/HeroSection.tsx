@@ -56,10 +56,7 @@ export function HeroSection() {
         <div className="text-center lg:text-left">
           <h1 style={entree(0)} className="text-[34px] sm:text-[50px] xl:text-[60px] font-extrabold leading-[1.02] tracking-tight text-[#111111]">
             {tr("Ta boutique en ligne,")}<br />
-            <span className="relative inline-block">
-              <span className="relative z-10">{tr("prête à vendre")}</span>
-              <span aria-hidden className="absolute left-0 right-0 bottom-[0.08em] h-[0.32em] rounded-sm" style={{ background: "#F5A623" }} />
-            </span>{" "}
+            <span style={{ color: "#F5A623" }}>{tr("prête à vendre")}</span>{" "}
             {tr("dès aujourd'hui.")}
           </h1>
 

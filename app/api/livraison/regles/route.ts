@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { PAYS_AFRICAINS } from "@/lib/devise-convert";
+
+// Pays d'une règle : codes ISO2 africains uniquement, sans doublon ; [] = tous les pays.
+const nettoyerPays = (v: unknown): string[] =>
+  Array.isArray(v) ? [...new Set(v.map(String).map((c) => c.toUpperCase()).filter((c) => PAYS_AFRICAINS.includes(c)))] : [];
 
 export async function GET() {
   const session = await auth();
@@ -9,7 +14,7 @@ export async function GET() {
 
   const regles = await prisma.reglePort.findMany({
     where: { tenantId },
-    orderBy: [{ zone: "asc" }, { poidsMin: "asc" }],
+    orderBy: [{ createdAt: "desc" }],
   });
   return NextResponse.json({ regles });
 }
@@ -20,9 +25,9 @@ export async function POST(req: Request) {
   const tenantId = (session.user as any)?.tenantId;
 
   const body = await req.json();
-  const { nom, zone, poidsMin, poidsMax, montantMin, montantMax, frais, fraisKg, delai, transporteur, gratuit, modeLivraison } = body;
+  const { nom, pays, zone, poidsMin, poidsMax, montantMin, montantMax, frais, fraisKg, delai, transporteur, gratuit, modeLivraison } = body;
 
-  if (!nom || !zone || frais === undefined) {
+  if (!nom || frais === undefined) {
     return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
   }
 
@@ -30,7 +35,8 @@ export async function POST(req: Request) {
     data: {
       tenantId,
       nom,
-      zone,
+      pays: nettoyerPays(pays),
+      zone: typeof zone === "string" ? zone.trim() : "",
       poidsMin: poidsMin ?? 0,
       poidsMax: poidsMax ?? null,
       montantMin: montantMin ?? null,
@@ -59,6 +65,8 @@ export async function PATCH(req: Request) {
   const existing = await prisma.reglePort.findFirst({ where: { id, tenantId } });
   if (!existing) return NextResponse.json({ error: "Règle introuvable" }, { status: 404 });
 
+  if ("pays" in data) data.pays = nettoyerPays(data.pays);
+  if ("zone" in data) data.zone = typeof data.zone === "string" ? data.zone.trim() : "";
   const regle = await prisma.reglePort.update({ where: { id }, data });
   return NextResponse.json({ regle });
 }

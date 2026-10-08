@@ -1,4 +1,5 @@
 "use client";
+import { exempleTelephone } from "@/lib/devise-convert";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Truck, Plus, Phone, MapPin, Loader2, Globe } from "lucide-react";
@@ -41,6 +42,8 @@ export function LivreursPanel() {
   const [form, setForm] = useState({
     nom: "", email: "", telephone: "", password: "", vehicule: "moto", zone: "",
   });
+  const [pays, setPays] = useState("");
+  useEffect(() => { fetch("/api/tenants/moi").then(r => r.json()).then(d => setPays(d?.tenant?.pays ?? "")).catch(() => {}); }, []);
 
   async function charger() {
     setLoading(true);
@@ -161,7 +164,7 @@ export function LivreursPanel() {
                 <input
                   required value={form.telephone}
                   onChange={(e) => setForm({ ...form, telephone: e.target.value })}
-                  placeholder="+221 77 000 00 00"
+                  placeholder={exempleTelephone(pays)}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 />
               </div>

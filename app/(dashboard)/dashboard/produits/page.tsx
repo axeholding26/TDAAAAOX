@@ -12,6 +12,7 @@ import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicato
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { ProduitsTutorial } from "@/components/dashboard/tutorials/ProduitsTutorial";
 import { getT } from "@/lib/i18n/serveur";
+import { ImportProduitsExcel } from "@/components/dashboard/ImportProduitsExcel";
 
 const FILTER_TABS = [
   { key: "all",      label: "Tous"         },
@@ -94,10 +95,13 @@ export default async function ProduitsPage({
           </div>
           <p className="text-[12px] sm:text-[12.5px] text-[#AAAAAA]">{t("Gérez votre catalogue et suivez vos ventes")}</p>
         </div>
-        <Link href="/dashboard/produits/nouveau"
-          className="flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-3 sm:py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap w-full sm:w-auto flex-shrink-0">
-          <Plus size={14} />{" "}{t("Nouveau produit")}
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto flex-shrink-0">
+          <ImportProduitsExcel />
+          <Link href="/dashboard/produits/nouveau"
+            className="flex items-center justify-center gap-1.5 text-[12.5px] sm:text-[12px] font-semibold bg-[#111111] text-white rounded-2xl px-4 py-3 sm:py-2 hover:bg-[#2a2a2a] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm whitespace-nowrap w-full sm:w-auto flex-shrink-0">
+            <Plus size={14} />{" "}{t("Nouveau produit")}
+          </Link>
+        </div>
       </div>
 
       {/* ── Stat cards — défilement horizontal sur mobile, grille au-delà ── */}

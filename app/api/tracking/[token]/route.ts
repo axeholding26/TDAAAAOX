@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
+
+// Lien livreur (livreurToken) : valable seulement pendant la course. Livrée ou
+// annulée, il ne donne plus ni l'adresse du client ni l'envoi de position.
+const COURSE_TERMINEE = { error: "Cette course est terminée : ce lien n'est plus actif." };
 
 // GET — client/marchand poll la position du livreur
 export async function GET(_: Request, { params }: { params: Promise<{ token: string }> }) {
@@ -21,6 +26,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
 
   // Ne pas exposer livreurToken au client (uniquement trackingToken)
   const isLivreurToken = commande.livreurToken === token;
+  if (isLivreurToken && !STATUTS_COURSE_ACTIVE.includes(commande.statut)) return NextResponse.json(COURSE_TERMINEE, { status: 410 });
 
   return NextResponse.json({
     commande: {
@@ -43,41 +49,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
       where: { livreurToken: token },
     });
     if (!commande) return NextResponse.json({ error: "Token livreur invalide" }, { status: 404 });
+    if (!STATUTS_COURSE_ACTIVE.includes(commande.statut)) return NextResponse.json(COURSE_TERMINEE, { status: 410 });
 
+    // Identité affichée au client : jamais réécrite par le lien. Livreur assigné (compte) :
+    // elle vient de l'assignation. Livreur externe : sa première déclaration fait foi.
+    const externe = !commande.livreurId;
     await prisma.commande.update({
       where: { id: commande.id },
       data: {
         livreurPosition: { lat, lng, updatedAt: new Date().toISOString() },
-        ...(nom ? { livreurNom: nom } : {}),
-        ...(telephone ? { livreurTelephone: telephone } : {}),
-      },
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Erreur" }, { status: 500 });
-  }
-}
-
-// PATCH — le livreur s'auto-enregistre (nom/téléphone) via son lien GPS.
-// Volontairement limité à ces deux champs : changer statut/livraisonStatut
-// doit toujours passer par /api/commandes/[id]/statut, seul endroit qui
-// applique TRANSITIONS_VALIDES et les effets de bord (commission,
-// analytics, notification WhatsApp).
-export async function PATCH(req: Request, { params }: { params: Promise<{ token: string }> }) {
-  try {
-    const { token } = await params;
-    const body = await req.json();
-    const commande = await prisma.commande.findFirst({
-      where: { livreurToken: token },
-    });
-    if (!commande) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
-
-    await prisma.commande.update({
-      where: { id: commande.id },
-      data: {
-        livreurNom: body.livreurNom ?? undefined,
-        livreurTelephone: body.livreurTelephone ?? undefined,
+        ...(externe && nom && !commande.livreurNom ? { livreurNom: String(nom).slice(0, 60) } : {}),
+        ...(externe && telephone && !commande.livreurTelephone ? { livreurTelephone: String(telephone).slice(0, 30) } : {}),
       },
     });
 

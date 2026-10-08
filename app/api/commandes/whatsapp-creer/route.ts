@@ -1,11 +1,13 @@
 // Créer une commande physique (paiement à la livraison) + générer lien WhatsApp + tokens tracking/facture.
 // Le dropshipping et le digital se paient en ligne (digital-creer) : refusés ici.
+import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande, formatMontant } from "@/lib/utils";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande, emailReel } from "@/lib/email";
 import { fraisLivraisonServeur } from "@/lib/livraison";
+import { codePays } from "@/lib/devise-convert";
 import { enregistrerConversionAffiliation } from "@/lib/affiliation";
 import { randomBytes } from "crypto";
 import { prixClient, reductionPromo } from "@/lib/pricing";
@@ -76,9 +78,9 @@ export async function POST(req: NextRequest) {
       : null;
 
     // Frais de livraison calculés côté serveur — jamais confiance en un
-    // montant envoyé par le client (le seul champ client-fourni utilisé
-    // ici est `zone`, un texte utilisé pour matcher une ReglePort active).
-    const montantLivraison = await fraisLivraisonServeur({ tenantId, zone, montantCommande: total });
+    // montant envoyé par le client (seuls le pays et le quartier choisis
+    // servent à trouver la ReglePort applicable — voir lib/livraison.ts).
+    const montantLivraison = await fraisLivraisonServeur({ tenantId, pays: codePays(client?.pays), zone, montantCommande: total });
     const montantTotalAvecLivraison = total + montantLivraison;
 
     // Création + sortie du stock dans la même transaction : une rupture annule tout.
@@ -138,8 +140,8 @@ export async function POST(req: NextRequest) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
-    const factureUrl  = `${appUrl}/${slug}/facture/${trackingToken}`;
-    const trackingUrl = `${appUrl}/${slug}/tracking/${trackingToken}`;
+    const factureUrl  = await lienBoutique(tenant.slug, `/facture/${trackingToken}`);
+    const trackingUrl = await lienBoutique(tenant.slug, `/tracking/${trackingToken}`);
     const adresseLivraison = [localisation?.adresseExacte || client.adresse, client.ville, client.pays].filter(Boolean).join(", ");
 
     const lignesTexte = items.map((i) =>

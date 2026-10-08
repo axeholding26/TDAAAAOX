@@ -61,8 +61,8 @@ export default function PortailAffiliePage() {
   }
 
   const { affilie, programme, palier, tenant, commissions, paiements, produits, periode: p } = data;
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const lienPartage = `${appUrl}/${tenant.slug}?ref=${affilie.codeParrainage}`;
+  // Adresse principale de la boutique (domaine personnalisé s'il est actif), fournie par l'API.
+  const lienPartage = `${tenant.lien}?ref=${affilie.codeParrainage}`;
 
   const textes = [
     { id: "whatsapp", label: "WhatsApp", Icon: MessageCircle, couleur: "#25D366",
@@ -187,7 +187,7 @@ export default function PortailAffiliePage() {
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {produits.map((prod: any) => {
-                const lienProduit = `${appUrl}/${tenant.slug}/produits/${prod.id}?ref=${affilie.codeParrainage}`;
+                const lienProduit = `${tenant.lien}/produits/${prod.id}?ref=${affilie.codeParrainage}`;
                 const idCopie = `produit-${prod.id}`;
                 return (
                   <div key={prod.id} style={{ display: "flex", alignItems: "center", gap: 10, border: "1px solid #F0F0F0", borderRadius: 14, padding: 12 }}>

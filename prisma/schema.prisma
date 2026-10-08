@@ -13,6 +13,7 @@ model Tenant {
   id                  String   @id @default(cuid())
   slug                String   @unique
   customDomain        String?  @unique
+  domaineActifAt      DateTime? // domaine personnalisé confirmé actif par Vercel (propriété + DNS) : il devient l'adresse principale de la boutique
   nomBoutique         String
   description         String?
   categorie           String
@@ -1093,7 +1094,8 @@ model ReglePort {
   id           String   @id @default(cuid())
   tenantId     String
   nom          String
-  zone         String   // ex: "Cameroun", "UEMOA", "International"
+  pays         String[] @default([])  // codes ISO2 desservis ; vide = tous les pays
+  zone         String   @default("")  // quartier/ville précis dans ces pays ; vide = tout le pays
   poidsMin     Float    @default(0)   // kg
   poidsMax     Float?                 // null = illimité
   montantMin   Float?                 // montant commande min pour activer

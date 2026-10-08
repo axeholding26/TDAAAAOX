@@ -2,6 +2,7 @@
 // Soumets cette URL dans TikTok for Business → Catalogue → Data Source
 // URL : https://ta-boutique.axso.africa/api/feed/tiktok?slug=ta-boutique
 
+import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     });
     if (!tenant) return new NextResponse("Boutique introuvable", { status: 404 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://axso.africa";
+    const boutiqueUrl = await lienBoutique(slug);
 
     // Format TikTok Catalog CSV
     const header = [
@@ -37,7 +38,7 @@ export async function GET(req: NextRequest) {
       csvEscape(p.stock > 0 ? "in stock" : "out of stock"),
       csvEscape("new"),
       csvEscape(`${p.prix} ${tenant.devise}`),
-      csvEscape(`${appUrl}/${slug}/produits/${p.slug}`),
+      csvEscape(`${boutiqueUrl}/produits/${p.slug}`),
       csvEscape(p.images[0] || ""),
       csvEscape(tenant.nomBoutique),
       csvEscape(p.categorie || ""),

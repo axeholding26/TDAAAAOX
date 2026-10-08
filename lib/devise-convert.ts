@@ -87,6 +87,42 @@ export const PAYS_OPTIONS = PAYS_AFRICAINS
   .map((code) => ({ code, nom: new Intl.DisplayNames(["fr"], { type: "region" }).of(code) ?? code }))
   .sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
 
+/** Exemple de numéro mobile au format international, pour chacun des 54 pays (placeholders des champs téléphone). */
+const EXEMPLES_TELEPHONE: Record<string, string> = {
+  DZ: "+213 5 51 23 45 67", AO: "+244 923 123 456", BJ: "+229 01 90 01 12 34", BW: "+267 71 123 456",
+  BF: "+226 70 12 34 56", BI: "+257 79 56 12 34", CV: "+238 991 12 34", CM: "+237 6 71 23 45 67",
+  CF: "+236 70 01 23 45", KM: "+269 321 23 45", CG: "+242 06 123 4567", CD: "+243 991 234 567",
+  CI: "+225 01 23 45 67 89", DJ: "+253 77 83 10 01", EG: "+20 100 123 4567", ER: "+291 7 123 456",
+  SZ: "+268 7612 3456", ET: "+251 91 123 4567", GA: "+241 06 03 12 34", GM: "+220 301 2345",
+  GH: "+233 23 123 4567", GN: "+224 601 12 34 56", GW: "+245 955 012 345", GQ: "+240 222 123 456",
+  KE: "+254 712 123 456", LS: "+266 5012 3456", LR: "+231 77 012 3456", LY: "+218 91 234 5678",
+  MG: "+261 32 12 345 67", MW: "+265 991 23 45 67", ML: "+223 65 01 23 45", MA: "+212 6 50 12 34 56",
+  MR: "+222 22 12 34 56", MU: "+230 5251 2345", MZ: "+258 82 123 4567", NA: "+264 81 123 4567",
+  NE: "+227 93 12 34 56", NG: "+234 802 123 4567", UG: "+256 712 345 678", RW: "+250 720 123 456",
+  ST: "+239 981 2345", SN: "+221 77 123 45 67", SC: "+248 2 510 123", SL: "+232 25 123456",
+  SO: "+252 7 1123456", SD: "+249 91 123 1234", SS: "+211 977 123 456", TZ: "+255 621 234 567",
+  TD: "+235 63 01 23 45", TG: "+228 90 11 23 45", TN: "+216 20 123 456", ZM: "+260 95 5123456",
+  ZW: "+263 71 234 5678", ZA: "+27 71 123 4567",
+};
+
+/** Code ISO2 d'un pays africain à partir de son code ou de son nom français (formulaires vitrine) ; null sinon. */
+export function codePays(pays?: string | null): string | null {
+  if (!pays) return null;
+  const code = pays.length === 2 ? pays.toUpperCase() : PAYS_OPTIONS.find((p) => p.nom === pays)?.code;
+  return code && PAYS_AFRICAINS.includes(code) ? code : null;
+}
+
+/** Placeholder d'un champ téléphone selon le pays (code ISO2 ou nom français) ; Cameroun par défaut. */
+export function exempleTelephone(pays?: string | null): string {
+  return EXEMPLES_TELEPHONE[codePays(pays) ?? "CM"];
+}
+
+/** Groupes proposés pour cocher plusieurs pays d'un coup (règles de livraison). */
+export const GROUPES_PAYS: Record<string, string[]> = {
+  "UEMOA (XOF)": ["BJ", "BF", "CI", "GW", "ML", "NE", "SN", "TG"],
+  "CEMAC (XAF)": ["CM", "CF", "TD", "CG", "GQ", "GA"],
+};
+
 /** La devise d'une boutique découle TOUJOURS de son pays ; `repli` seulement pour un pays hors carte. */
 export function deviseDuPays(pays: string | null | undefined, repli: string): string {
   return (pays && PAYS_DEVISES[pays]) || repli;

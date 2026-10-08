@@ -1,3 +1,4 @@
+import { lienBoutique } from "@/lib/origine-site";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TYPES_PRODUIT_DIGITAL } from "@/lib/affiliation";
@@ -144,7 +145,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
     },
     programme: affilie.programme,
     palier,
-    tenant: affilie.tenant,
+    tenant: { ...affilie.tenant, lien: await lienBoutique(affilie.tenant.slug) },
     commissions: affilie.commissions,
     produits,
     paiements,

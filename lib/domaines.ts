@@ -82,3 +82,26 @@ export async function slugPourDomaine(hote: string): Promise<string | null> {
   cache.set(domaine, { slug: t?.slug ?? null, expire: Date.now() + 60_000 }); // ponytail: 60 s de cache par instance ; invalidation active si besoin
   return t?.slug ?? null;
 }
+
+// ── Adresse principale (modèle Shopify) : slug → domaine personnalisé actif ────
+// Un domaine ne devient principal qu'une fois confirmé actif par Vercel
+// (Tenant.domaineActifAt, mis à jour par /api/domaine). Sert aux liens générés
+// (QR, emails, WhatsApp, factures) et à la redirection de l'adresse AXSO (proxy.ts).
+const cacheSlug = new Map<string, { domaine: string | null; expire: number }>();
+
+export async function domainePrincipal(slug: string): Promise<string | null> {
+  const c = cacheSlug.get(slug);
+  if (c && c.expire > Date.now()) return c.domaine;
+  const t = await prisma.tenant.findFirst({
+    where: { slug, statut: "active", customDomain: { not: null }, domaineActifAt: { not: null } },
+    select: { customDomain: true },
+  }).catch(() => null);
+  cacheSlug.set(slug, { domaine: t?.customDomain ?? null, expire: Date.now() + 60_000 });
+  return t?.customDomain ?? null;
+}
+
+/** À appeler après tout changement de domaine (sur cette instance ; les autres expirent en 60 s). */
+export function oublierDomaine(slug: string, domaine?: string | null) {
+  cacheSlug.delete(slug);
+  if (domaine) cache.delete(domaine);
+}

@@ -4,6 +4,7 @@
 // (ConnecteurConfig type "whatsapp_genuka") — prioritaire sur le token
 // plateforme partagé GENUKA_PROXY_TOKEN, lui-même utilisé si la boutique n'a
 // rien connecté (comportement inchangé pour les boutiques existantes).
+import { lienBoutique } from "./origine-site";
 import { hasGenuka, envoyerMessageGenuka } from "./genuka";
 import { prisma } from "./prisma";
 import { quotaCommandesAtteint } from "./abonnement";
@@ -127,10 +128,7 @@ export async function notifierClientWhatsApp(params: {
     return { envoyeAuto: false, whatsappUrl: null };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
-  // Suivi live (position GPS, étapes) — consolidé sur /tracking/[token], le lien
-  // /suivi/[orderId] legacy (sans géoloc, id de commande exposé) est retiré.
-  const lien = params.trackingToken ? `${appUrl}/${params.slug}/tracking/${params.trackingToken}` : `${appUrl}/${params.slug}`;
+  const lien = await lienBoutique(params.slug, params.trackingToken ? `/tracking/${params.trackingToken}` : "");
   const message = buildWhatsAppMessage({ statut: params.statut, numero: params.numero, boutique: params.boutique, lien, code: params.codeLivraison });
   if (!message) return { envoyeAuto: false, whatsappUrl: null };
 
@@ -159,8 +157,7 @@ export async function notifierLivreurAssigneWhatsApp(params: {
     return { envoyeAuto: false, whatsappUrl: null };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axso.vercel.app";
-  const lien = params.trackingToken ? `${appUrl}/${params.slug}/tracking/${params.trackingToken}` : `${appUrl}/${params.slug}`;
+  const lien = await lienBoutique(params.slug, params.trackingToken ? `/tracking/${params.trackingToken}` : "");
   const message = `🏍️ *Un livreur a été assigné à votre commande !*\n\nCommande *#${params.numero}* — *${params.boutique}*\n\n👤 Livreur : ${params.livreurNom}\n\n🔍 Suivre sa position en temps réel : ${lien}`;
 
   const envoyeAuto = await envoyerMessage(params.telephone, message, params.tenantId);

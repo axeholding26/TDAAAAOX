@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
 import { PAYS_DEVISES, PAYS_OPTIONS } from "@/lib/ai-agent";
+import { exempleTelephone } from "@/lib/devise-convert";
 import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { useT } from "@/components/I18nProvider";
@@ -636,8 +637,8 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, onConfirm, onThemeChang
 }
 
 // ─── Formulaire compte ────────────────────────────────────────────────────────
-function CompteForm({ onSubmit, loading, erreur }: {
-  onSubmit:(d:CompteData)=>void; loading:boolean; erreur?:string;
+function CompteForm({ onSubmit, loading, erreur, pays }: {
+  onSubmit:(d:CompteData)=>void; loading:boolean; erreur?:string; pays?:string;
 }) {
   const tr = useT();
   const { register, handleSubmit, formState:{errors} } = useForm<CompteData>({ resolver:zodResolver(schemaCompte) });
@@ -646,7 +647,7 @@ function CompteForm({ onSubmit, loading, erreur }: {
     { key:"name"     as const, Icon:User,  label:"Ton prénom",    type:"text",     ph:"Aminata" },
     { key:"email"    as const, Icon:Mail,  label:"Adresse email", type:"email",    ph:"aminata@example.com" },
     { key:"password" as const, Icon:Lock,  label:"Mot de passe",  type:"password", ph:"Minimum 6 caractères" },
-    { key:"whatsapp" as const, Icon:Phone, label:"WhatsApp",      type:"tel",      ph:"+221 77 000 00 00" },
+    { key:"whatsapp" as const, Icon:Phone, label:"WhatsApp",      type:"tel",      ph:exempleTelephone(pays) },
   ];
   return (
     <div className="msg-in" style={{ paddingLeft:47 }}>
@@ -1149,7 +1150,7 @@ export default function InscriptionPage() {
                   </span>
                 </AxiaMsg>
                 {phase==="q-compte" && (
-                  <CompteForm onSubmit={launchCreation} loading={loading} erreur={erreur||undefined}/>
+                  <CompteForm onSubmit={launchCreation} loading={loading} erreur={erreur||undefined} pays={paysCode}/>
                 )}
               </>
             )}

@@ -1,4 +1,5 @@
 "use client";
+import { exempleTelephone } from "@/lib/devise-convert";
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -59,8 +60,8 @@ function palierDe(planType: string): Palier {
 const CHAMPS_INFOS = [
   { key: "nomBoutique", label: "Nom de la boutique *", placeholder: "Mode Aminata",           Icon: Store },
   { key: "email",       label: "Email professionnel",  placeholder: "contact@maboutique.com", type: "email", Icon: Mail },
-  { key: "whatsapp",    label: "WhatsApp Business",    placeholder: "+221 77 000 00 00",      Icon: MessageCircle },
-  { key: "telephone",   label: "Téléphone",            placeholder: "+221 33 000 00 00",      Icon: Phone },
+  { key: "whatsapp",    label: "WhatsApp Business",    placeholder: "",      Icon: MessageCircle },
+  { key: "telephone",   label: "Téléphone",            placeholder: "",      Icon: Phone },
   { key: "adresse",     label: "Adresse physique",     placeholder: "Rue 10, Dakar",           Icon: MapPin },
 ];
 
@@ -373,7 +374,7 @@ export default function BoutiquePage() {
                 {CHAMPS_INFOS.map(f => (
                   <div key={f.key}>
                     <label className={labelCls}><f.Icon size={11} /> {tr(f.label)}</label>
-                    <input type={f.type || "text"} value={(form as any)[f.key]} placeholder={f.placeholder}
+                    <input type={f.type || "text"} value={(form as any)[f.key]} placeholder={f.key === "whatsapp" || f.key === "telephone" ? exempleTelephone(form.pays) : f.placeholder}
                       onChange={e => set(f.key, e.target.value)} className={inputCls} />
                   </div>
                 ))}

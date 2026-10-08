@@ -5,10 +5,12 @@ import { Truck, Plus, Trash2, Save, Package, CheckCircle, Clock, MapPin, Bus, La
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { FulfillmentKanban } from "@/components/dashboard/logistique/FulfillmentKanban";
 import { useT } from "@/components/I18nProvider";
+import { PAYS_OPTIONS, GROUPES_PAYS } from "@/lib/devise-convert";
 
 interface ReglePort {
   id: string;
   nom: string;
+  pays: string[];
   zone: string;
   poidsMin: number;
   poidsMax: number | null;
@@ -51,7 +53,7 @@ const STATUT_COLORS: Record<string, string> = {
   retour: "#ef4444",
 };
 
-const ZONES_SUGGEST = ["Cameroun", "Côte d'Ivoire", "Sénégal", "UEMOA", "CEMAC", "Afrique", "International"];
+const NOM_PAYS = Object.fromEntries(PAYS_OPTIONS.map((p) => [p.code, p.nom]));
 
 export function LivraisonPanel() {
   const tx = useT();
@@ -63,11 +65,12 @@ export function LivraisonPanel() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
-    nom: "", zone: "", poidsMin: 0, poidsMax: "", montantMin: "",
+    nom: "", pays: [] as string[], zone: "", poidsMin: 0, poidsMax: "", montantMin: "",
     frais: 0, fraisKg: 0, delai: "3-5 jours", transporteur: "", gratuit: false,
     modeLivraison: "livreur_local",
   });
   const [zonesConfigurees, setZonesConfigurees] = useState<string[]>([]);
+  const [paysBoutique, setPaysBoutique] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -79,10 +82,16 @@ export function LivraisonPanel() {
       setCommandes(data?.commandes ?? []);
       const zones = tenantData?.tenant?.parametresLivraison?.zones ?? [];
       if (zones.length > 0) setZonesConfigurees(zones);
+      const paysT = tenantData?.tenant?.pays ?? "";
+      setPaysBoutique(paysT);
+      if (paysT) setForm((f) => ({ ...f, pays: [paysT] }));
     }).finally(() => setLoading(false));
   }, []);
 
-  const zonesSuggestions = zonesConfigurees.length > 0 ? zonesConfigurees : ZONES_SUGGEST;
+  const ajouterPays = (codes: string[]) => setForm((f) => ({ ...f, pays: [...new Set([...f.pays, ...codes])] }));
+  const resumePays = (codes: string[]) => !codes.length ? tx("Tous les pays")
+    : codes.length > 3 ? `${codes.slice(0, 3).map((c) => tx(NOM_PAYS[c] ?? c)).join(", ")} +${codes.length - 3}`
+    : codes.map((c) => tx(NOM_PAYS[c] ?? c)).join(", ");
 
   async function saveRegle() {
     setSaving(true);
@@ -100,7 +109,7 @@ export function LivraisonPanel() {
     const data = await res.json();
     if (data.regle) {
       setRegles((prev) => [data.regle, ...prev]);
-      setForm({ nom: "", zone: "", poidsMin: 0, poidsMax: "", montantMin: "", frais: 0, fraisKg: 0, delai: "3-5 jours", transporteur: "", gratuit: false, modeLivraison: "livreur_local" });
+      setForm({ nom: "", pays: paysBoutique ? [paysBoutique] : [], zone: "", poidsMin: 0, poidsMax: "", montantMin: "", frais: 0, fraisKg: 0, delai: "3-5 jours", transporteur: "", gratuit: false, modeLivraison: "livreur_local" });
       setShowForm(false);
     }
     setSaving(false);
@@ -192,13 +201,35 @@ export function LivraisonPanel() {
                   <label className="block text-[11px] text-[#888] mb-1">{tx("Nom de la règle")}</label>
                   <input className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder={tx("ex: Standard Cameroun")} value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Pays desservis")}</label>
+                  <div className="flex flex-wrap items-center gap-1.5 border border-[#E5E5E5] rounded-lg px-2 py-1.5 min-h-[38px]">
+                    {form.pays.length === 0 && <span className="text-[12px] text-[#888] px-1">{tx("Tous les pays")}</span>}
+                    {form.pays.map((c) => (
+                      <span key={c} className="inline-flex items-center gap-1 text-[12px] bg-[#FFF8EC] text-[#111] rounded-full pl-2.5 pr-1 py-0.5">
+                        {tx(NOM_PAYS[c] ?? c)}
+                        <button type="button" aria-label={tx("Retirer")} onClick={() => setForm((f) => ({ ...f, pays: f.pays.filter((x) => x !== c) }))}
+                          className="w-4 h-4 rounded-full hover:bg-[#F5A623]/20 text-[11px] leading-none">×</button>
+                      </span>
+                    ))}
+                    <select value="" onChange={(e) => e.target.value && ajouterPays([e.target.value])}
+                      className="text-[12px] text-[#888] bg-transparent outline-none flex-1 min-w-[140px]">
+                      <option value="">{tx("+ Ajouter un pays…")}</option>
+                      {PAYS_OPTIONS.filter((p) => !form.pays.includes(p.code)).map((p) => <option key={p.code} value={p.code}>{tx(p.nom)}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-1.5">
+                    {Object.entries(GROUPES_PAYS).map(([nom, codes]) => (
+                      <button key={nom} type="button" onClick={() => ajouterPays(codes)} className="text-[11px] px-2.5 py-1 rounded-full border border-[#E5E5E5] text-[#444] hover:border-[#F5A623]">+ {nom}</button>
+                    ))}
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, pays: [] }))} className="text-[11px] px-2.5 py-1 rounded-full border border-[#E5E5E5] text-[#444] hover:border-[#F5A623]">{tx("Tous les pays")}</button>
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-[11px] text-[#888] mb-1">{tx("Zone")}</label>
-                  <input list="zones-list" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder={tx("Cameroun")} value={form.zone} onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))} />
-                  <datalist id="zones-list">{zonesSuggestions.map((z) => <option key={z} value={z} />)}</datalist>
-                  {zonesConfigurees.length === 0 && (
-                    <p className="text-[10px] text-[#AAA] mt-1">{tx("Configurez vos zones/quartiers dans Ma boutique → Livraison pour un sélecteur précis au checkout.")}</p>
-                  )}
+                  <label className="block text-[11px] text-[#888] mb-1">{tx("Quartier / ville (facultatif)")}</label>
+                  <input list="zones-list" className="w-full border border-[#E5E5E5] rounded-lg px-3 py-2 text-[13px]" placeholder={tx("Vide = tout le pays")} value={form.zone} onChange={(e) => setForm((f) => ({ ...f, zone: e.target.value }))} />
+                  <datalist id="zones-list">{zonesConfigurees.map((z) => <option key={z} value={z} />)}</datalist>
+                  <p className="text-[10px] text-[#AAA] mt-1">{tx("Un tarif de quartier remplace le tarif du pays pour ce quartier. Les quartiers proposés aux clients se règlent dans Ma boutique → Livraison.")}</p>
                 </div>
                 <div>
                   <label className="block text-[11px] text-[#888] mb-1">{tx("Mode de livraison")}</label>
@@ -269,7 +300,7 @@ export function LivraisonPanel() {
                           <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#EEF2FF] text-[#4338CA]"><Bus size={9} />{" "}{tx("Agence")}</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#888]">{tx(r.zone)} · {tx(r.delai)} {r.transporteur ? `· ${r.transporteur}` : ""}</p>
+                      <p className="text-[11px] text-[#888]">{resumePays(r.pays)}{r.zone ? ` · ${r.zone}` : ""} · {tx(r.delai)} {r.transporteur ? `· ${r.transporteur}` : ""}</p>
                     </div>
                   </div>
                   <div className="text-right shrink-0">

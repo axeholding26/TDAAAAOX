@@ -8,6 +8,7 @@ export default function LivreurPage() {
   const t = useT();
   const params = useParams<{ token: string }>();
   const [commande, setCommande] = useState<any>(null);
+  const [erreur, setErreur] = useState<string | null>(null); // lien terminé ou invalide
   const [status, setStatus] = useState<"idle"|"tracking"|"error"|"done">("idle");
   const [nom, setNom] = useState("");
   const [telephone, setTelephone] = useState("");
@@ -19,7 +20,7 @@ export default function LivreurPage() {
   useEffect(() => {
     fetch(`/api/tracking/${params.token}`)
       .then(r => r.json())
-      .then(d => { if (d.commande) setCommande(d.commande); });
+      .then(d => { if (d.commande) setCommande(d.commande); else setErreur(d.error || "Lien de livraison invalide."); });
     return () => {
       if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -28,10 +29,17 @@ export default function LivreurPage() {
   }, [params.token]);
 
   async function sendPos(lat: number, lng: number) {
-    await fetch(`/api/tracking/${params.token}`, {
+    const r = await fetch(`/api/tracking/${params.token}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lat, lng, nom: nom || undefined, telephone: telephone || undefined }),
     });
+    // Course terminée pendant le partage : on arrête d'envoyer la position.
+    if (r.status === 410) {
+      if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setErreur((await r.json()).error);
+      return;
+    }
     setLastPos({ lat, lng });
     setUpdateCount(c => c + 1);
   }
@@ -87,6 +95,12 @@ export default function LivreurPage() {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setStatus("done");
   }
+
+  if (erreur) return (
+    <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"system-ui,sans-serif", color:"white", display:"flex", alignItems:"center", justifyContent:"center", padding:24, textAlign:"center" }}>
+      <p style={{ fontSize:15, color:"#DDD", maxWidth:320 }}>{t(erreur)}</p>
+    </div>
+  );
 
   return (
     <div style={{ minHeight:"100vh", background:"#0A0A0A", fontFamily:"system-ui,sans-serif", color:"white", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24 }}>

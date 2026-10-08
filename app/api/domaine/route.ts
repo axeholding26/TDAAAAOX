@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireNiveau } from "@/lib/permissions-server";
-import { normaliserDomaine, vercelConfigure, ajouterDomaineVercel, retirerDomaineVercel, etatDomaine } from "@/lib/domaines";
+import { normaliserDomaine, vercelConfigure, ajouterDomaineVercel, retirerDomaineVercel, etatDomaine, oublierDomaine } from "@/lib/domaines";
 
 async function contexte(niveau: "lecture" | "ecriture") {
   const session = await auth();
@@ -19,11 +19,17 @@ const serveurNonConfigure = () => NextResponse.json({ error: "Les domaines perso
 // GET ?verifier=1 → état chez Vercel (+ relance de la vérification)
 export async function GET(req: NextRequest) {
   const c = await contexte("lecture"); if (c.erreur) return c.erreur;
-  const t = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true, slug: true, statut: true } });
+  const t = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true, slug: true, statut: true, domaineActifAt: true } });
   const base = { slug: t?.slug, publiee: t?.statut === "active", configure: vercelConfigure() };
   if (!t?.customDomain) return NextResponse.json({ ...base, domaine: null });
   if (!vercelConfigure()) return NextResponse.json({ ...base, domaine: t.customDomain, etat: null });
-  return NextResponse.json({ ...base, domaine: t.customDomain, etat: await etatDomaine(t.customDomain, req.nextUrl.searchParams.get("verifier") === "1") });
+  const etat = await etatDomaine(t.customDomain, req.nextUrl.searchParams.get("verifier") === "1");
+  // Actif chez Vercel (propriété + DNS) ⇒ adresse principale de la boutique ; plus actif ⇒ retour à l'adresse AXSO.
+  if (etat.actif !== !!t.domaineActifAt) {
+    await prisma.tenant.update({ where: { id: c.tenantId }, data: { domaineActifAt: etat.actif ? new Date() : null } });
+    oublierDomaine(t.slug, t.customDomain);
+  }
+  return NextResponse.json({ ...base, domaine: t.customDomain, etat });
 }
 
 // POST { domaine } → validé, unique, ajouté au projet Vercel, enregistré
@@ -36,8 +42,10 @@ export async function POST(req: NextRequest) {
   if (pris) return NextResponse.json({ error: "Ce domaine est déjà utilisé par une autre boutique." }, { status: 409 });
   const ajout = await ajouterDomaineVercel(domaine);
   if (!ajout.ok) return NextResponse.json({ error: ajout.erreur }, { status: 400 });
-  const ancien = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true } });
-  await prisma.tenant.update({ where: { id: c.tenantId }, data: { customDomain: domaine } });
+  const ancien = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true, slug: true } });
+  // Nouveau domaine : il ne devient principal qu'une fois vérifié actif.
+  await prisma.tenant.update({ where: { id: c.tenantId }, data: { customDomain: domaine, domaineActifAt: null } });
+  if (ancien) oublierDomaine(ancien.slug, ancien.customDomain);
   if (ancien?.customDomain && ancien.customDomain !== domaine) await retirerDomaineVercel(ancien.customDomain);
   return NextResponse.json({ domaine, etat: await etatDomaine(domaine) });
 }
@@ -45,8 +53,9 @@ export async function POST(req: NextRequest) {
 // DELETE → retire le domaine (boutique à nouveau servie uniquement sur l'adresse AXSO)
 export async function DELETE() {
   const c = await contexte("ecriture"); if (c.erreur) return c.erreur;
-  const t = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true } });
+  const t = await prisma.tenant.findUnique({ where: { id: c.tenantId }, select: { customDomain: true, slug: true } });
   if (t?.customDomain && vercelConfigure()) await retirerDomaineVercel(t.customDomain);
-  await prisma.tenant.update({ where: { id: c.tenantId }, data: { customDomain: null } });
+  await prisma.tenant.update({ where: { id: c.tenantId }, data: { customDomain: null, domaineActifAt: null } });
+  if (t) oublierDomaine(t.slug, t.customDomain);
   return NextResponse.json({ ok: true });
 }

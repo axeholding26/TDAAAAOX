@@ -85,6 +85,8 @@ export async function POST(request: Request) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ message: "Données invalides", erreurs: err.issues }, { status: 400 });
     }
+    // Code-barres unique par boutique (@@unique([tenantId, codeBarres])).
+    if ((err as any)?.code === "P2002") return NextResponse.json({ message: "Ce code-barres est déjà utilisé par un autre produit de ta boutique", error: "Ce code-barres est déjà utilisé par un autre produit de ta boutique" }, { status: 409 });
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

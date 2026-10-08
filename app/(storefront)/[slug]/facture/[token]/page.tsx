@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Check, Package, Printer } from "lucide-react";
 import { getT } from "@/lib/i18n/serveur";
+import { qrSvg } from "@/lib/qr";
+import { lienBoutique } from "@/lib/origine-site";
 
 export default async function FacturePage({ params }: { params: Promise<{ slug: string; token: string }> }) {
   const t = await getT();
@@ -21,6 +23,18 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
   const date = new Date(commande.createdAt).toLocaleDateString(t.loc, { year: "numeric", month: "long", day: "numeric" });
   const total = commande.montantTotal;
   const devise = commande.devise || "XAF";
+
+  // QR de suivi : seulement tant que la commande est en cours, et jamais à l'impression —
+  // une facture imprimée glissée dans le colis donnerait au livreur la page de suivi
+  // du client, qui affiche le code de remise.
+  const enCours = !["livree", "annulee"].includes(commande.statut) && !!commande.trackingToken;
+  const lienSuivi = enCours ? await lienBoutique(tenant.slug, `/tracking/${commande.trackingToken}`) : null;
+  const qrSuivi = lienSuivi ? await qrSvg(lienSuivi) : null;
+
+  // Valeurs de remplissage (« À préciser », « — », « Digital ») : jamais affichées.
+  const reel = (v: string | null | undefined) => (v && !["À préciser", "—", "Digital", "Local"].includes(v.trim()) ? v : null);
+  const adresse = reel(commande.adresseExacte) || reel(commande.adresseLivraison);
+  const villePays = [reel(commande.ville), reel(commande.pays)].filter(Boolean).join(", ");
 
   function fmt(n: number) {
     return n.toLocaleString(t.loc) + " " + devise;
@@ -41,6 +55,11 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         }
       `}</style>
 
+      {/* Un seul bloc racine : la règle globale de la vitrine (globals.css,
+          « body > .axs-store > div ») donne à chaque bloc de premier niveau une
+          hauteur d'écran — la barre d'impression devenait un calque flouté
+          posé sur toute la facture. */}
+      <div className="facture-racine">
       <div className="page">
         {/* Header gradient */}
         <div style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 50%, #111 100%)", padding: "48px 48px 40px", position: "relative", overflow: "hidden" }}>
@@ -48,7 +67,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
           <div style={{ position:"absolute", top:-60, right:-60, width:200, height:200, borderRadius:"50%", background:"rgba(245,166,35,0.08)" }}/>
           <div style={{ position:"absolute", bottom:-40, left:-20, width:140, height:140, borderRadius:"50%", background:"rgba(245,166,35,0.05)" }}/>
 
-          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", position:"relative", zIndex:1 }}>
+          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", flexWrap:"wrap", gap:24, position:"relative", zIndex:1 }}>
             <div>
               {tenant.logoUrl ? (
                 <img src={tenant.logoUrl} alt={tenant.nomBoutique} style={{ height:56, objectFit:"contain", marginBottom:16, filter:"brightness(0) invert(1)" }} />
@@ -66,11 +85,11 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
             </div>
             <div style={{ textAlign:"right" }}>
               <div style={{ color:"rgba(245,166,35,0.7)", fontSize:11, fontWeight:600, letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:8 }}>{t("Facture")}</div>
-              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:36, fontWeight:700, color:"white", letterSpacing:"-1px" }}>#{commande.numero}</div>
+              <div style={{ fontFamily:"'Playfair Display',serif", fontSize:"clamp(24px, 6vw, 36px)", fontWeight:700, color:"white", letterSpacing:"-1px", whiteSpace:"nowrap" }}>#{commande.numero}</div>
               <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:8 }}>{date}</div>
               <div style={{ marginTop:16, display:"inline-block", background:"rgba(245,166,35,0.15)", border:"1px solid rgba(245,166,35,0.3)", borderRadius:100, padding:"6px 16px" }}>
                 <span style={{ color:"#F5A623", fontSize:11, fontWeight:600, display:"inline-flex", alignItems:"center", gap:4 }}>
-                  {commande.paiementStatut === "completed" ? <><Check size={10} />{" "}{t("Payée")}</> : t("En attente")}
+                  {commande.paiementStatut === "completed" ? <><Check size={10} />{" "}{t("Payée")}</> : commande.paiementStatut === "refunded" ? t("Remboursée") : t("En attente")}
                 </span>
               </div>
             </div>
@@ -87,10 +106,10 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
             <div style={{ fontSize:17, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{t(commande.clientNom)}</div>
             {commande.clientEmail && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{t(commande.clientEmail)}</div>}
             {commande.clientTelephone && <div style={{ fontSize:13, color:"#666", marginBottom:2 }}>{t(commande.clientTelephone)}</div>}
-            {(commande.adresseExacte || commande.adresseLivraison) && (
-              <div style={{ fontSize:13, color:"#666", marginTop:4 }}>{t(commande.adresseExacte) || t(commande.adresseLivraison)}</div>
+            {adresse && (
+              <div style={{ fontSize:13, color:"#666", marginTop:4 }}>{t(adresse)}</div>
             )}
-            {commande.ville && <div style={{ fontSize:13, color:"#666" }}>{t(commande.ville)}{commande.pays ? `, ${commande.pays}` : ""}</div>}
+            {villePays && <div style={{ fontSize:13, color:"#666" }}>{villePays}</div>}
           </div>
           <div style={{ textAlign:"right" }}>
             <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>{t("Détails")}</div>
@@ -161,6 +180,16 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
 
+        {qrSuivi && (
+          <div className="no-print" style={{ margin:"0 48px 36px", padding:20, border:"1px solid #EDEAE4", borderRadius:16, display:"flex", alignItems:"center", gap:20, flexWrap:"wrap" }}>
+            <div style={{ width:112, height:112, flexShrink:0 }} dangerouslySetInnerHTML={{ __html: qrSuivi }} />
+            <div style={{ minWidth:200, flex:1 }}>
+              <div style={{ fontSize:15, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{t("Suivre ma commande")}</div>
+              <div style={{ fontSize:13, color:"#666", lineHeight:1.6 }}>{t("Scanne ce code avec ton téléphone pour voir où en est ta livraison.")}</div>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <div style={{ padding:"28px 48px", background:"#F8F7F4", borderTop:"1px solid #EDEAE4", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div>
@@ -186,6 +215,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
           style={{ background:"linear-gradient(135deg,#1A1A1A,#333)", color:"white", border:"none", padding:"14px 36px", borderRadius:100, fontSize:14, fontWeight:600, cursor:"pointer", display:"inline-flex", alignItems:"center", gap:8, boxShadow:"0 4px 20px rgba(0,0,0,0.2)" }}>
           <Printer size={16} />{" "}{t("Télécharger / Imprimer la facture")}
         </button>
+      </div>
       </div>
       <script dangerouslySetInnerHTML={{ __html: `
         document.getElementById('ax-btn-print')?.addEventListener('click', () => window.print());

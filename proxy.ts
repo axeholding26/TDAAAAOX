@@ -2,7 +2,7 @@
 // Routage par sous-domaine ou domaine custom
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { slugPourDomaine } from "@/lib/domaines";
+import { domainePrincipal, slugPourDomaine } from "@/lib/domaines";
 import { auth } from "@/lib/auth";
 import { requireNiveau } from "@/lib/permissions-server";
 import { moduleApi } from "@/lib/permissions-api";
@@ -69,11 +69,27 @@ export async function proxy(request: NextRequest) {
     const slug = estSousDomaine ? hostname.replace(`.${DOMAINE_APP}`, "") : await slugPourDomaine(hostname);
     if (!slug) return new NextResponse("Aucune boutique n'est reliée à ce domaine.", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
 
+    // Sous-domaine AXSO d'une boutique dont le domaine personnalisé est actif : même redirection.
+    if (estSousDomaine && (request.method === "GET" || request.method === "HEAD") && request.cookies.get("axso_apercu")?.value !== "1") {
+      const domaine = await domainePrincipal(slug);
+      const reste = pathname === `/${slug}` || pathname.startsWith(`/${slug}/`) ? pathname.slice(slug.length + 1) : pathname;
+      if (domaine) return NextResponse.redirect(`https://${domaine}${reste || "/"}${request.nextUrl.search}`, 308);
+    }
+
     // Les liens internes de la vitrine sont en /{slug}/… : déjà préfixés, on les sert tels quels.
     if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) return NextResponse.next();
     const url = request.nextUrl.clone();
     url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
+  }
+
+  // Adresse AXSO (/slug/…) d'une boutique dont le domaine personnalisé est actif :
+  // redirection permanente vers ce domaine (modèle Shopify) — anciens liens et QR
+  // continuent de marcher. Jamais pendant l'aperçu du Constructeur (cadre même origine).
+  const premier = pathname.split("/")[1];
+  if (premier && (request.method === "GET" || request.method === "HEAD") && request.cookies.get("axso_apercu")?.value !== "1") {
+    const domaine = await domainePrincipal(premier);
+    if (domaine) return NextResponse.redirect(`https://${domaine}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
   }
 
   // Expose pathname to server components via REQUEST header

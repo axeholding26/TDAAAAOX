@@ -29,8 +29,8 @@ const CHANNELS = [
   {
     Icon: Phone,
     titre: "WhatsApp Business",
-    desc: "+221 77 000 00 00 · Lun–Ven 8h–20h",
-    lien: "https://wa.me/221770000000",
+    desc: "+237 6 98 67 73 55 · Lun–Ven 8h–20h",
+    lien: "https://wa.me/237698677355",
     label: "Envoyer un message",
     accent: "#25D366",
   },

@@ -16,6 +16,7 @@ import { trackPixelEvent } from "./MetaPixel";
 import { trackTikTokEvent } from "./TikTokPixel";
 import { trackSnapchatEvent } from "./SnapchatPixel";
 import { useT } from "@/components/I18nProvider";
+import { PAYS_OPTIONS, exempleTelephone, codePays } from "@/lib/devise-convert";
 
 export interface ParametresCommande {
   demanderEmail?: boolean;
@@ -30,25 +31,8 @@ interface Props {
   paysBoutique?: string; // code ISO2 — pays présélectionné dans le formulaire
 }
 
-/** Nom du pays (clé de PAYS_CONFIG) de la boutique, sinon Sénégal. */
-const paysParDefaut = (code?: string) => Object.keys(PAYS_CONFIG).find((n) => PAYS_CONFIG[n].code === code) ?? "Sénégal";
-
-// ─── Config opérateurs ───────────────────────────────────────────────────────
-const PAYS_CONFIG: Record<string, { code: string; operateurs: { id: string; label: string; logo: string }[] }> = {
-  "Sénégal":       { code: "SN", operateurs: [{ id: "WAVE", label: "Wave", logo: "🌊" }, { id: "ORANGE", label: "Orange Money", logo: "🟠" }, { id: "FREE", label: "Free Money", logo: "🟣" }] },
-  "Côte d'Ivoire": { code: "CI", operateurs: [{ id: "MTN", label: "MTN MoMo", logo: "🟡" }, { id: "ORANGE", label: "Orange Money", logo: "🟠" }, { id: "WAVE", label: "Wave", logo: "🌊" }, { id: "MOOV", label: "Moov Money", logo: "🔵" }] },
-  "Cameroun":      { code: "CM", operateurs: [{ id: "MTN", label: "MTN MoMo", logo: "🟡" }, { id: "ORANGE", label: "Orange Money", logo: "🟠" }] },
-  "Mali":          { code: "ML", operateurs: [{ id: "ORANGE", label: "Orange Money", logo: "🟠" }, { id: "MOOV", label: "Moov Money", logo: "🔵" }] },
-  "Burkina Faso":  { code: "BF", operateurs: [{ id: "ORANGE", label: "Orange Money", logo: "🟠" }, { id: "MOOV", label: "Moov Money", logo: "🔵" }] },
-  "Guinée":        { code: "GN", operateurs: [{ id: "MTN", label: "MTN MoMo", logo: "🟡" }, { id: "ORANGE", label: "Orange Money", logo: "🟠" }] },
-  "Togo":          { code: "TG", operateurs: [{ id: "MOOV", label: "Moov Money", logo: "🔵" }, { id: "TMONEY", label: "T-Money", logo: "💙" }] },
-  "Bénin":         { code: "BJ", operateurs: [{ id: "MTN", label: "MTN MoMo", logo: "🟡" }, { id: "MOOV", label: "Moov Money", logo: "🔵" }] },
-  "Nigeria":       { code: "NG", operateurs: [{ id: "MTN", label: "MTN MoMo", logo: "🟡" }, { id: "AIRTEL", label: "Airtel Money", logo: "🔴" }] },
-  "Ghana":         { code: "GH", operateurs: [{ id: "MTN", label: "MTN MoMo GH", logo: "🟡" }, { id: "VODAFONE", label: "Vodafone Cash", logo: "🔴" }] },
-  "Kenya":         { code: "KE", operateurs: [{ id: "MPESA", label: "M-Pesa", logo: "🟢" }] },
-  "Maroc":         { code: "MA", operateurs: [{ id: "MAROC_TELECOM", label: "Maroc Telecom", logo: "🟦" }] },
-};
-const PAYS_AFRIQUE = Object.keys(PAYS_CONFIG).concat(["Niger","Mauritanie","Tunisie","Algérie","Gabon","Congo","RDC"]);
+/** Nom du pays de la boutique (présélectionné), sinon Sénégal. */
+const paysParDefaut = (code?: string) => PAYS_OPTIONS.find((p) => p.code === code)?.nom ?? "Sénégal";
 
 // ─── Guide GPS par navigateur ─────────────────────────────────────────────────
 function GpsStep({ label, steps }: { label: string; steps: string[] }) {
@@ -144,6 +128,9 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [zone, setZone] = useState("");
   const [fraisLivraison, setFraisLivraison] = useState<number | null>(null);
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  // Les quartiers du marchand ne concernent que les livraisons dans le pays de la boutique.
+  const zonesActives = codePays(form.pays) === paysBoutique ? zones : [];
+  const zoneChoisie = zonesActives.length ? zone : "";
 
   // Code d'affiliation depuis l'URL (?ref=CODE) ou localStorage — même
   // mécanisme que CheckoutDigital, manquait ici (COD/WhatsApp n'attribuait
@@ -165,21 +152,22 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       .catch(() => {});
   }, [slug]);
 
-  // Frais de livraison en direct dès qu'une zone est choisie (estimation
-  // affichée seulement — le montant réellement facturé est recalculé côté
-  // serveur dans whatsapp-creer/route.ts).
+  // Frais de livraison en direct selon le pays (et le quartier) choisis —
+  // estimation affichée seulement : le montant facturé est recalculé côté
+  // serveur dans whatsapp-creer/route.ts (lib/livraison.ts).
+  const attendQuartier = zonesActives.length > 0 && !zoneChoisie;
   useEffect(() => {
-    if (!zone) { setFraisLivraison(null); return; }
+    if (attendQuartier) { setFraisLivraison(null); return; }
     let annule = false;
     fetch("/api/livraison/calculer", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tenantId, zone, montantCommande: total }),
+      body: JSON.stringify({ tenantId, pays: form.pays, zone: zoneChoisie, montantCommande: total }),
     })
       .then(r => r.json())
       .then(d => { if (!annule && d.options?.[0]) setFraisLivraison(d.options[0].frais); })
       .catch(() => {});
     return () => { annule = true; };
-  }, [zone, tenantId, total]);
+  }, [form.pays, zoneChoisie, attendQuartier, tenantId, total]);
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
@@ -271,7 +259,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 
   async function commander(canal: "whatsapp" | "direct") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error(t("Nom et téléphone obligatoires")); return; }
-    if (zones.length > 0 && !zone) { toast.error(t("Sélectionnez votre zone de livraison")); return; }
+    if (attendQuartier) { toast.error(t("Sélectionnez votre zone de livraison")); return; }
     // WhatsApp : onglet ouvert PENDANT le clic — ouvert après la requête, il
     // était bloqué par le navigateur (surtout sur mobile) et le client
     // n'arrivait jamais sur le WhatsApp du marchand.
@@ -285,7 +273,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           tenantId, slug, canal,
           client: form,
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
-          total, devise, codePromo, zone: zone || undefined,
+          total, devise, codePromo, zone: zoneChoisie || undefined,
           codeAffiliation: codeRef || undefined,
           localisation: gps ? { lat: gps.lat, lng: gps.lng, adresseExacte: adresseExacte || form.adresse } : null,
           champPersonnalise: champPerso && champPersoValeur.trim() ? { label: champPerso, valeur: champPersoValeur.trim() } : undefined,
@@ -419,7 +407,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             <Field label={t("Téléphone (WhatsApp de préférence)")} required>
               <div className="relative">
                 <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
-                <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+                <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder={exempleTelephone(form.pays)} className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
               </div>
             </Field>
             {demanderEmail && (
@@ -673,20 +661,14 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </div>
             )}
 
-            {zones.length > 0 && (
+            {zonesActives.length > 0 && (
               <div className="sm:col-span-2">
                 <Field label={t("Zone de livraison")} required>
                   <select value={zone} onChange={e => setZone(e.target.value)} className={inp} style={inpStyle}>
                     <option value="" style={{ backgroundColor: theme.surface }}>{t("Sélectionnez votre zone…")}</option>
-                    {zones.map(z => <option key={z} value={z} style={{ backgroundColor: theme.surface }}>{t(z)}</option>)}
+                    {zonesActives.map(z => <option key={z} value={z} style={{ backgroundColor: theme.surface }}>{t(z)}</option>)}
                   </select>
                 </Field>
-                {zone && fraisLivraison !== null && (
-                  <p className="text-xs mt-1.5 flex items-center gap-1.5" style={{ color: theme.accent }}>
-                    <Package size={11} />
-                    {fraisLivraison > 0 ? t("Frais de livraison : {0}", fmt(fraisLivraison, devise)) : t("Livraison gratuite pour cette zone")}
-                  </p>
-                )}
               </div>
             )}
             <Field label={t("Ville")}>
@@ -694,7 +676,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             </Field>
             <Field label={t("Pays")}>
               <select value={form.pays} onChange={e => set("pays", e.target.value)} className={inp} style={inpStyle}>
-                {PAYS_AFRIQUE.map(p => <option key={p} style={{ backgroundColor: theme.surface }}>{t(p)}</option>)}
+                {PAYS_OPTIONS.map(p => <option key={p.code} value={p.nom} style={{ backgroundColor: theme.surface }}>{t(p.nom)}</option>)}
               </select>
             </Field>
           </div>
@@ -715,7 +697,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       {/* Récap + CTA */}
       <div>
         <div className="space-y-4">
-          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Votre commande")} fraisLivraison={zones.length > 0 ? fraisLivraison : null} />
+          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Votre commande")} fraisLivraison={fraisLivraison} />
 
           <button onClick={() => setPopup("whatsapp")} disabled={loading}
             className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
@@ -897,12 +879,12 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
             <Field label={t("Téléphone")} required>
               <div className="relative">
                 <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
-                <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder="+221 77 000 00 00" className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
+                <input type="tel" value={form.telephone} onChange={e => set("telephone", e.target.value)} placeholder={exempleTelephone(form.pays)} className={inp} style={{ ...inpStyle, paddingLeft: "2.25rem" }} />
               </div>
             </Field>
             <Field label={t("Pays")}>
               <select value={form.pays} onChange={e => set("pays", e.target.value)} className={inp} style={inpStyle}>
-                {PAYS_AFRIQUE.map(p => <option key={p} style={{ backgroundColor: theme.surface }}>{t(p)}</option>)}
+                {PAYS_OPTIONS.map(p => <option key={p.code} value={p.nom} style={{ backgroundColor: theme.surface }}>{t(p.nom)}</option>)}
               </select>
             </Field>
             {expedier && (

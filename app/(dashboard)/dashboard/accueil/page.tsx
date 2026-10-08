@@ -14,6 +14,8 @@ import {
   ChevronRight, Truck, Target, Wallet, BarChart3, Sparkles, CheckCircle,
 } from "lucide-react";
 import { getT } from "@/lib/i18n/serveur";
+import { BoutonQrBoutique } from "@/components/dashboard/BoutonQrBoutique";
+import { lienBoutique } from "@/lib/origine-site";
 
 const STATUT_CFG: Record<string, { label: string; color: string }> = {
   en_attente:     { label: "En attente",     color: "#6B7280" },
@@ -122,6 +124,7 @@ async function getData(tenantId: string) {
     topVilles:     topVilles   as { ville: string; _count: { id: number } }[],
     devise:        tenant?.devise || "XOF",
     slug:          tenant?.slug || "",
+    nomBoutique:   tenant?.nomBoutique || "",
     semaine:       weekRevenu._sum.montantTotal || 0,
     programmeAffiliationActif: programmeAffiliation?.actif ?? false,
   };
@@ -284,6 +287,7 @@ export default async function DashboardPage() {
                 <Globe size={13} />{" "}{t("Boutique")}{" "}<ArrowUpRight size={11} />
               </a>
             )}
+            {d.slug && <BoutonQrBoutique url={await lienBoutique(d.slug)} nomBoutique={d.nomBoutique} />}
             <a href="/dashboard/produits/nouveau"
               className="flex items-center gap-1.5 text-[12px] font-semibold rounded-2xl px-4 py-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-sm"
               style={{ background: "linear-gradient(135deg,#EDA900,#FFD75E)", color: "#111111" }}>

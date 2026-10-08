@@ -3,6 +3,7 @@
 // puis Affilie.codeParrainage (programme B2C individuel, redirige vers la
 // boutique). L'attribution réelle au checkout se fait via ?ref= (localStorage
 // axso_ref, voir CheckoutForm.tsx) — le cookie posé ici est informatif.
+import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -31,8 +32,8 @@ export async function GET(
       const shopSlug = lien.tenant.slug;
       const prodSlug = lien.produit?.slug;
       const dest = prodSlug
-        ? `${appUrl}/${shopSlug}/produits/${prodSlug}`
-        : `${appUrl}/${shopSlug}`;
+        ? await lienBoutique(shopSlug, `/produits/${prodSlug}`)
+        : await lienBoutique(shopSlug);
 
       const url = new URL(dest);
       url.searchParams.set("ref", code);
@@ -56,7 +57,7 @@ export async function GET(
         data: { clics: { increment: 1 } },
       }).catch(() => {});
 
-      const url = new URL(`${appUrl}/${affilie.tenant.slug}`);
+      const url = new URL(await lienBoutique(affilie.tenant.slug));
       url.searchParams.set("ref", code);
 
       const response = NextResponse.redirect(url.toString(), { status: 302 });

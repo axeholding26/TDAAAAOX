@@ -3,6 +3,7 @@
 // URL : https://ta-boutique.axso.africa/api/feed/meta?slug=ta-boutique
 // Format supporté : CSV (le plus simple pour Meta)
 
+import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -33,8 +34,7 @@ export async function GET(req: NextRequest) {
 
     if (!tenant) return new NextResponse("Boutique introuvable", { status: 404 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://axso.africa";
-    const boutiqueUrl = `${appUrl}/${slug}`;
+    const boutiqueUrl = await lienBoutique(slug);
 
     // En-tête CSV Meta Catalog
     const header = [

@@ -106,8 +106,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: "Données invalides", details: err.issues }, { status: 400 });
     }
-    const message = err instanceof Error ? err.message : "Erreur serveur";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Code-barres unique par boutique (@@unique([tenantId, codeBarres])).
+    if ((err as any)?.code === "P2002") return NextResponse.json({ error: "Ce code-barres est déjà utilisé par un autre produit de ta boutique" }, { status: 409 });
+    return NextResponse.json({ error: "Erreur lors de l'enregistrement du produit" }, { status: 500 });
   }
 }
 

@@ -1,4 +1,5 @@
 ﻿"use client";
+import { exempleTelephone } from "@/lib/devise-convert";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Bell, MessageSquare, Mail, Save } from "lucide-react";
@@ -21,9 +22,11 @@ export default function NotificationsPage() {
   const [config, setConfig] = useState(DEFAUT);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [pays, setPays] = useState("");
 
   useEffect(() => {
     fetch("/api/tenants/moi-complet").then(r => r.json()).then(tenant => {
+      setPays(tenant?.pays ?? "");
       if (tenant?.parametresPaiement) {
         const saved = (tenant.parametresPaiement as any).notifications;
         if (saved) setConfig({ ...DEFAUT, ...saved });
@@ -105,7 +108,7 @@ export default function NotificationsPage() {
             <input
               value={config.whatsappNumero}
               onChange={e => setConfig({ ...config, whatsappNumero: e.target.value })}
-              placeholder="+221 77 000 00 00"
+              placeholder={exempleTelephone(pays)}
               className="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
             />
             <p className="text-gray-600 text-xs mt-1.5">{t("Les notifications seront envoyées sur ce numéro via l'API WhatsApp Business.")}</p>

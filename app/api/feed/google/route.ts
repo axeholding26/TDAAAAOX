@@ -2,6 +2,7 @@
 // Soumets cette URL dans Google Merchant Center pour des listings GRATUITS
 // URL : https://ta-boutique.axso.africa/api/feed/google?slug=ta-boutique
 
+import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -48,8 +49,7 @@ export async function GET(req: NextRequest) {
       return new NextResponse("Boutique introuvable", { status: 404 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://axso.africa";
-    const boutiqueUrl = `${appUrl}/${slug}`;
+    const boutiqueUrl = await lienBoutique(slug);
     const langue = PAYS_LANGUES[tenant.pays] || "fr-FR";
     const pays = PAYS_CIBLES[tenant.pays] || tenant.pays;
 
