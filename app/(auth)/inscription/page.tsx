@@ -416,8 +416,8 @@ function PropositionsDesign({
   const devParam      = encodeURIComponent(devise || "XAF");
 
   return (
-    <div className="msg-in" style={{ paddingLeft:47 }}>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, maxWidth:560 }}>
+    <div className="msg-in max-sm:pl-0!" style={{ paddingLeft:47 }}>
+      <div style={{ display:"flex", gap:14, maxWidth:560, overflowX:"auto", scrollSnapType:"x mandatory", paddingBottom:8, WebkitOverflowScrolling:"touch" }}>
         {themeIds.map((id, idx) => {
           const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === id);
           if (!e) return null;
@@ -427,6 +427,7 @@ function PropositionsDesign({
           return (
             <button key={id} onClick={()=>onSelect(id)}
               style={{
+                flex:"0 0 240px", scrollSnapAlign:"start",
                 padding:0, borderRadius:18, overflow:"hidden",
                 border:`2px solid ${sel?YELLOW:BORDER}`,
                 cursor:"pointer", textAlign:"left",
@@ -481,7 +482,7 @@ function PropositionsDesign({
                     width:960, height:750, border:"none",
                     pointerEvents:"none",
                     transformOrigin:"top left",
-                    transform:"scale(0.175)",
+                    transform:"scale(0.25)",
                     position:"absolute", top:0, left:0,
                   }}
                 />
@@ -934,7 +935,7 @@ export default function InscriptionPage() {
 
               <h1 style={{
                 fontFamily:"'Sora',sans-serif",
-                fontSize:40, fontWeight:800, color:NAVY,
+                fontSize:"clamp(28px, 7vw, 40px)", fontWeight:800, color:NAVY,
                 lineHeight:1.1, margin:"0 0 14px",
                 letterSpacing:"-.03em",
               }}>

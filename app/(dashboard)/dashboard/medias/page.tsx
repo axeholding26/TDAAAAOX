@@ -200,7 +200,7 @@ export default function MediasPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "Total", value: stats.total, icon: Sparkles, color: "#6366f1", bg: "#eef2ff" },
           { label: "Prêts", value: stats.pretes, icon: CheckCircle2, color: "#059669", bg: "#ecfdf5" },

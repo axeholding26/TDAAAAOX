@@ -114,7 +114,7 @@ function StoryViewer({ stories, startIndex, onClose }: { stories: PostSocial[]; 
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,0.95)", display: "flex", alignItems: "center", justifyContent: "center" }} onClick={onClose}>
-      <div style={{ width: 380, maxHeight: "90vh", borderRadius: 24, overflow: "hidden", background: C.gray900, position: "relative" }} onClick={e => e.stopPropagation()}>
+      <div style={{ width: 380, maxWidth: "calc(100vw - 16px)", maxHeight: "90vh", borderRadius: 24, overflow: "hidden", background: C.gray900, position: "relative" }} onClick={e => e.stopPropagation()}>
         {/* Progress bars */}
         <div style={{ position: "absolute", top: 10, left: 10, right: 10, display: "flex", gap: 4, zIndex: 10 }}>
           {stories.map((_, i) => (

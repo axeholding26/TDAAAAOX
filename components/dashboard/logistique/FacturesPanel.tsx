@@ -182,7 +182,7 @@ export function FacturesPanel() {
         </div>
       ) : (
         <div className="bg-white border border-[#F0F0F0] rounded-xl overflow-hidden">
-          <table className="w-full text-[12.5px]">
+          <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-[12.5px]">
             <thead>
               <tr className="border-b border-[#F0F0F0]">
                 <th className="text-left px-4 py-3 font-semibold text-[#888]">{t("N° Facture")}</th>
@@ -213,7 +213,7 @@ export function FacturesPanel() {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
     </div>

@@ -119,12 +119,12 @@ export function TarifsSection() {
           <span className="text-[#F5A623] text-sm font-bold uppercase tracking-[0.2em] mb-4 inline-flex items-center gap-1.5">
             <Zap size={14} />{" "}{t("Paliers de puissance")}
           </span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-5"
+          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-5"
             style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
             {t("Commence gratuit. Grandis quand tu es prêt.")}
           </h2>
-          <p className="text-gray-400 text-xl max-w-2xl mx-auto">
-            {t("Pas de frais cachés. Pas de carte bancaire requise pour démarrer.")}
+          <p className="text-gray-400 text-base sm:text-xl max-w-2xl mx-auto">
+            {t("Pas de frais cachés. Pas de carte bancaire requise pour démarrer.")}{" "}
             <br className="hidden sm:block" />
             {t("Tu peux annuler à tout moment. Et tu peux payer ton abonnement directement par Orange Money ou MTN.")}
           </p>
@@ -144,7 +144,7 @@ export function TarifsSection() {
 
         {/* Comparaison Axso vs concurrents */}
         <div
-          className="mt-20 max-w-3xl mx-auto"
+          className="mt-14 sm:mt-20 max-w-3xl mx-auto"
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.8s" }}
         >
           <h3 className="text-center text-2xl sm:text-3xl font-bold text-gray-900 mb-8"
@@ -152,11 +152,11 @@ export function TarifsSection() {
             {t("Tout ce que Shopify ne fera jamais pour toi")}
           </h3>
           <div className="rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="grid grid-cols-4 bg-gray-50 border-b border-gray-100">
-              <div className="p-4 text-xs font-bold uppercase tracking-widest text-gray-400">{t("Critère")}</div>
-              <div className="p-4 text-center text-sm font-bold" style={{ color: "#F5A623" }}>AXSO</div>
-              <div className="p-4 text-center text-sm font-bold text-gray-400">{t("Shopify")}</div>
-              <div className="p-4 text-center text-sm font-bold text-gray-400">WooCommerce</div>
+            <div className="grid grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] sm:grid-cols-4 bg-gray-50 border-b border-gray-100">
+              <div className="px-3 py-3 sm:p-4 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-gray-400">{t("Critère")}</div>
+              <div className="px-1 py-3 sm:p-4 text-center text-xs sm:text-sm font-bold" style={{ color: "#F5A623" }}>AXSO</div>
+              <div className="px-1 py-3 sm:p-4 text-center text-xs sm:text-sm font-bold text-gray-400">{t("Shopify")}</div>
+              <div className="px-1 py-3 sm:p-4 text-center text-xs sm:text-sm font-bold text-gray-400"><span className="sm:hidden">Woo</span><span className="hidden sm:inline">WooCommerce</span></div>
             </div>
             {[
               { critere: "Paiement Orange Money natif",       axso: true, shopify: false, woo: "✗" },
@@ -165,15 +165,15 @@ export function TarifsSection() {
               { critere: "IA visuels pub intégrée",            axso: true, shopify: false, woo: "✗" },
               { critere: "Payer l'abonnement en mobile money", axso: true, shopify: false, woo: "✗" },
             ].map((row, i) => (
-              <div key={row.critere} className={`grid grid-cols-4 items-center ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
-                <div className="p-4 text-sm text-gray-700">{t(row.critere)}</div>
-                <div className="p-4 flex justify-center" style={{ background: "rgba(245,166,35,0.06)" }}>
+              <div key={row.critere} className={`grid grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))] sm:grid-cols-4 items-center ${i % 2 === 1 ? "bg-gray-50/50" : ""}`}>
+                <div className="px-3 py-3 sm:p-4 text-xs sm:text-sm text-gray-700 leading-snug">{t(row.critere)}</div>
+                <div className="px-1 py-3 sm:p-4 self-stretch flex items-center justify-center" style={{ background: "rgba(245,166,35,0.06)" }}>
                   <Check size={16} strokeWidth={3} style={{ color: "#F5A623" }} />
                 </div>
-                <div className="p-4 flex justify-center">
+                <div className="px-1 py-3 sm:p-4 flex justify-center">
                   <X size={16} strokeWidth={3} className="text-gray-300" />
                 </div>
-                <div className="p-4 text-center text-xs text-gray-400">{row.woo === "partiel" ? t("Partiel") : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
+                <div className="px-1 py-3 sm:p-4 text-center text-[10px] sm:text-xs text-gray-400">{row.woo === "partiel" ? t("Partiel") : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
               </div>
             ))}
           </div>

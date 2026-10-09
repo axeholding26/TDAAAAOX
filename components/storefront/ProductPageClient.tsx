@@ -1414,8 +1414,8 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
           {sec.type === "trust" && (
             <div className="space-y-3">
               {showBadges && (cfg.items ?? []).length > 0 && (
-                <div className={cfg.disposition === "liste" ? "space-y-2" : "grid gap-2"}
-                  style={cfg.disposition === "liste" ? undefined : { gridTemplateColumns: `repeat(${Number(cfg.colonnes) || 3}, minmax(0, 1fr))` }}>
+                <div className={cfg.disposition === "liste" ? "space-y-2" : "grid gap-2 grid-cols-[repeat(var(--cols-m),minmax(0,1fr))] sm:grid-cols-[repeat(var(--cols),minmax(0,1fr))]"}
+                  style={cfg.disposition === "liste" ? undefined : { "--cols": Number(cfg.colonnes) || 3, "--cols-m": Math.min(Number(cfg.colonnes) || 3, 2) } as React.CSSProperties}>
                   {(cfg.items as { icone: string; texte: string }[]).map((b, i) => (
                     <div key={i} className={cfg.disposition === "liste" ? "flex items-center gap-3 px-4 py-3 rounded-xl" : "flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-xl text-center"} style={{ background: surface }}>
                       {b.icone && (estImage(b.icone)

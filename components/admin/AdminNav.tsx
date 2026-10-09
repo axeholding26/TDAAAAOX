@@ -1,10 +1,11 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard, Store, DollarSign, Truck, CreditCard,
-  UserPlus, LogOut, Megaphone,
+  UserPlus, LogOut, Megaphone, Menu, X,
 } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
@@ -23,10 +24,21 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
   const pathname = usePathname();
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
+  const [open, setOpen] = useState(false);
 
   return (
+    <>
+    {/* Mobile (< md) : barre haute + burger ; la sidebar devient un drawer */}
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b"
+      style={{ background: "#1A1A1A", borderColor: "rgba(245,166,35,0.12)" }}>
+      <img src="/logo-dark.png" alt={t("Axso")} style={{ height: "28px", width: "auto", objectFit: "contain" }} />
+      <button onClick={() => setOpen(true)} aria-label={t("Menu")} className="p-2 rounded-lg hover:bg-white/5" style={{ color: "#AAAAAA" }}>
+        <Menu size={20} />
+      </button>
+    </header>
+    {open && <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setOpen(false)} />}
     <aside
-      className="w-64 flex-shrink-0 flex flex-col border-r"
+      className={`w-64 flex-shrink-0 flex flex-col border-r fixed inset-y-0 left-0 z-50 transition-transform md:static md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
       style={{ background: "linear-gradient(180deg,#1A1A1A,#111111)", borderColor: "rgba(245,166,35,0.12)" }}
     >
       <div className="p-6 border-b" style={{ borderColor: "rgba(245,166,35,0.12)" }}>
@@ -36,6 +48,9 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
             style={{ height: "30px", width: "auto", objectFit: "contain", flexShrink: 0 }}
           />
           <p className="text-[10px] font-medium" style={{ color: "#AAAAAA" }}>{t("Contrôle plateforme")}</p>
+          <button onClick={() => setOpen(false)} aria-label={t("Fermer")} className="md:hidden ml-auto p-1.5 rounded-lg hover:bg-white/5" style={{ color: "#AAAAAA" }}>
+            <X size={16} />
+          </button>
         </div>
       </div>
 
@@ -47,6 +62,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setOpen(false)}
               className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all"
               style={
                 active
@@ -84,5 +100,6 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
         </button>
       </div>
     </aside>
+    </>
   );
 }

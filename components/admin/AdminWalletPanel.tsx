@@ -108,7 +108,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
         <div className="flex items-center justify-center py-10"><Loader2 size={20} className="animate-spin" style={{ color: "#AAAAAA" }} /></div>
       ) : wallet ? (
         <>
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div>
               <p className="text-2xl font-bold" style={{ color: "#F5A623" }}>{fmt(wallet.solde, wallet.devise)}</p>
               <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t("Solde disponible")}</p>

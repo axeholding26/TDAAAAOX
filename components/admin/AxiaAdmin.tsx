@@ -84,8 +84,8 @@ export function AxiaAdmin() {
 
   return (
     <div
-      className="fixed bottom-6 right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden"
-      style={{ width: 360, height: 520, maxHeight: "calc(100vh - 48px)", background: "white", border: "1px solid #F0F0F0" }}
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col rounded-2xl shadow-2xl overflow-hidden"
+      style={{ width: "min(360px, calc(100vw - 32px))", height: 520, maxHeight: "calc(100vh - 48px)", background: "white", border: "1px solid #F0F0F0" }}
     >
       <div className="flex items-center justify-between px-4 py-3 text-white shrink-0" style={{ background: ACCENT }}>
         <div className="flex items-center gap-2">

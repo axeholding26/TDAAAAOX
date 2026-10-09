@@ -44,10 +44,14 @@ export function VideoSection() {
     if (!visible) return;
     let ticking = false;
     const appliquer = () => {
-      const y = window.scrollY;
-      if (playerRef.current) {
+      // Progression de la section dans l'écran (0 = elle entre par le bas, 1 = elle sort par le haut).
+      // Avant : décalage = 4 % du défilement ABSOLU — sur mobile (page longue) le lecteur remontait
+      // de ~280 px, recouvrait le texte et laissait un trou dessous.
+      const r = sectionRef.current?.getBoundingClientRect();
+      if (playerRef.current && r) {
+        const p = Math.min(1, Math.max(0, (window.innerHeight - r.top) / (window.innerHeight + r.height)));
         playerRef.current.style.transform =
-          `translateY(${-y * 0.04}px) perspective(1200px) rotateX(${Math.min(y * 0.005, 4)}deg)`;
+          `translateY(${(0.5 - p) * 40}px) perspective(1200px) rotateX(${Math.max(0, 0.5 - p) * 8}deg)`;
       }
       ticking = false;
     };
@@ -69,7 +73,7 @@ export function VideoSection() {
     <section
       id="video-demo"
       ref={sectionRef}
-      className="relative py-28 overflow-hidden bg-gradient-to-b from-white via-orange-50/20 to-white"
+      className="relative py-16 sm:py-28 overflow-hidden bg-gradient-to-b from-white via-orange-50/20 to-white"
     >
       <CartParallax carts={VIDEO_CARTS} color="#F5A623" />
 
@@ -80,11 +84,11 @@ export function VideoSection() {
         />
       </div>
 
-      <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 relative z-10">
+      <div className="w-full px-4 sm:px-10 lg:px-16 xl:px-24 relative z-10">
 
         {/* Header */}
         <div
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
           style={{
             opacity: visible ? 1 : 0,
             transform: visible ? "none" : "translateY(30px)",
@@ -111,7 +115,7 @@ export function VideoSection() {
               {t("C'est tout ce qu'il faut.")}
             </span>
           </h2>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-500 max-w-2xl mx-auto">
             {t("Dis-nous ce que tu vends. AXSO crée ta boutique, tes prix, tes visuels et ton premier post Instagram. En direct. Sous tes yeux.")}
           </p>
         </div>
@@ -145,17 +149,17 @@ export function VideoSection() {
             }}
           >
             {/* Browser chrome */}
-            <div className="bg-white px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
-              <div className="flex gap-2">
-                <div className="w-3.5 h-3.5 rounded-full bg-red-400/80"/>
-                <div className="w-3.5 h-3.5 rounded-full bg-yellow-400/80"/>
-                <div className="w-3.5 h-3.5 rounded-full bg-green-400/80"/>
+            <div className="bg-white px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-red-400/80"/>
+                <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-yellow-400/80"/>
+                <div className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-full bg-green-400/80"/>
               </div>
-              <div className="flex-1 bg-gray-50 rounded-xl px-4 py-2 flex items-center gap-2 border border-gray-200/80">
+              <div className="flex-1 min-w-0 bg-gray-50 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2 border border-gray-200/80">
                 <Lock size={14} className="text-gray-300 flex-shrink-0" />
-                <span className="text-sm text-gray-400 flex-1 text-center">{t("app.axso.africa — Construction de ton empire")}</span>
+                <span className="text-xs sm:text-sm text-gray-400 flex-1 text-center truncate">{t("app.axso.africa — Construction de ton empire")}</span>
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623]">
+              <span className="flex-shrink-0 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623]">
                 {t("● LIVE")}
               </span>
             </div>
@@ -253,7 +257,7 @@ export function VideoSection() {
             </div>
 
             {/* Bottom bar */}
-            <div className="bg-white px-5 py-3 border-t border-gray-100 flex items-center justify-between">
+            <div className="bg-white px-3 sm:px-5 py-2.5 sm:py-3 border-t border-gray-100 flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-[#F5A623]/10 flex items-center justify-center text-[#F5A623]"><Bot size={16} /></div>
                 <div>
@@ -262,8 +266,8 @@ export function VideoSection() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-semibold">{t("✓ Boutique live")}</span>
-                <span className="text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold inline-flex items-center gap-1"><Zap size={10} />{" "}{t("Agents actifs")}</span>
+                <span className="text-[10px] px-2.5 py-1 rounded-full bg-green-100 text-green-700 font-semibold whitespace-nowrap">{t("✓ Boutique live")}</span>
+                <span className="hidden sm:inline-flex text-[10px] px-2.5 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623] font-semibold items-center gap-1"><Zap size={10} />{" "}{t("Agents actifs")}</span>
               </div>
             </div>
           </div>
@@ -271,7 +275,7 @@ export function VideoSection() {
 
         {/* Points de réassurance */}
         <div
-          className="grid grid-cols-3 gap-8 mt-16 text-center"
+          className="grid grid-cols-3 gap-3 sm:gap-8 mt-10 sm:mt-16 text-center"
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 0.6s" }}
         >
           {[
@@ -286,8 +290,8 @@ export function VideoSection() {
               >
                 {item.icon}
               </div>
-              <p className="font-bold text-gray-900 mb-1">{t(item.title)}</p>
-              <p className="text-sm text-gray-400">{t(item.desc)}</p>
+              <p className="font-bold text-gray-900 mb-1 text-sm sm:text-base leading-snug">{t(item.title)}</p>
+              <p className="text-xs sm:text-sm text-gray-400">{t(item.desc)}</p>
             </div>
           ))}
         </div>

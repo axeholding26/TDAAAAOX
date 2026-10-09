@@ -75,7 +75,7 @@ export function TemoignagesSection() {
   const t = temoignages[actif];
 
   return (
-    <section ref={sectionRef} className="py-24 bg-white relative overflow-hidden" id="temoignages">
+    <section ref={sectionRef} className="py-16 sm:py-24 bg-white relative overflow-hidden" id="temoignages">
       {/* Floating star particles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {particles.map((p, i) => (
@@ -99,7 +99,7 @@ export function TemoignagesSection() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
           style={{
             opacity: visible ? 1 : 0,
             animation: visible ? "flip3dIn 0.7s cubic-bezier(0.23,1,0.32,1) both" : "none",
@@ -108,7 +108,7 @@ export function TemoignagesSection() {
           <span className="text-[#111111] text-sm font-semibold uppercase tracking-widest mb-4 block">
             {tr("Témoignages")}
           </span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900">
+          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900">
             {tr("Ils vendent déjà avec Axso")}
           </h2>
         </div>
@@ -122,7 +122,7 @@ export function TemoignagesSection() {
           }}
         >
           <div
-            className="relative bg-gradient-to-br from-[#FFFBF2] to-white rounded-3xl border border-[#F5A623]/25 p-8 sm:p-12 text-center shadow-lg shadow-[#F5A623]/10"
+            className="relative bg-gradient-to-br from-[#FFFBF2] to-white rounded-3xl border border-[#F5A623]/25 p-6 sm:p-12 text-center shadow-lg shadow-[#F5A623]/10"
             style={{
               transform: "perspective(1000px)",
               transformStyle: "preserve-3d",
@@ -134,12 +134,12 @@ export function TemoignagesSection() {
               style={{ backgroundColor: t.couleur }}
             />
 
-            <div className="flex justify-center gap-1 mb-6">
+            <div className="flex justify-center gap-1 mb-4 sm:mb-6">
               {[...Array(t.note)].map((_, i) => (
                 <Star
                   key={i}
                   className="text-[#F5A623]"
-                  size={22}
+                  size={20}
                   fill="#F5A623"
                   style={{
                     animation: visible ? `floatParticle 2s ${i * 0.1}s ease-in-out infinite` : "none",
@@ -150,7 +150,7 @@ export function TemoignagesSection() {
             </div>
 
             <blockquote
-              className="text-xl text-gray-600 leading-relaxed mb-8 italic transition-all duration-400"
+              className="text-base sm:text-xl text-gray-600 leading-relaxed mb-6 sm:mb-8 italic transition-all duration-400"
               key={actif}
               style={{
                 animation: `${dir === "right" ? "slideRevealRight" : "slideRevealLeft"} 0.4s cubic-bezier(0.23,1,0.32,1) both`,
@@ -160,14 +160,14 @@ export function TemoignagesSection() {
             </blockquote>
 
             <div
-              className="flex items-center justify-center gap-4 transition-all duration-400"
+              className="flex items-center justify-center gap-3 sm:gap-4 transition-all duration-400"
               key={`avatar-${actif}`}
               style={{
                 animation: `scaleReveal3d 0.4s 0.1s cubic-bezier(0.23,1,0.32,1) both`,
               }}
             >
               <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-2xl transition-all duration-500"
+                className="w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white shadow-2xl transition-all duration-500"
                 style={{
                   backgroundColor: t.couleur,
                   boxShadow: `0 0 0 4px ${t.couleur}30, 0 8px 32px ${t.couleur}50`,
@@ -177,11 +177,11 @@ export function TemoignagesSection() {
               </div>
               <div className="text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-bold text-lg">{tr(t.nom)}</span>
+                  <span className="text-gray-900 font-bold text-base sm:text-lg">{tr(t.nom)}</span>
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{tr(t.pays)}</span>
                 </div>
-                <p className="text-gray-400 text-sm">{tr(t.role)}</p>
-                <p className="text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {tr(t.ventes)}</p>
+                <p className="text-gray-400 text-xs sm:text-sm">{tr(t.role)}</p>
+                <p className="text-xs sm:text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {tr(t.ventes)}</p>
               </div>
             </div>
           </div>
@@ -189,7 +189,7 @@ export function TemoignagesSection() {
 
         {/* Navigation */}
         <div
-          className="flex items-center justify-center gap-6"
+          className="flex items-center justify-center gap-4 sm:gap-6"
           style={{
             opacity: visible ? 1 : 0,
             animation: visible ? "flip3dIn 0.7s 0.5s cubic-bezier(0.23,1,0.32,1) both" : "none",
@@ -197,7 +197,8 @@ export function TemoignagesSection() {
         >
           <button
             onClick={() => navigate("left")}
-            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/50 hover:shadow-lg hover:shadow-[#F5A623]/25 hover:scale-110 transition-all duration-200"
+            aria-label={tr("Témoignage précédent")}
+            className="w-10 h-10 rounded-full bg-white border border-[#F5A623]/30 shadow-sm flex items-center justify-center text-[#F5A623] hover:bg-[#F5A623] hover:text-white active:scale-95 transition-all duration-200"
           >
             <ChevronLeft size={18} />
           </button>
@@ -206,14 +207,20 @@ export function TemoignagesSection() {
               <button
                 key={i}
                 onClick={() => { setDir(i > actif ? "right" : "left"); setActif(i); }}
-                className={`h-2 rounded-full transition-all duration-300 ${i === actif ? "w-8" : "w-2 hover:w-4"}`}
-                style={{ backgroundColor: i === actif ? t.couleur : "#e5e7eb" }}
-              />
+                aria-label={`${i + 1}`}
+                className="py-3 px-0.5"
+              >
+                <span
+                  className={`block h-2 rounded-full transition-all duration-300 ${i === actif ? "w-8" : "w-2"}`}
+                  style={{ backgroundColor: i === actif ? t.couleur : "#e5e7eb" }}
+                />
+              </button>
             ))}
           </div>
           <button
             onClick={() => navigate("right")}
-            className="w-11 h-11 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/50 hover:shadow-lg hover:shadow-[#F5A623]/25 hover:scale-110 transition-all duration-200"
+            aria-label={tr("Témoignage suivant")}
+            className="w-10 h-10 rounded-full bg-white border border-[#F5A623]/30 shadow-sm flex items-center justify-center text-[#F5A623] hover:bg-[#F5A623] hover:text-white active:scale-95 transition-all duration-200"
           >
             <ChevronRight size={18} />
           </button>

@@ -56,7 +56,7 @@ export function AxiaSection() {
                 </div>
                 <Mic size={16} className="ml-auto text-gray-300" />
               </div>
-              <div className="h-[580px] sm:h-[520px] flex flex-col justify-end gap-3 overflow-hidden">
+              <div className="h-[400px] sm:h-[520px] flex flex-col justify-end gap-3 overflow-hidden">
                 {CONVERSATION.slice(0, affiches).map((m, i) => (
                   <div key={i} className={`flex ${m.de === "marchand" ? "justify-end" : "justify-start"}`}
                     style={{ animation: "slideRevealLeft 0.45s cubic-bezier(0.23,1,0.32,1) both" }}>

@@ -356,7 +356,7 @@ export function LivraisonPanel() {
               <p className="text-[13px] text-[#888]">{tx("Aucune commande à expédier pour l'instant.")}</p>
             </div>
           ) : (
-            <table className="w-full text-[12.5px]">
+            <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-[12.5px]">
               <thead>
                 <tr className="border-b border-[#F0F0F0]">
                   <th className="text-left px-4 py-3 font-semibold text-[#888]">{tx("Commande")}</th>
@@ -381,7 +381,7 @@ export function LivraisonPanel() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           )}
         </div>
       )}

@@ -226,7 +226,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
           { label: "Total posts", val: stats.total, color: "#818cf8" },
           { label: "Planifiés", val: stats.planifies, color: "#F5A623" },

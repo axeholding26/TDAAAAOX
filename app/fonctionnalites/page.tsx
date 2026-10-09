@@ -451,14 +451,14 @@ export default async function FonctionnalitesPage() {
               <span className="text-[#888888] text-xs ml-2">{t("Marketing — Performances")}</span>
             </div>
             <div className="p-5 space-y-4">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { label: "Ventes ce mois", val: "1,84M XOF", delta: "+32%", up: true },
                   { label: "Nouveaux clients", val: "247", delta: "+18%", up: true },
                   { label: "Taux conversion", val: "4,2%", delta: "+0.8pt", up: true },
                 ].map(m => (
-                  <div key={m.label} className="rounded-xl p-3 text-center" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)" }}>
-                    <p className="text-[#111111] font-black text-lg">{t(m.val)}</p>
+                  <div key={m.label} className="rounded-xl p-2 sm:p-3 text-center" style={{ background: "rgba(0,0,0,0.03)", border: "1px solid rgba(0,0,0,0.06)" }}>
+                    <p className="text-[#111111] font-black text-sm sm:text-lg">{t(m.val)}</p>
                     <p className="text-[#8C8C8C] text-[10px] mb-1">{t(m.label)}</p>
                     <span className="text-xs font-bold" style={{ color: "#22c55e" }}>{t(m.delta)}</span>
                   </div>

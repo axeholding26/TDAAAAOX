@@ -71,8 +71,8 @@ export default async function AProposPage({ params }: Props) {
                 {about?.stats && about.stats.length > 0 && (
                   <div className="grid grid-cols-3 gap-4 mt-8">
                     {about.stats.map((s, i) => (
-                      <div key={i} className="text-center p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
-                        <p className="text-xl font-bold" style={{ color: c.accent }}>{t(s.valeur)}</p>
+                      <div key={i} className="text-center p-3 sm:p-4 rounded-2xl" style={{ background: `${c.accent}08`, border: `1px solid ${c.accent}15` }}>
+                        <p className="text-base sm:text-xl font-bold" style={{ color: c.accent }}>{t(s.valeur)}</p>
                         <p className="text-xs mt-1" style={{ opacity: 0.6 }}>{t(s.label)}</p>
                       </div>
                     ))}

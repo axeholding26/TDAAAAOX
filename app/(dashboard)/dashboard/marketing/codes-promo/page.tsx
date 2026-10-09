@@ -113,7 +113,7 @@ export default function CodesPromoPage() {
         ) : codes.length === 0 ? (
           <div className="p-12 text-center text-gray-500">{t("Aucun code promo  créez-en un !")}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-gray-100">
                 {["Code", "Remise", "Utilisations", "Statut", "Actions"].map((h) => (
@@ -140,7 +140,7 @@ export default function CodesPromoPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>

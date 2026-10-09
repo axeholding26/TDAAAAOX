@@ -94,7 +94,7 @@ export default async function AvisPage() {
         {/* Note moyenne */}
         <div className="ax-card p-8 flex flex-col items-center justify-center text-center">
           <span className="ax-label mb-3">{t("Note moyenne")}</span>
-          <p className="text-[52px] font-black text-[#111111] leading-none tabular-nums">
+          <p className="text-[40px] md:text-[52px] font-black text-[#111111] leading-none tabular-nums">
             {noteMoyenne > 0 ? noteMoyenne.toFixed(1) : "—"}
           </p>
           <div className="my-3">

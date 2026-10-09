@@ -309,7 +309,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
 
   const mobileMenu = (
     <div
-      className={`overflow-hidden transition-all duration-300 ${minimal ? "" : "md:hidden"} ${menuOuvert ? "max-h-[420px] opacity-100" : "max-h-0 opacity-0"}`}
+      className={`transition-all duration-300 ${minimal ? "" : "md:hidden"} ${menuOuvert ? "max-h-[80vh] overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
       style={{ borderTop: menuOuvert ? `1px solid ${accent}20` : "none", backgroundColor: fond }}
     >
       <div className="px-4 py-4 space-y-1">

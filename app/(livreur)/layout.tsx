@@ -38,15 +38,15 @@ export default async function LivreurLayout({ children }: { children: React.Reac
 
       {/* Header premium */}
       <header className="sticky top-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-2xl lg:max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <img
               src="/logo-dark.png" alt={t("Axso")}
               style={{ height: "30px", width: "auto", objectFit: "contain", flexShrink: 0 }}
             />
-            <div>
-              <p className="text-white font-semibold text-sm leading-none">{t(livreur.nom.split(" ")[0])}</p>
-              <p className="text-gray-500 text-xs">
+            <div className="min-w-0">
+              <p className="text-white font-semibold text-sm leading-none truncate">{t(livreur.nom.split(" ")[0])}</p>
+              <p className="text-gray-500 text-xs truncate">
                 {t(livreur.tenant?.nomBoutique) || t("Livreur indépendant")}
               </p>
             </div>
@@ -65,7 +65,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
             </Link>
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <DisponibiliteToggle livreurId={livreur.id} disponible={livreur.disponible} />
             <NotificationsPanel />
           </div>

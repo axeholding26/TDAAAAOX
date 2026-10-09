@@ -108,7 +108,7 @@ export default async function RevenusPage() {
             {t("Chiffre d'affaires · 30 jours")}
           </p>
         </div>
-        <p className="text-5xl font-bold text-[#111111] font-poppins mb-2">
+        <p className="text-3xl md:text-5xl font-bold text-[#111111] font-poppins mb-2">
           {formatMontant(revenu30j, tenant.devise)}
         </p>
         <p className="text-[#717171] text-sm">

@@ -47,7 +47,13 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #F8F7F4; color: #1A1A1A; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .page { max-width: 820px; margin: 40px auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 80px rgba(0,0,0,0.10); }
-        @media (max-width: 640px) { .page { margin: 0; border-radius: 0; box-shadow: none; } }
+        .fx-px { padding-left: 48px; padding-right: 48px; }
+        @media (max-width: 640px) {
+          .page { margin: 0; border-radius: 0; box-shadow: none; }
+          .fx-px { padding-left: 16px; padding-right: 16px; }
+          .fx-client { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .fx-client > div:last-child { text-align: left !important; }
+        }
         @media print {
           body { background: white; }
           .page { box-shadow: none; border-radius: 0; margin: 0; max-width: 100%; }
@@ -62,7 +68,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
       <div className="facture-racine">
       <div className="page">
         {/* Header gradient */}
-        <div style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 50%, #111 100%)", padding: "48px 48px 40px", position: "relative", overflow: "hidden" }}>
+        <div className="fx-px" style={{ background: "linear-gradient(135deg, #1A1A1A 0%, #2D2D2D 50%, #111 100%)", paddingTop: 48, paddingBottom: 40, position: "relative", overflow: "hidden" }}>
           {/* Decorative circles */}
           <div style={{ position:"absolute", top:-60, right:-60, width:200, height:200, borderRadius:"50%", background:"rgba(245,166,35,0.08)" }}/>
           <div style={{ position:"absolute", bottom:-40, left:-20, width:140, height:140, borderRadius:"50%", background:"rgba(245,166,35,0.05)" }}/>
@@ -100,7 +106,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         <div style={{ height:3, background:"linear-gradient(90deg, #F5A623, #e09520, #F5A623)" }} />
 
         {/* Client info */}
-        <div style={{ padding:"36px 48px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, background:"#FAFAF8" }}>
+        <div className="fx-px fx-client" style={{ paddingTop:36, paddingBottom:36, display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, background:"#FAFAF8" }}>
           <div>
             <div style={{ fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.15em", textTransform:"uppercase", marginBottom:12 }}>{t("Facturé à")}</div>
             <div style={{ fontSize:17, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{t(commande.clientNom)}</div>
@@ -120,8 +126,9 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* Items table */}
-        <div style={{ padding:"0 48px 36px" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse" }}>
+        <div className="fx-px" style={{ paddingBottom:36 }}>
+          <div style={{ overflowX:"auto" }}>
+          <table style={{ width:"100%", minWidth:480, borderCollapse:"collapse" }}>
             <thead>
               <tr style={{ borderBottom:"2px solid #F0EDE8" }}>
                 <th style={{ textAlign:"left", padding:"12px 0", fontSize:10, fontWeight:700, color:"#999", letterSpacing:"0.12em", textTransform:"uppercase", width:"50%" }}>{t("Produit")}</th>
@@ -153,10 +160,11 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
               ))}
             </tbody>
           </table>
+          </div>
 
           {/* Totals */}
           <div style={{ marginTop:24, display:"flex", justifyContent:"flex-end" }}>
-            <div style={{ width:280 }}>
+            <div style={{ width:"100%", maxWidth:280 }}>
               {commande.montantLivraison > 0 && (
                 <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0", fontSize:13, color:"#666", borderBottom:"1px solid #F0EDE8" }}>
                   <span>{t("Sous-total")}</span><span>{fmt(commande.montantSousTotal)}</span>
@@ -181,7 +189,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         </div>
 
         {qrSuivi && (
-          <div className="no-print" style={{ margin:"0 48px 36px", padding:20, border:"1px solid #EDEAE4", borderRadius:16, display:"flex", alignItems:"center", gap:20, flexWrap:"wrap" }}>
+          <div className="no-print" style={{ margin:"0 clamp(16px, 5vw, 48px) 36px", padding:20, border:"1px solid #EDEAE4", borderRadius:16, display:"flex", alignItems:"center", gap:20, flexWrap:"wrap" }}>
             <div style={{ width:112, height:112, flexShrink:0 }} dangerouslySetInnerHTML={{ __html: qrSuivi }} />
             <div style={{ minWidth:200, flex:1 }}>
               <div style={{ fontSize:15, fontWeight:600, color:"#1A1A1A", marginBottom:4 }}>{t("Suivre ma commande")}</div>
@@ -191,7 +199,7 @@ export default async function FacturePage({ params }: { params: Promise<{ slug: 
         )}
 
         {/* Footer */}
-        <div style={{ padding:"28px 48px", background:"#F8F7F4", borderTop:"1px solid #EDEAE4", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <div className="fx-px" style={{ paddingTop:28, paddingBottom:28, background:"#F8F7F4", borderTop:"1px solid #EDEAE4", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:16 }}>
           <div>
             <div style={{ fontSize:11, color:"#999", marginBottom:4 }}>{t("Généré par")}</div>
             <div style={{ fontSize:13, fontWeight:600, color:"#1A1A1A" }}>{t(tenant.nomBoutique)}</div>

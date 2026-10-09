@@ -96,7 +96,7 @@ export default function SuiviPage() {
       style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
 
       {/* Ambient glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[350px] pointer-events-none"
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] max-w-full h-[350px] pointer-events-none"
         style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.06) 0%, transparent 70%)" }} />
 
       {/* Header */}

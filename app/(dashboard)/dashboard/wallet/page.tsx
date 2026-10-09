@@ -184,7 +184,7 @@ export default function WalletPage() {
                   <span className="text-[11px] font-semibold tracking-[0.15em] uppercase">{tr("Wallet Axso · Sécurisé")}</span>
                 </div>
                 <p className="text-[13px] opacity-60 mb-1.5">{tr("Solde disponible")}</p>
-                <p className="text-[48px] font-black tracking-tight leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
+                <p className="text-[32px] md:text-[48px] font-black tracking-tight leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {fmt(wallet?.solde ?? 0, devise)}
                 </p>
               </div>

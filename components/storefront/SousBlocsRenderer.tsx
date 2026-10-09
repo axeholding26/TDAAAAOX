@@ -78,7 +78,7 @@ export async function SousBlocsRenderer({ blocs, accent, texte }: { blocs?: Sous
         if (bloc.type === "stats") {
           const items: any[] = bloc.config.items || [];
           return (
-            <div key={bloc.id} className="grid gap-6 text-center" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, minmax(0,1fr))` }}>
+            <div key={bloc.id} className="grid gap-6 text-center grid-cols-[repeat(var(--cols-m),minmax(0,1fr))] sm:grid-cols-[repeat(var(--cols),minmax(0,1fr))]" style={{ "--cols": Math.min(items.length, 4), "--cols-m": Math.min(items.length, 2) } as React.CSSProperties}>
               {items.map((it, i) => (
                 <div key={i}>
                   <p className="text-3xl font-bold font-playfair" style={{ color: accent }}>{t(it.valeur)}</p>

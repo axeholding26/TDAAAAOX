@@ -89,7 +89,7 @@ export function CtaFinal() {
   };
 
   return (
-    <section ref={sectionRef} className="py-24 bg-gradient-to-b from-orange-50/60 to-white relative overflow-hidden">
+    <section ref={sectionRef} className="py-16 sm:py-24 bg-gradient-to-b from-orange-50/60 to-white relative overflow-hidden">
       <CartParallax carts={CTA_CARTS} color="#F5A623" />
       {/* Aurora background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -162,13 +162,13 @@ export function CtaFinal() {
         </h2>
 
         <p
-          className="text-gray-400 text-xl mb-10 max-w-2xl mx-auto"
+          className="text-gray-400 text-base sm:text-xl mb-8 sm:mb-10 max-w-2xl mx-auto"
           style={{
             opacity: visible ? 1 : 0,
             animation: visible ? "flip3dIn 0.7s 0.4s cubic-bezier(0.23,1,0.32,1) both" : "none",
           }}
         >
-          {tr("En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.")}
+          {tr("En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.")}{" "}
           <br className="hidden sm:block" />
           {tr("Gratuit pour commencer — tu paies seulement quand tu vends.")}
         </p>
@@ -182,7 +182,7 @@ export function CtaFinal() {
         >
           <Link
             href="/inscription"
-            className="inline-flex items-center gap-3 bg-[#F5A623] text-white font-bold px-10 py-5 rounded-2xl text-xl hover:bg-[#D4911A] transition-colors shadow-2xl shadow-[#F5A623]/25 active:scale-95 relative overflow-hidden group"
+            className="inline-flex items-center gap-2 sm:gap-3 bg-[#F5A623] text-white font-bold px-6 py-4 sm:px-10 sm:py-5 rounded-2xl text-base sm:text-xl hover:bg-[#D4911A] transition-colors shadow-2xl shadow-[#F5A623]/25 active:scale-95 relative overflow-hidden group"
             onMouseMove={handleBtnMouseMove}
             onMouseLeave={() => setMagnetOffset({ x: 0, y: 0 })}
             style={{
@@ -201,7 +201,7 @@ export function CtaFinal() {
                 background: "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%)",
               }}
             />
-            <Sparkles size={22} className="relative z-10" />
+            <Sparkles size={22} className="relative z-10 hidden sm:block" />
             <Rocket size={20} className="relative z-10" />
             <span className="relative z-10">{tr("Créer ma boutique gratuite maintenant")}</span>
             <ArrowRight size={22} className="relative z-10 group-hover:translate-x-1 transition-transform" />
