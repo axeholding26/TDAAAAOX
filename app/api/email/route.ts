@@ -150,7 +150,7 @@ function construireHtml(corps: string, nom: string | null, boutique: string) {
   <div style="padding:32px 40px;color:#374151;font-size:15px;line-height:1.7">${text}</div>
   <div style="padding:20px 40px 32px;border-top:1px solid #f3f4f6;color:#9ca3af;font-size:12px">
     Vous recevez cet email car vous êtes client de <strong>${boutique}</strong>.<br>
-    Propulsé par <a href="https://axso.africa" style="color:#F5A623;text-decoration:none">Axso</a>
+    Propulsé par <a href="https://axsoafrica.com" style="color:#F5A623;text-decoration:none">Axso</a>
   </div>
 </div>
 </body></html>`;

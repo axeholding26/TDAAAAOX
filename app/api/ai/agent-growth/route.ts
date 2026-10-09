@@ -249,7 +249,7 @@ const executeOutil: (tenantId: string) => ToolExecutor = (tenantId) => async (na
 <h2>Bonjour ${client.nom ?? ""},</h2>
 <p>${args.offre}</p>
 ${args.code_promo ? `<p><strong>Votre code exclusif : ${args.code_promo}</strong></p>` : ""}
-<p>Découvrez notre catalogue : <a href="https://${tenant.slug}.axso.app">${tenant.nomBoutique}</a></p>
+<p>Découvrez notre catalogue : <a href="${process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com"}/${tenant.slug}">${tenant.nomBoutique}</a></p>
 <p>Paiement Mobile Money disponible 📱</p>
 </div>`,
         });

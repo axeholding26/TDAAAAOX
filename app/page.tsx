@@ -10,12 +10,14 @@ import { FaqSection } from "@/components/marketing/FaqSection";
 import { CtaFinal } from "@/components/marketing/CtaFinal";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { PauseHorsEcran } from "@/components/marketing/PauseHorsEcran";
+import { Preloader } from "@/components/marketing/Preloader";
 
 export default function HomePage() {
   return (
     <main className="overflow-x-clip bg-white text-gray-900">
       {/* overflow-x-clip, pas -hidden : « hidden » fait de <main> une seconde zone de défilement
           (overflow-y passe à auto) ; sur mobile, le doigt hésitait entre la page et <main> en bas de page. */}
+      <Preloader/>
       <NavbarMarketing/>
       <HeroSection/>
       <PartenairesSection/>

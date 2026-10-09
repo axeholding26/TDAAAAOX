@@ -1,6 +1,6 @@
 // TikTok Product Catalog Feed — Format CSV pour TikTok for Business
 // Soumets cette URL dans TikTok for Business → Catalogue → Data Source
-// URL : https://ta-boutique.axso.africa/api/feed/tiktok?slug=ta-boutique
+// URL : https://axsoafrica.com/api/feed/tiktok?slug=ta-boutique
 
 import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";

@@ -157,7 +157,7 @@ export function VideoSection() {
               </div>
               <div className="flex-1 min-w-0 bg-gray-50 rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 flex items-center gap-2 border border-gray-200/80">
                 <Lock size={14} className="text-gray-300 flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-gray-400 flex-1 text-center truncate">{t("app.axso.africa — Construction de ton empire")}</span>
+                <span className="text-xs sm:text-sm text-gray-400 flex-1 text-center truncate">{t("axsoafrica.com — Construction de ton empire")}</span>
               </div>
               <span className="flex-shrink-0 text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1 rounded-full bg-[#F5A623]/10 text-[#F5A623]">
                 {t("● LIVE")}

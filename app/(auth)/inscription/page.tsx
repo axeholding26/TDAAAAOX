@@ -100,6 +100,13 @@ const CSS = `
   .field:focus { border-color: ${YELLOW}; box-shadow: 0 0 0 3px rgba(245,166,35,.15); }
   .field::placeholder { color: ${MUTED}; }
 
+  /* Mobile : zones de réponse et champs pleine largeur */
+  @media (max-width: 639px) {
+    .rep { padding-left: 0 !important; }
+    .rep > form, .rep > div { max-width: none !important; }
+    .insc-main { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: ${BG}; }
   ::-webkit-scrollbar-thumb { background: ${BORDER}; border-radius: 2px; }
@@ -323,7 +330,7 @@ function TypeBoutiqueSelector({ onSelect }: { onSelect:(type:TypeBoutique)=>void
   const tr = useT();
   const [sel,setSel] = useState<TypeBoutique|"">("");
   return (
-    <div className="msg-in" style={{ paddingLeft:47, display:"grid", gap:9, maxWidth:420 }}>
+    <div className="msg-in rep" style={{ paddingLeft:47, display:"grid", gap:9, maxWidth:420 }}>
       {TYPE_BOUTIQUE_OPTIONS.map(o=>(
         <button key={o.v}
           onClick={()=>{ setSel(o.v); onSelect(o.v); }}
@@ -363,7 +370,7 @@ function PaysSelector({ onSelect }: { onSelect:(code:string,nom:string,devise:st
   }
 
   return (
-    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
+    <div className="msg-in rep" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, maxWidth:460 }}>
         {PAYS_LIST.map(p=>(
           <button key={p.code}
@@ -416,7 +423,7 @@ function PropositionsDesign({
   const devParam      = encodeURIComponent(devise || "XAF");
 
   return (
-    <div className="msg-in max-sm:pl-0!" style={{ paddingLeft:47 }}>
+    <div className="msg-in rep" style={{ paddingLeft:47 }}>
       <div style={{ display:"flex", gap:14, maxWidth:560, overflowX:"auto", scrollSnapType:"x mandatory", paddingBottom:8, WebkitOverflowScrolling:"touch" }}>
         {themeIds.map((id, idx) => {
           const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === id);
@@ -534,7 +541,7 @@ function PlanCard({ plan, vente, themeIds, typeBoutique, onConfirm, onThemeChang
   const e = MANIFESTE_LIBRAIRIE.find(x => x.fichier === plan.themeId) || MANIFESTE_LIBRAIRIE[0];
   const nomValide = plan.nomBoutique.trim().length >= 2;
   return (
-    <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:14 }}>
+    <div className="msg-in rep" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:14 }}>
       {/* Récap boutique */}
       <div style={{
         background:SURFACE, border:`1.5px solid ${BORDER}`,
@@ -651,7 +658,7 @@ function CompteForm({ onSubmit, loading, erreur, pays }: {
     { key:"whatsapp" as const, Icon:Phone, label:"WhatsApp",      type:"tel",      ph:exempleTelephone(pays) },
   ];
   return (
-    <div className="msg-in" style={{ paddingLeft:47 }}>
+    <div className="msg-in rep" style={{ paddingLeft:47 }}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth:420, display:"flex", flexDirection:"column", gap:11 }}>
         {fields.map(f=>(
           <div key={f.key}>
@@ -878,7 +885,7 @@ export default function InscriptionPage() {
       </header>
 
       {/* ── Main ── */}
-      <main style={{
+      <main className="insc-main" style={{
         position:"relative", zIndex:1, flex:1,
         maxWidth:720, margin:"0 auto", width:"100%",
         padding:"8px 24px 160px",
@@ -1024,7 +1031,7 @@ export default function InscriptionPage() {
             )}
 
             {phase==="q-vente" && (
-              <div className="msg-in" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
+              <div className="msg-in rep" style={{ paddingLeft:47, display:"flex", flexDirection:"column", gap:10 }}>
                 <div style={{ display:"flex", flexWrap:"wrap", gap:7 }}>
                   {VENTE_EXEMPLES[typeBoutique || "physique"].map(ex=>(
                     <button key={ex} onClick={()=>setVenteInput(ex)}
@@ -1071,7 +1078,7 @@ export default function InscriptionPage() {
               </AxiaMsg>
             )}
             {phase==="q-nom" && (
-              <div className="msg-in" style={{ paddingLeft:47, display:"flex", gap:10 }}>
+              <div className="msg-in rep" style={{ paddingLeft:47, display:"flex", gap:10 }}>
                 <input
                   value={nomInput}
                   onChange={e=>setNomInput(e.target.value)}
@@ -1104,7 +1111,7 @@ export default function InscriptionPage() {
               </AxiaMsg>
             )}
             {phase==="q-pays" && erreur && (
-              <div className="msg-in" style={{ paddingLeft:47, fontSize:13, color:"#DC2626" }}>
+              <div className="msg-in rep" style={{ paddingLeft:47, fontSize:13, color:"#DC2626" }}>
                 {tr(erreur)}{" "}{tr("— choisis à nouveau ton pays pour relancer l'analyse.")}
               </div>
             )}
@@ -1158,7 +1165,7 @@ export default function InscriptionPage() {
 
             {/* Création en cours */}
             {phase==="creation" && (
-              <div className="msg-in scale-up" style={{ paddingLeft:47 }}>
+              <div className="msg-in scale-up rep" style={{ paddingLeft:47 }}>
                 <div style={{
                   background:SURFACE, border:`1.5px solid ${BORDER}`,
                   borderRadius:18, padding:"18px 22px",

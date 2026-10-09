@@ -41,14 +41,7 @@ export function HeroSection() {
     <section className="relative w-full pt-28 pb-16 sm:pt-36 sm:pb-24 bg-white overflow-hidden">
       {/* Fond animé : nappes de lumière ambrée qui dérivent, lueur centrale qui
           porte le texte et le téléphone, grille qui glisse, fondu vers le blanc. */}
-      <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="ax-nappe ax-nappe-1" />
-        <div className="ax-nappe ax-nappe-2" />
-        <div className="ax-nappe ax-nappe-3" />
-        <div className="ax-lueur" />
-        <div className="ax-grille"><div className="ax-grille-motif" /></div>
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
-      </div>
+      <HeroFond />
 
       <div className="relative px-4 sm:px-10 lg:px-16 max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 lg:gap-8 items-center">
 
@@ -199,5 +192,19 @@ export function HeroSection() {
         @media (prefers-reduced-motion: reduce) { .ax-float, .ax-nappe, .ax-lueur, .ax-grille-motif { animation: none; } }
       `}</style>
     </section>
+  );
+}
+
+/** Fond animé du hero — réutilisé par le Preloader. Les classes ax-* sont définies dans le <style> de HeroSection. */
+export function HeroFond() {
+  return (
+    <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div className="ax-nappe ax-nappe-1" />
+      <div className="ax-nappe ax-nappe-2" />
+      <div className="ax-nappe ax-nappe-3" />
+      <div className="ax-lueur" />
+      <div className="ax-grille"><div className="ax-grille-motif" /></div>
+      <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
+    </div>
   );
 }

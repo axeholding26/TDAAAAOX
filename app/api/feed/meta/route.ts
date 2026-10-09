@@ -1,6 +1,6 @@
 // Meta Product Catalog Feed — Format CSV pour Facebook/Instagram Ads
 // Soumets cette URL dans Meta Business → Commerce Manager → Catalogue
-// URL : https://ta-boutique.axso.africa/api/feed/meta?slug=ta-boutique
+// URL : https://axsoafrica.com/api/feed/meta?slug=ta-boutique
 // Format supporté : CSV (le plus simple pour Meta)
 
 import { lienBoutique } from "@/lib/origine-site";

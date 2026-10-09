@@ -1,6 +1,6 @@
 // Google Merchant Center Product Feed — Format RSS 2.0 / Google Shopping
 // Soumets cette URL dans Google Merchant Center pour des listings GRATUITS
-// URL : https://ta-boutique.axso.africa/api/feed/google?slug=ta-boutique
+// URL : https://axsoafrica.com/api/feed/google?slug=ta-boutique
 
 import { lienBoutique } from "@/lib/origine-site";
 import { NextRequest, NextResponse } from "next/server";

@@ -502,7 +502,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
               <div>
                 <label className="ax-label block mb-1.5">{t("URL de destination")}</label>
-                <input value={form.urlDestination} onChange={e => setForm(f => ({ ...f, urlDestination: e.target.value }))} placeholder="https://votre-boutique.axso.africa" className={inputClass} />
+                <input value={form.urlDestination} onChange={e => setForm(f => ({ ...f, urlDestination: e.target.value }))} placeholder="https://axsoafrica.com/votre-boutique" className={inputClass} />
               </div>
 
               <button onClick={creer} disabled={saving || !form.nom || !form.budget}
