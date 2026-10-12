@@ -32,7 +32,7 @@ export default async function CollectionPage({ params }: Props) {
 
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
-  const taux = tenant.commissionRate ?? 0.06;
+  const taux = tenant.commissionRate ?? 0.1;
 
   const layoutCfg = cfg.layout ?? {};
   const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;

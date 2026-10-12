@@ -81,7 +81,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
   };
   const btnPrimaryClass = `inline-flex items-center justify-center gap-2 font-semibold ${btnHoverClass}`;
 
-  const taux = tenant.commissionRate ?? 0.06;
+  const taux = tenant.commissionRate ?? 0.1;
 
   const where: any = { tenantId: tenant.id, actif: true, visibleListage: { not: false } };
   if (q) where.OR = [

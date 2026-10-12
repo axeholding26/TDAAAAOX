@@ -73,7 +73,7 @@ export default async function ProduitPage({ params }: Props) {
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c, radius } = cfg;
 
-  const taux = tenant.commissionRate ?? 0.06;
+  const taux = tenant.commissionRate ?? 0.1;
   const prixAffiche = prixClient(produit.prix, taux, produit.type);
   const prixCompareAffiche = produit.prixCompare ? prixClient(produit.prixCompare, taux, produit.type) : null;
   const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche

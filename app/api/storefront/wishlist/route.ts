@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const tenant = await prisma.tenant.findUnique({ where: { slug }, select: { id: true, commissionRate: true } });
     if (!tenant) return NextResponse.json({ produits: [] });
 
-    const taux = tenant.commissionRate ?? 0.06;
+    const taux = tenant.commissionRate ?? 0.1;
     const produits = await prisma.produit.findMany({
       where: { tenantId: tenant.id, id: { in: ids }, actif: true },
       select: { id: true, nom: true, type: true, images: true, prix: true, prixCompare: true, stock: true, categorie: true, ventes: true },

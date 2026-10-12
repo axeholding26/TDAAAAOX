@@ -376,8 +376,8 @@ export default async function StorefrontPage({ params }: Props) {
           </div>
           <div className={`grid ${GRID_PRODUITS} gap-4 sm:gap-6`}>
             {vedettes.map((p) => {
-              const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.06, p.type);
-              const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, tenant.commissionRate ?? 0.06, p.type) : null;
+              const prixAffiche = prixClient(p.prix, tenant.commissionRate ?? 0.1, p.type);
+              const prixCompareAffiche = p.prixCompare ? prixClient(p.prixCompare, tenant.commissionRate ?? 0.1, p.type) : null;
               const remise = prixCompareAffiche && prixCompareAffiche > prixAffiche
                 ? Math.round(((prixCompareAffiche - prixAffiche) / prixCompareAffiche) * 100)
                 : 0;

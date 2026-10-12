@@ -1154,7 +1154,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
             slug: tenant.slug,
             nomBoutique: tenant.nomBoutique,
             devise: tenant.devise,
-            commissionRate: tenant.commissionRate ?? 0.06,
+            commissionRate: tenant.commissionRate ?? 0.1,
             fichier: entree.fichier,
           });
           // Fusionne (sans reprendre l'ancien builderTree, qui appartient au

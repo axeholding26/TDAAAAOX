@@ -115,7 +115,7 @@ export async function POST(req: Request) {
         devise: data.devise,
         whatsapp: data.whatsapp,
         themeConfig: themeConfig as any,
-        commissionRate: 0.06,
+        commissionRate: 0.1,
         // "brouillon" : visible sur /{slug} seulement une fois publiée —
         // voir lib/boutique-completion.ts.
         statut: "brouillon",

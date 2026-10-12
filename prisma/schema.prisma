@@ -28,7 +28,7 @@ model Tenant {
   bannerUrl           String?
   themeId             String   @default("terre-et-or")
   themeConfig         Json     @default("{}")
-  commissionRate      Float    @default(0.06)
+  commissionRate      Float    @default(0.1)
   statut              String   @default("active")
   planType            String   @default("gratuit")
   planExpiresAt       DateTime?

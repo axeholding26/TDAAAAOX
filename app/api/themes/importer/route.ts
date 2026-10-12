@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       take: 24,
     });
-    const taux = tenant.commissionRate ?? 0.06;
+    const taux = tenant.commissionRate ?? 0.1;
     const produitsPourClone = produitsBruts.map((p) => ({
       id: p.id,
       nom: p.nom,

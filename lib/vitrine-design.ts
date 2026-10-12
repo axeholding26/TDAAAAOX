@@ -142,7 +142,7 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
   const carte = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
   // Sans produit, on garde les cartes de démonstration du design.
   if (!tenant || !carte || produits.length === 0) return cfg;
-  const taux = tenant.commissionRate ?? 0.06;
+  const taux = tenant.commissionRate ?? 0.1;
   const [devise, tauxChange] = await Promise.all([deviseVisiteur(tenant.devise), tauxDuJour()]); // prix des cartes dans la devise du visiteur, aux taux du jour
   // Filtres : catégories qui ont des produits, dans l'ordre choisi sur la page Catalogue → Catégories.
   const rang = (label: string) => { const i = ordreCategories.findIndex((c) => c.nom === label); return i < 0 ? Infinity : i; };

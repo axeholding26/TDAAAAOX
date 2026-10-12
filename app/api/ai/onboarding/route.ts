@@ -145,7 +145,7 @@ export async function POST(request: Request) {
             email: compte.email,
             description: plan.description || "",
             parametresLivraison,
-            commissionRate: 0.06,
+            commissionRate: 0.1,
             // "brouillon" : la boutique n'est visible sur /{slug} qu'une fois
             // publiée explicitement (critères vérifiés par lib/boutique-completion.ts) —
             // le marchand personnalise d'abord dans le Constructeur.

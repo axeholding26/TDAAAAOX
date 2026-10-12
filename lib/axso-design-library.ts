@@ -141,7 +141,7 @@ export async function provisionerThemeInitial(params: {
     orderBy: { createdAt: "desc" },
     take: 24,
   });
-  const taux = commissionRate ?? 0.06;
+  const taux = commissionRate ?? 0.1;
   const produits: ProduitPourClone[] = produitsDb.map((p) => ({
     id: p.id,
     nom: p.nom,

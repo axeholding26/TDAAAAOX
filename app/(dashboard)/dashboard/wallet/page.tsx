@@ -44,6 +44,8 @@ const OPERATEURS = [
   { id: "Free",   label: "Free Money"        },
 ];
 
+const MINIMUM_RETRAIT = 1000; // même seuil que lib/wallet.ts
+
 function fmt(n: number, devise = "XAF") {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency", currency: devise,
@@ -120,8 +122,7 @@ export default function WalletPage() {
 
   async function soumettrRetrait(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.montant || Number(form.montant) <= 0) { toast.error(tr("Montant invalide")); return; }
-    if (!form.destinataire.trim()) { toast.error(tr("Numéro / IBAN requis")); return; }
+    if (erreurMontant || erreurDestinataire || !form.montant || !form.destinataire.trim()) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/wallet/retrait", {
@@ -141,6 +142,28 @@ export default function WalletPage() {
   }
 
   const devise = wallet?.devise ?? "XAF";
+  const solde = wallet?.solde ?? 0;
+  const montant = Number(form.montant);
+  // Mêmes règles que le serveur (lib/wallet.ts), dites avant l'envoi plutôt qu'après.
+  const erreurMontant = !form.montant ? null
+    : !(montant >= MINIMUM_RETRAIT) ? tr("Le minimum de retrait est de {0}.", fmt(MINIMUM_RETRAIT, devise))
+    : montant > solde ? tr("Ce montant dépasse votre solde disponible ({0}).", fmt(solde, devise))
+    : null;
+  const chiffres = form.destinataire.replace(/\D/g, "");
+  const erreurDestinataire = !form.destinataire.trim() ? null
+    : form.methode === "mobile_money" && chiffres.length < 8 ? tr("Ce numéro est trop court.")
+    : form.methode === "virement_bancaire" && form.destinataire.trim().length < 10 ? tr("Ce numéro de compte est trop court.")
+    : null;
+  const instantane = (operateur: string) => devise === "XAF" && ["MTN", "Orange"].includes(operateur);
+
+  /** Ouvre le formulaire en reprenant le destinataire du dernier retrait : il change rarement. */
+  function ouvrirRetrait() {
+    const dernier = wallet?.retraits?.[0];
+    if (dernier && !form.destinataire) {
+      setForm(f => ({ ...f, methode: dernier.methode === "virement_bancaire" ? "virement_bancaire" : "mobile_money", destinataire: dernier.destinataire, operateur: dernier.operateur ?? f.operateur }));
+    }
+    setShowRetrait(true);
+  }
   // Seuls MTN et Orange Cameroun (XAF) partent automatiquement ; le reste est traité à la main par Axso.
   const retraitAuto = form.methode === "mobile_money" && devise === "XAF" && ["MTN", "Orange"].includes(form.operateur)
     && /^(\+|00)?(237)?6\d{8}$/.test(form.destinataire.replace(/[\s.-]/g, ""));
@@ -195,7 +218,7 @@ export default function WalletPage() {
               </div>
               <div className="flex flex-col sm:items-end gap-2.5">
                 <button
-                  onClick={() => setShowRetrait(true)}
+                  onClick={ouvrirRetrait}
                   disabled={(wallet?.solde ?? 0) <= 0}
                   className="flex items-center gap-2 px-6 py-3 bg-white text-[#D97706] font-bold rounded-2xl text-[13px] hover:bg-amber-50 transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
                   <ArrowUpFromLine size={15} />{" "}{tr("Retirer les fonds")}
@@ -268,7 +291,7 @@ export default function WalletPage() {
             <Info size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
             <p className="text-[12.5px] text-[#92400E] leading-relaxed">
               <strong>{tr("Comment fonctionne le Wallet Axso ?")}</strong><br />
-              {tr("Chaque paiement client est placé en")}{" "}<strong>{tr("séquestre 48h")}</strong>{" "}{tr("(protection acheteur). Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix, la commission Axso (6%) est ajoutée au prix payé par le client.")}
+              {tr("Chaque paiement client est placé en")}{" "}<strong>{tr("séquestre 48h")}</strong>{" "}{tr("(protection acheteur). Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix, la commission Axso (10%) est ajoutée au prix payé par le client.")}
             </p>
           </div>
 
@@ -387,16 +410,23 @@ export default function WalletPage() {
                 <div className="relative">
                   <input
                     type="number"
+                    inputMode="numeric"
+                    autoFocus
                     value={form.montant}
                     onChange={e => setForm(f => ({ ...f, montant: e.target.value }))}
                     placeholder={tr("Ex: 50 000")}
-                    min="1000"
-                    max={wallet?.solde ?? 0}
-                    className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[18px] font-bold outline-none focus:border-[#F5A623]/50 pr-14 transition-colors"
+                    min={MINIMUM_RETRAIT}
+                    max={solde}
+                    aria-invalid={!!erreurMontant}
+                    aria-describedby="retrait-montant-aide"
+                    className={`w-full border rounded-2xl px-4 py-3 text-[#111111] text-[18px] font-bold outline-none pr-14 transition-colors ${erreurMontant ? "border-[#DC2626]" : "border-[#E8E8E8] focus:border-[#F5A623]/50"}`}
                     style={{ fontVariantNumeric: "tabular-nums" }}
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-[#AAAAAA]">{tr(devise)}</span>
                 </div>
+                <p id="retrait-montant-aide" role={erreurMontant ? "alert" : undefined} className={`text-[11.5px] mt-1.5 ${erreurMontant ? "text-[#DC2626] font-semibold" : "text-[#AAAAAA]"}`}>
+                  {erreurMontant ?? tr("Minimum {0}.", fmt(MINIMUM_RETRAIT, devise))}
+                </p>
                 <div className="flex gap-2 mt-2">
                   {[25, 50, 75, 100].map(pct => (
                     <button key={pct} type="button"
@@ -438,15 +468,18 @@ export default function WalletPage() {
               {form.methode === "mobile_money" && (
                 <div>
                   <label className="ax-label block mb-2">{tr("Opérateur")}</label>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {OPERATEURS.map(op => (
-                      <button key={op.id} type="button"
+                      <button key={op.id} type="button" aria-pressed={form.operateur === op.id}
                         onClick={() => setForm(f => ({ ...f, operateur: op.id }))}
-                        className="py-2 text-[11px] font-bold rounded-xl border transition-all"
+                        className="py-2 px-2 text-[11px] font-bold rounded-xl border transition-all flex flex-col items-center gap-0.5"
                         style={form.operateur === op.id
                           ? { borderColor: "#F5A623", background: "#FFFBEB", color: "#D97706" }
                           : { borderColor: "#EBEBEB", background: "#FAFAFA", color: "#888888" }}>
-                        {op.id}
+                        {tr(op.label)}
+                        <span className="text-[10px] font-semibold" style={{ color: instantane(op.id) ? "#15803D" : "#AAAAAA" }}>
+                          {instantane(op.id) ? tr("Quelques minutes") : tr("24 à 48 h")}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -459,32 +492,41 @@ export default function WalletPage() {
                   {form.methode === "mobile_money" ? tr("Numéro Mobile Money") : tr("IBAN ou numéro de compte")}
                 </label>
                 <input
-                  type="text"
+                  type={form.methode === "mobile_money" ? "tel" : "text"}
+                  inputMode={form.methode === "mobile_money" ? "tel" : "text"}
+                  autoComplete={form.methode === "mobile_money" ? "tel" : "off"}
                   value={form.destinataire}
                   onChange={e => setForm(f => ({ ...f, destinataire: e.target.value }))}
                   placeholder={form.methode === "mobile_money" ? tr("+237 6XX XXX XXX") : tr("FR76 XXXX XXXX XXXX")}
-                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
+                  aria-invalid={!!erreurDestinataire}
+                  className={`w-full border rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none transition-colors ${erreurDestinataire ? "border-[#DC2626]" : "border-[#E8E8E8] focus:border-[#F5A623]/50"}`}
                 />
+                {erreurDestinataire
+                  ? <p role="alert" className="text-[11.5px] mt-1.5 text-[#DC2626] font-semibold">{erreurDestinataire}</p>
+                  : form.methode === "mobile_money" && instantane(form.operateur) && form.destinataire.trim() && !retraitAuto
+                    && <p className="text-[11.5px] mt-1.5 text-[#B45309]">{tr("Ce numéro n'a pas le format camerounais (6XX XXX XXX) : le retrait sera traité à la main, sous 24 à 48 h.")}</p>}
               </div>
 
               {/* Notes */}
-              <div>
-                <label className="ax-label block mb-2">{tr("Note (optionnel)")}</label>
+              <details>
+                <summary className="text-[12px] font-semibold text-[#888] cursor-pointer select-none">{tr("Ajouter une note (optionnel)")}</summary>
                 <input
                   type="text"
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   placeholder={tr("Ex: Virement mensuel…")}
-                  className="w-full border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
+                  aria-label={tr("Note")}
+                  className="w-full mt-2 border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 transition-colors"
                 />
-              </div>
+              </details>
 
               {/* Récap */}
-              {form.montant && Number(form.montant) > 0 && (
+              {form.montant && montant > 0 && !erreurMontant && (
                 <div className="bg-[#F9F9F9] border border-[#F0F0F0] rounded-2xl p-4 space-y-2">
                   {[
                     { label: "Montant demandé", value: fmt(Number(form.montant), devise), bold: false },
                     { label: "Frais de virement", value: "Inclus", bold: false },
+                    { label: "Solde après retrait", value: fmt(solde - montant, devise), bold: false },
                   ].map(row => (
                     <div key={row.label} className="flex justify-between text-[12.5px]">
                       <span className="text-[#AAAAAA]">{tr(row.label)}</span>
@@ -511,7 +553,7 @@ export default function WalletPage() {
               </div>
 
               <button type="submit"
-                disabled={submitting || !form.montant || Number(form.montant) <= 0}
+                disabled={submitting || !form.montant || !form.destinataire.trim() || !!erreurMontant || !!erreurDestinataire}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-white text-[13px] transition-all disabled:opacity-50 hover:scale-[1.01] active:scale-[0.99]"
                 style={{ background: "linear-gradient(135deg, #F5A623, #D4911A)", boxShadow: "0 4px 20px rgba(245,166,35,0.30)" }}>
                 {submitting

@@ -42,7 +42,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
   // Même règle que les autres pages : publique si active, visible par le propriétaire (aperçu du Constructeur).
   if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
-  const article = await articleCommande(tenant.id, tenant.commissionRate ?? 0.06, await searchParams);
+  const article = await articleCommande(tenant.id, tenant.commissionRate ?? 0.1, await searchParams);
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const theme = cfg.colors;
 

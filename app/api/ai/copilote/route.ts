@@ -24,7 +24,7 @@ Tu prends des actions directes sur la boutique du marchand via tes outils.
 Contexte Axso :
 - Axso est une plateforme e-commerce mondiale (Europe, Afrique, Amérique, Asie, Moyen-Orient, etc.)
 - Produits physiques, digitaux et dropshipping international supportés
-- Paiement en ligne (commission 6% ajoutée au prix payé par le client, jamais déduite du vendeur)
+- Paiement en ligne (commission 10% ajoutée au prix payé par le client, jamais déduite du vendeur)
 - Paiement à la livraison + WhatsApp pour les produits physiques/drop (abonnement SaaS)
 - Sources d'approvisionnement dropshipping : AliExpress, Amazon, fournisseurs locaux selon le pays
 
@@ -95,7 +95,7 @@ async function executerOutil(
           slug: tenant.slug,
           nomBoutique: tenant.nomBoutique,
           devise: tenant.devise,
-          commissionRate: tenant.commissionRate ?? 0.06,
+          commissionRate: tenant.commissionRate ?? 0.1,
           fichier: entree.fichier,
         });
         await prisma.tenant.update({ where: { id: tenantId }, data: { themeId: theme.id } });

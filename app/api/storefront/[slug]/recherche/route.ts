@@ -21,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   // (brouillon / aperçu du Constructeur) — sinon la recherche restait vide en test.
   if (!tenant || !(await boutiqueVisible(tenant))) return NextResponse.json({ produits: [] });
 
-  const taux = tenant.commissionRate ?? 0.06;
+  const taux = tenant.commissionRate ?? 0.1;
 
   const produits = await prisma.produit.findMany({
     where: {

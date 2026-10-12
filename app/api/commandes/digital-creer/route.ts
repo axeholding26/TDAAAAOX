@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     if (aExpedier && (!client?.adresse?.trim() || !(zone || client?.ville)?.trim())) {
       return NextResponse.json({ error: "Adresse et ville de livraison obligatoires" }, { status: 400 });
     }
-    const taux = tenant.commissionRate ?? 0.06;
+    const taux = tenant.commissionRate ?? 0.1;
     const lignes = items.map((item: any) => {
       const p = produits.find((x) => x.id === String(item.produitId))!;
       return { produitId: p.id, nom: p.nom, prix: prixClient(p.prix, taux, p.type), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: item.variante || null };

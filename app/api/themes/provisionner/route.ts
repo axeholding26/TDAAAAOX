@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       slug: tenant.slug,
       nomBoutique: tenant.nomBoutique,
       devise: tenant.devise,
-      commissionRate: tenant.commissionRate ?? 0.06,
+      commissionRate: tenant.commissionRate ?? 0.1,
       fichier: fichier || undefined,
     });
 

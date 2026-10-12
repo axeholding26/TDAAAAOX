@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       where: { id: { in: itemsClient.map((i: any) => String(i.produitId)) }, tenantId, actif: true },
       select: { id: true, nom: true, type: true, prix: true, images: true, variantes: { where: { actif: true }, select: { nom: true, valeur: true, prix: true } } },
     });
-    const taux = tenant.commissionRate ?? 0.06;
+    const taux = tenant.commissionRate ?? 0.1;
     const items: { produitId: string; nom: string; prix: number; quantite: number; imageUrl: string | null; variante: string | null }[] = [];
     for (const item of itemsClient) {
       const p = produits.find((x) => x.id === String(item.produitId));

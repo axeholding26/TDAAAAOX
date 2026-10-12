@@ -172,7 +172,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
 
               {commande.commission && (
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5 text-xs">
-                  <p className="text-gray-400 font-medium">{t("Commission Axso (6%)")}</p>
+                  <p className="text-gray-400 font-medium">{t("Commission Axso (10%)")}</p>
                   <div className="flex justify-between">
                     <span className="text-gray-500">{t("Commission brute")}</span>
                     <span className="text-[#111111]">{formatMontant(commande.commission.montantCommission, commande.devise)}</span>

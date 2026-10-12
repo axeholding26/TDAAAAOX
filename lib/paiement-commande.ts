@@ -89,7 +89,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     return;
   }
 
-  const tauxCommission = commande.tenant.commissionRate ?? 0.06;
+  const tauxCommission = commande.tenant.commissionRate ?? 0.1;
   const fraisPasserelle = fraisNotchPay(transaction);
 
   // Passage à « payé » ATOMIQUE : le webhook NotchPay et la page de confirmation

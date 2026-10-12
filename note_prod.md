@@ -25,11 +25,16 @@ jamais une base de prod sans sauvegarde.
 
 ### 0.2 Committer et pousser le code
 
-- [ ] Relire `git status` (environ 160 fichiers modifiés ou nouveaux).
-- [ ] Committer, puis pousser sur `main`.
+- [ ] Committer ce qui reste (les tests : dossier `tests/`, `package.json`,
+      `vercel.json`, et cette note).
+- [ ] Fusionner la branche `feature-test` dans `main`, puis pousser `main`.
 
-**Pourquoi** : rien n'est committé. Tant que ce n'est pas poussé, la prod garde
-l'ancien code, avec toutes les failles décrites plus bas.
+**État au 12/10/2026 à 17h30** : l'essentiel est dans le commit `746326d` sur la
+branche `feature-test`. `main` n'a pas bougé, donc la prod garde l'ancien code,
+avec toutes les failles décrites plus bas, tant que la fusion n'est pas poussée.
+
+**Attention** : pousser `main` déclenche le déploiement. Faire l'étape 1
+(variables d'environnement) **avant**.
 
 **À savoir** : trois fichiers ont été **supprimés volontairement**. C'est normal :
 - `app/api/ai/agent-dropshipping/route.ts` (ancien agent IA qui inventait des produits, des prix et des fournisseurs)
@@ -87,11 +92,61 @@ confirmation ne repose plus que sur l'événement webhook.
 qui est écrite en clair dans le code source. Ce point n'a **pas** été modifié dans
 le code, c'est juste une variable à régler.
 
+### 1.5 Liste complète des variables lues par le code (ajout du 12/10/2026)
+
+À régler dans Vercel → Project → Settings → Environment Variables, pour
+**Production** (et pour **Preview** si tu fais tester une branche).
+
+**Indispensables** (sans elles l'appli ne marche pas) :
+`DATABASE_URL`, `AUTH_SECRET`, `NEXTAUTH_SECRET`, `NEXT_PUBLIC_APP_URL`,
+`NEXT_PUBLIC_AXSO_DOMAIN`, `BLOB_READ_WRITE_TOKEN`, `NOTCHPAY_PUBLIC_KEY`,
+`NOTCHPAY_PRIVATE_KEY`, `NOTCHPAY_WEBHOOK_SECRET`, `CRON_SECRET`, `RESEND_API_KEY`,
+`GEMINI_API_KEY`.
+
+**Par fonctionnalité** :
+- WhatsApp et Meta : `META_APP_ID`, `META_APP_SECRET`, `META_WEBHOOK_VERIFY_TOKEN`,
+  `NEXT_PUBLIC_META_WEBHOOK_TOKEN`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
+- Domaines personnalisés des boutiques : `VERCEL_API_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID`
+- Connexion Gmail des marchands : `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- SMS : `AFRICASTALKING_USERNAME`, `AFRICASTALKING_KEY`
+- IA de secours : `DEEPSEEK_API_KEY`
+
+**À NE PAS mettre** (valeurs de secours partagées par toutes les boutiques) :
+`META_ACCESS_TOKEN`, `META_PAGE_ID`, `META_IG_USER_ID`, `META_AD_ACCOUNT_ID`.
+Si elles sont définies, une boutique qui n'a pas connecté son propre compte Meta
+publierait sur TA page.
+
+**Inutiles** (présentes dans ton `.env` local mais lues par aucun code) : Stripe,
+Flutterwave, CinetPay, Groq, Cerebras, OpenRouter, Together, SambaNova, NVIDIA,
+Anthropic, FAL, Pollinations, Upstash.
+
+**Ne jamais changer `AUTH_SECRET` et `NEXTAUTH_SECRET` sur une prod en service** :
+tout le monde serait déconnecté et les codes de connexion des clients acheteurs
+ne seraient plus reconnus.
+
 ---
 
 ## ÉTAPE 2 — Déploiement
 
 ### 2.1 Changement de structure de base (automatique)
+
+> **CONSTAT DU 12/10/2026 — déjà fait, sans le vouloir.** Sur Vercel, la variable
+> `DATABASE_URL` est la même pour « Production » et « Preview ». Le déploiement de
+> test de la branche `feature-test` (commit `746326d`, 15h44 UTC) a donc appliqué la
+> nouvelle structure **directement sur la base de production**. Le journal de build
+> le confirme : « Your database is now in sync with your Prisma schema ».
+>
+> Conséquences :
+> - La base de prod a déjà la nouvelle structure. Au déploiement de `main`, cette
+>   étape ne changera plus rien.
+> - Le lien de test travaille sur les **vraies données** des marchands, avec les
+>   **vraies clés NotchPay**. Un testeur qui passe une commande ou supprime un
+>   produit le fait en production.
+> - Le SQL manuel de l'étape 3 (journal d'audit) n'est **pas** appliqué pour autant.
+>
+> - [ ] Donner à l'environnement « Preview » sa propre base : créer une branche
+>       dans Neon, copier son adresse, et l'enregistrer comme `DATABASE_URL` pour
+>       « Preview » uniquement (Vercel → Settings → Environment Variables).
 
 - [ ] Rien à lancer à la main : `prisma db push` s'exécute pendant le build Vercel.
 - [ ] Vérifier dans les logs du build qu'il se termine sans erreur.
@@ -106,6 +161,25 @@ le code, c'est juste une variable à régler.
 
 **Si tu utilises `prisma migrate deploy` au lieu de `db push`** : les trois
 migrations sont dans `prisma/migrations/` et commencent par `20261012`.
+
+### 2.1 bis Les tests bloquent maintenant le déploiement
+
+- [ ] Rien à faire si le build passe. S'il échoue sur `npm test`, lire le nom du
+      test en échec dans les logs Vercel : il dit en français quel calcul est cassé.
+
+**Ce qui change** : la commande de build lance 33 tests avant de toucher à la base
+(`prisma generate && npm test && prisma db push && next build`). Ils couvrent les
+calculs d'argent : panier, remises et plafonds, TVA, paiements mixtes, conflits
+hors ligne, devises, prix conseillé, contrôle du montant payé, paliers.
+
+**Pourquoi** : si une modification future casse un calcul d'argent, le déploiement
+s'arrête au lieu de mettre le bug en ligne.
+
+**Condition** : Vercel doit utiliser Node 22 ou plus (Project → Settings →
+Build and Deployment → Node.js Version). Avec une version plus ancienne, la
+commande de test échoue.
+
+**En local** : `npm test` (6 secondes, aucune base de données nécessaire).
 
 ### 2.2 Vérifier que les tables du POS 2.0 existent en prod
 
@@ -160,6 +234,22 @@ UPDATE "Commande" SET "canal" = 'pos' WHERE "clientEmail" = 'pos@local' AND "can
 **Pourquoi** : les ventes faites avec l'ancienne caisse sont rangées avec les
 ventes en ligne, ce qui fausse les statistiques (taux de conversion notamment).
 
+### 3.2 bis Passer les boutiques existantes à 10 % de commission — OBLIGATOIRE
+
+- [ ] Prévenir les marchands **avant** (voir 6.10), puis exécuter :
+
+```sql
+UPDATE "Tenant" SET "commissionRate" = 0.1 WHERE "commissionRate" = 0.06;
+```
+
+**Pourquoi** : décision du 12/10/2026, la commission Axso passe de 6 % à 10 %
+(dont environ 3 % partent en frais NotchPay). Le déploiement ne change que le taux
+des **nouvelles** boutiques ; les boutiques existantes ont leur taux enregistré en
+base et restent à 6 % tant que ce SQL n'est pas lancé.
+
+**À savoir** : une boutique dont le taux a été réglé à autre chose que 6 % n'est
+pas touchée.
+
 ### 3.3 Le reste du SQL manuel
 
 - [ ] Lire la section 5 de `prisma/migrations/20261011120000_pos_v2/migration.sql`
@@ -189,9 +279,27 @@ près (04:00 peut partir jusqu'à 04:59).
       Elle doit passer à « payée » et le portefeuille du marchand doit être crédité.
 - [ ] Faire le même test sur un abonnement palier 1 (6 000 XAF).
 
-**Pourquoi** : le contrôle du montant payé est nouveau et n'a pas pu être testé
-avec un vrai paiement en local. Si NotchPay renvoie un montant net de frais ou une
-devise convertie, des paiements **légitimes** seraient refusés.
+**Pourquoi** : le contrôle du montant payé est nouveau et n'a pas encore été
+exercé par un vrai paiement de bout en bout.
+
+**Vérifié le 12/10/2026** en lisant un vrai paiement abouti chez NotchPay (mode
+live) : le champ `amount` est bien le montant payé par le client (106 XAF, frais
+de 3 XAF comptés à part) et la référence est bien `ORD-<commande>`. Le contrôle est
+donc compatible avec ce que NotchPay renvoie ; le test reste à faire une fois.
+
+### 4.2 bis Retraits du portefeuille — JAMAIS TESTÉS EN RÉEL
+
+- [ ] Vérifier chez NotchPay que les transferts sortants sont activés sur le compte.
+- [ ] Alimenter le solde NotchPay, puis faire un retrait de test de 1 000 XAF vers
+      ton propre numéro MTN ou Orange.
+
+**Constat du 12/10/2026** : NotchPay n'a enregistré **aucun transfert** depuis la
+création du compte, et son solde disponible est de **401 XAF**. Un retrait
+automatique (minimum 1 000 XAF) ne peut donc pas partir aujourd'hui.
+
+**À savoir** : le retrait n'est automatique que pour le Cameroun, en XAF, vers MTN
+ou Orange. Tout le reste (autres pays, virement bancaire) reste « en attente » :
+c'est toi qui paies à la main puis qui clôtures le retrait dans l'admin.
 
 **Si le test échoue** : chercher dans les logs Vercel
 `[paiement-commande] paiement refusé` ou `[notchpay/webhook] abonnement refusé`.
@@ -323,6 +431,38 @@ chez lui compte comme honorée.
 ne sont pas recomptées. Une commande fournisseur ne peut plus revenir à une étape
 précédente.
 
+### 6.9 Les lots suivent maintenant les transferts entre magasins
+
+Quand un produit suivi par lots est transféré, le lot part avec lui : le lot qui
+périme le premier part en premier, et à l'arrivée il devient un lot nommé
+`<code d'origine>-<numéro du transfert>` (exemple : `L42-TR8F3K2`), avec la même
+date de péremption, le même coût et le même fournisseur.
+
+**À savoir pour les équipes** :
+- Pour retrouver tout ce qui vient d'un lot (rappel de produit par exemple),
+  chercher le code d'origine dans Traçabilité : les lots transférés ressortent
+  aussi, car leur code commence par celui d'origine.
+- **Bloquer ou rappeler un lot ne bloque pas automatiquement ses parties déjà
+  transférées** dans un autre magasin : il faut le faire sur chacune.
+- Les transferts faits **avant** le déploiement ne sont pas corrigés : leurs lots
+  restent rattachés à l'entrepôt de départ. Un inventaire les recale.
+
+### 6.10 Commission à 10 % : les prix en ligne montent d'environ 4 %
+
+La commission est **ajoutée au prix payé par le client** ; le marchand touche
+toujours son prix en entier.
+
+| Produit du marchand à 10 000 | Le client paie | Le marchand touche |
+|---|---|---|
+| Payé en ligne (produit digital, formation, etc.) | 11 000 (avant : 10 600) | 10 000 |
+| Produit physique payé à la livraison | 10 000 | 10 000 (aucune commission) |
+
+Sur les 1 000 de commission, NotchPay prend environ 3 % du montant payé (environ
+330) : il reste environ 670 à Axso, soit 6,7 % du prix du marchand et non 7 %
+pile. Pour garder 7 % nets, il faudrait un taux de 10,3 %.
+
+- [ ] Annoncer le changement aux marchands avant de lancer le SQL de l'étape 3.2 bis.
+
 ---
 
 ## CE QUI N'A PAS ÉTÉ FAIT (à décider plus tard)
@@ -331,14 +471,15 @@ Ces points viennent de l'audit et restent ouverts. Aucun ne bloque le déploieme
 
 | Sujet | État | Conséquence |
 |---|---|---|
-| Tests automatiques | Aucun dans le projet | Rien ne protège contre une régression |
+| Tests automatiques | 33 tests sur les calculs d'argent | Pas de test d'écran ni de test avec base de données : la liste de l'étape 4 les remplace |
+| Tests du moteur de promotions | Non écrits | Les promotions (2+1, lots, seuils) ne sont pas couvertes par les tests |
 | Documentation technique et utilisateur | Absente | Demandée par le prompt POS |
 | Limitation de débit sur les routes de caisse | Absente | Risque de surcharge |
 | `/api/cron/publications` | Non planifiée | Les posts planifiés ne partent jamais ; demande un passage toutes les 5 à 15 min (offre Vercel Pro ou service externe) |
 | `/api/cron/agents` | Non planifiée | Déclenche des actions autonomes et des coûts d'IA : à décider |
 | `/api/cron/sync-fournisseurs` | Non planifiée, **à ne pas planifier** | Réécrit des prix de vente sans aucune donnée fournisseur (`lib/sync-fournisseurs.ts`) |
 | Rejeu des scans téléphone faits avant l'ouverture de l'écran | Abandonné volontairement | Comme chez Square et Shopify : un scan sans panier ouvert est refusé avec un message, pas gardé pour plus tard |
-| Lots suivis lors d'un transfert | Non fait | Après transfert, le lot reste rattaché à l'entrepôt d'origine |
+| Rappel d'un lot en cascade | Non fait | Rappeler un lot n'atteint pas ses parties transférées (voir 6.9) |
 | Taux de livraison dans les délais par fournisseur | Non fait | Seul le taux de commandes honorées est compté ; le délai réel vient encore des évaluations saisies à la main |
 | Vente hors ligne et session de caisse | Partiel | La vente est bien datée, mais rattachée à la session ouverte au moment de la synchronisation |
 | Ancienne page `/dashboard/dropshipping` | Toujours là | Ses onglets font doublon avec Sourcing |
