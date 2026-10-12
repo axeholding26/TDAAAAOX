@@ -242,3 +242,28 @@ export async function envoyerMessageContact(params: {
     `,
   });
 }
+
+// Demande de devis (RFQ) envoyée à un fournisseur depuis AXSO Sourcing — en
+// texte brut, réponse dirigée vers le marchand. Renvoie false si rien n'est
+// parti (Resend non configuré ou refus) : l'appelant ne marque alors PAS la
+// demande comme envoyée et propose le texte à copier.
+export async function envoyerDemandeDevis(params: { emailFournisseur: string; emailMarchand: string; boutique: string; reference: string; texte: string }): Promise<boolean> {
+  return envoyerEmailTexte({ a: params.emailFournisseur, repondreA: params.emailMarchand, boutique: params.boutique, sujet: `Request for quotation ${params.reference}`, texte: params.texte });
+}
+
+// E-mail en texte brut envoyé au nom d'une boutique (devis, bon de commande…),
+// réponse dirigée vers le marchand. Renvoie false si rien n'est parti (Resend
+// non configuré ou refus) : l'appelant ne doit alors rien marquer comme envoyé.
+export async function envoyerEmailTexte(params: { a: string; repondreA: string; boutique: string; sujet: string; texte: string }): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) return false;
+  const { error } = await resend.emails.send({
+    from: `${params.boutique.replace(/[<>"\r\n]/g, "")} via Axso <noreply@axsoafrica.com>`,
+    to: params.a,
+    replyTo: params.repondreA,
+    subject: params.sujet,
+    text: params.texte,
+  });
+  if (error) console.warn("[envoyerEmailTexte]", params.sujet, error.message);
+  return !error;
+}

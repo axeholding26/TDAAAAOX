@@ -102,5 +102,13 @@
  "Inviter un membre (lecture seule)": "Invite a member (read-only)",
  "Le compte pourra consulter tout le panneau admin (boutiques, finances, abonnements) mais ne pourra jamais suspendre une boutique, retirer des fonds ou inviter d'autres membres.": "The account will be able to view the entire admin panel (stores, finances, subscriptions) but will never be able to suspend a store, withdraw funds or invite other members.",
  "Inviter": "Invite",
- "Membres du panneau admin": "Admin panel members"
+ "Membres du panneau admin": "Admin panel members",
+ "Retraits à traiter à la main": "Withdrawals to process manually",
+ "Le solde du marchand est déjà débité. Envoyez l'argent, puis marquez le retrait payé — ou refusez-le pour le recréditer.": "The merchant's balance is already debited. Send the money, then mark the withdrawal as paid — or reject it to credit it back.",
+ "Marquer payé": "Mark as paid",
+ "Refuser": "Reject",
+ "Retrait marqué payé": "Withdrawal marked as paid",
+ "Retrait refusé — marchand recrédité": "Withdrawal rejected — merchant credited back",
+ "Confirmer que {0} ont bien été envoyés à {1} ?": "Confirm that {0} has been sent to {1}?",
+ "Refuser ce retrait et recréditer {0} au marchand ?": "Reject this withdrawal and credit {0} back to the merchant?"
 }

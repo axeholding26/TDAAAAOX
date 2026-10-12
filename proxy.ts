@@ -6,6 +6,7 @@ import { domainePrincipal, slugPourDomaine } from "@/lib/domaines";
 import { auth } from "@/lib/auth";
 import { requireNiveau } from "@/lib/permissions-server";
 import { moduleApi } from "@/lib/permissions-api";
+import { SLUGS_RESERVES } from "@/lib/utils";
 
 const DOMAINE_APP = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "localhost:3000";
 
@@ -87,7 +88,7 @@ export async function proxy(request: NextRequest) {
   // redirection permanente vers ce domaine (modèle Shopify) — anciens liens et QR
   // continuent de marcher. Jamais pendant l'aperçu du Constructeur (cadre même origine).
   const premier = pathname.split("/")[1];
-  if (premier && (request.method === "GET" || request.method === "HEAD") && request.cookies.get("axso_apercu")?.value !== "1") {
+  if (premier && !SLUGS_RESERVES.has(premier) && (request.method === "GET" || request.method === "HEAD") && request.cookies.get("axso_apercu")?.value !== "1") {
     const domaine = await domainePrincipal(premier);
     if (domaine) return NextResponse.redirect(`https://${domaine}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
   }

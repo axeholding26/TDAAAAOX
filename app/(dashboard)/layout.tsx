@@ -29,11 +29,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { plan: palier } = tenantId ? await planActif(tenantId) : { plan: "palier0" as const };
   const permissions = await permissionsSession(session);
   const modeCaisse = await estCaissierPur(session);
+  // Mode de la caisse (simple | pro) : allège ou déploie le menu « Caisse & magasin ».
+  // Une boutique sans réglages — ou une base pas encore migrée — reste en mode simple.
+  const modePos = tenantId
+    ? await prisma.reglagesPos.findUnique({ where: { tenantId }, select: { mode: true } }).then((r) => (r?.mode === "pro" ? "pro" as const : "simple" as const), () => "simple" as const)
+    : "simple" as const;
 
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("dashboard", "boutique")}>
     <AbonnementOverlayProvider palier={palier}>
-      <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse}>
+      <DashboardShell session={session} boutique={boutique} quotaAtteint={quotaAtteint} palier={palier} permissions={permissions} modeCaisse={modeCaisse} modePos={modePos}>
         <DeviseProvider devise={boutique?.devise || "XAF"}>{children}</DeviseProvider>
       </DashboardShell>
       {/* Son audio sur chaque notification toast */}

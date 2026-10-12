@@ -58,6 +58,10 @@ export function POSPanel() {
   const [varianteModal, setVarianteModal] = useState<Produit | null>(null);
   const [scannerOuvert, setScannerOuvert] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  // Clé d'idempotence de la vente en cours : un nouvel essai du MÊME panier (réseau coupé, double clic)
+  // ne crée pas une seconde vente. Le panier change : nouvelle clé.
+  const cleVente = useRef<string | null>(null);
+  useEffect(() => { cleVente.current = null; }, [cart]);
 
   useEffect(() => {
     fetch("/api/produits?limit=200&type=physique")
@@ -137,6 +141,7 @@ export function POSPanel() {
   async function validerVente() {
     if (!cart.length) return;
     setLoading(true);
+    cleVente.current ??= crypto.randomUUID();
     try {
       const res = await fetch("/api/commandes/pos-creer", {
         method: "POST",
@@ -148,6 +153,7 @@ export function POSPanel() {
           methode,
           montantTotal: total,
           montantReduction: remise,
+          cle: cleVente.current,
         }),
       });
       const d = await res.json();

@@ -10,16 +10,17 @@ export async function POST(req: NextRequest) {
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
-  const body = await req.json();
-  const { montant, methode, destinataire, operateur, notes } = body;
+  const body = await req.json().catch(() => ({}));
+  const { methode, destinataire, operateur, notes } = body;
+  const montant = Number(body.montant);
 
-  if (!montant || montant <= 0) {
+  if (!Number.isFinite(montant) || montant <= 0) {
     return NextResponse.json({ error: "Montant invalide" }, { status: 400 });
   }
   if (!methode || !["mobile_money", "virement_bancaire"].includes(methode)) {
     return NextResponse.json({ error: "Méthode invalide" }, { status: 400 });
   }
-  if (!destinataire?.trim()) {
+  if (typeof destinataire !== "string" || !destinataire.trim()) {
     return NextResponse.json({ error: "Destinataire requis" }, { status: 400 });
   }
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
   try {
     const retrait = await initierRetrait({
       tenantId,
-      montant: Number(montant),
+      montant,
       devise: tenant?.devise ?? "XAF",
       methode,
       destinataire,

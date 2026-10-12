@@ -159,6 +159,22 @@ model Produit {
   licenceProduit  LicenceProduit?
   bundleProduit   BundleProduit?
   inclusEnBundle  ElementBundle[]  @relation("InclusDansBundle")
+  offresFournisseurs ProduitFournisseur[] // Supplier Intelligence : offres comparées pour ce produit
+
+  // POS 2.0
+  // Unité de vente : "piece" (défaut) ou "kg". Pour "kg" : `stock`, StockEntrepot.quantite
+  // et LigneCommande.quantite sont tenus en GRAMMES (entiers) et `prix` / `cout`
+  // sont au KILO. Convention détaillée dans lib/pos/tarification.ts.
+  uniteVente      String   @default("piece")
+  tauxTVA         Float?   // fraction propre au produit (0.1925) ; null = taux de la boutique (Tenant.tauxTVA)
+  marque          String?
+  suiviSerie      Boolean  @default(false) // chaque unité porte un numéro de série / IMEI (NumeroSerie)
+  garantieMois    Int?
+  numerosSerie       NumeroSerie[]
+  lignesComptage     LigneComptage[]
+  lignesTransfert    LigneTransfert[]
+  lignesBonCommande  LigneBonCommande[]
+  lignesReception    LigneReception[]
 
   @@unique([tenantId, slug])
   @@unique([tenantId, codeBarres])
@@ -197,6 +213,11 @@ model Variante {
 
   produit Produit         @relation(fields: [produitId], references: [id])
   stocks  StockEntrepot[]
+
+  cout      Float?  // POS 2.0 — coût d'achat propre à la variante (sinon Produit.cout)
+
+  @@index([codeBarres])
+  @@index([produitId])
 }
 
 // =====================
@@ -237,7 +258,19 @@ model Client {
   avis      Avis[]
   wishlist  Wishlist[]
 
+  // POS 2.0 — fidélité, crédit, segmentation
+  codeClient          String? // code / QR de la carte client ; unicité par boutique assurée par l'application (lib/pos)
+  segment             String?
+  pointsFidelite      Int     @default(0)
+  niveauFidelite      String  @default("bronze") // bronze | silver | gold | vip
+  creditPlafond       Float   @default(0)
+  creditUtilise       Float   @default(0)
+  creditBloque        Boolean @default(false)
+  creditEcheanceJours Int?
+
   @@unique([tenantId, email])
+  @@index([tenantId, telephone])
+  @@index([tenantId, codeClient])
 }
 
 // =====================
@@ -310,6 +343,23 @@ model Commande {
   retours              RetourRMA[]
   facture              Facture?
   commandesFournisseur CommandeFournisseur[]
+
+  // POS 2.0 — vente en caisse (canal = "pos") : lieu, caisse, vendeur, taxes, encaissé.
+  canal             String    @default("en_ligne") // en_ligne | pos
+  magasinId         String?
+  caisseId          String?
+  sessionCaisseId   String?
+  vendeurId         String?   // userId du caissier
+  appareilId        String?
+  montantTaxes      Float     @default(0) // TVA comprise dans montantTotal (ou ajoutée, selon ReglagesPos.reglages.taxes.prixTTC)
+  montantPaye       Float     @default(0) // réellement encaissé, hors crédit client (une vente à crédit compte dans le CA dès la vente)
+  creeLocalAt       DateTime? // horodatage de l'appareil (vente saisie hors ligne)
+  commandeOrigineId String?   // échange / retour : vente d'origine
+  paiements         PaiementVente[]
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, canal, createdAt])
+  @@index([sessionCaisseId])
 }
 
 // =====================
@@ -329,6 +379,24 @@ model LigneCommande {
   commande Commande        @relation(fields: [commandeId], references: [id])
   produit  Produit         @relation(fields: [produitId], references: [id])
   lot      LotTracabilite? @relation(fields: [lotId], references: [id])
+
+  // POS 2.0
+  varianteId        String?
+  cout              Float?   // coût unitaire au moment de la vente (marge figée)
+  remise            Float    @default(0) // remise totale de la ligne (manuelle + promotion + part de la remise globale)
+  tauxTVA           Float?   // fraction (0.1925 = 19,25 %)
+  prixOrigine       Float?   // prix catalogue quand un prix personnalisé a été saisi
+  offert            Boolean  @default(false)
+  commentaire       String?
+  promotionId       String?
+  quantiteRetournee Int      @default(0)
+  // Produit au poids (Produit.uniteVente = "kg") : `quantite` est en GRAMMES, `prix`
+  // est le prix au GRAMME (prix*quantite reste le montant de la ligne partout
+  // ailleurs), `mesure` le poids en kilos pour l'affichage.
+  mesure            Float?
+  numeroSerieId     String?
+
+  @@index([commandeId])
 }
 
 // =====================
@@ -489,6 +557,10 @@ model MembreEquipe {
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   user   User?  @relation(fields: [userId], references: [id])
+
+  // POS 2.0
+  magasinIds      String[]  @default([]) // magasins où le membre peut travailler ; vide = tous
+  droitsPos       Json?     // { action: true|false } — retouches de la grille POS du rôle (lib/pos/droits.ts)
 
   @@unique([userId, tenantId])
 }
@@ -1125,7 +1197,7 @@ model Fournisseur {
   url            String?
   email          String?
   telephone      String?
-  delaiLivraison Int      @default(15)  // jours
+  delaiLivraison Int?     // jours annoncés par le fournisseur ; vide tant que personne ne l'a saisi
   fiabilite      Float    @default(4.0) // 1–5
   margeAuto      Float    @default(0.30) // marge par défaut 30%
   actif          Boolean  @default(true)
@@ -1133,11 +1205,49 @@ model Fournisseur {
   livraisonsTotal Int     @default(0)
   livraisonsOk   Int      @default(0)
   notes          String?
+  // ── Supplier Intelligence : informations DÉCLARÉES (saisies par le marchand,
+  // importées ou extraites par l'IA d'un texte fourni). Le niveau de confiance
+  // de chaque champ vit dans VerificationFournisseur (dernière ligne du champ) :
+  // sans ligne « verifie », la donnée reste « déclarée par le fournisseur ».
+  typeEntreprise      String   @default("inconnu") // fabricant | fabricant_trading | trading | grossiste | distributeur | inconnu
+  anneeCreation       Int?
+  nbEmployes          Int?
+  capaciteProduction  String?  // texte libre, ex. « 50 000 unités / mois »
+  adresseUsine        String?
+  categoriesProduites String[] @default([])
+  marchesExport       String[] @default([]) // pays ou régions d'exportation déclarés
+  photosUsine         String[] @default([])
+  videoUsine          String?
+  equipements         String?
+  numeroLicence       String?
+  protectionPaiement  String?  // ex. « Trade Assurance » — déclaré, jamais garanti par AXSO
+  personnalisation    Boolean? // null = inconnu
+  privateLabel        Boolean?
+  packagingPerso      Boolean?
+  echantillonPossible Boolean? // false = refus d'échantillon (signal de risque)
+  inspectionAcceptee  Boolean? // false = refus d'inspection (signal de risque)
+  paiementHorsPlateforme Boolean @default(false) // le marchand signale une pression pour payer hors plateforme
+  // Cache de la dernière analyse (recalculé par lib/sourcing/fournisseurs/service.ts)
+  scoreGlobal     Int?
+  scoreFabricant  Int?
+  niveauRisque    String?  // faible | moyen | eleve
+  labelVerifie    Boolean  @default(false) // « AXSO Verified Supplier » : calculé, jamais saisi
+  signatureRisque String?  // signaux actifs à la dernière surveillance (anti-doublon des alertes)
+  analyseLe       DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   produits             Produit[]
   commandesFournisseur CommandeFournisseur[]
+  offres               ProduitFournisseur[]
+  documents            DocumentFournisseur[]
+  audits               AuditFournisseur[]
+  echantillons         EchantillonFournisseur[]
+  evaluations          EvaluationFournisseur[]
+  verifications        VerificationFournisseur[]
+  reponsesDevis        ReponseDevis[]
+
+  bonsCommande BonCommande[] // POS 2.0
 
   @@index([tenantId, actif])
 }
@@ -1162,6 +1272,14 @@ model RetourRMA {
   updatedAt   DateTime @updatedAt
 
   commande Commande @relation(fields: [commandeId], references: [id])
+
+  // POS 2.0
+  lignes            Json?   // [{ ligneCommandeId, quantite, remisEnStock }] — retour partiel
+  modeRemboursement String? // especes | mobile_money | avoir | echange…
+  sessionCaisseId   String?
+  avoirId           String?
+  sansRecu          Boolean @default(false)
+  traitePar         String?
 
   @@index([tenantId, statut])
   @@index([commandeId])
@@ -1316,6 +1434,8 @@ model Entrepot {
   tenant Tenant          @relation(fields: [tenantId], references: [id])
   stocks StockEntrepot[]
 
+  magasins Magasin[] // POS 2.0
+
   @@index([tenantId])
 }
 
@@ -1334,7 +1454,12 @@ model StockEntrepot {
   produit  Produit   @relation(fields: [produitId], references: [id])
   variante Variante? @relation(fields: [varianteId], references: [id])
 
+  // POS 2.0 — parts du stock de ce lieu qui ne sont pas vendables. DISPONIBLE = quantite − bloque − endommage.
+  bloque     Int    @default(0)
+  endommage  Int    @default(0)
+
   @@unique([entrepotId, produitId, varianteId])
+  @@index([produitId])
 }
 
 // =====================
@@ -1346,6 +1471,7 @@ model CommandeFournisseur {
   commandeId     String
   fournisseurId  String
   statut         String   @default("en_attente") // en_attente | envoye | confirme | expedie | livre | annule
+  motifAnnulation String? // MOTIFS_ANNULATION (lib/sourcing/statuts.ts) : dit si l'annulation est imputable au fournisseur
   reference      String?
   montantFournisseur Float?
   delaiEstime    Int?
@@ -1742,8 +1868,16 @@ model StockMouvement {
   produit Produit         @relation(fields: [produitId], references: [id])
   lot     LotTracabilite? @relation(fields: [lotId], references: [id])
 
+  // POS 2.0 — types ajoutés : retour | transfert_sortie | transfert_entree | reception | inventaire
+  entrepotId  String?
+  varianteId  String?
+  transfertId String?
+  comptageId  String?
+  receptionId String?
+
   @@index([tenantId, produitId, createdAt])
   @@index([tenantId, createdAt])
+  @@index([commandeId])
 }
 
 // Lot de réception — traçabilité amont (fournisseur → rayon) et péremption.
@@ -1770,6 +1904,11 @@ model LotTracabilite {
   produit    Produit          @relation(fields: [produitId], references: [id])
   mouvements StockMouvement[]
   ventes     LigneCommande[]
+
+  // POS 2.0 — statut ajouté : bloque (jamais consommé par une vente)
+  cout          Float?  // coût unitaire d'achat du lot
+  fournisseurId String?
+  entrepotId    String? // lieu où se trouve le lot ; null = non localisé (consommable partout)
 
   @@unique([tenantId, codeLot])
   @@index([tenantId, produitId])
@@ -1798,6 +1937,10 @@ model ChargeExploitation {
   updatedAt          DateTime  @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  // POS 2.0 — dépense sortie d'une caisse
+  magasinId          String?
+  sessionCaisseId    String?
 
   @@index([tenantId, dateEnregistrement])
   @@index([tenantId, statut])
@@ -1861,3 +2004,837 @@ model AdminAxiaAction {
 
   @@index([adminId, statut])
 }
+
+// ===== SUPPLIER INTELLIGENCE =====
+// Moteur de vérification, comparaison et scoring des fournisseurs
+// (lib/sourcing/fournisseurs). Règle : rien n'est « vérifié » par défaut. Les
+// niveaux de confiance sont verifie | partiellement_verifie | declare_fournisseur
+// | inconnu, toujours accompagnés de la source de vérification.
+
+// Offre d'un fournisseur pour un produit (relation Produit ↔ Fournisseur).
+// produitId est vide tant que le produit sourcé n'est pas encore au catalogue.
+model ProduitFournisseur {
+  id              String   @id @default(cuid())
+  tenantId        String
+  fournisseurId   String
+  produitId       String?
+  nomProduit      String   // désignation chez le fournisseur
+  categorie       String?  // sert à déterminer les certifications potentiellement nécessaires
+  urlOffre        String?
+  prixUnitaire    Float    // prix de base, dans `devise`
+  devise          String   @default("USD")
+  paliers         Json     @default("[]") // [{ quantiteMin: Int, prix: Float }] — prix dégressifs
+  moq             Int?
+  delaiProduction Int?     // jours, avant expédition
+  poidsKg         Float?   // poids unitaire, pour le coût rendu
+  disponible      Boolean  @default(true)
+  source          String   @default("saisie") // saisie | connecteur | extraction_ia | devis
+  confiance       String   @default("declare_fournisseur") // niveau de confiance du prix et du MOQ
+  // Cache de la dernière analyse (pays et quantité du dernier calcul)
+  scoreQualite       Int?
+  scoreCertification Int?
+  scoreLogistique    Int?
+  scoreRisque        Int?
+  scoreFournisseur   Int?
+  coutRenduTotal     Float?  // coût réel estimé par unité, dans `coutRenduDevise`
+  coutRenduDevise    String?
+  derniereVerificationAt DateTime? // dernière confirmation du prix / de la disponibilité
+  recommandeDepuis   DateTime? // devenue la meilleure offre du produit sans en être le fournisseur actuel
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+  produit     Produit?    @relation(fields: [produitId], references: [id], onDelete: SetNull)
+
+  principal       Boolean  @default(false) // POS 2.0 — fournisseur principal du produit (réassort)
+
+  @@index([tenantId, produitId])
+  @@index([fournisseurId])
+}
+
+// Document fourni par le fournisseur (ou par le marchand pour lui) : certificat,
+// rapport de laboratoire, licence… Jamais « vérifié » sans vérificateur tracé.
+model DocumentFournisseur {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  fournisseurId      String
+  type               String    // certificat | rapport_labo | licence | document_entreprise | rapport_inspection | document_qualite
+  certification      String?   // pour un certificat : CE, RoHS, FCC, ISO 9001…
+  nom                String
+  url                String?   // fichier (Vercel Blob) — sans fichier, la certification est « non vérifiable »
+  organismeEmetteur  String?
+  numero             String?
+  dateEmission       DateTime?
+  dateExpiration     DateTime?
+  statutVerification String    @default("declare_fournisseur") // verifie | partiellement_verifie | declare_fournisseur | inconnu | rejete
+  sourceVerification String?   // qui / quoi a vérifié (ex. « Admin AXSO — registre de l'organisme »)
+  verifieParId       String?
+  verifieLe          DateTime?
+  alerteExpirationLe DateTime? // dernière alerte d'expiration envoyée (anti-doublon)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fournisseurId])
+  @@index([dateExpiration])
+}
+
+// Audit ou inspection réalisé par un prestataire tiers. Aucun audit n'est créé
+// par AXSO lui-même : rapport saisi par le marchand (déclaré) ou reçu d'un
+// prestataire connecté (voir lib/sourcing/fournisseurs/services-tiers.ts).
+model AuditFournisseur {
+  id            String    @id @default(cuid())
+  tenantId      String
+  fournisseurId String
+  type          String    // avant_production | pendant_production | avant_expedition | controle_qualite | audit_usine
+  prestataire   String
+  statut        String    @default("demande") // demande | planifie | reussi | echoue | annule
+  dateAudit     DateTime?
+  rapportUrl    String?
+  reference     String?   // référence chez le prestataire
+  confiance     String    @default("declare_fournisseur")
+  sourceVerification String?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fournisseurId])
+}
+
+// Commande d'échantillon et contrôle à réception (checklist du marchand).
+model EchantillonFournisseur {
+  id            String    @id @default(cuid())
+  tenantId      String
+  fournisseurId String
+  offreId       String?   // ProduitFournisseur concerné
+  nomProduit    String
+  quantite      Int       @default(1)
+  cout          Float?
+  devise        String    @default("USD")
+  statut        String    @default("a_commander") // a_commander | commande | recu | controle | refuse_par_fournisseur
+  commandeLe    DateTime?
+  recuLe        DateTime?
+  checklist     Json      @default("{}") // { qualite|packaging|finition|fonctionnement|conformite|photos|delai: { note: 1-5, commentaire? } }
+  verdict       String?   // conforme | reserves | non_conforme
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fournisseurId])
+}
+
+// Évaluation du marchand après une commande reçue : seule source de qualité
+// réellement constatée (alimente le score, à la différence des données déclarées).
+model EvaluationFournisseur {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  fournisseurId       String
+  offreId             String?  // ProduitFournisseur concerné
+  commandeFournisseurId String?
+  qualite             Int      // 1–5
+  conformite          Int
+  emballage           Int
+  delai               Int
+  communication       Int
+  unitesRecues        Int      @default(0)
+  unitesDefectueuses  Int      @default(0)
+  delaiReelJours      Int?
+  commentaire         String?
+  createdAt           DateTime @default(now())
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, fournisseurId])
+}
+
+// Journal des vérifications et des changements d'un champ du fournisseur.
+// Le niveau de confiance d'un champ = sa dernière ligne. « verifie » ne peut
+// être écrit que par un admin AXSO ou une source tierce nommée (verifieParId / source).
+model VerificationFournisseur {
+  id            String   @id @default(cuid())
+  tenantId      String
+  fournisseurId String
+  champ         String   // identite | entreprise | fabricant | email | telephone | url | adresseUsine | …
+  niveau        String   // verifie | partiellement_verifie | declare_fournisseur | inconnu
+  source        String   // ex. « Saisie du marchand », « Admin AXSO — registre du commerce »
+  verifieParId  String?
+  note          String?
+  createdAt     DateTime @default(now())
+
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@index([fournisseurId, champ, createdAt])
+}
+
+// Demande de devis standardisée (RFQ), adressée à un ou plusieurs fournisseurs.
+model DemandeDevis {
+  id               String   @id @default(cuid())
+  tenantId         String
+  reference        String
+  produitId        String?
+  nomProduit       String
+  description      String?  @db.Text
+  quantite         Int
+  prixCible        Float?
+  devise           String   @default("USD")
+  paysDestination  String   // code ISO2
+  villeDestination String?
+  incoterm         String?  // vide = « à déterminer selon la solution logistique »
+  couleur          String?
+  packaging        String?
+  personnalisation String?
+  contenu          String   @db.Text // texte standardisé envoyé aux fournisseurs
+  statut           String   @default("brouillon") // brouillon | envoye | clos
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  reponses ReponseDevis[]
+
+  @@unique([tenantId, reference])
+  @@index([tenantId, statut])
+}
+
+// Un destinataire du RFQ : trace de l'envoi puis réponse du fournisseur
+// (collée par le marchand ; les champs sont extraits par l'IA puis corrigeables).
+model ReponseDevis {
+  id                 String    @id @default(cuid())
+  demandeDevisId     String
+  fournisseurId      String
+  statutEnvoi        String    @default("non_envoye") // non_envoye | envoye_email | copie_manuelle | echec
+  envoyeLe           DateTime?
+  texteBrut          String?   @db.Text
+  recuLe             DateTime?
+  prixUnitaire       Float?
+  devise             String?
+  moq                Int?
+  delaiJours         Int?
+  packaging          String?
+  personnalisation   String?
+  expedition         String?
+  conditionsPaiement String?
+  extraitPar         String?   // ia | manuel
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  demande     DemandeDevis @relation(fields: [demandeDevisId], references: [id], onDelete: Cascade)
+  fournisseur Fournisseur  @relation(fields: [fournisseurId], references: [id], onDelete: Cascade)
+
+  @@unique([demandeDevisId, fournisseurId])
+}
+// ===== FIN SUPPLIER INTELLIGENCE =====
+
+// ===== DROPSHIPPING ENGINE =====
+// Modèles d'AXSO Sourcing (lib/sourcing/). Aucune relation Prisma vers les
+// modèles existants : les liens sont de simples ids, toujours filtrés par tenantId.
+
+// Produit repéré chez un fournisseur (connecteur ou saisie manuelle), suivi de
+// la découverte jusqu'à la marque : fiche source, hypothèses de coût, prix,
+// score, contenus IA. `produitId` = le produit de la boutique une fois publié.
+model ProduitSource {
+  id                String   @id @default(cuid())
+  tenantId          String
+  connecteur        String   @default("manuel") // id du SupplierConnector (lib/sourcing/connecteurs.ts)
+  refExterne        String?  // identifiant du produit chez le fournisseur
+  url               String?
+  nom               String
+  description       String?  @db.Text
+  images            String[] @default([])
+  videos            String[] @default([])
+  variantes         Json     @default("[]") // [{ nom, valeur, prix?, sku?, stock? }]
+  prixFournisseur   Float
+  deviseFournisseur String   @default("USD")
+  moq               Int      @default(1)
+  poidsKg           Float?
+  dimensions        Json?    // { longueurCm, largeurCm, hauteurCm }
+  logistique        Json?    // { delaiJours?, modes?, origine? }
+  sku               String?
+  disponibilite     Int?     // stock annoncé par le fournisseur ; null = inconnu
+  fournisseurNom    String?
+  fournisseurId     String?  // Fournisseur du marchand, s'il est rattaché
+  favori            Boolean  @default(false)
+  etape             String   @default("decouverte") // decouverte | test | validation | stock | marque | scale
+  modeAppro         String   @default("dropshipping") // dropshipping | stock_axso | stock_vendeur
+  parametresCout    Json     @default("{}") // hypothèses du calculateur de coût réel
+  tarification      Json     @default("{}") // { mode, margeFixe?, margePct?, prixVente? }
+  criteresScore     Json     @default("{}") // estimations du marchand (1 à 5) par critère
+  score             Int?     // dernier score /100 calculé
+  analyseIA         Json?    // copilote produit
+  kitTest           Json?    // centre de test : page, angles marketing
+  publicites        Json?    // centre publicitaire : variantes
+  produitId         String?  // Produit de la boutique créé à la publication
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([tenantId, connecteur, refExterne])
+  @@index([tenantId, etape])
+  @@index([tenantId, produitId])
+}
+
+// Expédition internationale (fournisseur → pays → entrepôt local). La livraison
+// au client final reste le cycle de commande existant (lib/cycle-livraison.ts).
+model Expedition {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  commandeFournisseurId String?   // dropshipping : la commande fournisseur transportée
+  commandeId            String?   // commande client concernée
+  produitSourceId       String?   // import en stock : le produit réapprovisionné
+  quantite              Int?
+  mode                  String    @default("aerien") // aerien | maritime | express | routier
+  transporteur          String?
+  transitaire           String?
+  trackingNo            String?
+  statut                String    @default("en_preparation") // en_preparation | expediee | en_transit | arrivee_pays | douane | entrepot_local | annulee
+  paysOrigine           String    @default("CN")
+  paysDestination       String
+  pointEntree           String?
+  entrepotId            String?
+  poidsKg               Float?
+  cout                  Float?
+  devise                String    @default("XAF")
+  dateExpedition        DateTime?
+  arriveeEstimee        DateTime?
+  arriveeReelle         DateTime?
+  stockRecu             Boolean   @default(false) // entrée en stock faite à l'arrivée (jamais deux fois)
+  evenements            Json      @default("[]") // [{ statut, date, note? }]
+  notes                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([tenantId, statut])
+  @@index([commandeId])
+}
+
+// Réglages Sourcing d'une boutique : pays de vente et hypothèses de coût
+// (droits, transitaire, refus…) qui remplacent les valeurs de départ du pays.
+model ReglagesSourcing {
+  tenantId  String   @id
+  reglages  Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+// Journal d'audit des actions Sourcing (import, publication, changement de
+// prix ou de mode, commande fournisseur, expédition).
+model JournalSourcing {
+  id        String   @id @default(cuid())
+  tenantId  String
+  userId    String?
+  action    String
+  cible     String?  // « ProduitSource:id », « Expedition:id »…
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+}
+// ===== FIN DROPSHIPPING ENGINE =====
+
+// ===== POS 2.0 =====
+// Caisse, magasins, stock par lieu, achats, fidélité, crédit, audit (lib/pos/).
+// Schéma strictement additif : la production applique `prisma db push`.
+// Une vente en caisse reste une `Commande` (canal = "pos") ; les modèles
+// ci-dessous portent tout ce qui l'entoure. Les `tenantId` sont de simples
+// colonnes (pas de relation Prisma), comme ReglagesSourcing / JournalSourcing.
+
+// Point de vente physique. Son stock est celui de son entrepôt (`entrepotId`) :
+// les transferts se font d'entrepôt à entrepôt, magasin ou dépôt.
+model Magasin {
+  id           String   @id @default(cuid())
+  tenantId     String
+  nom          String
+  code         String?
+  adresse      String?
+  ville        String?
+  pays         String?
+  telephone    String?
+  entrepotId   String
+  typeCommerce String?  // RETAIL | SUPERMARKET | … ; null = celui de ReglagesPos
+  actif        Boolean  @default(true)
+  demo         Boolean  @default(false) // données de démonstration, toujours étiquetées
+  createdAt    DateTime @default(now())
+
+  entrepot Entrepot @relation(fields: [entrepotId], references: [id])
+  caisses  Caisse[]
+
+  @@unique([tenantId, nom])
+  @@index([tenantId])
+}
+
+model Caisse {
+  id              String    @id @default(cuid())
+  tenantId        String
+  magasinId       String
+  nom             String
+  actif           Boolean   @default(true)
+  dernierSignalAt DateTime? // dernier signe de vie du poste (supervision)
+  ecranVenteAt    DateTime? // dernier signe de vie de l'écran de VENTE : sans lui, un scan de vente venu d'un téléphone est refusé
+  createdAt       DateTime  @default(now())
+
+  magasin  Magasin         @relation(fields: [magasinId], references: [id])
+  sessions SessionCaisse[]
+
+  @@unique([magasinId, nom])
+  @@index([tenantId])
+}
+
+// Appareil enregistré (téléphone-scanner, tablette, poste). Le jeton n'est
+// jamais stocké en clair : `tokenHash` = SHA-256 du jeton remis à l'appareil.
+model AppareilPos {
+  id              String    @id @default(cuid())
+  tenantId        String
+  magasinId       String?
+  caisseId        String?
+  type            String    @default("telephone") // telephone | tablette | pc
+  nom             String
+  statut          String    @default("en_attente") // en_attente | actif | revoque
+  codeAppairage   String?   @unique
+  codeExpireAt    DateTime?
+  essais          Int       @default(0) // essais d'appairage ratés (limite tenue en base)
+  tokenHash       String?   @unique
+  appairePar      String    // userId du marchand qui a autorisé l'appareil : ses droits bornent ceux de l'appareil
+  userAgent       String?
+  dernierSignalAt DateTime?
+  revoqueAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([tenantId, statut])
+  @@index([caisseId])
+}
+
+// Session de caisse : de l'ouverture (fonds initial) à la fermeture (comptage).
+// `caisseOuverteId` = caisseId tant que la session est ouverte, puis NULL :
+// son unicité garantit UNE SEULE session ouverte par caisse.
+model SessionCaisse {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  magasinId          String
+  caisseId           String
+  caisseOuverteId    String?   @unique
+  statut             String    @default("ouverte") // ouverte | fermee
+  ouvertePar         String
+  fermeePar          String?
+  fondsInitial       Float     @default(0)
+  ouverteAt          DateTime  @default(now())
+  fermeeAt           DateTime?
+  nbVentes           Int       @default(0) // incrémenté par chaque vente : verrouille la ligne, la fermeture attend les ventes en cours
+  montantAttendu     Float?
+  montantCompte      Float?
+  ecart              Float?    // compté − attendu
+  justificationEcart String?
+  detailComptage     Json?     // { "10000": 12, "5000": 3, … } billets et pièces comptés
+
+  caisse     Caisse            @relation(fields: [caisseId], references: [id])
+  mouvements MouvementCaisse[]
+
+  @@index([tenantId, statut])
+  @@index([caisseId, ouverteAt])
+}
+
+// Entrée ou sortie d'espèces hors vente. `montant` positif, sauf `correction` (signé).
+model MouvementCaisse {
+  id              String   @id @default(cuid())
+  tenantId        String
+  sessionCaisseId String
+  type            String   // retrait | depot | depense | correction
+  montant         Float
+  motif           String
+  chargeId        String?  // ChargeExploitation créée pour une dépense
+  creePar         String
+  createdAt       DateTime @default(now())
+
+  session SessionCaisse @relation(fields: [sessionCaisseId], references: [id])
+
+  @@index([sessionCaisseId])
+  @@index([tenantId, createdAt])
+}
+
+// Un règlement d'une vente (une vente peut en avoir plusieurs : paiement mixte).
+// `declaratif` = le caissier a confirmé lui-même (Mobile Money, carte sur TPE
+// externe, virement, QR) : JAMAIS vérifié par un prestataire, à rapprocher.
+// Un remboursement est une ligne de montant NÉGATIF au statut "rembourse".
+model PaiementVente {
+  id              String    @id @default(cuid())
+  tenantId        String
+  commandeId      String
+  sessionCaisseId String?
+  mode            String    // especes | mobile_money | carte | virement | qr | portefeuille | credit | bon | avoir
+  montant         Float     // part de la vente réglée par ce paiement (hors monnaie rendue)
+  devise          String    @default("XAF")
+  statut          String    @default("confirme") // confirme | en_attente | echoue | rembourse
+  declaratif      Boolean   @default(false)
+  prestataire     String?   // mtn | orange | wave | tpe… (information saisie)
+  reference       String?   // n° de transaction saisi, code de l'avoir…
+  montantRecu     Float?    // espèces remises par le client
+  monnaieRendue   Float?
+  rapprochement   String    @default("a_rapprocher") // a_rapprocher | rapproche | ecart | inconnu
+  rapprocheAt     DateTime?
+  encaissePar     String
+  createdAt       DateTime  @default(now())
+
+  commande Commande @relation(fields: [commandeId], references: [id])
+
+  @@index([commandeId])
+  @@index([sessionCaisseId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, rapprochement])
+}
+
+model PanierSuspendu {
+  id        String    @id @default(cuid())
+  tenantId  String
+  magasinId String
+  caisseId  String
+  creePar   String
+  libelle   String?
+  clientId  String?
+  contenu   Json      // lignes du panier telles que saisies ; les prix sont recalculés à la reprise
+  total     Float     @default(0)
+  statut    String    @default("suspendu") // suspendu | repris | abandonne
+  createdAt DateTime  @default(now())
+  reprisAt  DateTime?
+
+  @@index([tenantId, magasinId, statut])
+}
+
+// Chaque lecture de code-barres, quelle que soit sa source. `scanId` vient de
+// l'appareil : le même scan rejoué n'est enregistré qu'une fois.
+model ScanPos {
+  id              String   @id @default(cuid())
+  tenantId        String
+  scanId          String
+  appareilId      String?
+  userId          String?
+  magasinId       String?
+  caisseId        String?
+  sessionCaisseId String?
+  contexte        String   @default("vente") // vente | inventaire | reception | transfert | recherche | prix | stock | creation
+  codeBarres      String
+  resultat        String   // trouve | inconnu | ambigu
+  produitId       String?
+  varianteId      String?
+  source          String   @default("camera") // camera | clavier | mobile
+  scanneAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@unique([tenantId, scanId])
+  @@index([tenantId, caisseId, createdAt])
+}
+
+// Bus temps réel : un événement par fait métier, écrit dans la transaction du
+// fait. Lu par curseur (`seq`) — rejouable, sans perte. Purgé après 24 h.
+model EvenementPos {
+  seq       BigInt   @id @default(autoincrement())
+  tenantId  String
+  magasinId String?
+  caisseId  String?
+  type      String   // scan.created | sale.created | cash.opened | …
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, caisseId, seq])
+  @@index([tenantId, seq])
+  @@index([createdAt])
+}
+
+// Registre d'idempotence : une mutation (vente, ouverture de caisse, mouvement
+// de stock…) porte une clé générée par l'appareil. Rejouée, elle renvoie le
+// résultat déjà stocké au lieu de s'appliquer deux fois.
+model MutationPos {
+  id          String    @id @default(cuid())
+  tenantId    String
+  cle         String
+  type        String
+  appareilId  String?
+  userId      String?
+  statut      String    @default("appliquee") // appliquee | rejetee | conflit
+  resultat    Json
+  creeLocalAt DateTime?
+  recueAt     DateTime  @default(now())
+
+  @@unique([tenantId, cle])
+  @@index([tenantId, statut, recueAt])
+}
+
+model Promotion {
+  id           String    @id @default(cuid())
+  tenantId     String
+  nom          String
+  type         String    // pourcentage | montant_fixe | x_pour_y | lot | achete_x_obtiens_y | seuil_panier | produit_offert | prix_membre | prix_grossiste
+  valeur       Float?
+  regles       Json      @default("{}") // cibles (produits, catégories, clients), quantités, seuils — lib/pos/promotions
+  cumulable    Boolean   @default(false)
+  priorite     Int       @default(0)
+  dateDebut    DateTime?
+  dateFin      DateTime?
+  magasinIds   String[]  @default([]) // vide = tous les magasins
+  codePromoId  String?   // promotion déclenchée par un coupon (CodePromo)
+  actif        Boolean   @default(true)
+  utilisations Int       @default(0)
+  createdAt    DateTime  @default(now())
+
+  @@index([tenantId, actif])
+}
+
+model MouvementFidelite {
+  id         String   @id @default(cuid())
+  tenantId   String
+  clientId   String
+  type       String   // gain | utilisation | ajustement | annulation
+  points     Int      // signé
+  commandeId String?
+  motif      String?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, clientId, createdAt])
+  @@index([commandeId])
+}
+
+// Compte client (ardoise) : `montant` signé (+ vente à crédit, − remboursement).
+model MouvementCredit {
+  id              String    @id @default(cuid())
+  tenantId        String
+  clientId        String
+  type            String    // vente | remboursement | ajustement
+  montant         Float
+  soldeApres      Float
+  commandeId      String?
+  paiementVenteId String?
+  echeanceAt      DateTime?
+  creePar         String
+  createdAt       DateTime  @default(now())
+
+  @@index([tenantId, clientId, createdAt])
+  @@index([commandeId])
+}
+
+model AvoirClient {
+  id             String    @id @default(cuid())
+  tenantId       String
+  clientId       String?
+  code           String
+  montantInitial Float
+  solde          Float
+  retourId       String?
+  expireAt       DateTime?
+  statut         String    @default("actif") // actif | epuise | expire | annule
+  createdAt      DateTime  @default(now())
+
+  @@unique([tenantId, code])
+  @@index([tenantId, clientId])
+}
+
+// Numéro de série / IMEI d'une unité. Un numéro "vendu" ne se revend pas.
+model NumeroSerie {
+  id              String    @id @default(cuid())
+  tenantId        String
+  produitId       String
+  varianteId      String?
+  numero          String
+  statut          String    @default("en_stock") // en_stock | vendu | retourne | defectueux | bloque
+  entrepotId      String?
+  lotId           String?
+  commandeId      String?
+  ligneCommandeId String?
+  clientId        String?
+  venduAt         DateTime?
+  garantieFinAt   DateTime?
+  coutAchat       Float?
+  createdAt       DateTime  @default(now())
+
+  produit Produit @relation(fields: [produitId], references: [id])
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, produitId, statut])
+}
+
+model ComptageInventaire {
+  id         String    @id @default(cuid())
+  tenantId   String
+  entrepotId String
+  type       String    @default("partiel") // complet | partiel | rayon | categorie | produit | cyclique
+  perimetre  Json      @default("{}")
+  statut     String    @default("brouillon") // brouillon | en_cours | a_valider | valide | annule
+  creePar    String
+  validePar  String?
+  demarreAt  DateTime  @default(now())
+  valideAt   DateTime?
+  notes      String?
+
+  lignes LigneComptage[]
+
+  @@index([tenantId, statut])
+}
+
+// `cleArticle` = produitId + ":" + (varianteId ou "") : clé unique sans le piège des NULL.
+model LigneComptage {
+  id                String    @id @default(cuid())
+  comptageId        String
+  cleArticle        String
+  produitId         String
+  varianteId        String?
+  quantiteTheorique Int
+  quantiteComptee   Int?
+  ecart             Int?
+  comptePar         String?
+  compteAt          DateTime?
+
+  comptage ComptageInventaire @relation(fields: [comptageId], references: [id], onDelete: Cascade)
+  produit  Produit            @relation(fields: [produitId], references: [id])
+
+  @@unique([comptageId, cleArticle])
+}
+
+model TransfertStock {
+  id                    String    @id @default(cuid())
+  tenantId              String
+  numero                String
+  entrepotSourceId      String
+  entrepotDestinationId String
+  statut                String    @default("brouillon") // brouillon | demande | approuve | en_preparation | expedie | recu | partiellement_recu | annule
+  demandePar            String
+  approuvePar           String?
+  expedieAt             DateTime?
+  recuAt                DateTime?
+  notes                 String?
+  createdAt             DateTime  @default(now())
+
+  lignes LigneTransfert[]
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, statut])
+}
+
+model LigneTransfert {
+  id               String  @id @default(cuid())
+  transfertId      String
+  cleArticle       String
+  produitId        String
+  varianteId       String?
+  quantiteDemandee Int
+  quantiteExpediee Int     @default(0)
+  quantiteRecue    Int     @default(0)
+
+  transfert TransfertStock @relation(fields: [transfertId], references: [id], onDelete: Cascade)
+  produit   Produit        @relation(fields: [produitId], references: [id])
+
+  @@unique([transfertId, cleArticle])
+  @@index([produitId])
+}
+
+// Bon de commande de réassort. (CommandeFournisseur reste le routage dropshipping.)
+model BonCommande {
+  id            String    @id @default(cuid())
+  tenantId      String
+  numero        String
+  fournisseurId String
+  entrepotId    String
+  statut        String    @default("brouillon") // brouillon | envoye | confirme | partiellement_recu | recu | annule
+  devise        String    @default("XAF")
+  montantTotal  Float     @default(0)
+  dateAttendue  DateTime?
+  source        String    @default("manuel") // manuel | reappro | axia
+  creePar       String
+  notes         String?
+  createdAt     DateTime  @default(now())
+
+  fournisseur Fournisseur        @relation(fields: [fournisseurId], references: [id])
+  lignes      LigneBonCommande[]
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, statut])
+}
+
+model LigneBonCommande {
+  id            String  @id @default(cuid())
+  bonCommandeId String
+  produitId     String
+  varianteId    String?
+  quantite      Int
+  quantiteRecue Int     @default(0)
+  prixUnitaire  Float
+
+  bonCommande BonCommande @relation(fields: [bonCommandeId], references: [id], onDelete: Cascade)
+  produit     Produit     @relation(fields: [produitId], references: [id])
+
+  @@index([bonCommandeId])
+  @@index([produitId])
+}
+
+model ReceptionAchat {
+  id            String   @id @default(cuid())
+  tenantId      String
+  bonCommandeId String?
+  fournisseurId String?
+  entrepotId    String
+  statut        String   @default("en_cours") // en_cours | validee
+  reference     String?  // n° du bon de livraison
+  recuPar       String
+  recuAt        DateTime @default(now())
+
+  lignes LigneReception[]
+
+  @@index([tenantId, recuAt])
+  @@index([bonCommandeId])
+}
+
+// `coutUnitaire` fait foi pour le dernier prix d'achat et l'historique des prix.
+model LigneReception {
+  id           String   @id @default(cuid())
+  receptionId  String
+  produitId    String
+  varianteId   String?
+  quantite     Int
+  coutUnitaire Float
+  lotId        String?
+  numerosSerie String[] @default([])
+
+  reception ReceptionAchat @relation(fields: [receptionId], references: [id], onDelete: Cascade)
+  produit   Produit        @relation(fields: [produitId], references: [id])
+
+  @@index([receptionId])
+  @@index([produitId])
+}
+
+// Journal d'audit de la caisse — ajout seul. Chaque ligne porte le hachage de
+// la précédente (`hashPrecedent`) : toute modification casse la chaîne
+// (lib/pos/audit.ts). Un trigger SQL interdit UPDATE et DELETE (migration pos_v2).
+model JournalAudit {
+  id              String   @id @default(cuid())
+  seq             Int      @default(autoincrement()) // ordre d'écriture, par boutique sous verrou
+  tenantId        String
+  magasinId       String?
+  caisseId        String?
+  appareilId      String?
+  sessionCaisseId String?
+  userId          String?
+  userNom         String?
+  action          String   // vente.creee | vente.annulee | caisse.ouverte | stock.ajuste | …
+  entite          String   // Commande | SessionCaisse | Produit | …
+  entiteId        String?
+  avant           Json?
+  apres           Json?
+  motif           String?
+  ip              String?
+  hashPrecedent   String?
+  hash            String
+  createdAt       DateTime @default(now())
+
+  @@index([tenantId, seq])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entite, entiteId])
+}
+
+// Réglages de la caisse d'une boutique (lib/pos/flags.ts).
+model ReglagesPos {
+  tenantId     String   @id
+  typeCommerce String   @default("RETAIL") // RETAIL | SUPERMARKET | WHOLESALE | FASHION | ELECTRONICS | PHARMACY | RESTAURANT | GROCERY | HARDWARE | SERVICES
+  mode         String   @default("simple") // simple | pro
+  flags        Json     @default("{}") // drapeaux de fonctionnalité (FLAGS_POS)
+  reglages     Json     @default("{}") // taxes, plafonds de remise, fidélité, crédit, reçu, retours, modes de paiement
+  onboarding   Json     @default("{}") // étapes de mise en route franchies
+  updatedAt    DateTime @updatedAt
+}
+// ===== FIN POS 2.0 =====

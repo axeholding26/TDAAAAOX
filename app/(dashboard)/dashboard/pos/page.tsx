@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+// « Caisse & magasin » s'ouvre sur l'écran de caisse.
 export default function POSRedirect() {
-  redirect("/dashboard/logistique?tab=pos");
+  redirect("/dashboard/pos/caisse");
 }

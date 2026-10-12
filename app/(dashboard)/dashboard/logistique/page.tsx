@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { LogistiqueHubClient } from "@/components/dashboard/logistique/LogistiqueHubClient";
+import { flagActif } from "@/lib/pos/flags";
 
 export default async function LogistiqueHub({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const session = await auth();
@@ -9,6 +10,8 @@ export default async function LogistiqueHub({ searchParams }: { searchParams: Pr
   const tenantId = (session.user as any)?.tenantId;
   const { tab } = await searchParams;
 
+  // Caisse 2.0 activée : l'onglet « Caisse POS » renvoie vers elle (l'ancienne route de vente refuse alors).
+  const caisseV2 = tenantId ? await flagActif(tenantId, "caisse_v2").catch(() => false) : false;
   const [enCours, livreursActifs, retoursOuverts, echecs, codEnAttente, facturesEnAttente] = await Promise.all([
     prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "en_preparation", "expediee"] } } }),
     prisma.livreur.count({ where: { tenantId, actif: true, disponible: true } }),
@@ -21,6 +24,7 @@ export default async function LogistiqueHub({ searchParams }: { searchParams: Pr
   return (
     <LogistiqueHubClient
       initialTab={tab}
+      caisseV2={caisseV2}
       stats={{ enCours, livreursActifs, retoursOuverts, echecs, codEnAttente, facturesEnAttente }}
     />
   );

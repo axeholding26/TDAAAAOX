@@ -30,7 +30,7 @@ const TABS = [
   { id: "pos",       label: "Caisse POS",     Icon: ShoppingCart },
 ];
 
-export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string; stats: Stats }) {
+export function LogistiqueHubClient({ initialTab, stats, caisseV2 = false }: { initialTab?: string; stats: Stats; caisseV2?: boolean }) {
   const tr = useT();
   const [onglet, setOnglet] = useState(TABS.some((t) => t.id === initialTab) ? initialTab! : "apercu");
 
@@ -130,7 +130,14 @@ export function LogistiqueHubClient({ initialTab, stats }: { initialTab?: string
       {onglet === "livreurs"  && <LivreursPanel />}
       {onglet === "retours"   && <RetoursPanel />}
       {onglet === "factures"  && <FacturesPanel />}
-      {onglet === "pos"       && <POSPanel />}
+      {onglet === "pos"       && (caisseV2 ? (
+        <div className="rounded-2xl border border-[#E8E8E8] bg-white p-6 text-center">
+          <p className="text-[13px] text-[#555555]">{tr("La nouvelle caisse est activée pour cette boutique : les ventes s'encaissent désormais depuis l'écran Caisse.")}</p>
+          <Link href="/dashboard/pos/caisse" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#111111] px-4 text-[13px] font-semibold text-white">
+            <ShoppingCart size={15} aria-hidden />{tr("Ouvrir la caisse")}
+          </Link>
+        </div>
+      ) : <POSPanel />)}
     </div>
   );
 }

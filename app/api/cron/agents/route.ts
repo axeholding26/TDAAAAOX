@@ -7,9 +7,9 @@ import { traiterTachesEnAttente } from "@/lib/agent-consumer";
 import { planActif } from "@/lib/abonnement";
 
 export async function GET(req: NextRequest) {
-  // Sécurité basique — secret cron
-  const cronSecret = req.headers.get("x-cron-secret");
-  if (process.env.CRON_SECRET && cronSecret !== process.env.CRON_SECRET) {
+  // Sans CRON_SECRET configuré, la route est fermée (elle touche toutes les boutiques).
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !(req.headers.get("x-cron-secret") === secret || req.headers.get("authorization") === `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

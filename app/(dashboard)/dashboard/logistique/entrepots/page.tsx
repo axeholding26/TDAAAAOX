@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Plus, Star, Package, Warehouse } from "lucide-react";
+import { toast } from "sonner";
 import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicator";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
@@ -38,30 +39,38 @@ export default function EntrepotsPage() {
   }
   useEffect(() => { load(); }, []);
 
+  // Un refus du serveur (entrepôt non vide, magasin rattaché…) s'affiche tel quel.
+  async function envoyer(url: string, method: string, body?: unknown) {
+    const r = await fetch(url, { method, ...(body ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {}) });
+    if (!r.ok) toast.error(t((await r.json().catch(() => null))?.error ?? "Cette action n'a pas pu être enregistrée."));
+    return r.ok;
+  }
+
   async function save() {
     setLoading(true);
     const method = editId ? "PATCH" : "POST";
     const body = editId ? { ...form, id: editId } : form;
-    await fetch("/api/entrepots", { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    setForm({ ...EMPTY });
-    setEditId(null);
+    if (await envoyer("/api/entrepots", method, body)) {
+      setForm({ ...EMPTY });
+      setEditId(null);
+    }
     await load();
     setLoading(false);
   }
 
   async function toggleActif(e: Entrepot) {
-    await fetch("/api/entrepots", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: e.id, actif: !e.actif }) });
+    await envoyer("/api/entrepots", "PATCH", { id: e.id, actif: !e.actif });
     load();
   }
 
   async function setPrincipal(e: Entrepot) {
-    await fetch("/api/entrepots", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: e.id, principal: true }) });
+    await envoyer("/api/entrepots", "PATCH", { id: e.id, principal: true });
     load();
   }
 
   async function del(id: string) {
     if (!confirm(t("Supprimer cet entrepôt ?"))) return;
-    await fetch(`/api/entrepots?id=${id}`, { method: "DELETE" });
+    await envoyer(`/api/entrepots?id=${id}`, "DELETE");
     load();
   }
 

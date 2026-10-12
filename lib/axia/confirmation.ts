@@ -37,6 +37,11 @@ const SENSIBLES: Record<string, string> = {
   creer_pack_bundle: "Créer un pack produits",
   desactiver_produit_rupture: "Désactiver un produit",
   mettre_a_jour_statut: "Changer le statut d'une commande",
+  // Caisse & magasin (lib/axia/pos-tools.ts) : actions préparées, jamais exécutées sans validation
+  pos_preparer_bon_commande: "Préparer un bon de commande fournisseur (brouillon)",
+  pos_preparer_promotion: "Préparer une promotion (inactive)",
+  pos_preparer_inventaire: "Ouvrir un inventaire",
+  pos_preparer_transfert: "Préparer un transfert de stock (brouillon)",
 };
 
 // Connecteurs (Meta, WhatsApp, Gmail, SMS…) : tout ce qui publie ou envoie.

@@ -13,6 +13,7 @@ import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { FORMAT_PIXEL } from "@/lib/pixels";
+import { slugBoutiqueValide } from "@/lib/utils";
 
 const schemaCreation = z.object({
   name: z.string().min(2),
@@ -46,9 +47,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (slugExiste) {
+    if (slugExiste || !slugBoutiqueValide(data.slug)) {
       return NextResponse.json(
-        { message: `L'URL "${data.slug}" est déjà prise. Essayez un autre nom.` },
+        { message: `L'URL "${data.slug}" est déjà prise ou réservée. Essayez un autre nom.` },
         { status: 400 }
       );
     }

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard, Store, DollarSign, Truck, CreditCard,
-  UserPlus, LogOut, Megaphone, Menu, X,
+  UserPlus, LogOut, Megaphone, Menu, X, ShieldCheck,
 } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
@@ -16,6 +16,7 @@ const NAV = [
   { href: "/admin/finances", label: "Finances & Wallet", icon: DollarSign },
   { href: "/admin/axsocial", label: "Axsocial", icon: Megaphone },
   { href: "/admin/livreurs", label: "Livreurs", icon: Truck },
+  { href: "/admin/fournisseurs", label: "Fournisseurs à vérifier", icon: ShieldCheck },
   { href: "/admin/equipe", label: "Équipe", icon: UserPlus },
 ];
 

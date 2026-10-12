@@ -29,6 +29,7 @@ import { assurerSections, decrireAccueil, appliquerActionDesign, type ActionDesi
 import { reglagesTheme } from "./reglages-theme";
 import { findNode } from "@/lib/block-tree";
 import { FONTS } from "@/lib/theme-fonts";
+import { AXIA_POS_TOOLS, executerOutilPos } from "./pos-tools";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -984,6 +985,8 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
       required: ["agent", "tache"],
     },
   },
+  // ─── CAISSE & MAGASIN (lib/axia/pos-tools.ts) ─────────────────────────────
+  ...AXIA_POS_TOOLS,
 ];
 
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
@@ -1702,15 +1705,15 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       case "lister_fournisseurs": {
-        const fournisseurs = await (prisma as any).fournisseur.findMany({ where: { tenantId }, orderBy: { fiabilite: "desc" } }).catch(() => []);
+        const fournisseurs = await (prisma as any).fournisseur.findMany({ where: { tenantId }, orderBy: { nom: "asc" } }).catch(() => []);
         if (!fournisseurs.length) return { succes: true, resultat: "Aucun fournisseur configuré. Ajoute-en un depuis Dropshipping." };
-        const lines = fournisseurs.map((f: any) => `• ${f.nom} (${f.type}) | ${f.pays} | Délai: ${f.delaiLivraison}j | Fiabilité: ${f.fiabilite}/5 | Marge auto: ${Math.round(f.margeAuto * 100)}%`).join("\n");
+        const lines = fournisseurs.map((f: any) => `• ${f.nom} (${f.type}) | ${f.pays} | Délai: ${f.delaiLivraison != null ? `${f.delaiLivraison}j` : "non communiqué"} | Livraisons réussies: ${f.livraisonsTotal > 0 ? `${f.livraisonsOk}/${f.livraisonsTotal}` : "aucun historique"} | Marge auto: ${Math.round(f.margeAuto * 100)}%`).join("\n");
         return { succes: true, resultat: `${fournisseurs.length} fournisseur(s):\n${lines}` };
       }
 
       case "ajouter_fournisseur": {
         const f = await (prisma as any).fournisseur.create({
-          data: { tenantId, nom: args.nom, type: args.type ?? "local", pays: args.pays ?? "Cameroun", url: args.url ?? null, delaiLivraison: args.delaiLivraison ?? 7, margeAuto: (args.margeAuto ?? 30) / 100 },
+          data: { tenantId, nom: args.nom, type: args.type ?? "local", pays: args.pays ?? "Cameroun", url: args.url ?? null, delaiLivraison: args.delaiLivraison ?? null, margeAuto: (args.margeAuto ?? 30) / 100 },
         }).catch((e: any) => ({ error: e.message }));
         if ((f as any).error) return { succes: false, resultat: `Erreur: ${(f as any).error}` };
         return { succes: true, resultat: `✅ Fournisseur "${args.nom}" ajouté — Marge auto: ${args.margeAuto ?? 30}%` };
@@ -1797,7 +1800,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         if (!commande) return { succes: false, resultat: "Commande introuvable." };
         const fournisseurId = commande.lignes.find((l: any) => l.produit?.fournisseurId)?.produit?.fournisseurId;
         if (!fournisseurId) return { succes: false, resultat: "Aucun fournisseur dropshipping associé aux produits de cette commande." };
-        const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? l.prix * 0.5) * l.quantite), 0);
+        const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? 0) * l.quantite), 0);
         const cf = await (prisma as any).commandeFournisseur.create({ data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true } }).catch(() => null);
         if (!cf) return { succes: false, resultat: "Erreur lors du routage." };
         return { succes: true, resultat: `✅ Commande ${commande.numero} routée vers le fournisseur — Montant fournisseur estimé: ${montantFournisseur.toLocaleString()} ${commande.devise}` };
@@ -1869,7 +1872,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         if (!retards.length) return { succes: true, resultat: "Aucune commande fournisseur en retard. Tout est à jour !" };
         const lines = retards.map((cf: any) => {
           const jours = Math.floor((maintenant.getTime() - new Date(cf.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-          return `• Cmd ${cf.commande.numero} — ${cf.commande.clientNom} — ${cf.fournisseur.nom} — ${jours}j (délai prévu: ${cf.fournisseur.delaiLivraison}j) ⚠️`;
+          return `• Cmd ${cf.commande.numero} — ${cf.commande.clientNom} — ${cf.fournisseur.nom} — ${jours}j (délai prévu: ${cf.fournisseur.delaiLivraison != null ? `${cf.fournisseur.delaiLivraison}j` : "non communiqué"}) ⚠️`;
         }).join("\n");
         return { succes: true, resultat: `${retards.length} commande(s) fournisseur en retard :\n${lines}\n\n→ Conseillé : contacter les clients pour les prévenir du délai.` };
       }
@@ -1910,6 +1913,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
       }
 
       default: {
+        if (nom.startsWith("pos_")) return executerOutilPos(nom, args, tenantId);
         const MCP_PREFIXES = ["meta_", "whatsapp_", "gmail_", "sms_", "tiktok_", "google_ads_", "higgsfield_"];
         if (MCP_PREFIXES.some(p => nom.startsWith(p))) {
           const res = await executerOutilMcp(nom, args, tenantId);

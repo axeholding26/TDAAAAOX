@@ -8,6 +8,15 @@ export const PAIEMENT = {
   REMBOURSE: "refunded",
 } as const;
 
+// Valeurs de Commande.canal : d'où vient la vente. Une vente en caisse est une
+// Commande comme les autres (stock, retours, factures, analytics) sur le canal
+// "pos" — c'est LE marqueur des ventes de caisse (l'ancien, le client fictif
+// "pos@local", ne sert plus qu'à reconnaître les ventes d'avant le POS 2.0).
+export const CANAL = {
+  EN_LIGNE: "en_ligne",
+  POS: "pos",
+} as const;
+
 // Accès à un contenu digital acheté : commande payée (non remboursée) et lien
 // ni révoqué par le marchand ni arrivé au terme de la durée qu'il a choisie.
 export function accesDigitalOuvert(expireAt: Date | null, paiementStatut: string | null | undefined): boolean {

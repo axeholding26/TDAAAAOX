@@ -9,7 +9,7 @@ const liens = {
     { label: "Paliers d'empire", href: "/#tarifs" },
     { label: "Thèmes", href: "/themes" },
     { label: "Intégrations paiements", href: "/#paiements" },
-    { label: "Fonctionnalités", href: "/#fonctionnalites" },
+    { label: "Fonctionnalités", href: "/fonctionnalites" },
     { label: "Devenir affilié", href: "/affiliation" },
   ],
   Ressources: [

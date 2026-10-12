@@ -8,7 +8,7 @@ export const maxDuration = 60;
 
 function autorise(req: Request) {
   const secret = process.env.CRON_SECRET;
-  return !!secret && req.headers.get("x-cron-secret") === secret;
+  return !!secret && (req.headers.get("x-cron-secret") === secret || req.headers.get("authorization") === `Bearer ${secret}`);
 }
 
 export async function POST(req: Request) {

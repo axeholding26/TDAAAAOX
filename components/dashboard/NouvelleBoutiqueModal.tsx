@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2, Store, Check, AlertCircle, Sparkles, Shirt, Utensils, Cpu, Home, Palette, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
-import { slugify } from "@/lib/utils";
+import { slugify, SOUS_DOMAINES_ACTIFS } from "@/lib/utils";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { SelectPays } from "@/components/ui/SelectPays";
 import { useT } from "@/components/I18nProvider";
@@ -129,16 +129,17 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
             <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Adresse de la boutique")}</label>
             <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5 border transition-colors"
               style={{ borderColor: statutSlug === "pris" ? "#f87171" : statutSlug === "disponible" ? "#34d399" : "#e5e7eb", background: "#fafafa" }}>
-              <span className="text-gray-400 text-sm whitespace-nowrap">axsoafrica.com/</span>
-              <input value={slug} onChange={e => { verifierSlug(slugify(e.target.value)); setSlugTouche(true); }}
+              {!SOUS_DOMAINES_ACTIFS && <span className="text-gray-400 text-sm whitespace-nowrap">axsoafrica.com/</span>}
+              <input value={slug} onChange={e => { verifierSlug(slugify(e.target.value)); setSlugTouche(true); }} placeholder="maboutique"
                 className="flex-1 bg-transparent text-sm text-gray-800 focus:outline-none min-w-0" />
+              {SOUS_DOMAINES_ACTIFS && <span className="text-gray-400 text-sm whitespace-nowrap">.{process.env.NEXT_PUBLIC_AXSO_DOMAIN}</span>}
               <div className="flex-shrink-0">
                 {statutSlug === "verification" && <Loader2 size={14} className="animate-spin text-gray-400" />}
                 {statutSlug === "disponible" && <Check size={14} className="text-emerald-500" />}
                 {statutSlug === "pris" && <AlertCircle size={14} className="text-red-400" />}
               </div>
             </div>
-            {statutSlug === "pris" && <p className="text-[11px] text-red-500 mt-1">{t("Cette adresse est déjà prise")}</p>}
+            {statutSlug === "pris" && <p className="text-[11px] text-red-500 mt-1">{t("Cette adresse est déjà prise ou réservée")}</p>}
           </div>
 
           <div>

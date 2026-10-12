@@ -27,7 +27,8 @@ async function notchpayFetch(path: string, options: { method?: string; body?: an
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const message = data?.message || data?.error || `NotchPay HTTP ${res.status}`;
-    throw new Error(message);
+    // `status` distingue un refus explicite de NotchPay d'une panne réseau (aucun statut).
+    throw Object.assign(new Error(message), { status: res.status });
   }
   return data;
 }
@@ -64,6 +65,15 @@ export async function verifierPaiementNotchPay(reference: string): Promise<{ tra
   return { transaction: data.transaction };
 }
 
+/** Vrai si la transaction est aboutie ET couvre le montant attendu, dans la bonne devise. */
+export function paiementCouvre(transaction: any, montant: number, devise: string): boolean {
+  return (
+    transaction?.status === "complete" &&
+    Number(transaction?.amount) >= montant - 0.01 &&
+    String(transaction?.currency ?? "").toUpperCase() === devise.toUpperCase()
+  );
+}
+
 // ─── Remboursements (API Refunds : renvoi sur le moyen de paiement d'origine) ──
 
 export async function rembourserPaiementNotchPay(payment: string, reason: string): Promise<{ refund: any }> {
@@ -87,6 +97,7 @@ export async function initierTransfertNotchPay(params: {
   };
   reference?: string;
   description?: string;
+  metadata?: Record<string, string>;
 }): Promise<{ transfer: any }> {
   const data = await notchpayFetch("/transfers", {
     method: "POST",
@@ -98,8 +109,14 @@ export async function initierTransfertNotchPay(params: {
       beneficiary_data: params.beneficiaryData,
       reference: params.reference,
       description: params.description,
+      metadata: params.metadata,
     },
   });
+  return { transfer: data.transfer };
+}
+
+export async function verifierTransfertNotchPay(reference: string): Promise<{ transfer: any }> {
+  const data = await notchpayFetch(`/transfers/${encodeURIComponent(reference)}`, { withGrant: true });
   return { transfer: data.transfer };
 }
 

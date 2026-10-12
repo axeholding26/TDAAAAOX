@@ -9,6 +9,8 @@ import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/Mod
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { EtatPos } from "@/components/pos/ui";
+import { appelPos } from "@/components/pos/caisse/api";
 const COMPTA_TUTORIAL_STEPS = [
   { Icon: BarChart3,  titre: "Bénéfice brut vs net",  description: "Le bénéfice brut, c'est ton revenu moins le coût d'achat des produits vendus. Le bénéfice net va plus loin : il retire aussi ta part des charges d'exploitation (loyer, salaires...)." },
   { Icon: ShoppingBag, titre: "Rentabilité par produit", description: "Vois quels produits te rapportent vraiment, une fois le coût d'achat ET la quote-part des charges pris en compte — pas juste le chiffre d'affaires." },
@@ -60,14 +62,19 @@ export default function ComptabilitePage() {
   const [periode, setPeriode] = useState("mois");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState<{ code: string; message: string } | null>(null);
 
-  const charger = useCallback(() => {
+  const charger = useCallback(async () => {
     setLoading(true);
     const { debut, fin } = plage(periode);
-    fetch(`/api/pos/comptabilite?debut=${debut}&fin=${fin}`).then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+    const r = await appelPos(`/api/pos/comptabilite?debut=${debut}&fin=${fin}`);
+    if (r.ok) { setData(r.donnees); setErreur(null); } else setErreur({ code: r.code, message: r.message });
+    setLoading(false);
   }, [periode]);
 
-  useEffect(() => { charger(); }, [charger]);
+  useEffect(() => { void charger(); }, [charger]);
+
+  if (erreur) return <div className="p-5 max-w-5xl mx-auto"><EtatPos code={erreur.code} message={erreur.message} onReessayer={() => void charger()} /></div>;
 
   if (loading || !data) {
     return <div className="p-5 max-w-5xl mx-auto py-20 text-center text-sm text-gray-400" style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>{t("Chargement…")}</div>;
@@ -105,7 +112,7 @@ export default function ComptabilitePage() {
           {fmt(r.beneficeNet)}
         </p>
         <p className="text-[12px] text-white/70 mt-1">
-          {fmt(r.revenu)}{" "}{t("de revenu −")}{" "}{fmt(r.coutMarchandises)}{" "}{t("de coût d'achat −")}{" "}{fmt(r.chargesExploitation)}{" "}{t("de charges d'exploitation")}
+          {fmt(r.revenuHT ?? r.revenu)}{" "}{t("de revenu hors taxes −")}{" "}{fmt(r.coutMarchandises)}{" "}{t("de coût d'achat −")}{" "}{fmt(r.chargesExploitation)}{" "}{t("de charges d'exploitation")}
         </p>
       </div>
 
@@ -116,6 +123,21 @@ export default function ComptabilitePage() {
         <CardResume label={t("Bénéfice brut")} value={`${fmt(r.beneficeBrut)}`} Icon={ShoppingBag} color="#10b981" sub="Avant charges d'exploitation" />
         <CardResume label={t("Charges d'exploitation")} value={`${fmt(r.chargesExploitation)}`} Icon={TrendingDown} color="#ef4444" />
       </div>
+
+      {/* Taxes, remises, retours — déjà pris en compte dans le chiffre d'affaires */}
+      <div className="grid grid-cols-3 gap-3">
+        <CardResume label={t("Taxes collectées (comprises dans le chiffre d'affaires)")} value={`${fmt(r.taxes ?? 0)}`} Icon={Wallet} color="#1B2A4A" />
+        <CardResume label={t("Remises accordées (déjà déduites)")} value={`${fmt(r.remises ?? 0)}`} Icon={TrendingDown} color="#F5A623" />
+        <CardResume label={t("Retours d'articles (déjà déduits)")} value={`${fmt(r.retours ?? 0)}`} Icon={TrendingDown} color="#ef4444" />
+      </div>
+
+      {(data.approximation?.lignesCoutActuel > 0 || data.approximation?.lignesSansCout > 0) && (
+        <p role="note" className="rounded-2xl border border-amber-300 bg-amber-50 p-3 text-[12px] leading-relaxed text-amber-800">
+          {t("Marge approchée.")}{" "}
+          {data.approximation.lignesCoutActuel > 0 && <>{data.approximation.lignesCoutActuel}{" "}{t("ligne(s) vendue(s) avant la caisse 2.0 n'ont pas de coût figé : le coût actuel du produit est utilisé à la place.")}{" "}</>}
+          {data.approximation.lignesSansCout > 0 && <>{data.approximation.lignesSansCout}{" "}{t("ligne(s) concernent un produit sans prix d'achat : leur coût est compté à zéro.")}</>}
+        </p>
+      )}
 
       {/* Fonds généraux cumulés */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">

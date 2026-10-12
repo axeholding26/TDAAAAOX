@@ -26,6 +26,12 @@ export async function synchroniserFournisseurs(tenantId?: string) {
   const resultats: SyncResult[] = [];
   let alertesStock = 0;
 
+  // Produits dont le prix a été fixé dans AXSO Sourcing (coût réel + palier psychologique) :
+  // la marge automatique du fournisseur ne doit pas écraser ce prix.
+  const prixSourcing = new Set((await prisma.produitSource.findMany({
+    where: { produitId: { in: produits.map((p) => p.id) } }, select: { produitId: true },
+  })).map((s) => s.produitId));
+
   for (const p of produits) {
     if (!p.fournisseur || !p.prixFournisseur) continue;
 
@@ -37,7 +43,7 @@ export async function synchroniserFournisseurs(tenantId?: string) {
     const ecart = Math.abs((p.prix - prixCible) / prixCible);
 
     // Alert if margin drift > 5%
-    if (ecart > 0.05) {
+    if (ecart > 0.05 && !prixSourcing.has(p.id)) {
       await prisma.produit.update({
         where: { id: p.id },
         data: { prix: prixCible },

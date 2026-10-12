@@ -31,6 +31,12 @@ const REGLES: Record<string, Regle> = {
   // Finance
   stats_globales: L("finance"), rapport_complet: L("finance"), lister_factures: L("finance"), calculer_tva: L("finance"),
   generer_facture: E("finance"), payer_commission_affilie: E("finance"),
+  // Caisse & magasin (lib/axia/pos-tools.ts) : chiffres et marge = finance ; stock = produits ;
+  // préparer un achat, un inventaire, un transfert ou comparer des prix d'achat = produits en écriture.
+  pos_ventes_jour: L("finance"), pos_marge: L("finance"), pos_caisse_performante: L("finance"), pos_rapport: L("finance"),
+  pos_produits_rupture: L("produits"), pos_produits_dormants: L("produits"), pos_quoi_commander: L("produits"),
+  pos_comparer_fournisseurs: E("produits"), pos_relance_client: E("clients"),
+  pos_preparer_bon_commande: E("produits"), pos_preparer_inventaire: E("produits"), pos_preparer_transfert: E("produits"), pos_preparer_promotion: E("marketing"),
 };
 
 const tousLesDroits = (g: GrillePermissions) => Object.values(g).every((n) => n === "ecriture");

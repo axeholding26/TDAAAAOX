@@ -1,92 +1,71 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+// Charges d'exploitation du magasin (loyer, salaires, énergie… et dépenses
+// sorties d'une caisse). Droit : voir_couts ou rapprochement.
+// GET  /api/pos/charges?debut=&fin=&statut= — liste et totaux.
+// POST /api/pos/charges — enregistre une charge.
+// La boutique vient de la session (accesPos), jamais de la requête.
+import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { routePos } from "@/lib/pos/acces";
+import { exigerUnDroit } from "@/lib/pos/droits";
+import { journaliserAudit } from "@/lib/pos/audit";
+import { CATEGORIES_CHARGE } from "@/lib/pos/caisse/mouvements";
 
-const CATEGORIES_VALIDES = ["loyer", "electricite", "eau", "internet", "fournitures", "equipement", "salaires", "transport", "autre"];
-const FREQUENCES_VALIDES = ["ponctuelle", "hebdomadaire", "mensuelle", "annuelle"];
+const dateOptionnelle = z.preprocess((v) => (v ? new Date(v as string) : null), z.date().nullable());
 
-// GET — liste des charges d'exploitation de la boutique physique
-export async function GET(req: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    const tenantId = (session.user as any)?.tenantId;
-    const { searchParams } = new URL(req.url);
-    const debut = searchParams.get("debut");
-    const fin = searchParams.get("fin");
-    const statut = searchParams.get("statut");
+const schemaCharge = z.object({
+  categorie: z.enum(CATEGORIES_CHARGE),
+  description: z.string().trim().min(1).max(300),
+  // Le formulaire envoie le montant en texte.
+  montant: z.coerce.number().finite().positive().max(1e12),
+  frequence: z.enum(["ponctuelle", "hebdomadaire", "mensuelle", "annuelle"]).catch("ponctuelle"),
+  statut: z.enum(["payee", "en_attente", "en_retard"]).catch("payee"),
+  dateEnregistrement: dateOptionnelle.optional(),
+  dateEcheance: dateOptionnelle.optional(),
+  fournisseur: z.string().trim().max(120).nullish(),
+  reference: z.string().trim().max(120).nullish(),
+  notes: z.string().trim().max(500).nullish(),
+});
 
-    const where: any = { tenantId };
-    if (debut || fin) {
-      where.dateEnregistrement = {};
-      if (debut) where.dateEnregistrement.gte = new Date(debut);
-      if (fin) where.dateEnregistrement.lte = new Date(fin);
-    }
-    if (statut && statut !== "all") where.statut = statut;
+export const GET = routePos(async (ctx, req) => {
+  exigerUnDroit(ctx, "voir_couts", "rapprochement");
+  const p = new URL(req.url).searchParams;
+  const date = (cle: string) => { const d = p.get(cle) ? new Date(p.get(cle)!) : null; return d && !Number.isNaN(d.getTime()) ? d : undefined; };
+  const debut = date("debut"), fin = date("fin"), statut = p.get("statut");
+  const charges = await prisma.chargeExploitation.findMany({
+    where: {
+      tenantId: ctx.tenantId,
+      ...(debut || fin ? { dateEnregistrement: { gte: debut, lte: fin } } : {}),
+      ...(statut && statut !== "all" ? { statut } : {}),
+    },
+    orderBy: { dateEnregistrement: "desc" }, take: 300,
+  });
+  const parCategorie: Record<string, number> = {};
+  for (const c of charges) parCategorie[c.categorie] = (parCategorie[c.categorie] || 0) + c.montant;
+  return {
+    charges,
+    stats: {
+      total: Math.round(charges.reduce((s, c) => s + c.montant, 0) * 100) / 100,
+      enAttente: charges.filter((c) => c.statut === "en_attente").reduce((s, c) => s + c.montant, 0),
+      parCategorie,
+    },
+  };
+});
 
-    const charges = await prisma.chargeExploitation.findMany({ where, orderBy: { dateEnregistrement: "desc" }, take: 300 });
-
-    const total = charges.reduce((s, c) => s + c.montant, 0);
-    const parCategorie: Record<string, number> = {};
-    for (const c of charges) parCategorie[c.categorie] = (parCategorie[c.categorie] || 0) + c.montant;
-
-    return NextResponse.json({
-      charges,
-      stats: {
-        total: Math.round(total * 100) / 100,
-        enAttente: charges.filter(c => c.statut === "en_attente").reduce((s, c) => s + c.montant, 0),
-        parCategorie,
-      },
-    });
-  } catch (err) {
-    console.error("[pos/charges GET]", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
-
-// POST — enregistre une nouvelle charge d'exploitation
-export async function POST(req: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    const tenantId = (session.user as any)?.tenantId;
-    const userId = (session.user as any)?.id;
-
-    const body = await req.json();
-    const {
-      categorie, description, montant, devise, frequence,
-      dateEnregistrement, dateEcheance, statut, fournisseur, reference, notes,
-    } = body;
-
-    if (!categorie || !description || montant == null) {
-      return NextResponse.json({ error: "categorie, description et montant requis" }, { status: 400 });
-    }
-    if (!CATEGORIES_VALIDES.includes(categorie)) {
-      return NextResponse.json({ error: `categorie invalide. Valeurs: ${CATEGORIES_VALIDES.join(", ")}` }, { status: 400 });
-    }
-    if (Number(montant) <= 0) return NextResponse.json({ error: "Le montant doit être positif" }, { status: 400 });
-
-    const charge = await prisma.chargeExploitation.create({
+export const POST = routePos(async (ctx, req) => {
+  exigerUnDroit(ctx, "voir_couts", "rapprochement");
+  const d = schemaCharge.parse(await req.json());
+  const { devise } = await prisma.tenant.findUniqueOrThrow({ where: { id: ctx.tenantId }, select: { devise: true } });
+  const charge = await prisma.$transaction(async (tx) => {
+    const c = await tx.chargeExploitation.create({
       data: {
-        tenantId,
-        categorie,
-        description,
-        montant: Number(montant),
-        devise: devise || "XAF",
-        frequence: FREQUENCES_VALIDES.includes(frequence) ? frequence : "ponctuelle",
-        dateEnregistrement: dateEnregistrement ? new Date(dateEnregistrement) : new Date(),
-        dateEcheance: dateEcheance ? new Date(dateEcheance) : null,
-        statut: statut || "payee",
-        fournisseur: fournisseur || null,
-        reference: reference || null,
-        notes: notes || null,
-        creePar: userId || null,
+        tenantId: ctx.tenantId, categorie: d.categorie, description: d.description, montant: d.montant, devise,
+        frequence: d.frequence, statut: d.statut, dateEnregistrement: d.dateEnregistrement ?? new Date(), dateEcheance: d.dateEcheance ?? null,
+        fournisseur: d.fournisseur || null, reference: d.reference || null, notes: d.notes || null, creePar: ctx.userId,
       },
     });
-
-    return NextResponse.json({ charge }, { status: 201 });
-  } catch (err) {
-    console.error("[pos/charges POST]", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+    await journaliserAudit(tx, ctx, { action: "charge.creee", entite: "ChargeExploitation", entiteId: c.id, apres: { categorie: c.categorie, description: c.description, montant: c.montant, statut: c.statut } });
+    return c;
+  });
+  return NextResponse.json({ charge }, { status: 201 });
+});

@@ -1,5 +1,6 @@
 // Webhook Meta — reçoit les événements Facebook/Instagram/Ads en temps réel
 import { NextRequest, NextResponse } from "next/server";
+import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "axso_meta_2026";
@@ -15,8 +16,17 @@ export async function GET(req: NextRequest) {
 
 // ── POST : traitement des événements ────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  // Signature Meta obligatoire : sans secret configuré ou avec une signature fausse, rien n'est traité.
+  const rawBody = await req.text();
+  const secret = process.env.META_APP_SECRET;
+  const attendue = Buffer.from(secret ? "sha256=" + createHmac("sha256", secret).update(rawBody).digest("hex") : "");
+  const recue = Buffer.from(req.headers.get("x-hub-signature-256") ?? "");
+  if (!secret || recue.length !== attendue.length || !timingSafeEqual(recue, attendue)) {
+    return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
+  }
+
   try {
-    const body = await req.json();
+    const body = JSON.parse(rawBody);
     if (body.object !== "page" && body.object !== "instagram" && body.object !== "ads_management") {
       return NextResponse.json({ received: true });
     }

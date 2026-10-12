@@ -25,12 +25,29 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/affiliation/paiements", "finance"],
   ["/api/pos/comptabilite", "finance"],
   ["/api/pos/charges", "finance"],
+  ["/api/pos/rapprochement", "finance"], // rapprochement des paiements de caisse
   ["/api/wallet", "finance"],
   ["/api/factures", "finance"],
   ["/api/tva", "finance"],
   ["/api/abonnement", "finance"],
+  // Caisse 2.0 — routes ouvertes à plusieurs métiers, contrôlées par les DROITS FINS seuls
+  // (accesPos + exigerDroit dans chaque route, lib/pos/droits.ts), pas par un module :
+  // - import, export, journal d'audit : droits « import_export » / « voir_audit », accordés au
+  //   comptable (module finance) comme au gérant (module pos) — un seul module refuserait l'un des deux ;
+  // - scanner : le téléphone appairé est reconnu par son jeton d'appareil, même si le navigateur
+  //   porte aussi la session d'un compte sans accès à la caisse.
+  // Chacune de ces routes DOIT passer par routePos / routeScanner et exiger son droit.
+  ["/api/pos/import", null],
+  ["/api/pos/export", null],
+  ["/api/pos/audit", null],
+  ["/api/pos/scanner", null],
   // caisse
   ["/api/commandes/pos-creer", "pos"],
+  // Caisse 2.0 (ventes, articles, sessions, magasins, scanner, flux, stock,
+  // achats, clients…) : module « pos », puis droits fins par action dans chaque
+  // route (lib/pos/acces.ts → accesPos + exigerDroit). Une requête SANS session
+  // marchande — le téléphone appairé, reconnu par son jeton — n'est pas
+  // contrôlée ici : c'est accesPos() qui l'authentifie.
   ["/api/pos", "pos"],
   // commandes et livraison
   ["/api/commandes", "commandes"],
@@ -51,6 +68,11 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/formations", "produits"],
   ["/api/licences", "produits"],
   ["/api/magic-import", "produits"],
+  ["/api/sourcing/commandes", "commandes"],
+  ["/api/sourcing/expeditions", "commandes"],
+  ["/api/sourcing/routage", "commandes"],
+  ["/api/sourcing/tableau-de-bord", "commandes"],
+  ["/api/sourcing", "produits"], // AXSO Sourcing (dropshipping engine + fournisseurs)
   // clients
   ["/api/messages", "clients"],
   // marketing

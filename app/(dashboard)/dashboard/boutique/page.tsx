@@ -15,6 +15,7 @@ import { ImageUpload } from "@/components/ui/ImageUpload";
 import { PlanBadge } from "@/components/dashboard/PlanBadge";
 import { NouvelleBoutiqueModal } from "@/components/dashboard/NouvelleBoutiqueModal";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
+import { adresseBoutique } from "@/lib/utils";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { SelectPays } from "@/components/ui/SelectPays";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
@@ -197,17 +198,17 @@ export default function BoutiquePage() {
   }
 
   function copierLien() {
-    navigator.clipboard.writeText(`${window.location.origin}/${tenant!.slug}`);
+    navigator.clipboard.writeText(adresseBoutique(tenant!.slug) ?? `${window.location.origin}/${tenant!.slug}`);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   }
 
   function partager() {
-    const url = `${window.location.origin}/${tenant!.slug}`;
+    const url = adresseBoutique(tenant!.slug) ?? `${window.location.origin}/${tenant!.slug}`;
     if (navigator.share) navigator.share({ title: form.nomBoutique || "Ma Boutique", url }).catch(() => {});
     else copierLien();
   }
 
-  const urlProd = tenant && hote ? `${hote}/${tenant.slug}` : "";
+  const urlProd = tenant && hote ? (adresseBoutique(tenant.slug)?.replace(/^https?:\/\//, "") ?? `${hote}/${tenant.slug}`) : "";
   // Aperçu décoratif — palette AXSO jaune & noir (jamais bleu ni marron).
   // Le choix du design réel de la boutique se fait dans Theme Studio
   // (voir bannière ci-dessous).
@@ -304,7 +305,7 @@ export default function BoutiquePage() {
               </div>
               <div className="flex items-center gap-1.5 mt-1.5 text-[12px] leading-tight text-[#AAAAAA]">
                 <Globe size={11} className="flex-shrink-0" />
-                <span className="truncate">{tr(urlProd) || "axsoafrica.com/votre-boutique"}</span>
+                <span className="truncate">{tr(urlProd) || "votre-boutique.axsoafrica.com"}</span>
                 {tenant && (
                   <button onClick={copierLien}
                     className="text-[#CCCCCC] hover:text-[#888888] transition-colors flex-shrink-0">
@@ -452,7 +453,7 @@ export default function BoutiquePage() {
               <div className="border border-[#E8E8E8] rounded-2xl p-4 bg-[#FAFAFA] space-y-1.5">
                 <p className="ax-label mb-2 flex items-center gap-1.5 leading-none"><Sparkles size={10} />{" "}{tr("Aperçu Google")}</p>
                 <p className="text-[15px] font-semibold text-[#111111] leading-tight">{tr(form.metaTitle) || tr(form.nomBoutique) || tr("Ma Boutique")}</p>
-                <p className="text-green-700 text-[11.5px] leading-tight">{tr(urlProd) || "axsoafrica.com/votre-boutique"}</p>
+                <p className="text-green-700 text-[11.5px] leading-tight">{tr(urlProd) || "votre-boutique.axsoafrica.com"}</p>
                 <p className="text-[#666666] text-[12px] leading-relaxed">{tr(form.metaDescription) || form.description?.slice(0, 160) || tr("Ajoutez une description pour améliorer votre visibilité sur Google.")}</p>
               </div>
             </div>
@@ -651,7 +652,7 @@ export default function BoutiquePage() {
                 <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0] flex-wrap">
                   <div className="flex items-center gap-2 min-w-0">
                     <Globe size={13} className="text-[#AAAAAA] flex-shrink-0" />
-                    <span className="text-[12.5px] font-medium text-[#111111] truncate">{tr(tenant?.customDomain) || tr(urlProd) || "axsoafrica.com/votre-boutique"}</span>
+                    <span className="text-[12.5px] font-medium text-[#111111] truncate">{tr(tenant?.customDomain) || tr(urlProd) || "votre-boutique.axsoafrica.com"}</span>
                   </div>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full leading-none flex-shrink-0"
                     style={tenant?.customDomain ? { background: "#ECFDF5", color: "#16A34A" } : { background: "#F5F5F5", color: "#AAAAAA" }}>
@@ -849,7 +850,7 @@ function LivePreview({ form, theme, url }: { form: any; theme: { fond: string; a
           <div className="w-2 h-2 rounded-full bg-[#A9DFB0]" />
         </div>
         <div className="flex-1 min-w-0 bg-white border border-[#EFEFEF] rounded-full px-3 py-1 text-[9.5px] leading-tight text-[#AAAAAA] text-center truncate">
-          {url || "axsoafrica.com/votre-boutique"}
+          {url || "votre-boutique.axsoafrica.com"}
         </div>
       </div>
       <div style={{ backgroundColor: theme.fond }}>

@@ -288,7 +288,7 @@ export async function payerCommissionsAffilie(params: {
         const statut = transfer?.status === "complete" || transfer?.status === "processing" ? "traite" : "en_attente";
         await prisma.paiementCommission.update({
           where: { id: paiement.id },
-          data: { statut, reference: transfer?.id?.toString() },
+          data: { statut, reference: (transfer?.reference ?? transfer?.id)?.toString() },
         });
       }
     } catch {

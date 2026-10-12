@@ -3,6 +3,7 @@
 // NEXT_PUBLIC_APP_URL. Serveur uniquement.
 import { headers } from "next/headers";
 import { domainePrincipal } from "./domaines";
+import { adresseBoutique } from "./utils";
 
 export async function origineSite(): Promise<string> {
   const h = await headers();
@@ -23,10 +24,13 @@ export async function origineAxso(): Promise<string> {
 
 /**
  * Lien public d'une page de boutique : sur son domaine personnalisé s'il est actif
- * (https://maboutique.com/tracking/…), sinon sur l'adresse AXSO (…/slug/tracking/…).
+ * (https://maboutique.com/tracking/…), sinon sur son sous-domaine AXSO
+ * (https://slug.axsoafrica.com/tracking/…), à défaut en …/slug/tracking/….
  * `chemin` commence par « / » ou est vide.
  */
 export async function lienBoutique(slug: string, chemin = ""): Promise<string> {
   const domaine = await domainePrincipal(slug);
-  return domaine ? `https://${domaine}${chemin}` : `${await origineAxso()}/${slug}${chemin}`;
+  if (domaine) return `https://${domaine}${chemin}`;
+  const sousDomaine = adresseBoutique(slug);
+  return sousDomaine ? `${sousDomaine}${chemin}` : `${await origineAxso()}/${slug}${chemin}`;
 }

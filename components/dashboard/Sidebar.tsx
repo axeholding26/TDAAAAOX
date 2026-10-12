@@ -27,7 +27,7 @@ import {
   Settings2, ExternalLink, UserCheck, LayoutGrid, Plug, Link2,
   Bell, ChevronDown, ChevronRight, RotateCcw, FileText, Lock,
   Target, FileBarChart, Sparkles, Boxes, Receipt, Calculator, Store,
-  Tags, FolderOpen,
+  Tags, FolderOpen, Search,
 } from "lucide-react";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins, type Palier } from "@/lib/plans";
@@ -63,6 +63,10 @@ interface NavItem {
   opensAbonnement?: boolean;
   /** Module de permissions : l'item disparaît entièrement si le niveau est "aucun". */
   moduleKey?: ModuleKey;
+  /** Sous-titre affiché au-dessus du premier lien de chaque section d'un groupe long. */
+  section?: string;
+  /** Caisse en mode « simple » (ReglagesPos.mode) : seuls les liens essentiels du groupe restent affichés. */
+  essentiel?: boolean;
 }
 
 /** Groupe repliable — son en-tête déplie/replie ses liens. */
@@ -80,6 +84,8 @@ export interface SidebarProps {
   palier?: Palier;
   /** undefined = propriétaire : aucun filtrage n'est appliqué. */
   permissions?: Record<ModuleKey, Niveau>;
+  /** Mode de la caisse (ReglagesPos.mode). "simple" (défaut) masque les outils avancés du groupe « Caisse & magasin ». */
+  modePos?: "simple" | "pro";
 }
 
 // ─── Filtrage par permissions ─────────────────────────────────────────────────
@@ -138,17 +144,46 @@ const GROUPES: NavGroupe[] = [
     ],
   },
   {
-    id: "pos", label: "Point de vente", Icon: Monitor,
+    // AXSO POS 2.0 — toutes les pages de la caisse et du magasin (lib/pos/).
+    // `essentiel` : ce qui reste en mode « simple » (petite boutique : vendre,
+    // voir son stock, tenir sa caisse, régler) ; le mode « pro » affiche tout.
+    // Les quatre pages qui existaient avant le POS 2.0 (traçabilité,
+    // comptabilité, charges, encaissements COD) restent visibles dans les deux modes.
+    id: "pos", label: "Caisse & magasin", Icon: Monitor,
     items: [
-      { href: "/dashboard/logistique?tab=pos",       label: "Caisse POS",            Icon: Monitor,    moduleKey: "pos"     },
-      { href: "/dashboard/pos/stock",                label: "Gestion des stocks",    Icon: Boxes,      moduleKey: "pos"     },
-      { href: "/dashboard/pos/tracabilite",          label: "Traçabilité",           Icon: Package,    moduleKey: "pos"     },
-      // Comptabilité / Charges / Encaissements = sous-outils financiers de la
-      // caisse, pilotés par la permission "finance" : un caissier pur
-      // (pos:ecriture, finance:aucun) voit la caisse mais pas la comptabilité.
-      { href: "/dashboard/pos/comptabilite",         label: "Comptabilité",          Icon: Calculator, moduleKey: "finance" },
-      { href: "/dashboard/pos/charges",              label: "Charges d'exploitation", Icon: Receipt,   moduleKey: "finance" },
-      { href: "/dashboard/logistique/encaissements", label: "Encaissements COD",     Icon: Wallet,     moduleKey: "finance" },
+      { href: "/dashboard/pos/caisse",       label: "Caisse",              Icon: Monitor,      moduleKey: "pos", section: "Vente", essentiel: true },
+      { href: "/dashboard/pos/session",      label: "Session de caisse",   Icon: Wallet,       moduleKey: "pos", section: "Vente", essentiel: true },
+      { href: "/dashboard/pos/retours",      label: "Retours & avoirs",    Icon: RotateCcw,    moduleKey: "pos", section: "Vente" },
+      { href: "/dashboard/pos/pilotage",     label: "Pilotage en direct",  Icon: BarChart3,    moduleKey: "pos", section: "Vente" },
+      { href: "/dashboard/pos/supervision",  label: "Supervision des caisses", Icon: Monitor,  moduleKey: "pos", section: "Vente" },
+
+      { href: "/dashboard/pos/stock",        label: "Gestion des stocks",  Icon: Boxes,        moduleKey: "pos", section: "Stock", essentiel: true },
+      { href: "/dashboard/pos/fiche",        label: "Fiche produit",       Icon: Search,       moduleKey: "pos", section: "Stock" },
+      { href: "/dashboard/pos/inventaire",   label: "Inventaires",         Icon: Boxes,        moduleKey: "pos", section: "Stock" },
+      { href: "/dashboard/pos/transferts",   label: "Transferts de stock", Icon: Truck,        moduleKey: "pos", section: "Stock" },
+      { href: "/dashboard/pos/tracabilite",  label: "Traçabilité",         Icon: Package,      moduleKey: "pos", section: "Stock", essentiel: true },
+
+      { href: "/dashboard/pos/achats",       label: "Achats & réassort",   Icon: ShoppingCart, moduleKey: "pos", section: "Achats" },
+      { href: "/dashboard/pos/receptions",   label: "Réceptions",          Icon: Download,     moduleKey: "pos", section: "Achats" },
+      { href: "/dashboard/pos/import",       label: "Import / export",     Icon: FileText,     moduleKey: "pos", section: "Achats" },
+
+      { href: "/dashboard/pos/promotions",   label: "Promotions",          Icon: Tags,         moduleKey: "pos", section: "Clients en magasin" },
+      { href: "/dashboard/pos/fidelite",     label: "Fidélité",            Icon: Star,         moduleKey: "pos", section: "Clients en magasin" },
+      { href: "/dashboard/pos/credit",       label: "Crédit clients",      Icon: CreditCard,   moduleKey: "pos", section: "Clients en magasin" },
+
+      // Outils financiers de la caisse, pilotés par la permission "finance" : un
+      // caissier pur (pos:ecriture, finance:aucun) voit la caisse mais pas la comptabilité.
+      { href: "/dashboard/pos/rapprochement", label: "Rapprochement des paiements", Icon: Calculator, moduleKey: "finance", section: "Finance du magasin" },
+      { href: "/dashboard/pos/comptabilite", label: "Comptabilité",        Icon: Calculator,   moduleKey: "finance", section: "Finance du magasin", essentiel: true },
+      { href: "/dashboard/pos/charges",      label: "Charges d'exploitation", Icon: Receipt,   moduleKey: "finance", section: "Finance du magasin", essentiel: true },
+      { href: "/dashboard/logistique/encaissements", label: "Encaissements COD", Icon: Wallet, moduleKey: "finance", section: "Finance du magasin", essentiel: true },
+
+      { href: "/dashboard/pos/analytics",    label: "Analytics magasin",   Icon: FileBarChart, moduleKey: "pos", section: "Suivi" },
+      { href: "/dashboard/pos/journal",      label: "Journal d'activité",  Icon: FileText,     moduleKey: "pos", section: "Suivi" },
+      { href: "/dashboard/pos/audit",        label: "Journal d'audit",     Icon: Lock,         moduleKey: "pos", section: "Suivi" },
+
+      { href: "/dashboard/pos/demarrage",    label: "Mise en route",       Icon: Target,       moduleKey: "pos", section: "Configuration" },
+      { href: "/dashboard/pos/reglages",     label: "Réglages de la caisse", Icon: Settings2,  moduleKey: "pos", section: "Configuration", essentiel: true },
     ],
   },
   {
@@ -166,8 +201,24 @@ const GROUPES: NavGroupe[] = [
       { href: "/dashboard/produits",         label: "Produits",          Icon: Package,  excludePrefix: ["/dashboard/produits/digital", "/dashboard/produits/categories"], moduleKey: "produits" },
       { href: "/dashboard/produits/digital", label: "Produits Digitaux", Icon: Download, moduleKey: "produits" },
       { href: "/dashboard/produits/categories", label: "Catégories",     Icon: Tags,     moduleKey: "produits" },
-      { href: "/dashboard/sourcing",         label: "Sourcing",          Icon: Map,      requiresPalier: "palier2", moduleKey: "produits" },
       { href: "/dashboard/entrepots",        label: "Entrepôts",         Icon: Box,      moduleKey: "produits" },
+    ],
+  },
+  {
+    // AXSO Sourcing : trouver, importer, tester et faire livrer des produits de
+    // fournisseurs internationaux (lib/sourcing/). Même palier que l'ancien lien « Sourcing ».
+    id: "sourcing", label: "AXSO Sourcing", Icon: Map,
+    items: [
+      { href: "/dashboard/sourcing",             label: "Parcours guidé",        Icon: Map,        exact: true, requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing/catalogue",   label: "Catalogue sourcing",    Icon: Package,    requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing/fournisseurs", label: "Fournisseurs",         Icon: Users,      requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing/import",      label: "Import produit",        Icon: Download,   requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing/calculateur", label: "Calculateur de rentabilité", Icon: Calculator, requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing/commandes",   label: "Commandes fournisseurs", Icon: ShoppingCart, requiresPalier: "palier2", moduleKey: "commandes" },
+      { href: "/dashboard/sourcing/expeditions", label: "Expéditions internationales", Icon: Truck, requiresPalier: "palier2", moduleKey: "commandes" },
+      { href: "/dashboard/sourcing/stocks",      label: "Stocks & ruptures",     Icon: Boxes,      requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/dropshipping",         label: "Tableau de bord profit", Icon: BarChart3,  requiresPalier: "palier2", moduleKey: "commandes" },
+      { href: "/dashboard/sourcing/reglages",    label: "Pays & intégrations",   Icon: Plug,       requiresPalier: "palier2", moduleKey: "produits" },
     ],
   },
   {
@@ -401,14 +452,21 @@ function GroupeRepliable({
 
       {ouvert && (
         <div className="ml-[19px] pl-2.5 border-l border-[#F0F0F0] mt-0.5 mb-1 space-y-0.5">
-          {groupe.items.map(item => (
-            <LienEnfant
-              key={item.href}
-              item={item}
-              pathname={pathname}
-              searchParams={searchParams}
-              palier={palier}
-            />
+          {groupe.items.map((item, i) => (
+            <div key={item.href}>
+              {/* Sous-titre de section : au premier lien de chaque section d'un groupe long. */}
+              {item.section && item.section !== groupe.items[i - 1]?.section && (
+                <div className={cn("pl-3 pb-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#BBBBBB]", i > 0 ? "pt-2.5" : "pt-1")}>
+                  {t(item.section)}
+                </div>
+              )}
+              <LienEnfant
+                item={item}
+                pathname={pathname}
+                searchParams={searchParams}
+                palier={palier}
+              />
+            </div>
           ))}
         </div>
       )}
@@ -418,15 +476,20 @@ function GroupeRepliable({
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permissions }: SidebarProps) {
+export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permissions, modePos = "simple" }: SidebarProps) {
   const t = useT();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // Groupes visibles pour cette session (les items sans accès sont retirés,
   // et un groupe entièrement vidé par le filtrage disparaît avec eux).
+  // Caisse en mode « simple » : le groupe ne garde que ses liens essentiels —
+  // plus la page en cours, pour qu'un lien direct vers un outil avancé reste repéré.
   const groupes = GROUPES
     .map(g => ({ ...g, items: filtreParPermission(g.items, permissions) }))
+    .map(g => (g.id === "pos" && modePos === "simple"
+      ? { ...g, items: g.items.filter(it => it.essentiel || estActif(it, pathname, searchParams)) }
+      : g))
     .filter(g => g.items.length > 0);
 
   // Groupe qui contient la route courante.

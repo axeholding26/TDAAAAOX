@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { planActif } from "@/lib/abonnement";
 import { aAcces } from "@/lib/plans";
-import { slugify } from "@/lib/utils";
+import { slugify, slugBoutiqueValide } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const checkSlug = req.nextUrl.searchParams.get("checkSlug");
   if (checkSlug !== null) {
     const slug = slugify(checkSlug);
-    if (!slug) return NextResponse.json({ disponible: false });
+    if (!slugBoutiqueValide(slug)) return NextResponse.json({ disponible: false, slug });
     const existe = await prisma.tenant.findUnique({ where: { slug }, select: { id: true } });
     return NextResponse.json({ disponible: !existe, slug });
   }
@@ -91,9 +91,9 @@ export async function POST(req: Request) {
     throw err;
   }
 
-  const slugExiste = await prisma.tenant.findUnique({ where: { slug: data.slug } });
+  const slugExiste = !slugBoutiqueValide(data.slug) || await prisma.tenant.findUnique({ where: { slug: data.slug } });
   if (slugExiste) {
-    return NextResponse.json({ error: `L'URL "${data.slug}" est déjà prise.` }, { status: 400 });
+    return NextResponse.json({ error: `L'URL "${data.slug}" est déjà prise ou réservée.` }, { status: 400 });
   }
 
 

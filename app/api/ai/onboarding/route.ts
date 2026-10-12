@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { analyserBusinessEtCreerPlan, deviseDuPays } from "@/lib/ai-agent";
-import { slugify } from "@/lib/utils";
+import { slugify, slugBoutiqueValide } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
 import { genererAvisDemo } from "@/lib/gemini";
@@ -78,7 +78,8 @@ export async function POST(request: Request) {
       // Vérifier unicité du slug et ajuster si nécessaire
       let slug = plan.slug || slugify(plan.nomBoutique);
       const slugExiste = await prisma.tenant.findUnique({ where: { slug } });
-      if (slugExiste) slug = `${slug}-${Date.now().toString(36)}`;
+      // Pris ou réservé (sous-domaine technique, page du site) : suffixe unique.
+      if (slugExiste || !slugBoutiqueValide(slug)) slug = `${slug.slice(0, 50)}-${Date.now().toString(36)}`;
 
       return NextResponse.json({ plan: { ...plan, slug }, messageIA: plan.messageIA });
     }

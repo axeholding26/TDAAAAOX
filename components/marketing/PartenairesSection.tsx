@@ -29,7 +29,7 @@ export function PartenairesSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-14 bg-white border-y border-gray-100 overflow-hidden"
+    <section ref={sectionRef} id="paiements" className="py-14 bg-white border-y border-gray-100 overflow-hidden scroll-mt-24"
       style={{ opacity: visible ? 1 : 0, transform: visible ? "none" : "translateY(16px)", transition: "opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1)" }}>
       <p className="text-center text-[12px] font-bold uppercase tracking-widest text-gray-400 mb-8">
         {t("Ils font confiance à nos partenaires de paiement")}

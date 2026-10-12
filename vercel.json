@@ -3,6 +3,11 @@
   "functions": {
     "app/api/ai/axia/**": { "maxDuration": 120 },
     "app/api/ai/**": { "maxDuration": 60 },
-    "app/api/themes/importer/**": { "maxDuration": 60 }
-  }
+    "app/api/themes/importer/**": { "maxDuration": 60 },
+    "app/api/pos/flux/**": { "maxDuration": 300 }
+  },
+  "crons": [
+    { "path": "/api/cron/surveillance-fournisseurs", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/pos/alertes", "schedule": "30 4 * * *" }
+  ]
 }

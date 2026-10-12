@@ -1305,9 +1305,9 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       }
 
       case "lister_fournisseurs": {
-        const fournisseurs = await (prisma as any).fournisseur.findMany({ where: { tenantId }, orderBy: { fiabilite: "desc" } }).catch(() => []);
+        const fournisseurs = await (prisma as any).fournisseur.findMany({ where: { tenantId }, orderBy: { nom: "asc" } }).catch(() => []);
         if (!fournisseurs.length) return { succes: true, resultat: "Aucun fournisseur configuré. Ajoute-en un depuis Dropshipping." };
-        const lines = fournisseurs.map((f: any) => `• ${f.nom} (${f.type}) | ${f.pays} | Délai: ${f.delaiLivraison}j | Fiabilité: ${f.fiabilite}/5 | Marge auto: ${Math.round(f.margeAuto * 100)}%`).join("\n");
+        const lines = fournisseurs.map((f: any) => `• ${f.nom} (${f.type}) | ${f.pays} | Délai: ${f.delaiLivraison != null ? `${f.delaiLivraison}j` : "non communiqué"} | Livraisons réussies: ${f.livraisonsTotal > 0 ? `${f.livraisonsOk}/${f.livraisonsTotal}` : "aucun historique"} | Marge auto: ${Math.round(f.margeAuto * 100)}%`).join("\n");
         return { succes: true, resultat: `${fournisseurs.length} fournisseur(s):\n${lines}` };
       }
 
@@ -1315,7 +1315,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         const f = await (prisma as any).fournisseur.create({
           data: {
             tenantId, nom: args.nom, type: args.type ?? "local", pays: args.pays ?? "Cameroun",
-            url: args.url ?? null, delaiLivraison: args.delaiLivraison ?? 7,
+            url: args.url ?? null, delaiLivraison: args.delaiLivraison ?? null,
             margeAuto: (args.margeAuto ?? 30) / 100,
           },
         }).catch((e: any) => ({ error: e.message }));
@@ -1421,7 +1421,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (!commande) return { succes: false, resultat: "Commande introuvable." };
         const fournisseurId = commande.lignes.find((l: any) => l.produit?.fournisseurId)?.produit?.fournisseurId;
         if (!fournisseurId) return { succes: false, resultat: "Aucun fournisseur dropshipping associé aux produits de cette commande." };
-        const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? l.prix * 0.5) * l.quantite), 0);
+        const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? 0) * l.quantite), 0);
         const cf = await (prisma as any).commandeFournisseur.create({
           data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true },
         }).catch(() => null);
@@ -1504,7 +1504,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (!retards.length) return { succes: true, resultat: "Aucune commande fournisseur en retard. Tout est à jour !" };
         const lines = retards.map((cf: any) => {
           const jours = Math.floor((maintenant.getTime() - new Date(cf.createdAt).getTime()) / (1000 * 60 * 60 * 24));
-          return `• Cmd ${cf.commande.numero} — ${cf.commande.clientNom} — ${cf.fournisseur.nom} — ${jours}j (délai prévu: ${cf.fournisseur.delaiLivraison}j) ⚠️`;
+          return `• Cmd ${cf.commande.numero} — ${cf.commande.clientNom} — ${cf.fournisseur.nom} — ${jours}j (délai prévu: ${cf.fournisseur.delaiLivraison != null ? `${cf.fournisseur.delaiLivraison}j` : "non communiqué"}) ⚠️`;
         }).join("\n");
         return { succes: true, resultat: `${retards.length} commande(s) fournisseur en retard :\n${lines}\n\n→ Conseillé : contacter les clients pour les prévenir du délai.` };
       }

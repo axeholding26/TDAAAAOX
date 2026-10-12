@@ -26,12 +26,32 @@ export function formatMontant(montant: number, devise: string = "XAF"): string {
   }).format(montant);
 }
 
-// Générer un numéro de commande unique
+// Suffixe aléatoire lisible : ni 0/O ni 1/I/L, pour être dicté ou recopié sans erreur.
+const ALPHABET_NUMERO = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+function suffixeAleatoire(longueur: number): string {
+  const octets = new Uint8Array(longueur);
+  globalThis.crypto.getRandomValues(octets);
+  return Array.from(octets, (o) => ALPHABET_NUMERO[o % ALPHABET_NUMERO.length]).join("");
+}
+
+// Générer un numéro de commande unique : AX-20261011-K7M2QD.
+// Commande.numero est unique sur TOUTE la plateforme : 6 caractères tirés parmi
+// 31 donnent ~887 millions de numéros par jour (l'ancien tirage n'en avait que
+// 9 000, et se heurtait dès quelques centaines de commandes par jour). Une
+// collision reste possible en théorie : la caisse rejoue alors la vente avec un
+// nouveau numéro (avecRepriseCollision, lib/pos/idempotence.ts).
 export function genererNumeroCommande(): string {
-  const date = new Date();
-  const yyyymmdd = date.toISOString().slice(0, 10).replace(/-/g, "");
-  const rand = Math.floor(Math.random() * 9000 + 1000);
-  return `AX-${yyyymmdd}-${rand}`;
+  const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  return `AX-${yyyymmdd}-${suffixeAleatoire(6)}`;
+}
+
+// Numéro de facture : FAC-2026-0042-7KQ2M. `sequence` = rang de la facture dans
+// la boutique (nombre de factures + 1), lisible par le marchand. Facture.numero
+// étant unique sur toute la plateforme, le suffixe distingue les boutiques : sans
+// lui, la facture n°1 de la deuxième boutique échouait (« Unique constraint
+// failed on numero ») et la vente restait sans facture.
+export function genererNumeroFacture(sequence: number): string {
+  return `FAC-${new Date().getFullYear()}-${String(sequence).padStart(4, "0")}-${suffixeAleatoire(5)}`;
 }
 
 // Slugifier un texte français
@@ -120,4 +140,31 @@ export function hrefBoutique(slug: string, lien?: string | null): string | undef
 // saisi sans indicatif ne correspondrait pas — passer à une table d'indicatifs si besoin.
 export function cleTelephone(tel?: string | null): string {
   return (tel ?? "").replace(/\D/g, "").slice(-9);
+}
+
+// ── Adresse des boutiques : sous-domaine (modèle Shopify) — nom.axsoafrica.com ──
+// Actif dès que NEXT_PUBLIC_AXSO_DOMAIN est un vrai domaine (DNS générique *.domaine) ;
+// sur *.vercel.app aucun sous-domaine générique n'existe : on reste en domaine/nom.
+const DOMAINE_AXSO = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "";
+export const SOUS_DOMAINES_ACTIFS = !!DOMAINE_AXSO && !DOMAINE_AXSO.endsWith(".vercel.app");
+
+/** "https://nom.axsoafrica.com" ; null quand les sous-domaines ne sont pas actifs. */
+export function adresseBoutique(slug: string): string | null {
+  if (!SOUS_DOMAINES_ACTIFS) return null;
+  return `${DOMAINE_AXSO.startsWith("localhost") ? "http" : "https"}://${slug}.${DOMAINE_AXSO}`;
+}
+
+// Noms qu'une boutique ne peut pas prendre : sous-domaines techniques et premières
+// pages du site (une boutique « blog » serait masquée par /blog).
+export const SLUGS_RESERVES = new Set([
+  "www", "app", "api", "admin", "dashboard", "mail", "smtp", "ftp", "cdn", "static", "assets", "status", "support", "help", "aide",
+  "docs", "blog", "shop", "store", "boutique", "axso", "axsoafrica", "login", "register", "auth", "connexion", "inscription",
+  "about", "affiliation", "affilie", "community", "contact", "fonctionnalites", "jobs", "legal", "mon-espace-affilie", "press",
+  "rejoindre", "suivi", "temoignages", "themes", "tutorials", "livreur", "test", "dev", "staging", "preview",
+  "scanner", // interface du téléphone-scanner de la caisse (app/scanner)
+]);
+
+/** Un slug doit être une étiquette DNS valide (3 à 63 caractères) et ne pas être réservé. */
+export function slugBoutiqueValide(slug: string): boolean {
+  return /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(slug) && !SLUGS_RESERVES.has(slug);
 }

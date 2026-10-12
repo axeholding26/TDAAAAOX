@@ -1,16 +1,35 @@
 // POS — Créer une commande en boutique physique
+// ANCIENNE route de la caisse (POSPanel), gardée pour les boutiques qui n'ont pas
+// encore activé la caisse 2.0 (drapeau caisse_v2 éteint). Dès qu'il est allumé,
+// cette route REFUSE : toute vente passe alors par POST /api/pos/ventes
+// (lib/pos/vente.ts — paiements multiples, client réel, session de caisse), sinon
+// elle échapperait à la session ouverte et au stock du magasin.
+// Tant qu'elle sert, elle applique les mêmes garde-fous que la 2.0 : clé
+// d'idempotence (champ `cle`), droit et plafond de remise, entrée d'audit.
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { PAIEMENT } from "@/lib/commandes";
+import { CANAL, PAIEMENT } from "@/lib/commandes";
 import { RuptureStock, compterVentes, sortirStock } from "@/lib/stock";
-import { genererNumeroCommande } from "@/lib/utils";
+import { genererNumeroCommande, genererNumeroFacture } from "@/lib/utils";
+import { avecIdempotence, avecRepriseCollision } from "@/lib/pos/idempotence";
+import { droitsUtilisateur } from "@/lib/pos/acces";
+import { journaliserAudit } from "@/lib/pos/audit";
+import { ErreurPos, reponseErreurPos } from "@/lib/pos/erreurs";
+import { lireReglagesPos } from "@/lib/pos/flags";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session?.user as any)?.tenantId;
+  const userId = (session?.user as any)?.id as string;
+
+  const [acces, reglagesPos] = await Promise.all([droitsUtilisateur(tenantId, userId), lireReglagesPos(tenantId)]);
+  if (!acces?.droits.vendre) return NextResponse.json({ error: "Votre compte n'a pas le droit de vendre en caisse. Demandez à un responsable." }, { status: 403 });
+  if (reglagesPos.flags.caisse_v2) {
+    return NextResponse.json({ error: "La nouvelle caisse est activée pour cette boutique : cette vente n'a pas été enregistrée. Ouvrez Caisse (menu Point de vente) pour l'encaisser.", code: "caisse_v2", lien: "/dashboard/pos/caisse" }, { status: 409 });
+  }
 
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à vendre en boutique.", code: "quota_atteint" }, { status: 403 });
@@ -43,6 +62,14 @@ export async function POST(req: Request) {
   const sousTotal = items.reduce((s, i) => s + i.prix * i.quantite, 0);
   const montantReduction = Math.min(Math.max(Number(body.montantReduction) || 0, 0), sousTotal);
   const montantTotal = sousTotal - montantReduction;
+  // Remise : mêmes droits que la caisse 2.0 (« remise », puis « remise_hors_plafond » au-delà du plafond des réglages).
+  if (montantReduction > 0) {
+    const plafond = reglagesPos.reglages.remises.plafondPct;
+    if (!acces.droits.remise) return NextResponse.json({ error: "Vous n'avez pas le droit d'accorder une remise. Demandez à un responsable." }, { status: 403 });
+    if ((montantReduction / sousTotal) * 100 > plafond + 1e-6 && !acces.droits.remise_hors_plafond) {
+      return NextResponse.json({ error: `Cette remise dépasse le plafond autorisé (${plafond} %). Demandez à un responsable.` }, { status: 403 });
+    }
+  }
 
   // Auto-create or find client
   let client = await prisma.client.findFirst({ where: { tenantId, OR: [{ email: "pos@local" }] } });
@@ -50,13 +77,19 @@ export async function POST(req: Request) {
     client = await prisma.client.create({ data: { tenantId, nom: clientNom, email: "pos@local", telephone: clientTelephone } });
   }
 
-  let commande;
+  // Clé d'idempotence envoyée par la caisse : un nouvel essai après une coupure rend la vente
+  // d'origine au lieu d'en créer une seconde. Écran resté ouvert d'avant (sans clé) : une clé par requête.
+  const cle = typeof body.cle === "string" && body.cle.length >= 8 && body.cle.length <= 200 ? body.cle : crypto.randomUUID();
+  let commande: { id: string; numero: string };
+  let rejoue = false;
   try {
-    commande = await prisma.$transaction(async (tx) => {
+    // Numéro déjà pris (unique sur toute la plateforme) : la transaction repart avec un nouveau numéro.
+    ({ resultat: commande, rejoue } = await avecRepriseCollision(() => avecIdempotence(tenantId, cle, "vente.ancienne_caisse", async (tx) => {
       const c = await tx.commande.create({
         data: {
           tenantId,
           numero: genererNumeroCommande(),
+          canal: CANAL.POS,
           clientId: client.id,
           clientNom,
           clientEmail: "pos@local",
@@ -78,29 +111,42 @@ export async function POST(req: Request) {
         },
       });
       // Stock (lots FIFO + journal) et compteur de ventes : mêmes règles que la vitrine.
-      await sortirStock(tx, { tenantId, commandeId: c.id, motif: `Vente caisse #${c.numero}`, creePar: (session?.user as any)?.id });
+      await sortirStock(tx, { tenantId, commandeId: c.id, motif: `Vente caisse #${c.numero}`, creePar: userId });
       await compterVentes(tx, c.id, 1);
-      return c;
-    });
+      await journaliserAudit(tx, { tenantId, userId, userNom: acces.nom ?? session?.user?.name ?? session?.user?.email ?? "Utilisateur" }, {
+        action: "vente.creee", entite: "Commande", entiteId: c.id,
+        apres: { numero: c.numero, total: montantTotal, sousTotal, remises: montantReduction, methode, ancienneCaisse: true },
+      });
+      return { id: c.id, numero: c.numero };
+    }, { userId })));
   } catch (err) {
     if (err instanceof RuptureStock) return NextResponse.json({ error: err.message }, { status: err.status });
+    // Erreurs de la caisse (clé déjà utilisée pour autre chose…) : phrase humaine { error, code }.
+    if (err instanceof ErreurPos) return reponseErreurPos(err);
     throw err;
   }
+  // Rejeu : la vente et sa facture existent déjà.
+  if (rejoue) return NextResponse.json({ ok: true, commandeId: commande.id, numero: commande.numero, rejoue: true });
 
-  // Generate invoice automatically for POS sales
+  // Facture de la vente. Facture.numero est unique sur TOUTE la plateforme alors
+  // que le rang est compté par boutique : l'ancien « FAC-année-rang » échouait en
+  // silence dès la deuxième boutique (« Unique constraint failed on numero ») et
+  // la vente restait sans facture. genererNumeroFacture ajoute un suffixe unique ;
+  // un échec n'annule pas la vente mais n'est plus avalé sans trace.
   try {
-    const factureCount = await (prisma as any).facture.count({ where: { tenantId } });
-    const numeroFac = `FAC-${new Date().getFullYear()}-${String(factureCount + 1).padStart(4, "0")}`;
-    await (prisma as any).facture.create({
+    const rang = (await prisma.facture.count({ where: { tenantId } })) + 1;
+    await avecRepriseCollision(() => prisma.facture.create({
       data: {
-        tenantId, commandeId: commande.id, numero: numeroFac,
+        tenantId, commandeId: commande.id, numero: genererNumeroFacture(rang),
         clientNom, clientEmail: "pos@local", clientAdresse: "Vente en boutique",
         montantHT: montantTotal, tauxTVA: 0, montantTVA: 0, montantTTC: montantTotal, devise,
         lignes: items.map((i: any) => ({ nom: i.nom, quantite: i.quantite, prixHT: i.prix, tauxTVA: 0, prixTTC: i.prix })),
         statut: "payee",
       },
-    });
-  } catch {}
+    }));
+  } catch (e) {
+    console.error("[pos-creer] facture non créée pour la vente", commande.numero, e);
+  }
 
   return NextResponse.json({ ok: true, commandeId: commande.id, numero: commande.numero });
 }

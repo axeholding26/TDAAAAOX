@@ -38,7 +38,7 @@ const BIENVENUE_STEPS = [
 // tout premier chargement. usePathname() côté client, lui, se met à jour de
 // façon fiable à chaque navigation.
 export function DashboardShell({
-  children, session, boutique, quotaAtteint, palier, permissions, modeCaisse,
+  children, session, boutique, quotaAtteint, palier, permissions, modeCaisse, modePos,
 }: {
   children: React.ReactNode;
   session: any;
@@ -52,6 +52,8 @@ export function DashboardShell({
   // caissier pur doit voir le kiosque plein écran sur n'importe quelle route
   // du dashboard, pas seulement /dashboard/logistique?tab=pos.
   modeCaisse?: boolean;
+  /** Mode de la caisse (ReglagesPos.mode), lu dans layout.tsx : "simple" allège le menu « Caisse & magasin ». */
+  modePos?: "simple" | "pro";
 }) {
   const t = useT();
   const pathname = usePathname();
@@ -100,7 +102,7 @@ export function DashboardShell({
             fait via le bouton dédié dans la barre supérieure d'AXIA. */}
         {!estAccueilAxia && (
           <div className="hidden md:block">
-            <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} permissions={permissions} />
+            <Sidebar boutiqueNom={boutique?.nomBoutique} boutiqueSlug={boutique?.slug} palier={palier} permissions={permissions} modePos={modePos} />
           </div>
         )}
         <div className="flex flex-col flex-1 overflow-hidden">

@@ -7,10 +7,12 @@ import { crediterWallet } from "./wallet";
 import { traiterPaiementDigital, enregistrerConversionAffiliation, capturerCommissionAffiliation, TYPES_LIVRAISON_DIGITALE } from "./affiliation";
 import { notifierMarchand } from "./notifications-marchand";
 import { formatMontant } from "./utils";
-import { verifierPaiementNotchPay } from "./notchpay";
+import { verifierPaiementNotchPay, paiementCouvre } from "./notchpay";
 import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "./email";
 import { PAIEMENT } from "./commandes";
 import { compterVentes } from "./stock";
+
+export const NOTE_PRIX_ACHAT_MANQUANT = "Prix d'achat à renseigner : le montant fournisseur est incomplet.";
 
 // Dropshipping : la commande payée part chez chaque fournisseur concerné.
 async function routerVersFournisseurs(commandeId: string, tenantId: string) {
@@ -18,40 +20,53 @@ async function routerVersFournisseurs(commandeId: string, tenantId: string) {
     where: { commandeId, produit: { fournisseurId: { not: null } } },
     select: { prix: true, quantite: true, produit: { select: { fournisseurId: true, prixFournisseur: true } } },
   });
-  const parFournisseur = new Map<string, number>();
+  // Montant = prix d'achat connus uniquement. Un prix manquant n'est jamais deviné :
+  // il compte 0 et la commande fournisseur le signale.
+  const parFournisseur = new Map<string, { montant: number; prixManquant: boolean }>();
   for (const l of lignes) {
     const f = l.produit.fournisseurId!;
-    parFournisseur.set(f, (parFournisseur.get(f) ?? 0) + (l.produit.prixFournisseur ?? l.prix * 0.5) * l.quantite);
+    const cumul = parFournisseur.get(f) ?? { montant: 0, prixManquant: false };
+    if (l.produit.prixFournisseur == null) cumul.prixManquant = true;
+    else cumul.montant += l.produit.prixFournisseur * l.quantite;
+    parFournisseur.set(f, cumul);
   }
-  for (const [fournisseurId, montantFournisseur] of parFournisseur) {
+  for (const [fournisseurId, { montant, prixManquant }] of parFournisseur) {
     const deja = await prisma.commandeFournisseur.findFirst({ where: { commandeId, fournisseurId } });
-    if (!deja) await prisma.commandeFournisseur.create({ data: { tenantId, commandeId, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true } });
+    // « en_attente » : aucun connecteur fournisseur n'est branché, rien n'est donc envoyé
+    // tout seul — le marchand transmet la commande depuis Sourcing → Commandes fournisseurs.
+    if (!deja) await prisma.commandeFournisseur.create({ data: { tenantId, commandeId, fournisseurId, montantFournisseur: montant, notes: prixManquant ? NOTE_PRIX_ACHAT_MANQUANT : null, statut: "en_attente", envoiAuto: true } });
+  }
+  if (parFournisseur.size) {
+    await notifierMarchand({
+      tenantId, commandeId, type: "commande_fournisseur",
+      titre: "Commande à passer chez le fournisseur",
+      message: `Une commande payée attend d'être transmise à ${parFournisseur.size} fournisseur(s). Le message de commande est prêt.${[...parFournisseur.values()].some((f) => f.prixManquant) ? " Prix d'achat à renseigner sur au moins un produit." : ""}`,
+      lien: "/dashboard/sourcing/commandes",
+    });
   }
 }
 
 // NotchPay prélève son propre frais de traitement sur chaque paiement — jamais
 // déduit du vendeur, seulement de la commission Axso (voir lib/wallet.ts). On le
 // lit directement depuis la transaction NotchPay plutôt que de le deviner.
-async function fraisNotchPay(reference: string): Promise<number> {
-  try {
-    const { transaction } = await verifierPaiementNotchPay(reference);
-    const fees = (transaction as any)?.fees;
-    if (Array.isArray(fees) && fees.length > 0) {
-      return fees.reduce((s: number, f: any) => s + (Number(f?.amount) || 0), 0);
-    }
-    const amount = (transaction as any)?.amount;
-    const total = (transaction as any)?.amounts?.total;
-    if (typeof amount === "number" && typeof total === "number") {
-      return Math.max(0, amount - total);
-    }
-  } catch {
-    // Ne bloque jamais la confirmation du paiement pour ça — la commission sera
-    // comptée brute cette fois, sans grever le crédit du vendeur.
+function fraisNotchPay(transaction: any): number {
+  const fees = transaction?.fees;
+  if (Array.isArray(fees) && fees.length > 0) {
+    return fees.reduce((s: number, f: any) => s + (Number(f?.amount) || 0), 0);
+  }
+  const amount = transaction?.amount;
+  const total = transaction?.amounts?.total;
+  if (typeof amount === "number" && typeof total === "number") {
+    return Math.max(0, amount - total);
   }
   return 0;
 }
 
-export async function confirmerPaiementCommande(commandeId: string, reference: string) {
+/**
+ * `transactionEvenement` : données du webhook signé, utilisées seulement si l'API
+ * NotchPay ne répond pas. Sans transaction vérifiable, rien n'est confirmé.
+ */
+export async function confirmerPaiementCommande(commandeId: string, reference: string, transactionEvenement?: any) {
   const commande = await prisma.commande.findUnique({
     where: { id: commandeId },
     include: {
@@ -62,8 +77,20 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   if (!commande) return;
   if (commande.paiementStatut !== PAIEMENT.ATTENTE && commande.paiementStatut !== PAIEMENT.ECHOUE) return; // déjà traité (idempotence) ou remboursé
 
+  // Le montant réellement payé est relu chez NotchPay : une transaction « complete »
+  // d'un autre montant, d'une autre devise ou d'une autre commande ne paie pas celle-ci.
+  const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch(() => transactionEvenement);
+  const refMarchande = transaction?.merchant_reference ?? transaction?.trxref;
+  if (!paiementCouvre(transaction, commande.montantTotal, commande.devise) || (refMarchande && refMarchande !== `ORD-${commandeId}`)) {
+    console.error("[paiement-commande] paiement refusé : ne correspond pas à la commande", {
+      commandeId, reference, attendu: `${commande.montantTotal} ${commande.devise}`,
+      recu: transaction ? `${transaction.amount} ${transaction.currency} (${transaction.status}, ${refMarchande ?? "sans référence"})` : "transaction introuvable",
+    });
+    return;
+  }
+
   const tauxCommission = commande.tenant.commissionRate ?? 0.06;
-  const fraisPasserelle = await fraisNotchPay(reference);
+  const fraisPasserelle = fraisNotchPay(transaction);
 
   // Passage à « payé » ATOMIQUE : le webhook NotchPay et la page de confirmation
   // peuvent appeler cette fonction en même temps — un seul des deux continue,

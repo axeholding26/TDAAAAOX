@@ -5,6 +5,7 @@ import { formatMontant, formatDate } from "@/lib/utils";
 import { DollarSign, TrendingUp, AlertCircle, Receipt } from "lucide-react";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { AdminWalletPanel } from "@/components/admin/AdminWalletPanel";
+import { AdminRetraitsManuels } from "@/components/admin/AdminRetraitsManuels";
 import { getPlatformTenantId } from "@/lib/wallet";
 import { getT } from "@/lib/i18n/serveur";
 
@@ -56,6 +57,8 @@ export default async function AdminFinancesPage() {
 
       {/* Wallet plateforme + retrait */}
       <AdminWalletPanel peutRetirer={estAdminComplet(session)} />
+
+      <AdminRetraitsManuels peutTraiter={estAdminComplet(session)} />
 
       {/* Commission brute vs frais NotchPay vs net réel */}
       <div className="rounded-2xl p-6 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>

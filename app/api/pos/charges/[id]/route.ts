@@ -1,51 +1,57 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+// Une charge d'exploitation. Droit : voir_couts ou rapprochement.
+// PATCH  /api/pos/charges/:id — { statut?, montant?, description?, dateEcheance?, notes? }
+// DELETE /api/pos/charges/:id — erreur de saisie.
+// Une dépense sortie d'une caisse (sessionCaisseId renseigné) ne change plus de
+// montant et ne se supprime pas ici : l'argent est sorti du tiroir, la session
+// en garde le mouvement. Elle se corrige par un mouvement de caisse « correction ».
+// Modification de montant et suppression sont tracées dans le journal d'audit.
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { routePos } from "@/lib/pos/acces";
+import { exigerUnDroit } from "@/lib/pos/droits";
+import { ErreurPos } from "@/lib/pos/erreurs";
+import { journaliserAudit } from "@/lib/pos/audit";
+import type { ContextePos } from "@/lib/pos/types";
 
-type Ctx = { params: Promise<{ id: string }> };
+const schemaModif = z.object({
+  statut: z.enum(["payee", "en_attente", "en_retard"]).optional(),
+  montant: z.coerce.number().finite().positive().max(1e12).optional(),
+  description: z.string().trim().min(1).max(300).optional(),
+  dateEcheance: z.preprocess((v) => (v ? new Date(v as string) : null), z.date().nullable()).optional(),
+  notes: z.string().trim().max(500).nullable().optional(),
+});
 
-// PATCH — met à jour une charge (typiquement : marquer payée)
-export async function PATCH(req: NextRequest, { params }: Ctx) {
-  try {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    const tenantId = (session.user as any)?.tenantId;
-    const { id } = await params;
-
-    const charge = await prisma.chargeExploitation.findFirst({ where: { id, tenantId } });
-    if (!charge) return NextResponse.json({ error: "Charge introuvable" }, { status: 404 });
-
-    const body = await req.json();
-    const data: any = {};
-    if (body.statut !== undefined) data.statut = body.statut;
-    if (body.montant !== undefined) data.montant = Number(body.montant);
-    if (body.description !== undefined) data.description = body.description;
-    if (body.dateEcheance !== undefined) data.dateEcheance = body.dateEcheance ? new Date(body.dateEcheance) : null;
-    if (body.notes !== undefined) data.notes = body.notes;
-
-    const miseAJour = await prisma.chargeExploitation.update({ where: { id }, data });
-    return NextResponse.json({ charge: miseAJour });
-  } catch (err) {
-    console.error("[pos/charges/[id] PATCH]", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
+async function chargeDe(ctx: ContextePos, id: string) {
+  exigerUnDroit(ctx, "voir_couts", "rapprochement");
+  const charge = await prisma.chargeExploitation.findFirst({ where: { id, tenantId: ctx.tenantId } });
+  if (!charge) throw new ErreurPos("introuvable", 404, "Cette charge est introuvable dans cette boutique.");
+  return charge;
 }
 
-// DELETE — supprime une charge (erreur de saisie)
-export async function DELETE(_req: NextRequest, { params }: Ctx) {
-  try {
-    const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-    const tenantId = (session.user as any)?.tenantId;
-    const { id } = await params;
+const DE_CAISSE = "Cette dépense est sortie d'une caisse : son montant fait partie du comptage de la session. Corrigez-la par un mouvement de caisse « correction ».";
 
-    const charge = await prisma.chargeExploitation.findFirst({ where: { id, tenantId } });
-    if (!charge) return NextResponse.json({ error: "Charge introuvable" }, { status: 404 });
+export const PATCH = routePos<{ id: string }>(async (ctx, req, { id }) => {
+  const charge = await chargeDe(ctx, id);
+  const data = schemaModif.parse(await req.json());
+  if (charge.sessionCaisseId && data.montant !== undefined && data.montant !== charge.montant) throw new ErreurPos("conflit", 409, DE_CAISSE);
+  const miseAJour = await prisma.$transaction(async (tx) => {
+    const c = await tx.chargeExploitation.update({ where: { id: charge.id }, data });
+    await journaliserAudit(tx, ctx, {
+      action: "charge.modifiee", entite: "ChargeExploitation", entiteId: c.id,
+      avant: { statut: charge.statut, montant: charge.montant, description: charge.description },
+      apres: { statut: c.statut, montant: c.montant, description: c.description },
+    });
+    return c;
+  });
+  return { charge: miseAJour };
+});
 
-    await prisma.chargeExploitation.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
-  } catch (err) {
-    console.error("[pos/charges/[id] DELETE]", err);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
+export const DELETE = routePos<{ id: string }>(async (ctx, _req, { id }) => {
+  const charge = await chargeDe(ctx, id);
+  if (charge.sessionCaisseId) throw new ErreurPos("conflit", 409, DE_CAISSE);
+  await prisma.$transaction(async (tx) => {
+    await tx.chargeExploitation.delete({ where: { id: charge.id } });
+    await journaliserAudit(tx, ctx, { action: "charge.supprimee", entite: "ChargeExploitation", entiteId: charge.id, avant: { categorie: charge.categorie, description: charge.description, montant: charge.montant, statut: charge.statut } });
+  });
+  return { ok: true };
+});

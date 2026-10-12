@@ -131,7 +131,9 @@ export default function WalletPage() {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(tr(data.error) ?? tr("Erreur retrait")); return; }
-      toast.success(tr("Retrait initié ! Traitement sous 24–48h."));
+      toast.success(data.retrait?.statut === "traitement"
+        ? tr("Retrait envoyé à votre opérateur. Vous recevrez les fonds dans quelques minutes.")
+        : tr("Retrait initié ! Traitement sous 24–48h."));
       setShowRetrait(false);
       setForm({ montant: "", methode: "mobile_money", destinataire: "", operateur: "MTN", notes: "" });
       charger();
@@ -139,6 +141,9 @@ export default function WalletPage() {
   }
 
   const devise = wallet?.devise ?? "XAF";
+  // Seuls MTN et Orange Cameroun (XAF) partent automatiquement ; le reste est traité à la main par Axso.
+  const retraitAuto = form.methode === "mobile_money" && devise === "XAF" && ["MTN", "Orange"].includes(form.operateur)
+    && /^(\+|00)?(237)?6\d{8}$/.test(form.destinataire.replace(/[\s.-]/g, ""));
 
   return (
     <div className="space-y-5 max-w-5xl"
@@ -499,7 +504,9 @@ export default function WalletPage() {
               <div className="flex items-start gap-2 bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-3">
                 <AlertCircle size={13} className="text-[#D97706] mt-0.5 flex-shrink-0" />
                 <p className="text-[11.5px] text-[#92400E]">
-                  {tr("Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.")}
+                  {retraitAuto
+                    ? tr("Envoi automatique vers votre compte Mobile Money. Les fonds sont débités immédiatement de votre wallet.")
+                    : tr("Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.")}
                 </p>
               </div>
 

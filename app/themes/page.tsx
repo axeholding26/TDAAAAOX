@@ -2,7 +2,7 @@ import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Palette, ShoppingBag, Star } from "lucide-react";
+import { Palette, Star } from "lucide-react";
 import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { getT } from "@/lib/i18n/serveur";
 
@@ -17,7 +17,6 @@ const THEMES = MANIFESTE_LIBRAIRIE.map((e, i) => ({
   desc: `Un design ${e.ambiance.join(", ")} — vos vrais produits déjà branchés dès l'activation.`,
   accent: e.couleurs.accent || "#F5A623",
   bg: e.couleurs.fond || "#0a0a0a",
-  surface: e.couleurs.surface || "#111",
   tags: e.ambiance.map((a) => a.charAt(0).toUpperCase() + a.slice(1)),
   popular: i === 0,
 }));
@@ -53,38 +52,16 @@ export default async function ThemesPage() {
                 className="rounded-3xl overflow-hidden border group hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                 style={{ borderColor: "rgba(0,0,0,0.08)", background: "rgba(0,0,0,0.02)" }}>
 
-                {/* Aperçu simulé */}
+                {/* Aperçu réel du design (mêmes cartes de démo que la vitrine sans produit) */}
                 <div className="aspect-[4/3] relative overflow-hidden" style={{ background: theme.bg }}>
-                  {/* Header fictif de boutique */}
-                  <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between"
-                    style={{ background: theme.surface, borderBottom: `1px solid ${theme.accent}25` }}>
-                    <div className="flex items-center gap-2">
-                      <div style={{ width: 10, height: 10, borderRadius: "50%", background: theme.accent }} />
-                      <span className="text-xs font-bold" style={{ color: theme.accent }}>{t("Ma Boutique")}</span>
-                    </div>
-                    <div className="flex gap-1.5">
-                      {["Accueil","Produits","Cart"].map(l => (
-                        <span key={l} className="text-[10px] px-2 py-0.5 rounded"
-                          style={{ background: `${theme.accent}12`, color: `${theme.accent}99` }}>{t(l)}</span>
-                      ))}
-                    </div>
-                  </div>
-                  {/* Produits fictifs */}
-                  <div className="absolute bottom-0 left-0 right-0 top-12 p-3 grid grid-cols-2 gap-2">
-                    {[1,2,3,4].map(i => (
-                      <div key={i} className="rounded-xl overflow-hidden"
-                        style={{ background: theme.surface, border: `1px solid ${theme.accent}15` }}>
-                        <div className="aspect-square flex items-center justify-center"
-                          style={{ background: `${theme.accent}08` }}>
-                          <ShoppingBag size={18} style={{ color: theme.accent, opacity: 0.6 }} />
-                        </div>
-                        <div className="p-2">
-                          <div className="h-1.5 rounded mb-1" style={{ background: "rgba(0,0,0,0.1)", width: "70%" }} />
-                          <div className="h-1.5 rounded" style={{ background: theme.accent, width: "45%", opacity: 0.6 }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  {/* iframe à 400 % puis réduite à 25 % : rendu « bureau » qui suit la largeur de la carte */}
+                  <iframe
+                    src={`/api/preview-theme?fichier=${encodeURIComponent(theme.id)}&nom=${encodeURIComponent(theme.nom)}`}
+                    title={theme.nom} loading="lazy" scrolling="no" tabIndex={-1}
+                    sandbox="allow-same-origin allow-scripts"
+                    className="absolute top-0 left-0 border-0 pointer-events-none"
+                    style={{ width: "400%", height: "400%", transform: "scale(0.25)", transformOrigin: "top left" }}
+                  />
 
                   {/* Badge populaire */}
                   {theme.popular && (

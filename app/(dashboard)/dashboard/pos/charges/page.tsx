@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Receipt, Plus, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
+import { useDevise } from "@/components/dashboard/DeviseProvider";
 
 const CHARGES_TUTORIAL_STEPS = [
   { Icon: Plus,          titre: "Enregistrer une charge", description: "Loyer, salaires, électricité, fournitures... Choisis une catégorie, un montant et une fréquence (ponctuelle ou récurrente)." },
@@ -35,6 +36,7 @@ const EMPTY = { categorie: "loyer", description: "", montant: "", frequence: "po
 
 export default function ChargesPage() {
   const t = useT();
+  const { fmt, devise } = useDevise();
   const [charges, setCharges] = useState<Charge[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,11 @@ export default function ChargesPage() {
   const [saving, setSaving] = useState(false);
 
   const charger = useCallback(() => {
-    fetch("/api/pos/charges").then(r => r.json()).then(d => { setCharges(d.charges ?? []); setStats(d.stats ?? null); setLoading(false); }).catch(() => setLoading(false));
+    fetch("/api/pos/charges").then(async r => {
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) toast.error(t(d.error ?? "Les charges n'ont pas pu être chargées. Réessayez dans un instant."));
+      setCharges(d.charges ?? []); setStats(d.stats ?? null); setLoading(false);
+    }).catch(() => { toast.error(t("Connexion interrompue. Vérifiez le réseau puis réessayez.")); setLoading(false); });
   }, []);
   useEffect(() => { charger(); }, [charger]);
 
@@ -62,15 +68,22 @@ export default function ChargesPage() {
     }
   }
 
-  async function marquerPayee(id: string) {
-    await fetch(`/api/pos/charges/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: "payee" }) });
+  // Le serveur peut refuser (dépense sortie d'une caisse, droit manquant) : sa phrase est affichée.
+  async function modifier(appel: Promise<Response>) {
+    try {
+      const res = await appel;
+      if (!res.ok) toast.error(t((await res.json().catch(() => ({}))).error ?? "Un problème est survenu. Réessayez dans un instant."));
+    } catch { toast.error(t("Connexion interrompue. Vérifiez le réseau puis réessayez.")); }
     charger();
+  }
+
+  async function marquerPayee(id: string) {
+    await modifier(fetch(`/api/pos/charges/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ statut: "payee" }) }));
   }
 
   async function supprimer(id: string) {
     if (!confirm(t("Supprimer cette charge ?"))) return;
-    await fetch(`/api/pos/charges/${id}`, { method: "DELETE" });
-    charger();
+    await modifier(fetch(`/api/pos/charges/${id}`, { method: "DELETE" }));
   }
 
   const inp = "mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-[13px] outline-none focus:border-[#F5A623]/60";
@@ -94,11 +107,11 @@ export default function ChargesPage() {
       {stats && (
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold text-[#111]">{stats.total.toLocaleString()} XAF</p>
+            <p className="text-[20px] font-bold text-[#111]">{fmt(stats.total)}</p>
             <p className="text-[10.5px] text-gray-400 mt-0.5">{t("Total enregistré")}</p>
           </div>
           <div className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold text-amber-500">{stats.enAttente.toLocaleString()} XAF</p>
+            <p className="text-[20px] font-bold text-amber-500">{fmt(stats.enAttente)}</p>
             <p className="text-[10.5px] text-gray-400 mt-0.5">{t("En attente de paiement")}</p>
           </div>
         </div>
@@ -114,7 +127,7 @@ export default function ChargesPage() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Montant (XAF)")}</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Montant")} ({devise})</label>
               <input type="number" value={form.montant} onChange={e => setForm(v => ({ ...v, montant: e.target.value }))} className={inp} />
             </div>
             <div className="col-span-2">
@@ -167,7 +180,7 @@ export default function ChargesPage() {
                     {c.fournisseur && ` · ${c.fournisseur}`}
                   </p>
                 </div>
-                <p className="text-[13px] font-bold text-[#111] flex-shrink-0">{c.montant.toLocaleString()} {t(c.devise)}</p>
+                <p className="text-[13px] font-bold text-[#111] flex-shrink-0">{fmt(c.montant)}</p>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1 ${cfg.cls}`}>
                   <cfg.Icon size={9} /> {t(cfg.label)}
                 </span>

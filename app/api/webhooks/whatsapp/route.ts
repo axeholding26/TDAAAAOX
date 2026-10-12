@@ -24,13 +24,12 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   // 1. Vérification de signature HMAC-SHA256 (exigée par Meta)
   const rawBody = await req.text();
-  if (APP_SECRET) {
-    const sigHeader = req.headers.get("x-hub-signature-256") ?? "";
-    const expected = "sha256=" + createHmac("sha256", APP_SECRET).update(rawBody).digest("hex");
-    if (sigHeader !== expected) {
-      console.warn("[webhook/whatsapp] Signature invalide — requête rejetée");
-      return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
-    }
+  // Sans secret configuré on refuse tout : une signature non vérifiable n'est pas une signature valide.
+  const sigHeader = req.headers.get("x-hub-signature-256") ?? "";
+  const expected = "sha256=" + createHmac("sha256", APP_SECRET || "-").update(rawBody).digest("hex");
+  if (!APP_SECRET || sigHeader !== expected) {
+    console.warn("[webhook/whatsapp] Signature invalide — requête rejetée");
+    return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
   }
 
   let body: any;

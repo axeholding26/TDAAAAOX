@@ -66,12 +66,12 @@ export default async function AbonnementsPage() {
                     style={{ background: `${p.accent}15`, color: p.accent, border: `1px solid ${p.accent}25` }}>{t(p.nom)}</span>
                   {p.popular && <span className="text-xs text-[#999999]">{t("⭐ Populaire")}</span>}
                 </div>
-                <p className="text-xl font-black mb-1" style={{ color: p.accent }}>{p.prix}</p>
+                <p className="text-xl font-black mb-1" style={{ color: p.accent }}>{t(p.prix)}</p>
                 <p className="text-[#8C8C8C] text-xs mb-4">{t(p.engagement)}</p>
                 <ul className="space-y-1.5">
                   {p.inclus.map(i => (
                     <li key={i} className="text-xs text-[#666666] flex items-center gap-2">
-                      <span style={{ color: p.accent }}>✓</span> {i}
+                      <span style={{ color: p.accent }}>✓</span> {t(i)}
                     </li>
                   ))}
                 </ul>

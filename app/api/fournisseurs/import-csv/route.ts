@@ -15,6 +15,10 @@ export async function POST(request: Request) {
     const { fournisseurId, csv, marge = 30 } = body;
 
     if (!csv) return NextResponse.json({ message: "CSV requis" }, { status: 400 });
+    // Le fournisseur choisi doit appartenir à la boutique.
+    if (fournisseurId && !(await prisma.fournisseur.findFirst({ where: { id: String(fournisseurId), tenantId }, select: { id: true } }))) {
+      return NextResponse.json({ message: "Fournisseur introuvable" }, { status: 404 });
+    }
 
     const lines = csv.split("\n").filter((l: string) => l.trim());
     const headers = lines[0].split(",").map((h: string) => h.trim().toLowerCase());
