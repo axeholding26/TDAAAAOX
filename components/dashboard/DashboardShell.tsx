@@ -126,7 +126,7 @@ export function DashboardShell({
           </main>
           {!estAccueilAxia && (
             <div className="md:hidden flex-shrink-0">
-              <MobileBottomNav />
+              <MobileBottomNav permissions={permissions} />
             </div>
           )}
         </div>

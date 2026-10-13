@@ -119,9 +119,11 @@ export async function changerStatutCommande(p: {
   // dejaCommission : livraison déjà traitée (analytics déjà enregistrée)
   const dejaCommission = commande.commission?.statut === "captured";
 
-  await prisma.$transaction(async (tx) => {
-    await tx.commande.update({
-      where: { id },
+  const applique = await prisma.$transaction(async (tx) => {
+    // Conditionnel sur le statut lu : deux clics simultanés (ou livreur + marchand)
+    // ne comptent pas deux fois la vente ni l'analytics.
+    const { count } = await tx.commande.updateMany({
+      where: { id, statut: commande.statut },
       data: {
         statut,
         livraisonStatut: livraisonStatutPour(statut),
@@ -133,6 +135,7 @@ export async function changerStatutCommande(p: {
         updatedAt: now,
       },
     });
+    if (!count) return false;
 
     // Annulation : stock, code promo et commissions d'affiliation libérés.
     if (statut === "annulee") {
@@ -152,7 +155,9 @@ export async function changerStatutCommande(p: {
         });
       }
     }
+    return true;
   });
+  if (!applique) return { ok: false, status: 409, error: "La commande a changé entre-temps : rechargez la page" };
 
   if (statut === "livree") await capturerCommissionAffiliation(id).catch(() => {});
 

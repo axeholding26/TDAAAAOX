@@ -1,5 +1,6 @@
 // Initie le flux OAuth Meta — redirige vers la fenêtre d'autorisation Facebook
 import { NextResponse } from "next/server";
+import { integrationActive, BIENTOT_DISPONIBLE } from "@/lib/integrations";
 import { auth } from "@/lib/auth";
 
 const SCOPES = [
@@ -22,9 +23,9 @@ export async function GET() {
   }
 
   const appId = process.env.META_APP_ID;
-  if (!appId) {
+  if (!appId || !integrationActive("meta")) {
     return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/connecteurs?error=META_APP_ID+manquant`
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/connecteurs?error=${encodeURIComponent(BIENTOT_DISPONIBLE)}`
     );
   }
 

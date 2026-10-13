@@ -10,7 +10,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { id } = await params;
-  const { statut, echecRaison, code } = await req.json();
+  const { statut, echecRaison, code } = await req.json().catch(() => ({}));
+  if (typeof statut !== "string") return NextResponse.json({ error: "statut requis" }, { status: 400 });
   const user = session.user as any;
 
   if (user?.role !== "livreur") {

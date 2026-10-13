@@ -58,7 +58,7 @@ function Fournisseurs() {
       <Entete badge="AXSO SOURCING" titre="Le bon fournisseur. Au bon prix. Avec le bon niveau de confiance."
         sousTitre="Vos fournisseurs vérifiés, notés et comparés sur le coût réel rendu dans votre pays — pas sur le prix catalogue."
         actions={<>
-          <Bouton variante="secondaire" href="/dashboard/sourcing/fournisseurs/agent"><Bot size={14} />{t("Agent de sourcing")}</Bouton>
+          <Bouton variante="secondaire" href="/dashboard/sourcing"><Bot size={14} />{t("Retour à l'assistant")}</Bouton>
           <Bouton variante="secondaire" href="/dashboard/sourcing/fournisseurs/devis"><FileText size={14} />{t("Demandes de devis")}</Bouton>
           <Bouton onClick={() => setAjout(!ajout)}><Plus size={14} />{t("Ajouter un fournisseur")}</Bouton>
         </>} />

@@ -7,17 +7,17 @@ const temoignages = [
   {
     nom: "Fatou N.", role: "Cosmétiques · Douala-Akwa · Plan Pro depuis 3 mois", pays: "CM", note: 5,
     texte: "Avant AXSO, je vendais sur WhatsApp et je perdais des commandes tous les jours. Le premier mois avec AXSO, j'ai fait 180 000 FCFA de ventes — et j'ai tout encaissé via Orange Money directement.",
-    ventes: "+180 000 FCFA le 1er mois · 34 commandes · 0 frais cachés", avatar: "F", couleur: "#F5A623",
+    avatar: "F", couleur: "#F5A623",
   },
   {
-    nom: "Eric M.", role: "Mode homme · Yaoundé-Bastos · Plan Gratuit", pays: "CM", note: 5,
+    nom: "Eric M.", role: "Mode homme · Yaoundé-Bastos · Plan Essentiel", pays: "CM", note: 5,
     texte: "J'avais peur que ce soit compliqué. En 3 minutes ma boutique était en ligne. Le premier paiement Orange Money est arrivé le même jour.",
-    ventes: "12 ventes la première semaine", avatar: "E", couleur: "#10b981",
+    avatar: "E", couleur: "#10b981",
   },
   {
-    nom: "Sandrine K.", role: "Alimentation · Douala-Bonamoussadi · Plan Business", pays: "CM", note: 5,
-    texte: "Shopify c'était 19 000 FCFA par mois et tout en anglais. AXSO c'est 4 900 FCFA, en français, et mon manager me répond sur WhatsApp en moins d'une heure.",
-    ventes: "3 boutiques actives · 890 000 FCFA de CA en 2 mois", avatar: "S", couleur: "#111111",
+    nom: "Sandrine K.", role: "Alimentation · Douala-Bonamoussadi · Plan Illimité", pays: "CM", note: 5,
+    texte: "Shopify, c'était tout en anglais et impossible à payer en mobile money. AXSO est en français, je paie mon abonnement en Orange Money et le support me répond sur WhatsApp.",
+    avatar: "S", couleur: "#111111",
   },
 ];
 
@@ -181,7 +181,6 @@ export function TemoignagesSection() {
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{tr(t.pays)}</span>
                 </div>
                 <p className="text-gray-400 text-xs sm:text-sm">{tr(t.role)}</p>
-                <p className="text-xs sm:text-sm font-semibold mt-0.5" style={{ color: t.couleur }}>📈 {tr(t.ventes)}</p>
               </div>
             </div>
           </div>

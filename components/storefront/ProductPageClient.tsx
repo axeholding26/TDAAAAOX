@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { urlVideoIntegree } from "@/lib/utils";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { WishlistHeartButton } from "./WishlistHeartButton";
 import { SECTIONS_FICHE } from "@/lib/fiche-produit";
@@ -1158,7 +1158,8 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   // ─── Layout + Boutons (config globale du builder, comme sur la page d'accueil) ──
   const layoutCfg = tenant.layout ?? {};
-  const CONTAINER = layoutCfg.largeurContainer === "100%" ? "max-w-full" : `max-w-[${layoutCfg.largeurContainer || "1280px"}]`;
+  // Largeur libre choisie par le marchand : une classe max-w-[…] construite à l'exécution n'est jamais générée par Tailwind.
+  const largeurMax = layoutCfg.largeurContainer || "1280px";
 
   const boutonsCfg = tenant.boutons ?? {};
   const btnStyle = boutonsCfg.style || "filled";
@@ -1222,31 +1223,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const [selectedVariante, setSelectedVariante] = useState<Variante | null>(null);
   const [quantite, setQuantite] = useState(1);
   const [tab, setTab] = useState<"description" | "livraison" | "avis">("description");
-  const [variantePrix, setVariantePrix] = useState<{ id: string; nom: string; prix: number; prixPromo: number | null } | null>(null);
-
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Présélection d'une variante de prix via ?v=
-  useEffect(() => {
-    const vId = searchParams.get("v");
-    if (!vId) return;
-    fetch(`/api/v/${vId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.variante) {
-          setVariantePrix({
-            id:       d.variante.id,
-            nom:      d.variante.nom,
-            prix:     d.variante.prix,
-            prixPromo: d.variante.prixPromo,
-          });
-        }
-      })
-      .catch(() => {});
-  }, [searchParams]);
-
-  const prixEffectif = variantePrix?.prix ?? selectedVariante?.prix ?? produit.prixAffiche;
+  // ponytail: les variantes de prix (?v=) et les variantes des produits digitaux ne sont pas
+  // facturées par digital-creer : on affiche le prix réellement payé.
+  const prixEffectif = (!estDigital && selectedVariante?.prix) || produit.prixAffiche;
   const stockEffectif = selectedVariante !== null ? selectedVariante.stock : produit.stock;
   const enRupture     = stockSuivi && stockEffectif <= 0;
 
@@ -1306,29 +1287,22 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             <button onClick={() => setTab("avis")} className="flex items-center gap-2 group">
               <Stars note={produit.noteMoyenne} size={15} accent={accent} />
               <span className="text-sm font-semibold" style={{ color: accent }}>{produit.noteMoyenne.toFixed(1)}</span>
-              <span className="text-sm opacity-50 group-hover:opacity-80 underline transition-opacity">{produit.avis.length} avis</span>
+              <span className="text-sm opacity-50 group-hover:opacity-80 underline transition-opacity">{tx("{0} avis", produit.avis.length)}</span>
             </button>
           )}
           <div className="h-px" style={{ background: `${accent}12` }} />
           {showBadges && produit.remise > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-black px-2.5 py-1 rounded-lg" style={{ background: "#EF4444", color: "#fff" }}>
-                -{tx(produit.remise)}{tx("% · Offre limitée")}
+                -{produit.remise}%
               </span>
-            </div>
-          )}
-          {variantePrix && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold"
-              style={{ background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>
-              <span>{tx("✦ Offre sélectionnée :")}</span>
-              <span className="font-bold">{tx(variantePrix.nom)}</span>
             </div>
           )}
           <div className="flex items-baseline gap-3 flex-wrap">
             <span className="text-4xl font-black" style={{ color: accent }}>{fmt(prixEffectif, devise)}</span>
-            {(variantePrix?.prixPromo || (produit.prixCompareAffiche && produit.prixCompareAffiche > produit.prixAffiche)) && (
+            {produit.prixCompareAffiche && produit.prixCompareAffiche > prixEffectif && (
               <span className="text-lg opacity-35 line-through">
-                {fmt(variantePrix?.prixPromo ?? produit.prixCompareAffiche!, devise)}
+                {fmt(produit.prixCompareAffiche, devise)}
               </span>
             )}
           </div>
@@ -1340,13 +1314,13 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
               ) : stockEffectif <= 10 ? (
                 <><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" /><span className="font-medium flex items-center gap-1"><AlertTriangle size={13} className="text-amber-400" />{tx("Plus que")}{" "}<strong>{tx(stockEffectif)}</strong>{" "}{tx("en stock")}</span></>
               ) : (
-                <><div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" /><span className="text-emerald-600 font-semibold">{tx("En stock · Expédition sous 24-48h")}</span></>
+                <><div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" /><span className="text-emerald-600 font-semibold">{tx("En stock")}</span></>
               )}
             </div>
           )}
           {produit.description && (
             <p className="text-[15px] leading-relaxed" style={{ opacity: 0.7, paddingLeft: "12px", borderLeft: `3px solid ${accent}30` }}>
-              {produit.description.length > 220 ? produit.description.slice(0, 220) + "…" : tx(produit.description)}
+              {produit.description.length > 220 ? tx(produit.description).slice(0, 220) + "…" : tx(produit.description)}
             </p>
           )}
           <div className="h-px" style={{ background: `${accent}12` }} />
@@ -1456,7 +1430,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
       {/* Breadcrumb */}
       {showBreadcrumbs && layoutMode !== "fullwidth" && (
-        <div className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 py-3`}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3" style={{ maxWidth: largeurMax }}>
           <div className="flex items-center gap-1 text-xs flex-wrap" style={{ opacity: 0.45 }}>
             <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tx("Accueil")}</Link>
             <ChevronRight size={10} />
@@ -1468,7 +1442,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
         </div>
       )}
 
-      <main className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 pb-20`}>
+      <main className="mx-auto px-4 sm:px-6 lg:px-8 pb-20" style={{ maxWidth: largeurMax }}>
 
         {/* Amazon : galerie gauche + colonne infos droite, sticky */}
         {layoutMode === "amazon" && (

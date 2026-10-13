@@ -35,11 +35,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à vendre en boutique.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const body = await req.json();
-  const { clientNom, clientTelephone, items: itemsClient, methode } = body;
-  if (!itemsClient?.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
+  const body = await req.json().catch(() => null);
+  const itemsClient = Array.isArray(body?.items) ? body.items.slice(0, 500) : [];
+  if (!itemsClient.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
+  // Champs obligatoires de Commande : jamais undefined (sinon erreur 500 de Prisma).
+  const texte = (v: unknown, defaut: string, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : defaut);
+  const clientNom = texte(body.clientNom, "Client POS", 120);
+  const clientTelephone = texte(body.clientTelephone, "—", 30);
+  const methode = texte(body.methode, "especes", 40);
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, slug: true } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, pays: true } });
   const devise = tenant?.devise ?? "XAF";
 
   // Prix recalculés depuis la base (prix du marchand, sans commission : la vente
@@ -96,7 +101,7 @@ export async function POST(req: Request) {
           clientTelephone,
           adresseLivraison: "Vente en boutique",
           ville: "Local",
-          pays: "CM",
+          pays: tenant?.pays ?? "CM",
           montantSousTotal: sousTotal,
           montantLivraison: 0,
           montantReduction,

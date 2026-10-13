@@ -18,7 +18,7 @@ export const GET = routePos(async (ctx, req) => {
   const id = new URL(req.url).searchParams.get("sessionCaisseId") ?? ctx.sessionCaisseId;
   if (!id) return { session: null, mouvements: [], noms: {} };
   const session = await prisma.sessionCaisse.findFirst({
-    where: { id, tenantId: ctx.tenantId, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }) },
+    where: { id, tenantId: ctx.tenantId, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }), ...(ctx.magasinIds?.length ? { magasinId: { in: ctx.magasinIds } } : {}) },
     select: { id: true, statut: true, ouvertePar: true, fermeePar: true, mouvements: { orderBy: { createdAt: "desc" } } },
   });
   if (!session) throw new ErreurPos("introuvable", 404, "Cette session de caisse est introuvable.");

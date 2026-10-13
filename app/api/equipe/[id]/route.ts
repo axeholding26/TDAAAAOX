@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { requireNiveau } from "@/lib/permissions-server";
+import { requireNiveau, permissionsSession } from "@/lib/permissions-server";
+import { grilleCouverte, grillePourMembre } from "@/lib/permissions";
 
 const schemaMaj = z.object({
   role: z.enum(["gerant", "caissier", "comptable", "lecture", "personnalise"]).optional(),
@@ -20,19 +21,25 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const tenantId = (session.user as any)?.tenantId;
     const { id } = await params;
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const data = schemaMaj.parse(body);
 
     if (data.role === "personnalise" && !data.permissions) {
       return NextResponse.json({ error: "Grille de permissions requise pour un rôle personnalisé" }, { status: 400 });
     }
+    const actuel = await prisma.membreEquipe.findFirst({ where: { id, tenantId }, select: { userId: true, role: true, permissions: true } });
+    if (!actuel) return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
+    // Un membre ne modifie ni sa propre ligne, ni quelqu'un qui a plus de droits que lui,
+    // et ne donne jamais plus que ses propres droits (le propriétaire a tout).
+    const mesDroits = await permissionsSession(session);
+    const nouvelle = grillePourMembre({ role: data.role ?? actuel.role, permissions: data.permissions ?? actuel.permissions });
+    if (actuel.userId === (session.user as any)?.id || !grilleCouverte(grillePourMembre(actuel), mesDroits) || !grilleCouverte(nouvelle, mesDroits)) {
+      return NextResponse.json({ error: "Tu ne peux pas donner plus de droits que les tiens" }, { status: 403 });
+    }
     // Réactiver un membre qui n'a jamais accepté son invitation (userId
     // vide) n'a pas de sens — il n'a pas encore de compte pour se connecter.
-    if (data.statut === "actif") {
-      const membre = await prisma.membreEquipe.findFirst({ where: { id, tenantId }, select: { userId: true } });
-      if (!membre?.userId) {
-        return NextResponse.json({ error: "Ce membre n'a pas encore accepté son invitation" }, { status: 400 });
-      }
+    if (data.statut === "actif" && !actuel.userId) {
+      return NextResponse.json({ error: "Ce membre n'a pas encore accepté son invitation" }, { status: 400 });
     }
 
     const membre = await prisma.membreEquipe.updateMany({ where: { id, tenantId }, data });

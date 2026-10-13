@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
+import { toast } from "sonner";
 
 const CAMPAGNES_TUTORIAL_STEPS = [
   { Icon: Megaphone,   titre: "Créez des popups",              description: "Popup centré, bandeau ou slide-in : affichez une offre au bon moment (délai, exit intent, scroll, 1ère visite)." },
@@ -28,23 +29,27 @@ function OngletPopups() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ nom:"", type:"popup", declencheur:"delai", delaiSec:5, titre:"", message:"", ctaTexte:"", ctaUrl:"", codePromo:"" });
 
-  const charger = () => fetch("/api/popups").then(r=>r.json()).then(d=>{setPopups(d.popups??[]);setLoading(false);});
+  const charger = () => fetch("/api/popups").then(r=>r.ok?r.json():Promise.reject()).then(d=>setPopups(d.popups??[])).catch(()=>toast.error(t("Erreur chargement"))).finally(()=>setLoading(false));
   useEffect(()=>{charger();},[]);
 
   async function creer() {
     setSaving(true);
-    await fetch("/api/popups",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
-    await charger(); setShowForm(false); setSaving(false);
+    const res = await fetch("/api/popups",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}).catch(()=>null);
+    setSaving(false);
+    if (!res?.ok) { toast.error(t("Erreur lors de la sauvegarde")); return; }
+    await charger(); setShowForm(false);
     setForm({nom:"",type:"popup",declencheur:"delai",delaiSec:5,titre:"",message:"",ctaTexte:"",ctaUrl:"",codePromo:""});
   }
 
   async function supprimer(id: string) {
-    await fetch(`/api/popups/${id}`,{method:"DELETE"});
+    const res = await fetch(`/api/popups?id=${id}`,{method:"DELETE"}).catch(()=>null);
+    if (!res?.ok) { toast.error(t("Erreur lors de la suppression")); return; }
     setPopups(p=>p.filter(x=>x.id!==id));
   }
 
   async function toggle(id: string, actif: boolean) {
-    await fetch("/api/popups",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,actif:!actif})});
+    const res = await fetch("/api/popups",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,actif:!actif})}).catch(()=>null);
+    if (!res?.ok) { toast.error(t("Erreur lors de la mise à jour")); return; }
     setPopups(p=>p.map(x=>x.id===id?{...x,actif:!actif}:x));
   }
 
@@ -80,7 +85,7 @@ function OngletPopups() {
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
           </div>
           <div className="flex gap-2">
-            <button onClick={creer} disabled={!form.nom||saving}
+            <button onClick={creer} disabled={!form.nom||!form.titre||!form.message||saving}
               className="flex-1 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-semibold disabled:opacity-50">{saving?"…":t("Créer")}</button>
             <button onClick={()=>setShowForm(false)} className="px-4 py-2 border border-gray-200 rounded-xl text-[12px] text-gray-500">{t("Annuler")}</button>
           </div>
@@ -95,13 +100,13 @@ function OngletPopups() {
             <p className="text-[12px] font-semibold text-[#111] truncate">{t(p.nom)}</p>
             <p className="text-[11px] text-gray-400">{t(TYPE_LABELS[p.type])} · {t(DECL_LABELS[p.declencheur])}</p>
           </div>
-          <span className="text-[10px] text-gray-400 flex items-center gap-1"><Eye size={10}/> {t(p.affichages)}</span>
-          <span className="text-[10px] text-gray-400 flex items-center gap-1"><MousePointer size={10}/> {t(p.clics)}</span>
-          <button onClick={()=>toggle(p.id,p.actif)}
+          <span className="text-[10px] text-gray-400 flex items-center gap-1"><Eye size={10}/> {p.affichages}</span>
+          <span className="text-[10px] text-gray-400 flex items-center gap-1"><MousePointer size={10}/> {p.clics}</span>
+          <button onClick={()=>toggle(p.id,p.actif)} aria-label={t("Activer / désactiver")}
             className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${p.actif?"bg-[#F5A623]":"bg-gray-200"}`}>
             <span className={`inline-block h-4 w-4 m-0.5 rounded-full bg-white shadow transition-transform ${p.actif?"translate-x-4":""}`}/>
           </button>
-          <button onClick={()=>supprimer(p.id)}><Trash2 size={12} className="text-gray-300 hover:text-red-400"/></button>
+          <button onClick={()=>supprimer(p.id)} aria-label={t("Supprimer")}><Trash2 size={12} className="text-gray-300 hover:text-red-400"/></button>
         </div>
       ))}
     </div>
@@ -126,23 +131,27 @@ function OngletAutomation() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ nom:"", type:"panier_abandonne", delaiHeures:1, canal:"email", sujet:"", message:"" });
 
-  const charger = () => fetch("/api/automation").then(r=>r.json()).then(d=>{setWorkflows(d.workflows??[]);setLoading(false);});
+  const charger = () => fetch("/api/automation").then(r=>r.ok?r.json():Promise.reject()).then(d=>setWorkflows(d.workflows??[])).catch(()=>toast.error(t("Erreur chargement"))).finally(()=>setLoading(false));
   useEffect(()=>{charger();},[]);
 
   async function creer() {
     setSaving(true);
-    await fetch("/api/automation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)});
-    await charger(); setShowForm(false); setSaving(false);
+    const res = await fetch("/api/automation",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(form)}).catch(()=>null);
+    setSaving(false);
+    if (!res?.ok) { toast.error(t("Erreur lors de la sauvegarde")); return; }
+    await charger(); setShowForm(false);
     setForm({nom:"",type:"panier_abandonne",delaiHeures:1,canal:"email",sujet:"",message:""});
   }
 
   async function toggle(id: string, actif: boolean) {
-    await fetch("/api/automation",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,actif:!actif})});
+    const res = await fetch("/api/automation",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,actif:!actif})}).catch(()=>null);
+    if (!res?.ok) { toast.error(t("Erreur lors de la mise à jour")); return; }
     setWorkflows(w=>w.map(x=>x.id===id?{...x,actif:!actif}:x));
   }
 
   async function supprimer(id: string) {
-    await fetch(`/api/automation/${id}`,{method:"DELETE"});
+    const res = await fetch(`/api/automation?id=${id}`,{method:"DELETE"}).catch(()=>null);
+    if (!res?.ok) { toast.error(t("Erreur lors de la suppression")); return; }
     setWorkflows(w=>w.filter(x=>x.id!==id));
   }
 
@@ -176,7 +185,7 @@ function OngletAutomation() {
               rows={3} className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none resize-none col-span-2"/>
           </div>
           <div className="flex gap-2">
-            <button onClick={creer} disabled={!form.nom||saving}
+            <button onClick={creer} disabled={!form.nom||!form.message||saving}
               className="flex-1 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-semibold disabled:opacity-50">{saving?"…":t("Créer")}</button>
             <button onClick={()=>setShowForm(false)} className="px-4 py-2 border border-gray-200 rounded-xl text-[12px] text-gray-500">{t("Annuler")}</button>
           </div>
@@ -194,14 +203,14 @@ function OngletAutomation() {
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-[#111] truncate">{t(w.nom)}</p>
               <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                <CanalIcon size={10}/> {t(tc.label)} · {t(w.delaiHeures)}{t("h ·")}{" "}{t(w.declenchements)}{" "}{t("déclenchements")}
+                <CanalIcon size={10}/> {t(tc.label)} · {w.delaiHeures}{t("h ·")}{" "}{w.declenchements}{" "}{t("déclenchements")}
               </p>
             </div>
-            <button onClick={()=>toggle(w.id,w.actif)}
+            <button onClick={()=>toggle(w.id,w.actif)} aria-label={t("Activer / désactiver")}
               className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${w.actif?"bg-[#F5A623]":"bg-gray-200"}`}>
               <span className={`inline-block h-4 w-4 m-0.5 rounded-full bg-white shadow transition-transform ${w.actif?"translate-x-4":""}`}/>
             </button>
-            <button onClick={()=>supprimer(w.id)}><Trash2 size={12} className="text-gray-300 hover:text-red-400"/></button>
+            <button onClick={()=>supprimer(w.id)} aria-label={t("Supprimer")}><Trash2 size={12} className="text-gray-300 hover:text-red-400"/></button>
           </div>
         );
       })}
@@ -217,7 +226,7 @@ function OngletBadges() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/badges").then(r=>r.json()).then(d=>{setBadges(d.badges??[]);setNouveaux(d.nouveaux??[]);setLoading(false);});
+    fetch("/api/badges").then(r=>r.ok?r.json():Promise.reject()).then(d=>{setBadges(d.badges??[]);setNouveaux(d.nouveaux??[]);}).catch(()=>toast.error(t("Erreur chargement"))).finally(()=>setLoading(false));
   }, []);
 
   if (loading) return <div className="py-8 text-center text-sm text-gray-400">{t("Chargement…")}</div>;
@@ -244,7 +253,7 @@ function OngletBadges() {
       {obtenus.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t("Obtenus (")}{obtenus.length})</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {obtenus.map(b=>(
               <div key={b.type} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3">
                 <span className="text-2xl">{t(b.emoji)}</span>
@@ -258,7 +267,7 @@ function OngletBadges() {
       {restants.length > 0 && (
         <div>
           <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t("À obtenir (")}{restants.length})</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {restants.map(b=>(
               <div key={b.type} className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center gap-3 opacity-60">
                 <span className="text-2xl grayscale">{t(b.emoji)}</span>

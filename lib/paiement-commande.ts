@@ -41,7 +41,7 @@ async function routerVersFournisseurs(commandeId: string, tenantId: string) {
       tenantId, commandeId, type: "commande_fournisseur",
       titre: "Commande à passer chez le fournisseur",
       message: `Une commande payée attend d'être transmise à ${parFournisseur.size} fournisseur(s). Le message de commande est prêt.${[...parFournisseur.values()].some((f) => f.prixManquant) ? " Prix d'achat à renseigner sur au moins un produit." : ""}`,
-      lien: "/dashboard/sourcing/commandes",
+      lien: "/dashboard/sourcing?bloc=commandes",
     });
   }
 }

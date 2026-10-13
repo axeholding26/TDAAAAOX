@@ -192,7 +192,7 @@ const GROUPES: NavGroupe[] = [
       { href: "/dashboard/clients",  label: "Clients",      Icon: Users,         moduleKey: "clients" },
       { href: "/dashboard/avis",     label: "Avis clients", Icon: Star,          moduleKey: "clients" },
       { href: "/dashboard/whatsapp", label: "WhatsApp",     Icon: MessageSquare, badge: true, moduleKey: "clients" },
-      { href: "/dashboard/livreurs", label: "Livreurs",     Icon: Truck,         moduleKey: "clients" },
+      { href: "/dashboard/livreurs", label: "Livreurs",     Icon: Truck,         moduleKey: "commandes" },
     ],
   },
   {
@@ -205,20 +205,11 @@ const GROUPES: NavGroupe[] = [
     ],
   },
   {
-    // AXSO Sourcing : trouver, importer, tester et faire livrer des produits de
-    // fournisseurs internationaux (lib/sourcing/). Même palier que l'ancien lien « Sourcing ».
+    // AXSO Sourcing : une seule interface, l'assistant (lib/sourcing/assistant.ts). Fournisseurs et
+    // réglages s'ouvrent depuis cette page ; ils n'ont pas d'entrée de menu.
     id: "sourcing", label: "AXSO Sourcing", Icon: Map,
     items: [
-      { href: "/dashboard/sourcing",             label: "Parcours guidé",        Icon: Map,        exact: true, requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/sourcing/catalogue",   label: "Catalogue sourcing",    Icon: Package,    requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/sourcing/fournisseurs", label: "Fournisseurs",         Icon: Users,      requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/sourcing/import",      label: "Import produit",        Icon: Download,   requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/sourcing/calculateur", label: "Calculateur de rentabilité", Icon: Calculator, requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/sourcing/commandes",   label: "Commandes fournisseurs", Icon: ShoppingCart, requiresPalier: "palier2", moduleKey: "commandes" },
-      { href: "/dashboard/sourcing/expeditions", label: "Expéditions internationales", Icon: Truck, requiresPalier: "palier2", moduleKey: "commandes" },
-      { href: "/dashboard/sourcing/stocks",      label: "Stocks & ruptures",     Icon: Boxes,      requiresPalier: "palier2", moduleKey: "produits" },
-      { href: "/dashboard/dropshipping",         label: "Tableau de bord profit", Icon: BarChart3,  requiresPalier: "palier2", moduleKey: "commandes" },
-      { href: "/dashboard/sourcing/reglages",    label: "Pays & intégrations",   Icon: Plug,       requiresPalier: "palier2", moduleKey: "produits" },
+      { href: "/dashboard/sourcing", label: "Assistant Sourcing", Icon: Map, requiresPalier: "palier2", moduleKey: "produits" },
     ],
   },
   {
@@ -227,10 +218,10 @@ const GROUPES: NavGroupe[] = [
       { href: "/dashboard/themes",        label: "Thèmes",        Icon: LayoutGrid, moduleKey: "boutique" },
       { href: "/dashboard/builder",       label: "Constructeur",  Icon: Sparkles,   moduleKey: "boutique" },
       { href: "/dashboard/fichiers",      label: "Fichiers",      Icon: FolderOpen, moduleKey: "boutique" },
-      { href: "/dashboard/transporteurs", label: "Transporteurs", Icon: Truck,      moduleKey: "boutique" },
+      { href: "/dashboard/transporteurs", label: "Transporteurs", Icon: Truck,      moduleKey: "commandes" },
       { href: "/dashboard/connecteurs",   label: "Connecteurs",   Icon: Plug,       moduleKey: "boutique" },
       { href: "/dashboard/feeds",         label: "Flux produits", Icon: Link2,      moduleKey: "boutique" },
-      { href: "/dashboard/campagnes",     label: "Campagnes",     Icon: Bell,       moduleKey: "boutique" },
+      { href: "/dashboard/campagnes",     label: "Campagnes",     Icon: Bell,       moduleKey: "marketing" },
     ],
   },
   {
@@ -254,7 +245,7 @@ const GROUPES: NavGroupe[] = [
   {
     id: "compte", label: "Compte", Icon: Settings2,
     items: [
-      { href: "/dashboard/abonnement", label: "Abonnement", Icon: CreditCard, opensAbonnement: true, moduleKey: "parametres" },
+      { href: "/dashboard/abonnement", label: "Abonnement", Icon: CreditCard, opensAbonnement: true, moduleKey: "finance" },
     ],
   },
 ];
@@ -532,7 +523,7 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
       {/* Navigation — raccourcis puis groupes repliables */}
       <nav className="flex-1 px-3 py-3 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
         <div className="space-y-0.5 mb-1.5">
-          {PRIMAIRES.map(item => (
+          {filtreParPermission(PRIMAIRES, permissions).map(item => (
             <LienPrincipal
               key={item.href}
               item={item}

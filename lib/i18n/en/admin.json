@@ -110,5 +110,17 @@
  "Retrait marqué payé": "Withdrawal marked as paid",
  "Retrait refusé — marchand recrédité": "Withdrawal rejected — merchant credited back",
  "Confirmer que {0} ont bien été envoyés à {1} ?": "Confirm that {0} has been sent to {1}?",
- "Refuser ce retrait et recréditer {0} au marchand ?": "Reject this withdrawal and credit {0} back to the merchant?"
+ "Refuser ce retrait et recréditer {0} au marchand ?": "Reject this withdrawal and credit {0} back to the merchant?",
+ "État des intégrations": "Integration status",
+ "Ce que ce serveur a de configuré. Les valeurs ne sont jamais affichées : elles se règlent dans Vercel → Settings → Environment Variables, puis un redéploiement.": "What this server has configured. Values are never shown: set them in Vercel → Settings → Environment Variables, then redeploy.",
+ "Tout est configuré.": "Everything is configured.",
+ "Une intégration indispensable est incomplète : l'application ne peut pas fonctionner correctement.": "A required integration is incomplete: the app cannot work properly.",
+ "{0} fonction(s) facultative(s) non configurée(s) : elles sont masquées ou marquées « bientôt disponible » pour les marchands.": "{0} optional feature(s) not configured: they are hidden or marked “coming soon” for merchants.",
+ "Intégration": "Integration",
+ "Ce qu'elle active": "What it enables",
+ "Variables": "Variables",
+ "Indispensable": "Required",
+ "Facultative": "Optional",
+ "configurée": "configured",
+ "absente": "missing"
 }

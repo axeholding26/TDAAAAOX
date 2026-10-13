@@ -11,43 +11,8 @@ const CTA_CARTS = [
   { size: 650, top: "30%", duration: 15, delay: 12, opacity: 0.025, direction: "rtl" as const },
 ];
 
-function FlipDigit({ valeur, label }: { valeur: number; label: string }) {
-  const tr = useT();
-  const [prev, setPrev] = useState(valeur);
-  const [flipping, setFlipping] = useState(false);
-
-  useEffect(() => {
-    if (valeur !== prev) {
-      setFlipping(true);
-      const t = setTimeout(() => { setPrev(valeur); setFlipping(false); }, 300);
-      return () => clearTimeout(t);
-    }
-  }, [valeur, prev]);
-
-  return (
-    <div className="flex flex-col items-center">
-      <div
-        className="bg-white border-2 border-[#F5A623]/30 rounded-2xl w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-2xl sm:text-3xl font-bold text-[#F5A623] shadow-lg shadow-[#F5A623]/10 overflow-hidden"
-        style={{ perspective: "400px" }}
-      >
-        <span
-          style={{
-            display: "block",
-            animation: flipping ? "flipDigit 0.3s ease-in-out" : "none",
-            willChange: "transform",
-          }}
-        >
-          {String(valeur).padStart(2, "0")}
-        </span>
-      </div>
-      <span className="text-gray-400 text-xs mt-2 uppercase tracking-widest">{tr(label)}</span>
-    </div>
-  );
-}
-
 export function CtaFinal() {
   const tr = useT();
-  const [temps, setTemps] = useState({ h: 47, m: 59, s: 59 });
   const [visible, setVisible] = useState(false);
   const [magnetOffset, setMagnetOffset] = useState({ x: 0, y: 0 });
   const sectionRef = useRef<HTMLElement>(null);
@@ -60,23 +25,6 @@ export function CtaFinal() {
     if (sectionRef.current) obs.observe(sectionRef.current);
     return () => obs.disconnect();
   }, []);
-
-  useEffect(() => {
-    // Ne décompte que quand la section est visible — évite un re-render de
-    // toute la section (+ des 3 FlipDigit) chaque seconde pendant que
-    // l'utilisateur scrolle ailleurs sur la page, ce qui causait du jank.
-    if (!visible) return;
-    const timer = setInterval(() => {
-      setTemps((prev) => {
-        let { h, m, s } = prev;
-        if (s > 0) return { h, m, s: s - 1 };
-        if (m > 0) return { h, m: m - 1, s: 59 };
-        if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [visible]);
 
   const handleBtnMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -116,33 +64,6 @@ export function CtaFinal() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-        {/* Launch badge */}
-        <div
-          className="inline-flex items-center gap-2 bg-[#F5A623]/10 border border-[#F5A623]/25 rounded-full px-4 py-2 mb-8"
-          style={{
-            opacity: visible ? 1 : 0,
-            animation: visible ? "scaleReveal3d 0.6s cubic-bezier(0.23,1,0.32,1) both" : "none",
-          }}
-        >
-          <span className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
-          <span className="text-[#F5A623] text-sm font-medium">{tr("Offre de lancement — encore")}</span>
-        </div>
-
-        {/* 3D Flip Countdown */}
-        <div
-          className="flex items-center justify-center gap-4 sm:gap-6 mb-12"
-          style={{
-            opacity: visible ? 1 : 0,
-            animation: visible ? "flip3dIn 0.7s 0.1s cubic-bezier(0.23,1,0.32,1) both" : "none",
-          }}
-        >
-          <FlipDigit valeur={temps.h} label={tr("Heures")} />
-          <span className="text-[#F5A623] text-3xl font-bold animate-pulse" style={{ textShadow: "0 0 20px rgba(245,166,35,0.5)" }}>:</span>
-          <FlipDigit valeur={temps.m} label={tr("Minutes")} />
-          <span className="text-[#F5A623] text-3xl font-bold animate-pulse" style={{ textShadow: "0 0 20px rgba(245,166,35,0.5)" }}>:</span>
-          <FlipDigit valeur={temps.s} label={tr("Secondes")} />
-        </div>
-
         {/* Headline */}
         <h2
           className="text-4xl sm:text-6xl font-bold text-gray-900 mb-6"
@@ -170,7 +91,7 @@ export function CtaFinal() {
         >
           {tr("En 3 minutes, tu as une boutique en ligne professionnelle avec Orange Money intégré.")}{" "}
           <br className="hidden sm:block" />
-          {tr("Gratuit pour commencer — tu paies seulement quand tu vends.")}
+          {tr("Gratuit pour commencer, sans carte bancaire.")}
         </p>
 
         {/* Magnetic CTA button */}

@@ -23,6 +23,7 @@ export async function verifierCode(email: string, code: string): Promise<boolean
     orderBy: { createdAt: "desc" },
   });
   if (!entry) return false;
-  await prisma.codeVerification.update({ where: { id: entry.id }, data: { utilise: true } });
-  return true;
+  // Conditionnel : deux requêtes simultanées avec le même code, une seule passe.
+  const pris = await prisma.codeVerification.updateMany({ where: { id: entry.id, utilise: false }, data: { utilise: true } });
+  return pris.count === 1;
 }

@@ -56,7 +56,7 @@ export async function alertesSourcing(tenantId: string, tdb: TableauDeBord, stoc
       message: s.niveau === "rupture"
         ? `En rupture. ${s.aCommander ? `Commander ${s.aCommander} unités maintenant.` : ""}`
         : `Rupture estimée dans ${s.joursRestants} jour(s), le réapprovisionnement en demande ${s.delaiReappro}. Commander ${s.aCommander} unités maintenant.`,
-      lien: "/dashboard/sourcing/stocks",
+      lien: "/dashboard/sourcing?bloc=stocks",
     });
   }
 
@@ -73,7 +73,7 @@ export async function alertesSourcing(tenantId: string, tdb: TableauDeBord, stoc
     if (Date.now() - cf.createdAt.getTime() > delai * 86400_000) retards.set(cf.fournisseur.nom, [...(retards.get(cf.fournisseur.nom) ?? []), `#${cf.commande.numero}`]);
   }
   for (const [nom, numeros] of retards) {
-    alertes.push({ type: "fournisseur_lent", ton: "attention", titre: `Fournisseur lent : ${nom}`, message: `${numeros.length} commande(s) en retard sur le délai annoncé : ${numeros.slice(0, 5).join(", ")}. Relancez-le ou comparez avec un autre fournisseur.`, lien: "/dashboard/sourcing/commandes" });
+    alertes.push({ type: "fournisseur_lent", ton: "attention", titre: `Fournisseur lent : ${nom}`, message: `${numeros.length} commande(s) en retard sur le délai annoncé : ${numeros.slice(0, 5).join(", ")}. Relancez-le ou comparez avec un autre fournisseur.`, lien: "/dashboard/sourcing?bloc=commandes" });
   }
 
   return alertes;

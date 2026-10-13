@@ -3,6 +3,7 @@
 // Sandbox gratuit pour tests, production nécessite rechargement
 
 import { NextRequest, NextResponse } from "next/server";
+import { integrationActive, BIENTOT_DISPONIBLE } from "@/lib/integrations";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -25,7 +26,7 @@ export async function GET() {
       take: 20,
     });
 
-    return NextResponse.json({ campagnes });
+    return NextResponse.json({ campagnes, disponible: integrationActive("sms") });
   } catch {
     return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
@@ -33,6 +34,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Aucun prestataire SMS branché : on ne crée pas une campagne « envoyée » qui ne part pas.
+    if (!integrationActive("sms")) return NextResponse.json({ message: BIENTOT_DISPONIBLE }, { status: 503 });
     const session = await auth();
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
@@ -58,14 +61,14 @@ export async function POST(req: NextRequest) {
 
     const clientsAvecTel = clients.filter(c => c.telephone && c.telephone.trim());
 
-    // Vérifier si Africa's Talking est configuré
-    const atKey = process.env.AFRICASTALKING_KEY;
-    const atUsername = process.env.AFRICASTALKING_USERNAME;
+    // Renseignées : integrationActive("sms") l'a vérifié plus haut.
+    const atKey = process.env.AFRICASTALKING_KEY!;
+    const atUsername = process.env.AFRICASTALKING_USERNAME!;
 
     let nbEnvoyes = 0;
     let erreurEnvoi = "";
 
-    if (atKey && atUsername && clientsAvecTel.length > 0) {
+    if (clientsAvecTel.length > 0) {
       // Appel Africa's Talking API
       try {
         const baseUrl = atUsername === "sandbox"
@@ -95,9 +98,6 @@ export async function POST(req: NextRequest) {
       } catch (err: any) {
         erreurEnvoi = err.message;
       }
-    } else {
-      // Mode simulation (pas de clé AT)
-      nbEnvoyes = clientsAvecTel.length;
     }
 
     // Sauvegarder la campagne
@@ -110,14 +110,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const modeSimu = !atKey || !atUsername;
-
     return NextResponse.json({
       campagne,
-      message: modeSimu
-        ? `✅ Campagne enregistrée (${nbEnvoyes} clients ciblés). Ajoutez AFRICASTALKING_KEY pour les envois réels.`
-        : `✅ ${nbEnvoyes} SMS envoyés${erreurEnvoi ? ` (quelques erreurs: ${erreurEnvoi})` : ""}`,
-      simulation: modeSimu,
+      message: `✅ ${nbEnvoyes} SMS envoyés${erreurEnvoi ? ` (quelques erreurs: ${erreurEnvoi})` : ""}`,
     }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) return NextResponse.json({ message: "Données invalides" }, { status: 400 });

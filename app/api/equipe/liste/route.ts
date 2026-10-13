@@ -19,9 +19,12 @@ export async function GET() {
   });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
-  const enrichis = membres.map((m) => ({
+  // Le lien d'invitation (qui vaut accès) n'est montré qu'à qui peut gérer l'équipe.
+  const peutInviter = !(await requireNiveau(session, "equipe", "ecriture"));
+  const enrichis = membres.map(({ inviteToken, ...m }) => ({
     ...m,
-    lienInvitation: m.statut === "invite" && m.inviteToken ? `${appUrl}/rejoindre-equipe/${m.inviteToken}` : null,
+    inviteToken: null,
+    lienInvitation: peutInviter && m.statut === "invite" && inviteToken ? `${appUrl}/rejoindre-equipe/${inviteToken}` : null,
   }));
 
   return NextResponse.json({ membres: enrichis });

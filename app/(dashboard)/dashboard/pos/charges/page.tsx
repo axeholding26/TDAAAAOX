@@ -6,6 +6,7 @@ import { Receipt, Plus, Trash2, CheckCircle2, Clock, AlertCircle } from "lucide-
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
 import { useDevise } from "@/components/dashboard/DeviseProvider";
+import { EtatErreur, EtatNonAutorise } from "@/components/pos/ui";
 
 const CHARGES_TUTORIAL_STEPS = [
   { Icon: Plus,          titre: "Enregistrer une charge", description: "Loyer, salaires, électricité, fournitures... Choisis une catégorie, un montant et une fréquence (ponctuelle ou récurrente)." },
@@ -43,13 +44,16 @@ export default function ChargesPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ ...EMPTY });
   const [saving, setSaving] = useState(false);
+  // Échec du chargement : 403 (droit voir_couts / rapprochement manquant) ou autre, avec la phrase du serveur.
+  const [echec, setEchec] = useState<{ interdit: boolean; message: string } | null>(null);
 
   const charger = useCallback(() => {
     fetch("/api/pos/charges").then(async r => {
       const d = await r.json().catch(() => ({}));
-      if (!r.ok) toast.error(t(d.error ?? "Les charges n'ont pas pu être chargées. Réessayez dans un instant."));
-      setCharges(d.charges ?? []); setStats(d.stats ?? null); setLoading(false);
-    }).catch(() => { toast.error(t("Connexion interrompue. Vérifiez le réseau puis réessayez.")); setLoading(false); });
+      if (!r.ok) setEchec({ interdit: r.status === 403, message: d.error ?? "Les charges n'ont pas pu être chargées. Réessayez dans un instant." });
+      else { setEchec(null); setCharges(d.charges ?? []); setStats(d.stats ?? null); }
+      setLoading(false);
+    }).catch(() => { setEchec({ interdit: false, message: "Connexion interrompue. Vérifiez le réseau puis réessayez." }); setLoading(false); });
   }, []);
   useEffect(() => { charger(); }, [charger]);
 
@@ -58,11 +62,11 @@ export default function ChargesPage() {
     setSaving(true);
     try {
       const res = await fetch("/api/pos/charges", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-      if (!res.ok) throw new Error((await res.json()).error);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? "La charge n'a pas pu être enregistrée. Réessayez dans un instant.");
       toast.success(t("Charge enregistrée"));
       setForm({ ...EMPTY }); setShowForm(false); charger();
     } catch (e: any) {
-      toast.error(t(e.message) || t("Erreur"));
+      toast.error(t(e instanceof TypeError ? "Connexion interrompue. Vérifiez le réseau puis réessayez." : e.message));
     } finally {
       setSaving(false);
     }
@@ -99,9 +103,9 @@ export default function ChargesPage() {
           </div>
           <p className="text-[12px] text-gray-500">{t("Loyer, salaires, énergie... les coûts fixes de votre boutique physique")}</p>
         </div>
-        <button onClick={() => setShowForm(v => !v)} className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5">
+        {!echec && <button onClick={() => setShowForm(v => !v)} className="px-4 py-2 bg-[#F5A623] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5">
           <Plus size={13} />{" "}{t("Nouvelle charge")}
-        </button>
+        </button>}
       </div>
 
       {stats && (
@@ -117,38 +121,38 @@ export default function ChargesPage() {
         </div>
       )}
 
-      {showForm && (
+      {showForm && !echec && (
         <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Catégorie")}</label>
-              <select value={form.categorie} onChange={e => setForm(v => ({ ...v, categorie: e.target.value }))} className={`${inp} bg-white`}>
+              <select aria-label={t("Catégorie")} value={form.categorie} onChange={e => setForm(v => ({ ...v, categorie: e.target.value }))} className={`${inp} bg-white`}>
                 {CATEGORIES.map(c => <option key={c.v} value={c.v}>{t(c.l)}</option>)}
               </select>
             </div>
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Montant")} ({devise})</label>
-              <input type="number" value={form.montant} onChange={e => setForm(v => ({ ...v, montant: e.target.value }))} className={inp} />
+              <input type="number" aria-label={t("Montant")} value={form.montant} onChange={e => setForm(v => ({ ...v, montant: e.target.value }))} className={inp} />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Description")}</label>
-              <input value={form.description} onChange={e => setForm(v => ({ ...v, description: e.target.value }))} placeholder={t("Ex: Loyer boutique — Janvier")} className={inp} />
+              <input aria-label={t("Description")} value={form.description} onChange={e => setForm(v => ({ ...v, description: e.target.value }))} placeholder={t("Ex: Loyer boutique — Janvier")} className={inp} />
             </div>
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Fréquence")}</label>
-              <select value={form.frequence} onChange={e => setForm(v => ({ ...v, frequence: e.target.value }))} className={`${inp} bg-white`}>
+              <select aria-label={t("Fréquence")} value={form.frequence} onChange={e => setForm(v => ({ ...v, frequence: e.target.value }))} className={`${inp} bg-white`}>
                 {FREQUENCES.map(f => <option key={f.v} value={f.v}>{t(f.l)}</option>)}
               </select>
             </div>
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Statut")}</label>
-              <select value={form.statut} onChange={e => setForm(v => ({ ...v, statut: e.target.value }))} className={`${inp} bg-white`}>
+              <select aria-label={t("Statut")} value={form.statut} onChange={e => setForm(v => ({ ...v, statut: e.target.value }))} className={`${inp} bg-white`}>
                 {Object.entries(STATUT_CFG).map(([v, c]) => <option key={v} value={v}>{t(c.label)}</option>)}
               </select>
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">{t("Fournisseur (optionnel)")}</label>
-              <input value={form.fournisseur} onChange={e => setForm(v => ({ ...v, fournisseur: e.target.value }))} className={inp} />
+              <input aria-label={t("Fournisseur (optionnel)")} value={form.fournisseur} onChange={e => setForm(v => ({ ...v, fournisseur: e.target.value }))} className={inp} />
             </div>
           </div>
           <button onClick={creer} disabled={saving} className="px-5 py-2.5 bg-[#F5A623] text-white rounded-xl text-[12.5px] font-bold disabled:opacity-50">
@@ -159,6 +163,8 @@ export default function ChargesPage() {
 
       {loading ? (
         <div className="py-12 text-center text-sm text-gray-400">{t("Chargement…")}</div>
+      ) : echec ? (
+        echec.interdit ? <EtatNonAutorise texte={echec.message} /> : <EtatErreur texte={echec.message} onReessayer={() => { setLoading(true); charger(); }} />
       ) : charges.length === 0 ? (
         <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-2xl">
           <Receipt size={28} className="text-gray-200 mx-auto mb-3" />
@@ -169,12 +175,12 @@ export default function ChargesPage() {
           {charges.map(c => {
             const cfg = STATUT_CFG[c.statut] ?? STATUT_CFG.payee;
             return (
-              <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex items-center gap-3">
+              <div key={c.id} className="bg-white border border-gray-100 rounded-2xl p-4 flex flex-wrap items-center gap-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#F5A62312" }}>
                   <Receipt size={14} className="text-[#F5A623]" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-semibold text-[#111] truncate">{t(c.description)}</p>
+                <div className="flex-1 min-w-[10rem]">
+                  <p className="text-[13px] font-semibold text-[#111] truncate">{c.description}</p>
                   <p className="text-[11px] text-gray-400">
                     {t(CATEGORIES.find(x => x.v === c.categorie)?.l)} · {t(FREQUENCES.find(x => x.v === c.frequence)?.l)} · {new Date(c.dateEnregistrement).toLocaleDateString(t.loc)}
                     {c.fournisseur && ` · ${c.fournisseur}`}
@@ -187,7 +193,7 @@ export default function ChargesPage() {
                 {c.statut !== "payee" && (
                   <button onClick={() => marquerPayee(c.id)} className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-green-500 text-white flex-shrink-0">{t("Payer")}</button>
                 )}
-                <button onClick={() => supprimer(c.id)} className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0">
+                <button onClick={() => supprimer(c.id)} aria-label={t("Supprimer cette charge")} className="p-1.5 hover:bg-gray-100 rounded-lg flex-shrink-0">
                   <Trash2 size={12} className="text-gray-300" />
                 </button>
               </div>

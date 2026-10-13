@@ -8,6 +8,7 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const configs = await prisma.connecteurConfig.findMany({ where: { tenantId } });
 
@@ -26,8 +27,9 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
-  const { type, accessToken, pageId, igUserId, config } = await req.json();
+  const { type, accessToken, pageId, igUserId, config } = await req.json().catch(() => ({}));
   if (!type) return NextResponse.json({ error: "Type requis" }, { status: 400 });
 
   const connecteur = await prisma.connecteurConfig.upsert({
@@ -56,6 +58,7 @@ export async function DELETE(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get("type");
@@ -74,8 +77,9 @@ export async function PATCH(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
-  const { type } = await req.json();
+  const { type } = await req.json().catch(() => ({}));
   const config = await prisma.connecteurConfig.findFirst({ where: { tenantId, type } });
 
   if (!config || config.statut !== "actif") {

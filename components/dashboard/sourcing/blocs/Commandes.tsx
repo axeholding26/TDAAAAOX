@@ -3,13 +3,12 @@
 // (14 étapes, lib/sourcing/statuts.ts) et quelle est la prochaine action du
 // marchand. Aucun fournisseur n'est connecté : la commande se transmet à la main.
 import { useState } from "react";
-import Link from "next/link";
 import { AlertTriangle, Check, ChevronDown, ChevronRight, Copy, ExternalLink, Mail, MapPin, MessageCircle, Truck } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { ETAPES_COMMANDE, LIBELLES_EXPEDITION, MOTIFS_ANNULATION, libelleEtape, type StatutExpedition } from "@/lib/sourcing/statuts";
 import type { RouteLigne } from "@/lib/sourcing/routage";
-import { Bouton, Carte, Champ, Chargement, CLASSE_CHAMP, Entete, Erreur, Estimation, EtatVide, Onglets, Page, Pastille, envoyer, useApi } from "@/components/dashboard/sourcing/ui";
+import { Bouton, Carte, Champ, Chargement, CLASSE_CHAMP, Erreur, Estimation, EtatVide, Onglets, Pastille, envoyer, useApi, versDossier } from "@/components/dashboard/sourcing/ui";
 
 interface CommandeFournisseur {
   id: string; statut: "en_attente" | "envoye" | "confirme" | "expedie" | "livre" | "annule";
@@ -48,7 +47,7 @@ const MODES = [
 ];
 const texte = (s: string) => s.trim() || undefined;
 
-export default function PageCommandesFournisseurs() {
+export function BlocCommandes() {
   const t = useT();
   const { data, erreur, chargement, recharger } = useApi<{ commandes: Commande[] }>("/api/sourcing/commandes");
   const [filtre, setFiltre] = useState<Groupe>("a_commander");
@@ -57,18 +56,15 @@ export default function PageCommandesFournisseurs() {
   const visibles = commandes.filter((c) => groupe(c) === filtre);
 
   return (
-    <Page>
-      <Entete badge="AXSO Sourcing" titre="Commandes fournisseurs"
-        sousTitre="Aucun fournisseur n'est encore connecté automatiquement : vous transmettez la commande vous-même, Axso prépare le message." />
+    <div className="space-y-4">
+      <p className="text-[13px] text-[#666666] leading-relaxed">{t("Aucun fournisseur n'est encore connecté automatiquement : vous transmettez la commande vous-même, Axso prépare le message.")}</p>
 
       {erreur && <Erreur message={erreur} />}
       {chargement && !data && <Chargement />}
 
       {data && commandes.length === 0 && (
         <EtatVide titre="Aucune commande à faire livrer par un fournisseur"
-          texte="Dès qu'un client commande un produit en dropshipping, la commande apparaît ici avec le message prêt à envoyer à votre fournisseur.">
-          <Bouton href="/dashboard/sourcing/catalogue" variante="secondaire">{t("Ouvrir le catalogue")}</Bouton>
-        </EtatVide>
+          texte="Dès qu'un client commande un produit en dropshipping, la commande apparaît ici avec le message prêt à envoyer à votre fournisseur." />
       )}
 
       {commandes.length > 0 && (
@@ -85,7 +81,7 @@ export default function PageCommandesFournisseurs() {
           </div>
         </>
       )}
-    </Page>
+    </div>
   );
 }
 
@@ -131,7 +127,7 @@ function CarteCommande({ c, recharger }: { c: Commande; recharger: () => void })
         <div className="flex items-center justify-between gap-2 flex-wrap">
           {annulee ? <Pastille ton="attention">{t("Commande annulée")}</Pastille>
             : <Pastille ton={issue ? "attention" : c.etape === "livree" ? "positif" : "accent"}>{issue && <AlertTriangle size={9} />}{t(libelleEtape(c.etape))}</Pastille>}
-          <button onClick={() => setFrise((v) => !v)} className="flex items-center gap-1 text-[11px] font-semibold text-[#666666]">
+          <button type="button" aria-expanded={frise} onClick={() => setFrise((v) => !v)} className="flex items-center gap-1 text-[11px] font-semibold text-[#666666]">
             {t("Étape {0}/{1}", index + 1, ETAPES_COMMANDE.length)}<ChevronDown size={12} className={frise ? "rotate-180" : ""} />
           </button>
         </div>
@@ -165,7 +161,7 @@ function CarteCommande({ c, recharger }: { c: Commande; recharger: () => void })
           <p className="flex items-center gap-1.5 text-[13px] font-bold text-[#B91C1C]"><AlertTriangle size={14} />{t("Produit sans fournisseur rattaché")}</p>
           <p className="text-[12px] text-[#666666] mt-1 leading-relaxed">{t("Cette commande ne peut pas être transmise : rattachez un fournisseur au produit, puis créez la commande fournisseur.")}</p>
           <div className="flex gap-2 flex-wrap mt-2">
-            <Bouton href="/dashboard/sourcing/catalogue" petit>{t("Rattacher un fournisseur")}</Bouton>
+            <Bouton onClick={versDossier} petit>{t("Rattacher un fournisseur")}</Bouton>
             {!annulee && <Bouton onClick={creerCommandeFournisseur} charge={charge} variante="secondaire" petit>{t("Créer la commande fournisseur")}</Bouton>}
           </div>
         </div>
@@ -231,7 +227,7 @@ function BlocFournisseur({ c, cf, recharger }: { c: Commande; cf: CommandeFourni
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
             <Champ label="Référence fournisseur (facultatif)">
-              <input value={reference} onChange={(e) => setReference(e.target.value)} className={CLASSE_CHAMP} />
+              <input value={reference} maxLength={120} onChange={(e) => setReference(e.target.value)} className={CLASSE_CHAMP} />
             </Champ>
             <Bouton onClick={() => statut("envoye")} charge={charge}>{t("J'ai passé la commande")}</Bouton>
           </div>
@@ -282,7 +278,7 @@ function BlocFournisseur({ c, cf, recharger }: { c: Commande; cf: CommandeFourni
               {c.expedition?.id === cf.expeditionId && c.expedition.arriveeEstimee ? ` · ${t("Arrivée estimée le {0}", new Date(c.expedition.arriveeEstimee).toLocaleDateString(t.loc))}` : ""}
             </p>
           </div>
-          <Bouton href="/dashboard/sourcing/expeditions" variante="secondaire" petit>{t("Suivre l'expédition")}<ChevronRight size={11} /></Bouton>
+          <Bouton href="/dashboard/sourcing?bloc=expeditions" variante="secondaire" petit>{t("Suivre l'expédition")}<ChevronRight size={11} /></Bouton>
         </div>
       )}
 
@@ -366,7 +362,7 @@ function BlocItineraire({ commandeId }: { commandeId: string }) {
             </p>
           </div>
           {data.lignes.some((l) => l.origine === "indisponible") && (
-            <Link href="/dashboard/sourcing/catalogue" className="text-[12px] font-bold text-[#B45309] underline">{t("Rattacher un fournisseur dans le catalogue")}</Link>
+            <button type="button" onClick={versDossier} className="text-[12px] font-bold text-[#B45309] underline">{t("Rattacher un fournisseur")}</button>
           )}
         </>
       )}

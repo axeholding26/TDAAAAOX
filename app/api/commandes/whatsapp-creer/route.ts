@@ -10,18 +10,24 @@ import { fraisLivraisonServeur } from "@/lib/livraison";
 import { codePays } from "@/lib/devise-convert";
 import { enregistrerConversionAffiliation } from "@/lib/affiliation";
 import { randomBytes } from "crypto";
-import { prixClient, reductionPromo } from "@/lib/pricing";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { prixClient, reductionPromo, filtreUsagePromo } from "@/lib/pricing";
 import { RuptureStock, sortirStock } from "@/lib/stock";
 
 function genToken() { return randomBytes(20).toString("hex"); }
 
+// Formulaire public : limite par IP (partagée avec digital-creer).
+const limiteCommande = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "commande-vitrine" });
+
 export async function POST(req: NextRequest) {
   try {
+    const rl = limiteCommande.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     // Prix, total, remise et devise NE viennent JAMAIS du navigateur : recalculés depuis la base.
     const { tenantId, slug, client, items: itemsClient, codePromo: codeSaisi, localisation, canal, champPersonnalise, zone, codeAffiliation } = await req.json();
     const viaWhatsapp = canal !== "direct";
 
-    if (!tenantId || !itemsClient?.length || !client?.nom || !client?.telephone) {
+    if (!tenantId || !Array.isArray(itemsClient) || !itemsClient.length || itemsClient.length > 50 || !client?.nom || !client?.telephone) {
       return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
     }
 
@@ -118,9 +124,13 @@ export async function POST(req: NextRequest) {
       include: { lignes: true },
       });
       await sortirStock(tx, { tenantId, commandeId: c.id, motif: `Commande #${c.numero}` });
+      // Incrément conditionnel : deux commandes simultanées ne dépassent pas maxUtilisations.
+      if (promoValide) {
+        const { count } = await tx.codePromo.updateMany({ where: filtreUsagePromo(promo), data: { utilisations: { increment: 1 } } });
+        if (!count) throw new RuptureStock("Ce code promo vient d'être épuisé — réessayez sans le code");
+      }
       return c;
     });
-    if (promoValide) await prisma.codePromo.update({ where: { id: promo.id }, data: { utilisations: { increment: 1 } } });
 
     // Programme d'affiliation B2C — enregistrée "pending", capturée (payable)
     // seulement à la livraison confirmée (voir statut/route.ts), puisque le

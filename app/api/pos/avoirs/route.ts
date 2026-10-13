@@ -1,23 +1,24 @@
 // Avoirs clients (émis par un retour, utilisables comme moyen de paiement « avoir »).
 // GET /api/pos/avoirs?code=  — un avoir par son code exact (avant de l'accepter en paiement).
-// GET /api/pos/avoirs?clientId= ou ?q= — avoirs d'un client, ou recherche par début de code.
+// GET /api/pos/avoirs?clientId= — avoirs d'un client.
+// Pas de liste ni de recherche par début de code : un code d'avoir se dépense comme de l'argent.
 // Droit : vendre, encaisser, retour ou voir_caisse.
 // `utilisable` : actif, non expiré, solde positif — ce que lib/pos/paiements.ts exigera au paiement.
 import { prisma } from "@/lib/prisma";
 import { routePos } from "@/lib/pos/acces";
 import { exigerUnDroit } from "@/lib/pos/droits";
+import { erreurs } from "@/lib/pos/erreurs";
 
 export const GET = routePos(async (ctx, req) => {
   exigerUnDroit(ctx, "vendre", "encaisser", "retour", "voir_caisse");
   const p = new URL(req.url).searchParams;
   const code = p.get("code")?.trim();
-  const q = p.get("q")?.trim();
   const clientId = p.get("clientId")?.trim();
+  if (!code && !clientId) throw erreurs.invalide("Indiquez le code de l'avoir.");
   const avoirs = await prisma.avoirClient.findMany({
     where: {
       tenantId: ctx.tenantId,
       ...(code ? { code: { equals: code, mode: "insensitive" } } : {}),
-      ...(q ? { code: { startsWith: q, mode: "insensitive" } } : {}),
       ...(clientId ? { clientId } : {}),
     },
     orderBy: { createdAt: "desc" }, take: code ? 1 : 50,

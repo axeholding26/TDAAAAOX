@@ -4,7 +4,7 @@
 import { AlertTriangle, PackageCheck } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import type { PrevisionStock } from "@/lib/sourcing/stocks";
-import { Bouton, Carte, Chargement, Erreur, Estimation, EtatVide, Entete, Kpi, Page, Pastille, useApi, type Ton } from "@/components/dashboard/sourcing/ui";
+import { Bouton, Carte, Chargement, Erreur, Estimation, EtatVide, Kpi, Pastille, useApi, type Ton } from "@/components/dashboard/sourcing/ui";
 
 const NIVEAUX: Record<PrevisionStock["niveau"], { libelle: string; ton: Ton; couleur: string }> = {
   rupture: { libelle: "En rupture", ton: "attention", couleur: "#B91C1C" },
@@ -13,7 +13,7 @@ const NIVEAUX: Record<PrevisionStock["niveau"], { libelle: string; ton: Ton; cou
   ok: { libelle: "Stock suffisant", ton: "positif", couleur: "#15803D" },
 };
 
-export default function PageStocks() {
+export function BlocStocks() {
   const t = useT();
   const { data, erreur, chargement } = useApi<{ previsions: PrevisionStock[] }>("/api/sourcing/stocks");
   const previsions = data?.previsions ?? [];
@@ -23,9 +23,8 @@ export default function PageStocks() {
   const tries = [...previsions].sort((a, b) => ordre.indexOf(a.niveau) - ordre.indexOf(b.niveau));
 
   return (
-    <Page>
-      <Entete badge="AXSO Sourcing" titre="Stocks et ruptures"
-        sousTitre="Quantité à commander = ventes par jour × (délai du fournisseur + 14 jours de sécurité) − stock restant. Calculé sur vos ventes réelles des 30 derniers jours." />
+    <div className="space-y-4">
+      <p className="text-[13px] text-[#666666] leading-relaxed">{t("Quantité à commander = ventes par jour × (délai du fournisseur + 14 jours de sécurité) − stock restant. Calculé sur vos ventes réelles des 30 derniers jours.")}</p>
 
       {erreur && <Erreur message={erreur} />}
       {chargement && !data && <Chargement />}
@@ -33,7 +32,7 @@ export default function PageStocks() {
       {data && previsions.length === 0 && (
         <EtatVide titre="Aucun stock à suivre"
           texte="Seuls les produits physiques ont un stock suivi. Vos produits en dropshipping restent chez le fournisseur : ils n'apparaissent pas ici.">
-          <Bouton href="/dashboard/sourcing/expeditions" variante="secondaire">{t("Voir les expéditions")}</Bouton>
+          <Bouton href="/dashboard/sourcing?bloc=expeditions" variante="secondaire">{t("Voir les expéditions")}</Bouton>
         </EtatVide>
       )}
 
@@ -90,8 +89,8 @@ export default function PageStocks() {
                     <div className="mt-3 rounded-xl bg-[#FFF7ED] border border-[#FDE68A] p-3">
                       <p className="text-[13px] font-bold text-[#111111]">{t("Commander {0} unités maintenant", p.aCommander)}</p>
                       <div className="flex gap-2 flex-wrap mt-2">
-                        <Bouton href="/dashboard/sourcing/expeditions" petit>{t("Créer un réapprovisionnement")}</Bouton>
-                        {p.sourceId && <Bouton href={`/dashboard/sourcing/produits/${p.sourceId}`} variante="secondaire" petit>{t("Fiche sourcing")}</Bouton>}
+                        <Bouton href="/dashboard/sourcing?bloc=expeditions" petit>{t("Créer un réapprovisionnement")}</Bouton>
+                        {p.sourceId && <Bouton href={`/dashboard/sourcing?bloc=stocks&dossier=${p.sourceId}`} variante="secondaire" petit>{t("Fiche sourcing")}</Bouton>}
                       </div>
                     </div>
                   )}
@@ -101,6 +100,6 @@ export default function PageStocks() {
           </div>
         </>
       )}
-    </Page>
+    </div>
   );
 }

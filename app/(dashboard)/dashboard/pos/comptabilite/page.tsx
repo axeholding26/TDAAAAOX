@@ -49,7 +49,7 @@ function CardResume({ label, value, Icon, color, sub }: { label: string; value: 
           <Icon size={16} style={{ color }} />
         </div>
       </div>
-      <p className="text-[20px] font-bold text-[#111] leading-none">{t(value)}</p>
+      <p className="text-[20px] font-bold text-[#111] leading-none break-words">{value}</p>
       <p className="text-[11px] text-gray-400 mt-1">{t(label)}</p>
       {sub && <p className="text-[10px] mt-0.5" style={{ color }}>{t(sub)}</p>}
     </div>
@@ -94,7 +94,7 @@ export default function ComptabilitePage() {
           </div>
           <p className="text-[12px] text-gray-500">{t("Rentabilité, entrées, charges et fonds généraux de la vente physique")}</p>
         </div>
-        <div className="flex items-center gap-1.5 bg-gray-100 rounded-2xl p-1">
+        <div className="flex flex-wrap items-center gap-1.5 bg-gray-100 rounded-2xl p-1">
           {PERIODES.map(p => (
             <button key={p.v} onClick={() => setPeriode(p.v)}
               className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold flex items-center gap-1 ${periode === p.v ? "bg-white shadow-sm text-[#111]" : "text-gray-500"}`}>
@@ -107,7 +107,7 @@ export default function ComptabilitePage() {
       {/* Bénéfice net — carte hero */}
       <div className="rounded-2xl p-6" style={{ background: resultatPositif ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)" }}>
         <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">{t("Bénéfice net de la période")}</p>
-        <p className="text-[32px] font-black text-white flex items-center gap-2">
+        <p className="text-[26px] sm:text-[32px] font-black text-white flex items-center gap-2 break-all">
           {resultatPositif ? <TrendingUp size={26} /> : <TrendingDown size={26} />}
           {fmt(r.beneficeNet)}
         </p>
@@ -117,15 +117,15 @@ export default function ComptabilitePage() {
       </div>
 
       {/* Résumé */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <CardResume label={t("Chiffre d'affaires")} value={`${fmt(r.revenu)}`} Icon={Wallet} color="#1B2A4A" sub={`${r.nombreVentes} vente${r.nombreVentes > 1 ? "s" : ""}`} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <CardResume label={t("Chiffre d'affaires")} value={`${fmt(r.revenu)}`} Icon={Wallet} color="#1B2A4A" sub={t("{0} vente(s)", r.nombreVentes)} />
         <CardResume label={t("Coût d'achat marchandises")} value={`${fmt(r.coutMarchandises)}`} Icon={Package} color="#8b5cf6" />
         <CardResume label={t("Bénéfice brut")} value={`${fmt(r.beneficeBrut)}`} Icon={ShoppingBag} color="#10b981" sub="Avant charges d'exploitation" />
         <CardResume label={t("Charges d'exploitation")} value={`${fmt(r.chargesExploitation)}`} Icon={TrendingDown} color="#ef4444" />
       </div>
 
       {/* Taxes, remises, retours — déjà pris en compte dans le chiffre d'affaires */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <CardResume label={t("Taxes collectées (comprises dans le chiffre d'affaires)")} value={`${fmt(r.taxes ?? 0)}`} Icon={Wallet} color="#1B2A4A" />
         <CardResume label={t("Remises accordées (déjà déduites)")} value={`${fmt(r.remises ?? 0)}`} Icon={TrendingDown} color="#F5A623" />
         <CardResume label={t("Retours d'articles (déjà déduits)")} value={`${fmt(r.retours ?? 0)}`} Icon={TrendingDown} color="#ef4444" />
@@ -142,7 +142,7 @@ export default function ComptabilitePage() {
       {/* Fonds généraux cumulés */}
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
         <p className="text-[12.5px] font-bold text-[#111] mb-4 flex items-center gap-1.5"><PiggyBank size={14} className="text-[#F5A623]" />{" "}{t("Fonds généraux (tout historique)")}</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <p className="text-[16px] font-bold text-green-600">{fmt(data.fondsGeneraux.entreesTotales)}</p>
             <p className="text-[10.5px] text-gray-400">{t("Entrées totales")}</p>
@@ -169,18 +169,18 @@ export default function ComptabilitePage() {
             {data.parProduit.map((p: ProduitRentabilite) => (
               <div key={p.produitId} className="p-3.5">
                 <div className="flex items-center gap-3">
-                  {p.image ? <img src={p.image} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
+                  {p.image ? <img src={p.image} alt="" className="w-9 h-9 rounded-xl object-cover flex-shrink-0" /> : <div className="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0"><Package size={14} className="text-gray-300" /></div>}
                   <div className="flex-1 min-w-0">
                     <p className="text-[12.5px] font-semibold text-[#111] truncate">{t(p.nom)}</p>
-                    <p className="text-[10.5px] text-gray-400">{t(p.quantiteVendue)}{" "}{t("vendu(s) ·")}{" "}{fmt(p.revenu)}{" "}{t("de revenu ·")}{" "}{fmt(p.cout)}{" "}{t("de coût d'achat")}</p>
+                    <p className="text-[10.5px] text-gray-400">{p.quantiteVendue}{" "}{t("vendu(s) ·")}{" "}{fmt(p.revenu)}{" "}{t("de revenu ·")}{" "}{fmt(p.cout)}{" "}{t("de coût d'achat")}</p>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <p className="text-[13px] font-bold" style={{ color: p.beneficeNet >= 0 ? "#10b981" : "#ef4444" }}>{fmt(p.beneficeNet)}</p>
-                    <p className="text-[10px] text-gray-400">{t(p.beneficeNetPct)}{t("% net")}</p>
+                    <p className="text-[10px] text-gray-400">{p.beneficeNetPct}{t("% net")}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mt-2 pl-12 text-[10.5px]">
-                  <span className="text-gray-400">{t("Brut :")}{" "}<strong style={{ color: p.beneficeBrut >= 0 ? "#10b981" : "#ef4444" }}>{fmt(p.beneficeBrut)}</strong> ({t(p.beneficeBrutPct)}%)</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 pl-12 text-[10.5px]">
+                  <span className="text-gray-400">{t("Brut :")}{" "}<strong style={{ color: p.beneficeBrut >= 0 ? "#10b981" : "#ef4444" }}>{fmt(p.beneficeBrut)}</strong> ({p.beneficeBrutPct}%)</span>
                   <span className="text-gray-400">{t("Charges allouées :")}{" "}<strong className="text-red-400">-{fmt(p.quotePartCharges)}</strong></span>
                 </div>
               </div>

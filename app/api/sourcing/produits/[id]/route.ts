@@ -8,6 +8,7 @@ import { evaluerProduit, schemaHypotheses, MODES_APPRO, ETAPES_PRODUIT } from "@
 import { schemaProduitSource, connecteur } from "@/lib/sourcing/connecteurs";
 import { CRITERES_ESTIMES } from "@/lib/sourcing/score";
 import { budgetTest, AVERTISSEMENT_IA } from "@/lib/sourcing/ia";
+import { prixClient } from "@/lib/pricing";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -37,8 +38,12 @@ async function reponse(tenantId: string, id: string) {
     source.produitId ? prisma.produit.findFirst({ where: { id: source.produitId, tenantId }, select: { id: true, slug: true, prix: true, type: true, stock: true, actif: true, ventes: true } }) : null,
   ]);
   const evaluation = evaluerProduit(source, contexte);
+  // Prix payé en ligne par le client (commission Axso ajoutée) ; null si ce produit se paie à la livraison.
+  const taux = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true } }))?.commissionRate ?? 0.1;
+  const enLigne = evaluation.cout.prixVente ? prixClient(evaluation.cout.prixVente, taux, MODES_APPRO.find((m) => m.cle === source.modeAppro)?.typeProduit ?? "dropshipping") : null;
   return NextResponse.json({
     source, contexte, evaluation, produit,
+    prixEnLigne: enLigne && enLigne !== evaluation.cout.prixVente ? enLigne : null,
     budgetTest: budgetTest(evaluation),
     avertissementIA: AVERTISSEMENT_IA,
     connecteur: { id: source.connecteur, nom: connecteur(source.connecteur).nom, statut: connecteur(source.connecteur).statut },

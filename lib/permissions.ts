@@ -60,3 +60,10 @@ export function grillePourMembre(membre: { role: string; permissions: unknown })
   }
   return ROLE_PRESETS[membre.role] ?? ROLE_PRESETS.lecture;
 }
+
+const RANG_NIVEAU: Record<Niveau, number> = { aucun: 0, lecture: 1, ecriture: 2 };
+
+/** Vrai si `cible` ne donne nulle part plus que `plafond` : un membre d'équipe ne délègue jamais plus que ses propres droits. */
+export function grilleCouverte(cible: GrillePermissions, plafond: GrillePermissions): boolean {
+  return MODULES.every((m) => (RANG_NIVEAU[cible[m]] ?? 0) <= (RANG_NIVEAU[plafond[m]] ?? 0));
+}

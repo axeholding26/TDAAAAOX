@@ -102,7 +102,8 @@ export default function ReglagesSourcingPage() {
 
   return (
     <Page etroite>
-      <Entete titre="Pays & intégrations" sousTitre="Choisissez votre pays de vente, vos coûts habituels, et voyez ce qui est réellement branché." />
+      <Entete titre="Pays & intégrations" sousTitre="Choisissez votre pays de vente, vos coûts habituels, et voyez ce qui est réellement branché."
+        actions={<Bouton variante="secondaire" href="/dashboard/sourcing">{t("Retour à l'assistant")}</Bouton>} />
       {erreurEnvoi && <Erreur message={erreurEnvoi} />}
 
       <Carte titre="Pays de vente" aide="Le pays où vos clients sont livrés. Il fixe les valeurs de départ des calculs.">

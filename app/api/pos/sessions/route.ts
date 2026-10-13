@@ -18,7 +18,7 @@ export const GET = routePos(async (ctx, req) => {
   const [ouverte, recentes] = await Promise.all([
     ctx.sessionCaisseId ? prisma.sessionCaisse.findUnique({ where: { id: ctx.sessionCaisseId } }) : null,
     prisma.sessionCaisse.findMany({
-      where: { tenantId: ctx.tenantId, ...(voirTout ? {} : { caisseId: ctx.caisseId }) },
+      where: { tenantId: ctx.tenantId, ...(voirTout ? {} : { caisseId: ctx.caisseId }), ...(ctx.magasinIds?.length ? { magasinId: { in: ctx.magasinIds } } : {}) },
       orderBy: { ouverteAt: "desc" }, take: limite,
       include: { caisse: { select: { nom: true, magasin: { select: { nom: true } } } } },
     }),

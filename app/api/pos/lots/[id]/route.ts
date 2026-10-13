@@ -7,8 +7,6 @@ import { cleIdempotence, routePos } from "@/lib/pos/acces";
 import { changerLot, schemaActionLot } from "@/lib/pos/operations/lots";
 
 export const PATCH = routePos<{ id: string }>(async (ctx, req, { id }) => {
-  const corps = await req.json();
-  // Ancien écran : { statut: "perime" | "rappele" | "epuise" }.
-  const action = corps.action ?? corps.statut;
-  return { ok: true, ...(await changerLot(ctx, id, schemaActionLot.parse({ ...corps, action, cle: cleIdempotence(req, corps) ?? crypto.randomUUID() }))) };
+  const corps = (await req.json()) ?? {};
+  return { ok: true, ...(await changerLot(ctx, id, schemaActionLot.parse({ ...corps, cle: cleIdempotence(req, corps) }))) };
 });

@@ -6,7 +6,7 @@ import { ChevronDown, Info, PackageCheck, Pencil, Plus, Truck } from "lucide-rea
 import { useT } from "@/components/I18nProvider";
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { LIBELLES_EXPEDITION, STATUTS_EXPEDITION, transitionExpeditionValide, type StatutExpedition } from "@/lib/sourcing/statuts";
-import { Bouton, Carte, Champ, ChampNombre, Chargement, CLASSE_CHAMP, Entete, Erreur, EtatVide, Onglets, Page, Pastille, envoyer, useApi } from "@/components/dashboard/sourcing/ui";
+import { Bouton, Carte, Champ, ChampNombre, Chargement, CLASSE_CHAMP, Erreur, EtatVide, Onglets, Pastille, envoyer, useApi, versDossier } from "@/components/dashboard/sourcing/ui";
 
 interface Entrepot { id: string; nom: string; ville: string | null }
 interface Expedition {
@@ -30,7 +30,7 @@ const texte = (s: string) => s.trim() || undefined;
 
 type Filtre = "toutes" | StatutExpedition;
 
-export default function PageExpeditions() {
+export function BlocExpeditions() {
   const t = useT();
   const { data, erreur, chargement, recharger } = useApi<{ expeditions: Expedition[]; entrepots: Entrepot[] }>("/api/sourcing/expeditions");
   const [filtre, setFiltre] = useState<Filtre>("toutes");
@@ -42,10 +42,11 @@ export default function PageExpeditions() {
   const fait = (message: string | null) => { setInfo(message); setNouveau(false); recharger(); };
 
   return (
-    <Page>
-      <Entete badge="AXSO Sourcing" titre="Expéditions internationales"
-        sousTitre="Suivez chaque colis du fournisseur jusqu'à votre entrepôt local."
-        actions={<Bouton onClick={() => setNouveau((v) => !v)}><Plus size={14} />{t("Nouveau réapprovisionnement")}</Bouton>} />
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <p className="text-[13px] text-[#666666] leading-relaxed">{t("Suivez chaque colis du fournisseur jusqu'à votre entrepôt local.")}</p>
+        <Bouton onClick={() => setNouveau((v) => !v)}><Plus size={14} />{t("Nouveau réapprovisionnement")}</Bouton>
+      </div>
 
       <div className="flex items-start gap-2 rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-3.5 text-[12px] text-[#1D4ED8] leading-relaxed">
         <Info size={14} className="mt-0.5 flex-shrink-0" />
@@ -66,7 +67,7 @@ export default function PageExpeditions() {
       {data && expeditions.length === 0 && !nouveau && (
         <EtatVide titre="Aucune expédition pour le moment"
           texte="Une expédition se crée quand un fournisseur expédie une commande, ou quand vous importez du stock avec « Nouveau réapprovisionnement »." >
-          <Bouton href="/dashboard/sourcing/commandes" variante="secondaire">{t("Voir les commandes fournisseurs")}</Bouton>
+          <Bouton href="/dashboard/sourcing?bloc=commandes" variante="secondaire">{t("Voir les commandes fournisseurs")}</Bouton>
         </EtatVide>
       )}
 
@@ -82,7 +83,7 @@ export default function PageExpeditions() {
           </div>
         </>
       )}
-    </Page>
+    </div>
   );
 }
 
@@ -173,7 +174,7 @@ function CarteExpedition({ e, entrepots, onFait }: { e: Expedition; entrepots: E
       {e.notes && <p className="text-[12px] text-[#666666] mt-2">{e.notes}</p>}
       {e.stockRecu && <p className="flex items-center gap-1.5 text-[12px] text-[#15803D] font-semibold mt-2"><PackageCheck size={13} />{t("{0} unités entrées en stock", e.quantite ?? 0)}</p>}
 
-      <button onClick={() => setOuvert((v) => !v)} className="flex items-center gap-1 text-[12px] font-semibold text-[#B45309] mt-3">
+      <button type="button" aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)} className="flex items-center gap-1 text-[12px] font-semibold text-[#B45309] mt-3">
         {t("Étapes et historique")}<ChevronDown size={13} className={ouvert ? "rotate-180" : ""} />
       </button>
       {ouvert && (
@@ -210,7 +211,7 @@ function CarteExpedition({ e, entrepots, onFait }: { e: Expedition; entrepots: E
               {t("À cette étape, {0} unités seront ajoutées automatiquement au stock du produit, s'il est publié en boutique avec un stock suivi.", e.quantite ?? 0)}
             </p>
           )}
-          <input value={note} onChange={(ev) => setNote(ev.target.value)} maxLength={500} placeholder={t("Note (facultatif)")} className={CLASSE_CHAMP} />
+          <input value={note} onChange={(ev) => setNote(ev.target.value)} maxLength={500} placeholder={t("Note (facultatif)")} aria-label={t("Note (facultatif)")} className={CLASSE_CHAMP} />
           <div className="flex gap-2 flex-wrap">
             <Bouton onClick={avancer} charge={charge} petit>{t("Étape suivante : {0}", t(LIBELLES_EXPEDITION[suivant]))}</Bouton>
             <Bouton onClick={() => setEdition((v) => !v)} variante="secondaire" petit><Pencil size={11} />{t("Modifier le suivi")}</Bouton>
@@ -279,7 +280,7 @@ function FormulaireReappro({ entrepots, onCree, onFermer }: { entrepots: Entrepo
     <Carte titre="Nouveau réapprovisionnement" aide="Import de stock : vous achetez en quantité chez le fournisseur et le stock arrive dans votre entrepôt local.">
       {chargement && !data ? <Chargement /> : produits.length === 0 ? (
         <EtatVide titre="Aucun produit sourcé" texte="Ajoutez d'abord un produit à votre catalogue sourcing pour pouvoir le réapprovisionner.">
-          <Bouton href="/dashboard/sourcing/catalogue">{t("Ouvrir le catalogue")}</Bouton>
+          <Bouton onClick={versDossier}>{t("Nouveau dossier")}</Bouton>
         </EtatVide>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">

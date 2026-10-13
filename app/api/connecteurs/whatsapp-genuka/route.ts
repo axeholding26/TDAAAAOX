@@ -8,13 +8,16 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const config = await prisma.connecteurConfig.findFirst({
     where: { tenantId, type: "whatsapp_genuka" },
     select: { statut: true, config: true, updatedAt: true },
   });
 
-  return NextResponse.json({ config: config ?? null });
+  // Jamais les secrets eux-mêmes : seulement s'ils sont renseignés.
+  const cfg = (config?.config ?? {}) as any;
+  return NextResponse.json({ config: config ? { statut: config.statut, updatedAt: config.updatedAt, config: { proxyToken: !!cfg.proxyToken, webhookSecret: !!cfg.webhookSecret } } : null });
 }
 
 // POST — activer la connexion Genuka. Le proxy token (envoi) et le webhook
@@ -26,12 +29,13 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour connecter WhatsApp.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const { proxyToken, webhookSecret } = await req.json();
+  const { proxyToken, webhookSecret } = await req.json().catch(() => ({}));
   if ((!proxyToken || typeof proxyToken !== "string") && (!webhookSecret || typeof webhookSecret !== "string")) {
     return NextResponse.json({ error: "Renseignez le proxy token et/ou le secret du webhook" }, { status: 400 });
   }
@@ -60,6 +64,7 @@ export async function DELETE() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   await prisma.connecteurConfig.updateMany({
     where: { tenantId, type: "whatsapp_genuka" },

@@ -3,7 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { requireNiveau } from "@/lib/permissions-server";
+import { requireNiveau, permissionsSession } from "@/lib/permissions-server";
+import { grilleCouverte, grillePourMembre } from "@/lib/permissions";
 import { envoyerInvitationEquipe } from "@/lib/email";
 
 function genToken() { return randomBytes(20).toString("hex"); }
@@ -33,11 +34,14 @@ export async function POST(req: Request) {
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const { email, nom, role, permissions } = schemaInvitation.parse(body);
 
     if (role === "personnalise" && !permissions) {
       return NextResponse.json({ error: "Grille de permissions requise pour un rôle personnalisé" }, { status: 400 });
+    }
+    if (!grilleCouverte(grillePourMembre({ role, permissions }), await permissionsSession(session))) {
+      return NextResponse.json({ error: "Tu ne peux pas donner plus de droits que les tiens" }, { status: 403 });
     }
 
     // Un compte Axso existant (propriétaire ou membre d'une autre boutique)
@@ -111,6 +115,9 @@ export async function DELETE(req: Request) {
 
     const membre = await prisma.membreEquipe.findFirst({ where: { id: membreId, tenantId } });
     if (!membre) return NextResponse.json({ error: "Membre introuvable" }, { status: 404 });
+    if (!grilleCouverte(grillePourMembre(membre), await permissionsSession(session))) {
+      return NextResponse.json({ error: "Ce membre a plus de droits que toi" }, { status: 403 });
+    }
 
     if (membre.userId) {
       await prisma.membreEquipe.update({ where: { id: membreId }, data: { statut: "suspendu" } });

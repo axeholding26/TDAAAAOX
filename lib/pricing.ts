@@ -18,3 +18,9 @@ export function reductionPromo(promo: Promo | null | undefined, sousTotal: numbe
   if (promo.minCommande && sousTotal < promo.minCommande) return 0;
   return Math.min(sousTotal, Math.round(promo.type === "pourcentage" ? sousTotal * promo.valeur / 100 : promo.valeur));
 }
+
+// Filtre de l'incrément conditionnel d'un code promo : l'update ne touche rien
+// si le plafond est déjà atteint (deux commandes simultanées ne le dépassent pas).
+export function filtreUsagePromo(promo: { id: string; maxUtilisations?: number | null }) {
+  return promo.maxUtilisations ? { id: promo.id, utilisations: { lt: promo.maxUtilisations } } : { id: promo.id };
+}

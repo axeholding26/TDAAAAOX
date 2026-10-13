@@ -1,17 +1,14 @@
 // Supplier Intelligence — ce que fait l'IA, et seulement cela (SERVEUR) :
 // - LIRE un texte fourni par le marchand (fiche fournisseur copiée, réponse à
 //   un devis) pour en extraire les champs — toujours « déclaré par le fournisseur » ;
-// - RÉDIGER (message de négociation) à partir de chiffres calculés par le code ;
-// - COMPRENDRE un besoin écrit en langage courant (agent de sourcing).
+// - RÉDIGER (message de négociation) à partir de chiffres calculés par le code.
 // L'IA ne cherche, ne note et ne classe aucun fournisseur : la recherche et le
 // classement sont faits par le moteur sur la base de la boutique. Elle ne peut
 // donc pas inventer un fournisseur, une certification ni un « Top 5 ».
 import { z } from "zod";
 import { completionAuto } from "@/lib/llm-client";
 import type { Candidat } from "./classement";
-import { recommander } from "./classement";
 import { normaliserDevise, tauxEntre } from "../cout-rendu";
-import { rechercher } from "./service";
 
 export class IaIndisponible extends Error {
   status = 503;
@@ -176,62 +173,4 @@ export async function redigerNegociation(o: Objectifs, fournisseur: string, prod
     console.warn("[sourcing/fournisseurs/ia] négociation", e instanceof Error ? e.message.slice(0, 150) : e);
   }
   return { message: messageSimple(o, fournisseur, produit), redigeParIa: false };
-}
-
-// ─── Agent de sourcing ───────────────────────────────────────────────────────
-
-const schemaBesoin = z.object({
-  produit: texte,
-  termes: liste,
-  prixVenteMin: nombre, prixVenteMax: nombre, devisePrix: devise, moqMax: entier, quantite: entier,
-  fabricant: booleen, personnalisation: booleen,
-});
-export type Besoin = z.infer<typeof schemaBesoin>;
-
-/**
- * AXSO Sourcing Agent : comprend le besoin, puis cherche UNIQUEMENT parmi les
- * fournisseurs enregistrés dans la boutique. Renvoie au plus 5 lignes, chacune
- * avec ses écarts au besoin, et dit clairement quand il y en a moins — ou aucune.
- */
-export async function agentSourcing(tenantId: string, demande: string) {
-  const besoin = schemaBesoin.parse(await lireJson(
-    `Tu analyses le besoin d'achat d'un commerçant. Clés attendues : produit (désignation courte), termes (2 à 5 façons courtes de nommer ce produit, en français ET en anglais, 1 à 2 mots chacune, du plus précis au plus général), prixVenteMin, prixVenteMax (prix de revente visés, nombres dans la monnaie du texte), devisePrix (code ISO de cette monnaie ; « FCFA » = XAF), moqMax, quantite (volume d'achat souhaité), fabricant (true s'il exige un fabricant), personnalisation (true s'il veut son logo ou une personnalisation).`,
-    demande, 400));
-  const quantite = besoin.quantite ?? besoin.moqMax ?? 100;
-  const termes = besoin.termes.length ? besoin.termes : besoin.produit ? [besoin.produit] : [];
-  if (!termes.length) return { besoin, lignes: [], recommandation: null, contexte: null, message: "Je n'ai pas compris quel produit vous cherchez. Décrivez-le en quelques mots." };
-
-  const r = await rechercher(tenantId, { termes, quantite });
-  // Prix de vente ramené dans la devise de la boutique (celle des coûts) ; taux fixes de lib/devise-convert.ts.
-  const brut = besoin.prixVenteMin && besoin.prixVenteMax ? (besoin.prixVenteMin + besoin.prixVenteMax) / 2 : besoin.prixVenteMax ?? besoin.prixVenteMin ?? null;
-  const prixVente = brut === null ? null : Math.round(brut * tauxEntre(besoin.devisePrix ?? r.contexte.devise, r.contexte.devise) * 100) / 100;
-
-  const lignes = r.candidats.map((c) => {
-    const a = c.analyse;
-    const ecarts: string[] = [];
-    if (besoin.moqMax && !(c.offre?.moq != null && c.offre.moq <= besoin.moqMax)) ecarts.push(c.offre?.moq != null ? `MOQ ${c.offre.moq}, au-dessus des ${besoin.moqMax} demandés` : "MOQ non communiqué");
-    if (besoin.fabricant && a.fabricant.statut !== "fabricant" && a.fabricant.statut !== "fabricant_trading") ecarts.push(`Statut fabricant non établi (${a.fabricant.libelle.toLowerCase()})`);
-    if (besoin.personnalisation && c.fournisseur.personnalisation !== true && c.fournisseur.privateLabel !== true) ecarts.push(c.fournisseur.personnalisation === false ? "Ne propose pas la personnalisation" : "Personnalisation non confirmée");
-    const marge = prixVente && c.cout ? prixVente - c.cout.total : null;
-    if (marge !== null && marge <= 0) ecarts.push("Coût réel estimé supérieur à votre prix de vente");
-    const conseil = ecarts.length ? `Ne répond pas entièrement au besoin : ${ecarts.join(" ; ")}.`
-      : a.risque.niveau === "eleve" ? "Risque élevé : lever les alertes avant toute commande."
-      : !a.label.criteres.find((x) => x.cle === "echantillon")?.rempli ? "Répond au besoin sur le papier : commandez un échantillon avant d'acheter en volume."
-      : "Répond au besoin, échantillon déjà contrôlé : prêt pour une commande test.";
-    return { candidat: c, ecarts, margeUnitaire: marge, tauxMarge: marge !== null && prixVente ? marge / prixVente : null, conseil };
-  }).sort((x, y) => x.ecarts.length - y.ecarts.length || y.candidat.analyse.score - x.candidat.analyse.score).slice(0, 5);
-
-  const conformes = lignes.filter((l) => !l.ecarts.length);
-  const message = !lignes.length
-    ? (r.totalFournisseurs
-      ? `Aucun des ${r.totalFournisseurs} fournisseur(s) de votre base ne propose « ${besoin.produit ?? termes[0]} ». AXSO ne présente que des fournisseurs réellement enregistrés : ajoutez ceux que vous avez repérés, ou envoyez une demande de devis.`
-      : "Votre base ne contient encore aucun fournisseur. AXSO n'en invente pas : ajoutez ceux que vous avez repérés pour qu'ils soient vérifiés, notés et comparés.")
-    : `${lignes.length} fournisseur(s) de votre base correspond(ent)${lignes.length < 5 ? " — pas assez pour un Top 5" : ""}, dont ${conformes.length} sans écart avec votre besoin.`;
-
-  const recommandation = recommander((conformes.length ? conformes : lignes).map((l) => l.candidat), quantite);
-  // Un seul fournisseur sans écart parmi plusieurs trouvés : il n'est pas « le seul disponible », il est le seul à répondre au besoin.
-  if (recommandation && conformes.length === 1 && lignes.length > 1) {
-    recommandation.explication = recommandation.explication.replace("est le seul fournisseur disponible pour cette recherche : aucune comparaison possible.", `est le seul des ${lignes.length} fournisseurs trouvés à répondre à votre besoin sans écart.`);
-  }
-  return { besoin, prixVente, lignes, recommandation, contexte: r.contexte, message };
 }

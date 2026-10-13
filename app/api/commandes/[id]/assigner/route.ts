@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const { id } = await params;
-  const { livreurId } = await req.json();
+  const { livreurId } = await req.json().catch(() => ({}));
   const r = await assignerLivreurCommande({ commandeId: id, tenantId: (session.user as any)?.tenantId, livreurId: livreurId || null, source: "interface" });
   if (!r.ok) return NextResponse.json({ error: r.error, code: r.code }, { status: r.status });
   return NextResponse.json({ success: true, livreurNom: r.livreurNom, whatsappLivreurUrl: r.whatsappLivreurUrl, whatsappClientUrl: r.whatsappClientUrl });

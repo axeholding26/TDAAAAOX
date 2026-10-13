@@ -463,6 +463,30 @@ pile. Pour garder 7 % nets, il faudrait un taux de 10,3 %.
 
 - [ ] Annoncer le changement aux marchands avant de lancer le SQL de l'étape 3.2 bis.
 
+### 6.11 AXSO Sourcing tient en une seule page (13/10/2026)
+
+Les 10 entrées du menu Sourcing et `/dashboard/dropshipping` sont remplacées par
+une seule page, `/dashboard/sourcing` : une conversation avec l'assistant, le
+« dossier en cours » à côté, et en dessous les blocs À faire, Expéditions, Stocks,
+Bénéfice et Calcul rapide. « Mes fournisseurs » et « Réglages » s'ouvrent depuis
+cette page. Les anciennes adresses redirigent automatiquement.
+
+- L'assistant n'invente aucun produit ni prix : il calcule à partir de ce que le
+  marchand lui donne (nom, prix d'achat, poids) et des fournisseurs enregistrés.
+- Publier, fixer un prix, changer de mode ou créer une commande fournisseur
+  demande toujours un clic « Confirmer ».
+- Sans `GEMINI_API_KEY`, la conversation est désactivée avec un message ; les
+  blocs et le calcul rapide marchent sans elle.
+
+### 6.12 Fonctions non configurées : masquées au lieu de planter
+
+- Campagnes SMS : bouton « Bientôt disponible » tant que `AFRICASTALKING_*`
+  manquent (avant, une campagne était enregistrée « envoyée » sans rien envoyer).
+- Connexion Meta et Gmail : message « bientôt disponible » au lieu d'une erreur.
+- [ ] Nouvelle page admin **/admin/integrations** (super-admin seulement) : elle
+      dit quelles variables sont configurées sur le serveur, sans jamais montrer
+      leur valeur. À ouvrir après chaque déploiement pour vérifier.
+
 ---
 
 ## CE QUI N'A PAS ÉTÉ FAIT (à décider plus tard)

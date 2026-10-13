@@ -51,7 +51,7 @@ async function getData(tenantId: string) {
     prisma.analytics.aggregate({ where: { tenantId, type: "page_view", date: { gte: startOfMonth } }, _sum: { valeur: true } }),
     prisma.commande.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" }, take: 8, include: { lignes: true, client: true } }),
     prisma.produit.findMany({ where: { tenantId, actif: true, stock: { lte: 5, gt: 0 } }, take: 5, orderBy: { stock: "asc" } }),
-    prisma.analytics.findMany({ where: { tenantId, type: "purchase", date: { gte: last30 } }, orderBy: { date: "asc" } }),
+    prisma.commande.findMany({ where: { tenantId, paiementStatut: "completed", createdAt: { gte: last30 } }, select: { createdAt: true, montantTotal: true } }),
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     prisma.client.count({ where: { tenantId } }),
     prisma.commande.findMany({
@@ -80,8 +80,8 @@ async function getData(tenantId: string) {
   const chart = Array.from({ length: 30 }, (_, i) => {
     const d = new Date(last30.getTime() + i * 86400000);
     const label = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
-    const rows = chartData.filter(a => new Date(a.date).toDateString() === d.toDateString());
-    return { date: label, montant: rows.reduce((s, a) => s + a.valeur, 0) * 10000, commandes: rows.length };
+    const rows = chartData.filter(c => c.createdAt.toDateString() === d.toDateString());
+    return { date: label, montant: rows.reduce((s, c) => s + c.montantTotal, 0), commandes: rows.length };
   });
 
   const prevCA  = prevMonth._sum.montantTotal || 0;
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
     bg:    onTrack ? "#ECFDF5" : "#FFF8EC",
     title: "Projection fin de mois",
     value: formatMontant(d.projection, d.devise),
-    sub:   onTrack ? `En avance sur l'objectif` : `${remainingDays}j restants pour rattraper`,
+    sub:   onTrack ? t("En avance sur l'objectif") : t("{0} j restants pour rattraper", remainingDays),
   });
 
   if (livraisonRate > 0) insights.push({
@@ -222,7 +222,7 @@ export default async function DashboardPage() {
     bg:    livraisonRate >= 70 ? "#ECFDF5" : livraisonRate >= 40 ? "#FFFBEB" : "#FEF2F2",
     title: "Taux de livraison",
     value: `${livraisonRate}%`,
-    sub:   `${livrees} livrée${livrees > 1 ? "s" : ""} sur ${totalCmdsMonth} commande${totalCmdsMonth > 1 ? "s" : ""}`,
+    sub:   t("{0} livrée(s) sur {1} commande(s)", livrees, totalCmdsMonth),
   });
 
   if (d.topVilles.length > 0 && topVilleShare > 0) insights.push({
@@ -230,8 +230,8 @@ export default async function DashboardPage() {
     color: "#7C3AED",
     bg:    "#EEF1F6",
     title: "Ville principale",
-    value: d.topVilles[0]!.ville || "Inconnue",
-    sub:   `${topVilleShare}% des commandes ce mois`,
+    value: d.topVilles[0]!.ville || t("Inconnue"),
+    sub:   t("{0}% des commandes ce mois", topVilleShare),
   });
 
   if (panier > 0) insights.push({
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
     bg:    "#ECFEFF",
     title: "Panier moyen",
     value: formatMontant(panier, d.devise),
-    sub:   `Sur ${d.monthCount} commande${d.monthCount > 1 ? "s" : ""} ce mois`,
+    sub:   t("Sur {0} commande(s) ce mois", d.monthCount),
   });
 
   // Etapes de l'entonnoir
@@ -314,19 +314,19 @@ export default async function DashboardPage() {
               : "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]"
           }`}>
             {vsHierPct >= 0 ? <ArrowUpRight size={9} /> : <ArrowDownRight size={9} />}
-            {vsHierPct > 0 ? "+" : ""}{t(vsHierPct)}{t("% vs hier")}
+            {vsHierPct > 0 ? "+" : ""}{vsHierPct}{t("% vs hier")}
           </span>
         )}
         <span className="text-[#E8E8E8] hidden sm:inline">·</span>
-        <span className="text-[11.5px] text-[#AAAAAA]">{t(d.todayOrders)} commande{d.todayOrders !== 1 ? "s" : ""}</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{t("{0} commande(s)", d.todayOrders)}</span>
         <span className="text-[#E8E8E8] hidden sm:inline">·</span>
-        <span className="text-[11.5px] text-[#AAAAAA]">{t(d.newClients)} nouveau{d.newClients !== 1 ? "x" : ""} client{d.newClients !== 1 ? "s" : ""}{" "}{t("ce mois")}</span>
+        <span className="text-[11.5px] text-[#AAAAAA]">{t("{0} nouveau(x) client(s) ce mois", d.newClients)}</span>
         {d.pending > 0 && (
           <>
             <span className="text-[#E8E8E8] hidden sm:inline">·</span>
             <a href="/dashboard/commandes?statut=en_attente"
               className="flex items-center gap-1 text-[11.5px] font-semibold text-[#D97706] hover:underline">
-              <Zap size={11} /> {t(d.pending)}{" "}{t("en attente")}
+              <Zap size={11} /> {d.pending}{" "}{t("en attente")}
             </a>
           </>
         )}
@@ -337,7 +337,7 @@ export default async function DashboardPage() {
         <KpiCard
           label={t("CA ce mois")}
           value={formatMontant(d.month, d.devise)}
-          sub={d.evol !== null ? `${d.evol > 0 ? "+" : ""}${d.evol}% vs mois dernier` : `${d.monthCount} commandes`}
+          sub={d.evol !== null ? t("{0}% vs mois dernier", `${d.evol > 0 ? "+" : ""}${d.evol}`) : t("{0} commande(s)", d.monthCount)}
           trend={d.evol}
           Icon={TrendingUp}
           accent
@@ -346,7 +346,7 @@ export default async function DashboardPage() {
         <KpiCard
           label={t("Cette semaine")}
           value={formatMontant(d.semaine, d.devise)}
-          sub={`${d.todayCount} commande${d.todayCount !== 1 ? "s" : ""} aujourd'hui`}
+          sub={t("{0} commande(s) aujourd'hui", d.todayCount)}
           Icon={ShoppingBag}
           spark={d.spark7.slice(-5)}
           sparkColor="#7C3AED"
@@ -355,20 +355,16 @@ export default async function DashboardPage() {
           label={t("Clients")}
           value={d.totalClients.toLocaleString(t.loc)}
           sub={d.evolClients !== null
-            ? `+${d.newClients} ce mois (${d.evolClients > 0 ? "+" : ""}${d.evolClients}%)`
-            : `+${d.newClients} nouveaux ce mois`}
+            ? t("+{0} ce mois ({1}%)", d.newClients, `${d.evolClients > 0 ? "+" : ""}${d.evolClients}`)
+            : t("+{0} nouveaux ce mois", d.newClients)}
           trend={d.evolClients}
           Icon={Users}
-          spark={[d.totalClients - d.newClients*4, d.totalClients - d.newClients*3, d.totalClients - d.newClients*2, d.totalClients - d.newClients, d.totalClients]}
-          sparkColor="#0891B2"
         />
         <KpiCard
           label={t("Conversion")}
           value={`${conversion}%`}
-          sub={`Panier moy. ${formatMontant(panier, d.devise)}`}
+          sub={t("Panier moy. {0}", formatMontant(panier, d.devise))}
           Icon={Eye}
-          spark={d.spark7.map((v, i) => v > 0 ? parseFloat(conversion) + i * 0.1 : 0)}
-          sparkColor="#16A34A"
         />
       </div>
 
@@ -440,7 +436,7 @@ export default async function DashboardPage() {
                   <ShoppingBag size={16} className="text-[#D97706]" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold text-[#111111]">{t(d.pending)} commande{d.pending > 1 ? "s" : ""}{" "}{t("en attente")}</p>
+                  <p className="text-[13px] font-semibold text-[#111111]">{t("{0} commande(s) en attente", d.pending)}</p>
                   <p className="text-[11.5px] text-[#AAAAAA]">{t("À traiter en priorité")}</p>
                 </div>
               </div>
@@ -468,7 +464,7 @@ export default async function DashboardPage() {
                     <span className="text-[12.5px] text-[#444] truncate">{t(p.nom)}</span>
                     <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border ${
                       p.stock <= 2 ? "bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]" : "bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]"
-                    }`}>{p.stock} restant{p.stock > 1 ? "s" : ""}</span>
+                    }`}>{t("{0} restant(s)", p.stock)}</span>
                   </div>
                 ))}
               </div>
@@ -542,7 +538,7 @@ export default async function DashboardPage() {
                         <p className="text-[13px] font-bold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>
                           {formatMontant(p.revenue, d.devise)}
                         </p>
-                        <p className="text-[10.5px] text-[#AAAAAA]">{t(p.qte)} vente{p.qte > 1 ? "s" : ""}</p>
+                        <p className="text-[10.5px] text-[#AAAAAA]">{t("{0} vente(s)", p.qte)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -562,7 +558,7 @@ export default async function DashboardPage() {
         <div className="flex flex-col gap-4">
           <div className="ax-card p-5 flex-1">
             <h3 className="text-[13px] font-semibold text-[#111111] mb-1">{t("Statuts ce mois")}</h3>
-            <p className="text-[11.5px] text-[#AAAAAA] mb-4">{t(totalCmdsMonth)} commandes</p>
+            <p className="text-[11.5px] text-[#AAAAAA] mb-4">{t("{0} commande(s)", totalCmdsMonth)}</p>
             {totalCmdsMonth === 0 ? (
               <div className="py-6 text-center text-[12px] text-[#AAAAAA]">{t("Aucune commande")}</div>
             ) : (
@@ -671,7 +667,7 @@ export default async function DashboardPage() {
                   {!isLast && (
                     <div className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
                       <span className={`text-[10px] font-bold leading-none ${good ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
-                        {t(continueRate)}%
+                        {continueRate}%
                       </span>
                       <ChevronRight size={16} className="text-[#CCCCCC]" />
                       {dropout > 0 && (
@@ -691,7 +687,7 @@ export default async function DashboardPage() {
             <div className="mt-4 pt-3 border-t border-[#F5F5F7] flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-[#DC2626] flex-shrink-0" />
               <p className="text-[11.5px] text-[#AAAAAA]">
-                <span className="font-semibold text-[#DC2626]">{t(annulees)} annulation{annulees > 1 ? "s" : ""}</span>{" "}{t("ce mois")}
+                <span className="font-semibold text-[#DC2626]">{t("{0} annulation(s)", annulees)}</span>{" "}{t("ce mois")}
                 {totalCmdsMonth > 0 && t(" · {0}% du total", Math.round((annulees / totalCmdsMonth) * 100))}
               </p>
             </div>

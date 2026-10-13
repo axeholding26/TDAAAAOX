@@ -5,11 +5,11 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard, Store, DollarSign, Truck, CreditCard,
-  UserPlus, LogOut, Megaphone, Menu, X, ShieldCheck,
+  UserPlus, LogOut, Megaphone, Menu, X, ShieldCheck, Plug,
 } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: typeof Plug; exact?: boolean; adminComplet?: boolean }[] = [
   { href: "/admin", label: "Vue globale", icon: LayoutDashboard, exact: true },
   { href: "/admin/boutiques", label: "Boutiques", icon: Store },
   { href: "/admin/abonnements", label: "Abonnements", icon: CreditCard },
@@ -18,6 +18,7 @@ const NAV = [
   { href: "/admin/livreurs", label: "Livreurs", icon: Truck },
   { href: "/admin/fournisseurs", label: "Fournisseurs à vérifier", icon: ShieldCheck },
   { href: "/admin/equipe", label: "Équipe", icon: UserPlus },
+  { href: "/admin/integrations", label: "État des intégrations", icon: Plug, adminComplet: true },
 ];
 
 export function AdminNav({ email, role }: { email: string; role: "admin" | "admin_lecteur" }) {
@@ -56,7 +57,7 @@ export function AdminNav({ email, role }: { email: string; role: "admin" | "admi
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {NAV.map((item) => {
+        {NAV.filter((item) => !item.adminComplet || role === "admin").map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);
           return (

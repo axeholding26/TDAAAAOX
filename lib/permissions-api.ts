@@ -84,6 +84,13 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/posts", "marketing"],
   ["/api/automation", "marketing"],
   ["/api/veille", "marketing"],
+  ["/api/medias", "marketing"],
+  ["/api/orchestrator", "marketing"],
+  ["/api/mcp/publications", "marketing"],
+  ["/api/mcp", "boutique"], // connecteurs (même module que /dashboard/connecteurs)
+  ["/api/chatbot", "clients"],
+  ["/api/objectifs", "produits"],
+  ["/api/fichiers", "boutique"],
   // équipe, paramètres, boutique
   ["/api/equipe", "equipe"],
   ["/api/tenant", "parametres"],

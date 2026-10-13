@@ -8,6 +8,7 @@ export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const config = await prisma.connecteurConfig.findFirst({
     where: { tenantId, type: "whatsapp" },
@@ -22,12 +23,13 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour connecter WhatsApp.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const { phone_number_id, access_token, numero_affiche } = await req.json();
+  const { phone_number_id, access_token, numero_affiche } = await req.json().catch(() => ({}));
   if (!phone_number_id || !access_token) {
     return NextResponse.json({ error: "phone_number_id et access_token requis" }, { status: 400 });
   }
@@ -88,6 +90,7 @@ export async function DELETE() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   await prisma.connecteurConfig.updateMany({
     where: { tenantId, type: "whatsapp" },

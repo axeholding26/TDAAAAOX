@@ -7,77 +7,87 @@ import {
   IconAccueil, IconProduits, IconAxia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
+import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { palierAuMoins, type Palier } from "@/lib/plans";
+import type { ModuleKey, Niveau } from "@/lib/permissions";
 
-const GROUPS = [
+// Mêmes règles que la Sidebar : un lien disparaît si le membre d'équipe n'a aucun accès
+// au module, et un lien au-dessus du palier ouvre l'offre d'abonnement au lieu de la page.
+type ItemMobile = { href: string; label: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>; moduleKey?: ModuleKey; requiresPalier?: Palier };
+
+const GROUPS: { label: string; color: string; items: ItemMobile[] }[] = [
   {
     label: "Intelligence IA", color: "#111111",
     items: [
-      { href: "/dashboard",            label: "Axia — Assistante IA", icon: Zap },
-      { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar },
+      { href: "/dashboard",            label: "Axia — Assistante IA", icon: Zap, requiresPalier: "palier1" },
+      { href: "/dashboard/scheduler", label: "Planificateur",    icon: Calendar, moduleKey: "marketing" },
     ],
   },
   {
     label: "Boutique", color: "#F5A623",
     items: [
       { href: "/dashboard/accueil",    label: "Accueil",          icon: LayoutDashboard },
-      { href: "/dashboard/produits",   label: "Produits",         icon: Package },
-      { href: "/dashboard/commandes",  label: "Commandes",        icon: ShoppingCart },
-      { href: "/dashboard/clients",    label: "Clients",          icon: Bot },
-      { href: "/dashboard/avis",       label: "Avis clients",     icon: Star },
+      { href: "/dashboard/produits",   label: "Produits",         icon: Package, moduleKey: "produits" },
+      { href: "/dashboard/commandes",  label: "Commandes",        icon: ShoppingCart, moduleKey: "commandes" },
+      { href: "/dashboard/clients",    label: "Clients",          icon: Bot, moduleKey: "clients" },
+      { href: "/dashboard/avis",       label: "Avis clients",     icon: Star, moduleKey: "clients" },
     ],
   },
   {
     label: "Design", color: "#ec4899",
     items: [
-      { href: "/dashboard/boutique",   label: "Ma Boutique",      icon: Store },
-      { href: "/dashboard/builder",    label: "Constructeur",     icon: Paintbrush },
-      { href: "/dashboard/themes",     label: "Thèmes",           icon: Palette },
+      { href: "/dashboard/boutique",   label: "Ma Boutique",      icon: Store, moduleKey: "boutique" },
+      { href: "/dashboard/builder",    label: "Constructeur",     icon: Paintbrush, moduleKey: "boutique" },
+      { href: "/dashboard/themes",     label: "Thèmes",           icon: Palette, moduleKey: "boutique" },
     ],
   },
   {
     label: "Finance", color: "#34d399",
     items: [
-      { href: "/dashboard/paiements",  label: "Paiements",        icon: CreditCard },
-      { href: "/dashboard/revenus",    label: "Revenus",          icon: TrendingUp },
-      { href: "/dashboard/wallet",     label: "Wallet",           icon: Wallet },
+      { href: "/dashboard/paiements",  label: "Paiements",        icon: CreditCard, moduleKey: "finance" },
+      { href: "/dashboard/revenus",    label: "Revenus",          icon: TrendingUp, moduleKey: "finance" },
+      { href: "/dashboard/wallet",     label: "Wallet",           icon: Wallet, moduleKey: "finance" },
     ],
   },
   {
     label: "Croissance", color: "#f472b6",
     items: [
-      { href: "/dashboard/marketing",    label: "Marketing",      icon: Megaphone },
-      { href: "/dashboard/publicite",    label: "Publicité Ads",  icon: Megaphone },
-      { href: "/dashboard/sms",          label: "SMS / WhatsApp", icon: MessageSquare },
-      { href: "/dashboard/feeds",        label: "Flux Produits",  icon: Globe2 },
-      { href: "/dashboard/veille",       label: "Veille Concurr.",icon: Search },
-      { href: "/dashboard/dropshipping", label: "Dropshipping",   icon: Package2 },
+      { href: "/dashboard/marketing",    label: "Marketing",      icon: Megaphone, moduleKey: "marketing", requiresPalier: "palier1" },
+      { href: "/dashboard/publicite",    label: "Publicité Ads",  icon: Megaphone, moduleKey: "marketing" },
+      { href: "/dashboard/sms",          label: "SMS / WhatsApp", icon: MessageSquare, moduleKey: "marketing" },
+      { href: "/dashboard/feeds",        label: "Flux Produits",  icon: Globe2, moduleKey: "boutique" },
+      { href: "/dashboard/veille",       label: "Veille Concurr.",icon: Search, moduleKey: "marketing" },
+      { href: "/dashboard/sourcing",     label: "Sourcing",       icon: Package2, moduleKey: "produits", requiresPalier: "palier2" },
     ],
   },
   {
     label: "Opérations", color: "#fb923c",
     items: [
-      { href: "/dashboard/logistique",   label: "Logistique",     icon: Truck },
-      { href: "/dashboard/affiliation",  label: "Affiliation",    icon: TrendingUp },
-      { href: "/dashboard/campagnes",    label: "Campagnes",      icon: Megaphone },
+      { href: "/dashboard/logistique",   label: "Logistique",     icon: Truck, moduleKey: "commandes" },
+      { href: "/dashboard/affiliation",  label: "Affiliation",    icon: TrendingUp, moduleKey: "marketing" },
+      { href: "/dashboard/campagnes",    label: "Campagnes",      icon: Megaphone, moduleKey: "marketing" },
     ],
   },
   {
     label: "Analytiques", color: "#FFD280",
     items: [
-      { href: "/dashboard/analytics",  label: "Analytics",        icon: BarChart3 },
-      { href: "/dashboard/parametres", label: "Paramètres",       icon: Settings },
+      { href: "/dashboard/analytics",  label: "Analytics",        icon: BarChart3, moduleKey: "produits" },
+      { href: "/dashboard/parametres", label: "Paramètres",       icon: Settings, moduleKey: "parametres" },
     ],
   },
 ];
 
 const MAIN_TABS = [
   { href: "/dashboard/accueil",   label: "Accueil",   AppIcon: IconAccueil,   exact: true },
-  { href: "/dashboard/produits",  label: "Produits",  AppIcon: IconProduits },
-  { href: "/dashboard/commandes", label: "Commandes", AppIcon: IconCommandes },
+  { href: "/dashboard/produits",  label: "Produits",  AppIcon: IconProduits, moduleKey: "produits" as ModuleKey },
+  { href: "/dashboard/commandes", label: "Commandes", AppIcon: IconCommandes, moduleKey: "commandes" as ModuleKey },
 ];
 
-export function MobileBottomNav() {
+export function MobileBottomNav({ permissions }: { permissions?: Record<ModuleKey, Niveau> }) {
   const t = useT();
+  const { openAbonnement, palier } = useAbonnementOverlay();
+  const autorise = (it: { moduleKey?: ModuleKey }) => !permissions || !it.moduleKey || permissions[it.moduleKey] !== "aucun";
+  const onglets = MAIN_TABS.filter(autorise);
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -122,7 +132,7 @@ export function MobileBottomNav() {
             }}
           >
             {/* Tabs gauche */}
-            {MAIN_TABS.slice(0, 2).map((tab) => {
+            {onglets.filter(o => o.href !== "/dashboard/commandes").map((tab) => {
               const active = tab.exact
                 ? pathname === tab.href
                 : pathname.startsWith(tab.href);
@@ -163,7 +173,7 @@ export function MobileBottomNav() {
             </div>
 
             {/* Tab droite — Commandes */}
-            {MAIN_TABS.slice(2).map((tab) => {
+            {onglets.filter(o => o.href === "/dashboard/commandes").map((tab) => {
               const active = pathname.startsWith(tab.href);
               const AppIcon = tab.AppIcon!;
               return (
@@ -190,6 +200,8 @@ export function MobileBottomNav() {
 
             {/* Bouton Plus */}
             <button
+              type="button"
+              aria-label={t("Tous les modules")}
               onClick={() => setDrawerOpen(true)}
               className="flex flex-col items-center gap-0.5 px-4 py-1 rounded-2xl transition-all"
             >
@@ -238,6 +250,8 @@ export function MobileBottomNav() {
                   <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{t("Accédez à toutes les fonctionnalités")}</p>
                 </div>
                 <button
+                  type="button"
+                  aria-label={t("Fermer")}
                   onClick={() => setDrawerOpen(false)}
                   className="w-8 h-8 flex items-center justify-center bg-[#F5F5F7] rounded-xl text-[#666]"
                 >
@@ -248,7 +262,7 @@ export function MobileBottomNav() {
 
             {/* Modules */}
             <div className="overflow-y-auto pb-10" style={{ maxHeight: "calc(82vh - 90px)" }}>
-              {GROUPS.map((group) => (
+              {GROUPS.map((g) => ({ ...g, items: g.items.filter(autorise) })).filter((g) => g.items.length > 0).map((group) => (
                 <div key={group.label} className="px-4 pt-5">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-1.5 h-3 rounded-full" style={{ background: group.color }} />
@@ -266,7 +280,13 @@ export function MobileBottomNav() {
                         <Link
                           key={item.href}
                           href={item.href}
-                          onClick={() => setDrawerOpen(false)}
+                          onClick={(e) => {
+                            setDrawerOpen(false);
+                            if (item.requiresPalier && !palierAuMoins(palier, item.requiresPalier)) {
+                              e.preventDefault();
+                              openAbonnement(item.requiresPalier);
+                            }
+                          }}
                           className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all"
                           style={{
                             background: active ? group.color + "12" : "#F9F9F9",

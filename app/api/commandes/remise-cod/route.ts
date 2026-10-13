@@ -11,7 +11,7 @@ export async function PATCH(req: Request) {
   const refus = await requireNiveau(session, "commandes", "ecriture");
   if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
-  const { commandeIds } = await req.json();
+  const { commandeIds } = await req.json().catch(() => ({}));
   if (!Array.isArray(commandeIds) || commandeIds.length === 0) {
     return NextResponse.json({ error: "commandeIds requis" }, { status: 400 });
   }

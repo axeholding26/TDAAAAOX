@@ -11,7 +11,7 @@ import type { ModePaiement } from "@/lib/pos/types";
 export const GET = routePos<{ id: string }>(async (ctx, _req, { id }) => {
   exigerUnDroit(ctx, "vendre", "voir_caisse");
   const vente = await prisma.commande.findFirst({
-    where: { id, tenantId: ctx.tenantId, canal: CANAL.POS, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }) },
+    where: { id, tenantId: ctx.tenantId, canal: CANAL.POS, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }), ...(ctx.magasinIds?.length ? { magasinId: { in: ctx.magasinIds } } : {}) },
     include: {
       lignes: true,
       paiements: { orderBy: { createdAt: "asc" } },

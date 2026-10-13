@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     // Vérifie un mot de passe existant : limité comme une connexion.
     const rl = authLimiter.check(getClientIp(req));
     if (!rl.success) return rateLimitResponse(rl.reset);
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     const { token, password } = schema.parse(body);
 
     const membre = await prisma.membreEquipe.findUnique({ where: { inviteToken: token } });
@@ -53,10 +53,12 @@ export async function POST(req: Request) {
       userId = user.id;
     }
 
-    await prisma.membreEquipe.update({
-      where: { id: membre.id },
+    // Conditionnel : un lien d'invitation ne sert qu'une fois, même en double clic.
+    const pris = await prisma.membreEquipe.updateMany({
+      where: { id: membre.id, statut: "invite", inviteToken: token },
       data: { userId, statut: "actif", inviteToken: null, inviteExpiresAt: null },
     });
+    if (pris.count === 0) return NextResponse.json({ error: "Invitation invalide ou déjà utilisée" }, { status: 400 });
 
     return NextResponse.json({ success: true });
   } catch (err) {

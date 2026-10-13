@@ -21,9 +21,9 @@ export const GET = routePos(async (ctx, req) => {
 });
 
 export const POST = routePos(async (ctx, req) => {
-  const corps = await req.json();
-  // Ancien écran : la quantité s'appelait quantiteInitiale et arrivait en texte.
-  const lot = await recevoirLot(ctx, schemaLot.parse({ ...corps, quantite: corps.quantite ?? (corps.quantiteInitiale !== undefined ? Number(corps.quantiteInitiale) : undefined), cle: cleIdempotence(req, corps) ?? crypto.randomUUID() }));
+  const corps = (await req.json()) ?? {};
+  // Clé envoyée par l'écran : un renvoi (réseau coupé, double clic) ne recrédite pas le stock.
+  const lot = await recevoirLot(ctx, schemaLot.parse({ ...corps, cle: cleIdempotence(req, corps) }));
   return NextResponse.json(
     { ok: true, ...lot, ...(lot.rejoue ? { message: "Ce lot a déjà été enregistré. Aucun doublon n'a été créé." } : {}) },
     { status: lot.rejoue ? 200 : 201 },

@@ -10,7 +10,7 @@ import { useT } from "@/components/I18nProvider";
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import type { TableauDeBord } from "@/lib/sourcing/profit";
 import type { Alerte } from "@/lib/sourcing/alertes";
-import { Bouton, Carte, Chargement, Erreur, Estimation, EtatVide, Kpi, Onglets, POLICE, pourcent, useApi } from "./ui";
+import { Carte, Chargement, Erreur, Estimation, EtatVide, Kpi, Onglets, POLICE, pourcent, useApi, versDossier } from "./ui";
 
 type Donnees = TableauDeBord & { alertes: Alerte[] };
 type Periode = "7" | "30" | "90";
@@ -151,7 +151,7 @@ export function TableauDeBordProfit() {
                         <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
                         <div>
                           <p>{t("{0} ligne(s) de commande sans coût produit renseigné : le bénéfice est surestimé.", data.lignesSansCout)}</p>
-                          <Link href="/dashboard/sourcing/catalogue" className="font-bold underline">{t("Renseigner les coûts dans le catalogue")}</Link>
+                          <button type="button" onClick={versDossier} className="font-bold underline text-left">{t("Renseigner les coûts dans le catalogue")}</button>
                         </div>
                       </div>
                     )}
@@ -250,9 +250,6 @@ export function TableauDeBordProfit() {
               </>
             )}
 
-            <div className="flex justify-end">
-              <Bouton href="/dashboard/sourcing" variante="secondaire" petit>{t("Ouvrir AXSO Sourcing")}<ChevronRight size={12} /></Bouton>
-            </div>
           </>
         );
       })()}

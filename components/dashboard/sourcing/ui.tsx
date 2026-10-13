@@ -17,7 +17,7 @@ export function useApi<T>(url: string | null) {
     if (!url) return;
     setChargement(true);
     try {
-      const r = await fetch(url);
+      const r = await fetch(url).catch(() => { throw new Error("Erreur réseau"); });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(d.error ?? d.message ?? "Erreur");
       setData(d); setErreur(null);
@@ -33,11 +33,15 @@ export function useApi<T>(url: string | null) {
 
 /** Appel d'écriture : renvoie le JSON, ou lève l'erreur renvoyée par l'API (message en français). */
 export async function envoyer<T = any>(url: string, method: "POST" | "PATCH" | "PUT" | "DELETE", body?: unknown): Promise<T> {
-  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) })
+    .catch(() => { throw new Error("Erreur réseau"); });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error ?? d.message ?? "Erreur");
   return d as T;
 }
+
+/** Remonte au dossier produit (en haut de /dashboard/sourcing), là où se rattache un fournisseur et se renseignent les coûts. */
+export const versDossier = () => document.getElementById("dossier-en-cours")?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 export function Page({ children, etroite }: { children: React.ReactNode; etroite?: boolean }) {
   return <div className={`space-y-5 ${etroite ? "max-w-3xl mx-auto" : ""}`} style={POLICE}>{children}</div>;
@@ -177,7 +181,7 @@ export function Onglets<T extends string>({ onglets, actif, onChange }: { onglet
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
       {onglets.map((o) => (
-        <button key={o.cle} onClick={() => onChange(o.cle)}
+        <button key={o.cle} type="button" onClick={() => onChange(o.cle)}
           className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
           style={actif === o.cle ? { background: "#F5A623", color: "#111111" } : { background: "#F5F5F5", color: "#666666" }}>
           {t(o.libelle)}{o.nombre !== undefined ? ` · ${o.nombre}` : ""}
@@ -193,7 +197,7 @@ export function Kpi({ libelle, valeur, detail, ton }: { libelle: string; valeur:
   return (
     <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4">
       <p className="text-[11px] font-semibold text-[#666666] uppercase tracking-wide">{t(libelle)}</p>
-      <p className="text-[19px] font-bold leading-tight mt-1 tabular-nums" style={{ color: ton === "positif" ? "#15803D" : ton === "attention" ? "#B91C1C" : "#111111" }}>{valeur}</p>
+      <p className="text-[19px] font-bold leading-tight mt-1 tabular-nums break-words" style={{ color: ton === "positif" ? "#15803D" : ton === "attention" ? "#B91C1C" : "#111111" }}>{valeur}</p>
       {detail && <p className="text-[11px] text-[#AAAAAA] mt-0.5">{t(detail)}</p>}
     </div>
   );

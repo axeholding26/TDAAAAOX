@@ -10,7 +10,7 @@ import { detailAttendu } from "@/lib/pos/session-caisse";
 export const GET = routePos<{ id: string }>(async (ctx, _req, { id }) => {
   exigerUnDroit(ctx, "voir_caisse", "fermer_caisse", "ouvrir_caisse");
   const session = await prisma.sessionCaisse.findFirst({
-    where: { id, tenantId: ctx.tenantId, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }) },
+    where: { id, tenantId: ctx.tenantId, ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }), ...(ctx.magasinIds?.length ? { magasinId: { in: ctx.magasinIds } } : {}) },
     include: { mouvements: { orderBy: { createdAt: "asc" } }, caisse: { select: { nom: true, magasin: { select: { id: true, nom: true } } } } },
   });
   if (!session) throw new ErreurPos("introuvable", 404, "Cette session de caisse est introuvable.");

@@ -5,15 +5,21 @@ import { prixClient, reductionPromo } from "@/lib/pricing";
 import { fraisLivraisonServeur } from "@/lib/livraison";
 import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+
+// Formulaire public : limite par IP (partagée avec whatsapp-creer).
+const limiteCommande = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "commande-vitrine" });
 
 export async function POST(req: NextRequest) {
   try {
+    const rl = limiteCommande.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     // Prix, total et devise NE viennent JAMAIS du navigateur : recalculés depuis la
     // base (même formule que la vitrine) — sinon on pouvait payer le prix de son choix.
     // Commande payée en ligne : produits digitaux et dropshipping (expédié par le fournisseur).
     const { tenantId, client, items, codeAffiliation, codePromo: codeSaisi, zone } = await req.json();
 
-    if (!tenantId || !items?.length || !client?.nom?.trim() || !client?.email?.trim() || !client?.telephone?.trim()) {
+    if (!tenantId || !Array.isArray(items) || !items.length || items.length > 50 || !client?.nom?.trim() || !client?.email?.trim() || !client?.telephone?.trim()) {
       return NextResponse.json({ error: "Nom, email et téléphone obligatoires" }, { status: 400 });
     }
 
@@ -29,6 +35,7 @@ export async function POST(req: NextRequest) {
       where: { id: { in: items.map((i: any) => String(i.produitId)) }, tenantId, actif: true },
       select: {
         id: true, nom: true, type: true, prix: true, images: true,
+        variantes: { where: { actif: true }, select: { nom: true, valeur: true, prix: true } },
         produitFichier: { select: { limitAchats: true } },
         licenceProduit: { select: { id: true, cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 } } },
       },
@@ -45,10 +52,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Adresse et ville de livraison obligatoires" }, { status: 400 });
     }
     const taux = tenant.commissionRate ?? 0.1;
-    const lignes = items.map((item: any) => {
+    const lignes: { produitId: string; nom: string; prix: number; quantite: number; imageUrl: string | null; variante: string | null }[] = [];
+    for (const item of items) {
       const p = produits.find((x) => x.id === String(item.produitId))!;
-      return { produitId: p.id, nom: p.nom, prix: prixClient(p.prix, taux, p.type), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: item.variante || null };
-    });
+      // Variante revérifiée et payée à SON prix (sinon une variante plus chère passait au prix de base).
+      const variante = item.variante ? p.variantes.find((v) => `${v.nom}: ${v.valeur}` === item.variante) : null;
+      if (item.variante && !variante) return NextResponse.json({ error: `Variante « ${item.variante} » introuvable pour ${p.nom}` }, { status: 400 });
+      lignes.push({ produitId: p.id, nom: p.nom, prix: prixClient(variante?.prix ?? p.prix, taux, p.type), quantite: Math.min(Math.max(Math.floor(Number(item.quantite) || 1), 1), 10), imageUrl: p.images[0] ?? null, variante: variante ? item.variante : null });
+    }
     const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
     const reduction = reductionPromo(promo, sousTotal);

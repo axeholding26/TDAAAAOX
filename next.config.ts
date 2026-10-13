@@ -35,6 +35,17 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: false },
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
 
+  // AXSO Sourcing tient en une page : les anciennes adresses y renvoient.
+  async redirects() {
+    const vers = (source: string, destination: string) => ({ source, destination, permanent: false });
+    return [
+      ...["catalogue", "import", "calculateur", "fournisseurs/agent"].map((p) => vers(`/dashboard/sourcing/${p}`, "/dashboard/sourcing")),
+      ...["commandes", "expeditions", "stocks"].map((p) => vers(`/dashboard/sourcing/${p}`, `/dashboard/sourcing?bloc=${p}`)),
+      vers("/dashboard/sourcing/produits/:id", "/dashboard/sourcing?dossier=:id"),
+      vers("/dashboard/dropshipping", "/dashboard/sourcing?bloc=benefice"),
+    ];
+  },
+
   async headers() {
     return [
       { source: "/(.*)", headers: OWASP_HEADERS },

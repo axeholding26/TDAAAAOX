@@ -25,10 +25,10 @@ export default function DashboardError({
           {t("Une erreur s'est produite")}
         </h2>
         <p className="text-gray-500 text-sm leading-relaxed">
-          {t("Le dashboard n'a pas pu se charger. Nos agents travaillent déjà sur le problème.")}
+          {t("Le tableau de bord n'a pas pu se charger. Réessaie dans un instant.")}
         </p>
         {error.digest && (
-          <p className="text-xs text-gray-400 mt-2 font-mono">#{t(error.digest)}</p>
+          <p className="text-xs text-gray-400 mt-2 font-mono">#{error.digest}</p>
         )}
       </div>
       <button

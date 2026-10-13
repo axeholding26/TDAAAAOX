@@ -41,6 +41,8 @@ export default function SMSPage() {
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
   const [histoCampagnes, setHistoCampagnes] = useState<any[]>([]);
+  // Faux tant que le prestataire SMS n'est pas branché côté Axso (lib/integrations.ts).
+  const [disponible, setDisponible] = useState(true);
 
   const [form, setForm] = useState({
     nom: "",
@@ -54,12 +56,12 @@ export default function SMSPage() {
   async function charger() {
     try {
       const [clientsRes, campagnesRes] = await Promise.all([
-        fetch("/api/clients?count=true"),
+        fetch("/api/email?action=stats"),
         fetch("/api/sms"),
       ]);
-      if (clientsRes.ok) { const d = await clientsRes.json(); setNbClients(d.total || 0); }
-      if (campagnesRes.ok) { const d = await campagnesRes.json(); setHistoCampagnes(d.campagnes || []); }
-    } catch { }
+      if (clientsRes.ok) { const d = await clientsRes.json(); setNbClients(d.segments?.tous || 0); }
+      if (campagnesRes.ok) { const d = await campagnesRes.json(); setHistoCampagnes(d.campagnes || []); setDisponible(d.disponible !== false); }
+    } catch { toast.error(tr("Erreur chargement")); }
   }
 
   async function genererMessage() {
@@ -79,6 +81,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
         }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error();
       const sms = (data.reponse || "").trim().slice(0, 160);
       setForm(f => ({ ...f, message: sms }));
       toast.success(tr("Message généré !"));
@@ -96,7 +99,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
         body: JSON.stringify({ nom: form.nom, message: form.message, segment: form.segment }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur");
+      if (!res.ok) throw new Error(data.message || "Erreur envoi");
       toast.success(tr(data.message) || tr("Campagne SMS lancée !"));
       setShowModal(false);
       setForm({ nom: "", message: "", segment: "tous", promptIA: "" });
@@ -111,31 +114,27 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("SMS & WhatsApp")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Envoyez des campagnes SMS à vos clients")}</p>
         </div>
-        <button onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
+        <button onClick={() => setShowModal(true)} disabled={!disponible}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 20px rgba(34,197,94,0.3)" }}>
-          <Plus size={16} />{" "}{tr("Nouvelle campagne")}
+          <Plus size={16} />{" "}{tr(disponible ? "Nouvelle campagne" : "Bientôt disponible")}
         </button>
       </div>
 
-      {/* Info Africa's Talking */}
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-        <div className="flex items-start gap-3">
+      {!disponible && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-start gap-3">
           <Smartphone size={18} className="text-green-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-green-800">{tr("Africa's Talking — SMS panafricain")}</p>
-            <p className="text-xs text-green-600 mt-1">
-              {tr("Pour activer les envois SMS réels, ajoutez")}{" "}<code className="bg-green-100 px-1 rounded">AFRICASTALKING_KEY</code> et <code className="bg-green-100 px-1 rounded">AFRICASTALKING_USERNAME</code> dans votre .env.local.
-              <br />{tr("Créez un compte gratuit sur")}{" "}<a href="https://africastalking.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">africastalking.com</a> (sandbox gratuit pour les tests).
-            </p>
+          <div>
+            <p className="text-sm font-semibold text-green-800">{tr("Les campagnes SMS seront bientôt disponibles")}</p>
+            <p className="text-xs text-green-700 mt-1">{tr("L'envoi de SMS n'est pas encore activé sur Axso. En attendant, vous pouvez écrire à vos clients par WhatsApp ou par e-mail.")}</p>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -151,7 +150,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: s.color + "15", border: `1px solid ${s.color}25` }}>
                   <Icone size={16} style={{ color: s.color }} />
                 </div>
-                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{tr(s.val)}</p>
+                <p className="text-[20px] font-bold text-[#111111] tabular-nums" style={{ fontVariantNumeric: "tabular-nums" }}>{s.val}</p>
               </div>
               <p className="text-[12px] text-[#AAAAAA]">{tr(s.label)}</p>
             </div>
@@ -169,11 +168,11 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
             {histoCampagnes.slice(0, 5).map((c: any) => (
               <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAFAFA] transition-colors">
                 <div>
-                  <p className="text-[13px] font-medium text-[#222]">{tr(c.nom)}</p>
+                  <p className="text-[13px] font-medium text-[#222] truncate">{c.nom}</p>
                   <p className="text-[11.5px] text-[#AAAAAA]">{tr(c.segment)} · {new Date(c.createdAt).toLocaleDateString(tr.loc)}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500">{tr(c.nbEnvoyes)}{" "}{tr("envoyés")}</span>
+                  <span className="text-xs text-gray-500">{c.nbEnvoyes}{" "}{tr("envoyés")}</span>
                   <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full border ${c.statut === "envoye" ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]" : "bg-[#F5F5F7] text-[#888] border-[#EBEBEB]"}`}>
                     {c.statut === "envoye" ? tr("✓ Envoyé") : tr("Brouillon")}
                   </span>
@@ -191,7 +190,7 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#F3F3F3]">
               <h2 className="text-[15px] font-bold text-[#111111]">{tr("Nouvelle campagne SMS")}</h2>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
+              <button onClick={() => setShowModal(false)} aria-label={tr("Fermer")} className="text-gray-400 hover:text-gray-700"><X size={20} /></button>
             </div>
             <div className="p-6 space-y-5">
               {/* Segment */}

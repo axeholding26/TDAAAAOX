@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
+import { authLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { verifierCode } from "@/lib/two-factor";
 
 const schema = z.object({
@@ -14,6 +15,11 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Données invalides (mot de passe : 6 caractères min.)" }, { status: 400 });
 
+  // Limite par IP et par email : bloque la devinette du code à 6 chiffres / du mot de passe.
+  for (const cle of [getClientIp(req), `email:${parsed.data.email.toLowerCase()}`]) {
+    const rl = authLimiter.check(cle);
+    if (!rl.success) return rateLimitResponse(rl.reset);
+  }
   const codeOk = await verifierCode(parsed.data.email, parsed.data.code);
   if (!codeOk) return NextResponse.json({ error: "Code invalide ou expiré" }, { status: 400 });
 

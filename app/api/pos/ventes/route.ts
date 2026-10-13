@@ -11,6 +11,7 @@ import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { routePos } from "@/lib/pos/acces";
 import { aDroit, exigerUnDroit } from "@/lib/pos/droits";
 import { ErreurPos } from "@/lib/pos/erreurs";
+import { mutationConnue } from "@/lib/pos/idempotence";
 import { schemaVente } from "@/lib/pos/schemas";
 import { enregistrerVente } from "@/lib/pos/vente";
 
@@ -18,7 +19,8 @@ export const POST = routePos(async (ctx, req) => {
   const demande = schemaVente.parse(await req.json());
   // Même règle que l'ancienne caisse tant que le propriétaire n'a pas tranché
   // (le quota du palier gratuit compte les ventes en caisse — lib/abonnement.ts).
-  if (await quotaCommandesAtteint(ctx.tenantId)) {
+  // Une vente déjà enregistrée sous cette clé (réponse perdue) est rendue telle quelle, même quota atteint.
+  if (!(await mutationConnue(ctx.tenantId, demande.cle, "vente")) && (await quotaCommandesAtteint(ctx.tenantId))) {
     throw new ErreurPos("quota_atteint", 403, "Le nombre de commandes du palier gratuit est atteint pour ce mois. Passez à un palier supérieur pour continuer à vendre en caisse.");
   }
   const vente = await enregistrerVente(ctx, demande);
@@ -37,6 +39,8 @@ export const GET = routePos(async (ctx, req) => {
     where: {
       tenantId: ctx.tenantId, canal: CANAL.POS,
       ...(aDroit(ctx, "voir_caisse") ? {} : { caisseId: ctx.caisseId }),
+      // Membre limité à certains magasins : seulement leurs ventes.
+      ...(ctx.magasinIds?.length ? { magasinId: { in: ctx.magasinIds } } : {}),
       ...(p.get("sessionCaisseId") ? { sessionCaisseId: p.get("sessionCaisseId") } : {}),
       ...(q ? { OR: [{ numero: { contains: q, mode: "insensitive" } }, { clientNom: { contains: q, mode: "insensitive" } }] } : {}),
     },
