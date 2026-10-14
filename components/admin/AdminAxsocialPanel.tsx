@@ -25,7 +25,7 @@ export function AdminAxsocialPanel({ peutPublier }: { peutPublier: boolean }) {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/axsocial");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       setPosts(data.posts ?? []);
     } finally {
       setLoading(false);
@@ -43,13 +43,13 @@ export function AdminAxsocialPanel({ peutPublier }: { peutPublier: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contenu, type: "post" }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t("Publié sur Axsocial"));
       setContenu("");
       charger();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     } finally {
       setSubmitting(false);
     }
@@ -59,12 +59,12 @@ export function AdminAxsocialPanel({ peutPublier }: { peutPublier: boolean }) {
     if (!confirm(t("Supprimer cette publication ?"))) return;
     try {
       const res = await fetch(`/api/admin/axsocial/${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t("Supprimée"));
       charger();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     }
   }
 

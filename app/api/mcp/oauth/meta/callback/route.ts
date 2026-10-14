@@ -1,7 +1,9 @@
 // Callback OAuth Meta — échange le code, récupère les pages et comptes WA
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { enregistrerConnexion } from "@/lib/connect";
+import { auth } from "@/lib/auth";
+import { integrationActive } from "@/lib/integrations";
+import { verifierEtatOAuth } from "@/lib/mcp/oauth-etat";
 
 const GRAPH = "https://graph.facebook.com/v19.0";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
@@ -9,10 +11,12 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "";
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
-  const tenantId = searchParams.get("state");
+  // Boutique de la session, jamais du paramètre `state` (voir lib/mcp/oauth-etat.ts).
+  const tenantId = ((await auth())?.user as any)?.tenantId as string | undefined;
+  const etatOk = await verifierEtatOAuth(searchParams.get("state"));
   const error = searchParams.get("error");
 
-  if (error || !code || !tenantId) {
+  if (error || !code || !tenantId || !etatOk || !integrationActive("meta")) {
     const msg = error === "access_denied" ? "Autorisation refusée" : "oauth_echec";
     return NextResponse.redirect(`${APP_URL}/dashboard/connecteurs?error=${encodeURIComponent(msg)}`);
   }
@@ -23,7 +27,7 @@ export async function GET(req: NextRequest) {
 
   // 1. Échange code → short-lived user token
   const tokenRes = await fetch(
-    `${GRAPH}/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(callbackUrl)}&client_secret=${appSecret}&code=${code}`
+    `${GRAPH}/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(callbackUrl)}&client_secret=${appSecret}&code=${encodeURIComponent(code)}`
   );
   const tokenData = await tokenRes.json();
   if (tokenData.error) {
@@ -75,8 +79,10 @@ export async function GET(req: NextRequest) {
   const meData = await meRes.json();
 
   // 7. Sauvegarde en base
-  const configData: Prisma.InputJsonValue = {
+  const configData = {
     user_token: userToken,
+    // Jeton utilisateur longue durée : Meta donne sa durée de vie en secondes (≈ 60 jours).
+    ...(longData.expires_in && { expires_at: new Date(Date.now() + longData.expires_in * 1000).toISOString() }),
     user_id: meData.id,
     user_name: meData.name,
     user_picture: meData.picture?.data?.url,
@@ -85,40 +91,25 @@ export async function GET(req: NextRequest) {
     connected_at: new Date().toISOString(),
   };
 
-  await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type: "meta" } },
-    create: { tenantId, type: "meta", statut: "actif", config: configData },
-    update: { statut: "actif", config: configData },
-  });
+  await enregistrerConnexion(tenantId, "meta", { statut: "actif", config: configData });
 
   // Si une seule page, on la sélectionne automatiquement
   if (pagesAvecIG.length === 1) {
     const page = pagesAvecIG[0];
-    await prisma.connecteurConfig.update({
-      where: { tenantId_type: { tenantId, type: "meta" } },
-      data: {
-        pageId: page.id,
-        accessToken: page.access_token,
-        igUserId: page.ig_account?.id ?? null,
-      },
+    await enregistrerConnexion(tenantId, "meta", {
+      pageId: page.id,
+      accessToken: page.access_token,
+      igUserId: page.ig_account?.id ?? null,
     });
   }
 
   // Si des numéros WA disponibles, sauvegarder le 1er automatiquement
   const allPhones = wabaAccounts.flatMap((w: any) => w.whatsapp_business_accounts?.data?.flatMap((wba: any) => wba.phone_numbers?.data ?? []) ?? []);
   if (allPhones.length > 0) {
-    await prisma.connecteurConfig.upsert({
-      where: { tenantId_type: { tenantId, type: "whatsapp" } },
-      create: {
-        tenantId, type: "whatsapp", statut: "actif",
-        accessToken: userToken,
-        config: { phone_number_id: allPhones[0].id, display_phone: allPhones[0].display_phone_number, all_phones: allPhones } as Prisma.InputJsonValue,
-      },
-      update: {
-        statut: "actif",
-        accessToken: userToken,
-        config: { phone_number_id: allPhones[0].id, display_phone: allPhones[0].display_phone_number, all_phones: allPhones } as Prisma.InputJsonValue,
-      },
+    await enregistrerConnexion(tenantId, "whatsapp", {
+      statut: "actif",
+      accessToken: userToken,
+      config: { phone_number_id: allPhones[0].id, display_phone: allPhones[0].display_phone_number, all_phones: allPhones },
     });
   }
 

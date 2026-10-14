@@ -549,7 +549,7 @@ export default function WhatsAppPage() {
     return (
       <UpgradeGate
         titre={tr("WhatsApp verrouillé — quota de commandes atteint")}
-        description={tr("Vous avez atteint votre quota de 30 commandes ce mois-ci au Palier 0. Passez à un palier supérieur pour retrouver l'accès à WhatsApp — envoi et réception de messages.")}
+        description={tr("Vous avez atteint votre quota de 60 commandes ce mois-ci au Palier 0. Passez à un palier supérieur pour retrouver l'accès à WhatsApp — envoi et réception de messages.")}
         palierRequis="palier1"
       />
     );

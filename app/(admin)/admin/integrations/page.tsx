@@ -28,8 +28,8 @@ export default async function AdminIntegrationsPage() {
           : manquantes.some((e) => e.indispensable) ? t("Une intégration indispensable est incomplète : l'application ne peut pas fonctionner correctement.")
           : t("{0} fonction(s) facultative(s) non configurée(s) : elles sont masquées ou marquées « bientôt disponible » pour les marchands.", manquantes.length)}
       </p>
-      <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "rgba(255,255,255,0.08)", background: "#1A1A1A" }}>
-        <table className="w-full text-sm">
+      <div className="rounded-2xl border overflow-x-auto" style={{ borderColor: "rgba(255,255,255,0.08)", background: "#1A1A1A" }}>
+        <table className="w-full text-sm min-w-[560px]">
           <thead>
             <tr className="text-left" style={{ color: "#888888" }}>
               <th className="px-4 py-3 font-semibold">{t("Intégration")}</th>

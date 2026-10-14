@@ -6,10 +6,20 @@ import { Prix } from "@/components/storefront/DeviseVitrine";
 import { WishlistHeartButton } from "@/components/storefront/WishlistHeartButton";
 import type { BlockRenderProps } from "../types";
 import { getT } from "@/lib/i18n/serveur";
+import { requeteLiaison, selectionner } from "@/lib/builder/liaisons";
 
-const COLONNES_MAP: Record<number, string> = {
-  2: "grid-cols-2", 3: "grid-cols-2 @min-[640px]:grid-cols-3", 4: "grid-cols-2 @min-[640px]:grid-cols-3 @min-[1024px]:grid-cols-4",
-};
+// Classes écrites en entier (Tailwind ne génère que ce qu'il lit dans le code).
+const MOBILE: Record<number, string> = { 1: "grid-cols-1", 2: "grid-cols-2" };
+const TABLETTE: Record<number, string> = { 2: "@min-[640px]:grid-cols-2", 3: "@min-[640px]:grid-cols-3", 4: "@min-[640px]:grid-cols-4" };
+const BUREAU: Record<number, string> = { 2: "@min-[1024px]:grid-cols-2", 3: "@min-[1024px]:grid-cols-3", 4: "@min-[1024px]:grid-cols-4" };
+
+/** Sans colonnes tablette/mobile choisies : 2 colonnes sur mobile, 3 au plus sur tablette (comme avant). */
+function classesColonnes(config: Record<string, any>) {
+  const d = BUREAU[Number(config.colonnes)] ? Number(config.colonnes) : 4;
+  const t = TABLETTE[Number(config.colonnesTablette)] ? Number(config.colonnesTablette) : Math.min(d, 3);
+  const m = MOBILE[Number(config.colonnesMobile)] ? Number(config.colonnesMobile) : 2;
+  return `${MOBILE[m]} ${TABLETTE[t]} ${BUREAU[d]}`;
+}
 
 // Widget "Produits" (atome, vague 2) — seul widget de la bibliothèque à
 // interroger Prisma directement : rendu uniquement côté SSR storefront (via
@@ -23,18 +33,16 @@ export async function ProductsBlock({ config, colors, slug, container, tenantId 
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { commissionRate: true, devise: true } });
   if (!tenant) return null;
 
-  const nombre = Math.min(Math.max(Number(config.nombre) || 8, 1), 24);
-  const colonnes = COLONNES_MAP[Number(config.colonnes) || 4] || COLONNES_MAP[4];
-  const orderBy =
-    config.tri === "ventes" ? { ventes: "desc" as const } :
-    config.tri === "featured" ? { featured: "desc" as const } :
-    { createdAt: "desc" as const };
-
-  const produits = await prisma.produit.findMany({
-    where: { tenantId, actif: true },
-    orderBy,
-    take: nombre,
+  const colonnes = classesColonnes(config);
+  // Règle de liaison (meilleures ventes, collection, forte marge, dormants…) : lib/builder/liaisons.ts.
+  const r = requeteLiaison(config, tenantId);
+  const lignes = await prisma.produit.findMany({
+    where: r.where as any,
+    orderBy: r.orderBy as any,
+    take: r.take,
+    ...(r.ventesDepuis ? { include: { _count: { select: { lignesCommande: { where: { commande: { createdAt: { gte: r.ventesDepuis }, statut: { not: "annulee" } } } } } } } } : {}),
   });
+  const produits = selectionner(lignes, r);
 
   if (produits.length === 0) return null;
 

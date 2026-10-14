@@ -21,12 +21,12 @@ export function TenantStatutToggle({ tenantId, statutActuel }: { tenantId: strin
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ statut: nouveauStatut }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(nouveauStatut === "suspendu" ? t("Boutique suspendue") : t("Boutique réactivée"));
       router.refresh();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     } finally {
       setLoading(false);
     }

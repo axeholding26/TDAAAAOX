@@ -1,27 +1,19 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
-import { MessageCircle, Mail, Phone, Clock, MapPin, ArrowRight, Shield } from "lucide-react";
+import { Mail, Phone, Clock, ArrowRight, Shield } from "lucide-react";
 import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
   title: "Contact — AXSO",
-  description: "Contactez l'équipe AXSO. Support, partenariats, presse : nous répondons en moins de 24h.",
+  description: "Contactez l'équipe AXSO : support, partenariats, presse.",
 };
 
 const CHANNELS = [
   {
-    Icon: MessageCircle,
-    titre: "Chat en direct",
-    desc: "Réponse en quelques minutes pendant les heures ouvrées",
-    lien: "#",
-    label: "Ouvrir le chat",
-    accent: "#F5A623",
-  },
-  {
     Icon: Mail,
     titre: "Email support",
-    desc: "support@axsoafrica.com · Réponse garantie en 24h",
+    desc: "support@axsoafrica.com",
     lien: "mailto:support@axsoafrica.com",
     label: "Envoyer un email",
     accent: "#7c3aed",
@@ -38,9 +30,7 @@ const CHANNELS = [
 
 const FAQ = [
   { q: "Puis-je tester AXSO gratuitement ?", r: "Oui, le plan Essentiel est gratuit pour toujours. Aucune carte bancaire requise pour démarrer." },
-  { q: "AXSO fonctionne-t-il dans mon pays ?", r: "AXSO est disponible dans 12 pays africains : Sénégal, Côte d'Ivoire, Cameroun, Mali, Togo, Burkina Faso, Guinée, Ghana, Bénin, Niger, RDC, Maroc." },
   { q: "Comment fonctionne l'IA Axia ?", r: "Axia est un agent conversationnel qui exécute de vraies actions dans votre boutique — créer des produits, répondre aux clients, analyser vos ventes — sans formation technique." },
-  { q: "Puis-je migrer depuis une autre plateforme ?", r: "Notre équipe vous accompagne gratuitement pour migrer vos produits, clients et commandes depuis Shopify, WooCommerce ou votre boutique actuelle." },
 ];
 
 export default async function ContactPage() {
@@ -65,14 +55,14 @@ export default async function ContactPage() {
             </span>
           </h1>
           <p className="text-[#666666] text-lg leading-relaxed">
-            {t("Notre équipe répond en moins de 24h ouvrées. Pour les urgences, le chat en direct est disponible dès 8h.")}
+            {t("Écrivez-nous par email ou sur WhatsApp, notre équipe vous répond pendant les heures d'assistance.")}
           </p>
         </div>
       </section>
 
       {/* ── Channels ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-20">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-5 mb-24">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-5 mb-24">
           {CHANNELS.map(({ Icon, titre, desc, lien, label, accent }) => (
             <a key={titre} href={lien} target={lien.startsWith("http") ? "_blank" : undefined}
               rel="noopener noreferrer"
@@ -111,16 +101,6 @@ export default async function ContactPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl p-6 border" style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(124,58,237,0.1)" }}>
-                  <MapPin size={16} style={{ color: "#7c3aed" }} />
-                </div>
-                <h3 className="font-bold text-[#111111] text-sm">{t("Localisation")}</h3>
-              </div>
-              <p className="text-[#666666] text-sm leading-relaxed">{t("Dakar, Sénégal")}<br />{t("Équipe distribuée sur 12 pays")}</p>
-            </div>
-
             <div className="rounded-2xl p-6 border" style={{ background: "rgba(37,211,102,0.04)", borderColor: "rgba(37,211,102,0.15)" }}>
               <h3 className="font-bold text-[#111111] text-sm mb-2">{t("Partenariats & Presse")}</h3>
               <p className="text-[#737373] text-xs leading-relaxed mb-3">{t("Pour les demandes médias, partenariats ou investisseurs :")}</p>
@@ -133,7 +113,7 @@ export default async function ContactPage() {
             <div className="rounded-3xl p-8 border"
               style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(245,166,35,0.15)" }}>
               <h2 className="text-2xl font-black mb-1 text-[#111111]">{t("Envoyer un message")}</h2>
-              <p className="text-[#808080] text-sm mb-7">{t("Nous répondons sous 24h en jours ouvrés.")}</p>
+              <p className="text-[#808080] text-sm mb-7">{t("Le bouton ouvre votre application email avec votre message prêt à envoyer.")}</p>
 
               <style>{`
                 .axso-input { background:#fff; border:1px solid rgba(0,0,0,0.1); color:#111111; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; font-family:inherit; }
@@ -142,27 +122,13 @@ export default async function ContactPage() {
               `}</style>
 
               <form className="space-y-4" action="mailto:support@axsoafrica.com" method="get">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Prénom")}</label>
-                    <input type="text" name="fname" placeholder={t("Aminata")} className="axso-input" />
-                  </div>
-                  <div>
-                    <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Nom")}</label>
-                    <input type="text" name="lname" placeholder={t("Diallo")} className="axso-input" />
-                  </div>
+                <div>
+                  <label htmlFor="contact-sujet" className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Sujet")}</label>
+                  <input id="contact-sujet" type="text" name="subject" required placeholder={t("Support technique, partenariat, presse...")} className="axso-input" />
                 </div>
                 <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Email")}</label>
-                  <input type="email" name="email" placeholder="aminata@example.com" className="axso-input" />
-                </div>
-                <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Sujet")}</label>
-                  <input type="text" name="subject" placeholder={t("Support technique, partenariat, presse...")} className="axso-input" />
-                </div>
-                <div>
-                  <label className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Message")}</label>
-                  <textarea rows={5} name="body" placeholder={t("Décrivez votre demande en détail...")} className="axso-input" style={{ resize: "none" }} />
+                  <label htmlFor="contact-message" className="block text-[#595959] text-xs font-semibold mb-1.5 uppercase tracking-wide">{t("Message")}</label>
+                  <textarea id="contact-message" rows={5} name="body" required placeholder={t("Décrivez votre demande en détail...")} className="axso-input" style={{ resize: "none" }} />
                 </div>
                 <button type="submit"
                   className="w-full font-bold py-4 rounded-xl transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2"

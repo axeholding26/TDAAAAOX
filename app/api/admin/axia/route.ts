@@ -10,6 +10,7 @@ import { getPlatformTenantId } from "@/lib/wallet";
 import { OUTILS_LECTURE, OUTILS_ACTION, estActionAdmin, executerLecture, decrireAction } from "@/lib/axia-admin/outils";
 import { consigneLangue } from "@/lib/axia/style";
 import { getLangue } from "@/lib/i18n/serveur";
+import { aiLimiter, rateLimitResponse } from "@/lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -37,9 +38,11 @@ export async function POST(req: Request) {
   const session = await getAdminSession();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const complet = estAdminComplet(session);
+  const rl = aiLimiter.check(`admin:${session.userId}`);
+  if (!rl.success) return rateLimitResponse(rl.reset);
 
   try {
-    const { messages } = schema.parse(await req.json());
+    const { messages } = schema.parse(await req.json().catch(() => null));
     const confirmations: { id: string; message: string }[] = [];
 
     const executer: ToolExecutor = async (nom, args, tenantId) => {

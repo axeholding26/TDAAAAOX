@@ -59,7 +59,8 @@ export async function GET(request: Request) {
   const carte = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
   const safeDevCarte = /^[A-Z]{3}$/.test(devise) ? devise : "XAF";
   const cartes = carte ? produits.slice(0, 24).map((p, i) => remplacerTokensCarte(carte, {
-    id: String(p.id ?? i), nom: String(p.nom ?? ""), prixAffiche: formatMontant(Number(p.prix) || 0, safeDevCarte),
+    // id réinjecté jusque dans des onclick du design : identifiant simple uniquement (pas de JS via l'URL).
+    id: /^[\w-]{1,40}$/.test(String(p.id)) ? String(p.id) : String(i), nom: String(p.nom ?? ""), prixAffiche: formatMontant(Number(p.prix) || 0, safeDevCarte),
     image: typeof p.image === "string" && /^https?:\/\//.test(p.image) ? p.image : null, description: null,
   }, "apercu")).join("") : "";
 

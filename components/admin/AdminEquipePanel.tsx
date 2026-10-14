@@ -17,7 +17,7 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
     setLoading(true);
     try {
       const res = await fetch("/api/admin/equipe");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       setMembres(data.membres ?? []);
     } finally {
       setLoading(false);
@@ -36,13 +36,13 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t("Membre invité en lecture seule"));
       setForm({ email: "", password: "", name: "" });
       charger();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     } finally {
       setSubmitting(false);
     }
@@ -52,12 +52,12 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
     if (!confirm(t("Révoquer l'accès de ce membre ?"))) return;
     try {
       const res = await fetch(`/api/admin/equipe/${id}`, { method: "DELETE" });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t("Accès révoqué"));
       charger();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     }
   }
 

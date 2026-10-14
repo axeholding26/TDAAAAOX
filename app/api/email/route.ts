@@ -2,12 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { lireConnexion } from "@/lib/connect";
 import { AVEC_EMAIL_REEL } from "@/lib/email";
+import { integrationActive } from "@/lib/integrations";
+import { envoyerGmail, rafraichirTokenGoogle } from "@/lib/mcp/connectors/gmail";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
 
   const { searchParams } = new URL(req.url);
   const action = searchParams.get("action");
@@ -49,11 +53,12 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
+  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
   if (!tenant) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
 
-  const { sujet, corps, segment, provider = "resend" } = await req.json();
-  if (!sujet?.trim() || !corps?.trim()) {
+  const { sujet, corps, segment, provider = "resend" } = await req.json().catch(() => ({}));
+  if (typeof sujet !== "string" || typeof corps !== "string" || !sujet.trim() || !corps.trim()) {
     return NextResponse.json({ error: "Sujet et corps requis" }, { status: 400 });
   }
 
@@ -73,23 +78,23 @@ export async function POST(req: NextRequest) {
   });
 
   let envoyes = 0;
-  let source = "simulation";
+  let source = "aucun";
 
   // ── Envoi via Gmail OAuth ─────────────────────────────────────────────────
-  if (provider === "gmail") {
-    const gmailCfg = await prisma.connecteurConfig.findUnique({
-      where: { tenantId_type: { tenantId, type: "gmail" } },
-    });
+  if (provider === "gmail" && integrationActive("gmail")) {
+    const gmailCfg = await lireConnexion(tenantId, "gmail");
     const cfg = gmailCfg?.config as any;
-    const accessToken = cfg?.access_token ?? cfg?.refresh_token ? await rafraichirGmail(cfg.refresh_token) : null;
+    // Jeton d'accès Google valable une heure : rafraîchi à chaque campagne quand c'est possible.
+    const accessToken = (cfg?.refresh_token ? await rafraichirTokenGoogle(cfg.refresh_token).catch(() => null) : null) ?? cfg?.access_token ?? null;
 
     if (accessToken) {
       source = "gmail";
       for (const client of clients) {
         if (!client.email) continue;
         const html = construireHtml(corps, client.nom, tenant.nomBoutique);
-        await envoyerGmailOAuth(accessToken, client.email, sujet, html).catch(() => {});
-        envoyes++;
+        // Compté seulement si Gmail accepte l'envoi (avant : compté même en cas d'échec).
+        const r = await envoyerGmail({ accessToken, a: client.email, sujet, corpsHtml: html }).catch(() => ({ succes: false }));
+        if (r.succes) envoyes++;
         await pause(150);
       }
     }
@@ -130,7 +135,7 @@ export async function POST(req: NextRequest) {
     envoyes,
     total: clients.length,
     source,
-    mode: envoyes === 0 ? "simulation" : undefined,
+    ...(envoyes === 0 && { error: "Aucun e-mail n'a pu être envoyé." }),
   });
 }
 
@@ -154,35 +159,6 @@ function construireHtml(corps: string, nom: string | null, boutique: string) {
   </div>
 </div>
 </body></html>`;
-}
-
-async function envoyerGmailOAuth(accessToken: string, to: string, subject: string, html: string) {
-  const message = [`To: ${to}`, `Subject: =?UTF-8?B?${Buffer.from(subject).toString("base64")}?=`, "MIME-Version: 1.0", 'Content-Type: text/html; charset="UTF-8"', "", html].join("\r\n");
-  const encoded = Buffer.from(message).toString("base64url");
-  await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ raw: encoded }),
-  });
-}
-
-async function rafraichirGmail(refreshToken: string): Promise<string | null> {
-  try {
-    const res = await fetch("https://oauth2.googleapis.com/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: process.env.GOOGLE_CLIENT_ID ?? "",
-        client_secret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-        refresh_token: refreshToken,
-        grant_type: "refresh_token",
-      }),
-    });
-    const data = await res.json();
-    return data.access_token ?? null;
-  } catch {
-    return null;
-  }
 }
 
 const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));

@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+
+// Formulaire public : limite par IP (partagée avec contact et newsletter).
+const limite = rateLimit({ windowMs: 60_000, max: 5, keyPrefix: "formulaire-vitrine" });
 
 // POST — client soumet un avis sur un produit
 export async function POST(req: NextRequest) {
   try {
+    const rl = limite.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     const { tenantId, produitId, clientEmail, clientNom, note, titre, commentaire } = await req.json();
 
-    if (!tenantId || !produitId || !clientEmail || !note) {
+    if (!tenantId || !produitId || typeof clientEmail !== "string" || !clientEmail.includes("@") || typeof note !== "number") {
       return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
     }
     if (note < 1 || note > 5) {

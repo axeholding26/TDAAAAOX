@@ -19,8 +19,12 @@ export default function LivreurPage() {
 
   useEffect(() => {
     fetch(`/api/tracking/${params.token}`)
-      .then(r => r.json())
-      .then(d => { if (d.commande) setCommande(d.commande); else setErreur(d.error || "Lien de livraison invalide."); });
+      .then(async r => {
+        const d = await r.json().catch(() => ({}));
+        if (d.commande) setCommande(d.commande);
+        else setErreur(r.status === 410 && d.error ? d.error : r.status === 404 ? "Lien de livraison invalide." : "Connexion impossible. Vérifiez votre réseau et rechargez la page.");
+      })
+      .catch(() => setErreur("Connexion impossible. Vérifiez votre réseau et rechargez la page."));
     return () => {
       if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -32,14 +36,16 @@ export default function LivreurPage() {
     const r = await fetch(`/api/tracking/${params.token}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lat, lng, nom: nom || undefined, telephone: telephone || undefined }),
-    });
+    }).catch(() => null);
+    if (!r) return; // réseau coupé : le prochain envoi réessaie
     // Course terminée pendant le partage : on arrête d'envoyer la position.
     if (r.status === 410) {
       if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
       if (intervalRef.current) clearInterval(intervalRef.current);
-      setErreur((await r.json()).error);
+      setErreur((await r.json().catch(() => ({}))).error || "Cette course est terminée : ce lien n'est plus actif.");
       return;
     }
+    if (!r.ok) return;
     setLastPos({ lat, lng });
     setUpdateCount(c => c + 1);
   }
@@ -116,7 +122,7 @@ export default function LivreurPage() {
           <Bike size={32} color="#F5A623" />
         </div>
         <div style={{ fontSize:13, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
-          {t(commande?.tenant?.nomBoutique) ?? t("Livraison")}
+          {commande?.tenant?.nomBoutique || t("Livraison")}
         </div>
         <div style={{ fontSize:20, fontWeight:700 }}>{t("Mode livreur")}</div>
         {commande && <div style={{ fontSize:12, color:"#555", marginTop:4 }}>{t("Commande #")}{commande.numero} · {t(commande.clientNom)}</div>}
@@ -126,13 +132,13 @@ export default function LivreurPage() {
       {status === "idle" && (
         <div style={{ width:"100%", maxWidth:360 }}>
           <div style={{ marginBottom:12 }}>
-            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Votre nom (optionnel)")}</label>
-            <input value={nom} onChange={e => setNom(e.target.value)} placeholder={t("Ex: Moussa")}
+            <label htmlFor="livreur-nom" style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Votre nom (optionnel)")}</label>
+            <input id="livreur-nom" value={nom} onChange={e => setNom(e.target.value)} placeholder={t("Ex: Moussa")}
               style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
           </div>
           <div style={{ marginBottom:20 }}>
-            <label style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Téléphone (optionnel)")}</label>
-            <input value={telephone} onChange={e => setTelephone(e.target.value)} placeholder={t("+237 6XX XX XX XX")} type="tel"
+            <label htmlFor="livreur-tel" style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Téléphone (optionnel)")}</label>
+            <input id="livreur-tel" value={telephone} onChange={e => setTelephone(e.target.value)} placeholder={t("+237 6XX XX XX XX")} type="tel"
               style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
           </div>
 

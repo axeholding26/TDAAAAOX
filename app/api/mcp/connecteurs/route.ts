@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { MCP_CONNECTEURS } from "@/lib/mcp/registry";
-import { Prisma } from "@prisma/client";
+import { enregistrerConnexion } from "@/lib/connect";
 import { z } from "zod";
 
 const saveSchema = z.object({
@@ -48,27 +48,13 @@ export async function POST(req: NextRequest) {
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const body = saveSchema.parse(await req.json());
+  const parsed = saveSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Format invalide" }, { status: 400 });
+  const body = parsed.data;
 
-  const connecteur = await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type: body.type } },
-    create: {
-      tenantId,
-      type: body.type,
-      statut: body.statut ?? "actif",
-      pageId: body.pageId,
-      igUserId: body.igUserId,
-      accessToken: body.accessToken,
-      config: (body.config ?? {}) as Prisma.InputJsonValue,
-    },
-    update: {
-      statut: body.statut ?? "actif",
-      ...(body.pageId !== undefined && { pageId: body.pageId }),
-      ...(body.igUserId !== undefined && { igUserId: body.igUserId }),
-      ...(body.accessToken !== undefined && { accessToken: body.accessToken }),
-      ...(body.config !== undefined && { config: body.config as Prisma.InputJsonValue }),
-    },
-  });
+  const { type, ...donnees } = body;
+  const connecteur = await enregistrerConnexion(tenantId, type, { ...donnees, statut: body.statut ?? "actif" });
 
-  return NextResponse.json(connecteur);
+  // Jamais de jeton ni de config (peut contenir des clés) renvoyé au navigateur.
+  return NextResponse.json({ type: connecteur.type, statut: connecteur.statut, pageId: connecteur.pageId, igUserId: connecteur.igUserId });
 }

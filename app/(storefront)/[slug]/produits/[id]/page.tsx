@@ -43,7 +43,7 @@ export default async function ProduitPage({ params }: Props) {
   if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const produitInclude = {
-    variantes: { orderBy: { nom: "asc" as const } },
+    variantes: { where: { actif: true }, orderBy: { nom: "asc" as const } },
     avis: {
       where: { approuve: true },
       include: { client: { select: { nom: true } } },

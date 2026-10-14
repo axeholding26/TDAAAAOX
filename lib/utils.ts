@@ -161,6 +161,7 @@ export const SLUGS_RESERVES = new Set([
   "docs", "blog", "shop", "store", "boutique", "axso", "axsoafrica", "login", "register", "auth", "connexion", "inscription",
   "about", "affiliation", "affilie", "community", "contact", "fonctionnalites", "jobs", "legal", "mon-espace-affilie", "press",
   "rejoindre", "suivi", "temoignages", "themes", "tutorials", "livreur", "test", "dev", "staging", "preview",
+  "oauth", // écran d'autorisation des IA externes (app/oauth)
   "scanner", // interface du téléphone-scanner de la caisse (app/scanner)
 ]);
 

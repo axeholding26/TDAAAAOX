@@ -1,6 +1,7 @@
 // WhatsApp Business Cloud API v22.0 — envoi messages texte, template, interactif
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lireConnexion } from "@/lib/connect";
 import { auth } from "@/lib/auth";
 
 const WA_API = "https://graph.facebook.com/v22.0";
@@ -25,9 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Config WhatsApp du tenant
-  const waConfig = await prisma.connecteurConfig.findFirst({
-    where: { tenantId, type: "whatsapp" },
-  });
+  const waConfig = await lireConnexion(tenantId, "whatsapp");
   const token  = waConfig?.accessToken ?? process.env.WHATSAPP_TOKEN;
   const phoneId = (waConfig?.config as any)?.phone_number_id ?? process.env.WHATSAPP_PHONE_NUMBER_ID;
 

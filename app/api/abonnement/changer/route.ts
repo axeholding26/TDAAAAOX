@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 // Cette route ne gère que le downgrade gratuit (aucun paiement requis).
 // Les upgrades payants passent par /api/abonnement/paiement (NotchPay).
@@ -14,6 +15,10 @@ export async function POST(req: NextRequest) {
   if (!tenantId) {
     return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
   }
+
+  // Rétrograder fait perdre les jours payés : décision du propriétaire seul.
+  const { proprietaire } = await boutiquesDuCompte((session.user as any).id);
+  if (!proprietaire.includes(tenantId)) return NextResponse.json({ error: "Seul le propriétaire peut changer d'abonnement" }, { status: 403 });
 
   let body: { plan?: string };
   try {

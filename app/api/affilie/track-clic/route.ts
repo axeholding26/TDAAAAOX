@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { apiLimiter, getClientIp } from "@/lib/rate-limit";
 
 // Clic sur un lien de parrainage B2C (?ref=CODE) — incrémente le compteur
 // rapide Affilie.clics et journalise un événement daté pour les graphiques
 // jour par jour du portail affilié. Best-effort : jamais bloquant.
 export async function POST(req: NextRequest) {
   try {
+    // Public : limité pour qu'on ne gonfle pas les clics d'un affilié.
+    if (!apiLimiter.check(getClientIp(req)).success) return NextResponse.json({ ok: false });
     const { code } = await req.json();
     if (!code || typeof code !== "string") return NextResponse.json({ ok: false });
 

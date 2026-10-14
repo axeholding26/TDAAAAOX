@@ -7,6 +7,8 @@ export async function GET(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any).tenantId;
+  // Sans boutique, `where: { tenantId: undefined }` lirait les paiements de toutes les boutiques.
+  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
   const { searchParams } = new URL(req.url);
   const statut = searchParams.get("statut");
 
@@ -54,7 +56,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
   const tenantId = (session.user as any).tenantId;
-  const body = await req.json();
+  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const body = await req.json().catch(() => ({}));
 
   if (!body.affilieId) return NextResponse.json({ error: "affilieId requis" }, { status: 400 });
 
@@ -73,7 +76,8 @@ export async function PATCH(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any).tenantId;
-  const body = await req.json();
+  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const body = await req.json().catch(() => ({}));
   if (!body.id) return NextResponse.json({ error: "id requis" }, { status: 400 });
 
   const existing = await prisma.paiementCommission.findFirst({ where: { id: body.id, tenantId } });
@@ -85,6 +89,11 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ paiement });
   }
 
+  // Seule transition manuelle : en_attente → traite (virement confirmé). Un statut libre
+  // permettait de repasser un paiement « echec » en attente puis de le rembourser une 2e fois.
+  if (body.statut !== undefined && (body.statut !== "traite" || existing.statut !== "en_attente")) {
+    return NextResponse.json({ error: "Transition de statut impossible" }, { status: 400 });
+  }
   const paiement = await prisma.paiementCommission.update({
     where: { id: body.id },
     data: { statut: body.statut ?? undefined, reference: body.reference ?? undefined, notes: body.notes ?? undefined },

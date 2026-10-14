@@ -49,6 +49,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const tenantId = (session.user as any)?.tenantId;
+  // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
   const { id } = await params;
 
   const produit = await prisma.produit.findFirst({
@@ -65,6 +67,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const tenantId = (session.user as any)?.tenantId;
+  // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
   const role = (session.user as any)?.role;
   if (role !== "owner" && role !== "editeur") {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
@@ -117,6 +121,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
   const { id } = await params;
 
   const body = await req.json();
@@ -152,6 +158,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const tenantId = (session.user as any)?.tenantId;
+  // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
   const role = (session.user as any)?.role;
   if (role !== "owner") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 

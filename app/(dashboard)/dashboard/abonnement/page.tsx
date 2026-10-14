@@ -11,7 +11,7 @@ import { PlansGrid } from "@/components/dashboard/PlansGrid";
 export default async function AbonnementPage() {
   const session = await auth();
   if (!session) redirect("/connexion");
-  await exigerModule(session, "parametres");
+  await exigerModule(session, "finance");
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/inscription");

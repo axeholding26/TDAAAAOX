@@ -30,7 +30,8 @@ async function articleCommande(tenantId: string, taux: number, q: { produit?: st
   return {
     produitId: p.id, nom: p.nom, type: p.type, imageUrl: p.images[0],
     prix: prixClient(variante?.prix ?? p.prix, taux, p.type),
-    quantite: p.type === "physique" || p.type === "dropshipping" ? Math.min(Math.max(Math.floor(Number(q.quantite) || 1), 1), 999) : 1,
+    // Mêmes plafonds que la création de commande : 999 (à la livraison), 10 (payé en ligne).
+    quantite: Math.min(Math.max(Math.floor(Number(q.quantite) || 1), 1), p.type === "physique" ? 999 : 10),
     variante: variante ? q.variante : undefined,
   };
 }
@@ -68,7 +69,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
             <span className="text-xl font-bold font-playfair" style={{ color: theme.accent }}>{t(tenant.nomBoutique)}</span>
           </Link>
           <div className="flex items-center gap-2 text-sm opacity-50">
-            <span className="text-xs">{t("Paiement sécurisé")}</span>
+            <span className="text-xs">{article?.type === "physique" ? t("Paiement à la livraison") : t("Paiement sécurisé")}</span>
             <Lock size={14} />
           </div>
         </div>
@@ -90,7 +91,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>
-        <p>{t("Paiement sécurisé via NotchPay · SSL 256-bit")}</p>
+        <p>{article?.type === "physique" ? t("Paiement à la livraison") : t("Paiement sécurisé via NotchPay · SSL 256-bit")}</p>
       </footer>
     </div>
   );

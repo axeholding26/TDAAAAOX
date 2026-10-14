@@ -11,6 +11,8 @@ export async function GET(request: Request) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
@@ -44,6 +46,8 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
     const body = await request.json();
     const data = schemaProduit.parse(body);
 

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifierSignatureWebhook, verifierPaiementNotchPay, paiementCouvre } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
-import { appliquerStatutTransfert, crediterPlateformeAvecFrais } from "@/lib/wallet";
+import { appliquerStatutTransfert, activerAbonnementPaye } from "@/lib/wallet";
 import { rembourserPaiementCommissionEchoue } from "@/lib/affiliation";
 
 export const maxDuration = 60;
@@ -77,7 +77,7 @@ async function traiterEvenementAbonnement(type: string, merchantRef: string, not
   if (!tenantId || !PALIER_PRIX[plan]) return;
 
   if (type === "payment.failed" || type === "payment.canceled" || type === "payment.expired") {
-    await prisma.tenant.update({ where: { id: tenantId }, data: { planPendingRef: null } }).catch(() => {});
+    await prisma.tenant.updateMany({ where: { id: tenantId, planPendingRef: { in: [notchpayRef, merchantRef].filter(Boolean) } }, data: { planPendingRef: null } });
     return;
   }
 
@@ -91,27 +91,12 @@ async function traiterEvenementAbonnement(type: string, merchantRef: string, not
     return;
   }
 
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 30);
-
-  const tenant = await prisma.tenant.update({
-    where: { id: tenantId },
-    data: { planType: plan, planExpiresAt: expiresAt, planPendingRef: null },
-  }).catch(() => null);
-  if (!tenant) return;
-
   // Revenu d'abonnement = 100% Axso, net du frais de traitement NotchPay réel
   // (jamais deviné — lu directement sur la transaction).
   const fees = transaction?.fees;
   const frais = Array.isArray(fees) ? fees.reduce((s: number, f: any) => s + (Number(f?.amount) || 0), 0) : 0;
 
-  await crediterPlateformeAvecFrais(
-    PALIER_PRIX[plan],
-    frais,
-    "XAF",
-    `Abonnement ${plan} — ${tenant.nomBoutique}`,
-    reference
-  ).catch(() => {});
+  await activerAbonnementPaye({ tenantId, plan, jours: 30, montant: PALIER_PRIX[plan], frais, devise: "XAF", reference });
 }
 
 // ─── Transfert sortant (retrait wallet ou commission d'affilié) ───────────────

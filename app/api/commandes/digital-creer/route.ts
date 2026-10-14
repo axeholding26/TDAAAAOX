@@ -6,6 +6,7 @@ import { fraisLivraisonServeur } from "@/lib/livraison";
 import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { COOKIE_XP, noterConversion } from "@/lib/builder/experiences";
 
 // Formulaire public : limite par IP (partagée avec whatsapp-creer).
 const limiteCommande = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "commande-vitrine" });
@@ -124,6 +125,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Test A/B en cours : commande attribuée à la variante vue par ce visiteur (lib/builder/experiences.ts).
+    await noterConversion(tenantId, req.cookies.get(COOKIE_XP)?.value);
     return NextResponse.json({ commandeId: commande.id, numero: commande.numero, total, montantLivraison, devise });
   } catch (err) {
     console.error("[digital-creer]", err);

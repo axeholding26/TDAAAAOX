@@ -5,6 +5,7 @@
 import { prisma } from "./prisma";
 import { versXAF } from "./devise-convert";
 import { tauxDuJour } from "./taux-change";
+import { expirationApresPaiement } from "./abonnement";
 import { initierTransfertNotchPay, verifierTransfertNotchPay, hasNotchPay } from "./notchpay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -108,13 +109,29 @@ async function logFraisPasserelleTx(tx: any, taux: Record<string, number>, frais
   });
 }
 
-// Revenu d'abonnement net des frais NotchPay réels sur cette transaction.
-export async function crediterPlateformeAvecFrais(montantBrut: number, frais: number, devise: string, description: string, reference?: string) {
-  const net = Math.max(0, montantBrut - frais);
+// Abonnement payé : activation du palier + revenu Axso (net des frais NotchPay
+// réels) dans UNE transaction, la boutique verrouillée. Un webhook rejoué ou reçu
+// deux fois en même temps ne prolonge ni ne crédite deux fois : la référence
+// NotchPay déjà inscrite au portefeuille plateforme vaut « déjà traité ».
+// Renvoie false si ce paiement avait déjà été appliqué.
+export async function activerAbonnementPaye(p: { tenantId: string; plan: string; jours: number; montant: number; frais: number; devise: string; reference: string }): Promise<boolean> {
+  const net = Math.max(0, p.montant - p.frais);
   const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
-  await prisma.$transaction(async (tx) => {
-    if (net > 0) await crediterPlateformeTx(tx, taux, net, devise, description, reference);
-    await logFraisPasserelleTx(tx, taux, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
+  return prisma.$transaction(async (tx) => {
+    const [tenant] = await tx.$queryRaw<{ nomBoutique: string; planType: string; planExpiresAt: Date | null }[]>`SELECT "nomBoutique", "planType", "planExpiresAt" FROM "Tenant" WHERE "id" = ${p.tenantId} FOR UPDATE`;
+    if (!tenant) return false;
+    const platformTenantId = await getOrCreatePlatformTenantId(tx);
+    const deja = await tx.walletTransaction.findFirst({ where: { reference: p.reference, wallet: { tenantId: platformTenantId } }, select: { id: true } });
+    if (deja) return false;
+
+    await tx.tenant.update({
+      where: { id: p.tenantId },
+      data: { planType: p.plan, planExpiresAt: expirationApresPaiement(tenant, p.plan, p.jours), planPendingRef: null },
+    });
+    const description = `Abonnement ${p.plan} — ${tenant.nomBoutique}`;
+    if (net > 0) await crediterPlateformeTx(tx, taux, net, p.devise, description, p.reference);
+    await logFraisPasserelleTx(tx, taux, p.frais, p.devise, `Frais NotchPay · ${p.reference}`, p.reference);
+    return true;
   });
 }
 

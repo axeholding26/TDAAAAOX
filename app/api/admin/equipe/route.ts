@@ -21,13 +21,14 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Réservé au super-admin" }, { status: 403 });
 
-  const { email, password, name } = await req.json();
-  if (!email?.trim() || !password || password.length < 6) {
+  const { email, password, name } = await req.json().catch(() => ({}));
+  if (typeof email !== "string" || !email.trim() || typeof password !== "string" || password.length < 6) {
     return NextResponse.json({ error: "Email valide et mot de passe (6 caractères min.) requis" }, { status: 400 });
   }
 
   const existant = await prisma.user.findUnique({ where: { email } });
-  if (existant && existant.role !== "admin_lecteur" && existant.role !== "admin") {
+  // Un admin complet ne se rétrograde (ni ne se fait changer son mot de passe) jamais par ici.
+  if (existant && existant.role !== "admin_lecteur") {
     return NextResponse.json({ error: "Cet email est déjà utilisé par un autre compte" }, { status: 400 });
   }
 

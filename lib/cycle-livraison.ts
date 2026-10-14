@@ -14,6 +14,7 @@ import { notifierClientWhatsApp, notifierLivreurAssigneWhatsApp, notifierLivreur
 import { PAIEMENT } from "@/lib/commandes";
 import { compterVentes } from "@/lib/stock";
 import { libererCommande, rembourserCommande } from "@/lib/remboursement";
+import { publier } from "@/lib/controle-ia/evenements";
 
 // "interface" : le marchand a cliqué lui-même, il reçoit le lien WhatsApp de secours dans la réponse.
 // "axia" : action d'AXIA (directe ou autorisée dans la bulle), le lien de secours part dans ses notifications.
@@ -160,6 +161,8 @@ export async function changerStatutCommande(p: {
   if (!applique) return { ok: false, status: 409, error: "La commande a changé entre-temps : rechargez la page" };
 
   if (statut === "livree") await capturerCommissionAffiliation(id).catch(() => {});
+  // Bus AXSO CONTROL (automatisations, webhooks) : livrée, et payée si le paiement se faisait à la livraison.
+  if (statut === "livree") for (const type of dejaVente ? (["order.fulfilled"] as const) : (["order.fulfilled", "order.paid"] as const)) publier(commande.tenantId, type, { commandeId: id, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: commande.methodePaiement });
 
   if (acteur.type === "livreur" && NOTIF_LIVREUR[statut]) {
     await notifierMarchand({

@@ -10,6 +10,8 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
     const { id } = await params;
 
     const produit = await prisma.produit.findFirst({ where: { id, tenantId, type: "fichier" } });
@@ -57,15 +59,19 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
     const { id } = await params;
 
     const produit = await prisma.produit.findFirst({ where: { id, tenantId } });
     if (!produit) return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
 
     const { ordre }: { ordre: { id: string; ordre: number }[] } = await req.json();
+    if (!Array.isArray(ordre)) return NextResponse.json({ error: "ordre requis" }, { status: 400 });
     await prisma.$transaction(
       ordre.map(({ id: fichierId, ordre: o }) =>
-        prisma.fichierNumerique.updateMany({ where: { id: fichierId }, data: { ordre: o } })
+        // Seuls les fichiers de CE produit (donc de cette boutique) sont touchés.
+        prisma.fichierNumerique.updateMany({ where: { id: String(fichierId), produitFichier: { produitId: id } }, data: { ordre: Number(o) || 0 } })
       )
     );
 

@@ -2,10 +2,12 @@
 // Conforme aux exigences Meta: vérification de signature, statuts, fenêtre 24h
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createHmac } from "crypto";
+import { lireConnexion, lireConnexionPar } from "@/lib/connect";
+import { createHmac, timingSafeEqual } from "crypto";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
-const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "axso_meta_2026";
+// Sans variable configurée, aucune vérification d'abonnement ne passe (pas de jeton par défaut public).
+const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
 const APP_SECRET   = process.env.META_APP_SECRET ?? "";
 
 // ── GET : vérification du webhook Meta ──────────────────────────────────────
@@ -13,7 +15,7 @@ export async function GET(req: NextRequest) {
   const p = new URL(req.url).searchParams;
   if (
     p.get("hub.mode") === "subscribe" &&
-    p.get("hub.verify_token") === VERIFY_TOKEN
+    !!VERIFY_TOKEN && p.get("hub.verify_token") === VERIFY_TOKEN
   ) {
     return new NextResponse(p.get("hub.challenge") ?? "", { status: 200 });
   }
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
   // Sans secret configuré on refuse tout : une signature non vérifiable n'est pas une signature valide.
   const sigHeader = req.headers.get("x-hub-signature-256") ?? "";
   const expected = "sha256=" + createHmac("sha256", APP_SECRET || "-").update(rawBody).digest("hex");
-  if (!APP_SECRET || sigHeader !== expected) {
+  if (!APP_SECRET || sigHeader.length !== expected.length || !timingSafeEqual(Buffer.from(sigHeader), Buffer.from(expected))) {
     console.warn("[webhook/whatsapp] Signature invalide — requête rejetée");
     return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
   }
@@ -57,10 +59,7 @@ async function traiterEvenements(body: any) {
 
       const phoneId = val?.metadata?.phone_number_id;
       const config = phoneId
-        ? await prisma.connecteurConfig.findFirst({
-            where: { type: "whatsapp", config: { path: ["phone_number_id"], equals: phoneId } },
-            select: { tenantId: true, accessToken: true },
-          })
+        ? await lireConnexionPar({ type: "whatsapp", config: { path: ["phone_number_id"], equals: phoneId } })
         : null;
       const tenantId = config?.tenantId;
       // Quota Palier 0 atteint : WhatsApp est verrouillé, on n'enregistre ni ne
@@ -98,12 +97,12 @@ async function traiterEvenements(body: any) {
             }).catch(() => {});
 
             await detecterEtConfirmerCommande(tenantId, de, corps, commandeLiee).catch(() => {});
-            autoRepondre(tenantId, de, corps, phoneId).catch(() => {});
+            await autoRepondre(tenantId, de, corps, phoneId).catch(() => {});
           }
         }
 
         // Marquer comme lu côté Meta
-        marquerLu(phoneId, msg.id, config?.accessToken ?? null).catch(() => {});
+        await marquerLu(phoneId, msg.id, config?.accessToken ?? null).catch(() => {});
       }
 
       // ── Statuts de livraison (sent/delivered/read/failed) ─────────────────
@@ -199,7 +198,7 @@ async function autoRepondre(tenantId: string, de: string, messageRecu: string, p
   const result = await executerOutilMcp("gemini_generer_texte", { instruction: systeme, contenu: messageRecu }, tenantId);
   if (!result.succes || !result.resultat) return;
 
-  const waConfig = await prisma.connecteurConfig.findFirst({ where: { tenantId, type: "whatsapp" } });
+  const waConfig = await lireConnexion(tenantId, "whatsapp");
   const token = waConfig?.accessToken ?? process.env.WHATSAPP_TOKEN;
   if (!token || !phoneId) return;
 

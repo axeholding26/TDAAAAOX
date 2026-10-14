@@ -16,7 +16,7 @@ export function palierAuMoins(palier: Palier, requis: Palier): boolean {
 }
 
 export const LIMITES: Record<Palier, { commandesParMois: number | null }> = {
-  palier0: { commandesParMois: 30 },
+  palier0: { commandesParMois: 60 },
   palier1: { commandesParMois: null },
   palier2: { commandesParMois: null },
 };

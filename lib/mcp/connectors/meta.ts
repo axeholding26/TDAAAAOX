@@ -3,8 +3,9 @@
 
 const GRAPH = "https://graph.facebook.com/v19.0";
 
+// Jeton de la boutique uniquement : sans lui, rien n'est publié (jamais avec un compte de la plateforme).
 function token(tenantToken?: string): string {
-  return tenantToken || process.env.META_ACCESS_TOKEN || "";
+  return tenantToken || "";
 }
 
 // ── Facebook Posts ─────────────────────────────────────────────────────────
@@ -94,8 +95,10 @@ export async function creerCampagneAds(params: {
   accessToken?: string;
 }): Promise<{ succes: boolean; campagneId?: string; erreur?: string }> {
   const t = token(params.accessToken);
+  // ponytail: compte publicitaire de la plateforme (META_AD_ACCOUNT_ID) ; tant que la boutique ne
+  // connecte pas le sien, aucun jeton de boutique n'y a accès et la création échoue proprement.
   const adAccountId = process.env.META_AD_ACCOUNT_ID;
-  if (!t || !adAccountId) return { succes: false, erreur: "META_ACCESS_TOKEN ou META_AD_ACCOUNT_ID manquant" };
+  if (!t || !adAccountId) return { succes: false, erreur: "Compte publicitaire Meta de la boutique non connecté" };
 
   const res = await fetch(`${GRAPH}/act_${adAccountId}/campaigns`, {
     method: "POST",

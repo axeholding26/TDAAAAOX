@@ -11,6 +11,7 @@ import { verifierPaiementNotchPay, paiementCouvre } from "./notchpay";
 import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "./email";
 import { PAIEMENT } from "./commandes";
 import { compterVentes } from "./stock";
+import { publier } from "./controle-ia/evenements";
 
 export const NOTE_PRIX_ACHAT_MANQUANT = "Prix d'achat à renseigner : le montant fournisseur est incomplet.";
 
@@ -101,6 +102,8 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   });
   if (pris.count === 0) return;
   await prisma.$transaction((tx) => compterVentes(tx, commandeId, 1));
+  // Bus AXSO CONTROL (automatisations, webhooks) : part après la réponse, sans effet sur le paiement.
+  for (const type of ["order.paid", "payment.completed"] as const) publier(commande.tenantId, type, { commandeId, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: "en_ligne", reference });
 
   // Code promo : compté quand le paiement est réellement reçu (un paiement abandonné ne consomme pas le code).
   if (commande.codePromoId) {

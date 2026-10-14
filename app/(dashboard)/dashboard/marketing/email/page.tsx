@@ -62,12 +62,16 @@ export default function EmailMarketingPage() {
   const [preview, setPreview] = useState(false);
 
   const charger = useCallback(async () => {
-    const [s, h] = await Promise.all([
-      fetch("/api/email?action=stats").then(r => r.json()),
-      fetch("/api/email?action=historique").then(r => r.json()),
-    ]);
-    setStats(s);
-    setHistorique(Array.isArray(h) ? h : []);
+    try {
+      const [s, h] = await Promise.all([
+        fetch("/api/email?action=stats").then(r => r.ok ? r.json() : Promise.reject()),
+        fetch("/api/email?action=historique").then(r => r.ok ? r.json() : Promise.reject()),
+      ]);
+      setStats(s);
+      setHistorique(Array.isArray(h) ? h : []);
+    } catch {
+      setErreur("Erreur chargement");
+    }
   }, []);
 
   useEffect(() => { charger(); }, [charger]);
@@ -95,6 +99,7 @@ export default function EmailMarketingPage() {
         }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error();
       const content = data.message ?? "";
       const match = content.match(/\{[\s\S]*?"sujet"[\s\S]*?\}/);
       if (match) {
@@ -128,7 +133,7 @@ export default function EmailMarketingPage() {
         body: JSON.stringify({ sujet, corps, segment, provider }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur");
+      if (!res.ok) throw new Error(data.error ?? "Erreur lors de l'envoi");
       setResult({ envoyes: data.envoyes, total: data.total, source: data.source });
       charger();
     } catch (e: any) {
@@ -144,7 +149,7 @@ export default function EmailMarketingPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{tr("Email Marketing")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{tr("Envoyez des campagnes directement depuis Axso")}</p>
@@ -168,7 +173,7 @@ export default function EmailMarketingPage() {
       </div>
 
       {/* Providers connectés */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
           { key: "resend", label: "Resend",      Icon: Send, actif: stats?.providers.resend, desc: "Emails transactionnels jusqu'à 50/envoi" },
           { key: "gmail",  label: "Gmail OAuth", Icon: Mail, actif: stats?.providers.gmail,  desc: "Votre compte Gmail professionnel" },
@@ -253,6 +258,7 @@ export default function EmailMarketingPage() {
                 <input
                   value={sujet}
                   onChange={(e) => setSujet(e.target.value)}
+                  aria-label={tr("Sujet")}
                   placeholder={tr("Ex: 🔥 Offre spéciale pour vous !")}
                   className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all"
                 />
@@ -263,7 +269,8 @@ export default function EmailMarketingPage() {
                 <textarea
                   value={corps}
                   onChange={(e) => setCorps(e.target.value)}
-                  placeholder={tr("Bonjour {prenom},&#10;&#10;Votre message ici...")}
+                  aria-label={tr("Message")}
+                  placeholder={tr("Bonjour {prenom},\n\nVotre message ici...")}
                   rows={8}
                   className="w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-2.5 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 transition-all resize-none"
                 />

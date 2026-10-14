@@ -65,9 +65,9 @@ export async function POST(req: NextRequest) {
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "Tenant requis" }, { status: 400 });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { nom, description, config, effetId, badge } = body;
-    if (!nom || !config) return NextResponse.json({ error: "nom et config requis" }, { status: 400 });
+    if (typeof nom !== "string" || !nom.trim() || !config) return NextResponse.json({ error: "nom et config requis" }, { status: 400 });
 
     const slug = `custom-${nom.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}-${Date.now()}`;
 

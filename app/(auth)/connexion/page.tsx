@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { schemaConnexion } from "@/lib/validations";
 import type { z } from "zod";
-import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Star, Mail, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Mail, ArrowLeft } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
@@ -25,7 +25,9 @@ function ConnexionForm() {
   const t = useT();
   const router       = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl  = searchParams.get("callbackUrl") || "/dashboard";
+  // Uniquement un chemin interne : empêche une redirection vers un site externe via ?callbackUrl=
+  const cb           = searchParams.get("callbackUrl");
+  const callbackUrl  = cb?.startsWith("/") && !cb.startsWith("//") ? cb : "/dashboard";
   const inscriptionReussie = searchParams.get("inscription") === "success";
 
   const [showPass, setShowPass] = useState(false);
@@ -59,7 +61,7 @@ function ConnexionForm() {
         body: JSON.stringify({ email: data.email, password: data.password }),
       });
       const result = await res.json();
-      if (!res.ok) { setErreur(result.error ?? "Email ou mot de passe incorrect"); return; }
+      if (!res.ok) { setErreur(result.error ?? result.message ?? "Email ou mot de passe incorrect"); return; }
 
       if (result.skip2fa) {
         await finaliserConnexion(data.email, data.password);
@@ -119,7 +121,8 @@ function ConnexionForm() {
 
         <form onSubmit={onSubmitCode} className="space-y-4">
           <input
-            type="text" inputMode="numeric" maxLength={6} autoFocus
+            type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+            aria-label={t("Code de vérification à 6 chiffres")}
             value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
             placeholder="000000"
             className={inputCls + " text-center text-2xl tracking-[0.5em] font-bold"}
@@ -162,17 +165,18 @@ function ConnexionForm() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-[#595959] text-sm font-medium mb-1.5">{t("Email")}</label>
-          <input type="email" {...register("email")} placeholder="aminata@example.com" className={inputCls} />
+          <label htmlFor="connexion-email" className="block text-[#595959] text-sm font-medium mb-1.5">{t("Email")}</label>
+          <input id="connexion-email" type="email" autoComplete="email" {...register("email")} placeholder="aminata@example.com" className={inputCls} />
           {errors.email && <p className="text-red-400 text-xs mt-1">{t(errors.email.message)}</p>}
         </div>
 
         <div>
-          <label className="block text-[#595959] text-sm font-medium mb-1.5">{t("Mot de passe")}</label>
+          <label htmlFor="connexion-password" className="block text-[#595959] text-sm font-medium mb-1.5">{t("Mot de passe")}</label>
           <div className="relative">
-            <input type={showPass ? "text" : "password"} {...register("password")}
+            <input id="connexion-password" type={showPass ? "text" : "password"} autoComplete="current-password" {...register("password")}
               placeholder="••••••••" className={inputCls + " pr-10"} />
             <button type="button" onClick={() => setShowPass(!showPass)}
+              aria-label={showPass ? t("Masquer le mot de passe") : t("Afficher le mot de passe")}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999999] hover:text-[#444444] transition-colors">
               {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -232,12 +236,6 @@ export default function ConnexionPage() {
         </Link>
 
         <div className="max-w-md">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-7"
-            style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.25)", color: ACCENT }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: ACCENT }} />
-            {t("+1 247 boutiques actives en Afrique")}
-          </div>
-
           <h1 className="text-4xl font-bold text-[#111111] leading-tight mb-4">
             {t("Gérez votre boutique")}<br />
             <span style={{
@@ -252,7 +250,7 @@ export default function ConnexionPage() {
             {t("La plateforme e-commerce pensée pour les entrepreneurs africains. Simple, puissante, et adaptée à vos besoins.")}
           </p>
 
-          <div className="space-y-4 mb-10">
+          <div className="space-y-4">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -264,27 +262,9 @@ export default function ConnexionPage() {
             ))}
           </div>
 
-          {/* Testimonial */}
-          <div className="rounded-2xl p-5 border"
-            style={{ background: "#FFFBF2", borderColor: "rgba(245,166,35,0.15)" }}>
-            <div className="flex gap-0.5 mb-3">
-              {[1,2,3,4,5].map(i => <Star key={i} size={13} fill={ACCENT} style={{ color: ACCENT }} />)}
-            </div>
-            <p className="text-[#4D4D4D] text-sm leading-relaxed mb-3">
-              {t("\"Axso a transformé mon activité. Je gère ma boutique depuis mon téléphone et les paiements arrivent directement.\"")}
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808" }}>A</div>
-              <div>
-                <p className="text-[#333333] text-xs font-semibold">{t("Aminata Kouyaté")}</p>
-                <p className="text-[#8C8C8C] text-xs">{t("Mode Aminata, Dakar")}</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <p className="text-[#B3B3B3] text-xs">{t("© 2026 Axso · Made for Africa")}</p>
+        <p className="text-[#B3B3B3] text-xs">© {new Date().getFullYear()} Axso · Made for Africa</p>
       </div>
 
       {/* ── Right panel — form ── */}

@@ -6,16 +6,13 @@
 // rien connecté (comportement inchangé pour les boutiques existantes).
 import { lienBoutique } from "./origine-site";
 import { hasGenuka, envoyerMessageGenuka } from "./genuka";
-import { prisma } from "./prisma";
+import { lireConnexion } from "./connect";
 import { quotaCommandesAtteint } from "./abonnement";
 
 async function tokenGenukaTenant(tenantId?: string): Promise<string | null> {
   if (!tenantId) return null;
-  const cfg = await prisma.connecteurConfig.findFirst({
-    where: { tenantId, type: "whatsapp_genuka", statut: "actif" },
-    select: { config: true },
-  }).catch(() => null);
-  const token = (cfg?.config as any)?.proxyToken;
+  const cfg = await lireConnexion(tenantId, "whatsapp_genuka").catch(() => null);
+  const token = cfg?.statut === "actif" ? (cfg.config as any)?.proxyToken : null;
   return typeof token === "string" && token ? token : null;
 }
 

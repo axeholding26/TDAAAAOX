@@ -67,6 +67,11 @@ async function lisibles(tenantId: string, args: Record<string, any>): Promise<Re
     delete a.livreurId;
     if (l) a.livreur = `${l.nom} (${l.telephone})`;
   }
+  if (a.produitId) {
+    const p = await prisma.produit.findFirst({ where: { id: String(a.produitId), tenantId }, select: { nom: true } }).catch(() => null);
+    delete a.produitId;
+    if (p) a.produit = p.nom;
+  }
   if (a.commandeId) {
     const c = await prisma.commande.findFirst({ where: { tenantId, OR: [{ id: String(a.commandeId) }, { numero: String(a.commandeId) }] }, select: { numero: true } }).catch(() => null);
     delete a.commandeId;
@@ -91,7 +96,7 @@ function semaine() {
 }
 
 /** Enregistre l'action en attente et renvoie au modèle la consigne à suivre. */
-export async function demanderConfirmation(tenantId: string, outil: string, args: Record<string, any>, agent?: string, interactif = false) {
+export async function demanderConfirmation(tenantId: string, outil: string, args: Record<string, any>, agent?: string, interactif = false, origine?: string, ia?: { connexionId: string; actionId: string }) {
   const libelle = SENSIBLES[outil] ?? outil.replace(/_/g, " ");
   const details = resumerArgs(await lisibles(tenantId, args));
   // Agent autonome (cron horaire) : la même action n'est proposée qu'une fois par semaine.
@@ -105,8 +110,10 @@ export async function demanderConfirmation(tenantId: string, outil: string, args
       tenantId,
       type: "confirmation",
       cle,
-      message: details ? `${libelle} — ${details}` : libelle,
-      action: { outil, args, ...(agent && { agent }) },
+      // `origine` : IA externe qui demande (« Claude »…), voir lib/controle-ia.
+      message: (origine ? `${origine} · ` : "") + (details ? `${libelle} — ${details}` : libelle),
+      // `ia` : demande d'une IA externe, exécutée à l'accord par lib/controle-ia (executerAccordIA).
+      action: { outil, args, ...(agent && { agent }), ...(ia && { ia }) },
     },
   });
   return {

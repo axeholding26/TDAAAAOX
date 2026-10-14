@@ -15,7 +15,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ message: "Tenant introuvable" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { whatsappNumero } = body as { whatsappNumero: string };
 
     if (!whatsappNumero) {

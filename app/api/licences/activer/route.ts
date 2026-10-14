@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+
+const limite = rateLimit({ windowMs: 15 * 60_000, max: 20, keyPrefix: "licence-activer" });
 
 // POST public — active une clé de licence pour un client
 // Body: { cle: string, email: string, appareil?: string, ipAdresse?: string }
 export async function POST(req: NextRequest) {
   try {
+    // Publique : limitée pour empêcher de deviner des clés à la chaîne.
+    const rl = limite.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     const { cle, email, appareil, ipAdresse } = await req.json();
-    if (!cle || !email) {
+    if (typeof cle !== "string" || typeof email !== "string" || !cle || !email) {
       return NextResponse.json({ error: "cle et email requis" }, { status: 400 });
     }
 

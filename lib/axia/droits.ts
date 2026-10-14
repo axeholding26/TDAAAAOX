@@ -41,6 +41,10 @@ const REGLES: Record<string, Regle> = {
 
 const tousLesDroits = (g: GrillePermissions) => Object.values(g).every((n) => n === "ecriture");
 
+/** Niveau exigé par un outil (`null` : outil absent de la table, donc jamais proposé à une IA externe). */
+export const niveauRequis = (nom: string): "lecture" | "ecriture" | null => REGLES[nom]?.[1] ?? null;
+export const moduleRequis = (nom: string): ModuleKey | null => REGLES[nom]?.[0] ?? null;
+
 export function outilAutorise(nom: string, g: GrillePermissions): boolean {
   if (nom === "deleguer_vers_agent") return tousLesDroits(g); // les sous-agents n'appliquent pas ce filtre
   const r = REGLES[nom];

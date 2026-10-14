@@ -15,19 +15,22 @@ import { palierAuMoins } from "@/lib/plans";
 import { logDecision } from "@/lib/agent-memory";
 import { getLangue } from "@/lib/i18n/serveur";
 import type { GrillePermissions } from "@/lib/permissions";
+import { accordVisible, executerAccordIA, noterRefusIA, type ActionAccord } from "@/lib/controle-ia/serveur";
 
 export const maxDuration = 60;
 
 const INTERVALLE_DETECTION_MS = 15 * 60_000;
 const EN_ATTENTE = ["nouveau", "vu"];
 
-type Action = { outil?: string; args?: Record<string, any>; agent?: string; prompt?: string; lien?: string };
+type Action = { outil?: string; args?: Record<string, any>; agent?: string; prompt?: string; lien?: string; ia?: ActionAccord["ia"] };
 
 // Constats (chiffres de la boutique) : accès complet uniquement. Confirmations :
 // quiconque a le droit d'utiliser l'outil ; celles des agents autonomes : accès complet.
 function visible(p: { type: string; action: unknown }, droits: GrillePermissions, complet: boolean) {
   if (p.type !== "confirmation") return complet;
   const a = p.action as Action | null;
+  // Demande d'une IA externe (lib/controle-ia) : ses outils ne sont pas tous des outils AXIA.
+  if (a?.ia && a.outil) return accordVisible(a.outil, droits);
   return a?.agent ? complet : !!a?.outil && outilAutorise(a.outil, droits);
 }
 
@@ -102,11 +105,14 @@ export async function PATCH(req: Request) {
   if (!pris.count) return NextResponse.json({ error: "Déjà traité" }, { status: 409 });
 
   const action = p.action as Action | null;
+  if (action?.ia && decision === "refuser") await noterRefusIA(tenantId, action.ia.actionId).catch(() => {});
   if (p.type !== "confirmation" || decision !== "accepter" || !action?.outil) return NextResponse.json({ ok: true });
 
   let r: { succes: boolean; resultat: string };
   try {
-    if (action.agent) {
+    if (action.ia) {
+      r = await executerAccordIA(tenantId, action as ActionAccord, droits);
+    } else if (action.agent) {
       r = await executerOutilAgent(action.agent, tenantId, action.outil, action.args ?? {});
     } else {
       // Revérifié au moment de l'exécution : droits et plan ont pu changer depuis la demande.

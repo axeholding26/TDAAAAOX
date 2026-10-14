@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Lecture seule — retrait réservé au super-admin" }, { status: 403 });
 
-  const { montant, methode, destinataire, operateur, notes } = await req.json();
+  const { montant, methode, destinataire, operateur, notes } = await req.json().catch(() => ({}));
   try {
     const retrait = await retirerWalletPlateforme({ montant, methode, destinataire, operateur, notes });
     return NextResponse.json({ success: true, retrait });

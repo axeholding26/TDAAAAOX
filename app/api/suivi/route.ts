@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cleTelephone } from "@/lib/utils";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+
+// Public : limité pour qu'on ne puisse pas essayer des couples numéro/téléphone à la chaîne.
+const limite = rateLimit({ windowMs: 15 * 60_000, max: 30, keyPrefix: "suivi" });
 
 export async function GET(req: Request) {
+  const rl = limite.check(getClientIp(req));
+  if (!rl.success) return rateLimitResponse(rl.reset);
   const { searchParams } = new URL(req.url);
   const numero = searchParams.get("numero")?.trim();
   // Même numéro saisi avec ou sans indicatif (+237, 00237…)

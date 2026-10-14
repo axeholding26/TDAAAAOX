@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const userId = (session.user as any)?.id;
 
-  const { tenantId } = await req.json();
+  const { tenantId } = await req.json().catch(() => ({}));
   if (!tenantId || typeof tenantId !== "string") {
     return NextResponse.json({ error: "tenantId requis" }, { status: 400 });
   }

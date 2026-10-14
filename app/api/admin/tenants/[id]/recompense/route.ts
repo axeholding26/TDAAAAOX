@@ -8,7 +8,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Lecture seule — action réservée au super-admin" }, { status: 403 });
 
   const { id } = await params;
-  const { montant, raison, emoji, titre } = await req.json();
+  const { montant, raison, emoji, titre } = await req.json().catch(() => ({}));
   try {
     await recompenserBoutique(id, { montant, raison, emoji, titre });
     return NextResponse.json({ success: true });

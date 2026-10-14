@@ -220,6 +220,7 @@ const GROUPES: NavGroupe[] = [
       { href: "/dashboard/fichiers",      label: "Fichiers",      Icon: FolderOpen, moduleKey: "boutique" },
       { href: "/dashboard/transporteurs", label: "Transporteurs", Icon: Truck,      moduleKey: "commandes" },
       { href: "/dashboard/connecteurs",   label: "Connecteurs",   Icon: Plug,       moduleKey: "boutique" },
+      { href: "/dashboard/controle-ia",   label: "Contrôle IA",   Icon: Sparkles,   requiresPalier: "palier1" },
       { href: "/dashboard/feeds",         label: "Flux produits", Icon: Link2,      moduleKey: "boutique" },
       { href: "/dashboard/campagnes",     label: "Campagnes",     Icon: Bell,       moduleKey: "marketing" },
     ],

@@ -10,7 +10,7 @@ const creerSchema = z.object({
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
   hashtags: z.array(z.string()).default([]),
-  planifieLe: z.string(),
+  planifieLe: z.string().datetime(),
   noteInterne: z.string().optional(),
 });
 
@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const body = creerSchema.parse(await req.json());
+  const parsed = creerSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: "Format invalide" }, { status: 400 });
+  const body = parsed.data;
 
   const post = await prisma.postPlanifie.create({
     data: {

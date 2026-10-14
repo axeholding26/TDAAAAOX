@@ -7,6 +7,16 @@ import { auth } from "@/lib/auth";
 import { requireNiveau } from "@/lib/permissions-server";
 import { moduleApi } from "@/lib/permissions-api";
 import { SLUGS_RESERVES } from "@/lib/utils";
+import { COOKIE_XP, OPTIONS_COOKIE_XP, cookieVisiteurXp } from "@/lib/builder/experiences";
+
+// Test A/B du Builder (lib/builder/experiences.ts) : un nouveau visiteur de vitrine reçoit sa
+// répartition stable. Posée aussi sur la requête pour qu'il voie sa variante dès ce premier rendu.
+async function repartitionXp(request: NextRequest, slug: string): Promise<string | null> {
+  if (request.method !== "GET") return null;
+  const xp = await cookieVisiteurXp(slug, request.cookies.get(COOKIE_XP)?.value).catch(() => null);
+  if (xp) request.cookies.set(COOKIE_XP, xp);
+  return xp;
+}
 
 const DOMAINE_APP = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "localhost:3000";
 
@@ -77,11 +87,13 @@ export async function proxy(request: NextRequest) {
       if (domaine) return NextResponse.redirect(`https://${domaine}${reste || "/"}${request.nextUrl.search}`, 308);
     }
 
+    const xp = await repartitionXp(request, slug);
     // Les liens internes de la vitrine sont en /{slug}/… : déjà préfixés, on les sert tels quels.
-    if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) return NextResponse.next();
     const url = request.nextUrl.clone();
-    url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(url);
+    if (!(pathname === `/${slug}` || pathname.startsWith(`/${slug}/`))) url.pathname = `/${slug}${pathname === "/" ? "" : pathname}`;
+    const res = url.pathname === pathname ? NextResponse.next({ request: { headers: request.headers } }) : NextResponse.rewrite(url, { request: { headers: request.headers } });
+    if (xp) res.cookies.set(COOKIE_XP, xp, OPTIONS_COOKIE_XP);
+    return res;
   }
 
   // Adresse AXSO (/slug/…) d'une boutique dont le domaine personnalisé est actif :
@@ -93,6 +105,8 @@ export async function proxy(request: NextRequest) {
     if (domaine) return NextResponse.redirect(`https://${domaine}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
   }
 
+  const xp = premier && !SLUGS_RESERVES.has(premier) ? await repartitionXp(request, premier) : null;
+
   // Expose pathname to server components via REQUEST header
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
@@ -103,6 +117,7 @@ export async function proxy(request: NextRequest) {
   response.headers.set("X-Frame-Options", request.cookies.get("axso_apercu")?.value === "1" ? "SAMEORIGIN" : "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (xp) response.cookies.set(COOKIE_XP, xp, OPTIONS_COOKIE_XP);
   return response;
 }
 

@@ -151,7 +151,7 @@ export function TableauDeBordProfit() {
                         <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
                         <div>
                           <p>{t("{0} ligne(s) de commande sans coût produit renseigné : le bénéfice est surestimé.", data.lignesSansCout)}</p>
-                          <button type="button" onClick={versDossier} className="font-bold underline text-left">{t("Renseigner les coûts dans le catalogue")}</button>
+                          <button type="button" onClick={versDossier} className="font-bold underline text-left">{t("Renseigner les coûts dans le dossier produit")}</button>
                         </div>
                       </div>
                     )}

@@ -8,7 +8,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!estAdminComplet(session)) return NextResponse.json({ error: "Lecture seule — action réservée au super-admin" }, { status: 403 });
 
   const { id } = await params;
-  const { statut } = await req.json();
+  const { statut } = await req.json().catch(() => ({}));
   try {
     return NextResponse.json({ success: true, ...(await changerStatutBoutique(id, statut)) });
   } catch (err) {

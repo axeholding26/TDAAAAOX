@@ -1,6 +1,8 @@
 // Résolution multi-tenant pour Axso
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { COOKIE_APERCU, lireJetonApercu } from "@/lib/builder/apercu";
 
 /**
  * Ids des boutiques accessibles à un compte : celles qu'il possède
@@ -38,6 +40,8 @@ export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire:
  */
 export async function boutiqueVisible(tenant: { id: string; statut: string }): Promise<boolean> {
   if (tenant.statut === "active") return true;
+  // Lien d'aperçu signé du Builder pour cette boutique (lib/builder/apercu.ts) : visible pour ce navigateur seulement.
+  if (lireJetonApercu((await cookies()).get(COOKIE_APERCU)?.value) === tenant.id) return true;
   const session = await auth();
   const role = (session?.user as any)?.role;
   // Propriétaire (aperçu) ou admin AXSO (modération depuis /admin/boutiques).

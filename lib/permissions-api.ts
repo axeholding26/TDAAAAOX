@@ -87,6 +87,7 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/medias", "marketing"],
   ["/api/orchestrator", "marketing"],
   ["/api/mcp/publications", "marketing"],
+  ["/api/mcp/v1", null], // serveur MCP des IA externes : jeton OAuth, droits dans lib/controle-ia
   ["/api/mcp", "boutique"], // connecteurs (même module que /dashboard/connecteurs)
   ["/api/chatbot", "clients"],
   ["/api/objectifs", "produits"],

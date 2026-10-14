@@ -41,14 +41,14 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/wallet");
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Erreur de chargement");
       // Un wallet fraîchement créé (aucune commission encaissée pour l'instant)
       // n'a pas encore de ligne en base — on affiche un état à 0, jamais un
       // chargement infini.
       setWallet(data.wallet ?? { solde: 0, totalRecu: 0, totalRetire: 0, devise: "XAF", retraits: [] });
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Impossible de charger le wallet plateforme"));
+      toast.error(t(e.message || "Impossible de charger le wallet plateforme"));
       setWallet({ solde: 0, totalRecu: 0, totalRetire: 0, devise: "XAF", retraits: [] });
     } finally {
       setLoading(false);
@@ -68,14 +68,14 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t("Retrait initié"));
       setForm({ montant: "", methode: "mobile_money", operateur: "MTN", destinataire: "" });
       setShowForm(false);
       charger();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur retrait"));
+      toast.error(t(e.message || "Erreur retrait"));
     } finally {
       setSubmitting(false);
     }

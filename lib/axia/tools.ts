@@ -1051,10 +1051,11 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
           }
         }
 
-        await prisma.produit.create({ data });
+        const cree = await prisma.produit.create({ data, select: { id: true } });
 
         const details = [images.length ? "image IA" : null, type === "digital" && !args.fichierUrl ? "fichier à ajouter" : null].filter(Boolean).join(", ");
-        return { succes: true, resultat: `✅ Produit ${type} "${args.nom}" créé à ${args.prix}${details ? ` (${details})` : ""}` };
+        // `donnees` : lu par les IA externes (lib/controle-ia) pour enchaîner une étape sur ce produit.
+        return { succes: true, resultat: `✅ Produit ${type} "${args.nom}" créé à ${args.prix}${details ? ` (${details})` : ""}`, donnees: { produitId: cree.id } };
       }
 
       case "lister_produits": {

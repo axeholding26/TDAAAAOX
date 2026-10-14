@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const { searchParams } = new URL(req.url);
   const commandeId = searchParams.get("commandeId");
@@ -36,17 +37,18 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   if (await quotaCommandesAtteint(tenantId)) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { commandeId } = body;
   if (!commandeId) return NextResponse.json({ error: "commandeId requis" }, { status: 400 });
 
   // Check if invoice already exists
-  const existing = await prisma.facture.findFirst({ where: { commandeId } });
+  const existing = await prisma.facture.findFirst({ where: { commandeId, tenantId } });
   if (existing) return NextResponse.json({ facture: existing });
 
   const commande = await prisma.commande.findFirst({

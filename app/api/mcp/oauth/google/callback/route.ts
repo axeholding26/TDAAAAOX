@@ -1,13 +1,17 @@
 // Callback OAuth Google — échange le code contre un access + refresh token
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { enregistrerConnexion } from "@/lib/connect";
+import { auth } from "@/lib/auth";
+import { verifierEtatOAuth } from "@/lib/mcp/oauth-etat";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
-  const tenantId = searchParams.get("state");
+  // Boutique de la session, jamais du paramètre `state` (voir lib/mcp/oauth-etat.ts).
+  const tenantId = ((await auth())?.user as any)?.tenantId as string | undefined;
+  const etatOk = await verifierEtatOAuth(searchParams.get("state"));
 
-  if (!code || !tenantId) {
+  if (!code || !tenantId || !etatOk) {
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/connecteurs?error=oauth_failed`);
   }
 
@@ -24,32 +28,21 @@ export async function GET(req: NextRequest) {
     }),
   });
 
-  const tokens = await tokenRes.json();
+  const tokens = await tokenRes.json().catch(() => ({ error: "oauth_failed" }));
 
   if (tokens.error) {
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/connecteurs?error=${tokens.error}`);
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/connecteurs?error=${encodeURIComponent(String(tokens.error))}`);
   }
 
   // Sauvegarde les tokens
-  await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type: "gmail" } },
-    create: {
-      tenantId,
-      type: "gmail",
-      statut: "actif",
-      config: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_in: tokens.expires_in,
-      },
-    },
-    update: {
-      statut: "actif",
-      config: {
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires_in: tokens.expires_in,
-      },
+  await enregistrerConnexion(tenantId, "gmail", {
+    statut: "actif",
+    config: {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      expires_in: tokens.expires_in,
+      // Droits accordés par le marchand, affichés dans le centre de connexions.
+      scope: tokens.scope,
     },
   });
 

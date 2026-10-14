@@ -183,9 +183,9 @@ export function OngletOffres({ fiche, recharger }: PropsOnglet) {
     <div className="space-y-4">
       <div className="flex gap-2 flex-wrap">
         <Bouton petit onClick={() => setSaisie(SAISIE_VIDE)}><Plus size={12} />{t("Ajouter une offre")}</Bouton>
-        <Bouton petit variante="secondaire" onClick={importer} charge={enCours}><Download size={12} />{t("Importer depuis le catalogue sourcing")}</Bouton>
+        <Bouton petit variante="secondaire" onClick={importer} charge={enCours}><Download size={12} />{t("Importer depuis mes dossiers produits")}</Bouton>
       </div>
-      {importees !== null && <p className="text-[12px] text-[#666666]">{importees ? t("{0} offre(s) importée(s) du catalogue sourcing.", importees) : t("Aucune nouvelle offre à importer : aucun produit du catalogue sourcing n'est rattaché à ce fournisseur.")}</p>}
+      {importees !== null && <p className="text-[12px] text-[#666666]">{importees ? t("{0} offre(s) importée(s) de vos dossiers produits.", importees) : t("Aucune nouvelle offre à importer : aucun dossier produit n'est rattaché à ce fournisseur.")}</p>}
       {erreur && <Erreur message={erreur} />}
       {saisie && !saisie.id && <Carte titre="Nouvelle offre"><FormulaireOffre initial={saisie} produits={fiche.produits} enCours={enCours} onEnvoi={enregistrer} onAnnule={() => setSaisie(null)} /></Carte>}
 

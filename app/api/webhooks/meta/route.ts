@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createHmac, timingSafeEqual } from "crypto";
 import { prisma } from "@/lib/prisma";
 
-const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "axso_meta_2026";
+// Sans variable configurée, aucune vérification d'abonnement ne passe (pas de jeton par défaut public).
+const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
 
 // ── GET : vérification Meta ──────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const p = new URL(req.url).searchParams;
-  if (p.get("hub.mode") === "subscribe" && p.get("hub.verify_token") === VERIFY_TOKEN) {
+  if (p.get("hub.mode") === "subscribe" && !!VERIFY_TOKEN && p.get("hub.verify_token") === VERIFY_TOKEN) {
     return new NextResponse(p.get("hub.challenge") ?? "", { status: 200 });
   }
   return NextResponse.json({ error: "Token invalide" }, { status: 403 });

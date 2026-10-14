@@ -371,6 +371,11 @@ export interface ThemeConfig {
   // Polices d'origine du design AXSO (manifeste) — pour y substituer celles
   // choisies dans le Constructeur (lib/scope-css.ts::cssDesignPersonnalise).
   axsoDesignPolices?: { titre?: string; corps?: string };
+  // Builder IA (lib/builder) — formes détaillées dans lib/builder/* (pages libres, menus du socle, marque, SEO).
+  pagesPerso?: Record<string, { nom?: string; slug?: string; builderTree?: BlockNode[]; seo?: Record<string, any>; statut?: string; [cle: string]: any }>;
+  navigation?: { principal?: { libelle: string; lien: string }[]; pied?: { titre: string; liens: { libelle: string; lien: string }[] }[] };
+  marque?: Record<string, any>;
+  seo?: Record<string, any>;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -538,6 +543,12 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     axsoDesignCssVarMapping: overrides.axsoDesignCssVarMapping ?? base.axsoDesignCssVarMapping,
     designsOrigine: overrides.designsOrigine ?? base.designsOrigine,
     axsoDesignPolices: overrides.axsoDesignPolices ?? base.axsoDesignPolices,
+    // Champs du Builder IA (lib/builder) : sans eux, la vitrine perdrait les pages libres, les menus,
+    // la marque et le SEO au rendu (y compris dans l'aperçu du brouillon).
+    pagesPerso: overrides.pagesPerso ?? base.pagesPerso,
+    navigation: overrides.navigation ?? base.navigation,
+    marque: overrides.marque ?? base.marque,
+    seo: overrides.seo ?? base.seo,
   };
 }
 

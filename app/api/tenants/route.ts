@@ -1,204 +1,12 @@
-// API Route — Création de tenant (inscription boutique)
+// API Route — Réglages de la boutique active (l'inscription passe par /api/ai/onboarding)
 import { deviseDuPays } from "@/lib/ai-agent";
 import { convertirDeviseBoutique } from "@/lib/changement-devise";
 import { tauxDuJour } from "@/lib/taux-change";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hash } from "bcryptjs";
-import { z } from "zod";
-import { generateStoreConfig } from "@/lib/generate-store-config";
-import { genererAvisDemo } from "@/lib/gemini";
 import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
-import { MANIFESTE_LIBRAIRIE, provisionerThemeInitial } from "@/lib/axso-design-library";
-import { notifierMarchand } from "@/lib/notifications-marchand";
 import { FORMAT_PIXEL } from "@/lib/pixels";
-import { slugBoutiqueValide } from "@/lib/utils";
-
-const schemaCreation = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  password: z.string().min(6),
-  nomBoutique: z.string().min(2),
-  slug: z.string().min(2).regex(/^[a-z0-9-]+$/),
-  categorie: z.string(),
-  pays: z.string(),
-  whatsapp: z.string().min(8),
-  devise: z.string().default("XOF"),
-  themeId: z.string().default("terre-et-or"),
-});
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const data = schemaCreation.parse(body);
-    data.devise = deviseDuPays(data.pays, data.devise);
-
-    // Vérifier si l'email ou slug existe déjà
-    const [emailExiste, slugExiste] = await Promise.all([
-      prisma.user.findUnique({ where: { email: data.email } }),
-      prisma.tenant.findUnique({ where: { slug: data.slug } }),
-    ]);
-
-    if (emailExiste) {
-      return NextResponse.json(
-        { message: "Cet email est déjà utilisé" },
-        { status: 400 }
-      );
-    }
-
-    if (slugExiste || !slugBoutiqueValide(data.slug)) {
-      return NextResponse.json(
-        { message: `L'URL "${data.slug}" est déjà prise ou réservée. Essayez un autre nom.` },
-        { status: 400 }
-      );
-    }
-
-    // Générer la config structurelle (sections/page produit/à propos/contact)
-    // en fonction de la catégorie du business — le design visuel lui-même
-    // (accueil/boutique/fiche produit) est désormais provisionné après coup
-    // depuis la bibliothèque AXSO Design (voir plus bas), pas choisi ici.
-    const { themeConfig } = generateStoreConfig({
-      categorie: data.categorie,
-      nomBoutique: data.nomBoutique,
-      pays: data.pays,
-      devise: data.devise,
-    });
-
-    // Créer le tenant et l'utilisateur en transaction
-    const { tenant } = await prisma.$transaction(async (tx) => {
-      const tenant = await tx.tenant.create({
-        data: {
-          slug: data.slug,
-          nomBoutique: data.nomBoutique,
-          categorie: data.categorie,
-          pays: data.pays,
-          devise: data.devise,
-          whatsapp: data.whatsapp,
-          email: data.email,
-          themeConfig: themeConfig as any,
-          commissionRate: 0.1,
-          // "brouillon" : visible sur /{slug} seulement une fois publiée —
-          // voir lib/boutique-completion.ts et le garde-fou dans PATCH ci-dessous.
-          statut: "brouillon",
-          planType: "gratuit",
-        },
-      });
-
-      const user = await tx.user.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          password: await hash(data.password, 10),
-          tenantId: tenant.id,
-          role: "owner",
-          // Lien propriétaire ↔ boutique : sans lui, le multi-boutique ne voit pas cette boutique.
-          boutiques: { create: { tenantId: tenant.id, role: "owner" } },
-        },
-      });
-
-      return { tenant, user };
-    });
-
-    // Boutique créée en "brouillon" — notifie le marchand qu'il lui reste à
-    // compléter ses infos avant de publier (voir lib/boutique-completion.ts).
-    await notifierMarchand({
-      tenantId: tenant.id,
-      type: "boutique_a_completer",
-      titre: "Ta boutique n'est pas encore publiée",
-      message: "Ajoute au moins un produit et vérifie tes infos dans le Constructeur puis publie ta boutique pour qu'elle soit visible.",
-      lien: "/dashboard/builder",
-    });
-
-    // Provisionne un design de la bibliothèque AXSO Design d'après la
-    // catégorie (aucun produit encore créé à ce stade sur ce chemin
-    // d'inscription simple — la grille accueil/boutique reste vide jusqu'au
-    // premier produit ajouté, comme le ferait un thème classique fraîchement
-    // créé). `data.themeId`, s'il correspond à un design précis de la
-    // bibliothèque, le force. Non bloquant : en cas d'échec, la boutique
-    // reste sur le socle par défaut ("terre-et-or").
-    try {
-      const fichierForce = MANIFESTE_LIBRAIRIE.some((e) => e.fichier === data.themeId) ? data.themeId : undefined;
-      const theme = await provisionerThemeInitial({
-        tenantId: tenant.id,
-        categorie: data.categorie,
-        slug: tenant.slug,
-        nomBoutique: tenant.nomBoutique,
-        devise: tenant.devise,
-        fichier: fichierForce,
-      });
-      await prisma.tenant.update({ where: { id: tenant.id }, data: { themeId: theme.id } });
-    } catch (err) {
-      console.warn("[API/TENANTS] Provisionnement bibliothèque échoué (non bloquant):", err);
-    }
-
-    // Avis clients IA de démonstration — pour qu'une boutique neuve inspire
-    // confiance dès le premier jour. Ne bloque jamais la création du tenant :
-    // toute erreur (Gemini, DB) est avalée et journalisée. Sans produit créé
-    // à l'inscription simple, un Avis n'a pas de produitId valide — on saute.
-    try {
-      const produits = await prisma.produit.findMany({
-        where: { tenantId: tenant.id },
-        select: { id: true, nom: true },
-      });
-      if (produits.length > 0) {
-        const avisGeneres = await genererAvisDemo(
-          data.nomBoutique,
-          data.categorie,
-          produits.map((p) => p.nom)
-        );
-        for (let i = 0; i < avisGeneres.length; i++) {
-          const a = avisGeneres[i];
-          const client = await prisma.client.create({
-            data: {
-              tenantId: tenant.id,
-              nom: a.clientNom,
-              email: `demo+${tenant.id}-${i}@axso-avis.local`,
-            },
-          });
-          const produit = produits[i % produits.length];
-          await prisma.avis.create({
-            data: {
-              tenantId: tenant.id,
-              produitId: produit.id,
-              clientId: client.id,
-              note: a.note,
-              titre: a.titre,
-              commentaire: a.commentaire,
-              verifie: false,
-              approuve: true,
-            },
-          });
-        }
-      }
-    } catch (err) {
-      console.warn("[API/TENANTS] Génération avis démo échouée (non bloquant):", err);
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Boutique créée avec succès !",
-        slug: tenant.slug,
-        tenantId: tenant.id,
-      },
-      { status: 201 }
-    );
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: "Données invalides", erreurs: err.issues },
-        { status: 400 }
-      );
-    }
-
-    console.error("[API/TENANTS] Erreur création:", err);
-    return NextResponse.json(
-      { message: "Erreur serveur — veuillez réessayer" },
-      { status: 500 }
-    );
-  }
-}
 
 // Champs fournis par le Theme du design (lib/axso-design-library.ts), jamais édités dans le Constructeur.
 const CHAMPS_DU_DESIGN = [
@@ -217,7 +25,7 @@ export async function PATCH(request: Request) {
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const champs: Record<string, any> = {};
     const autorises = [
       "themeId", "logoUrl", "bannerUrl", "description", "metaTitle", "metaDescription",
@@ -315,26 +123,5 @@ export async function PATCH(request: Request) {
   } catch (err) {
     console.error("[API/TENANTS] Erreur PATCH:", err);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
-  }
-}
-
-export async function GET() {
-  try {
-    const tenants = await prisma.tenant.findMany({
-      select: {
-        id: true,
-        slug: true,
-        nomBoutique: true,
-        pays: true,
-        statut: true,
-        createdAt: true,
-        _count: { select: { produits: true, commandes: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-
-    return NextResponse.json({ tenants });
-  } catch (err) {
-    return NextResponse.json({ message: "Erreur serveur" }, { status: 500 });
   }
 }

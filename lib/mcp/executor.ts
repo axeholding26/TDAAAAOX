@@ -1,5 +1,6 @@
 // Exécuteur MCP — reçoit un nom d'outil + arguments et l'exécute via le bon connecteur
 import { prisma } from "@/lib/prisma";
+import { lireConnexion, enregistrerConnexion } from "@/lib/connect";
 import { posterFacebook, posterInstagram, creerCampagneAds, statsPageFacebook } from "./connectors/meta";
 import { envoyerMessageWhatsApp, envoyerTemplateWhatsApp } from "./connectors/whatsapp";
 import { envoyerGmail, rafraichirTokenGoogle } from "./connectors/gmail";
@@ -18,9 +19,7 @@ export interface McpResult {
 
 // Récupère la config connecteur d'un tenant
 async function getConfig(tenantId: string, type: string) {
-  return prisma.connecteurConfig.findUnique({
-    where: { tenantId_type: { tenantId, type } },
-  });
+  return lireConnexion(tenantId, type);
 }
 
 // Récupère un access token Gmail valide (rafraîchit si nécessaire)
@@ -28,18 +27,23 @@ async function getGmailToken(tenantId: string): Promise<string | null> {
   const config = await getConfig(tenantId, "gmail");
   if (!config) return null;
   const cfg = config.config as any;
-  if (cfg.access_token) return cfg.access_token;
+  // Le jeton d'accès Google expire au bout d'une heure : on repart du jeton de rafraîchissement.
   if (cfg.refresh_token) {
     const newToken = await rafraichirTokenGoogle(cfg.refresh_token);
     if (newToken) {
-      await prisma.connecteurConfig.update({
-        where: { tenantId_type: { tenantId, type: "gmail" } },
-        data: { config: { ...cfg, access_token: newToken } },
-      });
+      await enregistrerConnexion(tenantId, "gmail", { config: { ...cfg, access_token: newToken } });
       return newToken;
     }
   }
-  return null;
+  return cfg.access_token ?? null;
+}
+
+// WhatsApp de la boutique ; `numeroAxso` : à défaut, numéro d'Axso (messages unitaires seulement).
+async function getWhatsApp(tenantId: string, numeroAxso = true): Promise<{ token: string; phoneId: string } | null> {
+  const cfg = await getConfig(tenantId, "whatsapp");
+  const token = cfg?.accessToken || (numeroAxso ? process.env.WHATSAPP_TOKEN : undefined);
+  const phoneId = (cfg?.config as any)?.phone_number_id || (numeroAxso ? process.env.WHATSAPP_PHONE_NUMBER_ID : undefined);
+  return token && phoneId ? { token, phoneId } : null;
 }
 
 export async function executerOutilMcp(
@@ -51,14 +55,15 @@ export async function executerOutilMcp(
     // ── META ────────────────────────────────────────────────────────────────
     if (toolName === "meta_poster_facebook") {
       const config = await getConfig(tenantId, "meta");
-      const pageId = config?.pageId || process.env.META_PAGE_ID;
+      // Page et jeton de la boutique uniquement (jamais ceux de la plateforme).
+      const pageId = config?.pageId;
       const accessToken = config?.accessToken || undefined;
-      if (!pageId) return { succes: false, resultat: "Page Facebook ID non configurée — allez dans Connecteurs" };
+      if (!pageId || !accessToken) return { succes: false, resultat: "Page Facebook non connectée — allez dans Connecteurs" };
 
       const res = await posterFacebook({ pageId, message: args.message, imageUrl: args.imageUrl, lienUrl: args.lienUrl, accessToken });
       if (!res.succes) return { succes: false, resultat: `Erreur Facebook : ${res.erreur}` };
 
-      await prisma.postPlanifie.create({
+      if (!args.dejaEnregistre) await prisma.postPlanifie.create({
         data: { tenantId, plateforme: "facebook", contenu: args.message, hashtags: [], planifieLe: new Date(), publieLe: new Date(), statut: "publie", externalId: res.postId },
       });
       return { succes: true, resultat: `Post Facebook publié ✓ (ID: ${res.postId})`, donnees: res };
@@ -66,15 +71,15 @@ export async function executerOutilMcp(
 
     if (toolName === "meta_poster_instagram") {
       const config = await getConfig(tenantId, "meta");
-      const igUserId = config?.igUserId || process.env.META_IG_USER_ID;
+      const igUserId = config?.igUserId;
       const accessToken = config?.accessToken || undefined;
-      if (!igUserId) return { succes: false, resultat: "Instagram User ID non configuré — allez dans Connecteurs" };
+      if (!igUserId || !accessToken) return { succes: false, resultat: "Compte Instagram non connecté — allez dans Connecteurs" };
       if (!args.imageUrl) return { succes: false, resultat: "Une image est obligatoire pour Instagram" };
 
       const res = await posterInstagram({ igUserId, caption: args.caption, imageUrl: args.imageUrl, type: args.type, accessToken });
       if (!res.succes) return { succes: false, resultat: `Erreur Instagram : ${res.erreur}` };
 
-      await prisma.postPlanifie.create({
+      if (!args.dejaEnregistre) await prisma.postPlanifie.create({
         data: { tenantId, plateforme: "instagram", contenu: args.caption, hashtags: [], imageUrl: args.imageUrl, planifieLe: new Date(), publieLe: new Date(), statut: "publie", externalId: res.postId },
       });
       return { succes: true, resultat: `Post Instagram publié ✓ (ID: ${res.postId})`, donnees: res };
@@ -132,8 +137,8 @@ export async function executerOutilMcp(
 
     if (toolName === "meta_stats_page") {
       const config = await getConfig(tenantId, "meta");
-      const pageId = config?.pageId || process.env.META_PAGE_ID;
-      if (!pageId) return { succes: false, resultat: "Page Facebook ID non configurée" };
+      const pageId = config?.pageId;
+      if (!pageId || !config?.accessToken) return { succes: false, resultat: "Page Facebook non connectée" };
 
       const res = await statsPageFacebook({ pageId, accessToken: config?.accessToken || undefined });
       if (!res.succes) return { succes: false, resultat: `Erreur : ${res.erreur}` };
@@ -142,26 +147,20 @@ export async function executerOutilMcp(
 
     // ── WHATSAPP ─────────────────────────────────────────────────────────────
     if (toolName === "whatsapp_envoyer_message") {
-      const waCfg = await getConfig(tenantId, "whatsapp");
-      const waToken = waCfg?.accessToken || process.env.WHATSAPP_TOKEN;
-      const waPhoneId = (waCfg?.config as any)?.phone_number_id || process.env.WHATSAPP_PHONE_NUMBER_ID;
-      if (!waToken || !waPhoneId) return { succes: false, resultat: "WhatsApp non connecté — allez dans Connecteurs pour autoriser l'accès" };
-
-      // Injecter les credentials per-tenant dans les env vars temporairement via les params
-      const origToken = process.env.WHATSAPP_TOKEN;
-      const origPhoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-      process.env.WHATSAPP_TOKEN = waToken;
-      process.env.WHATSAPP_PHONE_NUMBER_ID = waPhoneId;
-      const res = await envoyerMessageWhatsApp({ telephone: args.telephone, message: args.message });
-      process.env.WHATSAPP_TOKEN = origToken;
-      process.env.WHATSAPP_PHONE_NUMBER_ID = origPhoneId;
+      // Identifiants passés en paramètre : modifier process.env le temps d'un envoi mélangeait
+      // les numéros de deux boutiques servies en même temps.
+      const wa = await getWhatsApp(tenantId);
+      if (!wa) return { succes: false, resultat: "WhatsApp non connecté — allez dans Connecteurs pour autoriser l'accès" };
+      const res = await envoyerMessageWhatsApp({ telephone: args.telephone, message: args.message }, wa);
 
       if (!res.succes) return { succes: false, resultat: `Erreur WhatsApp : ${res.erreur}` };
       return { succes: true, resultat: `Message WhatsApp envoyé à ${args.telephone} ✓` };
     }
 
     if (toolName === "whatsapp_diffusion") {
-      if (!process.env.WHATSAPP_TOKEN) return { succes: false, resultat: "WHATSAPP_TOKEN non configuré" };
+      // Diffusion marketing : numéro de la boutique uniquement, jamais celui d'Axso.
+      const wa = await getWhatsApp(tenantId, false);
+      if (!wa) return { succes: false, resultat: "WhatsApp de la boutique non connecté — allez dans Connecteurs" };
 
       const clients = await prisma.client.findMany({
         where: {
@@ -181,7 +180,7 @@ export async function executerOutilMcp(
       const erreurs: string[] = [];
       for (const client of clients) {
         if (!client.telephone) continue;
-        const res = await envoyerMessageWhatsApp({ telephone: client.telephone, message });
+        const res = await envoyerMessageWhatsApp({ telephone: client.telephone, message }, wa);
         if (res.succes) envoyes++;
         else erreurs.push(client.telephone);
         await new Promise((r) => setTimeout(r, 100)); // éviter le rate limiting
@@ -194,7 +193,9 @@ export async function executerOutilMcp(
     }
 
     if (toolName === "whatsapp_envoyer_template") {
-      const res = await envoyerTemplateWhatsApp({ telephone: args.telephone, templateNom: args.template_nom, variables: args.variables });
+      const wa = await getWhatsApp(tenantId, false);
+      if (!wa) return { succes: false, resultat: "WhatsApp de la boutique non connecté — allez dans Connecteurs" };
+      const res = await envoyerTemplateWhatsApp({ telephone: args.telephone, templateNom: args.template_nom, variables: args.variables }, wa);
       if (!res.succes) return { succes: false, resultat: `Erreur template WhatsApp : ${res.erreur}` };
       return { succes: true, resultat: `Template "${args.template_nom}" envoyé à ${args.telephone} ✓` };
     }
@@ -228,11 +229,11 @@ export async function executerOutilMcp(
       for (const client of clients) {
         if (!client.email) continue;
         const corps = args.corps_html.replace(/\{\{nom\}\}/g, client.nom ?? "");
-        await envoyerGmail({ accessToken, a: client.email, sujet: args.sujet, corpsHtml: corps });
-        envoyes++;
+        const r = await envoyerGmail({ accessToken, a: client.email, sujet: args.sujet, corpsHtml: corps });
+        if (r.succes) envoyes++;
         await new Promise((r) => setTimeout(r, 200));
       }
-      return { succes: true, resultat: `Campagne Gmail envoyée à ${envoyes} client(s) ✓` };
+      return { succes: envoyes > 0, resultat: `Campagne Gmail : ${envoyes}/${clients.length} e-mail(s) envoyé(s)` };
     }
 
     // ── SMS ──────────────────────────────────────────────────────────────────
@@ -285,7 +286,7 @@ export async function executerOutilMcp(
         if (!res.succes) return { succes: false, resultat: res.resultat };
 
         // Sauvegarder dans VideoGeneree
-        if (res.videoUrl) {
+        if (res.videoUrl && !args.dejaEnregistre) {
           await prisma.videoGeneree.create({
             data: { tenantId, prompt: args.prompt, style: args.style ?? "product", videoUrl: res.videoUrl, statut: "pret" },
           });
@@ -316,7 +317,7 @@ export async function executerOutilMcp(
         if (!res.succes) return { succes: false, resultat: res.resultat };
         if (res.videoUrl) {
           await prisma.videoGeneree.create({ data: { tenantId, prompt, style: args.style ?? "commercial", videoUrl: res.videoUrl, statut: "pret" } });
-          await prisma.produit.update({ where: { id: args.produitId }, data: { videos: { push: res.videoUrl } } });
+          await prisma.produit.update({ where: { id: produit.id, tenantId }, data: { videos: { push: res.videoUrl } } });
         }
         return { succes: true, resultat: `Vidéo produit "${produit.nom}" générée ✓`, donnees: res };
       }

@@ -53,6 +53,8 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
 
     const produitId = req.nextUrl.searchParams.get("produitId");
     if (!produitId) return NextResponse.json({ error: "produitId requis" }, { status: 400 });
@@ -87,6 +89,8 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
+    if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
 
     const { produitId, nom, prix, prixPromo, periodeValidite, renouvAuto, autorisePromo, dateDebut, dateFin, slug: slugInput } =
       await req.json();

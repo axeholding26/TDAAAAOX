@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { integrationActive, BIENTOT_DISPONIBLE } from "@/lib/integrations";
 import { auth } from "@/lib/auth";
+import { creerEtatOAuth } from "@/lib/mcp/oauth-etat";
 
 const SCOPES = [
   "pages_manage_posts",
@@ -35,7 +36,7 @@ export async function GET() {
     redirect_uri: callbackUrl,
     scope: SCOPES,
     response_type: "code",
-    state: tenantId,
+    state: await creerEtatOAuth(),
   });
 
   return NextResponse.redirect(

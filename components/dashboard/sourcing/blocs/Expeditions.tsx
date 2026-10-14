@@ -279,7 +279,7 @@ function FormulaireReappro({ entrepots, onCree, onFermer }: { entrepots: Entrepo
   return (
     <Carte titre="Nouveau réapprovisionnement" aide="Import de stock : vous achetez en quantité chez le fournisseur et le stock arrive dans votre entrepôt local.">
       {chargement && !data ? <Chargement /> : produits.length === 0 ? (
-        <EtatVide titre="Aucun produit sourcé" texte="Ajoutez d'abord un produit à votre catalogue sourcing pour pouvoir le réapprovisionner.">
+        <EtatVide titre="Aucun produit sourcé" texte="Ouvrez d'abord un dossier produit (en haut de la page) pour pouvoir le réapprovisionner.">
           <Bouton onClick={versDossier}>{t("Nouveau dossier")}</Bouton>
         </EtatVide>
       ) : (

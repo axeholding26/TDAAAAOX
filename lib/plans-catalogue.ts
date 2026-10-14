@@ -80,7 +80,7 @@ export const ABONNEMENT_FAQ = [
   },
   {
     q: "Comment fonctionne la limite de commandes au Palier 0 ?",
-    r: "Au Palier 0 vous pouvez recevoir jusqu'à 30 commandes par mois. Au-delà, vos commandes continuent d'arriver normalement, mais vous ne pouvez plus les gérer (statuts, livreurs, retours, factures) ni utiliser WhatsApp tant que vous n'upgradez pas ou que le mois ne change pas.",
+    r: "Au Palier 0 vous pouvez recevoir jusqu'à 60 commandes par mois. Au-delà, vos commandes continuent d'arriver normalement, mais vous ne pouvez plus les gérer (statuts, livreurs, retours, factures) ni utiliser WhatsApp tant que vous n'upgradez pas ou que le mois ne change pas.",
   },
   {
     q: "Le Palier 2 inclut vraiment tout sans supplément ?",

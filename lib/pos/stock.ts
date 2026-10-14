@@ -33,6 +33,7 @@ import { prisma } from "../prisma";
 import { ErreurPos } from "./erreurs";
 import { entrepotPrincipal } from "./magasins";
 import { cleArticle } from "./types";
+import { publier } from "../controle-ia/evenements";
 
 type Tx = Prisma.TransactionClient;
 type Db = Tx | PrismaClient;
@@ -106,7 +107,7 @@ export async function mouvementStock(tx: Tx, p: DemandeMouvement): Promise<Resul
   if (sens === undefined) throw new ErreurPos("invalide", 400, "Ce type de mouvement de stock n'existe pas.");
   const delta = sens === 0 ? p.quantite : sens * Math.abs(p.quantite);
 
-  const produit = await tx.produit.findFirst({ where: { id: p.produitId, tenantId: p.tenantId }, select: { nom: true, type: true, stock: true } });
+  const produit = await tx.produit.findFirst({ where: { id: p.produitId, tenantId: p.tenantId }, select: { nom: true, type: true, stock: true, stockMin: true } });
   if (!produit) throw new ErreurPos("introuvable", 404, "Ce produit est introuvable dans cette boutique.");
   if (produit.type !== "physique") throw new ErreurPos("invalide", 400, `« ${produit.nom} » n'a pas de stock suivi.`);
   const varianteId = p.varianteId ?? null;
@@ -126,6 +127,8 @@ export async function mouvementStock(tx: Tx, p: DemandeMouvement): Promise<Resul
     ? await tx.variante.findUniqueOrThrow({ where: { id: varianteId }, select: { stock: true } })
     : await tx.produit.findUniqueOrThrow({ where: { id: p.produitId }, select: { stock: true } });
   const stockAvant = stockApres - delta;
+  // Franchissement du seuil d'alerte (il n'existe que sur le produit, pas sur ses variantes) : événement du bus AXSO CONTROL, sans effet sur le mouvement.
+  if (!varianteId && produit.stockMin && stockApres <= produit.stockMin && stockAvant > produit.stockMin) publier(p.tenantId, "inventory.low", { produitId: p.produitId, nom: produit.nom, stock: stockApres, seuil: produit.stockMin });
 
   // 2. Ventilation par entrepôt.
   const lieu = p.lieu !== undefined ? p.lieu : await resoudreLieu(tx, p.tenantId, p.entrepotId);

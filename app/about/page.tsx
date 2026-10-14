@@ -10,17 +10,10 @@ export const metadata: Metadata = {
 };
 
 const VALEURS = [
-  { Icon: Globe,  accent: "#F5A623", titre: "Africa-first", desc: "Tout ce que nous construisons est pensé pour les réalités du marché africain — Mobile Money, langues locales, logistique adaptée." },
+  { Icon: Globe,  accent: "#F5A623", titre: "Africa-first", desc: "Tout ce que nous construisons est pensé pour les réalités du marché africain — Mobile Money, paiement à la livraison, livraison par quartier." },
   { Icon: Zap,    accent: "#F5A623", titre: "Simplicité radicale", desc: "Un entrepreneur à Dakar ou Douala ne doit pas avoir besoin d'un développeur. AXSO est puissant et simple à la fois." },
   { Icon: Cpu,    accent: "#7c3aed", titre: "IA au service du marchand", desc: "Axia, notre IA embarquée, automatise ce qui prend du temps — descriptions, réponses clients, gestion des commandes." },
   { Icon: Shield, accent: "#10b981", titre: "Confiance & transparence", desc: "Pas de frais cachés. Pas de commissions surprises. Votre boutique, vos données, votre argent." },
-];
-
-const CHIFFRES = [
-  { n: "1 247+", label: "boutiques actives" },
-  { n: "12",     label: "pays couverts" },
-  { n: "98%",    label: "satisfaction client" },
-  { n: "< 3min", label: "pour lancer" },
 ];
 
 export default async function AboutPage() {
@@ -49,20 +42,10 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Chiffres */}
+      {/* Mission & valeurs */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-24">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-5 mb-28">
-          {CHIFFRES.map(c => (
-            <div key={c.n} className="text-center rounded-2xl p-6 border"
-              style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.15)" }}>
-              <p className="text-3xl font-black mb-1" style={{ color: "#F5A623" }}>{c.n}</p>
-              <p className="text-[#737373] text-sm">{t(c.label)}</p>
-            </div>
-          ))}
-        </div>
-
         {/* Mission */}
-        <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-28">
+        <div className="max-w-4xl mx-auto mb-28">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] mb-4" style={{ color: "#F5A623" }}>{t("Notre mission")}</p>
             <h2 className="text-3xl font-bold text-[#111111] mb-5 leading-snug">
@@ -70,16 +53,6 @@ export default async function AboutPage() {
             </h2>
             <p className="text-[#666666] leading-relaxed text-lg">
               {t("Nous croyons que le commerce africain est le moteur de la prochaine décennie. AXSO donne à chaque marchand — qu'il soit à Dakar, Abidjan, Lagos ou Casablanca — les outils pour vendre en ligne, automatiser sa gestion et croître sans limite.")}
-            </p>
-          </div>
-          <div className="rounded-3xl p-8 border relative overflow-hidden"
-            style={{ background: "rgba(245,166,35,0.04)", borderColor: "rgba(245,166,35,0.2)" }}>
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-1/2 translate-x-1/2"
-              style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.2), transparent)" }} />
-            <p className="text-5xl font-black leading-none mb-3" style={{ color: "#F5A623" }}>2023</p>
-            <p className="text-[#111111] font-bold text-xl mb-2">{t("Fondée à Dakar")}</p>
-            <p className="text-[#737373] text-sm leading-relaxed">
-              {t("AXSO a été fondée par une équipe d'ingénieurs et d'entrepreneurs africains qui ont vécu les frustrations de vendre en ligne sur le continent.")}
             </p>
           </div>
         </div>

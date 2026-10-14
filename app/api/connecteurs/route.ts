@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { lireConnexion, enregistrerConnexion, deconnecter, etatConnexions } from "@/lib/connect";
 
 // ── GET — lister tous les connecteurs du tenant ───────────────────────────────
 export async function GET() {
@@ -10,16 +11,8 @@ export async function GET() {
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
-  const configs = await prisma.connecteurConfig.findMany({ where: { tenantId } });
-
-  // Masquer les tokens sensibles pour l'affichage
-  const safe = configs.map(c => ({
-    ...c,
-    accessToken: c.accessToken ? "••••••••" + c.accessToken.slice(-4) : null,
-    config: masquerSecrets(c.config as Record<string, any>),
-  }));
-
-  return NextResponse.json({ connecteurs: safe });
+  // Aucun secret, même masqué : seulement l'état des services reliés.
+  return NextResponse.json({ connecteurs: await etatConnexions(tenantId) });
 }
 
 // ── POST — créer ou mettre à jour un connecteur ───────────────────────────────
@@ -32,22 +25,12 @@ export async function POST(req: NextRequest) {
   const { type, accessToken, pageId, igUserId, config } = await req.json().catch(() => ({}));
   if (!type) return NextResponse.json({ error: "Type requis" }, { status: 400 });
 
-  const connecteur = await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type } },
-    create: {
-      tenantId, type, statut: "actif",
-      ...(accessToken && { accessToken }),
-      ...(pageId && { pageId }),
-      ...(igUserId && { igUserId }),
-      config: config ?? {},
-    },
-    update: {
-      statut: "actif",
-      ...(accessToken && { accessToken }),
-      ...(pageId && { pageId }),
-      ...(igUserId && { igUserId }),
-      ...(config && { config }),
-    },
+  const connecteur = await enregistrerConnexion(tenantId, type, {
+    statut: "actif",
+    accessToken: accessToken || undefined,
+    pageId: pageId || undefined,
+    igUserId: igUserId || undefined,
+    config: config || undefined,
   });
 
   return NextResponse.json({ succes: true, id: connecteur.id, statut: connecteur.statut });
@@ -64,10 +47,7 @@ export async function DELETE(req: NextRequest) {
   const type = searchParams.get("type");
   if (!type) return NextResponse.json({ error: "Type requis" }, { status: 400 });
 
-  await prisma.connecteurConfig.updateMany({
-    where: { tenantId, type },
-    data: { statut: "inactif", accessToken: null, pageId: null, igUserId: null, config: {} },
-  });
+  await deconnecter(tenantId, type);
 
   return NextResponse.json({ succes: true });
 }
@@ -80,7 +60,7 @@ export async function PATCH(req: NextRequest) {
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
   const { type } = await req.json().catch(() => ({}));
-  const config = await prisma.connecteurConfig.findFirst({ where: { tenantId, type } });
+  const config = await lireConnexion(tenantId, type);
 
   if (!config || config.statut !== "actif") {
     return NextResponse.json({ connecte: false, message: "Connecteur non configuré" });
@@ -114,15 +94,4 @@ export async function PATCH(req: NextRequest) {
     await prisma.connecteurConfig.updateMany({ where: { tenantId, type }, data: { statut: "erreur" } });
     return NextResponse.json({ connecte: false, message: err.message });
   }
-}
-
-function masquerSecrets(cfg: Record<string, any>): Record<string, any> {
-  const secrets = ["apiKey", "secret", "password", "token", "webhook_secret"];
-  return Object.fromEntries(
-    Object.entries(cfg).map(([k, v]) =>
-      secrets.some(s => k.toLowerCase().includes(s)) && typeof v === "string"
-        ? [k, "••••" + v.slice(-4)]
-        : [k, v]
-    )
-  );
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { enregistrerConnexion } from "@/lib/connect";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 // GET — lire la config WhatsApp du tenant
@@ -48,27 +49,13 @@ export async function POST(req: NextRequest) {
   }
 
   // Sauvegarder la config
-  await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type: "whatsapp" } },
-    create: {
-      tenantId,
-      type: "whatsapp",
-      statut: "actif",
-      accessToken: access_token,
-      config: {
-        phone_number_id,
-        numero_affiche: testData.display_phone_number ?? numero_affiche,
-        verified_name: testData.verified_name,
-      },
-    },
-    update: {
-      statut: "actif",
-      accessToken: access_token,
-      config: {
-        phone_number_id,
-        numero_affiche: testData.display_phone_number ?? numero_affiche,
-        verified_name: testData.verified_name,
-      },
+  await enregistrerConnexion(tenantId, "whatsapp", {
+    statut: "actif",
+    accessToken: access_token,
+    config: {
+      phone_number_id,
+      numero_affiche: testData.display_phone_number ?? numero_affiche,
+      verified_name: testData.verified_name,
     },
   });
 

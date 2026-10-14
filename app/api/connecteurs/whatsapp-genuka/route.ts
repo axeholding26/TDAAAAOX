@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { lireConnexion, enregistrerConnexion } from "@/lib/connect";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 // GET — lire la config WhatsApp via Genuka du tenant
@@ -10,10 +11,7 @@ export async function GET() {
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
 
-  const config = await prisma.connecteurConfig.findFirst({
-    where: { tenantId, type: "whatsapp_genuka" },
-    select: { statut: true, config: true, updatedAt: true },
-  });
+  const config = await lireConnexion(tenantId, "whatsapp_genuka");
 
   // Jamais les secrets eux-mêmes : seulement s'ils sont renseignés.
   const cfg = (config?.config ?? {}) as any;
@@ -40,21 +38,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Renseignez le proxy token et/ou le secret du webhook" }, { status: 400 });
   }
 
-  const existant = await prisma.connecteurConfig.findFirst({
-    where: { tenantId, type: "whatsapp_genuka" },
-    select: { config: true },
-  });
+  const existant = await lireConnexion(tenantId, "whatsapp_genuka");
   const config = {
     ...(existant?.config as any),
     ...(proxyToken && typeof proxyToken === "string" ? { proxyToken } : {}),
     ...(webhookSecret && typeof webhookSecret === "string" ? { webhookSecret } : {}),
   };
 
-  await prisma.connecteurConfig.upsert({
-    where: { tenantId_type: { tenantId, type: "whatsapp_genuka" } },
-    create: { tenantId, type: "whatsapp_genuka", statut: "actif", config },
-    update: { statut: "actif", config },
-  });
+  await enregistrerConnexion(tenantId, "whatsapp_genuka", { statut: "actif", config });
 
   return NextResponse.json({ success: true });
 }

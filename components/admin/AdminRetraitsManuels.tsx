@@ -18,7 +18,7 @@ export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) 
 
   async function charger() {
     const res = await fetch("/api/admin/wallet/retraits");
-    if (res.ok) setRetraits((await res.json()).retraits ?? []);
+    if (res.ok) setRetraits((await res.json().catch(() => ({}))).retraits ?? []);
   }
   useEffect(() => { charger(); }, []);
 
@@ -35,11 +35,11 @@ export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: r.id, action }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(t(data.error ?? "Erreur")); return; }
       toast.success(action === "payer" ? t("Retrait marqué payé") : t("Retrait refusé — marchand recrédité"));
       charger();
-    } finally { setEnCours(null); }
+    } catch { toast.error(t("Erreur réseau")); } finally { setEnCours(null); }
   }
 
   if (retraits.length === 0) return null;

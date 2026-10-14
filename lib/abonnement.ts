@@ -60,3 +60,11 @@ export async function quotaCommandesAtteint(tenantId: string): Promise<boolean> 
   const utilisees = await commandesCeMois(tenantId);
   return utilisees >= limite;
 }
+
+// Nouvelle échéance après un paiement de `jours` jours : un renouvellement du
+// même palier encore actif s'ajoute aux jours restants (jamais perdus) ; un
+// changement de palier ou un palier expiré repart d'aujourd'hui.
+export function expirationApresPaiement(actuel: { planType: string; planExpiresAt: Date | null }, plan: string, jours: number, maintenant = new Date()): Date {
+  const depart = actuel.planType === plan && actuel.planExpiresAt && actuel.planExpiresAt > maintenant ? actuel.planExpiresAt : maintenant;
+  return new Date(depart.getTime() + jours * 24 * 3600 * 1000);
+}

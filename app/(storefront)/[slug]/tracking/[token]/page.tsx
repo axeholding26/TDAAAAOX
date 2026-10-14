@@ -27,16 +27,25 @@ export default function TrackingPage() {
   const params = useParams<{ token: string }>();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [erreur, setErreur] = useState(false); // réseau ou serveur indisponible (≠ commande introuvable)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [liveInfo, setLiveInfo] = useState<{ distanceKm: number | null; etaMin: number | null; speedKmh: number | null }>({ distanceKm: null, etaMin: null, speedKmh: null });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   async function load() {
-    const r = await fetch(`/api/tracking/${params.token}`).then(r => r.json());
-    if (r.commande) {
-      setData(r.commande); setLastUpdate(new Date());
-      // Livrée ou annulée : plus rien ne bougera, inutile de continuer à interroger le serveur
-      if (["livree", "annulee"].includes(r.commande.statut) && intervalRef.current) clearInterval(intervalRef.current);
+    try {
+      const res = await fetch(`/api/tracking/${params.token}`);
+      const r = await res.json().catch(() => ({}));
+      if (r.commande) {
+        setData(r.commande); setLastUpdate(new Date()); setErreur(false);
+        // Livrée ou annulée : plus rien ne bougera, inutile de continuer à interroger le serveur
+        if (["livree", "annulee"].includes(r.commande.statut) && intervalRef.current) clearInterval(intervalRef.current);
+      } else {
+        if (res.status !== 404) setErreur(true);
+        else if (intervalRef.current) clearInterval(intervalRef.current);
+      }
+    } catch {
+      setErreur(true); // le prochain passage réessaie
     }
     setLoading(false);
   }
@@ -60,7 +69,7 @@ export default function TrackingPage() {
 
   if (!data) return (
     <div style={{ minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center", background:"#0F0F0F", fontFamily:"system-ui,sans-serif" }}>
-      <p style={{ color:"#666" }}>{t("Commande introuvable")}</p>
+      <p style={{ color:"#666", padding:"0 16px", textAlign:"center" }}>{erreur ? t("Suivi momentanément indisponible. Vérifiez votre connexion et réessayez.") : t("Commande introuvable")}</p>
     </div>
   );
 
@@ -165,7 +174,7 @@ export default function TrackingPage() {
             return (
               <div key={step.key} style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 0", borderBottom: i < STATUT_STEPS.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
                 <div style={{ width:36, height:36, borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color: done ? "#22c55e" : active ? "#F5A623" : "#555", background: done ? "rgba(34,197,94,0.15)" : active ? "rgba(245,166,35,0.15)" : "rgba(255,255,255,0.05)", border: done ? "1px solid rgba(34,197,94,0.3)" : active ? "1px solid rgba(245,166,35,0.4)" : "1px solid rgba(255,255,255,0.1)" }}>
-                  {done ? <Check size={16} /> : t(STATUT_STEP_ICONS[step.key])}
+                  {done ? <Check size={16} /> : STATUT_STEP_ICONS[step.key]}
                 </div>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13, fontWeight: active ? 600 : 400, color: done ? "#22c55e" : active ? "#F5A623" : "#555" }}>{t(step.label)}</div>
@@ -219,8 +228,8 @@ export default function TrackingPage() {
           <div className="trk-side" style={{ background:"rgba(245,166,35,0.08)", border:"1px solid rgba(245,166,35,0.2)", borderRadius:16, padding:16, marginBottom:16, display:"flex", alignItems:"center", gap:14 }}>
             <div style={{ width:44, height:44, borderRadius:"50%", background:"rgba(245,166,35,0.15)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, color:"#F5A623" }}><Bike size={20} /></div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{t(data.livreurNom) ?? t("Livreur assigné")}</div>
-              {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{t(data.livreurTelephone)}</div>}
+              <div style={{ fontSize:13, fontWeight:600, color:"white", marginBottom:2 }}>{data.livreurNom || t("Livreur assigné")}</div>
+              {data.livreurTelephone && <div style={{ fontSize:12, color:"#888" }}>{data.livreurTelephone}</div>}
             </div>
             {data.livreurTelephone && (
               <a href={`tel:${data.livreurTelephone}`} style={{ background:"#F5A623", color:"black", borderRadius:12, padding:"8px 14px", fontSize:12, fontWeight:600, textDecoration:"none" }}>

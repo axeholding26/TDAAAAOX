@@ -22,6 +22,9 @@ import { corrigerLiensDesign } from "./liens-design";
 import { convertirMontant } from "./devise-convert";
 import { deviseVisiteur } from "./devise-visiteur";
 import { tauxDuJour } from "./taux-change";
+import { cookies } from "next/headers";
+import { COOKIE_APERCU, lireJetonApercu } from "./builder/apercu";
+import { COOKIE_XP, varianteVitrine } from "./builder/experiences";
 
 function htmlEmbeds(node: BlockNode): string {
   if (node.actif === false) return "";
@@ -165,9 +168,28 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
 }
 
 /** À utiliser par toutes les pages de la vitrine à la place de resolveThemeConfigAsync. */
+/** Brouillon du Builder IA si ce navigateur a ouvert un lien d'aperçu valide pour CETTE boutique (lib/builder/apercu.ts). */
+export async function brouillonEnApercu(tenantId: string): Promise<Record<string, any> | null> {
+  try {
+    const jeton = (await cookies()).get(COOKIE_APERCU)?.value;
+    if (lireJetonApercu(jeton) !== tenantId) return null;
+    const b = await prisma.brouillonBoutique.findUnique({ where: { tenantId }, select: { config: true } });
+    return (b?.config as Record<string, any>) ?? null;
+  } catch { return null; } // hors requête (génération statique) : jamais d'aperçu
+}
+
 export async function resolveConfigVitrine(themeId: string, tenantId: string, savedConfig: Record<string, any> = {}): Promise<ThemeConfig> {
+  const apercu = await brouillonEnApercu(tenantId);
+  // Test A/B (lib/builder/experiences.ts) : variante stable du visiteur, posée sur la version en
+  // ligne. Jamais pendant un aperçu (brouillon IA ou cadre du Constructeur) : on y voit exactement sa config.
+  const variante = apercu ? null : await (async () => {
+    try {
+      const c = await cookies();
+      return c.get("axso_apercu")?.value === "1" ? null : await varianteVitrine(tenantId, c.get(COOKIE_XP)?.value);
+    } catch { return null; }
+  })();
   const [cfg, collections, tenant] = await Promise.all([
-    resolveThemeConfigAsync(themeId, tenantId, savedConfig),
+    resolveThemeConfigAsync(themeId, tenantId, apercu ?? (variante ? { ...savedConfig, ...variante } : savedConfig)),
     // Liens du pied de page vers chaque collection (voir lib/liens-design.ts).
     prisma.collection.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, select: { slug: true, nom: true } }),
     prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),

@@ -101,7 +101,7 @@ export const BLOCK_CATALOG: BlockCatalogEntry[] = [
   },
   {
     type: "products", label: "Produits", categorie: "widget",
-    champs: `{ titre: string, nombre: number (1-24), colonnes: 2|3|4, tri: "recent"|"ventes"|"featured" } — affiche les VRAIS produits de la boutique, jamais de contenu inventé`,
+    champs: `{ titre: string, nombre: number (1-24), colonnes: 2|3|4, colonnesTablette: 2|3|4, colonnesMobile: 1|2, tri: "recent"|"ventes"|"featured"|"prix_asc"|"prix_desc", regle: "meilleures_ventes"|"nouveautes"|"mis_en_avant"|"collection"|"categorie"|"forte_marge"|"stock_bas"|"dormants"|"marge_peu_vendus"|"recherche", collection: string (slug, règle collection), categorie: string (règle categorie), motCle: string (règle recherche), jours: number (7-365), seuilStock: number (1-100) } — affiche les VRAIS produits de la boutique, choisis à chaque affichage par la règle (lib/builder/liaisons.ts), jamais de contenu inventé ; sans regle, tri seul`,
     defaultConfig: { titre: "Nos produits", nombre: 8, colonnes: 4, tri: "recent" },
   },
 ];

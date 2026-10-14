@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Paiement en ligne indisponible" }, { status: 503 });
   }
 
-  const { plan } = await req.json();
+  const { plan } = await req.json().catch(() => ({}));
   if (!plan || !PALIER_PRIX[plan]) {
     return NextResponse.json({ error: "Plan invalide" }, { status: 400 });
   }

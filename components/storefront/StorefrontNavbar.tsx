@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { Menu, X, Search, BadgeCheck, Heart, ChevronDown, Package, User } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import type { ThemeNavigationCfg } from "@/lib/theme-config";
 import { usePrix, PastillePays } from "@/components/storefront/DeviseVitrine";
 import { useT } from "@/components/I18nProvider";
@@ -32,9 +32,40 @@ interface RechercheProduit {
 
 const HAUTEUR_PX: Record<string, number> = { "48px": 48, "64px": 64, "80px": 80 };
 
+// Menus du socle configurés dans le Builder (themeConfig.navigation, lib/builder/operations/navigation.ts),
+// fournis par le layout de la vitrine. Vide = liens par défaut ci-dessous.
+type LienMenu = { libelle: string; lien: string };
+const MenuVitrine = createContext<LienMenu[]>([]);
+export function MenuVitrineProvider({ menu, children }: { menu: LienMenu[]; children: React.ReactNode }) {
+  return <MenuVitrine.Provider value={menu}>{children}</MenuVitrine.Provider>;
+}
+// Lien enregistré : chemin interne sans le slug (« collections/ete ») ou adresse complète.
+const hrefMenu = (slug: string, lien: string) => (/^(https:|mailto:|tel:|#|\/)/.test(lien) ? lien : `/${slug}${lien ? `/${lien}` : ""}`);
+
+/** Colonnes de liens du pied de page configurées dans le Builder (socle), sous le pied de page de la page. */
+export function PiedMenuVitrine({ slug, colonnes, accent, fond, texte }: { slug: string; colonnes: { titre: string; liens: LienMenu[] }[]; accent: string; fond: string; texte: string }) {
+  return (
+    <footer className="border-t" style={{ backgroundColor: fond, color: texte, borderColor: `${accent}15` }}>
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8">
+        {colonnes.map((c, i) => (
+          <div key={i}>
+            <p className="font-semibold text-sm mb-3 uppercase tracking-wider" style={{ color: accent }}>{c.titre}</p>
+            <div className="space-y-2">
+              {c.liens.map((l, j) => (
+                <Link key={j} href={hrefMenu(slug, l.lien)} className="block text-sm transition-opacity hover:opacity-100" style={{ opacity: 0.6 }}>{l.libelle}</Link>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </footer>
+  );
+}
+
 export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, texte, radius, collections, certifie, navStyle, showAbout, showContact }: Props) {
   const t = useT();
   const { fmt } = usePrix();
+  const menu = useContext(MenuVitrine);
   const wishlistCount = useWishlistStore((s) => s.produitIds.length);
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [rechercheOuverte, setRechercheOuverte] = useState(false);
@@ -178,7 +209,15 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
 
   const collectionLinks = type === "mega" ? collections : collections.slice(0, 4);
 
-  const linksNode = !minimal && (
+  const linksNode = !minimal && (menu.length ? (
+    <div className="hidden md:flex items-center gap-8">
+      {menu.map((l, i) => (
+        <Link key={i} href={hrefMenu(slug, l.lien)} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
+          {l.libelle}
+        </Link>
+      ))}
+    </div>
+  ) : (
     <div className="hidden md:flex items-center gap-8">
       <Link href={`/${slug}/produits`} className="text-sm font-medium opacity-70 hover:opacity-100 transition-opacity tracking-wide" style={{ color: txt }}>
         {t("Produits")}
@@ -219,7 +258,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         ))
       )}
     </div>
-  );
+  ));
 
   const actionsNode = (
     <div className="flex items-center gap-2 flex-shrink-0">
@@ -345,15 +384,22 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
             )}
           </div>
         )}
+        {menu.map((l, i) => (
+          <Link key={i} href={hrefMenu(slug, l.lien)} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
+            {l.libelle}
+          </Link>
+        ))}
+        {!menu.length && (
         <Link href={`/${slug}/produits`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
           {t("Tous les produits")}
         </Link>
-        {showAbout && (
+        )}
+        {!menu.length && showAbout && (
           <Link href={`/${slug}/a-propos`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
             {t("À propos")}
           </Link>
         )}
-        {showContact && (
+        {!menu.length && showContact && (
           <Link href={`/${slug}/contact`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
             {t("Contact")}
           </Link>
@@ -366,7 +412,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
         <Link href={`/${slug}/mon-compte`} onClick={() => setMenuOuvert(false)} className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
           <User size={14} />{" "}{t("Mon compte")}
         </Link>
-        {collections.map((col) => (
+        {!menu.length && collections.map((col) => (
           <Link key={col.slug} href={`/${slug}/collections/${col.slug}`} onClick={() => setMenuOuvert(false)} className="block px-3 py-3 rounded-xl text-sm font-medium transition-all hover:opacity-80" style={{ color: texte }}>
             {t(col.nom)}
           </Link>

@@ -6,7 +6,7 @@ import { codePays } from "@/lib/devise-convert";
 // Body: { tenantId, pays, zone?, poids?, montantCommande }
 // Options de livraison applicables au pays (et quartier) du client, triées par prix.
 export async function POST(req: Request) {
-  const body = await req.json();
+  const body = await req.json().catch(() => ({}));
   const { tenantId, pays, zone, poids = 0, montantCommande = 0 } = body;
 
   if (!tenantId) {

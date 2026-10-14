@@ -2,16 +2,16 @@
 // tenantId) dans les paramètres Webhooks de son propre compte Genuka. Le
 // tenantId dans l'URL identifie la boutique de façon fiable (contrairement à
 // une route globale, qui ne peut pas savoir de quel compte Genuka vient
-// l'appel). La confirmation automatique de commande par mot-clé n'a lieu que
-// si la signature est vérifiée, pour éviter qu'un tiers connaissant le
-// tenantId ne confirme des commandes à distance en forgeant des messages.
+// l'appel). Tout appel sans signature HMAC valide (secret webhook enregistré
+// par le marchand) est refusé : le tenantId de l'URL n'est pas un secret.
 //
 // ⚠️ La forme exacte du payload "message.received" n'est pas garantie par la
 // doc publique (seul un exemple de test minimal est documenté). Le payload
 // brut est toujours journalisé dans MessageRecu.payload pour inspection.
 // Docs : https://docs.genuka.com/merchant-api/12-inbox-messaging.md
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lireConnexion } from "@/lib/connect";
 import { verifierSignatureGenukaWebhook } from "@/lib/genuka";
 import { notifierClientWhatsApp } from "@/lib/whatsapp";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
@@ -25,10 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ten
   const { tenantId } = await params;
   const rawBody = await req.text();
 
-  const cfg = await prisma.connecteurConfig.findFirst({
-    where: { tenantId, type: "whatsapp_genuka" },
-    select: { config: true, statut: true },
-  });
+  const cfg = await lireConnexion(tenantId, "whatsapp_genuka");
   if (!cfg || cfg.statut !== "actif") {
     return NextResponse.json({ error: "Boutique non connectée à Genuka" }, { status: 404 });
   }
@@ -39,13 +36,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ten
   const sig = req.headers.get("signature") ?? req.headers.get("x-genuka-signature");
   const verifie = verifierSignatureGenukaWebhook(rawBody, sig, webhookSecret);
 
-  // Le format de signature de Genuka n'est pas garanti par leur doc publique —
-  // observé en prod : les signatures ne matchent pas le HMAC attendu. On ne
-  // bloque donc plus l'affichage des messages sur un échec de vérification,
-  // seule la confirmation auto de commande (action à effet de bord) reste
-  // désactivée tant que la signature n'est pas vérifiée.
-  if (webhookSecret && !verifie) {
-    console.warn(`[webhook/genuka/${tenantId}] Signature non vérifiée (en-têtes: ${[...req.headers.keys()].join(", ")} · sig reçue: ${sig ?? "aucune"}) — message accepté sans confirmation auto`);
+  // Sans secret vérifié, n'importe qui connaissant le tenantId (visible dans l'URL)
+  // pourrait glisser de faux messages clients dans la boîte du marchand : refusé.
+  if (!verifie) {
+    console.warn(`[webhook/genuka/${tenantId}] Signature absente ou invalide — requête rejetée`);
+    return NextResponse.json({ error: "Signature invalide" }, { status: 401 });
   }
 
   let body: any;
@@ -63,12 +58,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ten
     return NextResponse.json({ received: true });
   }
 
-  traiterMessage(tenantId, body, verifie).catch((err) => console.error(`[webhook/genuka/${tenantId}] Erreur traitement:`, err));
+  // after() : sur Vercel, une promesse abandonnée est coupée dès la réponse envoyée.
+  after(() => traiterMessage(tenantId, body).catch((err) => console.error(`[webhook/genuka/${tenantId}] Erreur traitement:`, err)));
 
   return NextResponse.json({ received: true });
 }
 
-async function traiterMessage(tenantId: string, body: any, verifie: boolean) {
+async function traiterMessage(tenantId: string, body: any) {
   const data = body.data ?? {};
   const message = data.message ?? {};
   const conversation = data.conversation ?? {};
@@ -107,7 +103,6 @@ async function traiterMessage(tenantId: string, body: any, verifie: boolean) {
     },
   }).catch(() => {});
 
-  if (!verifie) return; // pas de secret configuré/valide → pas d'action côté commande
   if (!commandeLiee || commandeLiee.statut !== "en_attente") return;
   const texte = corps.toLowerCase().trim();
   const estConfirmation = MOTS_CONFIRMATION.some(

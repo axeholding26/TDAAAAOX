@@ -12,7 +12,7 @@ import { prisma } from "@/lib/prisma";
 import { CANAL, PAIEMENT } from "@/lib/commandes";
 import { RuptureStock, compterVentes, sortirStock } from "@/lib/stock";
 import { genererNumeroCommande, genererNumeroFacture } from "@/lib/utils";
-import { avecIdempotence, avecRepriseCollision } from "@/lib/pos/idempotence";
+import { avecIdempotence, avecRepriseCollision, mutationConnue } from "@/lib/pos/idempotence";
 import { droitsUtilisateur } from "@/lib/pos/acces";
 import { journaliserAudit } from "@/lib/pos/audit";
 import { ErreurPos, reponseErreurPos } from "@/lib/pos/erreurs";
@@ -31,11 +31,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "La nouvelle caisse est activée pour cette boutique : cette vente n'a pas été enregistrée. Ouvrez Caisse (menu Point de vente) pour l'encaisser.", code: "caisse_v2", lien: "/dashboard/pos/caisse" }, { status: 409 });
   }
 
-  if (await quotaCommandesAtteint(tenantId)) {
+  const body = await req.json().catch(() => null);
+  const cleRecue = typeof body?.cle === "string" && body.cle.length >= 8 && body.cle.length <= 200 ? body.cle : null;
+  // Vente déjà enregistrée sous cette clé (réponse perdue) : rendue par avecIdempotence, même quota atteint.
+  if (!(cleRecue && (await mutationConnue(tenantId, cleRecue, "vente.ancienne_caisse").catch(() => null))) && (await quotaCommandesAtteint(tenantId))) {
     return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à vendre en boutique.", code: "quota_atteint" }, { status: 403 });
   }
-
-  const body = await req.json().catch(() => null);
   const itemsClient = Array.isArray(body?.items) ? body.items.slice(0, 500) : [];
   if (!itemsClient.length) return NextResponse.json({ error: "Panier vide" }, { status: 400 });
   // Champs obligatoires de Commande : jamais undefined (sinon erreur 500 de Prisma).
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
 
   // Clé d'idempotence envoyée par la caisse : un nouvel essai après une coupure rend la vente
   // d'origine au lieu d'en créer une seconde. Écran resté ouvert d'avant (sans clé) : une clé par requête.
-  const cle = typeof body.cle === "string" && body.cle.length >= 8 && body.cle.length <= 200 ? body.cle : crypto.randomUUID();
+  const cle = cleRecue ?? crypto.randomUUID();
   let commande: { id: string; numero: string };
   let rejoue = false;
   try {

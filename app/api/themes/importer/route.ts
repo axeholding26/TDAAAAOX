@@ -8,6 +8,7 @@ import { fontEntry } from "@/lib/theme-fonts";
 import { prixClient } from "@/lib/pricing";
 import { formatMontant } from "@/lib/utils";
 import { construireTemplateBoutique } from "@/lib/theme-import-clone";
+import { aiLimiter, rateLimitResponse } from "@/lib/rate-limit";
 
 // Import de template — clone visuel exact. Le marchand envoie son propre
 // fichier HTML ; on garde SON copywriting et SON design tels quels, et on y
@@ -32,8 +33,10 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ error: "Tenant requis" }, { status: 400 });
+    const rl = aiLimiter.check(`theme-import:${tenantId}`);
+    if (!rl.success) return rateLimitResponse(rl.reset);
 
-    const parsedBody = bodySchema.safeParse(await req.json());
+    const parsedBody = bodySchema.safeParse(await req.json().catch(() => null));
     if (!parsedBody.success) {
       return NextResponse.json({ error: "Fichier HTML vide ou invalide" }, { status: 400 });
     }

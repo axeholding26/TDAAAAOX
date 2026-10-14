@@ -96,10 +96,10 @@ function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   const t = useT();
   return (
-    <div>
-      <label className="text-xs block mb-1.5 font-medium opacity-60">{t(label)}{required && <span className="text-red-400 ml-0.5">*</span>}</label>
+    <label className="block">
+      <span className="text-xs block mb-1.5 font-medium opacity-60">{t(label)}{required && <span className="text-red-400 ml-0.5">*</span>}</span>
       {children}
-    </div>
+    </label>
   );
 }
 
@@ -458,7 +458,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                     className="text-xs font-semibold underline flex-shrink-0" style={{ color: "#16a34a" }}>
                     {t("Voir")}
                   </a>
-                  <button type="button" onClick={() => setGps(null)} className="text-xs opacity-50 hover:opacity-100 flex-shrink-0" style={{ color: "#16a34a" }}>✕</button>
+                  <button type="button" onClick={() => setGps(null)} aria-label={t("Retirer la position")} className="text-xs opacity-50 hover:opacity-100 flex-shrink-0" style={{ color: "#16a34a" }}>✕</button>
                 </div>
               )}
 
@@ -654,7 +654,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                   style={{ borderColor: `${theme.accent}35`, color: theme.accent, background: `${theme.accent}06` }}>
                   {gpsLoading
                     ? <><Loader2 size={14} className="animate-spin" />{" "}{t("Localisation en cours…")}</>
-                    : <><MapPin size={14} />{" "}{t("Partager ma localisation GPS")}{" "}<span className="opacity-50 font-normal">(optionnel)</span></>
+                    : <><MapPin size={14} />{" "}{t("Partager ma localisation GPS")}{" "}<span className="opacity-50 font-normal">{t("(optionnel)")}</span></>
                   }
                 </button>
               )}
@@ -939,8 +939,6 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CHECKOUT MIXTE — Avertissement + deux sections
-// ═══════════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPOSANT PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1050,7 +1048,7 @@ function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
   }
   return (
     <div className="max-w-xl mx-auto mb-5 flex gap-2">
-      <input value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && appliquer()} placeholder={t("Code promo")}
+      <input value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && appliquer()} placeholder={t("Code promo")} aria-label={t("Code promo")}
         className="flex-1 h-11 px-4 rounded-xl border bg-transparent text-sm outline-none" style={{ borderColor: `${theme.accent}30` }} />
       <button type="button" onClick={appliquer} disabled={verif || !code.trim()} className="h-11 px-5 rounded-xl text-sm font-semibold disabled:opacity-50"
         style={{ background: `${theme.accent}15`, color: theme.accent }}>

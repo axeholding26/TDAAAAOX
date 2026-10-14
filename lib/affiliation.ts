@@ -247,10 +247,13 @@ export async function payerCommissionsAffilie(params: {
       },
     });
 
-    await tx.commissionAffilie.updateMany({
-      where: { id: { in: commissionIds } },
+    // Conditionnel : deux paiements simultanés ne paient pas deux fois les mêmes commissions
+    // (le second échoue ici et la transaction annule son débit du wallet).
+    const prises = await tx.commissionAffilie.updateMany({
+      where: { id: { in: commissionIds }, statut: "approuvee" },
       data: { statut: "payee" },
     });
+    if (prises.count !== commissionIds.length) throw new Error("Commissions déjà en cours de paiement — rechargez la page");
 
     await tx.affilie.update({
       where: { id: affilieId },
@@ -304,12 +307,13 @@ export async function payerCommissionsAffilie(params: {
 // Idempotent : ne rembourse jamais deux fois le même paiement.
 export async function rembourserPaiementCommissionEchoue(paiementId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
-    const paiement = await tx.paiementCommission.findUnique({ where: { id: paiementId } });
-    if (!paiement) return;
-    if (paiement.statut === "echec" || paiement.statut === "traite") return;
+    // Passage à « echec » d'abord, conditionnel : deux appels simultanés ne remboursent pas deux fois.
+    const pris = await tx.paiementCommission.updateMany({ where: { id: paiementId, statut: { notIn: ["echec", "traite"] } }, data: { statut: "echec" } });
+    if (!pris.count) return;
+    const paiement = await tx.paiementCommission.findUniqueOrThrow({ where: { id: paiementId } });
 
     const wallet = await tx.wallet.findUnique({ where: { tenantId: paiement.tenantId } });
-    if (!wallet) return;
+    if (!wallet) throw new Error("Wallet marchand introuvable"); // annule le passage à « echec »
 
     await tx.wallet.update({
       where: { id: wallet.id },
@@ -337,8 +341,6 @@ export async function rembourserPaiementCommissionEchoue(paiementId: string): Pr
         data: { commissionPending: { increment: paiement.montant } },
       });
     }
-
-    await tx.paiementCommission.update({ where: { id: paiementId }, data: { statut: "echec" } });
   });
 }
 
@@ -415,18 +417,21 @@ export async function traiterPaiementDigital(params: {
         // Attribue la prochaine clé disponible (générée/importée à l'avance par le
         // marchand). Si le stock de clés est épuisé, on ne bloque pas la commande —
         // le marchand doit en générer davantage, visible via ses stats de licence.
-        const cle = await prisma.cleLicence.findFirst({
-          where: { licenceProduitId: produit.licenceProduit.id, statut: "disponible" },
-          orderBy: { createdAt: "asc" },
-        });
-        if (cle) {
-          const expiry = produit.licenceProduit.dureeJours
-            ? new Date(Date.now() + produit.licenceProduit.dureeJours * 86400 * 1000)
-            : null;
-          await prisma.cleLicence.update({
-            where: { id: cle.id },
+        const expiry = produit.licenceProduit.dureeJours
+          ? new Date(Date.now() + produit.licenceProduit.dureeJours * 86400 * 1000)
+          : null;
+        // Prise conditionnelle : deux achats simultanés ne reçoivent jamais la même clé.
+        for (let essai = 0; essai < 5; essai++) {
+          const cle = await prisma.cleLicence.findFirst({
+            where: { licenceProduitId: produit.licenceProduit.id, statut: "disponible" },
+            orderBy: { createdAt: "asc" },
+          });
+          if (!cle) break;
+          const { count } = await prisma.cleLicence.updateMany({
+            where: { id: cle.id, statut: "disponible" },
             data: { statut: "vendue", commandeId: commande.id, acheteurEmail: commande.clientEmail, expireAt: expiry },
           });
+          if (count) break;
         }
       } else if (produit.type === "bundle") {
         // Résout et livre chaque élément inclus (fichier/licence/digital) — déjà

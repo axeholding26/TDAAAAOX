@@ -12,6 +12,7 @@ import { Badge, BadgePaiement, Bouton, CLASSE_SAISIE, Champ, EtatChargement, Eta
 import { appelPos, nouvelleCle } from "@/components/pos/crm/appel";
 import { SelecteurClient } from "@/components/pos/crm/SelecteurClient";
 import { dateCourte } from "@/components/pos/crm/libelles";
+import { useCaisse } from "@/components/pos/finance/commun";
 import { cn } from "@/lib/utils";
 
 type Regles = { actif: boolean; plafondDefaut: number; echeanceJours: number };
@@ -48,17 +49,19 @@ export default function PageCredit() {
   // Confirmation affichée DANS le tiroir : une notification flottante passerait derrière lui.
   const [confirmation, setConfirmation] = useState<string | null>(null);
   const cle = useRef(nouvelleCle());
+  // Caisse de ce poste : le remboursement entre dans SA session, pas dans celle de la caisse par défaut.
+  const [caisseId] = useCaisse();
 
   const charger = useCallback(async (clientId?: string | null) => {
     setErreur(null);
-    const r = await appelPos<Donnees>(`/api/pos/credit${clientId ? `?clientId=${encodeURIComponent(clientId)}` : ""}`);
+    const r = await appelPos<Donnees>(`/api/pos/credit${clientId ? `?clientId=${encodeURIComponent(clientId)}` : ""}`, { caisseId });
     if (!r.ok) return setErreur(r);
     setD(r.donnees);
     setRegles({ actif: r.donnees.regles.actif, plafondDefaut: String(r.donnees.regles.plafondDefaut), echeanceJours: String(r.donnees.regles.echeanceJours) });
     const c = r.donnees.clients.find((x) => x.id === clientId);
     setCompte({ plafond: c ? String(c.plafond) : "0", echeanceJours: c?.echeanceJours ? String(c.echeanceJours) : "", bloque: c?.bloque ?? false });
     setPaiement((p) => ({ ...p, mode: p.mode || r.donnees.modes[0]?.id || "" }));
-  }, []);
+  }, [caisseId]);
   useEffect(() => { charger(); }, [charger]);
 
   function ouvrir(c: { id: string; nom: string; telephone: string | null }) {
@@ -92,7 +95,7 @@ export default function PageCredit() {
     if (!ouvert) return;
     setEnvoiPaiement({ enCours: true });
     const r = await appelPos<{ rembourse: number; resteDu: number; nonVerifie: boolean }>("/api/pos/credit/remboursements", {
-      corps: { clientId: ouvert.id, montant: Number(paiement.montant), mode: paiement.mode, reference: paiement.reference || null }, cle: cle.current,
+      corps: { clientId: ouvert.id, montant: Number(paiement.montant), mode: paiement.mode, reference: paiement.reference || null }, cle: cle.current, caisseId,
     });
     if (!r.ok) return setEnvoiPaiement({ enCours: false, erreur: r.message });
     cle.current = nouvelleCle();

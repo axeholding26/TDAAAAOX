@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   try {
     const { token } = await params;
     const { lat, lng, nom, telephone } = await req.json();
-    if (!lat || !lng) return NextResponse.json({ error: "lat/lng requis" }, { status: 400 });
+    if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng)) return NextResponse.json({ error: "lat/lng requis" }, { status: 400 });
 
     const commande = await prisma.commande.findFirst({
       where: { livreurToken: token },

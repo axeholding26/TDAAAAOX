@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { accesDigitalOuvert } from "@/lib/commandes";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+
+// Mot de passe du fichier : limité pour empêcher de le deviner à la chaîne.
+const limite = rateLimit({ windowMs: 15 * 60_000, max: 20, keyPrefix: "mdp-fichier" });
 
 type Ctx = { params: Promise<{ token: string }> };
 
@@ -10,8 +14,10 @@ type Ctx = { params: Promise<{ token: string }> };
 // réels (qui doivent eux-mêmes porter ?pw= pour passer le contrôle du GET).
 export async function POST(req: NextRequest, { params }: Ctx) {
   try {
+    const rl = limite.check(getClientIp(req));
+    if (!rl.success) return rateLimitResponse(rl.reset);
     const { token } = await params;
-    const { password } = await req.json();
+    const { password } = await req.json().catch(() => ({}));
 
     const dl = await prisma.telechargement.findUnique({ where: { token } });
     if (!dl) return NextResponse.json({ ok: false, error: "Lien invalide ou expiré" }, { status: 404 });

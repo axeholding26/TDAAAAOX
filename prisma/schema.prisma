@@ -43,6 +43,7 @@ model Tenant {
   kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
   kycDocUrl           String?
   certifie            Boolean  @default(false)
+  editionIaBloquee    Boolean  @default(false) // verrou d'urgence : aucune IA externe ne modifie la boutique (lib/builder)
   snapActif             Boolean  @default(false)
   parametresAffiliation Json?    @default("{}")
   parametresCommande    Json     @default("{}") // formulaire "Commander maintenant" : champs actifs/personnalisés
@@ -235,6 +236,8 @@ model Collection {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id])
   produits Produit[] @relation("ProduitCollection")
+
+  @@index([tenantId])
 }
 
 // =====================
@@ -360,6 +363,8 @@ model Commande {
   @@index([tenantId, createdAt])
   @@index([tenantId, canal, createdAt])
   @@index([sessionCaisseId])
+  @@index([clientId])
+  @@index([livreurId])
 }
 
 // =====================
@@ -397,6 +402,7 @@ model LigneCommande {
   numeroSerieId     String?
 
   @@index([commandeId])
+  @@index([produitId])
 }
 
 // =====================
@@ -438,6 +444,8 @@ model Notification {
   createdAt  DateTime @default(now())
 
   livreur Livreur @relation(fields: [livreurId], references: [id])
+
+  @@index([livreurId, createdAt])
 }
 
 // =====================
@@ -478,6 +486,8 @@ model Commission {
 
   commande Commande @relation(fields: [commandeId], references: [id])
   tenant   Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
 }
 
 // =====================
@@ -520,6 +530,8 @@ model Avis {
   tenant  Tenant  @relation(fields: [tenantId], references: [id])
   produit Produit @relation(fields: [produitId], references: [id])
   client  Client  @relation(fields: [clientId], references: [id])
+
+  @@index([tenantId, produitId])
 }
 
 // =====================
@@ -577,6 +589,8 @@ model Analytics {
   metadata Json     @default("{}")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId, type, date])
 }
 
 // =====================
@@ -943,6 +957,8 @@ model WalletTransaction {
   createdAt   DateTime @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId, createdAt])
 }
 
 // =====================
@@ -964,6 +980,8 @@ model Retrait {
   updatedAt    DateTime @updatedAt
 
   wallet Wallet @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
 }
 
 // =====================
@@ -982,6 +1000,8 @@ model PixelEvent {
   sessionId  String?
   userAgent  String?
   createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
 }
 
 // =====================
@@ -1198,7 +1218,7 @@ model Fournisseur {
   email          String?
   telephone      String?
   delaiLivraison Int?     // jours annoncés par le fournisseur ; vide tant que personne ne l'a saisi
-  fiabilite      Float    @default(4.0) // 1–5
+  fiabilite      Float?   // 1–5 ; vide tant que non évaluée (plus de note 4/5 inventée)
   margeAuto      Float    @default(0.30) // marge par défaut 30%
   actif          Boolean  @default(true)
   catalogueCount Int      @default(0)
@@ -1486,6 +1506,7 @@ model CommandeFournisseur {
   fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id])
 
   @@index([tenantId, statut])
+  @@index([commandeId])
 }
 
 // =====================
@@ -2838,3 +2859,280 @@ model ReglagesPos {
   updatedAt    DateTime @updatedAt
 }
 // ===== FIN POS 2.0 =====
+
+// =====================
+// AXSO CONTROL — IA externes (Claude, ChatGPT, Gemini…) reliées à une boutique
+// par OAuth, sans jamais recevoir d'identifiants Axso (lib/controle-ia).
+// =====================
+model ConnexionIA {
+  id        String    @id @default(cuid())
+  userId    String    // compte qui a autorisé : l'IA n'a jamais plus de droits que lui
+  tenantId  String    // boutique choisie à l'autorisation, jamais lue d'une requête
+  client    String    // nom déclaré par l'IA (« Claude », « ChatGPT »…)
+  fournisseur String  @default("autre") // claude | chatgpt | gemini | autre (lib/controle-ia/regles.ts)
+  boutiques String[]  // boutiques autorisées ; tenantId est celle sur laquelle l'IA travaille
+  scopes    String[]
+  mode      String    @default("copilot") // assistant | copilot | autopilot
+  capacitesClient Json @default("{}") // ce que le client MCP sait faire (initialize) : confirmation, interface…
+  limites   Json      @default("{}") // { variationPrixMax (%), budgetPubMax, transactionMax }
+  revoqueLe DateTime?
+  utiliseLe DateTime?
+  createdAt DateTime  @default(now())
+
+  jetons  JetonIA[]
+  actions ActionIA[]
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+// Codes d'autorisation et jetons : seule l'empreinte SHA-256 est gardée.
+model JetonIA {
+  hash        String   @id
+  type        String   // code | acces | rafraichissement
+  connexionId String?  // vide pour un code (la connexion naît à l'échange)
+  expireLe    DateTime
+  donnees     Json?    // code : { userId, tenantId, client, scopes, clientId, redirectUri, challenge }
+
+  connexion ConnexionIA? @relation(fields: [connexionId], references: [id], onDelete: Cascade)
+
+  @@index([connexionId])
+  @@index([expireLe])
+}
+
+// Journal de chaque appel d'outil fait par une IA externe (audit + idempotence).
+model ActionIA {
+  id             String   @id @default(cuid())
+  tenantId       String
+  connexionId    String
+  client         String
+  outil          String
+  risque         String   // faible | moyen | eleve
+  entree         String   @db.Text // résumé des paramètres, tronqué
+  sortie         String   @default("") @db.Text
+  statut         String   @default("en_cours") // en_cours | execute | echec | refuse | accord_demande
+  cleIdempotence String?
+  dureeMs        Int      @default(0)
+  requete        String?  // identifiant de la requête MCP (suivi dans les journaux)
+  args           Json?    // paramètres complets d'une action en attente d'accord ou annulable
+  ressources     Json?    // reçu : [{ type, id }] des éléments modifiés
+  avant          Json?    // reçu : valeurs avant modification
+  apres          Json?    // reçu : valeurs après modification
+  donnees        Json?    // données structurées du résultat (identifiants créés…), relues par les objectifs
+  agent          String?  // agent Axso qui a agi pour la connexion (business, store…), vide si l'IA externe agit seule
+  approuvePar    String?  // userId de la personne qui a validé une action en attente d'accord
+  coutEstime     Float    @default(0) // coût estimé de l'appel (FCFA), compté dans l'usage du mois
+  annuleLe       DateTime?
+  createdAt      DateTime @default(now())
+
+  connexion ConnexionIA @relation(fields: [connexionId], references: [id], onDelete: Cascade)
+
+  @@unique([connexionId, cleIdempotence])
+  @@index([tenantId, createdAt])
+}
+
+// Tâche longue lancée par une IA (étude, génération, import, objectif) : l'appel
+// MCP rend la main tout de suite, l'IA suit l'avancement (lib/controle-ia/taches.ts).
+model TacheIA {
+  id          String   @id @default(cuid())
+  tenantId    String
+  connexionId String?
+  type        String
+  statut      String   @default("en_attente") // en_attente | en_cours | termine | echec
+  progression Int      @default(0) // 0 à 100
+  etape       String?
+  resultat    Json?
+  erreur      String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, createdAt])
+}
+
+// Plan d'un objectif business confié à une IA (lib/controle-ia/modules/objectifs.ts).
+model PlanIA {
+  id          String   @id @default(cuid())
+  tenantId    String
+  connexionId String
+  objectif    String   @db.Text
+  contraintes Json     @default("{}")
+  etapes      Json     @default("[]") // [{ id, titre, outil, args, statut, resultat, actionId }]
+  statut      String   @default("propose") // propose | en_cours | attente_accord | termine | echec | annule
+  rapport     String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId, createdAt])
+}
+
+// Événements métier (order.created, inventory.low…) publiés par lib/controle-ia/evenements.ts.
+model EvenementIA {
+  id        String   @id @default(cuid())
+  tenantId  String
+  type      String
+  donnees   Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, type, createdAt])
+}
+
+// Abonnement d'un service externe aux événements d'une boutique (appel signé HMAC).
+model WebhookIA {
+  id         String   @id @default(cuid())
+  tenantId   String
+  url        String
+  evenements String[]
+  secret     String
+  actif      Boolean  @default(true)
+  echecs     Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+// Automatisation créée par une IA : déclencheur (événement ou horaire), conditions,
+// étapes (outils, attente, accord, branche). Elle agit avec les droits de sa connexion :
+// connexion révoquée = automatisation à l'arrêt.
+model AutomatisationIA {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  connexionId        String
+  nom                String
+  declencheur        Json      // { type: "evenement", evenement } | { type: "horaire", ... }
+  conditions         Json      @default("[]")
+  etapes             Json      @default("[]")
+  actif              Boolean   @default(true)
+  prochaineExecution DateTime?
+  derniereExecution  DateTime?
+  executions         Int       @default(0)
+  dernierResultat    String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([actif, prochaineExecution])
+}
+
+// Exécution en cours d'une automatisation (attente, accord, reprise après échec).
+model ExecutionAutomatisation {
+  id               String    @id @default(cuid())
+  automatisationId String
+  tenantId         String
+  statut           String    @default("en_cours") // en_cours | en_attente | termine | echec
+  etape            Int       @default(0)
+  contexte         Json      @default("{}")
+  journal          Json      @default("[]")
+  reprendreLe      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([automatisationId])
+  @@index([statut, reprendreLe])
+}
+
+// Médiathèque : tout média généré ou importé par une IA, indexé et réutilisable.
+model MediaIA {
+  id          String   @id @default(cuid())
+  tenantId    String
+  type        String   // image | video | audio
+  fournisseur String   // moteur qui l'a produit (gemini, higgsfield, import…)
+  url         String
+  cleStockage String?
+  metadonnees Json     @default("{}")
+  largeur     Int?
+  hauteur     Int?
+  duree       Float?
+  creePar     String   // connexionId ou userId
+  usage       Json     @default("{}") // { produits: [], campagnes: [], pages: [] }
+  createdAt   DateTime @default(now())
+
+  @@index([tenantId, type, createdAt])
+}
+
+// =====================
+// AXSO BUILDER MCP (lib/builder) — la vitrine en ligne reste Tenant.themeConfig ;
+// une IA ne modifie que le BROUILLON, publié ensuite selon la politique.
+// =====================
+model BrouillonBoutique {
+  tenantId      String   @id
+  config        Json     // themeConfig complet en cours de préparation
+  baseEmpreinte String   // empreinte de la version en ligne au départ du brouillon (conflit si elle a changé)
+  majPar        String   // connexionId ou userId
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Version de la boutique : chaque publication, instantané ou restauration en crée une.
+model VersionBoutique {
+  id          String   @id @default(cuid())
+  tenantId    String
+  numero      Int
+  type        String   // publication | instantane | avant_restauration
+  config      Json
+  auteur      String   // userId
+  client      String?  // IA qui l'a faite (« Claude »…), vide pour le marchand
+  fournisseur String?
+  connexionId String?
+  raison      String   @db.Text
+  changements Json     @default("[]") // résumé du diff avec la version précédente
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, createdAt])
+}
+
+// Test A/B d'une variante de l'accueil (lib/builder/experiences.ts).
+model ExperienceBoutique {
+  id         String    @id @default(cuid())
+  tenantId   String
+  nom        String
+  statut     String    @default("brouillon") // brouillon | en_cours | arrete
+  variantes  Json      // [{ id, nom, config (partielle : builderTree, sections…) }]
+  repartition Int      @default(50) // % de visiteurs sur la variante B
+  metrique   String    @default("conversion")
+  resultats  Json      @default("{}")
+  debut      DateTime?
+  fin        DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([tenantId, statut])
+}
+
+// =====================
+// COMMERCE OS — usage mesuré par boutique et par mois (lib/controle-ia/usage.ts) :
+// appels MCP, exécutions d'outils, workflows d'agents, contenus et images générés,
+// recherches fournisseurs, automatisations. Sert aux limites du plan et à la facturation à l'usage.
+// =====================
+model UsageIA {
+  id        String   @id @default(cuid())
+  tenantId  String
+  periode   String   // AAAA-MM
+  type      String   // mcp_call | tool_execution | agent_workflow | generated_content | generated_image | generated_video | supplier_search | automation_run | ai_call
+  nombre    Int      @default(0)
+  cout      Float    @default(0) // FCFA estimés
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, periode, type])
+}
+
+// Agent installé sur une boutique (préparation de la place de marché d'agents) : les agents
+// Axso sont décrits dans le code (lib/agents-os) ; un agent tiers aura ici son manifeste.
+model AgentManifeste {
+  id          String   @id @default(cuid())
+  tenantId    String?  // vide : agent proposé à toutes les boutiques
+  agentId     String
+  nom         String
+  description String   @db.Text
+  version     String   @default("1.0.0")
+  developpeur String   @default("Axso")
+  permissions String[]
+  outils      String[]
+  tarif       Json     @default("{}")
+  statut      String   @default("brouillon") // brouillon | publie | suspendu
+  actif       Boolean  @default(true)        // activé par le marchand
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([tenantId, agentId])
+}

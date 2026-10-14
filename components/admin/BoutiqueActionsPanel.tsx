@@ -35,12 +35,12 @@ export function BoutiqueActionsPanel({ tenantId, statut, planType, certifie, dev
     setLoading(key);
     try {
       const res = await fetch(url, { method: url.includes("recompense") ? "POST" : "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
       toast.success(t(msg));
       router.refresh();
     } catch (e: any) {
-      toast.error(t(e.message) ?? t("Erreur"));
+      toast.error(t(e.message || "Erreur"));
     } finally {
       setLoading(null);
     }

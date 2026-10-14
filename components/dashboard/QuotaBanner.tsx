@@ -12,7 +12,7 @@ export function QuotaBanner() {
         <AlertTriangle size={15} className="text-red-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-red-600">{t("Quota de 30 commandes/mois atteint")}</p>
+        <p className="text-sm font-bold text-red-600">{t("Quota de 60 commandes/mois atteint")}</p>
         <p className="text-xs text-red-500/80 leading-snug">
           {t("Vous ne pouvez plus gérer vos commandes ni utiliser WhatsApp ce mois-ci — passez à un palier supérieur pour continuer sans interruption.")}
         </p>

@@ -9,6 +9,8 @@ import { FiltresCatalogue } from "@/components/storefront/FiltresCatalogue";
 import { RechercheDesign } from "@/components/storefront/RechercheDesign";
 import { WidgetsDesign } from "@/components/storefront/WidgetsDesign";
 import { NavigationDesign } from "@/components/storefront/NavigationDesign";
+import { MenuVitrineProvider, PiedMenuVitrine } from "@/components/storefront/StorefrontNavbar";
+import { zoneDe } from "@/lib/block-tree";
 import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
@@ -17,6 +19,7 @@ import { TikTokPixel } from "@/components/storefront/TikTokPixel";
 import { SnapchatPixel } from "@/components/storefront/SnapchatPixel";
 import { GoogleTagManager } from "@/components/storefront/GoogleTagManager";
 import { CustomTrackingScripts } from "@/components/storefront/CustomTrackingScripts";
+import { COOKIE_APERCU, lireJetonApercu } from "@/lib/builder/apercu";
 import { AffiliationRefCapture } from "@/components/storefront/AffiliationRefCapture";
 import { StorefrontPageView } from "@/components/storefront/StorefrontPageView";
 import { DeviseVitrineProvider, PastillePaysDesign } from "@/components/storefront/DeviseVitrine";
@@ -56,7 +59,10 @@ async function ContenuVitrine({ children, params }: Props) {
   // publier (au lieu d'un 404) ; le public reçoit le 404 de la page.
   // Aperçu du Constructeur : le propriétaire voit sa boutique telle quelle
   // (même en brouillon), sans compter de visite ni déclencher pixels/popups.
-  const apercu = (await cookies()).get("axso_apercu")?.value === "1";
+  const jar = await cookies();
+  // Aperçu du Constructeur, ou aperçu d'un brouillon IA pour CETTE boutique (lib/builder/apercu.ts) :
+  // aucune visite comptée, aucun pixel ni script de suivi (le navigateur de vérification du Builder non plus).
+  const apercu = jar.get("axso_apercu")?.value === "1" || lireJetonApercu(jar.get(COOKIE_APERCU)?.value) === tenant.id;
   if (tenant.statut !== "active") {
     const session = await auth();
     const proprietaire = (session?.user as any)?.tenantId === tenant.id;
@@ -72,13 +78,18 @@ async function ContenuVitrine({ children, params }: Props) {
     ? await prisma.collection.findMany({ where: { tenantId: tenant.id, actif: true }, select: { slug: true, nom: true, imageUrl: true }, orderBy: { createdAt: "asc" }, take: 12 })
     : [];
 
+  // Menus du socle réglés par le Builder (themeConfig.navigation). Le pied n'est pas ajouté sous un pied de page de design.
+  const navigation = ((cfg as any).navigation ?? (tenant.themeConfig as any)?.navigation ?? {}) as { principal?: { libelle: string; lien: string }[]; pied?: { titre: string; liens: { libelle: string; lien: string }[] }[] };
+  const piedMenu = cfg.builderTree?.some((n) => zoneDe(n) === "footer") ? [] : (navigation.pied ?? []);
+
   const deviseAffichee = await deviseVisiteur(tenant.devise);
   return (
     <DeviseVitrineProvider devise={deviseAffichee} pays={await paysVisiteur()} deviseBoutique={tenant.devise} ratio={ratioConversion(tenant.devise, deviseAffichee, await tauxDuJour())}>
       <StorefrontTypography fonts={cfg.fonts} />
       <StorefrontCustomCss css={cfg.customCss} />
       <div className="axs-store" style={{ display: "contents" }}>
-        {children}
+        <MenuVitrineProvider menu={navigation.principal ?? []}>{children}</MenuVitrineProvider>
+        {piedMenu.length > 0 && <PiedMenuVitrine slug={slug} colonnes={piedMenu} accent={accent} fond={cfg.colors.fond} texte={cfg.colors.texte} />}
       </div>
       <Suspense fallback={null}>
         <AffiliationRefCapture />

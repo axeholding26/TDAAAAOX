@@ -37,7 +37,7 @@ export function AxiaAdmin() {
         body: JSON.stringify({ messages: newMessages.slice(-40).map(({ role, content }) => ({ role, content })) }),
       });
       if (!res.ok) throw new Error();
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       setMessages(prev => [...prev, { role: "assistant", content: data.reponse || t("Je n'ai pas pu traiter ta demande."), confirmations: data.confirmations }]);
     } catch {
       setMessages(prev => [...prev, { role: "assistant", content: t("Désolée, je rencontre une difficulté technique. Réessaie dans un instant.") }]);

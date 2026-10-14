@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { envoyerMessageContact } from "@/lib/email";
 import { z } from "zod";
+import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 const schema = z.object({
   nom: z.string().min(1),
@@ -11,7 +12,11 @@ const schema = z.object({
 });
 
 // POST public — formulaire de contact de la boutique, pas de session requise.
+const limite = rateLimit({ windowMs: 60_000, max: 5, keyPrefix: "formulaire-vitrine" });
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
+  const rl = limite.check(getClientIp(req));
+  if (!rl.success) return rateLimitResponse(rl.reset);
   const { slug } = await params;
   let body: z.infer<typeof schema>;
   try {

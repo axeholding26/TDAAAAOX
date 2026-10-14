@@ -30,16 +30,17 @@ export default async function MarketingPage() {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) redirect("/inscription");
 
-  const [codesPromo, totalClients] = await Promise.all([
+  const [codesPromo, totalClients, totalCodes, codesActifs] = await Promise.all([
     prisma.codePromo.findMany({
       where: { tenantId },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.client.count({ where: { tenantId } }),
+    prisma.codePromo.count({ where: { tenantId } }),
+    prisma.codePromo.count({ where: { tenantId, actif: true } }),
   ]);
 
-  const codesActifs = codesPromo.filter((c) => c.actif).length;
   const pixelsActifs = [tenant.metaPixelId, tenant.tiktokPixelId, tenant.snapPixelId, tenant.gtmId].filter(Boolean).length;
 
   const tools = [
@@ -49,7 +50,7 @@ export default async function MarketingPage() {
       description: "Créez des remises pour fidéliser vos clients et booster vos ventes.",
       href: "/dashboard/marketing/codes-promo",
       accent: "#F5A623",
-      stat: codesActifs > 0 ? `${codesActifs} code${codesActifs > 1 ? "s" : ""} actif${codesActifs > 1 ? "s" : ""}` : "Aucun code actif",
+      stat: codesActifs > 0 ? t("{0} code(s) actif(s)", codesActifs) : t("Aucun code actif"),
       statClass: codesActifs > 0 ? "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]" : "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]",
     },
     {
@@ -58,16 +59,16 @@ export default async function MarketingPage() {
       description: "Envoyez des campagnes email ciblées à votre base clients.",
       href: "/dashboard/marketing/email",
       accent: "#16A34A",
-      stat: `${totalClients} client${totalClients > 1 ? "s" : ""} à contacter`,
+      stat: t("{0} client(s) à contacter", totalClients),
       statClass: "bg-[#ECFDF5] text-[#16A34A] border border-[#BBF7D0]",
     },
     {
       icone: Megaphone,
       titre: "Campagnes",
-      description: "Planifiez et lancez des promotions ciblées sur votre boutique.",
-      href: "/dashboard/marketing",
+      description: "Popups, relances automatiques et badges pour votre boutique.",
+      href: "/dashboard/campagnes",
       accent: "#7C3AED",
-      stat: "Bientôt disponible",
+      stat: t("Popups et automatisations"),
       statClass: "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]",
     },
     {
@@ -76,7 +77,7 @@ export default async function MarketingPage() {
       description: "Optimisez le référencement de vos produits pour attirer plus de visiteurs.",
       href: "/dashboard/produits",
       accent: "#D97706",
-      stat: "Optimisez vos fiches",
+      stat: t("Optimisez vos fiches"),
       statClass: "bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]",
     },
     {
@@ -85,7 +86,7 @@ export default async function MarketingPage() {
       description: "Meta, TikTok, Snapchat, Google Tag Manager et vos scripts de suivi personnalisés.",
       href: "/dashboard/marketing/tracking",
       accent: "#1877F2",
-      stat: pixelsActifs > 0 ? `${pixelsActifs} pixel${pixelsActifs > 1 ? "s" : ""} actif${pixelsActifs > 1 ? "s" : ""}` : "Aucun pixel actif",
+      stat: pixelsActifs > 0 ? t("{0} pixel(s) actif(s)", pixelsActifs) : t("Aucun pixel actif"),
       statClass: pixelsActifs > 0 ? "bg-[#EFF6FF] text-[#1877F2] border border-[#BFDBFE]" : "bg-[#F4F4F4] text-[#717171] border border-[#E8E8E8]",
     },
   ];
@@ -104,7 +105,7 @@ export default async function MarketingPage() {
         </div>
         <div className="flex items-center gap-2 bg-white border border-[#E8E8E8] rounded-xl px-4 py-2">
           <Users size={14} className="text-[#717171]" />
-          <span className="text-[#717171] text-sm">{t(totalClients)} client{totalClients > 1 ? "s" : ""}</span>
+          <span className="text-[#717171] text-sm">{t("{0} client(s)", totalClients)}</span>
         </div>
       </div>
 
@@ -112,9 +113,9 @@ export default async function MarketingPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Codes actifs",    value: codesActifs.toString(),                                                              icon: Tag,      accent: "#F5A623" },
-          { label: "Total codes",     value: codesPromo.length.toString(),                                                        icon: Zap,      accent: "#7C3AED" },
+          { label: "Total codes",     value: totalCodes.toString(),                                                              icon: Zap,      accent: "#7C3AED" },
           { label: "Base clients",    value: totalClients.toString(),                                                              icon: Users,    accent: "#16A34A" },
-          { label: "Taux activation", value: codesPromo.length > 0 ? `${Math.round((codesActifs / codesPromo.length) * 100)}%` : "—", icon: TrendingUp, accent: "#D97706" },
+          { label: "Taux activation", value: totalCodes > 0 ? `${Math.round((codesActifs / totalCodes) * 100)}%` : "—", icon: TrendingUp, accent: "#D97706" },
         ].map((stat, i) => {
           const Icone = stat.icon;
           return (
@@ -122,7 +123,7 @@ export default async function MarketingPage() {
               <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-[#F4F4F4] mb-3">
                 <Icone size={15} style={{ color: stat.accent }} />
               </div>
-              <p className="text-[#111111] text-xl font-bold font-poppins">{t(stat.value)}</p>
+              <p className="text-[#111111] text-xl font-bold font-poppins">{stat.value}</p>
               <p className="text-[#717171] text-xs mt-0.5">{t(stat.label)}</p>
             </div>
           );
@@ -151,7 +152,7 @@ export default async function MarketingPage() {
 
                 <div className="mt-4 pt-4 border-t border-[#E8E8E8] flex items-center justify-between">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.statClass}`}>
-                    {t(tool.stat)}
+                    {tool.stat}
                   </span>
                   <span className="text-xs font-medium text-[#717171] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     {t("Accéder →")}
@@ -173,7 +174,7 @@ export default async function MarketingPage() {
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#111111]">{t("Codes promo récents")}</h2>
-                <p className="text-[#717171] text-xs">{t(codesActifs)} actif{codesActifs > 1 ? "s" : ""} sur {codesPromo.length}</p>
+                <p className="text-[#717171] text-xs">{t("{0} actif(s) sur {1}", codesActifs, totalCodes)}</p>
               </div>
             </div>
             <Link
@@ -190,7 +191,7 @@ export default async function MarketingPage() {
                 key={code.id}
                 className="flex items-center justify-between p-3 rounded-xl bg-[#F4F4F4] border border-[#E8E8E8] hover:border-[#D0D0D0] transition-colors"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <code className="text-sm font-mono font-bold px-3 py-1 rounded-lg bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
                     {code.code}
                   </code>
@@ -202,7 +203,7 @@ export default async function MarketingPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-[#717171] text-xs">
-                    {t(code.utilisations)}/{t(code.maxUtilisations) ?? "∞"} util.
+                    {code.utilisations}/{code.maxUtilisations ?? "∞"} {t("util.")}
                   </span>
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                     code.actif

@@ -33,17 +33,19 @@ export async function rafraichirTokenGoogle(refreshToken: string): Promise<strin
   return data.access_token || null;
 }
 
-function construireRaw(params: {
+export function construireRaw(params: {
   de: string;
   a: string;
   sujet: string;
   corps: string;
   cc?: string;
 }): string {
+  // Retours à la ligne retirés des en-têtes : sinon un destinataire piégé ajoute ses propres en-têtes (Bcc…).
+  const h = (v: string) => v.replace(/[\r\n]+/g, " ");
   const headers = [
-    `From: ${params.de}`,
-    `To: ${params.a}`,
-    ...(params.cc ? [`Cc: ${params.cc}`] : []),
+    `From: ${h(params.de)}`,
+    `To: ${h(params.a)}`,
+    ...(params.cc ? [`Cc: ${h(params.cc)}`] : []),
     `Subject: =?UTF-8?B?${Buffer.from(params.sujet).toString("base64")}?=`,
     "MIME-Version: 1.0",
     "Content-Type: text/html; charset=UTF-8",

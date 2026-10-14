@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
   const posts = await prisma.postPlanifie.findMany({
     where: {
       statut: "planifie",
+      publieLe: null,
       planifieLe: { lte: maintenant },
     },
     take: 50,
@@ -26,7 +27,8 @@ export async function GET(req: NextRequest) {
 
   for (const post of posts) {
     let toolName = "";
-    const args: Record<string, any> = {};
+    // Le post est déjà enregistré : l'outil ne doit pas en créer un second.
+    const args: Record<string, any> = { dejaEnregistre: true };
 
     if (post.plateforme === "facebook") {
       toolName = "meta_poster_facebook";
@@ -42,9 +44,14 @@ export async function GET(req: NextRequest) {
       args.message = post.contenu;
       args.segment = "tous";
     } else {
-      // Plateforme non encore supportée (TikTok, Twitter) — marquer comme planifié
+      // Plateforme non encore supportée (TikTok, Twitter) : le post reste planifié
       continue;
     }
+
+    // Prise atomique : deux passages simultanés du cron ne publient jamais deux fois le même post.
+    // (publieLe sert de marqueur : pas de statut intermédiaire, que le calendrier ne saurait pas afficher)
+    const pris = await prisma.postPlanifie.updateMany({ where: { id: post.id, statut: "planifie", publieLe: null }, data: { publieLe: maintenant } });
+    if (!pris.count) continue;
 
     try {
       const result = await executerOutilMcp(toolName, args, post.tenantId);
@@ -53,7 +60,7 @@ export async function GET(req: NextRequest) {
         where: { id: post.id },
         data: {
           statut: result.succes ? "publie" : "echec",
-          publieLe: result.succes ? new Date() : undefined,
+          publieLe: result.succes ? new Date() : null,
           externalId: result.donnees?.postId || result.donnees?.messageId,
           erreur: result.succes ? null : result.resultat,
         },
@@ -63,7 +70,7 @@ export async function GET(req: NextRequest) {
     } catch (err) {
       await prisma.postPlanifie.update({
         where: { id: post.id },
-        data: { statut: "echec", erreur: String(err) },
+        data: { statut: "echec", publieLe: null, erreur: String(err) },
       });
       resultats.push({ id: post.id, plateforme: post.plateforme, succes: false, message: String(err) });
     }

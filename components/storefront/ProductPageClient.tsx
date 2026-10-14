@@ -241,7 +241,7 @@ function FlechesDiaporama({ n, selected, aller, toujoursVisibles = false }: { n:
           {sens < 0 ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       ))}
-      <span className="absolute top-3 left-3 z-10 text-[11px] font-semibold px-2 py-1 rounded-full bg-black/55 text-white pointer-events-none tabular-nums">{tx(selected) + 1} / {n}</span>
+      <span className="absolute top-3 left-3 z-10 text-[11px] font-semibold px-2 py-1 rounded-full bg-black/55 text-white pointer-events-none tabular-nums">{selected + 1} / {n}</span>
     </>
   );
 }
@@ -1062,7 +1062,7 @@ function FormationCurriculumSection({ chapitres, accent, surface }: {
       <div className="space-y-4">
         {chapitres.map((ch, ci) => (
           <div key={ch.id} className="rounded-2xl overflow-hidden" style={{ background: surface }}>
-            <p className="text-xs font-bold uppercase tracking-widest px-4 pt-4 pb-2 opacity-50">{tx("Chapitre")}{" "}{tx(ci) + 1} · {tx(ch.titre)}</p>
+            <p className="text-xs font-bold uppercase tracking-widest px-4 pt-4 pb-2 opacity-50">{tx("Chapitre")}{" "}{ci + 1} · {tx(ch.titre)}</p>
             <div className="pb-2">
               {ch.lecons.map(l => {
                 const Icon = l.type === "video" ? PlayCircle : l.type === "audio" ? Headphones : FileText;
@@ -1348,9 +1348,9 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                 <div className="flex items-center gap-4">
                   <span className="text-[15px] font-medium opacity-60">{tx("Quantité")}</span>
                   <div className="flex items-center border rounded-xl overflow-hidden" style={{ borderColor: `${accent}25` }}>
-                    <button onClick={() => setQuantite(q => Math.max(1, q - 1))} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={15} /></button>
+                    <button onClick={() => setQuantite(q => Math.max(1, q - 1))} aria-label={tx("Diminuer la quantité")} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Minus size={15} /></button>
                     <span className="w-10 text-center text-base font-bold tabular-nums">{quantite}</span>
-                    <button onClick={() => setQuantite(q => Math.min(stockSuivi ? Math.max(1, stockEffectif) : 99, q + 1))} disabled={enRupture} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={15} /></button>
+                    <button onClick={() => setQuantite(q => Math.min(stockSuivi ? Math.max(1, stockEffectif) : 10, q + 1))} disabled={enRupture} aria-label={tx("Augmenter la quantité")} className="w-11 h-11 flex items-center justify-center hover:opacity-80" style={{ color: accent }}><Plus size={15} /></button>
                   </div>
                 </div>
               )}

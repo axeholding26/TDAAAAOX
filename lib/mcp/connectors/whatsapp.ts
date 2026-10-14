@@ -3,11 +3,13 @@
 
 const WA_BASE = "https://graph.facebook.com/v19.0";
 
-function getPhoneId(): string {
-  return process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+// Identifiants passés par l'appelant (numéro de la boutique) ; à défaut, numéro d'Axso.
+type Identifiants = { token?: string; phoneId?: string };
+function getPhoneId(id?: Identifiants): string {
+  return id?.phoneId || process.env.WHATSAPP_PHONE_NUMBER_ID || "";
 }
-function getToken(): string {
-  return process.env.WHATSAPP_TOKEN || "";
+function getToken(id?: Identifiants): string {
+  return id?.token || process.env.WHATSAPP_TOKEN || "";
 }
 
 // ── Message texte simple ───────────────────────────────────────────────────
@@ -15,9 +17,9 @@ function getToken(): string {
 export async function envoyerMessageWhatsApp(params: {
   telephone: string;
   message: string;
-}): Promise<{ succes: boolean; messageId?: string; erreur?: string }> {
-  const phoneId = getPhoneId();
-  const token = getToken();
+}, id?: Identifiants): Promise<{ succes: boolean; messageId?: string; erreur?: string }> {
+  const phoneId = getPhoneId(id);
+  const token = getToken(id);
   if (!phoneId || !token) return { succes: false, erreur: "WHATSAPP_TOKEN ou WHATSAPP_PHONE_NUMBER_ID manquant" };
 
   const telephone = params.telephone.replace(/\D/g, "");
@@ -37,7 +39,7 @@ export async function envoyerMessageWhatsApp(params: {
     }),
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (data.error || !res.ok) return { succes: false, erreur: data.error?.message || "Erreur WhatsApp" };
   return { succes: true, messageId: data.messages?.[0]?.id };
 }
@@ -49,9 +51,9 @@ export async function envoyerTemplateWhatsApp(params: {
   templateNom: string;
   variables?: string[];
   langue?: string;
-}): Promise<{ succes: boolean; messageId?: string; erreur?: string }> {
-  const phoneId = getPhoneId();
-  const token = getToken();
+}, id?: Identifiants): Promise<{ succes: boolean; messageId?: string; erreur?: string }> {
+  const phoneId = getPhoneId(id);
+  const token = getToken(id);
   if (!phoneId || !token) return { succes: false, erreur: "WhatsApp non configuré" };
 
   const telephone = params.telephone.replace(/\D/g, "");
@@ -74,7 +76,7 @@ export async function envoyerTemplateWhatsApp(params: {
     }),
   });
 
-  const data = await res.json();
-  if (data.error) return { succes: false, erreur: data.error.message };
+  const data = await res.json().catch(() => ({}));
+  if (data.error || !res.ok) return { succes: false, erreur: data.error?.message || "Erreur WhatsApp" };
   return { succes: true, messageId: data.messages?.[0]?.id };
 }

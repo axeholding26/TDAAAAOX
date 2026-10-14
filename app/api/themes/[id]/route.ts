@@ -7,9 +7,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique, `tenantId: null` viserait les thèmes partagés de la plateforme.
+    if (!tenantId) return NextResponse.json({ error: "Tenant requis" }, { status: 400 });
     const { id } = await params;
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { nom, description, config, effetId, badge, actif } = body;
 
     const theme = await prisma.theme.update({
@@ -35,6 +37,8 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique, `tenantId: null` viserait les thèmes partagés de la plateforme.
+    if (!tenantId) return NextResponse.json({ error: "Tenant requis" }, { status: 400 });
     const { id } = await params;
 
     await prisma.theme.delete({ where: { id, tenantId } });

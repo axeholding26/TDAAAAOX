@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { initierRetrait } from "@/lib/wallet";
 import { prisma } from "@/lib/prisma";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -9,6 +10,11 @@ export async function POST(req: NextRequest) {
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
+
+  // Comme chez Shopify : seul un propriétaire retire l'argent de la boutique,
+  // jamais un membre d'équipe (même comptable avec la finance en écriture).
+  const { proprietaire } = await boutiquesDuCompte((session.user as any).id);
+  if (!proprietaire.includes(tenantId)) return NextResponse.json({ error: "Seul le propriétaire de la boutique peut retirer de l'argent" }, { status: 403 });
 
   const body = await req.json().catch(() => ({}));
   const { methode, destinataire, operateur, notes } = body;

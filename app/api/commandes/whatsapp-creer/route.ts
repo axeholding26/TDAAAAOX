@@ -13,6 +13,7 @@ import { randomBytes } from "crypto";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { prixClient, reductionPromo, filtreUsagePromo } from "@/lib/pricing";
 import { RuptureStock, sortirStock } from "@/lib/stock";
+import { COOKIE_XP, noterConversion } from "@/lib/builder/experiences";
 
 function genToken() { return randomBytes(20).toString("hex"); }
 
@@ -183,6 +184,8 @@ export async function POST(req: NextRequest) {
     const numero = (tenant.whatsappNumero || (tenant as any).whatsapp || "").replace(/\D/g, "");
     const whatsappUrl = numero ? `https://wa.me/${numero}?text=${encodeURIComponent(messageMarchand)}` : null;
 
+    // Test A/B en cours : commande attribuée à la variante vue par ce visiteur (lib/builder/experiences.ts).
+    await noterConversion(tenantId, req.cookies.get(COOKIE_XP)?.value);
     // Notification dashboard — toujours créée, quel que soit le canal choisi par l'acheteur
     await notifierMarchand({
       tenantId,
