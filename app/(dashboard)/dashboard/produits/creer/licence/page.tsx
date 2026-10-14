@@ -94,7 +94,7 @@ export default function CreerLicencePage() {
   const sauvegarderConfig = async () => {
     if (!produitId) return;
     setSaving(true);
-    await fetch(`/api/produits/digitaux/${produitId}`, {
+    const r = await fetch(`/api/produits/digitaux/${produitId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -107,8 +107,9 @@ export default function CreerLicencePage() {
           dureeJours: config.dureeJours ? parseInt(config.dureeJours) : null,
         },
       }),
-    });
+    }).catch(() => null);
     setSaving(false);
+    if (!r?.ok) { alert(t("Configuration non enregistrée, réessayez.")); return; }
     setEtape(3);
   };
 
@@ -116,12 +117,14 @@ export default function CreerLicencePage() {
   const publier = async () => {
     if (!produitId) return;
     setPublishing(true);
-    await fetch(`/api/produits/digitaux/${produitId}`, {
+    const r = await fetch(`/api/produits/digitaux/${produitId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ actif: true }),
-    });
+    }).catch(() => null);
     setPublishing(false);
+    // Pas de redirection « publié » si la publication a échoué
+    if (!r?.ok) { alert(t("La publication a échoué, réessayez.")); return; }
     router.push(`/dashboard/produits/${produitId}`);
   };
 

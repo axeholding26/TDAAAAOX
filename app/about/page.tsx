@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "À propos — AXSO",
+  title: "À propos",
   description: "AXSO est la plateforme e-commerce pensée pour les entrepreneurs africains. Notre mission : donner à chaque commerçant africain les outils pour bâtir son empire digital.",
 };
 

@@ -5,13 +5,13 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Politique de Confidentialité — AXSO",
+  title: "Politique de Confidentialité",
 };
 
 const SECTIONS = [
   {
     titre: "1. Responsable du traitement",
-    contenu: `AXSO Technologies SAS, dont le siège social est situé à Dakar, Sénégal, est responsable du traitement de vos données personnelles. Contact : privacy@axsoafrica.com`,
+    contenu: `AXSO, [Raison sociale, adresse et RCCM à compléter], est responsable du traitement de vos données personnelles. Contact : privacy@axsoafrica.com`,
   },
   {
     titre: "2. Données collectées",
@@ -39,7 +39,7 @@ const SECTIONS = [
   },
   {
     titre: "8. Cookies et traceurs",
-    contenu: `AXSO utilise des cookies essentiels au fonctionnement de la plateforme, des cookies d'analyse (anonymisés) et des cookies de personnalisation. Consultez notre Politique Cookies pour plus d'informations.`,
+    contenu: `AXSO utilise des cookies nécessaires au fonctionnement de la plateforme (session, langue, pays, suivi des recommandations d'affiliés). Sur leurs boutiques, les marchands peuvent ajouter leurs propres pixels publicitaires (Facebook, TikTok, Snapchat, Google). Consultez notre Politique Cookies pour plus d'informations.`,
   },
 ];
 
@@ -55,7 +55,7 @@ export default async function PrivacyPage() {
             <Lock size={14} className="inline-block mr-1.5" />{t("Légal")}
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">{t("Politique de Confidentialité")}</h1>
-          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 1er juillet 2026")}</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 14 octobre 2026")}</p>
 
           <div className="space-y-10">
             {SECTIONS.map(s => (

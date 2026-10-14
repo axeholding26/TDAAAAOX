@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { lireConnexion } from "@/lib/connect";
 import { auth } from "@/lib/auth";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 
 const WA_API = "https://graph.facebook.com/v22.0";
 
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (await quotaCommandesAtteint(tenantId)) {
+    return NextResponse.json({ error: "Quota mensuel de commandes atteint : WhatsApp est verrouillé jusqu'au mois prochain ou au passage au Palier Pro.", code: "QUOTA_ATTEINT" }, { status: 403 });
+  }
 
   const body = await req.json();
   const { contact, message, type = "text", buttons, header, footer } = body;
@@ -25,10 +30,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "contact et message requis" }, { status: 400 });
   }
 
-  // Config WhatsApp du tenant
+  // Config WhatsApp du tenant — jamais le numéro d'Axso (réservé aux notifications système).
   const waConfig = await lireConnexion(tenantId, "whatsapp");
-  const token  = waConfig?.accessToken ?? process.env.WHATSAPP_TOKEN;
-  const phoneId = (waConfig?.config as any)?.phone_number_id ?? process.env.WHATSAPP_PHONE_NUMBER_ID;
+  const token  = waConfig?.accessToken;
+  const phoneId = (waConfig?.config as any)?.phone_number_id;
 
   if (!token || !phoneId) {
     return NextResponse.json({ error: "WhatsApp Business non configuré — connectez votre compte dans les paramètres" }, { status: 503 });

@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Contact — AXSO",
+  title: "Contact",
   description: "Contactez l'équipe AXSO : support, partenariats, presse.",
 };
 
@@ -96,7 +96,7 @@ export default async function ContactPage() {
               </div>
               <div className="space-y-2 text-sm text-[#666666]">
                 <div className="flex justify-between"><span>{t("Lun – Ven")}</span><span className="text-[#444444]">{t("08h00 – 20h00")}</span></div>
-                <div className="flex justify-between"><span>{t("Samedi")}</span><span className="text-[#444444]">{t("09h00 – 17h00")}</span></div>
+                <div className="flex justify-between"><span>{t("Samedi")}</span><span className="text-[#8C8C8C]">{t("Fermé")}</span></div>
                 <div className="flex justify-between"><span>{t("Dimanche")}</span><span className="text-[#8C8C8C]">{t("Fermé")}</span></div>
               </div>
             </div>

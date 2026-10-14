@@ -75,7 +75,7 @@ export default function CreerFormationPage() {
     if (!r.ok) { alert(t(d.error) ?? t("Erreur")); return; }
     setProduitId(d.produit?.id ?? d.id);
     // Sauvegarder la config formation
-    await fetch(`/api/produits/digitaux/${d.produit?.id ?? d.id}`, {
+    const rc = await fetch(`/api/produits/digitaux/${d.produit?.id ?? d.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -86,7 +86,9 @@ export default function CreerFormationPage() {
           certif:   config.certif,
         },
       }),
-    });
+    }).catch(() => null);
+    // Produit déjà créé : on avance, mais on prévient que les paramètres sont à refaire
+    if (!rc?.ok) alert(t("Formation créée, mais ses paramètres n'ont pas été enregistrés : modifiez-les depuis la fiche produit."));
     setEtape(2);
   };
 
@@ -94,12 +96,14 @@ export default function CreerFormationPage() {
   const publier = async () => {
     if (!produitId) return;
     setPublishing(true);
-    await fetch(`/api/produits/digitaux/${produitId}`, {
+    const r = await fetch(`/api/produits/digitaux/${produitId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ actif: true }),
-    });
+    }).catch(() => null);
     setPublishing(false);
+    // Pas de redirection « publié » si la publication a échoué
+    if (!r?.ok) { alert(t("La publication a échoué, réessayez.")); return; }
     router.push(`/dashboard/produits/${produitId}`);
   };
 

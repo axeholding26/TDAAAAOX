@@ -82,14 +82,31 @@ export async function rembourserCommande(p: {
       await prisma.commande.update({ where: { id: commande.id }, data: { paiementStatut: PAIEMENT.PAYE } });
       return { ok: false, status: 502, error: `Remboursement refusé par NotchPay : ${err?.message ?? "erreur inconnue"}` };
     }
-    await reprendreVenteRemboursee({ tenantId: commande.tenantId, commandeId: commande.id, numero: commande.numero, reference: commande.paiementReference ?? undefined });
   }
 
-  await prisma.$transaction(async (tx) => {
-    await compterVentes(tx, commande.id, -1);
-    await libererCommande(tx, { commandeId: commande.id, motif: `Remboursement #${commande.numero}`, restock: p.restock });
-    await tx.cleLicence.updateMany({ where: { commandeId: commande.id, statut: "vendue" }, data: { statut: "revoquee" } });
-  });
+  // L'argent est rendu (ou la commande COD marquée remboursée) : la suite ne doit jamais rester
+  // à moitié faite. Chaque bloc est idempotent ou transactionnel, on le retente donc avant d'alerter.
+  for (let essai = 1; ; essai++) {
+    try {
+      if (enLigne) await reprendreVenteRemboursee({ tenantId: commande.tenantId, commandeId: commande.id, numero: commande.numero, reference: commande.paiementReference ?? undefined });
+      await prisma.$transaction(async (tx) => {
+        await compterVentes(tx, commande.id, -1);
+        await libererCommande(tx, { commandeId: commande.id, motif: `Remboursement #${commande.numero}`, restock: p.restock });
+        await tx.cleLicence.updateMany({ where: { commandeId: commande.id, statut: "vendue" }, data: { statut: "revoquee" } });
+      });
+      break;
+    } catch (err) {
+      if (essai < 3) continue;
+      console.error("[remboursement] client remboursé mais mise à jour incomplète (portefeuille, stock ou licences)", commande.id, err);
+      await notifierMarchand({
+        tenantId: commande.tenantId, commandeId: commande.id, type: "commande_remboursee",
+        titre: `Remboursement #${commande.numero} à vérifier`,
+        message: "Le client a bien été remboursé, mais la mise à jour du portefeuille, du stock ou des licences a échoué. Contacte le support Axso.",
+        lien: `/dashboard/commandes/${commande.id}`,
+      }).catch(() => {});
+      break;
+    }
+  }
 
   await notifierMarchand({
     tenantId: commande.tenantId,

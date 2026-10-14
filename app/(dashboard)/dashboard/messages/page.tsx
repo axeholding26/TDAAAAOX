@@ -521,9 +521,11 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
     if (!contenu.trim()) return;
     setAxiaLoading(true);
     try {
-      const res = await fetch("/api/ai/copilote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: `Améliore ce post pour Axsocial (réseau social e-commerce), rends-le viral, accrocheur et vendeur. Garde un ton authentique et percutant: "${contenu}". Réponds uniquement avec le texte amélioré, max 280 caractères.` }) });
+      // Réécriture de texte : /api/ai/chat (sans outils) plutôt que le copilote, qui peut agir sur la boutique.
+      const res = await fetch("/api/ai/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ messages: [{ role: "user", content: `Améliore ce post pour Axsocial (réseau social e-commerce), rends-le accrocheur et vendeur. Garde un ton authentique et percutant, n'invente ni chiffre ni promotion: "${contenu}". Réponds uniquement avec le texte amélioré, max 280 caractères.` }] }) });
       const data = await res.json();
-      if (data.message) { setContenu(data.message); setCharCount(data.message.length); }
+      const texte = res.ok && typeof data.reponse === "string" ? data.reponse.trim().slice(0, MAX) : "";
+      if (texte) { setContenu(texte); setCharCount(texte.length); }
     } finally { setAxiaLoading(false); }
   };
 

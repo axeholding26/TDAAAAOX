@@ -10,7 +10,7 @@ import type { AgentTool, ToolExecutor } from "@/lib/agent-runner";
 import { getAxiaAgentById, AXIA_AGENTS } from "./agents";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { changerStatutCommande, assignerLivreurCommande, marquerEspecesRemises } from "@/lib/cycle-livraison";
-import { PAIEMENT, STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
+import { PAIEMENT, STATUTS_COURSE_ACTIVE, clientsInactifs } from "@/lib/commandes";
 import { executerOutilMcp } from "@/lib/mcp/executor";
 import { generateProductImage, buildProductImagePrompt } from "@/lib/image-gen";
 import { generateSpeechGemini, startVideoGemini, GEMINI_TTS_VOICES } from "@/lib/llm-client";
@@ -895,7 +895,7 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   {
     name: "router_commande_fournisseur",
     tier: "palier2",
-    description: "Route automatiquement une commande vers le fournisseur dropshipping approprié",
+    description: "Prépare une commande fournisseur (en attente) pour une commande dont les produits viennent d'un fournisseur dropshipping — rien n'est envoyé : le marchand la transmet depuis Sourcing → Commandes fournisseurs",
     parameters: { type: "object" as const, properties: { commandeId: { type: "string", description: "ID ou numéro de la commande" } }, required: ["commandeId"] },
   },
   {
@@ -1042,7 +1042,8 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
           if (args.fichierNom) data.fichierNom = args.fichierNom;
           if (args.instructionsTelechargement) data.instructionsTelechargement = args.instructionsTelechargement;
         } else {
-          data.stock = args.stock ?? 10;
+          // Stock strict : celui fourni par le marchand, sinon 0 (invendable) — jamais inventé.
+          data.stock = Math.max(0, Math.floor(Number(args.stock) || 0));
           if (args.poids != null) data.poids = args.poids;
           if (type === "dropshipping") {
             if (args.prixFournisseur != null) data.prixFournisseur = args.prixFournisseur;
@@ -1053,7 +1054,8 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
         const cree = await prisma.produit.create({ data, select: { id: true } });
 
-        const details = [images.length ? "image IA" : null, type === "digital" && !args.fichierUrl ? "fichier à ajouter" : null].filter(Boolean).join(", ");
+        const details = [images.length ? "image IA" : null, type === "digital" && !args.fichierUrl ? "fichier à ajouter" : null,
+          type !== "digital" && data.stock === 0 ? "stock à 0 : invendable tant que le stock réel n'est pas renseigné" : null].filter(Boolean).join(", ");
         // `donnees` : lu par les IA externes (lib/controle-ia) pour enchaîner une étape sur ce produit.
         return { succes: true, resultat: `✅ Produit ${type} "${args.nom}" créé à ${args.prix}${details ? ` (${details})` : ""}`, donnees: { produitId: cree.id } };
       }
@@ -1376,29 +1378,32 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const jours = args.periode === "7j" ? 7 : args.periode === "30j" ? 30 : args.periode === "90j" ? 90 : 365;
         const depuis = new Date(Date.now() - jours * 86400000);
         const [commandes, clients, tenant] = await Promise.all([
-          prisma.commande.findMany({ where: { tenantId, createdAt: { gte: depuis } }, select: { montantTotal: true, statut: true, devise: true } }),
+          prisma.commande.findMany({ where: { tenantId, createdAt: { gte: depuis } }, select: { montantTotal: true, statut: true, devise: true, paiementStatut: true } }),
           prisma.client.count({ where: { tenantId, createdAt: { gte: depuis } } }),
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { devise: true, nomBoutique: true } }),
         ]);
+        // CA = commandes payées (définition officielle, lib/commandes.ts) ; confirmées = suivi opérationnel.
+        const payees = commandes.filter(c => c.paiementStatut === PAIEMENT.PAYE);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
-        const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
+        const ca = payees.reduce((s, c) => s + c.montantTotal, 0);
         const dev = tenant?.devise ?? "XAF";
-        return { succes: true, resultat: `Stats ${args.periode} — CA: ${Math.round(ca)} ${dev} | Commandes: ${commandes.length} (${conf.length} confirmées) | Taux conversion: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Panier moyen: ${conf.length ? Math.round(ca / conf.length) : 0} ${dev} | Nouveaux clients: ${clients}` };
+        return { succes: true, resultat: `Stats ${args.periode} — CA (payé): ${Math.round(ca)} ${dev} | Commandes: ${commandes.length} (${payees.length} payées, ${conf.length} confirmées/livrées) | Taux de confirmation: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Panier moyen: ${payees.length ? Math.round(ca / payees.length) : 0} ${dev} | Nouveaux clients: ${clients}` };
       }
 
       case "rapport_complet": {
         const depuis = new Date(Date.now() - 30 * 86400000);
         const [commandes, clients, topProduits, tenant] = await Promise.all([
-          prisma.commande.findMany({ where: { tenantId, createdAt: { gte: depuis } }, select: { montantTotal: true, statut: true, devise: true } }),
+          prisma.commande.findMany({ where: { tenantId, createdAt: { gte: depuis } }, select: { montantTotal: true, statut: true, devise: true, paiementStatut: true } }),
           prisma.client.aggregate({ where: { tenantId }, _count: true, _sum: { totalDepense: true } }),
           prisma.produit.findMany({ where: { tenantId, actif: true }, orderBy: { ventes: "desc" }, take: 5, select: { nom: true, ventes: true, prix: true } }),
           prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, devise: true, pays: true } }),
         ]);
+        const payees = commandes.filter(c => c.paiementStatut === PAIEMENT.PAYE);
         const conf = commandes.filter(c => ["confirmee", "livree"].includes(c.statut));
-        const ca = conf.reduce((s, c) => s + c.montantTotal, 0);
+        const ca = payees.reduce((s, c) => s + c.montantTotal, 0);
         const dev2 = tenant?.devise ?? "XAF";
         const topStr = topProduits.map(p => `${p.nom} (${p.ventes} ventes, ${p.prix} ${dev2})`).join(", ");
-        return { succes: true, resultat: `Rapport 30j — ${tenant?.nomBoutique} | CA: ${Math.round(ca)} ${dev2} | Commandes: ${commandes.length} (${conf.length} confirmées) | Taux: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Clients total: ${clients._count} | LTV cumulé: ${Math.round(clients._sum.totalDepense ?? 0)} ${dev2} | Top produits: ${topStr || "aucun"}` };
+        return { succes: true, resultat: `Rapport 30j — ${tenant?.nomBoutique} | CA (payé): ${Math.round(ca)} ${dev2} | Commandes: ${commandes.length} (${payees.length} payées, ${conf.length} confirmées/livrées) | Taux de confirmation: ${commandes.length ? Math.round(conf.length / commandes.length * 100) : 0}% | Clients total: ${clients._count} | LTV cumulé: ${Math.round(clients._sum.totalDepense ?? 0)} ${dev2} | Top produits: ${topStr || "aucun"}` };
       }
 
       case "produits_performance": {
@@ -1410,7 +1415,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
       case "lister_clients": {
         let where: any = { tenantId };
-        if (args.segment === "inactifs_30j") where.createdAt = { lt: new Date(Date.now() - 30 * 86400000) };
+        if (args.segment === "inactifs_30j") Object.assign(where, clientsInactifs(30));
         else if (args.segment === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
         const orderBy: any = args.tri === "depense_desc" ? { totalDepense: "desc" } : args.tri === "commandes_desc" ? { totalCommandes: "desc" } : { createdAt: "desc" };
         const clients = await prisma.client.findMany({ where, orderBy, take: args.limite ?? 15, select: { id: true, nom: true, email: true, totalCommandes: true, totalDepense: true, createdAt: true } });
@@ -1422,7 +1427,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const resendKey = process.env.RESEND_API_KEY;
         if (!resendKey) return { succes: false, resultat: "RESEND_API_KEY manquante" };
         let where: any = { tenantId };
-        if (args.destinataires === "inactifs_30j") where.createdAt = { lt: new Date(Date.now() - 30 * 86400000) };
+        if (args.destinataires === "inactifs_30j") Object.assign(where, clientsInactifs(30));
         else if (args.destinataires === "vip") { const agg = await prisma.client.aggregate({ where: { tenantId }, _avg: { totalDepense: true } }); where.totalDepense = { gte: (agg._avg.totalDepense ?? 0) * 2 }; }
         else if (args.destinataires === "nouveaux") where.createdAt = { gte: new Date(Date.now() - 7 * 86400000) };
         const clients = await prisma.client.findMany({ where: { ...where, ...AVEC_EMAIL_REEL }, select: { email: true, nom: true }, take: 50 });
@@ -1802,9 +1807,9 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const fournisseurId = commande.lignes.find((l: any) => l.produit?.fournisseurId)?.produit?.fournisseurId;
         if (!fournisseurId) return { succes: false, resultat: "Aucun fournisseur dropshipping associé aux produits de cette commande." };
         const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? 0) * l.quantite), 0);
-        const cf = await (prisma as any).commandeFournisseur.create({ data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true } }).catch(() => null);
-        if (!cf) return { succes: false, resultat: "Erreur lors du routage." };
-        return { succes: true, resultat: `✅ Commande ${commande.numero} routée vers le fournisseur — Montant fournisseur estimé: ${montantFournisseur.toLocaleString()} ${commande.devise}` };
+        const cf = await (prisma as any).commandeFournisseur.create({ data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "en_attente" /* rien n'est transmis automatiquement */ } }).catch(() => null);
+        if (!cf) return { succes: false, resultat: "Erreur lors de la préparation de la commande fournisseur." };
+        return { succes: true, resultat: `Commande fournisseur préparée pour la commande ${commande.numero} (montant fournisseur estimé : ${montantFournisseur.toLocaleString()} ${commande.devise}). Elle n'est PAS encore envoyée : à transmettre au fournisseur depuis Sourcing → Commandes fournisseurs.` };
       }
 
       case "lister_commandes_fournisseur": {

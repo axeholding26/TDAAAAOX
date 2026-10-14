@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasGemini, completionAuto } from "@/lib/llm-client";
+import { hasGemini, hasDeepSeek, completionAuto } from "@/lib/llm-client";
 import { generateProductImageUrl, buildProductImagePrompt } from "@/lib/image-gen";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
@@ -27,14 +27,15 @@ Format strict :
     "categorie": "Catégorie précise du produit",
     "tags": ["tag1", "tag2", "tag3", "tag4"],
     "imagePrompt": "Ultra-detailed product photography prompt in English: describe the product on white background, studio lighting, 8K, photorealistic, specific colors and materials",
-    "stock": 25
+    "stock": 0
   }
 ]
 
 Règles strictes :
 - Pays cible : ${pays}, devise : ${devise}
 - Prix réalistes pour le marché local (pas trop élevés ni trop bas)
-- prixCompare = prix barré, toujours 15-30% plus élevé que prix
+- prixCompare : 0 (pas de faux prix barré : le marchand le saisira s'il a une vraie promotion)
+- stock : 0 (n'invente jamais de stock : le marchand saisira son stock réel)
 - imagePrompt EN ANGLAIS, ultra-détaillé pour Flux.1-dev
 - Descriptions percutantes en français, orientées vente
 - Produits variés et complémentaires (éviter doublons)
@@ -58,8 +59,8 @@ export async function POST(request: Request) {
     const pays = tenant?.pays || "SN";
     const devise = tenant?.devise || "XOF";
 
-    if (!hasGemini()) {
-      return NextResponse.json({ message: "Gemini non configuré. Vérifiez GEMINI_API_KEY dans .env.local" }, { status: 503 });
+    if (!hasGemini() && !hasDeepSeek()) {
+      return NextResponse.json({ message: "Aucune clé IA configurée (GEMINI_API_KEY ou DEEPSEEK_API_KEY)." }, { status: 503 });
     }
 
     const result = await completionAuto(
@@ -121,7 +122,8 @@ export async function PUT(request: Request) {
             description: String(p.description || ""),
             prix: Number(p.prix) || 0,
             prixCompare: p.prixCompare && Number(p.prixCompare) > Number(p.prix) ? Number(p.prixCompare) : null,
-            stock: Number(p.stock) || 10,
+            // Stock strict : celui fourni, sinon 0 (invendable tant que le marchand ne le saisit pas).
+            stock: Math.max(0, Math.floor(Number(p.stock) || 0)),
             categorie: String(p.categorie || "Général"),
             tags: Array.isArray(p.tags) ? p.tags : [],
             images: p.imageUrl ? [String(p.imageUrl)] : [],
@@ -137,7 +139,8 @@ export async function PUT(request: Request) {
     return NextResponse.json({
       created,
       errors: errors.length,
-      message: `${created} produit${created > 1 ? "s" : ""} importé${created > 1 ? "s" : ""} avec succès`,
+      message: `${created} produit${created > 1 ? "s" : ""} importé${created > 1 ? "s" : ""} avec succès`
+        + (produits.some((p: any) => !(Number(p.stock) > 0)) ? " — les produits sans stock sont à 0 et invendables : renseigne ton stock réel." : ""),
     });
   } catch (err: any) {
     console.error("[MAGIC-IMPORT/PUT]", err);

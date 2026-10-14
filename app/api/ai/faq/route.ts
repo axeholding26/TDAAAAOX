@@ -11,7 +11,8 @@ const schema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    // Module produits contrôlé par proxy.ts, qui exige une boutique active.
+    if (!(session?.user as any)?.tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
     const body = await req.json();
     const { nom, description } = schema.parse(body);

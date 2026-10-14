@@ -36,35 +36,52 @@ async function StockBadge({ stock }: { stock: number }) {
 export default async function ProduitsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; filtre?: string }>;
+  searchParams: Promise<{ q?: string; filtre?: string; page?: string }>;
 }) {
   const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "produits");
-  const { q, filtre } = await searchParams;
+  const { q, filtre, page: pageParam } = await searchParams;
+  const PAR_PAGE = 60;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
 
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   const devise = tenant?.devise || "XOF";
 
-  const tous = await prisma.produit.findMany({
-    where: { tenantId },
-    include: { variantes: true, _count: { select: { avis: true } } },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const totalActifs  = tous.filter(p => p.actif).length;
-  const totalVentes  = tous.reduce((s, p) => s + p.ventes, 0);
-  const stockFaible  = tous.filter(p => p.stock <= 5 && p.stock > 0 && p.actif).length;
-  const stockEpuise  = tous.filter(p => p.stock === 0 && p.actif).length;
-
-  let produits = tous;
-  if (filtre === "actif")   produits = tous.filter(p => p.actif);
-  if (filtre === "inactif") produits = tous.filter(p => !p.actif);
-  if (filtre === "faible")  produits = tous.filter(p => p.stock <= 5 && p.stock > 0 && p.actif);
-  if (filtre === "epuise")  produits = tous.filter(p => p.stock === 0);
-  if (q) produits = produits.filter(p => p.nom.toLowerCase().includes(q.toLowerCase()));
+  // Compteurs en base + page de produits (au lieu de charger tout le catalogue)
+  const base = { tenantId };
+  const FILTRES: Record<string, object> = {
+    actif:   { actif: true },
+    inactif: { actif: false },
+    faible:  { actif: true, stock: { gt: 0, lte: 5 } },
+    epuise:  { stock: 0 },
+  };
+  const where = {
+    ...base,
+    ...(filtre && FILTRES[filtre] ? FILTRES[filtre] : {}),
+    ...(q ? { nom: { contains: q, mode: "insensitive" as const } } : {}),
+  };
+  const [totalTous, totalActifs, stockFaible, stockEpuise, ventes, totalFiltre, produits] = await Promise.all([
+    prisma.produit.count({ where: base }),
+    prisma.produit.count({ where: { ...base, actif: true } }),
+    prisma.produit.count({ where: { ...base, ...FILTRES.faible } }),
+    prisma.produit.count({ where: { ...base, actif: true, stock: 0 } }),
+    prisma.produit.aggregate({ where: base, _sum: { ventes: true } }),
+    prisma.produit.count({ where }),
+    prisma.produit.findMany({
+      where,
+      include: { _count: { select: { avis: true } } },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAR_PAGE,
+      take: PAR_PAGE,
+    }),
+  ]);
+  const totalVentes = ventes._sum.ventes ?? 0;
+  const nbPages = Math.max(1, Math.ceil(totalFiltre / PAR_PAGE));
+  const lienPage = (n: number) =>
+    `/dashboard/produits?${new URLSearchParams({ ...(filtre ? { filtre } : {}), ...(q ? { q } : {}), page: String(n) })}`;
 
   const statCards = [
     { label: "Produits actifs",  value: totalActifs,    iconBg: "#F0FDF4", iconColor: "#16A34A", Icon: Package     },
@@ -85,7 +102,7 @@ export default async function ProduitsPage({
             <h1 className="text-[18px] sm:text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{t("Produits")}{" "}<AgentActiveIndicator label={t("Agent Produits actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="produits" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
-              {tous.length}
+              {totalTous}
             </span>
             {stockFaible > 0 && (
               <span className="text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] px-2.5 py-0.5 rounded-full flex items-center gap-1">
@@ -105,7 +122,7 @@ export default async function ProduitsPage({
       </div>
 
       {/* ── Stat cards — défilement horizontal sur mobile, grille au-delà ── */}
-      {tous.length > 0 && (
+      {totalTous > 0 && (
         <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:overflow-visible"
           style={{ scrollbarWidth: "none" }}>
           {statCards.map((s, i) => {
@@ -158,9 +175,9 @@ export default async function ProduitsPage({
         <div className="flex items-center gap-1.5 overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0" style={{ scrollbarWidth: "none" }}>
           {FILTER_TABS.map(tab => {
             const isActive = (filtre ?? "all") === tab.key;
-            const count = tab.key === "all" ? tous.length
+            const count = tab.key === "all" ? totalTous
               : tab.key === "actif"   ? totalActifs
-              : tab.key === "inactif" ? tous.filter(p => !p.actif).length
+              : tab.key === "inactif" ? totalTous - totalActifs
               : tab.key === "faible"  ? stockFaible
               : stockEpuise;
             const href = tab.key === "all"
@@ -299,6 +316,14 @@ export default async function ProduitsPage({
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {nbPages > 1 && (
+        <div className="flex items-center justify-between text-[12px] font-semibold">
+          {page > 1 ? <Link href={lienPage(page - 1)} className="text-[#111] hover:underline">← {t("Précédent")}</Link> : <span />}
+          <span className="text-[#AAAAAA]">{page} / {nbPages}</span>
+          {page < nbPages ? <Link href={lienPage(page + 1)} className="text-[#111] hover:underline">{t("Suivant")} →</Link> : <span />}
         </div>
       )}
     </div>

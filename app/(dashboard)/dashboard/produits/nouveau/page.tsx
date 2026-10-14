@@ -247,6 +247,8 @@ function FormulaireProduit() {
         actif: form.actif,
         featured: form.featured,
         type: form.type,
+        metaTitle: form.metaTitle || undefined,
+        metaDesc: form.metaDesc || undefined,
       };
 
       if (form.type === "physique") {
@@ -279,7 +281,11 @@ function FormulaireProduit() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Erreur");
+      if (!res.ok) {
+        // Zod renvoie les champs fautifs : on nomme le premier
+        const champ = data.erreurs?.[0];
+        throw new Error(champ ? `${data.message} : ${champ.path?.join(".")} — ${champ.message}` : (data.message || data.error || "Erreur"));
+      }
       toast.success(tr("Produit créé !"));
       router.push(`/dashboard/produits/${data.produit.id}`);
     } catch (err: any) {
@@ -632,11 +638,11 @@ function FormulaireProduit() {
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Titre méta")}</label>
-              <input value={form.metaTitle} onChange={e => set("metaTitle", e.target.value)} placeholder={tr("Titre pour Google")} className={inputClass} />
+              <input value={form.metaTitle} maxLength={60} onChange={e => set("metaTitle", e.target.value)} placeholder={tr("Titre pour Google")} className={inputClass} />
             </div>
             <div>
               <label className="ax-label block mb-1.5">{tr("Méta description")}</label>
-              <textarea value={form.metaDesc} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder={tr("Description Google...")} className={`${inputClass} resize-none`} />
+              <textarea value={form.metaDesc} maxLength={155} onChange={e => set("metaDesc", e.target.value)} rows={2} placeholder={tr("Description Google...")} className={`${inputClass} resize-none`} />
             </div>
           </div>
         </div>

@@ -260,7 +260,7 @@ export default function TrackingPage() {
         {data.tenant?.slug && (
           <a href={`/${data.tenant.slug}/mon-compte?lien=${params.token}`}
             style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:16, padding:"14px 16px", marginBottom:16, color:"white", fontSize:14, fontWeight:600, textDecoration:"none" }}>
-            <ClipboardList size={16} style={{ color:"#F5A623" }} />{" "}{t("Voir toutes mes commandes")}
+            <ClipboardList size={16} style={{ color:"#F5A623" }} />{" "}{t("Ouvrir dans mon espace client")}
           </a>
         )}
 

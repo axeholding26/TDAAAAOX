@@ -13,7 +13,7 @@ export async function SousBlocsRenderer({ blocs, accent, texte }: { blocs?: Sous
     if (b.type === "promo") return !!(b.config?.titre || b.config?.texte);
     if (b.type === "texte") return !!(b.config?.titre || b.config?.texte);
     if (b.type === "video") return !!b.config?.videoUrl;
-    if (b.type === "stats") return (b.config?.items || []).length > 0;
+    if (b.type === "stats") return (b.config?.items || []).some((i: any) => i?.valeur);
     if (b.type === "features") return (b.config?.items || []).length > 0;
     if (b.type === "countdown") return !!b.config?.dateFin;
     if (b.type === "logos") return (b.config?.logos || []).some(Boolean);
@@ -76,7 +76,7 @@ export async function SousBlocsRenderer({ blocs, accent, texte }: { blocs?: Sous
           );
         }
         if (bloc.type === "stats") {
-          const items: any[] = bloc.config.items || [];
+          const items: any[] = (bloc.config.items || []).filter((i: any) => i?.valeur);
           return (
             <div key={bloc.id} className="grid gap-6 text-center grid-cols-[repeat(var(--cols-m),minmax(0,1fr))] sm:grid-cols-[repeat(var(--cols),minmax(0,1fr))]" style={{ "--cols": Math.min(items.length, 4), "--cols-m": Math.min(items.length, 2) } as React.CSSProperties}>
               {items.map((it, i) => (
@@ -89,7 +89,7 @@ export async function SousBlocsRenderer({ blocs, accent, texte }: { blocs?: Sous
           );
         }
         if (bloc.type === "features") {
-          const items: any[] = bloc.config.items || [];
+          const items: any[] = (bloc.config.items || []).filter((i: any) => i?.valeur);
           return (
             <div key={bloc.id} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {items.map((it, i) => (

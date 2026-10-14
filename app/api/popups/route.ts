@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { requireNiveau } from "@/lib/permissions-server";
 import { apiLimiter, getClientIp } from "@/lib/rate-limit";
 
 // GET — pour le dashboard (auth requis)
@@ -25,6 +26,9 @@ export async function GET(req: Request) {
   const tenantId = (session.user as any)?.tenantId;
   // Sans boutique (livreur, admin) : `where: { tenantId: undefined }` renverrait les popups de TOUTES les boutiques.
   if (!tenantId) return NextResponse.json({ popups: [] });
+  // Route publique dans proxy.ts (vitrine) : le module marketing est contrôlé ici.
+  const refusLecture = await requireNiveau(session, "marketing", "lecture");
+  if (refusLecture) return NextResponse.json({ error: refusLecture.error }, { status: refusLecture.status });
 
   const popups = await prisma.popupCampagne.findMany({
     where: { tenantId },
@@ -38,6 +42,8 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const refus = await requireNiveau(session, "marketing", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const body = await req.json().catch(() => ({}));
   const { nom, type, declencheur, delaiSec, titre, message, ctaTexte, ctaUrl, imageUrl, codePromo } = body;
@@ -80,6 +86,8 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const refus = await requireNiveau(session, "marketing", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const existing = await prisma.popupCampagne.findFirst({ where: { id, tenantId } });
   if (!existing) return NextResponse.json({ error: "Popup introuvable" }, { status: 404 });
@@ -101,6 +109,8 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
   if (!id || !tenantId) return NextResponse.json({ error: "ID requis" }, { status: 400 });
+  const refus = await requireNiveau(session, "marketing", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const existing = await prisma.popupCampagne.findFirst({ where: { id, tenantId } });
   if (!existing) return NextResponse.json({ error: "Popup introuvable" }, { status: 404 });

@@ -9,6 +9,11 @@ interface Stats {
   providers: { gmail: boolean; resend: boolean };
 }
 
+interface CodePromo {
+  id: string; code: string; type: string; valeur: number; actif: boolean;
+  dateExpiration: string | null; maxUtilisations: number | null; utilisations: number;
+}
+
 interface Campagne {
   id: string; sujet: string; corps: string; segment: string;
   nbEnvoyes: number; statut: string; source: string; createdAt: string;
@@ -25,7 +30,8 @@ const TEMPLATES = [
   {
     id: "promo", label: "Promotion flash", Icon: Flame,
     sujet: "Offre limitée — {boutique}",
-    corps: "Bonjour {prenom},\n\nNous avons une offre exclusive pour vous ! Profitez de -20% sur toute la boutique ce weekend.\n\nUtilisez le code : PROMO20\n\nÀ très vite,\nL'équipe {boutique}",
+    // {offre} : remplacé par un vrai code promo actif choisi par le marchand (jamais un code inventé).
+    corps: "Bonjour {prenom},\n\nNous avons une offre exclusive pour vous !{offre}\n\nÀ très vite,\nL'équipe {boutique}",
   },
   {
     id: "nouveau_produit", label: "Nouveau produit", Icon: Sparkles,
@@ -35,7 +41,7 @@ const TEMPLATES = [
   {
     id: "relance", label: "Relance client", Icon: Mail,
     sujet: "On pense à vous, {prenom} — {boutique}",
-    corps: "Bonjour {prenom},\n\nVous nous manquez ! Voici un code de bienvenue spécialement pour vous : RETOUR15\n\nValidez votre prochain achat avec -15% de réduction.\n\nÀ bientôt,\n{boutique}",
+    corps: "Bonjour {prenom},\n\nVous nous manquez ! Revenez découvrir nos nouveautés.{offre}\n\nÀ bientôt,\n{boutique}",
   },
   {
     id: "fidelite", label: "Fidélité VIP", Icon: Crown,
@@ -54,6 +60,8 @@ export default function EmailMarketingPage() {
   const [corps, setCorps] = useState("");
   const [provider, setProvider] = useState<"resend" | "gmail">("resend");
   const [templateId, setTemplateId] = useState("promo");
+  const [codes, setCodes] = useState<CodePromo[]>([]);
+  const [codeId, setCodeId] = useState("");
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<{ envoyes: number; total: number; source: string } | null>(null);
@@ -76,32 +84,46 @@ export default function EmailMarketingPage() {
 
   useEffect(() => { charger(); }, [charger]);
 
-  function appliquerTemplate(id: string) {
+  // Vrais codes promo utilisables (actifs, non expirés, non épuisés).
+  useEffect(() => {
+    fetch("/api/codes-promo").then(r => r.ok ? r.json() : []).then((liste: CodePromo[]) => {
+      const now = Date.now();
+      setCodes((Array.isArray(liste) ? liste : []).filter(c => c.actif
+        && (!c.dateExpiration || new Date(c.dateExpiration).getTime() > now)
+        && (c.maxUtilisations == null || c.utilisations < c.maxUtilisations)));
+    }).catch(() => {});
+  }, []);
+
+  function appliquerTemplate(id: string, idCode = codeId) {
     const t = TEMPLATES.find(t => t.id === id);
     if (!t) return;
+    const c = codes.find(c => c.id === idCode);
+    const offre = c ? `\n\nUtilisez le code ${c.code}${c.type === "pourcentage" ? ` (-${c.valeur}%)` : ""} lors de votre prochain achat.` : "";
     setTemplateId(id);
     setSujet(t.sujet);
-    setCorps(t.corps);
+    setCorps(t.corps.replace("{offre}", offre));
   }
 
   async function genererAvecIA() {
     setGenerating(true);
     setErreur("");
     try {
-      const res = await fetch("/api/ai/agent-marketing", {
+      // Brouillon de texte uniquement : /api/ai/chat n'a aucun outil (rien n'est envoyé).
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [{
             role: "user",
-            content: `Génère une campagne email pour le segment "${SEGMENTS.find(s => s.value === segment)?.label}". Template style: ${templateId}. Retourne un JSON avec les clés "sujet" et "corps". Corps en texte simple avec variables {prenom} et {boutique}.`,
+            content: `Rédige un brouillon d'email marketing pour le segment "${SEGMENTS.find(s => s.value === segment)?.label}". Template style: ${templateId}. Retourne uniquement un JSON avec les clés "sujet" et "corps". Corps en texte simple avec variables {prenom} et {boutique}. N'invente ni prix, ni réduction, ni chiffre.`,
           }],
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
-      const content = data.message ?? "";
-      const match = content.match(/\{[\s\S]*?"sujet"[\s\S]*?\}/);
+      const content: string = data.reponse ?? "";
+      // Gourmand : le corps contient {prenom}/{boutique}, un match paresseux s'arrêterait dessus.
+      const match = content.match(/\{[\s\S]*"sujet"[\s\S]*\}/);
       if (match) {
         try {
           const parsed = JSON.parse(match[0]);
@@ -109,10 +131,10 @@ export default function EmailMarketingPage() {
           if (parsed.corps) setCorps(parsed.corps);
         } catch {
           // Fallback: use the whole content as corps
-          setCorps(content.slice(0, 800));
+          setCorps(content.slice(0, 2000));
         }
       } else {
-        setCorps(content.slice(0, 600));
+        setCorps(content.slice(0, 2000));
       }
     } catch {
       setErreur("Erreur de génération IA");
@@ -235,6 +257,15 @@ export default function EmailMarketingPage() {
                   </button>
                 ))}
               </div>
+              <label className="text-xs text-gray-400 mt-3 mb-1 block">{tr("Code promo à inclure (facultatif)")}</label>
+              <select
+                value={codeId}
+                onChange={(e) => { setCodeId(e.target.value); if (TEMPLATES.find(t => t.id === templateId)?.corps.includes("{offre}")) appliquerTemplate(templateId, e.target.value); }}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white"
+              >
+                <option value="">{codes.length ? tr("Aucun code") : tr("Aucun code promo actif — créez-en un dans Codes promo")}</option>
+                {codes.map(c => <option key={c.id} value={c.id}>{c.code}{c.type === "pourcentage" ? ` (-${c.valeur}%)` : ` (-${c.valeur})`}</option>)}
+              </select>
             </div>
           </div>
 

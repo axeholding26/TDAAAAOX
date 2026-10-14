@@ -22,6 +22,8 @@ async function notchpayFetch(path: string, options: { method?: string; body?: an
     method: options.method ?? "GET",
     headers: headers(options.withGrant),
     body: options.body ? JSON.stringify(options.body) : undefined,
+    // Un NotchPay lent ne bloque jamais une fonction jusqu'à sa durée maximale.
+    signal: AbortSignal.timeout(30_000),
   });
 
   const data = await res.json().catch(() => ({}));

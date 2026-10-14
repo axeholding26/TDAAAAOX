@@ -83,10 +83,10 @@ function buildProductSections(type: CategoryType): ProductPageSection[] {
       gallery("vertical-thumbs"), info(), variants(), quantity(), trust(),
       custom("specs_tech", "specs", { titre: "Caractéristiques techniques", rows: [{ cle: "Processeur", valeur: "Voir description" },{ cle: "Mémoire", valeur: "Voir description" },{ cle: "Stockage", valeur: "Voir description" },{ cle: "Connectivité", valeur: "WiFi, Bluetooth 5.0" },{ cle: "Garantie", valeur: "12 mois constructeur" },{ cle: "Poids", valeur: "Voir description" }] }),
       custom("features_tech", "features", { titre: "Pourquoi choisir ce produit ?", items: [{ icone: "✅", titre: "Produit authentique", texte: "100% original avec certificat d'authenticité et numéro de série vérifiable." },{ icone: "🛡️", titre: "Garantie 12 mois", texte: "SAV réactif sous 48h, pièces de rechange disponibles." },{ icone: "📦", titre: "Livraison sécurisée", texte: "Emballage renforcé, assurance transport incluse." }] }),
-      custom("comparison_tech", "comparison", { titre: "Pourquoi nous ?", headers: ["Critère","Notre boutique","Marché classique"], rows: [{ cells: ["Authenticité","✓ Garantie","Non certifié"] },{ cells: ["Garantie","✓ 12 mois","0-3 mois"] },{ cells: ["SAV","✓ Sous 48h","Variable"] },{ cells: ["Prix","Meilleur prix","Prix marché"] }] }),
+      custom("comparison_tech", "comparison", { titre: "Pourquoi nous ?", headers: ["Critère","Notre boutique","Marché classique"], rows: [{ cells: ["Authenticité","✓ Garantie","Non certifié"] },{ cells: ["SAV","✓ Sous 48h","Variable"] },{ cells: ["Prix","Meilleur prix","Prix marché"] }] }),
       desc(), reviews(),
       custom("faq_tech", "faq", { titre: "Questions fréquentes", items: [{ question: "Le produit est-il compatible avec mon pays ?", reponse: "Oui, nos produits sont compatibles avec les normes locales (prise 220V, fréquences réseau adaptées)." },{ question: "Comment fonctionne la garantie ?", reponse: "En cas de défaut, contactez-nous sous 48h. Réparation ou remplacement sans frais sous garantie." },{ question: "Livrez-vous en dehors de la capitale ?", reponse: "Oui, nous livrons dans tout le pays via nos partenaires logistiques. Délai : 2 à 5 jours ouvrés." }] }),
-      custom("guarantee_tech", "guarantee", { titre: "Acheter en toute confiance", items: [{ icone: "🔒", titre: "Paiement sécurisé", texte: "Orange Money, MTN Mobile Money, carte bancaire — transactions cryptées SSL." },{ icone: "🛡️", titre: "Garantie 12 mois", texte: "Couverte pièces & main-d'œuvre, SAV réactif." },{ icone: "📦", titre: "Retour 30 jours", texte: "Produit défectueux ? Retour ou échange sans frais." }] }),
+      custom("guarantee_tech", "guarantee", { titre: "Acheter en toute confiance", items: [{ icone: "🔒", titre: "Paiement sécurisé", texte: "Orange Money, MTN Mobile Money, carte bancaire — transactions cryptées SSL." },{ icone: "🛡️", titre: "SAV réactif", texte: "Une question ou un souci ? Nous vous répondons rapidement." },{ icone: "📦", titre: "Retour 30 jours", texte: "Produit défectueux ? Retour ou échange sans frais." }] }),
       similar("Ces produits vous intéresseront aussi"),
     ];
 
@@ -153,7 +153,6 @@ function buildProductSections(type: CategoryType): ProductPageSection[] {
       info(), quantity(), trust(),
       custom("features_services", "features", { titre: "Ce qui est inclus dans votre forfait", items: [{ icone: "✅", titre: "Prestation complète", texte: "Service clé en main de A à Z, aucun frais caché." },{ icone: "⚡", titre: "Démarrage rapide", texte: "Lancement de votre projet sous 48h après commande." },{ icone: "🤝", titre: "Accompagnement dédié", texte: "Un expert à votre disposition tout au long de la mission." }] }),
       custom("howto_services", "howto", { titre: "Comment ça marche ?", steps: [{ num: "01", titre: "Commande", texte: "Passez votre commande en ligne et choisissez vos options." },{ num: "02", titre: "Brief", texte: "Nous vous contactons sous 24h pour définir vos besoins précis." },{ num: "03", titre: "Livraison", texte: "Réception de votre prestation dans les délais convenus avec satisfaction garantie." }] }),
-      custom("testimonials_services", "testimonials", { titre: "Ils nous font confiance", items: [{ nom: "Kofi M.", note: 5, texte: "Service exceptionnel, rendu dans les délais et qualité irréprochable. Je recommande vivement !" },{ nom: "Aminata D.", note: 5, texte: "Équipe professionnelle et réactive. Mon projet a été transformé au-delà de mes attentes." }] }),
       desc(), reviews(),
       custom("faq_services", "faq", { titre: "Questions fréquentes", items: [{ question: "Quel est le délai d'exécution ?", reponse: "Le délai varie selon la prestation. Il est précisé dans la description. Nous respectons toujours les délais convenus." },{ question: "Que se passe-t-il si je ne suis pas satisfait ?", reponse: "Nous offrons des révisions illimitées jusqu'à votre satisfaction complète. Remboursement si non livré." },{ question: "Comment s'effectue le paiement ?", reponse: "Paiement sécurisé par Orange Money, MTN Mobile Money ou virement bancaire. Acompte de 50% à la commande." }] }),
       custom("guarantee_services", "guarantee", { titre: "Notre engagement qualité", items: [{ icone: "✅", titre: "Satisfaction garantie", texte: "Révisions illimitées jusqu'à votre validation complète." },{ icone: "⏱️", titre: "Respect des délais", texte: "Ponctualité absolue — pénalité en cas de retard de notre fait." },{ icone: "🔒", titre: "Confidentialité", texte: "Vos données et projets restent strictement confidentiels." }] }),
@@ -237,7 +236,7 @@ const HERO_EN: Partial<Record<CategoryType, (nom: string) => { titre: string; so
   fashion:  (nom) => ({ titre: `${nom} — Your Style, Your Identity`, sousTitre: "Carefully curated pieces to reveal your unique personality", ctaTexte: "Shop the Collection", annonce: `✦ Free delivery over 50$ ✦ -10% on your first order with WELCOME ✦ 14-day returns` }),
   beauty:   (nom) => ({ titre: `${nom} — Natural Beauty Revealed`, sousTitre: "Premium skincare crafted to celebrate your authentic beauty, naturally", ctaTexte: "Shop My Skincare", annonce: `✨ Free shipping over 30$ ✨ 100% natural formulas ✨ Satisfied or refunded` }),
   food:     (nom) => ({ titre: `${nom} — Authentic Flavours`, sousTitre: "Fresh products sourced from local farmers, delivered straight to you", ctaTexte: "Order Now", annonce: `🌿 Fresh products delivered in 24h ✦ 100% natural, no preservatives ✦ Order before 12pm for same-day delivery` }),
-  tech:     (nom) => ({ titre: `${nom} — Innovation Within Reach`, sousTitre: "The best tech products at the best price, with authenticity guarantee and reactive support", ctaTexte: "Browse Catalogue", annonce: `🔒 100% genuine products ✦ 12-month warranty ✦ Express 24h delivery ✦ Responsive support` }),
+  tech:     (nom) => ({ titre: `${nom} — Innovation Within Reach`, sousTitre: "The best tech products at the best price, with authenticity guarantee and reactive support", ctaTexte: "Browse Catalogue", annonce: `🔒 100% genuine products ✦ Express 24h delivery ✦ Responsive support` }),
   jewelry:  (nom) => ({ titre: `${nom} — Wear Your Story`, sousTitre: "Handcrafted jewellery that celebrates your heritage and elegance", ctaTexte: "Discover Collections", annonce: `✦ Free gift wrapping ✦ Authenticity certificate ✦ 30-day returns` }),
   home:     (nom) => ({ titre: `${nom} — Your Interior, Your Signature`, sousTitre: "Furniture and decor carefully selected to create your ideal living space", ctaTexte: "Explore the Store", annonce: `🏠 Home delivery ✦ Assembly included on selection ✦ 30-day satisfaction guarantee` }),
   health:   (nom) => ({ titre: `${nom} — Your Wellbeing First`, sousTitre: "Quality health and wellness products selected by experts for your daily routine", ctaTexte: "Shop Wellness", annonce: `✦ Authentic certified products ✦ Expert advice included ✦ Fast delivery` }),
@@ -277,7 +276,7 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
     confiance: { ...base.confiance },
     vedettes: { actif: true, titre: langue === "en" ? `✦ ${t.vedettes}` : "✦ Nos Best-Sellers", nombre: 8, triPar: "ventes" as const, colonnes: 4, layout: "grid" as const, showRatings: true, showSoldCount: true },
     collections: { actif: true, titre: langue === "en" ? "Explore Collections" : "Explorer nos collections", layout: "masonry" as const },
-    about: { actif: true, titre: `L'histoire de ${nomCourt}`, texte: "Née d'une passion pour la mode authentique, notre boutique propose une sélection de pièces uniques qui allient élégance et accessibilité. Chaque article est choisi avec soin pour vous offrir le meilleur.", layout: "image-right" as const, stats: [{ valeur: "500+", label: "Pièces disponibles" }, { valeur: "1000+", label: "Clientes satisfaites" }, { valeur: "4.9★", label: "Note moyenne" }] },
+    about: { actif: true, titre: `L'histoire de ${nomCourt}`, texte: "Née d'une passion pour la mode authentique, notre boutique propose une sélection de pièces uniques qui allient élégance et accessibilité. Chaque article est choisi avec soin pour vous offrir le meilleur.", layout: "image-right" as const },
     promo: { actif: true, titre: "Nouvelle collection", texte: "Découvrez nos dernières arrivées avant tout le monde — pièces exclusives en quantité limitée", ctaTexte: "Voir les nouveautés", style: "gradient" as const },
     faq: { actif: true, titre: "Questions fréquentes", layout: "accordion" as const, items: [{ question: "Puis-je retourner un article ?", reponse: "Oui, vous disposez de 14 jours après réception pour retourner votre commande. Article dans son état d'origine." }, { question: "Quels modes de paiement ?", reponse: "Orange Money, MTN Mobile Money, paiement à la livraison disponible." }, { question: "Comment connaître ma taille ?", reponse: "Consultez notre guide des tailles disponible sur chaque fiche produit. En cas de doute, contactez-nous." }] },
     avis: { actif: true, titre: t.avis, layout: "carousel" as const, showPhotos: true },
@@ -292,7 +291,7 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
       : [{ icone: "🌿", titre: "100% naturel", texte: "Formules vegan, sans parabènes" },{ icone: "🔬", titre: "Testé dermo", texte: "Validé par des dermatologues" },{ icone: "🚀", titre: "Livraison 24h", texte: "Expédiée rapidement" },{ icone: "↩️", titre: "Satisfaite ou remboursée", texte: "30 jours pour essayer" }] },
     vedettes: { actif: true, titre: langue === "en" ? `✨ ${t.vedettes}` : "✨ Nos soins best-sellers", nombre: 8, triPar: "ventes" as const, colonnes: 4, layout: "grid" as const, showRatings: true },
     collections: { actif: true, titre: langue === "en" ? "Your Beauty Routine" : "Votre routine beauté", layout: "grid" as const },
-    about: { actif: true, titre: `L'ADN de ${nomCourt}`, texte: "Nous croyons que chaque peau est unique. C'est pourquoi nous formulons des soins naturels adaptés à la diversité des peaux africaines. Efficacité prouvée, ingrédients sourcés localement.", layout: "image-left" as const, stats: [{ valeur: "97%", label: "Satisfaites" }, { valeur: "50+", label: "Soins disponibles" }, { valeur: "0", label: "Produits nocifs" }] },
+    about: { actif: true, titre: `L'ADN de ${nomCourt}`, texte: "Nous croyons que chaque peau est unique. C'est pourquoi nous formulons des soins naturels adaptés à la diversité des peaux africaines. Efficacité prouvée, ingrédients sourcés localement.", layout: "image-left" as const },
     promo: { actif: true, titre: "Votre routine offerte", texte: "Achetez 2 soins, obtenez le 3ème à -50% — composez votre routine idéale", ctaTexte: "Profiter de l'offre", style: "gradient" as const },
     faq: { actif: true, titre: "Vos questions beauté", layout: "accordion" as const, items: [{ question: "Ces soins conviennent-ils aux peaux sensibles ?", reponse: "Oui, toutes nos formules sont hypoallergéniques et testées dermatologiquement pour les peaux les plus sensibles." }, { question: "Quand verrai-je les résultats ?", reponse: "La plupart de nos clientes observent des résultats visibles après 2 à 4 semaines d'utilisation régulière." }, { question: "Les produits sont-ils vegan et cruelty-free ?", reponse: "Absolument, tous nos produits sont 100% vegan et non testés sur les animaux." }] },
     avis: { actif: true, titre: langue === "en" ? "They Love Their Skincare" : "Elles adorent leurs soins", layout: "masonry" as const, showPhotos: true },
@@ -307,7 +306,7 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
       : [{ icone: "🌿", titre: "100% naturel", texte: "Sans conservateurs artificiels" },{ icone: "🏡", titre: "Producteurs locaux", texte: "Circuit court, frais garanti" },{ icone: "❄️", titre: "Chaîne du froid", texte: "Livraison température contrôlée" },{ icone: "📦", titre: "Livraison 24h", texte: "Expédiée sous 24h" }] },
     vedettes: { actif: true, titre: langue === "en" ? `🌟 ${t.vedettes}` : "🌟 Nos incontournables", nombre: 8, triPar: "ventes" as const, colonnes: 4, layout: "grid" as const, showRatings: true },
     collections: { actif: true, titre: t.collections, layout: "grid" as const },
-    about: { actif: true, titre: `L'histoire de ${nomCourt}`, texte: "Depuis notre création, nous travaillons directement avec les meilleurs producteurs locaux pour vous apporter des produits frais, naturels et de qualité supérieure. Notre engagement : la traçabilité totale de vos aliments.", layout: "image-right" as const, stats: [{ valeur: "50+", label: "Producteurs partenaires" }, { valeur: "200+", label: "Produits disponibles" }, { valeur: "4.8★", label: "Satisfaction client" }] },
+    about: { actif: true, titre: `L'histoire de ${nomCourt}`, texte: "Nous travaillons avec des producteurs locaux pour vous apporter des produits frais, naturels et de qualité. Notre engagement : vous dire d'où viennent vos aliments.", layout: "image-right" as const },
     promo: { actif: true, titre: "Panier saveurs", texte: "Composez votre panier de produits frais — livraison offerte dès 20 000 XOF", ctaTexte: "Composer mon panier", style: "split" as const },
     faq: { actif: true, titre: "Questions fréquentes", layout: "accordion" as const, items: [{ question: "Les produits sont-ils vraiment frais ?", reponse: "Oui, nos produits sont récoltés ou préparés dans les 24h avant expédition. Fraîcheur garantie à la livraison." }, { question: "Puis-je commander en gros ?", reponse: "Oui, nous gérons les commandes en gros pour les professionnels. Contactez-nous pour un devis personnalisé." }, { question: "Quel est votre zone de livraison ?", reponse: "Nous livrons dans la capitale et les principales villes. Consultez notre page de livraison pour plus de détails." }] },
     avis: { actif: true, titre: langue === "en" ? "They Love Our Products" : "Ils adorent nos produits", layout: "cards" as const },
@@ -315,14 +314,14 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
   };
 
   const techSections = {
-    annonce: { actif: true, texte: heroEn?.annonce ?? `🔒 Produits 100% authentiques ✦ Garantie 12 mois ✦ Livraison express 24h ✦ SAV réactif`, couleurFond: "#00b4d8", couleurTexte: "#ffffff" },
+    annonce: { actif: true, texte: heroEn?.annonce ?? `🔒 Produits 100% authentiques ✦ Livraison express 24h ✦ SAV réactif`, couleurFond: "#00b4d8", couleurTexte: "#ffffff" },
     hero: { actif: true, style: "centered" as const, titre: heroEn?.titre ?? `${nomCourt} — L'innovation à votre portée`, sousTitre: heroEn?.sousTitre ?? "Les meilleurs produits tech au meilleur prix, avec garantie d'authenticité et SAV réactif", ctaTexte: heroEn?.ctaTexte ?? "Explorer le catalogue", ctaLien: "produits", overlay: 60, hauteur: "80vh" as const, textPosition: "center" as const, showSecondCta: true, secondCtaTexte: langue === "en" ? "Our Guarantees" : "Nos garanties", secondCtaLien: "collections" },
     confiance: { actif: true, layout: "icons" as const, items: langue === "en"
-      ? [{ icone: "✅", titre: "100% Genuine", texte: "Authenticity certificate guaranteed" },{ icone: "🛡️", titre: "12-Month Warranty", texte: "Professional support included" },{ icone: "🚀", titre: "24h Delivery", texte: "Secure packaging" },{ icone: "🔄", titre: "30-Day Returns", texte: "Guaranteed refund" }]
-      : [{ icone: "✅", titre: "100% authentique", texte: "Certification d'authenticité garantie" },{ icone: "🛡️", titre: "Garantie 12 mois", texte: "SAV professionnel inclus" },{ icone: "🚀", titre: "Livraison 24h", texte: "Emballage sécurisé" },{ icone: "🔄", titre: "Retour 30 jours", texte: "Remboursement garanti" }] },
+      ? [{ icone: "✅", titre: "100% Genuine", texte: "Authenticity certificate guaranteed" },{ icone: "🛡️", titre: "Responsive support", texte: "We answer quickly" },{ icone: "🚀", titre: "24h Delivery", texte: "Secure packaging" },{ icone: "🔄", titre: "30-Day Returns", texte: "Guaranteed refund" }]
+      : [{ icone: "✅", titre: "100% authentique", texte: "Certification d'authenticité garantie" },{ icone: "🛡️", titre: "SAV réactif", texte: "Nous répondons rapidement" },{ icone: "🚀", titre: "Livraison 24h", texte: "Emballage sécurisé" },{ icone: "🔄", titre: "Retour 30 jours", texte: "Remboursement garanti" }] },
     vedettes: { actif: true, titre: langue === "en" ? `🏆 ${t.vedettes}` : "🏆 Les meilleures ventes", nombre: 8, triPar: "ventes" as const, colonnes: 4, layout: "grid" as const, showRatings: true, showSoldCount: true },
     collections: { actif: true, titre: langue === "en" ? "By Category" : "Par catégorie", layout: "grid" as const },
-    about: { actif: true, titre: `Pourquoi ${nomCourt} ?`, texte: "Spécialiste de la tech depuis plusieurs années, nous sélectionnons rigoureusement chaque produit pour vous garantir authenticité, qualité et performance. Chaque achat est couvert par notre garantie et notre SAV réactif.", layout: "image-right" as const, stats: [{ valeur: "5000+", label: "Clients satisfaits" }, { valeur: "1000+", label: "Produits en stock" }, { valeur: "12 mois", label: "Garantie incluse" }] },
+    about: { actif: true, titre: `Pourquoi ${nomCourt} ?`, texte: "Passionnés de tech, nous sélectionnons rigoureusement chaque produit pour vous garantir authenticité, qualité et performance, avec un SAV réactif.", layout: "image-right" as const },
     promo: { actif: true, titre: "Offre reconditionnés premium", texte: "Économisez jusqu'à 40% avec nos produits reconditionnés certifiés — qualité garantie", ctaTexte: "Voir les offres", style: "gradient" as const },
     faq: { actif: true, titre: "Questions fréquentes", layout: "accordion" as const, items: [{ question: "Les produits sont-ils garantis authentiques ?", reponse: "Oui, tous nos produits sont authentiques avec numéro de série vérifiable. Certificat d'authenticité inclus." }, { question: "La garantie est-elle valable localement ?", reponse: "Oui, notre SAV prend en charge toutes les réparations sous garantie localement, sans avoir à exporter le produit." }, { question: "Acceptez-vous les paiements en plusieurs fois ?", reponse: "Oui, nous proposons un paiement en 2 à 3 fois sans frais pour les achats supérieurs à 100 000 XOF." }] },
     avis: { actif: true, titre: langue === "en" ? "They Trust Us" : "Ils nous font confiance", layout: "cards" as const },
@@ -348,7 +347,7 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
     confiance: { actif: true, layout: "icons" as const, items: [{ icone: "✅", titre: "Résultat garanti", texte: "Révisions jusqu'à satisfaction" },{ icone: "⚡", titre: "Démarrage 48h", texte: "Rapidité & réactivité" },{ icone: "🔒", titre: "Confidentialité", texte: "Vos données protégées" },{ icone: "🏆", titre: "Expertise certifiée", texte: "Professionnels qualifiés" }] },
     vedettes: { actif: true, titre: "Nos prestations phares", nombre: 6, triPar: "ventes" as const, colonnes: 3, layout: "grid" as const },
     collections: { actif: true, titre: "Nos domaines d'expertise", layout: "cards" as const },
-    about: { actif: true, titre: `Qui sommes-nous ?`, texte: `${nomCourt} est une agence de professionnels qualifiés dédiés à votre succès. Notre approche : comprendre vos enjeux, proposer des solutions adaptées, livrer des résultats mesurables. Chaque mission est unique.`, layout: "image-right" as const, stats: [{ valeur: "200+", label: "Missions réalisées" }, { valeur: "98%", label: "Clients satisfaits" }, { valeur: "48h", label: "Délai de démarrage" }] },
+    about: { actif: true, titre: `Qui sommes-nous ?`, texte: `${nomCourt} est une agence de professionnels qualifiés dédiés à votre succès. Notre approche : comprendre vos enjeux, proposer des solutions adaptées, livrer des résultats mesurables. Chaque mission est unique.`, layout: "image-right" as const },
     promo: { actif: true, titre: "Offre de lancement", texte: "-20% sur votre première prestation — profitez de nos tarifs préférentiels exclusifs", ctaTexte: "Saisir l'offre", style: "gradient" as const },
     faq: { actif: true, titre: "Questions fréquentes", layout: "accordion" as const, items: [{ question: "Comment démarrer une mission avec vous ?", reponse: "Commandez en ligne, nous vous contactons sous 24h pour un brief détaillé et le lancement de la mission sous 48h." }, { question: "Que se passe-t-il si le résultat ne me convient pas ?", reponse: "Nous offrons des révisions illimitées jusqu'à votre satisfaction complète. Si non livré, remboursement total." }, { question: "Travaillez-vous avec des entreprises de toute taille ?", reponse: "Oui, nous accompagnons aussi bien les entrepreneurs individuels que les grandes entreprises." }] },
     avis: { actif: true, titre: "Ce que disent nos clients", layout: "carousel" as const },
@@ -361,14 +360,12 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
       sections: fashionSections,
       sectionOrder: ["annonce","hero","confiance","vedettes","collections","promo","avis","about","faq","newsletter"],
       customSections: [
-        { id: "stats_fashion", type: "stats", actif: true, label: "Nos chiffres", ordre: 5, config: { items: [{ valeur: "10 000+", label: "Clientes satisfaites" },{ valeur: "500+", label: "Pièces disponibles" },{ valeur: "4.9★", label: "Note moyenne" },{ valeur: "48h", label: "Livraison express" }] } },
       ],
     },
     beauty: {
       sections: beautySections,
       sectionOrder: ["annonce","hero","confiance","vedettes","about","promo","avis","faq","newsletter"],
       customSections: [
-        { id: "stats_beauty", type: "stats", actif: true, label: "Nos résultats", ordre: 4, config: { items: [{ valeur: "4500+", label: "Clientes satisfaites" },{ valeur: "97%", label: "Recommandent" },{ valeur: "50+", label: "Soins naturels" },{ valeur: "4 sem.", label: "Résultats visibles" }] } },
       ],
     },
     food: {
@@ -382,7 +379,6 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
       sections: techSections,
       sectionOrder: ["annonce","hero","confiance","vedettes","collections","about","faq","promo","avis","newsletter"],
       customSections: [
-        { id: "stats_tech", type: "stats", actif: true, label: "En chiffres", ordre: 5, config: { items: [{ valeur: "5000+", label: "Clients satisfaits" },{ valeur: "100%", label: "Authentique" },{ valeur: "12 mois", label: "Garantie" },{ valeur: "48h", label: "SAV réactif" }] } },
       ],
     },
     home: {
@@ -409,7 +405,6 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
       sections: { ...techSections, annonce: { actif: true, texte: `⚡ Équipements pro ✦ Livraison express 24h ✦ Guide des tailles offert ✦ Retour 30 jours`, couleurFond: "#0a0a0a", couleurTexte: "#F5A623" } },
       sectionOrder: ["annonce","hero","confiance","vedettes","collections","promo","avis","about","newsletter"],
       customSections: [
-        { id: "stats_sport", type: "stats", actif: true, label: "Nos athlètes", ordre: 5, config: { items: [{ valeur: "3000+", label: "Athlètes équipés" },{ valeur: "200+", label: "Références sport" },{ valeur: "4.8★", label: "Satisfaction" },{ valeur: "24h", label: "Livraison express" }] } },
       ],
     },
     services: {
@@ -446,7 +441,7 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
         confiance: { ...base.confiance },
         vedettes: { actif: true, titre: t.vedettes, nombre: 8, triPar: "ventes" as const, colonnes: 4, layout: "grid" as const, showRatings: true },
         collections: { actif: true, titre: t.collections, layout: "grid" as const },
-        about: { actif: true, titre: langue === "en" ? `About ${nomCourt}` : `À propos de ${nomCourt}`, texte: langue === "en" ? "Founded with the ambition to offer you the best value for money, our store rigorously selects every product to guarantee your satisfaction. Customer service available 7 days a week." : "Fondée avec l'ambition de vous offrir le meilleur rapport qualité-prix, notre boutique sélectionne rigoureusement chaque produit pour garantir votre satisfaction. Service client disponible 7j/7.", layout: "image-right" as const, stats: [{ valeur: "1000+", label: langue === "en" ? "Happy Customers" : "Clients satisfaits" }, { valeur: "500+", label: langue === "en" ? "Products Available" : "Produits disponibles" }, { valeur: "4.8★", label: langue === "en" ? "Average Rating" : "Note moyenne" }] },
+        about: { actif: true, titre: langue === "en" ? `About ${nomCourt}` : `À propos de ${nomCourt}`, texte: langue === "en" ? "Founded with the ambition to offer you the best value for money, our store rigorously selects every product to guarantee your satisfaction. Customer service available 7 days a week." : "Fondée avec l'ambition de vous offrir le meilleur rapport qualité-prix, notre boutique sélectionne rigoureusement chaque produit pour garantir votre satisfaction. Service client disponible 7j/7.", layout: "image-right" as const },
         promo: { actif: true, titre: t.promo, texte: langue === "en" ? "Discover our exclusive promotions, available for a limited time" : "Découvrez nos promotions exclusives, disponibles pour une durée limitée", ctaTexte: langue === "en" ? "View Deals" : "Voir les offres", style: "gradient" as const },
         faq: { actif: true, titre: t.faq, layout: "accordion" as const, items: langue === "en"
           ? [{ question: "What are your delivery times?", reponse: "Delivery within 24 to 48h for orders placed before 2pm. WhatsApp tracking." }, { question: "Which payment methods do you accept?", reponse: "Mobile Money, bank card, cash on delivery available. 100% secure transactions." }, { question: "How do I return an item?", reponse: "Return within 14 days. Contact us on WhatsApp, refund within 48h." }]
@@ -464,7 +459,8 @@ function buildHomeSections(type: CategoryType, nom: string, langue: Langue = "fr
 
 // ─── Pages À propos & Contact par catégorie ───────────────────────────────────
 // Contenu tenant en 2-3 blocs CustomSection réutilisant la même bibliothèque
-// que la home (richtext/stats/features) — pour qu'une boutique neuve n'affiche
+// que la home (richtext/features) — pour qu'une boutique neuve n'affiche
+// jamais de chiffres ni de témoignages inventés (ajoutés par le marchand seulement), ni
 // jamais un "À propos" vide. Bespoke pour les catégories les plus fréquentes
 // (fashion, food, tech, services), générique de bonne qualité pour le reste.
 export function buildAboutContactPages(type: CategoryType, nom: string, langue: Langue = "fr"): {
@@ -485,9 +481,6 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
   const richtext = (id: string, ordre: number, titre: string, texte: string): CustomSection =>
     section(id, "richtext", en ? "Our Story" : "Notre histoire", ordre, { titre, texte });
 
-  const stats = (id: string, ordre: number, items: Array<{ valeur: string; label: string }>): CustomSection =>
-    section(id, "stats", en ? "Stats" : "Statistiques", ordre, { items });
-
   const features = (
     id: string,
     ordre: number,
@@ -506,15 +499,9 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
           1,
           en ? "Our Story" : "Notre histoire",
           en
-            ? `${nomCourt} was born from a passion for fashion that tells a story. We hand-pick every piece so it stays with you well beyond a single season. Today, thousands of customers trust us to express their style.`
-            : `${nomCourt} est né d'une passion pour la mode qui raconte une histoire. Nous sélectionnons chaque pièce avec exigence pour qu'elle vous accompagne bien au-delà d'une saison. Aujourd'hui, des milliers de clientes nous font confiance pour affirmer leur style.`
+            ? `${nomCourt} was born from a passion for fashion that tells a story. We hand-pick every piece so it stays with you well beyond a single season.`
+            : `${nomCourt} est né d'une passion pour la mode qui raconte une histoire. Nous sélectionnons chaque pièce avec exigence pour qu'elle vous accompagne bien au-delà d'une saison.`
         ),
-        stats("about_stats", 2, [
-          { valeur: "10 000+", label: en ? "Happy customers" : "Clientes satisfaites" },
-          { valeur: "500+", label: en ? "Available pieces" : "Pièces disponibles" },
-          { valeur: "4.9★", label: en ? "Average rating" : "Note moyenne" },
-          { valeur: "48h", label: en ? "Express delivery" : "Livraison express" },
-        ]),
         features("about_features", 3, en ? "Why choose us" : "Pourquoi nous faire confiance", [
           { icone: "✦", titre: en ? "Premium quality" : "Qualité premium", texte: en ? "Materials carefully selected for lasting comfort." : "Des matières soigneusement sélectionnées pour un confort durable." },
           { icone: "🚀", titre: en ? "Fast delivery" : "Livraison rapide", texte: en ? "Shipped within 24h, tracked in real time." : "Expédiée sous 24h, suivi en temps réel." },
@@ -536,12 +523,6 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
             ? `${nomCourt} works hand in hand with local producers to bring fresh, authentic products to your table. Every item is chosen for its quality and its origin. Our commitment: full traceability from farm to doorstep.`
             : `${nomCourt} travaille main dans la main avec des producteurs locaux pour vous apporter des produits frais et authentiques. Chaque article est choisi pour sa qualité et son origine. Notre engagement : une traçabilité totale, du producteur jusqu'à votre porte.`
         ),
-        stats("about_stats", 2, [
-          { valeur: "50+", label: en ? "Partner producers" : "Producteurs partenaires" },
-          { valeur: "200+", label: en ? "Products available" : "Produits disponibles" },
-          { valeur: "4.8★", label: en ? "Customer satisfaction" : "Satisfaction client" },
-          { valeur: "24h", label: en ? "Freshly delivered" : "Livraison fraîcheur" },
-        ]),
       ];
       contactIntro = en
         ? `A question about a product or a delivery? Write to us — the ${nomCourt} team replies quickly, every day.`
@@ -558,15 +539,8 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
             ? `${nomCourt} was founded to make quality tech accessible, with a guarantee of authenticity on every product. We rigorously test our catalogue and back it with responsive after-sales support. Your trust is our best warranty.`
             : `${nomCourt} a été fondée pour rendre la tech de qualité accessible, avec une garantie d'authenticité sur chaque produit. Nous testons rigoureusement notre catalogue et l'accompagnons d'un SAV réactif. Votre confiance est notre meilleure garantie.`
         ),
-        stats("about_stats", 2, [
-          { valeur: "5000+", label: en ? "Happy customers" : "Clients satisfaits" },
-          { valeur: "100%", label: en ? "Genuine products" : "Produits authentiques" },
-          { valeur: "12 mois", label: en ? "Warranty" : "Garantie" },
-          { valeur: "48h", label: en ? "Responsive support" : "SAV réactif" },
-        ]),
         features("about_features", 3, en ? "Buy with confidence" : "Acheter en toute confiance", [
           { icone: "✅", titre: en ? "Authenticity guaranteed" : "Authenticité garantie", texte: en ? "Verifiable serial number and certificate on every unit." : "Numéro de série vérifiable et certificat sur chaque appareil." },
-          { icone: "🛡️", titre: en ? "12-month warranty" : "Garantie 12 mois", texte: en ? "Parts and labour covered, responsive support." : "Pièces et main-d'œuvre couvertes, SAV réactif." },
           { icone: "📦", titre: en ? "Secure shipping" : "Livraison sécurisée", texte: en ? "Reinforced packaging, insured transport." : "Emballage renforcé, transport assuré." },
         ]),
       ];
@@ -585,11 +559,6 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
             ? `${nomCourt} is a team of qualified professionals dedicated to your success. Our approach: understand your challenges, propose the right solution, deliver measurable results. Every engagement is unique.`
             : `${nomCourt} est une équipe de professionnels qualifiés dédiés à votre réussite. Notre approche : comprendre vos enjeux, proposer la solution adaptée, livrer des résultats mesurables. Chaque mission est unique.`
         ),
-        stats("about_stats", 2, [
-          { valeur: "200+", label: en ? "Projects delivered" : "Missions réalisées" },
-          { valeur: "98%", label: en ? "Happy clients" : "Clients satisfaits" },
-          { valeur: "48h", label: en ? "Kickoff time" : "Délai de démarrage" },
-        ]),
         features("about_features", 3, en ? "What you get" : "Ce que vous obtenez", [
           { icone: "✅", titre: en ? "End-to-end delivery" : "Prestation complète", texte: en ? "A turnkey service, no hidden fees." : "Un service clé en main, sans frais cachés." },
           { icone: "🤝", titre: en ? "Dedicated support" : "Accompagnement dédié", texte: en ? "One expert available throughout your project." : "Un expert à votre disposition tout au long de la mission." },
@@ -611,11 +580,6 @@ export function buildAboutContactPages(type: CategoryType, nom: string, langue: 
             ? `${nomCourt} was founded with one ambition: offer you the best value for money on every product. We rigorously select our catalogue and stand behind it with attentive customer service. Thank you for being part of our story.`
             : `${nomCourt} a été fondée avec l'ambition de vous offrir le meilleur rapport qualité-prix sur chaque produit. Nous sélectionnons rigoureusement notre catalogue et l'accompagnons d'un service client attentif. Merci de faire partie de notre histoire.`
         ),
-        stats("about_stats", 2, [
-          { valeur: "1000+", label: en ? "Happy customers" : "Clients satisfaits" },
-          { valeur: "500+", label: en ? "Products available" : "Produits disponibles" },
-          { valeur: "4.8★", label: en ? "Average rating" : "Note moyenne" },
-        ]),
       ];
       contactIntro = en
         ? `A question about an order or a product? The ${nomCourt} team replies quickly, every day.`

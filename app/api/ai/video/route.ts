@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
+    // Sans boutique, proxy.ts ne contrôle ni le module ni le palier (Illimité).
+    if (!tenantId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const body = await req.json();
     const { prompt, style, duree, ratio } = schemaGenerer.parse(body);
@@ -69,7 +71,10 @@ export async function GET(req: NextRequest) {
     const videoId = req.nextUrl.searchParams.get("videoId");
     if (!videoId) return NextResponse.json({ message: "videoId requis" }, { status: 400 });
 
-    const video = await prisma.videoGeneree.findUnique({ where: { id: videoId } });
+    // Uniquement une vidéo de la boutique connectée.
+    const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    const video = await prisma.videoGeneree.findFirst({ where: { id: videoId, tenantId } });
     if (!video) return NextResponse.json({ message: "Vidéo introuvable" }, { status: 404 });
 
     // Si déjà terminée ou en erreur, retourner directement

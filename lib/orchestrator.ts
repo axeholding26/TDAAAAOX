@@ -1,5 +1,6 @@
 // Orchestrateur central Axso — coordonne tous les agents vers les objectifs revenus
 import { prisma } from "./prisma";
+import { clientsInactifs } from "./commandes";
 import { publierTache } from "./agent-bus";
 import { logDecision } from "./agent-memory";
 
@@ -76,7 +77,8 @@ export async function orchestrerAutonomie(tenantId: string): Promise<string[]> {
   ]);
 
   const produitsStockBas = produits.filter((p) => p.stock <= 5);
-  const clientsAnciens = clients.filter((c) => c.createdAt <= new Date(Date.now() - 30 * 24 * 3600 * 1000));
+  // À réactiver : clients ayant déjà commandé, sans commande depuis 30 jours (pas la date d'inscription).
+  const nbClientsInactifs = await prisma.client.count({ where: { tenantId, ...clientsInactifs(30) } });
   const totalCA = await prisma.commande.aggregate({
     where: { tenantId, paiementStatut: "completed" },
     _sum: { montantTotal: true },
@@ -105,11 +107,11 @@ export async function orchestrerAutonomie(tenantId: string): Promise<string[]> {
   if (clients.length > 0) {
     await publierTache(tenantId, "orchestrator", "agent-fidelite", "analyser_retention", {
       nb_clients: clients.length,
-      clients_anciens: clientsAnciens.length,
-    }, clientsAnciens.length > 5 ? 2 : 1);
+      clients_anciens: nbClientsInactifs,
+    }, nbClientsInactifs > 5 ? 2 : 1);
     actionsLancees.push(
-      clientsAnciens.length > 0
-        ? `Agent Fidélité — ${clientsAnciens.length} client(s) à réactiver identifié(s)`
+      nbClientsInactifs > 0
+        ? `Agent Fidélité — ${nbClientsInactifs} client(s) à réactiver identifié(s)`
         : `Agent Fidélité — analyse de la base clients`
     );
   }

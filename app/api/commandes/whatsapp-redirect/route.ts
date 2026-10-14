@@ -1,5 +1,6 @@
 // API Route — Génération du lien WhatsApp pour commandes physiques/dropshipping
 import { NextResponse } from "next/server";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatMontant } from "@/lib/utils";
@@ -15,6 +16,7 @@ export async function POST(request: Request) {
     if (!tenantId) {
       return NextResponse.json({ message: "Tenant introuvable" }, { status: 400 });
     }
+    if (await quotaCommandesAtteint(tenantId)) return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", message: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
 
     const body = await request.json();
     const { commandeId } = body as { commandeId: string };

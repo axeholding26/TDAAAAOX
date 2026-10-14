@@ -1,3 +1,5 @@
+import { AVEC_CENTIMES } from "./changement-devise";
+
 // Prix affiché au client = prix vendeur majoré de la commission Axso, prélevée
 // sur les paiements en ligne. Le vendeur ne perd jamais d'argent : c'est le client
 // qui paie la commission en plus. Un produit physique se paie à la livraison, en
@@ -23,4 +25,14 @@ export function reductionPromo(promo: Promo | null | undefined, sousTotal: numbe
 // si le plafond est déjà atteint (deux commandes simultanées ne le dépassent pas).
 export function filtreUsagePromo(promo: { id: string; maxUtilisations?: number | null }) {
   return promo.maxUtilisations ? { id: promo.id, utilisations: { lt: promo.maxUtilisations } } : { id: promo.id };
+}
+
+// Paiement en ligne reçu → part du vendeur et commission Axso. Seuls les produits ont été
+// majorés de la commission ; la livraison (`horsCommission`) revient en entier au vendeur.
+// FCFA et autres monnaies sans centimes : arrondi à l'unité.
+export function partVendeur(brut: number, horsCommission: number, tauxCommission: number, devise: string) {
+  const hors = Math.min(Math.max(0, horsCommission), brut);
+  const pas = AVEC_CENTIMES.has(devise) ? 100 : 1;
+  const montantNet = Math.round(((brut - hors) / (1 + tauxCommission) + hors) * pas) / pas;
+  return { montantNet, montantCommission: Math.round((brut - montantNet) * pas) / pas };
 }

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { lireConnexion, lireConnexionPar } from "@/lib/connect";
 import { createHmac, timingSafeEqual } from "crypto";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
+import { decrireRegle } from "@/lib/livraison";
 
 // Sans variable configurée, aucune vérification d'abonnement ne passe (pas de jeton par défaut public).
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
@@ -177,32 +178,62 @@ async function autoRepondre(tenantId: string, de: string, messageRecu: string, p
   const exclure = (cfg.motsClesExclus ?? []) as string[];
   if (exclure.some((mc: string) => messageRecu.toLowerCase().includes(mc.toLowerCase()))) return;
 
+  const tenant = await prisma.tenant.findUnique({
+    where: { id: tenantId }, select: { nomBoutique: true, pays: true, devise: true, parametresLivraison: true },
+  }).catch(() => null);
+  if (!tenant) return;
+
+  // Horaires comparés dans le fuseau du pays de la boutique (le serveur tourne en UTC).
   if (cfg.horaires?.actif) {
-    const now = new Date();
     const [hDeb, mDeb] = (cfg.horaires.debut ?? "08:00").split(":").map(Number);
     const [hFin, mFin] = (cfg.horaires.fin ?? "20:00").split(":").map(Number);
-    const totalNow = now.getHours() * 60 + now.getMinutes();
+    const [h, m] = new Intl.DateTimeFormat("en-GB", { timeZone: fuseauPays(tenant.pays), hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .format(new Date()).split(":").map(Number);
+    const totalNow = h * 60 + m;
     if (totalNow < hDeb * 60 + mDeb || totalNow > hFin * 60 + mFin) return;
   }
 
   const delai = (cfg.delaiReponse ?? 0) * 1000;
   if (delai > 0) await new Promise(r => setTimeout(r, delai));
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId }, select: { nomBoutique: true }
-  }).catch(() => null);
+  // Contexte réel : le bot ne répond que sur ces données, jamais de prix ni de stock inventés.
+  const [produits, regles, nbMessages] = await Promise.all([
+    prisma.produit.findMany({
+      where: { tenantId, actif: true }, orderBy: { ventes: "desc" }, take: 60,
+      select: { nom: true, prix: true, stock: true, type: true },
+    }),
+    prisma.reglePort.findMany({ where: { tenantId, actif: true }, orderBy: { frais: "asc" }, take: 15 }),
+    prisma.messageRecu.count({ where: { tenantId, source: "whatsapp", de } }),
+  ]);
+  const devise = tenant.devise ?? "";
+  const catalogue = produits.map(p => `- ${p.nom} : ${p.prix} ${devise} — ${p.type === "digital" ? "disponible (produit digital)" : p.stock > 0 ? `en stock (${p.stock})` : "en rupture"}`).join("\n");
+  const pl = (tenant.parametresLivraison ?? {}) as { frais?: number; minimum?: number; gratuite?: boolean };
+  const livraison = regles.length
+    ? regles.map(r => `- ${r.nom} (${decrireRegle(r)}) : ${r.gratuit ? "gratuit" : `${r.frais} ${devise}`}, délai ${r.delai}`).join("\n")
+    : pl.gratuite ? "Livraison offerte."
+    : pl.frais != null ? `Frais de livraison : ${pl.frais} ${devise}${pl.minimum ? `, offerte dès ${pl.minimum} ${devise}` : ""}.`
+    : "Non renseignée.";
 
-  const { executerOutilMcp } = await import("@/lib/mcp/executor");
-  const systeme = `Tu es AXIA, l'assistante IA de "${tenant?.nomBoutique ?? "cette boutique"}". Style: ${cfg.personnalite ?? "professionnel"}. Langue: ${cfg.langue ?? "fr"}. Réponds naturellement en 2-3 phrases. Ne mentionne jamais que tu es un bot.`;
+  const systeme = `Tu es l'assistant automatique WhatsApp de la boutique "${tenant.nomBoutique}". Style : ${cfg.personnalite ?? "professionnel"}. Langue : ${cfg.langue ?? "fr"}. Réponds naturellement en 2-3 phrases.
+Si on te demande si tu es un robot, dis honnêtement que tu es l'assistant automatique de la boutique et que l'équipe peut prendre le relais.
+RÈGLE ABSOLUE : ne donne un prix, une disponibilité, un délai ou des frais de livraison QUE s'ils figurent ci-dessous. Sinon, dis que tu transmets la question à l'équipe de la boutique. N'invente jamais de promotion, de code promo, de garantie ni de politique de retour.
+${nbMessages <= 1 && cfg.messageAccueil ? `Premier message de ce client : commence par ce message d'accueil (adapté si besoin) : « ${cfg.messageAccueil} »\n` : ""}${cfg.instructionsSupp ? `Consignes du marchand : ${cfg.instructionsSupp}\n` : ""}
+─── PRODUITS EN VENTE (${devise}) ───
+${catalogue || "Aucun produit en vente pour le moment."}
 
-  const result = await executerOutilMcp("gemini_generer_texte", { instruction: systeme, contenu: messageRecu }, tenantId);
-  if (!result.succes || !result.resultat) return;
+─── LIVRAISON ───
+${livraison}`;
+
+  const { completionAuto } = await import("@/lib/llm-client");
+  const result = await completionAuto([{ role: "system", content: systeme }, { role: "user", content: messageRecu }], 400)
+    .catch(() => null);
+  if (!result?.text) return;
 
   const waConfig = await lireConnexion(tenantId, "whatsapp");
   const token = waConfig?.accessToken ?? process.env.WHATSAPP_TOKEN;
   if (!token || !phoneId) return;
 
-  await envoyerTexteWA(phoneId, token, toE164(de), result.resultat);
+  await envoyerTexteWA(phoneId, token, toE164(de), result.text);
 }
 
 // ── Helpers Meta API ─────────────────────────────────────────────────────────
@@ -222,6 +253,16 @@ async function envoyerTexteWA(phoneId: string, token: string, to: string, body: 
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body, preview_url: true } }),
   });
+}
+
+// Fuseau IANA du pays de la boutique (code ISO2) ; UTC si inconnu.
+function fuseauPays(pays?: string | null): string {
+  try {
+    const l: any = new Intl.Locale(`und-${(pays ?? "").toUpperCase()}`);
+    return (l.getTimeZones?.() ?? l.timeZones)?.[0] ?? "UTC";
+  } catch {
+    return "UTC";
+  }
 }
 
 // E.164 : s'assure que le numéro commence par + et indicatif pays

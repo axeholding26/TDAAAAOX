@@ -6,19 +6,19 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Fonctionnalités — AXSO, la plateforme e-commerce africaine",
+  title: "Fonctionnalités — la plateforme e-commerce africaine",
   description: "Catalogue, paiements Mobile Money, Axia IA, livraison, marketing, analytics — tout pour vendre en Afrique.",
 };
 
 const STATS = [
   { n: "8",     label: "modules intégrés" },
   { n: "50+",   label: "fonctionnalités" },
-  { n: "12",    label: "pays couverts" },
-  { n: "1 247+", label: "boutiques actives" },
+  { n: "3 min", label: "pour créer votre boutique" },
+  { n: "0 FCFA", label: "pour démarrer" },
 ];
 
 // Modes réellement encaissés par Axso (NotchPay) + paiement à la livraison
-const PAIEMENTS = ["Orange Money", "MTN MoMo", "Carte bancaire", "Paiement à la livraison"];
+const PAIEMENTS = ["Orange Money", "MTN MoMo", "Paiement à la livraison"];
 
 const AGENTS = [
   { icon: Package,        nom: "Agent Produits",   desc: "Crée, optimise et audite votre catalogue automatiquement" },
@@ -144,7 +144,7 @@ export default async function FonctionnalitesPage() {
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: `${p.accent}12`, color: p.accent }}>{t(p.type)}</span>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[#111111] font-bold text-sm">{p.prix} XOF</p>
+                    <p className="text-[#111111] font-bold text-sm">{p.prix} FCFA</p>
                     <p className="text-[#8C8C8C] text-xs">{t("Stock :")}{" "}{p.stock}</p>
                   </div>
                 </div>
@@ -175,7 +175,6 @@ export default async function FonctionnalitesPage() {
                 {[
                   { nom: "Orange Money", color: "#FF7900", active: true },
                   { nom: "MTN MoMo", color: "#FFC200", active: false },
-                  { nom: "Carte bancaire", color: "#635BFF", active: false },
                   { nom: "À la livraison", color: "#111111", active: false },
                 ].map(p => (
                   <div key={p.nom}
@@ -195,7 +194,7 @@ export default async function FonctionnalitesPage() {
               <div className="rounded-xl p-4" style={{ background: "rgba(255,121,0,0.08)", border: "1px solid rgba(255,121,0,0.2)" }}>
                 <div className="flex justify-between mb-2">
                   <span className="text-[#666666] text-sm">{t("Total commande")}</span>
-                  <span className="text-[#111111] font-bold">{t("24 500 XOF")}</span>
+                  <span className="text-[#111111] font-bold">{t("24 500 FCFA")}</span>
                 </div>
                 <div className="w-full h-10 rounded-xl flex items-center justify-center font-bold text-sm"
                   style={{ background: "linear-gradient(135deg,#FF7900,#CC6100)", color: "#fff" }}>
@@ -231,7 +230,6 @@ export default async function FonctionnalitesPage() {
                 "Codes promo et réductions à la commande",
                 "Gestion des remboursements en un clic",
                 "Facturation automatique PDF à chaque vente",
-                "Réconciliation comptable intégrée",
               ].map(item => (
                 <li key={item} className="flex items-start gap-3">
                   <Check size={14} className="flex-shrink-0 mt-1" style={{ color: "#10b981" }} />
@@ -302,7 +300,7 @@ export default async function FonctionnalitesPage() {
                 <div className="max-w-[85%] rounded-2xl rounded-tl-sm px-4 py-3 text-sm space-y-2"
                   style={{ background: "rgba(124,58,237,0.12)", border: "1px solid rgba(124,58,237,0.2)", color: "rgba(0,0,0,0.8)" }}>
                   <p>{t("Ce mois, vos 3 top produits :")}</p>
-                  {[["Robe wax premium","47 ventes","1,15M XOF"],["Bijoux argent","32 ventes","384K XOF"],["Formation e-comm","18 ventes","270K XOF"]].map(([n,v,r]) => (
+                  {[["Robe wax premium","47 ventes","1,15M FCFA"],["Bijoux argent","32 ventes","384K FCFA"],["Formation e-comm","18 ventes","270K FCFA"]].map(([n,v,r]) => (
                     <div key={n} className="flex justify-between text-xs rounded-lg px-3 py-2" style={{ background: "rgba(0,0,0,0.05)" }}>
                       <span>{n}</span><span style={{ color: "#a78bfa" }}>{t(v)} · {t(r)}</span>
                     </div>
@@ -396,10 +394,8 @@ export default async function FonctionnalitesPage() {
               {[
                 "Moteur de frais de port : zones, poids, montant minimum",
                 "Réseau de livreurs internes avec app mobile dédiée",
-                "Intégration DHL, Campost, MTN Delivery, transporteurs locaux",
                 "Suivi GPS temps réel partagé avec l'acheteur via lien",
                 "RMA complet : remboursement, échange, avoir magasin",
-                "Stock réservé automatiquement dès l'ajout au panier",
               ].map(item => (
                 <li key={item} className="flex items-start gap-3">
                   <Check size={14} className="flex-shrink-0 mt-1" style={{ color: "#3b82f6" }} />
@@ -453,7 +449,7 @@ export default async function FonctionnalitesPage() {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
-                  { label: "Ventes ce mois", val: "1,84M XOF", delta: "+32%", up: true },
+                  { label: "Ventes ce mois", val: "1,84M FCFA", delta: "+32%", up: true },
                   { label: "Nouveaux clients", val: "247", delta: "+18%", up: true },
                   { label: "Taux conversion", val: "4,2%", delta: "+0.8pt", up: true },
                 ].map(m => (
@@ -525,7 +521,7 @@ export default async function FonctionnalitesPage() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 pointer-events-none"
             style={{ background: "radial-gradient(ellipse, rgba(245,166,35,0.15), transparent)" }} />
           <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-4 relative">{t("Prêt à bâtir votre empire ?")}</h2>
-          <p className="text-[#666666] text-lg mb-8 relative">{t("Créez votre boutique en 2 minutes. Gratuit, sans carte bancaire.")}</p>
+          <p className="text-[#666666] text-lg mb-8 relative">{t("Créez votre boutique en 3 minutes. Gratuit, sans carte bancaire.")}</p>
           <Link href="/inscription"
             className="inline-flex items-center gap-2 font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105 relative"
             style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.4)" }}>

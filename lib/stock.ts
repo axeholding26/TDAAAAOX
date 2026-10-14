@@ -13,6 +13,7 @@
 //   paiement est acquis et redescend si la commande est remboursée.
 import type { Prisma } from "@prisma/client";
 import { mouvementStock, resoudreLieu } from "./pos/stock";
+import { lireVariantes } from "./variantes";
 
 type Tx = Prisma.TransactionClient;
 
@@ -41,6 +42,26 @@ async function varianteDeLigne(tx: Tx, l: LigneVariante): Promise<string | null 
 }
 
 /**
+ * Variantes d'une ligne de la vitrine à plusieurs groupes (« Taille: M · Couleur: Rouge »,
+ * lib/variantes.ts) : chaque valeur a son stock, la ligne en sort une de chacune.
+ * Sinon la variante unique (ou aucune : [null]). `undefined` = une variante n'existe plus.
+ */
+async function variantesDeLigne(tx: Tx, l: LigneVariante): Promise<(string | null)[] | undefined> {
+  const lues = !l.varianteId && l.variante ? lireVariantes(l.variante) : null;
+  if (!lues || lues.length < 2) {
+    const id = await varianteDeLigne(tx, l);
+    return id === undefined ? undefined : [id];
+  }
+  const ids: string[] = [];
+  for (const v of lues) {
+    const r = await tx.variante.findFirst({ where: { produitId: l.produitId, nom: v.nom, valeur: v.valeur }, select: { id: true } });
+    if (!r) return undefined;
+    ids.push(r.id);
+  }
+  return ids;
+}
+
+/**
  * Sort du stock les lignes physiques d'une commande déjà créée (même transaction).
  * Lève RuptureStock si une quantité n'est pas disponible : la transaction entière
  * est alors annulée, la commande n'existe pas.
@@ -64,24 +85,28 @@ export async function sortirStock(tx: Tx, p: { tenantId: string; commandeId: str
   for (const l of lignes) {
     if (l.produit.type !== "physique") continue;
     const libelle = `Stock insuffisant pour « ${l.produit.nom}${l.variante ? ` (${l.variante})` : ""} »`;
-    const varianteId = await varianteDeLigne(tx, l);
-    if (varianteId === undefined) throw new RuptureStock(libelle);
-    if (p.varianteId && varianteId !== p.varianteId) continue;
+    const ids = await variantesDeLigne(tx, l);
+    if (ids === undefined) throw new RuptureStock(libelle);
+    if (p.varianteId && !ids.includes(p.varianteId)) continue;
 
-    let r;
-    try {
-      r = await mouvementStock(tx, {
-        tenantId: p.tenantId, produitId: l.produitId, varianteId, type: "vente", quantite: l.quantite, lieu,
-        motif: p.motif, refs: { commandeId: p.commandeId }, creePar: p.creePar, autoriserNegatif: p.autoriserNegatif,
-      });
-    } catch (e) {
-      // Même erreur qu'avant pour les appelants existants (vitrine, ancienne caisse) ; le détail par magasin est gardé.
-      if ((e as any)?.code === "stock_insuffisant") throw new RuptureStock((e as any).details?.disponibleIci !== undefined ? (e as Error).message.replace(/\.$/, "") : libelle);
-      throw e;
+    for (const varianteId of ids) {
+      let r;
+      try {
+        r = await mouvementStock(tx, {
+          tenantId: p.tenantId, produitId: l.produitId, varianteId, type: "vente", quantite: l.quantite, lieu,
+          motif: p.motif, refs: { commandeId: p.commandeId }, creePar: p.creePar, autoriserNegatif: p.autoriserNegatif,
+        });
+      } catch (e) {
+        // Même erreur qu'avant pour les appelants existants (vitrine, ancienne caisse) ; le détail par magasin est gardé.
+        if ((e as any)?.code === "stock_insuffisant") throw new RuptureStock((e as any).details?.disponibleIci !== undefined ? (e as Error).message.replace(/\.$/, "") : libelle);
+        throw e;
     }
     // Traçabilité : la ligne garde le premier lot entamé (le détail par lot est dans StockMouvement).
-    if (r.lots[0] || (varianteId && !l.varianteId)) {
-      await tx.ligneCommande.update({ where: { id: l.id }, data: { ...(r.lots[0] ? { lotId: r.lots[0].lotId } : {}), ...(varianteId && !l.varianteId ? { varianteId } : {}) } });
+    // Ligne à plusieurs variantes : varianteId reste vide, le libellé les retrouve toutes.
+    const uneSeule = ids.length === 1 && varianteId && !l.varianteId;
+    if (r.lots[0] || uneSeule) {
+      await tx.ligneCommande.update({ where: { id: l.id }, data: { ...(r.lots[0] ? { lotId: r.lots[0].lotId } : {}), ...(uneSeule ? { varianteId } : {}) } });
+    }
     }
   }
 }
@@ -119,29 +144,31 @@ export async function rendreStock(tx: Tx, p: { commandeId: string; motif: string
     if (l.produit.type !== "physique") continue;
     const quantite = Math.min(l.quantite - l.quantiteRetournee, reste.get(l.produitId) ?? 0);
     if (quantite <= 0) continue;
-    const varianteId = await varianteDeLigne(tx, l);
-    if (varianteId === undefined) continue; // variante supprimée depuis : plus rien à recréditer
-    if (p.varianteId && varianteId !== p.varianteId) continue;
+    const ids = await variantesDeLigne(tx, l);
+    if (ids === undefined) continue; // variante supprimée depuis : plus rien à recréditer
+    if (p.varianteId && !ids.includes(p.varianteId)) continue;
 
-    const origine = sorties.find((m) => m.produitId === l.produitId && (m.varianteId ?? null) === (l.varianteId ?? m.varianteId ?? null));
-    const commun = {
-      tenantId: l.produit.tenantId, produitId: l.produitId, varianteId, type: "retour" as const, motif: p.motif,
-      entrepotId: p.entrepotId ?? origine?.entrepotId ?? null,
-    };
-    // D'abord vers les lots d'où la marchandise était sortie, puis le reste sans lot.
-    let aRendre = quantite;
-    for (const m of sorties) {
-      if (aRendre <= 0) break;
-      if (m.produitId !== l.produitId || !m.lotId) continue;
-      const q = Math.min(aRendre, resteLot.get(m.lotId) ?? 0);
-      if (q <= 0) continue;
-      await mouvementStock(tx, { ...commun, quantite: q, refs: { commandeId: p.commandeId, lotId: m.lotId } });
-      resteLot.set(m.lotId, (resteLot.get(m.lotId) ?? 0) - q);
-      aRendre -= q;
+    for (const varianteId of ids) {
+      const origine = sorties.find((m) => m.produitId === l.produitId && (m.varianteId ?? null) === (l.varianteId ?? m.varianteId ?? null));
+      const commun = {
+        tenantId: l.produit.tenantId, produitId: l.produitId, varianteId, type: "retour" as const, motif: p.motif,
+        entrepotId: p.entrepotId ?? origine?.entrepotId ?? null,
+      };
+      // D'abord vers les lots d'où la marchandise était sortie, puis le reste sans lot.
+      let aRendre = quantite;
+      for (const m of sorties) {
+        if (aRendre <= 0) break;
+        if (m.produitId !== l.produitId || !m.lotId) continue;
+        const q = Math.min(aRendre, resteLot.get(m.lotId) ?? 0);
+        if (q <= 0) continue;
+        await mouvementStock(tx, { ...commun, quantite: q, refs: { commandeId: p.commandeId, lotId: m.lotId } });
+        resteLot.set(m.lotId, (resteLot.get(m.lotId) ?? 0) - q);
+        aRendre -= q;
     }
     if (aRendre > 0) await mouvementStock(tx, { ...commun, quantite: aRendre, refs: { commandeId: p.commandeId } });
+    }
 
-    reste.set(l.produitId, (reste.get(l.produitId) ?? 0) - quantite);
+    reste.set(l.produitId, (reste.get(l.produitId) ?? 0) - quantite * ids.length);
     await tx.ligneCommande.update({ where: { id: l.id }, data: { quantiteRetournee: { increment: quantite } } });
   }
 }

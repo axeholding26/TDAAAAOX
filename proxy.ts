@@ -4,8 +4,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { domainePrincipal, slugPourDomaine } from "@/lib/domaines";
 import { auth } from "@/lib/auth";
-import { requireNiveau } from "@/lib/permissions-server";
-import { moduleApi } from "@/lib/permissions-api";
+import { requireNiveau, refusPalier } from "@/lib/permissions-server";
+import { moduleApi, palierApi } from "@/lib/permissions-api";
 import { SLUGS_RESERVES } from "@/lib/utils";
 import { COOKIE_XP, OPTIONS_COOKIE_XP, cookieVisiteurXp } from "@/lib/builder/experiences";
 
@@ -29,11 +29,14 @@ export async function proxy(request: NextRequest) {
   // les modules que sa grille lui ouvre (lib/permissions-api.ts).
   if (pathname.startsWith("/api/")) {
     const module = moduleApi(pathname);
-    if (module) {
+    const palier = palierApi(pathname, request.method);
+    if (module || palier) {
       const session = await auth();
-      if ((session?.user as any)?.tenantId) {
-        const refus = await requireNiveau(session, module, request.method === "GET" || request.method === "HEAD" ? "lecture" : "ecriture");
-        if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+      const tenantId = (session?.user as any)?.tenantId as string | undefined;
+      if (tenantId) {
+        const refus = (module && await requireNiveau(session, module, request.method === "GET" || request.method === "HEAD" ? "lecture" : "ecriture"))
+          || (palier && await refusPalier(tenantId, palier));
+        if (refus) return NextResponse.json({ error: refus.error, message: refus.error }, { status: refus.status });
       }
     }
     return NextResponse.next();

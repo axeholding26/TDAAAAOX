@@ -6,7 +6,7 @@ import { useT } from "@/components/I18nProvider";
 const temoignages = [
   {
     nom: "Fatou N.", role: "Cosmétiques · Douala-Akwa · Plan Pro depuis 3 mois", pays: "CM", note: 5,
-    texte: "Avant AXSO, je vendais sur WhatsApp et je perdais des commandes tous les jours. Le premier mois avec AXSO, j'ai fait 180 000 FCFA de ventes — et j'ai tout encaissé via Orange Money directement.",
+    texte: "Avant AXSO, je vendais sur WhatsApp et je perdais des commandes tous les jours. Avec AXSO, j'encaisse tout via Orange Money directement.",
     avatar: "F", couleur: "#F5A623",
   },
   {
@@ -16,7 +16,7 @@ const temoignages = [
   },
   {
     nom: "Sandrine K.", role: "Alimentation · Douala-Bonamoussadi · Plan Illimité", pays: "CM", note: 5,
-    texte: "Shopify, c'était tout en anglais et impossible à payer en mobile money. AXSO est en français, je paie mon abonnement en Orange Money et le support me répond sur WhatsApp.",
+    texte: "Shopify, c'était impossible à payer en mobile money. AXSO est en français, je paie mon abonnement en Orange Money et le support me répond sur WhatsApp.",
     avatar: "S", couleur: "#111111",
   },
 ];

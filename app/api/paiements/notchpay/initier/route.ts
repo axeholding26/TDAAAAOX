@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     await prisma.commande.update({
       where: { id: commandeId },
       data: { paiementProvider: "notchpay", paiementReference: transaction?.reference ?? merchantRef, methodePaiement: "notchpay" },
-    }).catch(() => {});
+    }); // jamais ignoré : sans cette trace, la réconciliation et le remboursement en ligne seraient impossibles
 
     return NextResponse.json({ authorizationUrl, reference: merchantRef });
   } catch (err: any) {

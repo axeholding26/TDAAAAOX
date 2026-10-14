@@ -273,11 +273,11 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
       promo: { titre: "", texte: "", ctaTexte: "" },
       texte: { titre: "", texte: "" },
       video: { videoUrl: "" },
-      stats: { items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }] },
+      stats: { items: [{ valeur: "", label: "Clients" }, { valeur: "", label: "Produits" }] },
       features: { items: [{ icone: "★", titre: "Avantage", texte: "Description" }] },
       countdown: { texte: "Offre limitée dans le temps", dateFin: new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,16), ctaTexte: "Profiter maintenant" },
       logos: { logos: [""] },
-      confiance: { note: "4.9/5", nbClients: "12 000+", certifications: ["✓ Paiement sécurisé"] },
+      confiance: { note: "", nbClients: "", certifications: ["✓ Paiement sécurisé"] },
       liste: { items: [""] },
       spacer: { hauteur: "40px" },
     };

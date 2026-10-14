@@ -394,20 +394,22 @@ export default function CreerBundlePage() {
 
       // 2. Ajouter les produits inclus
       if (etat.produitsSelectionnes.length > 0) {
-        await fetch(`/api/produits/digitaux/${id}/elements`, {
+        const resE = await fetch(`/api/produits/digitaux/${id}/elements`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ produitIds: etat.produitsSelectionnes.map((p) => p.id) }),
         });
+        if (!resE.ok) throw new Error(tr("Bundle créé en brouillon, mais les produits inclus n'ont pas été ajoutés"));
       }
 
       // 3. Publier si demandé
       if (publier) {
-        await fetch(`/api/produits/digitaux/${id}`, {
+        const resPub = await fetch(`/api/produits/digitaux/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
+        if (!resPub.ok) throw new Error(tr("Bundle créé en brouillon, mais la publication a échoué"));
         toast.success(tr("Bundle publié !"));
         router.push(`/dashboard/produits/${id}`);
       } else {
@@ -424,11 +426,12 @@ export default function CreerBundlePage() {
     if (produitId) {
       setSaving(true);
       try {
-        await fetch(`/api/produits/digitaux/${produitId}`, {
+        const res = await fetch(`/api/produits/digitaux/${produitId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
+        if (!res.ok) throw new Error();
         toast.success(tr("Bundle publié !"));
         router.push(`/dashboard/produits/${produitId}`);
       } catch { toast.error(tr("Erreur publication")); }

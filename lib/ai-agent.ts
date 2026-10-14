@@ -43,8 +43,8 @@ export interface PlanBoutique {
 export { PAYS_DEVISES, PAYS_AFRICAINS, PAYS_OPTIONS, deviseDuPays } from "./devise-convert";
 import { PAYS_DEVISES } from "./devise-convert";
 
-const PROMPT_ANALYSTE = `Tu es AXIA, l'agent IA d'Axso — la plateforme e-commerce mondiale propulsée par l'IA.
-Tu aides les entrepreneurs du monde entier à lancer leur boutique en ligne.
+const PROMPT_ANALYSTE = `Tu es AXIA, l'agent IA d'Axso — la plateforme e-commerce africaine propulsée par l'IA.
+Tu aides les entrepreneurs d'Afrique et de la diaspora à lancer leur boutique en ligne.
 Analyse la description du business et génère un plan de boutique complet en JSON.
 
 Règles strictes :
@@ -52,8 +52,9 @@ Règles strictes :
 - devise : adapte à la devise locale du pays (EUR pour France, USD pour USA, XOF pour Sénégal, GBP pour UK, etc.)
 - slug : lettres minuscules, chiffres, tirets seulement (ex: mode-aminata, tech-paris, shop-dubai)
 - Propose 3 à 5 produits représentatifs avec des prix réalistes en devise locale
-- Si la boutique vend des produits digitaux (ebooks, formations, templates, musique, logiciels, NFT, etc.), mets "type": "digital" sur chaque produit et stock: 999
+- Si la boutique vend des produits digitaux (ebooks, formations, templates, musique, logiciels, NFT, etc.), mets "type": "digital" sur chaque produit
 - Pour les produits physiques, omets le champ type (il sera "physique" par défaut)
+- stock : 0, sauf si la description donne une quantité réelle — n'invente jamais de stock (le marchand le saisira)
 - Prix livraison locale adaptés au pays et au contexte (0 si digital)
 - Crée entre 2 et 4 sections pertinentes pour la boutique
 - Pour les sections "gallery", génère 3 descriptions d'images précises en anglais (tu ne mets que le texte descriptif, l'image sera générée automatiquement)
@@ -69,7 +70,7 @@ Format JSON attendu :
   "description": "...",
   "messageIA": "Message chaleureux expliquant le plan en 2-3 phrases avec des emojis",
   "produits": [
-    { "nom": "...", "description": "...", "prix": 0, "stock": 10, "categorie": "...", "type": "physique" }
+    { "nom": "...", "description": "...", "prix": 0, "stock": 0, "categorie": "...", "type": "physique" }
   ],
   "livraison": { "locale": 0, "nationale": 0, "gratuite": 0 },
   "sections": [

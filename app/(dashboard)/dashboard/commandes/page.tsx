@@ -11,6 +11,7 @@ import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { CommandesTutorial } from "@/components/dashboard/tutorials/CommandesTutorial";
 import { formatMontant, dateRelative } from "@/lib/utils";
 import { getT } from "@/lib/i18n/serveur";
+import { PAIEMENT } from "@/lib/commandes";
 
 const STATUTS: Record<string, { label: string; bg: string; text: string; dot: string; border: string }> = {
   en_attente:     { label: "En attente",     bg: "#FFFBEB", text: "#B45309", dot: "#F59E0B", border: "#FDE68A" },
@@ -64,40 +65,54 @@ const FILTER_TABS = [
 export default async function CommandesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ statut?: string }>;
+  searchParams: Promise<{ statut?: string; page?: string }>;
 }) {
   const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "commandes");
-  const { statut: filtreStatut } = await searchParams;
+  const { statut: filtreStatut, page: pageParam } = await searchParams;
 
   const tenantId = (session.user as any)?.tenantId;
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
 
-  const toutes = await prisma.commande.findMany({
-    where: { tenantId },
-    include: { lignes: true, client: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  // Pagination + statistiques calculées en base (pas sur la page affichée)
+  const PAR_PAGE = 50;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const filtre = filtreStatut && filtreStatut !== "all" ? filtreStatut : undefined;
 
   const now = new Date();
   const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
   const devise = tenant?.devise || "XOF";
 
-  const stats = {
-    enAttente: toutes.filter(c => c.statut === "en_attente").length,
-    livrees:   toutes.filter(c => c.statut === "livree").length,
-    expediees: toutes.filter(c => c.statut === "expediee").length,
-    totalCeMois: toutes
-      .filter(c => c.paiementStatut === "completed" && new Date(c.createdAt) >= debutMois)
-      .reduce((s, c) => s + c.montantTotal, 0),
-  };
+  const [commandes, parStatut, caMois] = await Promise.all([
+    prisma.commande.findMany({
+      where: { tenantId, ...(filtre ? { statut: filtre } : {}) },
+      include: { lignes: true, client: true },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAR_PAGE,
+      take: PAR_PAGE,
+    }),
+    prisma.commande.groupBy({ by: ["statut"], where: { tenantId }, _count: { _all: true } }),
+    prisma.commande.aggregate({
+      where: { tenantId, paiementStatut: PAIEMENT.PAYE, createdAt: { gte: debutMois } },
+      _sum: { montantTotal: true },
+    }),
+  ]);
 
-  const commandes = filtreStatut && filtreStatut !== "all"
-    ? toutes.filter(c => c.statut === filtreStatut)
-    : toutes;
+  const compte = (st: string) => parStatut.find(g => g.statut === st)?._count._all ?? 0;
+  const totalToutes = parStatut.reduce((s, g) => s + g._count._all, 0);
+  const totalFiltre = filtre ? compte(filtre) : totalToutes;
+  const nbPages = Math.max(1, Math.ceil(totalFiltre / PAR_PAGE));
+  const lienPage = (p: number) =>
+    `/dashboard/commandes?${new URLSearchParams({ ...(filtre ? { statut: filtre } : {}), page: String(p) })}`;
+
+  const stats = {
+    enAttente: compte("en_attente"),
+    livrees:   compte("livree"),
+    expediees: compte("expediee"),
+    totalCeMois: caMois._sum.montantTotal ?? 0,
+  };
 
   const statCards = [
     {
@@ -139,7 +154,7 @@ export default async function CommandesPage({
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Commandes")}</h1>
             <BoutonRevoirTutoriel moduleKey="commandes" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
-              {toutes.length}
+              {totalToutes}
             </span>
             {stats.enAttente > 0 && (
               <span className="text-[11px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] px-2.5 py-0.5 rounded-full">
@@ -149,7 +164,7 @@ export default async function CommandesPage({
           </div>
           <p className="text-[12.5px] text-[#AAAAAA]">{t("Gérez et suivez toutes les commandes de votre boutique")}</p>
         </div>
-        <CommandesExport total={toutes.length} />
+        <CommandesExport total={totalToutes} />
       </div>
 
       {/* ── Stat cards ── */}
@@ -181,9 +196,7 @@ export default async function CommandesPage({
       <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
         {FILTER_TABS.map(tab => {
           const isActive = (filtreStatut ?? "all") === tab.key;
-          const count = tab.key === "all"
-            ? toutes.length
-            : toutes.filter(c => c.statut === tab.key).length;
+          const count = tab.key === "all" ? totalToutes : compte(tab.key);
           return (
             <Link
               key={tab.key}
@@ -234,12 +247,12 @@ export default async function CommandesPage({
         <div className="ax-card overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F3F3F3] flex items-center justify-between">
             <p className="text-[13px] font-semibold text-[#111111]">
-              {commandes.length} commande{commandes.length > 1 ? "s" : ""}
+              {totalFiltre} commande{totalFiltre > 1 ? "s" : ""}
               {filtreStatut && filtreStatut !== "all" && (
                 <span className="ml-2 text-[#AAAAAA] font-normal">{t("— filtrées")}</span>
               )}
             </p>
-            <p className="text-[11.5px] text-[#AAAAAA]">{t("Triées par date décroissante")}</p>
+            <p className="text-[11.5px] text-[#AAAAAA]">{t("Triées par date décroissante")} · {t("Page")} {page}/{nbPages}</p>
           </div>
 
           {/* Desktop table */}
@@ -337,6 +350,18 @@ export default async function CommandesPage({
               </Link>
             ))}
           </div>
+
+          {nbPages > 1 && (
+            <div className="px-6 py-3 border-t border-[#F3F3F3] flex items-center justify-between text-[12px] font-semibold">
+              {page > 1
+                ? <Link href={lienPage(page - 1)} className="text-[#111] hover:underline">← {t("Précédent")}</Link>
+                : <span />}
+              <span className="text-[#AAAAAA]">{page} / {nbPages}</span>
+              {page < nbPages
+                ? <Link href={lienPage(page + 1)} className="text-[#111] hover:underline">{t("Suivant")} →</Link>
+                : <span />}
+            </div>
+          )}
         </div>
       )}
     </div>

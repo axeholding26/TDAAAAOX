@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { exigerModule } from "@/lib/permissions-server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { formatDate } from "@/lib/utils";
 import { Star, MessageSquare, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
@@ -38,7 +39,7 @@ function Stars({ note, size = 13 }: { note: number; size?: number }) {
   );
 }
 
-export default async function AvisPage() {
+export default async function AvisPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const t = await getT();
   const session = await auth();
   if (!session) redirect("/connexion");
@@ -48,18 +49,38 @@ export default async function AvisPage() {
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) redirect("/inscription");
 
-  const avis = await prisma.avis.findMany({
-    where: { tenantId },
-    include: {
-      produit: { select: { nom: true } },
-      client:  { select: { nom: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // Statistiques par agrégat + liste paginée
+  const PAR_PAGE = 50;
+  const page = Math.max(1, parseInt((await searchParams).page ?? "1", 10) || 1);
+  const [avis, parNote, nonApprouves] = await Promise.all([
+    prisma.avis.findMany({
+      where: { tenantId },
+      include: {
+        produit: { select: { nom: true } },
+        client:  { select: { nom: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAR_PAGE,
+      take: PAR_PAGE,
+    }),
+    prisma.avis.groupBy({ by: ["note"], where: { tenantId }, _count: { _all: true } }),
+    prisma.avis.count({ where: { tenantId, approuve: false } }),
+  ]);
 
-  const noteMoyenne  = avis.length > 0 ? avis.reduce((s, a) => s + a.note, 0) / avis.length : 0;
-  const nonApprouves = avis.filter(a => !a.approuve).length;
-  const repartition  = [5,4,3,2,1].map(note => ({ note, count: avis.filter(a => a.note === note).length }));
+  const totalAvis    = parNote.reduce((s, g) => s + g._count._all, 0);
+  const noteMoyenne  = totalAvis > 0 ? parNote.reduce((s, g) => s + g.note * g._count._all, 0) / totalAvis : 0;
+  const repartition  = [5,4,3,2,1].map(note => ({ note, count: parNote.find(g => g.note === note)?._count._all ?? 0 }));
+  const nbPages      = Math.max(1, Math.ceil(totalAvis / PAR_PAGE));
+
+  // Modération : approuver / masquer (le modèle n'a que le booléen approuve)
+  async function moderer(formData: FormData) {
+    "use server";
+    await prisma.avis.updateMany({
+      where: { id: String(formData.get("id")), tenantId },
+      data: { approuve: formData.get("approuve") === "1" },
+    });
+    revalidatePath("/dashboard/avis");
+  }
 
   const NOTE_COLORS: Record<number, string> = { 5:"#16A34A", 4:"#F5A623", 3:"#D97706", 2:"#EA580C", 1:"#DC2626" };
 
@@ -75,11 +96,11 @@ export default async function AvisPage() {
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Avis clients")}</h1>
             <BoutonRevoirTutoriel moduleKey="avis" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
-              {avis.length}
+              {totalAvis}
             </span>
           </div>
           <p className="text-[12.5px] text-[#AAAAAA]">
-            {avis.length}{" "}{t("avis au total ·")}{" "}{t(nonApprouves)}{" "}{t("en attente de modération")}
+            {totalAvis}{" "}{t("avis au total ·")}{" "}{t(nonApprouves)}{" "}{t("en attente de modération")}
           </p>
         </div>
         {nonApprouves > 0 && (
@@ -101,12 +122,12 @@ export default async function AvisPage() {
             <Stars note={Math.round(noteMoyenne)} size={20} />
           </div>
           <p className="text-[12px] text-[#AAAAAA]">
-            {t("Basé sur")}{" "}<span className="font-semibold text-[#666]">{avis.length}</span> avis
+            {t("Basé sur")}{" "}<span className="font-semibold text-[#666]">{totalAvis}</span> avis
           </p>
-          {avis.length > 0 && (
+          {totalAvis > 0 && (
             <div className="mt-4 flex items-center gap-4 pt-4 border-t border-[#F5F5F5] w-full justify-center">
               <div className="flex items-center gap-1 text-[11.5px] text-[#16A34A]">
-                <CheckCircle2 size={11} /> {avis.filter(a => a.approuve).length}{" "}{t("approuvés")}
+                <CheckCircle2 size={11} /> {totalAvis - nonApprouves}{" "}{t("approuvés")}
               </div>
               <div className="flex items-center gap-1 text-[11.5px] text-[#D97706]">
                 <Clock size={11} /> {t(nonApprouves)}{" "}{t("en attente")}
@@ -118,14 +139,14 @@ export default async function AvisPage() {
         {/* Répartition */}
         <div className="lg:col-span-2 ax-card p-6">
           <h3 className="text-[13px] font-semibold text-[#111111] mb-4">{t("Répartition des notes")}</h3>
-          {avis.length === 0 ? (
+          {totalAvis === 0 ? (
             <div className="h-32 flex items-center justify-center text-[12px] text-[#AAAAAA]">
               {t("Aucune donnée disponible")}
             </div>
           ) : (
             <div className="space-y-3">
               {repartition.map(({ note, count }) => {
-                const pct = avis.length > 0 ? (count / avis.length) * 100 : 0;
+                const pct = totalAvis > 0 ? (count / totalAvis) * 100 : 0;
                 return (
                   <div key={note} className="flex items-center gap-3">
                     <div className="flex items-center gap-1 w-12 flex-shrink-0">
@@ -164,9 +185,9 @@ export default async function AvisPage() {
         <div className="px-5 py-4 border-b border-[#F3F3F3] flex items-center gap-2">
           <MessageSquare size={15} className="text-[#AAAAAA]" />
           <h2 className="text-[13px] font-semibold text-[#111111]">{t("Tous les avis")}</h2>
-          {avis.length > 0 && (
+          {totalAvis > 0 && (
             <span className="ml-auto text-[11px] font-bold text-[#888] bg-[#F5F5F7] border border-[#EBEBEB] px-2 py-0.5 rounded-full">
-              {avis.length}
+              {totalAvis}
             </span>
           )}
         </div>
@@ -222,24 +243,28 @@ export default async function AvisPage() {
                       {formatDate(a.createdAt)}
                     </p>
                   </div>
-                  {!a.approuve && (
-                    <div className="flex-shrink-0">
-                      <form
-                        action={async () => {
-                          "use server";
-                          await prisma.avis.update({ where: { id: a.id }, data: { approuve: true } });
-                        }}
-                      >
-                        <button type="submit"
-                          className="text-[11.5px] font-semibold border px-3 py-1.5 rounded-2xl transition-all hover:scale-[1.01] bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#ECFDF5]">
-                          {t("Approuver")}
-                        </button>
-                      </form>
-                    </div>
-                  )}
+                  <div className="flex-shrink-0">
+                    <form action={moderer}>
+                      <input type="hidden" name="id" value={a.id} />
+                      <input type="hidden" name="approuve" value={a.approuve ? "0" : "1"} />
+                      <button type="submit"
+                        className={`text-[11.5px] font-semibold border px-3 py-1.5 rounded-2xl transition-all hover:scale-[1.01] ${a.approuve
+                          ? "bg-white text-[#888] border-[#E8E8E8] hover:bg-[#F5F5F7]"
+                          : "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0] hover:bg-[#ECFDF5]"}`}>
+                        {a.approuve ? t("Masquer") : t("Approuver")}
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {nbPages > 1 && (
+          <div className="px-5 py-3 border-t border-[#F3F3F3] flex items-center justify-between text-[12px] font-semibold">
+            {page > 1 ? <a href={`/dashboard/avis?page=${page - 1}`} className="text-[#111] hover:underline">← {t("Précédent")}</a> : <span />}
+            <span className="text-[#AAAAAA]">{page} / {nbPages}</span>
+            {page < nbPages ? <a href={`/dashboard/avis?page=${page + 1}`} className="text-[#111] hover:underline">{t("Suivant")} →</a> : <span />}
           </div>
         )}
       </div>

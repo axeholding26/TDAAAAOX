@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
+import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 
 // ─── Schema ──────────────────────────────────────────────────────────────────
 
@@ -164,7 +165,8 @@ export async function GET(request: Request) {
     }
 
     // ── Main product listing ──
-    const where: any = { tenantId, type: "digital" };
+    // Tous les types digitaux (digital, fichier, licence, formation, bundle)
+    const where: any = { tenantId, type: { in: [...TYPES_LIVRAISON_DIGITALE] } };
     if (statutFilter === "actif") where.actif = true;
     if (statutFilter === "archive") where.actif = false;
 
@@ -177,6 +179,8 @@ export async function GET(request: Request) {
     // Parse metadata and apply type filter
     let result = produits.map((p: any) => {
       const meta = parseMeta(p.instructionsTelechargement);
+      // Types du nouveau système : leur type sert de catégorie (filtres, pastilles)
+      if (p.type !== "digital") meta.typeDigital = p.type;
       return {
         ...p,
         meta,
@@ -311,7 +315,7 @@ export async function PATCH(request: Request) {
 
     // Verify ownership
     const existing = await prisma.produit.findFirst({
-      where: { id, tenantId, type: "digital" },
+      where: { id, tenantId, type: { in: [...TYPES_LIVRAISON_DIGITALE] } },
     });
     if (!existing) return NextResponse.json({ message: "Produit introuvable" }, { status: 404 });
 

@@ -4,17 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { planActif } from "@/lib/abonnement";
+import { verifierAbonnementEnAttente } from "@/lib/abonnement-paiement";
 import { NOMS_PALIERS } from "@/lib/plans";
 import { PlansGrid } from "@/components/dashboard/PlansGrid";
 
 // ─── Page ────────────────────────────────────────────────────────────────────
-export default async function AbonnementPage() {
+export default async function AbonnementPage({ searchParams }: { searchParams: Promise<{ paiement?: string }> }) {
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "finance");
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) redirect("/inscription");
+
+  // Retour de la page de paiement NotchPay : on n'attend pas le webhook pour activer le palier payé.
+  if ((await searchParams).paiement === "en_cours") await verifierAbonnementEnAttente(tenantId);
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },

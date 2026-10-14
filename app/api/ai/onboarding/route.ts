@@ -6,7 +6,6 @@ import { analyserBusinessEtCreerPlan, deviseDuPays } from "@/lib/ai-agent";
 import { slugify, slugBoutiqueValide } from "@/lib/utils";
 import { z } from "zod";
 import { generateStoreConfig } from "@/lib/generate-store-config";
-import { genererAvisDemo } from "@/lib/gemini";
 import { provisionerThemeInitial } from "@/lib/axso-design-library";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 
@@ -88,6 +87,8 @@ export async function POST(request: Request) {
       const { plan, compte, typeBoutique, designsProposes } = schemaExecuter.parse(body);
       plan.devise = deviseDuPays(plan.pays, plan.devise);
       const modeBoutique = typeBoutique === "digital" ? "digital" : "catalogue";
+      // Email normalisé : la connexion compare en minuscules, sans espaces.
+      compte.email = compte.email.trim().toLowerCase();
 
       // Vérifier que l'email n'existe pas déjà
       const emailExiste = await prisma.user.findUnique({ where: { email: compte.email } });
@@ -96,9 +97,10 @@ export async function POST(request: Request) {
       }
 
       // Vérifier unicité du slug
-      let slug = plan.slug;
+      // Le slug vient du navigateur : mêmes règles qu'en phase « analyser ».
+      let slug = slugify(plan.slug) || slugify(plan.nomBoutique) || "boutique";
       const slugExiste = await prisma.tenant.findUnique({ where: { slug } });
-      if (slugExiste) slug = `${slug}-${Date.now().toString(36)}`;
+      if (slugExiste || !slugBoutiqueValide(slug)) slug = `${slug.slice(0, 50)}-${Date.now().toString(36)}`;
 
       const parametresLivraison = plan.livraison ? {
         locale: plan.livraison.locale,
@@ -150,7 +152,7 @@ export async function POST(request: Request) {
             // publiée explicitement (critères vérifiés par lib/boutique-completion.ts) —
             // le marchand personnalise d'abord dans le Constructeur.
             statut: "brouillon",
-            planType: "gratuit",
+            planType: "palier0",
             themeConfig,
           },
         });
@@ -167,29 +169,32 @@ export async function POST(request: Request) {
           },
         });
 
+        // Slugs uniques avant la boucle : une erreur dans la transaction l'annulerait en entier (Postgres).
+        const slugsPris = new Set<string>();
         const produitsCreees: string[] = [];
         for (const p of plan.produits.slice(0, 5)) {
-          const produitSlug = slugify(p.nom) || `produit-${Date.now()}`;
-          try {
-            await tx.produit.create({
-              data: {
-                tenantId: tenant.id,
-                nom: p.nom,
-                slug: produitSlug,
-                description: p.description || "",
-                prix: p.prix,
-                stock: p.stock ?? 10,
-                categorie: p.categorie,
-                images: p.imageUrl ? [p.imageUrl] : [],
-                type: p.type ?? "physique",
-                actif: true,
-                featured: true,
-              },
-            });
-            produitsCreees.push(p.nom);
-          } catch {
-            // Ignorer les doublons de slug produit
-          }
+          const base = slugify(p.nom) || "produit";
+          let produitSlug = base;
+          for (let n = 2; slugsPris.has(produitSlug); n++) produitSlug = `${base}-${n}`;
+          slugsPris.add(produitSlug);
+          await tx.produit.create({
+            data: {
+              tenantId: tenant.id,
+              nom: p.nom,
+              slug: produitSlug,
+              description: p.description || "",
+              prix: p.prix,
+              // Produits proposés par l'IA : brouillons à vérifier (prix, photo, stock) par le marchand.
+              // Stock strict : 0 tant qu'il n'a pas saisi son vrai stock ; inactifs → jamais publiés tels quels.
+              stock: 0,
+              categorie: p.categorie,
+              images: p.imageUrl ? [p.imageUrl] : [],
+              type: p.type ?? "physique",
+              actif: false,
+              featured: true,
+            },
+          });
+          produitsCreees.push(p.nom);
         }
 
         return { tenant, produitsCreees };
@@ -201,7 +206,7 @@ export async function POST(request: Request) {
         tenantId: tenant.id,
         type: "boutique_a_completer",
         titre: "Ta boutique n'est pas encore publiée",
-        message: "Vérifie tes infos (WhatsApp, description, produits) dans le Constructeur puis publie ta boutique pour qu'elle soit visible.",
+        message: "Vérifie tes infos (WhatsApp, description) dans le Constructeur. Les produits proposés par l'IA sont en brouillon avec un stock à 0 : vérifie prix, photos et stock puis active-les avant de publier ta boutique.",
         lien: "/dashboard/builder",
       });
 
@@ -225,50 +230,7 @@ export async function POST(request: Request) {
         console.warn("[API/AI/ONBOARDING] Provisionnement bibliothèque échoué (non bloquant):", err);
       }
 
-      // Avis clients IA de démonstration — pour qu'une boutique fraîchement
-      // générée par l'IA n'affiche jamais une section "Avis" vide. Ne bloque
-      // jamais la création de la boutique : erreurs (Gemini, DB) avalées et
-      // journalisées. Un Avis exige un produitId réel — on ne les génère que
-      // si des produits ont bien été créés.
-      try {
-        const produitsPourAvis = await prisma.produit.findMany({
-          where: { tenantId: tenant.id },
-          select: { id: true, nom: true },
-        });
-        if (produitsPourAvis.length > 0) {
-          const avisGeneres = await genererAvisDemo(
-            plan.nomBoutique,
-            plan.categorie,
-            produitsPourAvis.map((p) => p.nom)
-          );
-          for (let i = 0; i < avisGeneres.length; i++) {
-            const a = avisGeneres[i];
-            const client = await prisma.client.create({
-              data: {
-                tenantId: tenant.id,
-                nom: a.clientNom,
-                email: `demo+${tenant.id}-${i}@axso-avis.local`,
-              },
-            });
-            const produit = produitsPourAvis[i % produitsPourAvis.length];
-            await prisma.avis.create({
-              data: {
-                tenantId: tenant.id,
-                produitId: produit.id,
-                clientId: client.id,
-                note: a.note,
-                titre: a.titre,
-                commentaire: a.commentaire,
-                verifie: false,
-                approuve: true,
-              },
-            });
-          }
-        }
-      } catch (err) {
-        console.warn("[API/AI/ONBOARDING] Génération avis démo échouée (non bloquant):", err);
-      }
-
+      // Aucun avis ni client fictif : la vitrine masque la section Avis tant qu'il n'y a pas de vrais avis.
       return NextResponse.json({
         success: true,
         slug: tenant.slug,

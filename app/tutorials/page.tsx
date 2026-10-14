@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Tutoriels vidéo — AXSO",
+  title: "Tutoriels vidéo",
   description: "Tutoriels vidéo AXSO pas à pas (en préparation).",
 };
 

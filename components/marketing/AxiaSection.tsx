@@ -8,7 +8,7 @@ import { useT } from "@/components/I18nProvider";
 // Conversation jouée message par message quand la section arrive à l'écran.
 const CONVERSATION: { de: "marchand" | "axia"; texte: string }[] = [
   { de: "marchand", texte: "Salut Axia, comment s'est passée ma semaine ?" },
-  { de: "axia",     texte: "Très bonne semaine : 47 commandes et 1 284 000 XOF de ventes, soit +18 % par rapport à la semaine dernière. Tes sneakers sont ton best-seller." },
+  { de: "axia",     texte: "Très bonne semaine : 47 commandes et 1 284 000 FCFA de ventes, soit +18 % par rapport à la semaine dernière. Tes sneakers sont ton best-seller." },
   { de: "marchand", texte: "Il m'en reste combien ?" },
   { de: "axia",     texte: "Plus que 6 paires en 42 et 3 en 43. À ce rythme, tu seras en rupture d'ici jeudi. Tu veux que je prépare une commande fournisseur ?" },
   { de: "marchand", texte: "Oui. Et ajoute une promo -20% sur mes sneakers ce week-end" },

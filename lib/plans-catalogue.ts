@@ -17,11 +17,12 @@ export const PLANS_CATALOGUE = [
     icone: CreditCard as LucideIcon,
     recommande: false,
     features: [
-      { label: "Commandes limitées (30/mois)", ok: true },
+      { label: "Commandes limitées (60/mois)", ok: true },
       { label: "WhatsApp Business intégré", ok: true },
       { label: "AXIA IA — outils essentiels", ok: true },
       { label: "Social Media intégré", ok: true },
       { label: "1 boutique en ligne", ok: true },
+      { label: "Support WhatsApp (lun-ven, 8h-20h)", ok: true },
       { label: "Commandes illimitées", ok: false },
       { label: "IA avancée (agents, automatisations)", ok: false },
       { label: "Sourcing dropshipping mondial", ok: false },
@@ -45,6 +46,7 @@ export const PLANS_CATALOGUE = [
       { label: "AXIA IA — outils avancés (agents, automatisations)", ok: true },
       { label: "Marketing & campagnes (email, SMS, réseaux sociaux)", ok: true },
       { label: "Analytics avancés — historique complet", ok: true },
+      { label: "Support WhatsApp (lun-ven, 8h-20h)", ok: true },
       { label: "Sourcing dropshipping mondial", ok: false },
       { label: "Analytics temps réel", ok: false },
       { label: "Multi-boutique", ok: false },
@@ -67,7 +69,7 @@ export const PLANS_CATALOGUE = [
       { label: "Sourcing dropshipping mondial", ok: true },
       { label: "Analytics temps réel", ok: true },
       { label: "Multi-boutique", ok: true },
-      { label: "Support prioritaire 24/7", ok: true },
+      { label: "Support WhatsApp (lun-ven, 8h-20h)", ok: true },
     ],
   },
 ] as const;
@@ -76,7 +78,7 @@ export const PLANS_CATALOGUE = [
 export const ABONNEMENT_FAQ = [
   {
     q: "Puis-je changer de plan à tout moment ?",
-    r: "Oui. Le changement est immédiat. Si vous montez de palier, vous accédez instantanément aux nouvelles fonctionnalités.",
+    r: "Oui. Un plan payant est activé dès la confirmation du paiement, pour 30 jours à compter de ce jour (sans prorata ni report des jours restants d'un autre plan). Revenir au Palier 0 est immédiat, mais les jours payés restants sont perdus.",
   },
   {
     q: "Comment fonctionne la limite de commandes au Palier 0 ?",
@@ -88,6 +90,6 @@ export const ABONNEMENT_FAQ = [
   },
   {
     q: "Les prix sont-ils affichés en ma devise locale ?",
-    r: "Oui, les prix sont automatiquement convertis dans la devise de votre pays pour vous donner une idée du coût. La facturation s'effectue en FCFA ou via votre opérateur local.",
+    r: "Oui, les prix sont automatiquement convertis dans la devise de votre pays pour vous donner une idée du coût. Le paiement s'effectue en FCFA, par Orange Money ou MTN Mobile Money.",
   },
 ];

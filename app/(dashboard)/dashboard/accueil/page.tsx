@@ -8,6 +8,7 @@ import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { AccueilTutorial } from "@/components/dashboard/tutorials/AccueilTutorial";
 import { formatMontant } from "@/lib/utils";
+import { permissionsSession } from "@/lib/permissions-server";
 import {
   TrendingUp, ShoppingBag, Users, Eye, Package, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Globe, Plus, MapPin, Zap,
@@ -185,6 +186,9 @@ export default async function DashboardPage() {
   if (!tenantId) redirect("/inscription");
 
   const d = await getData(tenantId);
+  // Membre sans droit finance (caissier…) : chiffre d'affaires masqué, comme le menu Finance.
+  const voitFinance = (await permissionsSession(session)).finance !== "aucun";
+  const montant = (v: number, devise: string) => (voitFinance ? formatMontant(v, devise) : "—");
   const prenom     = session.user?.name?.split(" ")[0] ?? "Marchand";
   const conversion = d.visitors > 0 ? ((d.monthCount / d.visitors) * 100).toFixed(1) : "0";
   const panier     = d.monthCount > 0 ? d.month / d.monthCount : 0;
@@ -212,7 +216,7 @@ export default async function DashboardPage() {
     color: onTrack ? "#16A34A" : "#F5A623",
     bg:    onTrack ? "#ECFDF5" : "#FFF8EC",
     title: "Projection fin de mois",
-    value: formatMontant(d.projection, d.devise),
+    value: montant(d.projection, d.devise),
     sub:   onTrack ? t("En avance sur l'objectif") : t("{0} j restants pour rattraper", remainingDays),
   });
 
@@ -239,7 +243,7 @@ export default async function DashboardPage() {
     color: "#0891B2",
     bg:    "#ECFEFF",
     title: "Panier moyen",
-    value: formatMontant(panier, d.devise),
+    value: montant(panier, d.devise),
     sub:   t("Sur {0} commande(s) ce mois", d.monthCount),
   });
 
@@ -305,7 +309,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-1.5 text-[11.5px]">
           <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse flex-shrink-0" />
           <span className="font-semibold text-[#111]">{t("Aujourd'hui :")}</span>
-          <span className="font-bold text-[#F5A623]">{formatMontant(d.today, d.devise)}</span>
+          <span className="font-bold text-[#F5A623]">{montant(d.today, d.devise)}</span>
         </div>
         {vsHierPct !== null && (
           <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full border flex items-center gap-0.5 ${
@@ -336,7 +340,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard
           label={t("CA ce mois")}
-          value={formatMontant(d.month, d.devise)}
+          value={montant(d.month, d.devise)}
           sub={d.evol !== null ? t("{0}% vs mois dernier", `${d.evol > 0 ? "+" : ""}${d.evol}`) : t("{0} commande(s)", d.monthCount)}
           trend={d.evol}
           Icon={TrendingUp}
@@ -345,7 +349,7 @@ export default async function DashboardPage() {
         />
         <KpiCard
           label={t("Cette semaine")}
-          value={formatMontant(d.semaine, d.devise)}
+          value={montant(d.semaine, d.devise)}
           sub={t("{0} commande(s) aujourd'hui", d.todayCount)}
           Icon={ShoppingBag}
           spark={d.spark7.slice(-5)}
@@ -363,7 +367,7 @@ export default async function DashboardPage() {
         <KpiCard
           label={t("Conversion")}
           value={`${conversion}%`}
-          sub={t("Panier moy. {0}", formatMontant(panier, d.devise))}
+          sub={t("Panier moy. {0}", montant(panier, d.devise))}
           Icon={Eye}
         />
       </div>
@@ -391,7 +395,7 @@ export default async function DashboardPage() {
       {/* ── Chart + Sidebar ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <SalesChart donnees={d.chart} devise={d.devise} />
+          {voitFinance && <SalesChart donnees={d.chart} devise={d.devise} />}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -410,9 +414,9 @@ export default async function DashboardPage() {
                 <p className="text-[13px] font-bold text-[#111111]">
                   {d.goalPct >= 100 ? <span className="flex items-center gap-1"><Sparkles size={13} />{t("Objectif atteint !")}</span> : t("En progression")}
                 </p>
-                <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{formatMontant(d.month, d.devise)}</p>
+                <p className="text-[11.5px] text-[#AAAAAA] mt-0.5">{montant(d.month, d.devise)}</p>
                 {d.prevCA > 0 && (
-                  <p className="text-[11px] text-[#CCCCCC] mt-0.5">{t("Objectif :")}{" "}{formatMontant(d.prevCA, d.devise)}</p>
+                  <p className="text-[11px] text-[#CCCCCC] mt-0.5">{t("Objectif :")}{" "}{montant(d.prevCA, d.devise)}</p>
                 )}
               </div>
             </div>
@@ -423,7 +427,7 @@ export default async function DashboardPage() {
                   <span className="text-[11px] text-[#AAAAAA]">{t("Projection fin de mois")}</span>
                 </div>
                 <span className={`text-[12px] font-bold ${onTrack ? "text-[#16A34A]" : "text-[#F5A623]"}`}>
-                  {formatMontant(d.projection, d.devise)}
+                  {montant(d.projection, d.devise)}
                 </span>
               </div>
             )}
@@ -536,7 +540,7 @@ export default async function DashboardPage() {
                       <span className="text-[13px] font-medium text-[#222] truncate flex-1">{t(p.nom)}</span>
                       <div className="text-right flex-shrink-0">
                         <p className="text-[13px] font-bold text-[#111111]" style={{ fontVariantNumeric: "tabular-nums" }}>
-                          {formatMontant(p.revenue, d.devise)}
+                          {montant(p.revenue, d.devise)}
                         </p>
                         <p className="text-[10.5px] text-[#AAAAAA]">{t("{0} vente(s)", p.qte)}</p>
                       </div>

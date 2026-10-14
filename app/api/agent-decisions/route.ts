@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { refusAgentIA } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -11,6 +12,9 @@ export async function GET(req: NextRequest) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
+  // Journal de tous les modules (ventes, prix, stock…) : accès complet, comme les agents.
+  const refus = await refusAgentIA(session, false);
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const { searchParams } = new URL(req.url);
   const agentId = searchParams.get("agent") || undefined;

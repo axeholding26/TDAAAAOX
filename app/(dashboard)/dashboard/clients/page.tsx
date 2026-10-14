@@ -10,6 +10,8 @@ import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicato
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { ClientsTutorial } from "@/components/dashboard/tutorials/ClientsTutorial";
 import { getT } from "@/lib/i18n/serveur";
+import { PAIEMENT } from "@/lib/commandes";
+import { estVip } from "@/lib/segments-clients";
 
 const AVATAR_COLORS = [
   ["#FFF8EC","#F5A623"],["#EFF6FF","#3B82F6"],["#F0FDF4","#16A34A"],
@@ -28,9 +30,9 @@ async function Avatar({ nom, idx }: { nom: string; idx: number }) {
   );
 }
 
-async function SegmentBadge({ nbCommandes, total }: { nbCommandes: number; total: number }) {
+async function SegmentBadge({ nbCommandes, total, devise }: { nbCommandes: number; total: number; devise: string }) {
   const tx = await getT();
-  if (nbCommandes >= 5 || total >= 100000)
+  if (estVip(nbCommandes, total, devise))
     return (
       <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]">
         <Star size={9} fill="currentColor" /> VIP
@@ -49,9 +51,12 @@ async function SegmentBadge({ nbCommandes, total }: { nbCommandes: number; total
   );
 }
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
   const tx = await getT();
-  const q = ((await searchParams).q ?? "").trim();
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const PAR_PAGE = 50;
+  const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const session = await auth();
   if (!session) redirect("/connexion");
   await exigerModule(session, "clients");
@@ -60,34 +65,53 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
   const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!tenant) redirect("/inscription");
 
-  const clients = await prisma.client.findMany({
-    where: { tenantId },
-    include: {
-      commandes: {
-        where: { statut: { notIn: ["annulee", "remboursee"] }, paiementStatut: "completed" },
-        select: { montantTotal: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  // Statistiques par agrégat (une ligne par acheteur) au lieu de charger toutes les commandes.
+  // ponytail: groupBy en mémoire, trier sur Client.totalDepense une fois ce champ fiable partout.
+  const [totalClients, parClient] = await Promise.all([
+    prisma.client.count({ where: { tenantId } }),
+    prisma.commande.groupBy({
+      by: ["clientId"],
+      where: { tenantId, clientId: { not: null }, statut: { notIn: ["annulee", "remboursee"] }, paiementStatut: PAIEMENT.PAYE },
+      _sum: { montantTotal: true },
+      _count: { _all: true },
+      _max: { createdAt: true },
+    }),
+  ]);
+  const achats = new Map(parClient.map(g => [g.clientId as string, {
+    total: g._sum.montantTotal ?? 0, nb: g._count._all, derniere: g._max.createdAt,
+  }]));
+  const achatsDe = (id: string) => achats.get(id) ?? { total: 0, nb: 0, derniere: null };
 
-  // Filtre ?q= (résultat de la recherche du tableau de bord) : la liste seulement, pas les statistiques.
-  const qMin = q.toLowerCase();
-  const sorted = [...clients].filter((c) => !qMin || [c.nom, c.email, c.telephone].some((v) => v?.toLowerCase().includes(qMin))).sort((a, b) => {
-    const ta = a.commandes.reduce((s, c) => s + c.montantTotal, 0);
-    const tb = b.commandes.reduce((s, c) => s + c.montantTotal, 0);
-    return tb - ta;
-  });
+  // Liste : recherche ?q= (50 premiers résultats) ou page triée par dépenses décroissantes
+  const parDepense = [...achats.entries()].sort((x, y) => y[1].total - x[1].total).map(([id]) => id);
+  const debut = (page - 1) * PAR_PAGE;
+  let liste;
+  if (q) {
+    liste = await prisma.client.findMany({
+      where: { tenantId, OR: ["nom", "email", "telephone"].map(k => ({ [k]: { contains: q, mode: "insensitive" as const } })) },
+      orderBy: { createdAt: "desc" },
+      take: PAR_PAGE,
+    });
+  } else {
+    const ids = parDepense.slice(debut, debut + PAR_PAGE);
+    const actifs = ids.length ? await prisma.client.findMany({ where: { tenantId, id: { in: ids } } }) : [];
+    // Puis les clients sans achat payé, du plus récent au plus ancien
+    const reste = PAR_PAGE - ids.length;
+    const inactifs = reste > 0 ? await prisma.client.findMany({
+      where: { tenantId, id: { notIn: parDepense } },
+      orderBy: { createdAt: "desc" },
+      skip: Math.max(0, debut - parDepense.length),
+      take: reste,
+    }) : [];
+    liste = [...actifs, ...inactifs];
+  }
+  const sorted = liste.sort((x, y) => achatsDe(y.id).total - achatsDe(x.id).total);
+  const nbPages = q ? 1 : Math.max(1, Math.ceil(totalClients / PAR_PAGE));
 
-  const totalClients  = clients.length;
-  const clientsActifs = clients.filter(c => c.commandes.length > 0).length;
-  const totalRevenu   = clients.reduce((s, c) => s + c.commandes.reduce((sc, cmd) => sc + cmd.montantTotal, 0), 0);
-  const panierMoyen   = clientsActifs > 0 ? totalRevenu / clientsActifs : 0;
-  const vipCount      = clients.filter(c => {
-    const t = c.commandes.reduce((s, cmd) => s + cmd.montantTotal, 0);
-    return c.commandes.length >= 5 || t >= 100000;
-  }).length;
+  const clientsActifs = parClient.length;
+  const totalRevenu   = parClient.reduce((s, g) => s + (g._sum.montantTotal ?? 0), 0);
+  const revenuParClient = clientsActifs > 0 ? totalRevenu / clientsActifs : 0;
+  const vipCount      = parClient.filter(g => estVip(g._count._all, g._sum.montantTotal ?? 0, tenant.devise)).length;
   const tauxActifs = totalClients > 0 ? Math.round((clientsActifs / totalClients) * 100) : 0;
 
   const statCards = [
@@ -104,7 +128,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       Icon: TrendingUp, iconBg: "#FAF5FF", iconColor: "#7C3AED",
     },
     {
-      label: "Panier moyen",   value: formatMontant(panierMoyen, tenant.devise),
+      label: "Revenu moyen par client", value: formatMontant(revenuParClient, tenant.devise),
       Icon: Star, iconBg: "#EFF6FF", iconColor: "#3B82F6",
     },
   ];
@@ -194,7 +218,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             <a href="/dashboard/clients" className="ml-auto font-semibold text-[#F5A623] hover:underline">{tx("Tout afficher")}</a>
           </div>
         )}
-        {clients.length === 0 ? (
+        {totalClients === 0 ? (
           <div className="p-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-[#F5F5F7] flex items-center justify-center mx-auto mb-4">
               <Users size={24} className="text-[#CCCCCC]" />
@@ -228,8 +252,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                 </thead>
                 <tbody>
                   {sorted.map((client, idx) => {
-                    const totalAchats = client.commandes.reduce((s, c) => s + c.montantTotal, 0);
-                    const derniereCommande = client.commandes[0]?.createdAt;
+                    const { total: totalAchats, nb: nbCommandes, derniere: derniereCommande } = achatsDe(client.id);
                     return (
                       <tr key={client.id}
                         className="border-b border-[#F9F9F9] hover:bg-[#FAFAFA] transition-colors group">
@@ -248,7 +271,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                           <p className="text-[12px] text-[#888888]">{client.telephone || "—"}</p>
                         </td>
                         <td className="px-5 py-4">
-                          <span className="text-[13px] font-bold text-[#111]">{client.commandes.length}</span>
+                          <span className="text-[13px] font-bold text-[#111]">{nbCommandes}</span>
                           <span className="text-[11px] text-[#AAAAAA] ml-1">cmd</span>
                         </td>
                         <td className="px-5 py-4">
@@ -258,7 +281,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <SegmentBadge nbCommandes={client.commandes.length} total={totalAchats} />
+                          <SegmentBadge nbCommandes={nbCommandes} total={totalAchats} devise={tenant.devise} />
                         </td>
                         <td className="px-5 py-4">
                           <span className="text-[11.5px] text-[#AAAAAA]">
@@ -280,15 +303,15 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
             {/* Mobile cards */}
             <div className="sm:hidden divide-y divide-[#F5F5F5]">
               {sorted.map((client, idx) => {
-                const totalAchats = client.commandes.reduce((s, c) => s + c.montantTotal, 0);
+                const { total: totalAchats, nb: nbCommandes } = achatsDe(client.id);
                 return (
                   <div key={client.id} className="flex items-center gap-3 px-4 py-3.5">
                     <Avatar nom={client.nom} idx={idx} />
                     <div className="flex-1 min-w-0">
                       <p className="text-[13px] font-semibold text-[#222] truncate">{tx(client.nom)}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-[#AAAAAA]">{client.commandes.length} cmd</span>
-                        <SegmentBadge nbCommandes={client.commandes.length} total={totalAchats} />
+                        <span className="text-[11px] text-[#AAAAAA]">{nbCommandes} cmd</span>
+                        <SegmentBadge nbCommandes={nbCommandes} total={totalAchats} devise={tenant.devise} />
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0">
@@ -302,6 +325,18 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                 );
               })}
             </div>
+
+            {nbPages > 1 && (
+              <div className="px-6 py-3 border-t border-[#F3F3F3] flex items-center justify-between text-[12px] font-semibold">
+                {page > 1
+                  ? <a href={`/dashboard/clients?page=${page - 1}`} className="text-[#111] hover:underline">← {tx("Précédent")}</a>
+                  : <span />}
+                <span className="text-[#AAAAAA]">{page} / {nbPages}</span>
+                {page < nbPages
+                  ? <a href={`/dashboard/clients?page=${page + 1}`} className="text-[#111] hover:underline">{tx("Suivant")} →</a>
+                  : <span />}
+              </div>
+            )}
           </>
         )}
       </div>

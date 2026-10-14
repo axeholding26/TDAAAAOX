@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
@@ -69,10 +70,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const tenantId = (session.user as any)?.tenantId;
   // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
   if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
-  const role = (session.user as any)?.role;
-  if (role !== "owner" && role !== "editeur") {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
+  const refus = await requireNiveau(session, "produits", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const { id } = await params;
   const body = await req.json();
@@ -160,8 +159,9 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const tenantId = (session.user as any)?.tenantId;
   // Sans boutique (admin, livreur) : un filtre tenantId vide ouvrirait toutes les boutiques.
   if (!tenantId) return NextResponse.json({ error: "Non autorisé", message: "Non autorisé" }, { status: 401 });
-  const role = (session.user as any)?.role;
-  if (role !== "owner") return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
+  // Suppression réservée au propriétaire de la boutique (jamais déduit de User.role).
+  const proprio = await prisma.proprietaireBoutique.findUnique({ where: { userId_tenantId: { userId: (session.user as any).id, tenantId } }, select: { id: true } });
+  if (!proprio) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
   const { id } = await params;
 

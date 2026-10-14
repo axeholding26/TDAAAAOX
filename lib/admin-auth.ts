@@ -1,4 +1,5 @@
 import { auth } from "./auth";
+import { prisma } from "./prisma";
 
 export type RoleAdmin = "admin" | "admin_lecteur";
 
@@ -11,10 +12,14 @@ export interface AdminSession {
 // Page components : appeler puis `if (!session) redirect(...)`.
 export async function getAdminSession(): Promise<AdminSession | null> {
   const session = await auth();
-  const role = (session?.user as any)?.role;
-  if (!session || (role !== "admin" && role !== "admin_lecteur")) return null;
+  const userId = (session?.user as any)?.id as string | undefined;
+  if (!session || !userId) return null;
+  // Rôle relu en base à chaque appel : celui du jeton est figé à la connexion
+  // (un admin rétrogradé garderait sinon l'accès jusqu'à l'expiration du cookie).
+  const role = (await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }))?.role;
+  if (role !== "admin" && role !== "admin_lecteur") return null;
   return {
-    userId: (session.user as any).id,
+    userId,
     email: session.user?.email ?? "",
     role,
   };

@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Communauté — AXSO",
+  title: "Communauté",
   description: "La communauté des entrepreneurs africains qui vendent en ligne avec AXSO.",
 };
 

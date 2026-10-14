@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { peutTeleverser } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { TYPES_FICHIERS, TAILLE_MAX } from "@/lib/types-fichiers";
 import { dossierBoutique } from "@/lib/fichiers-boutique";
@@ -25,8 +26,9 @@ export async function POST(req: Request) {
       // clientPayload = catégorie annoncée par le navigateur (lib/televerser.ts) : types et taille
       // maximale imposés ICI, côté serveur. Sans catégorie (MediaUpload) : images et vidéos.
       onBeforeGenerateToken: async (chemin, clientPayload) => {
-        const tenantId = ((await auth())?.user as any)?.tenantId as string | undefined;
-        if (!tenantId) throw new Error("Non autorisé");
+        const session = await auth();
+        const tenantId = (session?.user as any)?.tenantId as string | undefined;
+        if (!tenantId || !(await peutTeleverser(session))) throw new Error("Non autorisé");
         // Le jeton est lié au chemin demandé par le navigateur : on n'autorise que
         // le dossier de la boutique connectée (jamais celui d'une autre).
         if (!chemin.startsWith(dossierBoutique(tenantId)) || chemin.includes("..")) throw new Error("Dossier non autorisé");

@@ -22,7 +22,7 @@ const PLANS = [
       "AXIA IA — version essentielle",
       "Social Media intégré",
       "Paiements Mobile Money",
-      "Support communauté",
+      "Support WhatsApp (lun-ven, 8h-20h)",
     ],
     notIncluded: ["Commandes illimitées", "Sourcing dropshipping mondial"],
     recommande: false,
@@ -45,7 +45,7 @@ const PLANS = [
       "AXIA IA — version avancée",
       "Analytics avancés",
       "Marketing & automatisations",
-      "Support prioritaire",
+      "Support WhatsApp (lun-ven, 8h-20h)",
     ],
     notIncluded: ["Sourcing dropshipping mondial"],
     recommande: true,
@@ -61,14 +61,14 @@ const PLANS = [
     bg: "#F5F5F5",
     borderColor: "rgba(17,17,17,0.22)",
     shadowColor: "rgba(17,17,17,0.16)",
-    desc: "Pour les PME qui scalent. Boutiques multiples, sourcing dropshipping mondial, analytics en temps réel et support prioritaire. Aucune limite.",
+    desc: "Pour les PME qui scalent. Boutiques multiples, sourcing dropshipping mondial et analytics en temps réel. Aucune limite.",
     features: [
       "AUCUNE LIMITE — tout inclus",
       "AXIA IA — version complète",
       "Sourcing dropshipping mondial",
       "Boutiques illimitées",
       "Analytics temps réel",
-      "Support prioritaire 24/7",
+      "Support WhatsApp (lun-ven, 8h-20h)",
     ],
     notIncluded: [],
     recommande: false,
@@ -123,7 +123,7 @@ export function TarifsSection() {
           <p className="text-gray-400 text-base sm:text-xl max-w-2xl mx-auto">
             {t("Pas de frais cachés. Pas de carte bancaire requise pour démarrer.")}{" "}
             <br className="hidden sm:block" />
-            {t("Tu peux annuler à tout moment. Et tu peux payer ton abonnement directement par Orange Money ou MTN.")}
+            {t("Aucun prélèvement automatique : tu paies 30 jours à la fois, directement par Orange Money ou MTN.")}
           </p>
         </div>
 
@@ -157,8 +157,7 @@ export function TarifsSection() {
             </div>
             {[
               { critere: "Paiement Orange Money natif",       axso: true, shopify: false, woo: "✗" },
-              { critere: "Interface en français local",       axso: true, shopify: false, woo: "partiel" },
-              { critere: "Support WhatsApp en 2h",             axso: true, shopify: false, woo: "✗" },
+              { critere: "Support WhatsApp en français",       axso: true, shopify: false, woo: "✗" },
               { critere: "IA visuels pub intégrée",            axso: true, shopify: false, woo: "✗" },
               { critere: "Payer l'abonnement en mobile money", axso: true, shopify: false, woo: "✗" },
             ].map((row, i) => (
@@ -170,7 +169,7 @@ export function TarifsSection() {
                 <div className="px-1 py-3 sm:p-4 flex justify-center">
                   <X size={16} strokeWidth={3} className="text-gray-300" />
                 </div>
-                <div className="px-1 py-3 sm:p-4 text-center text-[10px] sm:text-xs text-gray-400">{row.woo === "partiel" ? t("Partiel") : <X size={16} strokeWidth={3} className="text-gray-300 inline-block" />}</div>
+                <div className="px-1 py-3 sm:p-4 text-center text-[10px] sm:text-xs text-gray-400"><X size={16} strokeWidth={3} className="text-gray-300 inline-block" /></div>
               </div>
             ))}
           </div>
@@ -182,7 +181,7 @@ export function TarifsSection() {
           style={{ opacity: visible ? 1 : 0, transition: "opacity 1s 1s" }}
         >
           <p className="text-sm text-gray-400 inline-flex items-center gap-1.5">
-            <Lock size={13} />{" "}{t("Paiement par Orange Money ou MTN · Annulation à tout moment · 0 frais cachés · Support WhatsApp inclus")}
+            <Lock size={13} />{" "}{t("Paiement par Orange Money ou MTN · Sans renouvellement automatique · 0 frais cachés · Support WhatsApp inclus")}
           </p>
         </div>
       </div>
@@ -327,7 +326,7 @@ function PlanCard({
                   >
                     {plan.prix.toLocaleString(t.loc)}
                   </span>
-                  <span className="text-gray-400 text-sm mb-1.5">{t("XOF / mois")}</span>
+                  <span className="text-gray-400 text-sm mb-1.5">{t("FCFA / mois")}</span>
                 </div>
                 <p className="text-xs text-gray-400">
                   ≈ {Math.round(plan.prix / 655).toLocaleString()}{" "}{t("€/mois")}

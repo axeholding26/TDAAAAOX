@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Carrières — AXSO",
+  title: "Carrières",
   description: "Rejoignez l'équipe AXSO et construisez l'avenir du commerce africain.",
 };
 

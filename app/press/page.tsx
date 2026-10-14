@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Presse — AXSO",
+  title: "Presse",
   description: "Contact presse AXSO : demandes d'interviews et informations sur la plateforme.",
 };
 

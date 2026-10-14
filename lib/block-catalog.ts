@@ -30,8 +30,8 @@ export const BLOCK_CATALOG: BlockCatalogEntry[] = [
   },
   {
     type: "stats", label: "Statistiques", categorie: "widget",
-    champs: `{ titre: string, items: [{ valeur: string, label: string }] }`,
-    defaultConfig: { titre: "En chiffres", items: [{ valeur: "10K+", label: "Clients" }, { valeur: "500+", label: "Produits" }, { valeur: "4.9★", label: "Note" }, { valeur: "48h", label: "Livraison" }] },
+    champs: `{ titre: string, items: [{ valeur: string (chiffre RÉEL fourni par le marchand, jamais inventé ; vide = masqué), label: string }] }`,
+    defaultConfig: { titre: "En chiffres", items: [{ valeur: "", label: "Clients" }, { valeur: "", label: "Produits" }, { valeur: "", label: "Note" }, { valeur: "", label: "Livraison" }] },
   },
   {
     type: "countdown", label: "Compte à rebours", categorie: "widget",
@@ -55,13 +55,13 @@ export const BLOCK_CATALOG: BlockCatalogEntry[] = [
   },
   {
     type: "social-proof", label: "Preuve sociale", categorie: "widget",
-    champs: `{ note: string (ex "4.9/5"), nbClients: string, nbCommandes: string, certifications: string[] }`,
-    defaultConfig: { note: "4.9/5", nbClients: "12 000+", nbCommandes: "30 000+", certifications: ["✓ Paiement sécurisé", "✓ Livraison garantie"] },
+    champs: `{ note: string (ex "4.9/5"), nbClients: string, nbCommandes: string, certifications: string[] } — chiffres RÉELS fournis par le marchand, jamais inventés ; vides = masqués`,
+    defaultConfig: { note: "", nbClients: "", nbCommandes: "", certifications: ["✓ Paiement sécurisé"] },
   },
   {
     type: "cta-band", label: "Bande CTA", categorie: "widget",
     champs: `{ titre: string, texte: string, ctaTexte: string, ctaLien: string (chemin relatif ex "produits"), style: "gradient"|"solid" }`,
-    defaultConfig: { titre: "Prêt à découvrir ?", texte: "Rejoignez des milliers de clients satisfaits", ctaTexte: "Commencer maintenant", ctaLien: "produits", style: "gradient" },
+    defaultConfig: { titre: "Prêt à découvrir ?", texte: "Découvrez nos produits", ctaTexte: "Commencer maintenant", ctaLien: "produits", style: "gradient" },
   },
   {
     type: "richtext", label: "Texte riche", categorie: "widget",

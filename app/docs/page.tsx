@@ -6,14 +6,14 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Documentation — AXSO",
+  title: "Documentation",
   description: "Documentation AXSO : démarrage, boutique, paiements, livraison, IA.",
 };
 
 const SECTIONS = [
   { Icon: Zap,         titre: "Démarrage rapide", articles: ["Créer votre boutique en 3 étapes", "Configurer les paiements Mobile Money", "Ajouter vos premiers produits", "Personnaliser votre thème"], accent: "#F5A623" },
   { Icon: ShoppingBag, titre: "Boutique & produits", articles: ["Catalogue multi-type", "Gestion des variantes", "Produits digitaux", "Import en masse CSV"], accent: "#7c3aed" },
-  { Icon: CreditCard,  titre: "Paiements", articles: ["Orange Money, MTN MoMo", "Carte bancaire via NotchPay", "Paiement à la livraison", "Gestion des remboursements"], accent: "#25D366" },
+  { Icon: CreditCard,  titre: "Paiements", articles: ["Orange Money, MTN MoMo", "Paiement à la livraison", "Gestion des remboursements"], accent: "#25D366" },
   { Icon: Truck,       titre: "Livraison", articles: ["Zones et tarifs de livraison", "Intégration livreurs", "Suivi de commande", "Livraison digitale automatique"], accent: "#0ea5e9" },
   { Icon: Cpu,         titre: "Axia — Intelligence artificielle", articles: ["Présentation d'Axia", "Chatbot client automatique", "Génération de descriptions", "Onboarding boutique IA"], accent: "#ef4444" },
 ];

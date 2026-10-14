@@ -57,6 +57,7 @@ export default function EditProduitPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [erreurChargement, setErreurChargement] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [genIA, setGenIA] = useState(false);
@@ -98,9 +99,11 @@ export default function EditProduitPage() {
     }).catch(() => {});
 
     fetch(`/api/produits/${id}`)
-      .then(r => r.json())
-      .then(d => {
+      .then(async r => ({ ok: r.ok, d: await r.json().catch(() => ({})) }))
+      .then(({ ok, d }) => {
         const p = d.produit;
+        // Produit introuvable (404, autre boutique) ou erreur serveur : message au lieu d'un plantage
+        if (!ok || !p) { setErreurChargement(d.message || d.error || tr("Produit introuvable")); setLoading(false); return; }
         setStats({ ventes: p.ventes ?? 0, vues: p.vues ?? 0, avis: p._count?.avis ?? 0, commandes: p._count?.lignesCommande ?? 0 });
         setFormState({
           nom: p.nom ?? "",
@@ -147,8 +150,9 @@ export default function EditProduitPage() {
           })));
         }
         setLoading(false);
-      });
-  }, [id]);
+      })
+      .catch(() => { setErreurChargement(tr("Impossible de charger le produit")); setLoading(false); });
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function ajouterVariante() {
     if (!varianteForm.valeur) return;
@@ -165,17 +169,19 @@ export default function EditProduitPage() {
           image: varianteForm.image || null,
         }),
       });
-      const d = await res.json();
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.message || d.error || tr("Erreur ajout variante"));
       setVariantes(vs => [...vs, { ...varianteForm, id: d.variante?.id, actif: true }]);
       setVarianteForm(v => ({ ...v, valeur: "", sku: "", prix: "", stock: "0", image: "" }));
       toast.success(tr("Variante ajoutée"));
-    } catch { toast.error(tr("Erreur ajout variante")); }
+    } catch (err: any) { toast.error(err.message || tr("Erreur ajout variante")); }
     finally { setSavingVariante(false); }
   }
 
   async function supprimerVariante(varianteId: string | undefined, idx: number) {
     if (!varianteId) { setVariantes(vs => vs.filter((_, i) => i !== idx)); return; }
-    await fetch(`/api/produits/${id}/variantes?varianteId=${varianteId}`, { method: "DELETE" }).catch(() => null);
+    const res = await fetch(`/api/produits/${id}/variantes?varianteId=${varianteId}`, { method: "DELETE" }).catch(() => null);
+    if (!res?.ok) { toast.error(tr("Suppression de la variante impossible")); return; }
     setVariantes(vs => vs.filter((_, i) => i !== idx));
     toast.success(tr("Variante supprimée"));
   }
@@ -190,13 +196,15 @@ export default function EditProduitPage() {
   }
 
   async function changerType(newType: "physique" | "digital" | "dropshipping") {
+    const ancien = form.type;
     set("type", newType);
     try {
-      await fetch(`/api/produits/${id}`, {
+      const res = await fetch(`/api/produits/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: newType }),
       });
+      if (!res.ok) { set("type", ancien); throw new Error(); }
       toast.success(tr("Type changé → {0}", newType === "digital" ? "Digital" : newType === "dropshipping" ? "Dropshipping" : "Physique"));
     } catch {
       toast.error(tr("Erreur lors du changement de type"));
@@ -207,7 +215,7 @@ export default function EditProduitPage() {
     ? Math.round((1 - parseFloat(form.prixFournisseur) / parseFloat(form.prix)) * 100) : null;
   const margeCout = form.cout && form.prix
     ? Math.round((1 - parseFloat(form.cout) / parseFloat(form.prix)) * 100) : null;
-  const estDigital = ["digital", "fichier", "licence", "formation"].includes(form.type);
+  const estDigital = ["digital", "fichier", "licence", "formation", "bundle"].includes(form.type);
   const prixNum = parseFloat(form.prix), prixCompareNum = parseFloat(form.prixCompare);
   const promoInvalide = !!form.prixCompare && prixCompareNum > 0 && prixNum > 0 && prixCompareNum <= prixNum;
   const remisePct = prixCompareNum > prixNum && prixNum > 0 ? Math.round((1 - prixNum / prixCompareNum) * 100) : null;
@@ -356,6 +364,13 @@ export default function EditProduitPage() {
   if (loading) return (
     <div className="flex items-center justify-center min-h-64">
       <Loader2 size={24} className="animate-spin text-[#F5A623]" />
+    </div>
+  );
+
+  if (erreurChargement) return (
+    <div className="ax-card p-10 text-center max-w-md mx-auto">
+      <p className="text-[14px] font-semibold text-[#111111] mb-2">{erreurChargement}</p>
+      <Link href="/dashboard/produits" className="text-[12.5px] font-semibold text-[#F5A623] hover:underline">{tr("Retour aux produits")}</Link>
     </div>
   );
 

@@ -9,6 +9,8 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
+  // Sans boutique, proxy.ts ne contrôle ni le module ni le palier (Illimité).
+  if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const { produitId, actions } = await req.json();
   // actions: ["photo", "video", "post_instagram", "post_facebook", "description"]

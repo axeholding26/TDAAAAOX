@@ -82,7 +82,8 @@ export async function changerStatutCommande(p: {
     return { ok: false, status: 404, error: "Commande introuvable" };
   }
 
-  if (await quotaCommandesAtteint(commande.tenantId)) return QUOTA_ATTEINT;
+  // Le quota ne bloque jamais ce qui protège le client ou clôt une course : annuler (et rembourser), livrer, signaler un échec.
+  if (!["annulee", "livree", "tentative_echouee"].includes(statut) && await quotaCommandesAtteint(commande.tenantId)) return QUOTA_ATTEINT;
 
   if (!(TRANSITIONS_VALIDES[commande.statut] || []).includes(statut)) {
     return { ok: false, status: 400, error: `Transition invalide : ${commande.statut} → ${statut}` };
@@ -280,7 +281,7 @@ export async function marquerEspecesRemises(p: {
   livreurId?: string; // toutes les commandes non remises de ce livreur
 }): Promise<Resultat<{ count: number }>> {
   if (!p.commandeIds?.length && !p.livreurId) return { ok: false, status: 400, error: "Précise les commandes ou le livreur" };
-  if (await quotaCommandesAtteint(p.tenantId)) return QUOTA_ATTEINT;
+  // Pas de quota ici : enregistrer l'argent liquide reçu du livreur n'est jamais bloqué.
   const { count } = await prisma.commande.updateMany({
     where: {
       tenantId: p.tenantId,

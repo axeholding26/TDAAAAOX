@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { payerCommissionsAffilie, rembourserPaiementCommissionEchoue } from "@/lib/affiliation";
@@ -51,12 +52,10 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const role = (session.user as any)?.role;
-  if (role !== "owner" && role !== "editeur") {
-    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  }
   const tenantId = (session.user as any).tenantId;
   if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+  const refus = await requireNiveau(session, "finance", "ecriture");
+  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
   const body = await req.json().catch(() => ({}));
 
   if (!body.affilieId) return NextResponse.json({ error: "affilieId requis" }, { status: 400 });

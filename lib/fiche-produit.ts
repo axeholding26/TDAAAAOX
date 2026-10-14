@@ -24,28 +24,28 @@ export const SECTIONS_FICHE: Record<string, Catalogue> = {
   info:         { label: "Infos produit", base: true, defaut: () => ({ breadcrumbs: true, badges: true, stock: true }) },
   variants:     { label: "Variantes", base: true, defaut: () => ({ style: "boutons", taille: "md", espacement: "normal", afficherLibelle: true }) },
   quantity:     { label: "Quantité & achat", base: true, defaut: () => ({ afficherQuantite: true, texteBouton: "", afficherWhatsApp: true, couleurBouton: "", couleurTexteBouton: "" }) },
-  trust:        { label: "Badges confiance", base: true, defaut: () => ({ disposition: "grille", colonnes: 3, afficherVendeur: true, items: [{ icone: "🔒", texte: "Paiement sécurisé" }, { icone: "🚚", texte: "Livraison rapide" }, { icone: "↩️", texte: "Retour 14 jours" }] }) },
+  trust:        { label: "Badges confiance", base: true, defaut: () => ({ disposition: "grille", colonnes: 3, afficherVendeur: true, items: [{ icone: "🔒", texte: "Paiement sécurisé" }, { icone: "🚚", texte: "Livraison rapide" }] }) },
   // Section de base : diffuse les vidéos rattachées au produit (Produit →
   // Images & vidéos). Aucune URL à saisir ici — le marchand règle le titre et
   // la lecture auto, et la section s'affiche d'elle-même dès qu'un produit a
   // au moins une vidéo. `titre` vide = aucune barre de titre.
   videoProduit: { label: "Vidéo du produit", base: true, defaut: () => ({ titre: "", autoplay: false }) },
-  description:  { label: "Description", base: true, defaut: () => ({ ai: true, afficherLivraison: true, livraison: [{ titre: "Livraison standard", texte: "Préparée sous 24–48h ouvrées." }, { titre: "Politique de retour", texte: "Retours sous 14 jours, produit intact." }, { titre: "Paiement sécurisé", texte: "Mobile money, carte ou paiement à la livraison." }] }) },
+  description:  { label: "Description", base: true, defaut: () => ({ ai: true, afficherLivraison: true, livraison: [] }) }, // délais et retours : à remplir par le marchand (onglet masqué tant que vide)
   reviews:      { label: "Avis clients", base: true, defaut: () => ({ titre: "Avis clients", disposition: "grille", afficherResume: true, afficherFormulaire: true, afficherVerifie: true, couleurEtoiles: "", max: 20 }) },
   similar:      { label: "Produits similaires", base: true, defaut: () => ({ count: 4, titre: "Vous aimerez aussi" }) },
   richtext:     { label: "Texte libre", repetable: true, defaut: () => ({ titre: "Notre engagement", texte: "Votre texte ici.", ctaTexte: "" }) },
-  features:     { label: "Points forts", repetable: true, defaut: () => ({ titre: "Pourquoi choisir ce produit ?", items: [{ icone: "✓", titre: "Qualité premium", texte: "Matériaux soigneusement sélectionnés." }, { icone: "⚡", titre: "Livraison rapide", texte: "Expédié en 24-48h." }, { icone: "♻️", titre: "Éco-responsable", texte: "Fabriqué de façon durable." }] }) },
+  features:     { label: "Points forts", repetable: true, defaut: () => ({ titre: "Pourquoi choisir ce produit ?", items: [{ icone: "✓", titre: "Avantage 1", texte: "Description" }, { icone: "⚡", titre: "Avantage 2", texte: "Description" }, { icone: "♻️", titre: "Avantage 3", texte: "Description" }] }) },
   howto:        { label: "Mode d'emploi", defaut: () => ({ titre: "Comment l'utiliser ?", style: "etapes", steps: [{ num: "01", titre: "Étape 1", texte: "Description de l'étape ici.", image: "" }, { num: "02", titre: "Étape 2", texte: "Description de l'étape ici.", image: "" }, { num: "03", titre: "Étape 3", texte: "Description de l'étape ici.", image: "" }] }) }, // style : etapes | accordeon | carrousel | colonnes
   banner:       { label: "Bannière image", repetable: true, defaut: () => ({ titre: "Offre spéciale", texte: "", imageUrl: "", ctaTexte: "Profiter maintenant" }) },
   video:        { label: "Vidéo", repetable: true, defaut: () => ({ titre: "", videoUrl: "", autoplay: false }) },
   faq:          { label: "FAQ produit", defaut: () => ({ titre: "Questions fréquentes", items: [{ question: "Comment utiliser ce produit ?", reponse: "Répondez ici." }] }) },
   specs:        { label: "Caractéristiques", defaut: () => ({ titre: "Caractéristiques techniques", rows: [{ cle: "Matière", valeur: "" }, { cle: "Dimensions", valeur: "" }, { cle: "Poids", valeur: "" }] }) },
   ingredients:  { label: "Ingrédients / Matières", defaut: () => ({ titre: "Composition", texte: "", items: [{ image: "", nom: "Ingrédient 1", desc: "" }, { image: "", nom: "Ingrédient 2", desc: "" }] }) }, // chaque élément : image et/ou texte
-  testimonials: { label: "Témoignages", defaut: () => ({ titre: "Ils en parlent", items: [{ nom: "Marie D.", note: 5, texte: "Excellent produit, je recommande !", avatar: "" }, { nom: "Jean K.", note: 5, texte: "Très satisfait de mon achat.", avatar: "" }] }) },
+  testimonials: { label: "Témoignages", defaut: () => ({ titre: "Ils en parlent", items: [{ nom: "", note: 5, texte: "", avatar: "" }] }) }, // vrais avis à recopier par le marchand ; vides = masqués
   sizeguide:    { label: "Guide des tailles", defaut: () => ({ titre: "Guide des tailles", headers: ["Taille", "Tour de poitrine", "Tour de taille", "Tour de hanches"], rows: [{ cells: ["XS", "80-84 cm", "60-64 cm", "86-90 cm"] }, { cells: ["S", "84-88 cm", "64-68 cm", "90-94 cm"] }, { cells: ["M", "88-92 cm", "68-72 cm", "94-98 cm"] }] }) },
-  guarantee:    { label: "Garantie & SAV", defaut: () => ({ titre: "Notre garantie", items: [{ icone: "🛡️", titre: "Garantie 2 ans", texte: "Pièces et main-d'œuvre couvertes." }, { icone: "🔄", titre: "Retour 30 jours", texte: "Remboursement intégral si insatisfait." }, { icone: "📞", titre: "Support 7j/7", texte: "Notre équipe est là pour vous." }] }) },
-  bundle:       { label: "Pack / Bundle", defaut: () => ({ titre: "Souvent achetés ensemble", items: [{ nom: "Produit complémentaire 1", imageUrl: "", prix: "" }, { nom: "Produit complémentaire 2", imageUrl: "", prix: "" }], ctaTexte: "Tout ajouter au panier" }) },
-  comparison:   { label: "Tableau comparatif", defaut: () => ({ titre: "Comparaison", headers: ["Caractéristique", "Ce produit", "Standard"], rows: [{ cells: ["Qualité", "✓ Premium", "Basique"] }, { cells: ["Garantie", "✓ 2 ans", "6 mois"] }, { cells: ["Support", "✓ Prioritaire", "Email"] }], images: ["", "", ""] }) }, // images : une par colonne, facultative
+  guarantee:    { label: "Garantie & SAV", defaut: () => ({ titre: "Notre garantie", items: [{ icone: "🛡️", titre: "", texte: "" }, { icone: "🔄", titre: "", texte: "" }, { icone: "📞", titre: "", texte: "" }] }) }, // conditions réelles à remplir ; vides = masquées
+  bundle:       { label: "Pack / Bundle", defaut: () => ({ titre: "Souvent achetés ensemble", items: [{ nom: "Produit complémentaire 1", imageUrl: "", prix: "" }, { nom: "Produit complémentaire 2", imageUrl: "", prix: "" }], ctaTexte: "Voir les produits" }) }, // pas de panier : le bouton mène au catalogue
+  comparison:   { label: "Tableau comparatif", defaut: () => ({ titre: "Comparaison", headers: ["Caractéristique", "Ce produit", "Standard"], rows: [{ cells: ["Caractéristique 1", "", ""] }, { cells: ["Caractéristique 2", "", ""] }], images: ["", "", ""] }) }, // images : une par colonne, facultative
   countdown:    { label: "Compte à rebours", defaut: () => ({ titre: "Offre limitée", texte: "Ne manquez pas cette opportunité !", dateFin: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16), ctaTexte: "Profiter maintenant" }) },
   social:       { label: "Partage social", defaut: () => ({}) },
 };
@@ -141,6 +141,8 @@ export function appliquerActionFiche(pp: ThemeProductPageConfig | null | undefin
     }
     case "afficher":
     case "masquer":
+      // Le bouton Commander/Acheter vit dans cette section : jamais masqué (on masque la quantité ou WhatsApp dans ses réglages).
+      if (a.action === "masquer" && (cible!.type === "quantity" || cible!.type === "variants")) throw new Error(`« ${SECTIONS_FICHE[cible!.type].label} » ne peut pas être masquée : le client doit pouvoir choisir et commander.`);
       return { pp: { ...base, sections: sections.map((s) => (s.id === cible!.id ? { ...s, actif: a.action === "afficher" } : s)) } };
     case "configurer":
       return { pp: { ...base, sections: sections.map((s) => (s.id === cible!.id ? { ...s, config: { ...s.config, ...a.config } } : s)) } };

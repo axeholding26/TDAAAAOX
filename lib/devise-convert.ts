@@ -117,6 +117,37 @@ export function exempleTelephone(pays?: string | null): string {
   return EXEMPLES_TELEPHONE[codePays(pays) ?? "CM"];
 }
 
+// Indicatif et longueur du numéro national (sans 0 initial) de chaque pays, tirés des exemples ci-dessus.
+const FORMATS_TELEPHONE: { code: string; ind: string; long: number }[] = Object.entries(EXEMPLES_TELEPHONE).map(([code, ex]) => {
+  const [ind, ...reste] = ex.slice(1).split(" ");
+  return { code, ind, long: reste.join("").replace(/^0+/, "").length };
+});
+
+/**
+ * Numéro au format international "+<indicatif><numéro>" (0 national retiré), ou null s'il
+ * n'est pas valide. Accepte +226…, 00226…, 226… ou le numéro national seul (0 initial
+ * facultatif) du pays donné — y compris les pays à 8 chiffres (BF, TG, ML, NE, DJ…).
+ * Sert de clé : deux saisies du même numéro donnent la même valeur.
+ */
+export function normaliserTelephone(tel?: string | null, pays?: string | null): string | null {
+  const brut = (tel ?? "").trim();
+  const tous = brut.replace(/\D/g, "");
+  const chiffres = tous.replace(/^0+/, "");
+  const international = brut.startsWith("+") || tous.startsWith("00");
+  const f = FORMATS_TELEPHONE.find((x) => x.code === codePays(pays));
+  const avecIndicatif = (x: { ind: string; long: number }) => {
+    const reste = chiffres.slice(x.ind.length).replace(/^0+/, "");
+    return chiffres.startsWith(x.ind) && reste.length === x.long ? `+${x.ind}${reste}` : null;
+  };
+  // 1. Indicatif du pays de la commande ; 2. numéro national de ce pays (anciens plans
+  // plus courts tolérés) ; 3. indicatif d'un autre pays africain ; 4. autre pays saisi avec +.
+  const r = (f && avecIndicatif(f))
+    || (f && !international && chiffres.length <= f.long && chiffres.length >= f.long - 2 ? `+${f.ind}${chiffres}` : null)
+    || FORMATS_TELEPHONE.map(avecIndicatif).find(Boolean);
+  if (r) return r;
+  return international && chiffres.length >= 8 && chiffres.length <= 15 ? `+${chiffres}` : null;
+}
+
 /** Groupes proposés pour cocher plusieurs pays d'un coup (règles de livraison). */
 export const GROUPES_PAYS: Record<string, string[]> = {
   "UEMOA (XOF)": ["BJ", "BF", "CI", "GW", "ML", "NE", "SN", "TG"],

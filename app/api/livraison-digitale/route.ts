@@ -1,6 +1,7 @@
 // API Route — Livraison digitale sécurisée
 // Génère et valide des liens de téléchargement avec token UUID, suivi des limites
 import { NextRequest, NextResponse } from "next/server";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { finAcces, metaDigital } from "@/lib/commandes";
@@ -18,6 +19,8 @@ export async function POST(req: NextRequest) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    if (await quotaCommandesAtteint(tenantId)) return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", message: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
     const body = await req.json();
     const { orderId, productId } = body;
 
@@ -110,6 +113,8 @@ export async function PATCH(req: NextRequest) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
     const tenantId = (session.user as any)?.tenantId;
+    if (!tenantId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    if (await quotaCommandesAtteint(tenantId)) return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", message: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
     const body = await req.json();
     const { action, token, orderId, productId } = body;
 

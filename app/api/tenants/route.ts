@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { FORMAT_PIXEL } from "@/lib/pixels";
+import { requireNiveau } from "@/lib/permissions-server";
+import type { ModuleKey } from "@/lib/permissions";
 
 // Champs fournis par le Theme du design (lib/axso-design-library.ts), jamais édités dans le Constructeur.
 const CHAMPS_DU_DESIGN = [
@@ -14,6 +16,8 @@ const CHAMPS_DU_DESIGN = [
   "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp",
   "axsoDesignCssVarMapping", "axsoDesignPolices",
 ];
+
+const CHAMPS_BOUTIQUE = new Set(["themeId", "themeConfig", "statut"]);
 
 export async function PATCH(request: Request) {
   try {
@@ -26,6 +30,13 @@ export async function PATCH(request: Request) {
     if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
 
     const body = await request.json().catch(() => ({}));
+    // Constructeur et thèmes (design, publication) : module boutique ; tout le reste : paramètres.
+    const modules = new Set<ModuleKey>(Object.keys(body ?? {}).map((k) => (CHAMPS_BOUTIQUE.has(k) ? "boutique" : "parametres")));
+    if (!modules.size) modules.add("parametres");
+    for (const m of modules) {
+      const refus = await requireNiveau(session, m, "ecriture");
+      if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+    }
     const champs: Record<string, any> = {};
     const autorises = [
       "themeId", "logoUrl", "bannerUrl", "description", "metaTitle", "metaDescription",

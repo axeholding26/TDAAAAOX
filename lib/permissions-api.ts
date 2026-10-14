@@ -6,6 +6,7 @@
 // Les routes IA (AXIA, agents) appliquent leurs propres droits ; les routes
 // publiques (vitrine, webhooks, tâches planifiées) ne sont pas concernées.
 import type { ModuleKey } from "./permissions";
+import type { Palier } from "./plans";
 
 // Préfixe le plus long d'abord. `null` = route publique ou gérée ailleurs.
 const MODULES_API: [string, ModuleKey | null][] = [
@@ -85,6 +86,12 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/automation", "marketing"],
   ["/api/veille", "marketing"],
   ["/api/medias", "marketing"],
+  // IA du tableau de bord (les agents autonomes exigent en plus un accès complet, refusAgentIA)
+  ["/api/ai/agent-marketing", "marketing"],
+  ["/api/ai/chat", "marketing"],
+  ["/api/ai/video", "marketing"],
+  ["/api/ai/voix-off", "marketing"],
+  ["/api/ai/faq", "produits"],
   ["/api/orchestrator", "marketing"],
   ["/api/mcp/publications", "marketing"],
   ["/api/mcp/v1", null], // serveur MCP des IA externes : jeton OAuth, droits dans lib/controle-ia
@@ -95,7 +102,9 @@ const MODULES_API: [string, ModuleKey | null][] = [
   // équipe, paramètres, boutique
   ["/api/equipe", "equipe"],
   ["/api/tenant", "parametres"],
-  ["/api/tenants", "parametres"],
+  ["/api/tenants/moi-complet", "parametres"],
+  ["/api/tenants/moi", "parametres"],
+  ["/api/tenants", null], // PATCH : boutique (design, publication) ou paramètres selon les champs, contrôlé dans la route
   ["/api/domaine", "parametres"],
   ["/api/connecteurs", "parametres"],
   ["/api/themes", "boutique"],
@@ -105,6 +114,32 @@ const MODULES_API: [string, ModuleKey | null][] = [
 export function moduleApi(pathname: string): ModuleKey | null {
   for (const [prefixe, module] of MODULES_API) {
     if (pathname === prefixe || pathname.startsWith(prefixe + "/")) return module;
+  }
+  return null;
+}
+
+// Fonctions payantes promises à partir d'un palier (lib/plans-catalogue.ts) : avant,
+// seul le menu les verrouillait. Contrôlées dans proxy.ts pour les actions
+// (POST/PUT/PATCH) ; lecture et suppression restent ouvertes, un compte rétrogradé
+// consulte et nettoie ses données. Codes promo et popups restent au Palier 0.
+const PALIERS_API: [string, Palier][] = [
+  // Marketing & campagnes (email, SMS, réseaux sociaux, publicité) et automatisations : Pro
+  ["/api/campagnes", "palier1"],
+  ["/api/email", "palier1"],
+  ["/api/sms", "palier1"],
+  ["/api/automation", "palier1"],
+  ["/api/posts", "palier1"],
+  // Génération de médias payante (clé plateforme) : Illimité
+  ["/api/ai/video", "palier2"],
+  ["/api/ai/voix-off", "palier2"],
+  ["/api/medias", "palier2"],
+  ["/api/orchestrator/contenu", "palier2"],
+];
+
+export function palierApi(pathname: string, method: string): Palier | null {
+  if (method === "GET" || method === "HEAD" || method === "DELETE") return null;
+  for (const [prefixe, palier] of PALIERS_API) {
+    if (pathname === prefixe || pathname.startsWith(prefixe + "/")) return palier;
   }
   return null;
 }

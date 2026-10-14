@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { hasGemini } from "@/lib/llm-client";
+import { hasGemini, hasDeepSeek } from "@/lib/llm-client";
 import { runAxia } from "@/lib/axia/engine";
 import { requireNiveau } from "@/lib/permissions-server";
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
@@ -22,13 +22,14 @@ const schema = z.object({
 export async function GET() {
   const acces = await accesSourcing();
   if (acces instanceof NextResponse) return acces;
-  return NextResponse.json({ iaDisponible: hasGemini() });
+  return NextResponse.json({ iaDisponible: hasGemini() || hasDeepSeek() });
 }
 
 export async function POST(req: Request) {
   const acces = await accesSourcing();
   if (acces instanceof NextResponse) return acces;
-  if (!hasGemini()) return erreur("L'assistant est momentanément indisponible. Le calcul rapide et le suivi des commandes, plus bas, fonctionnent sans lui.", 503);
+  // DeepSeek seul suffit : runAxia bascule dessus quand Gemini manque ou échoue.
+  if (!hasGemini() && !hasDeepSeek()) return erreur("L'assistant est momentanément indisponible. Le calcul rapide et le suivi des commandes, plus bas, fonctionnent sans lui.", 503);
   const rl = aiLimiter.check(`${acces.tenantId}:${getClientIp(req)}`);
   if (!rl.success) return rateLimitResponse(rl.reset);
   try {

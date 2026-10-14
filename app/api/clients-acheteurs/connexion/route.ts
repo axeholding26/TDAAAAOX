@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createHash, randomBytes, randomInt } from "crypto";
 import { envoyerCodeAcheteur, hasResend } from "@/lib/email";
-import { cleTelephone } from "@/lib/utils";
 
 // Espace client sans mot de passe, deux portes :
 //  - lien personnel : le lien de suivi reçu après la commande (jeton secret) ouvre
-//    le compte du TÉLÉPHONE de cette commande — rien à envoyer, marche sans service ;
+//    CETTE commande seulement — rien à envoyer, marche sans service ;
 //  - email : code à 6 chiffres reçu par email (achats digitaux, sans lien de suivi).
 // Un compte ne voit que les commandes de l'identifiant prouvé — jamais email +
 // téléphone mêlés (sinon commander avec son email et le numéro d'un autre
@@ -21,7 +20,7 @@ const empreinte = (code: string) => createHash("sha256").update(code + process.e
 // Colonne `code` = "<empreinte>:<essais ratés>" : le compteur limite les essais sans changer le schéma.
 const lire = (v: string) => { const [h, n] = v.split(":"); return { h, essais: Number(n) || 0 }; };
 
-const INDISPONIBLE = "L'envoi du code par email n'est pas encore disponible. Ouvrez le lien de suivi reçu sur WhatsApp après votre commande, puis « Voir toutes mes commandes ».";
+const INDISPONIBLE = "L'envoi du code par email n'est pas encore disponible. Ouvrez le lien de suivi reçu sur WhatsApp après votre commande pour la retrouver.";
 
 const session = () => ({ token: randomBytes(32).toString("hex"), tokenExpire: new Date(Date.now() + 30 * 24 * 3600_000) });
 
@@ -37,17 +36,13 @@ export async function POST(req: Request) {
   if (!tenant) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
 
   if (lien) {
-    // Jeton de 40 caractères aléatoires, connu du seul client (et du marchand, qui voit déjà
-    // ses commandes) ; le livreur ne le reçoit jamais (voir /api/commandes/[id]).
-    const commande = await prisma.commande.findFirst({ where: { tenantId: tenant.id, trackingToken: String(lien) }, select: { clientTelephone: true, clientNom: true } });
-    const cle = cleTelephone(commande?.clientTelephone);
-    if (!commande || cle.length < 9) return NextResponse.json({ error: "Lien invalide ou expiré" }, { status: 404 });
-    // Compte téléphone : email null, telephone = clé (ses commandes sont retrouvées par elle).
-    const existant = await prisma.compteAcheteur.findFirst({ where: { tenantId: tenant.id, email: null, telephone: cle }, select: { id: true } });
-    const compte = existant
-      ? await prisma.compteAcheteur.update({ where: { id: existant.id }, data: session() })
-      : await prisma.compteAcheteur.create({ data: { tenantId: tenant.id, email: null, telephone: cle, nom: commande.clientNom || "Client", ...session() } });
-    return NextResponse.json({ ok: true, token: compte.token, compte: { id: compte.id, email: null, nom: compte.nom } });
+    // Jeton de 40 caractères aléatoires, connu du seul client (et du marchand) ; le livreur
+    // ne le reçoit jamais (voir /api/commandes/[id]). Il n'ouvre QUE sa commande : un même
+    // numéro de téléphone ne prouve rien (n'importe qui peut commander en COD avec le
+    // numéro d'un autre) — l'historique complet passe par le code email.
+    const commande = await prisma.commande.findFirst({ where: { tenantId: tenant.id, trackingToken: String(lien) }, select: { clientNom: true } });
+    if (!commande) return NextResponse.json({ error: "Lien invalide ou expiré" }, { status: 404 });
+    return NextResponse.json({ ok: true, token: `lien:${String(lien)}`, compte: { id: null, email: null, nom: commande.clientNom || "Client" } });
   }
 
   const email = String(brut ?? "").trim().toLowerCase();

@@ -18,7 +18,8 @@ const schemaChat = z.object({
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session) {
+    // Module marketing contrôlé par proxy.ts, qui exige une boutique active.
+    if (!session || !(session.user as any)?.tenantId) {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 

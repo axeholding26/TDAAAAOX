@@ -83,7 +83,7 @@ Client en colère, commande perdue, litige → tu restes calme et factuel. Tu pr
 
 ─── MARCHÉ ──────────────────────────────────────────────────────────────────
 
-Afrique francophone (Sénégal, Côte d'Ivoire, Cameroun, etc.) + diaspora. Paiement mobile (Wave, Orange Money, MTN MoMo). WhatsApp = canal de vente #1. Les prix sont en XAF ou selon la devise de la boutique.
+Afrique francophone (Sénégal, Côte d'Ivoire, Cameroun, etc.) + diaspora. Paiements encaissés par Axso : Orange Money et MTN Mobile Money (via NotchPay) + paiement à la livraison — ne cite aucun autre moyen de paiement. WhatsApp = canal de vente #1. Les prix sont dans la devise de la boutique.
 
 ─── EXEMPLES BONS VS MAUVAIS ────────────────────────────────────────────────
 
@@ -783,7 +783,7 @@ const OUTILS: OutilDef[] = [
   {
     name: "router_commande_fournisseur",
     tier: "palier2",
-    description: "Route automatiquement une commande vers le fournisseur dropshipping approprié",
+    description: "Prépare une commande fournisseur (en attente) pour une commande dont les produits viennent d'un fournisseur dropshipping — rien n'est envoyé : le marchand la transmet depuis Sourcing → Commandes fournisseurs",
     parameters: {
       type: "object" as const,
       properties: {
@@ -933,14 +933,16 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
             slug: prodSlug,
             description: args.description || "",
             prix: args.prix,
-            stock: args.stock ?? 10,
+            // Stock strict : celui fourni, sinon 0 (invendable) — jamais inventé.
+            stock: Math.max(0, Math.floor(Number(args.stock) || 0)),
             categorie: args.categorie,
             images,
             tags: args.tags || [],
             actif: true,
           },
         });
-        return { succes: true, resultat: `✅ Produit "${args.nom}" créé à ${args.prix}${images.length ? " avec image IA" : ""}` };
+        const stockNul = !(Number(args.stock) > 0) ? " — stock à 0 : invendable tant que le stock réel n'est pas renseigné" : "";
+        return { succes: true, resultat: `✅ Produit "${args.nom}" créé à ${args.prix}${images.length ? " avec image IA" : ""}${stockNul}` };
       }
 
       case "lister_produits": {
@@ -1423,10 +1425,10 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         if (!fournisseurId) return { succes: false, resultat: "Aucun fournisseur dropshipping associé aux produits de cette commande." };
         const montantFournisseur = commande.lignes.reduce((s: number, l: any) => s + ((l.produit?.prixFournisseur ?? 0) * l.quantite), 0);
         const cf = await (prisma as any).commandeFournisseur.create({
-          data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "envoye", envoiAuto: true },
+          data: { tenantId, commandeId: commande.id, fournisseurId, montantFournisseur, statut: "en_attente" /* rien n'est transmis automatiquement */ },
         }).catch(() => null);
-        if (!cf) return { succes: false, resultat: "Erreur lors du routage." };
-        return { succes: true, resultat: `✅ Commande ${commande.numero} routée vers le fournisseur — Montant fournisseur estimé: ${montantFournisseur.toLocaleString()} ${commande.devise}` };
+        if (!cf) return { succes: false, resultat: "Erreur lors de la préparation de la commande fournisseur." };
+        return { succes: true, resultat: `Commande fournisseur préparée pour la commande ${commande.numero} (montant fournisseur estimé : ${montantFournisseur.toLocaleString()} ${commande.devise}). Elle n'est PAS encore envoyée : à transmettre au fournisseur depuis Sourcing → Commandes fournisseurs.` };
       }
 
       case "lister_commandes_fournisseur": {
@@ -1545,7 +1547,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
             [{ role: "user", content: tacheComplete }],
             agentTools,
             tenantId,
-            executeOutil,
+            avecAccord, // actions sensibles du sous-agent → demande d'accord
             6,
           );
           const reponse = result.reponse || result.actions.join("\n") || "L'agent n'a pas pu compléter la tâche.";
@@ -1569,6 +1571,14 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
     return { succes: false, resultat: `Erreur: ${err.message}` };
   }
 };
+
+// Actions sensibles : demande d'accord dans la bulle AXIA, comme pour AXIA plein écran.
+// Une fois autorisées, elles sont exécutées par l'implémentation d'AXIA (mêmes noms d'outils).
+// Utilisé aussi par les sous-agents de deleguer_vers_agent : même circuit d'accord.
+const avecAccord: ToolExecutor = (nom, args, tid) =>
+  estSensible(nom) ? demanderConfirmation(tid, nom, args)
+  : OUTILS_DELEGUES_AXIA.has(nom) ? executerOutilDirect(nom, args, tid)
+  : executeOutil(nom, args, tid);
 
 export const maxDuration = 60;
 
@@ -1601,12 +1611,6 @@ export async function POST(request: Request) {
 
     const { plan } = await planActif(tenantId);
     const droits = await permissionsSession(session);
-    // Actions sensibles : demande d'accord dans la bulle AXIA, comme pour AXIA plein écran.
-    // Une fois autorisées, elles sont exécutées par l'implémentation d'AXIA (mêmes noms d'outils).
-    const avecAccord: ToolExecutor = (nom, args, tid) =>
-      estSensible(nom) ? demanderConfirmation(tid, nom, args)
-      : OUTILS_DELEGUES_AXIA.has(nom) ? executerOutilDirect(nom, args, tid)
-      : executeOutil(nom, args, tid);
     const { outils, executer } = restreindreAxia(filtrerOutilsParPalier(OUTILS, plan), avecAccord, droits);
     const promptFinal = SYSTEM_PROMPT + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "")
       + `\n\n${CONSIGNE_ACCORD}\n\n${consigneLangue(await getLangue())}`;

@@ -7,8 +7,8 @@ import { Package, Download, LogOut, User, Eye } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 interface Compte {
-  id: string;
-  email: string | null; // null : compte ouvert par le lien personnel (commandes retrouvées par le téléphone)
+  id: string | null;
+  email: string | null; // null : ouvert par le lien de suivi (cette commande seulement)
   nom: string;
   telephone: string | null;
 }
@@ -61,7 +61,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
   const [code, setCode] = useState("");
 
   const loadData = useCallback(async (token: string) => {
-    const res = await fetch(`/api/clients-acheteurs/commandes?token=${token}&slug=${slug}`);
+    const res = await fetch(`/api/clients-acheteurs/commandes?token=${encodeURIComponent(token)}&slug=${slug}`);
     const data = await res.json();
     if (res.ok) {
       setCompte(data.compte);
@@ -152,7 +152,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
 
           {view === "identifiant" && (
             <p className="text-center text-[12px] text-[#888] mt-4 leading-relaxed">
-              {t("Commandé sans email ? Ouvrez le lien de suivi reçu sur WhatsApp après votre commande, puis touchez « Voir toutes mes commandes ».")}
+              {t("Commandé sans email ? Ouvrez le lien de suivi reçu sur WhatsApp après votre commande pour la retrouver.")}
             </p>
           )}
 

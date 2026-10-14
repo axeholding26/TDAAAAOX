@@ -11,6 +11,7 @@ import { verifierPaiementNotchPay, paiementCouvre } from "./notchpay";
 import { envoyerConfirmationCommande, envoyerAlerteNouvelleCommande } from "./email";
 import { PAIEMENT } from "./commandes";
 import { compterVentes } from "./stock";
+import { rembourserCommande } from "./remboursement";
 import { publier } from "./controle-ia/evenements";
 
 export const NOTE_PRIX_ACHAT_MANQUANT = "Prix d'achat à renseigner : le montant fournisseur est incomplet.";
@@ -66,6 +67,8 @@ function fraisNotchPay(transaction: any): number {
 /**
  * `transactionEvenement` : données du webhook signé, utilisées seulement si l'API
  * NotchPay ne répond pas. Sans transaction vérifiable, rien n'est confirmé.
+ * Rejouable : un appel répété sur une commande déjà payée reprend seulement la
+ * finalisation (crédit, livraison digitale, fournisseurs), qui est idempotente.
  */
 export async function confirmerPaiementCommande(commandeId: string, reference: string, transactionEvenement?: any) {
   const commande = await prisma.commande.findUnique({
@@ -76,7 +79,11 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     },
   });
   if (!commande) return;
-  if (commande.paiementStatut !== PAIEMENT.ATTENTE && commande.paiementStatut !== PAIEMENT.ECHOUE) return; // déjà traité (idempotence) ou remboursé
+  if (commande.paiementStatut === PAIEMENT.PAYE) {
+    if (reference === commande.paiementReference || reference === `ORD-${commandeId}`) return finaliserPaiementCommande(commandeId);
+    return signalerDoublePaiement(commande, reference);
+  }
+  if (commande.paiementStatut !== PAIEMENT.ATTENTE && commande.paiementStatut !== PAIEMENT.ECHOUE) return; // remboursée
 
   // Le montant réellement payé est relu chez NotchPay : une transaction « complete »
   // d'un autre montant, d'une autre devise ou d'une autre commande ne paie pas celle-ci.
@@ -90,18 +97,30 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     return;
   }
 
-  const tauxCommission = commande.tenant.commissionRate ?? 0.1;
   const fraisPasserelle = fraisNotchPay(transaction);
 
   // Passage à « payé » ATOMIQUE : le webhook NotchPay et la page de confirmation
-  // peuvent appeler cette fonction en même temps — un seul des deux continue,
-  // sinon le wallet serait crédité deux fois.
+  // peuvent appeler cette fonction en même temps — un seul des deux continue.
   const pris = await prisma.commande.updateMany({
     where: { id: commandeId, paiementStatut: { in: [PAIEMENT.ATTENTE, PAIEMENT.ECHOUE] } },
     data: { paiementStatut: PAIEMENT.PAYE, paiementReference: reference },
   });
   if (pris.count === 0) return;
   await prisma.$transaction((tx) => compterVentes(tx, commandeId, 1));
+
+  // Commande annulée par le marchand avant que le client ne valide son paiement :
+  // jamais ressuscitée, l'argent est rendu tout de suite sur le moyen d'origine.
+  if (commande.statut === "annulee") {
+    const r = await rembourserCommande({ commandeId, tenantId: commande.tenantId, motif: `Paiement reçu après l'annulation #${commande.numero}`, restock: false });
+    await notifierMarchand({
+      tenantId: commande.tenantId, commandeId, type: "commande_remboursee",
+      titre: `Paiement tardif sur la commande annulée #${commande.numero}`,
+      message: r.ok ? "Le client a payé après l'annulation : il a été remboursé automatiquement via NotchPay." : `Le client a payé après l'annulation et le remboursement automatique a échoué (${r.error}). Rembourse-le depuis la commande.`,
+      lien: `/dashboard/commandes/${commandeId}`,
+    }).catch(() => {});
+    return;
+  }
+
   // Bus AXSO CONTROL (automatisations, webhooks) : part après la réponse, sans effet sur le paiement.
   for (const type of ["order.paid", "payment.completed"] as const) publier(commande.tenantId, type, { commandeId, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: "en_ligne", reference });
 
@@ -110,6 +129,9 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     await prisma.codePromo.update({ where: { id: commande.codePromoId }, data: { utilisations: { increment: 1 } } }).catch(() => {});
   }
 
+  // L'argent et les accès d'abord : les notifications ne doivent jamais les retarder ni les empêcher.
+  await finaliserPaiementCommande(commandeId, fraisPasserelle);
+
   await notifierMarchand({
     tenantId: commande.tenantId,
     type: "nouvelle_commande",
@@ -117,7 +139,7 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     message: `${commande.clientNom} · ${commande.lignes.length} article(s) · ${formatMontant(commande.montantTotal, commande.devise)} · payé en ligne`,
     lien: `/dashboard/commandes/${commande.id}`,
     commandeId: commande.id,
-  });
+  }).catch(() => {});
 
   const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
@@ -146,41 +168,9 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     }).catch(() => {});
   }
 
-  if (hasDigital) {
-    await traiterPaiementDigital({
-      commande: {
-        id: commande.id,
-        tenantId: commande.tenantId,
-        clientEmail: commande.clientEmail ?? "", // digital : email obligatoire à la commande
-        clientNom: commande.clientNom,
-        montantTotal: commande.montantTotal,
-        devise: commande.devise,
-      },
-      lignes: commande.lignes.map((l) => ({ produitId: l.produitId, produit: l.produit })),
-      reference,
-      tauxCommission,
-      fraisPasserelle,
-    });
-  } else {
-    // Dropshipping payé : confirmé, puis expédié par le fournisseur (cycle de livraison normal).
-    await prisma.commande.update({ where: { id: commandeId }, data: { statut: "confirmee" } });
-    await routerVersFournisseurs(commandeId, commande.tenantId).catch((e) => console.error("[routerVersFournisseurs]", e));
-    await crediterWallet({
-      tenantId: commande.tenantId,
-      montantBrut: commande.montantTotal,
-      tauxCommission,
-      devise: commande.devise,
-      description: `Paiement reçu #${commande.numero}`,
-      commandeId: commande.id,
-      reference,
-      fraisPasserelle,
-    }).catch(() => {});
-  }
-
   // Programme d'affiliation B2C : s'applique à TOUTE commande payée en ligne
-  // (digitale ou physique), pas seulement au digital — la vente est acquise
-  // immédiatement ici (paiement en ligne confirmé), donc enregistrement +
-  // capture directe (pas d'attente de livraison comme pour le COD).
+  // (digitale ou physique) — la vente est acquise immédiatement ici, donc
+  // enregistrement + capture directe (pas d'attente de livraison comme pour le COD).
   await enregistrerConversionAffiliation({
     commande: {
       id: commande.id,
@@ -193,4 +183,70 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
     lignes: commande.lignes.map((l) => ({ produitId: l.produitId, prix: l.prix, quantite: l.quantite })),
   }).catch(() => {});
   await capturerCommissionAffiliation(commande.id).catch(() => {});
+}
+
+/**
+ * Ce qu'une commande payée en ligne doit produire : accès digitaux, ou confirmation +
+ * commande fournisseur (dropshipping), puis crédit du portefeuille marchand.
+ * Idempotent (crédit unique par commande, livraison digitale et commandes fournisseur
+ * non recréées) : rejoué par le webhook, la page de retour et la réconciliation quotidienne
+ * tant qu'une étape a échoué. `fraisPasserelle` inconnu (rejeu) : relu chez NotchPay.
+ */
+export async function finaliserPaiementCommande(commandeId: string, fraisPasserelle?: number) {
+  const commande = await prisma.commande.findUnique({
+    where: { id: commandeId },
+    include: { tenant: { select: { commissionRate: true } }, lignes: { include: { produit: { select: { id: true, type: true, fichierUrl: true } } } } },
+  });
+  if (!commande || commande.paiementStatut !== PAIEMENT.PAYE || commande.methodePaiement !== "notchpay" || commande.statut === "annulee") return;
+  const reference = commande.paiementReference ?? `ORD-${commandeId}`;
+  const tauxCommission = commande.tenant.commissionRate ?? 0.1;
+  const frais = fraisPasserelle ?? await verifierPaiementNotchPay(reference).then((r) => fraisNotchPay(r.transaction)).catch(() => 0);
+
+  if (commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type))) {
+    await traiterPaiementDigital({
+      commande: {
+        id: commande.id,
+        tenantId: commande.tenantId,
+        clientEmail: commande.clientEmail ?? "", // digital : email obligatoire à la commande
+        clientNom: commande.clientNom,
+        montantTotal: commande.montantTotal,
+        devise: commande.devise,
+      },
+      lignes: commande.lignes.map((l) => ({ produitId: l.produitId, produit: l.produit })),
+      reference,
+      tauxCommission,
+      fraisPasserelle: frais,
+    });
+    return;
+  }
+  // Dropshipping payé : confirmé, puis expédié par le fournisseur (cycle de livraison normal).
+  await prisma.commande.updateMany({ where: { id: commandeId, statut: "en_attente" }, data: { statut: "confirmee" } });
+  await routerVersFournisseurs(commandeId, commande.tenantId);
+  await crediterWallet({
+    tenantId: commande.tenantId,
+    montantBrut: commande.montantTotal,
+    // La livraison n'est pas majorée de la commission : elle revient en entier au marchand.
+    montantHorsCommission: commande.montantLivraison,
+    tauxCommission,
+    devise: commande.devise,
+    description: `Paiement reçu #${commande.numero}`,
+    commandeId: commande.id,
+    reference,
+    fraisPasserelle: frais,
+  });
+}
+
+// Deuxième paiement « complete » sur une commande déjà payée (le client a payé deux fois) :
+// jamais crédité ni ignoré en silence — le marchand est prévenu pour rembourser le client.
+async function signalerDoublePaiement(commande: { id: string; tenantId: string; numero: string; montantTotal: number; devise: string }, reference: string) {
+  const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch(() => null);
+  const refMarchande = transaction?.merchant_reference ?? transaction?.trxref;
+  if (transaction?.status !== "complete" || refMarchande !== `ORD-${commande.id}`) return;
+  console.error("[paiement-commande] DOUBLE PAIEMENT à rembourser", { commandeId: commande.id, reference, montant: transaction.amount, devise: transaction.currency });
+  await notifierMarchand({
+    tenantId: commande.tenantId, commandeId: commande.id, type: "commande_remboursee",
+    titre: `Paiement en double sur la commande #${commande.numero}`,
+    message: `Le client a payé deux fois (${formatMontant(Number(transaction.amount), String(transaction.currency))}, référence ${reference}). Le second paiement n'a pas été crédité : contacte le support Axso pour le lui rendre.`,
+    lien: `/dashboard/commandes/${commande.id}`,
+  }).catch(() => {});
 }

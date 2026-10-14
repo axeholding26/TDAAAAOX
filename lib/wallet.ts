@@ -7,6 +7,7 @@ import { versXAF } from "./devise-convert";
 import { tauxDuJour } from "./taux-change";
 import { expirationApresPaiement } from "./abonnement";
 import { initierTransfertNotchPay, verifierTransfertNotchPay, hasNotchPay } from "./notchpay";
+import { partVendeur } from "./pricing";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ export interface CreditWalletParams {
   // Frais de traitement NotchPay réels sur cette transaction (jamais déduits du
   // vendeur — uniquement de la commission Axso, qui est la seule chose qui les couvre).
   fraisPasserelle?: number;
+  // Part du montant payé qui n'a jamais été majorée de la commission (frais de livraison) : reversée en entier au vendeur.
+  montantHorsCommission?: number;
 }
 
 export interface RetraitParams {
@@ -174,14 +177,20 @@ export async function crediterWallet(
 ): Promise<{ montantNet: number; montantCommission: number }> {
   const { tenantId, montantBrut, tauxCommission, devise, description, commandeId, reference, fraisPasserelle } = params;
 
-  // montantBrut = ce que le client a payé, déjà majoré de la commission côté storefront
-  // (prix vendeur × (1 + tauxCommission)) — on extrait donc le net du vendeur par
-  // division, on ne déduit RIEN de son prix : le vendeur reçoit exactement son prix.
-  const montantNet = Math.round((montantBrut / (1 + tauxCommission)) * 100) / 100;
-  const montantCommission = Math.round((montantBrut - montantNet) * 100) / 100;
+  // montantBrut = ce que le client a payé : produits majorés de la commission côté storefront
+  // (prix vendeur × (1 + tauxCommission)) + livraison non majorée. On extrait le net du vendeur
+  // par division sur la seule part majorée : le vendeur reçoit exactement son prix et sa livraison.
+  // FCFA et autres monnaies sans centimes : arrondi à l'unité.
+  const { montantNet, montantCommission } = partVendeur(montantBrut, params.montantHorsCommission ?? 0, tauxCommission, devise);
 
   const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
-  await prisma.$transaction(async (tx) => {
+  const credite = await prisma.$transaction(async (tx) => {
+    // Une commande n'est créditée qu'une fois, même si sa finalisation est rejouée
+    // (webhook, page de retour, réconciliation) : verrou sur la commande, puis contrôle.
+    if (commandeId) {
+      await tx.$queryRaw`SELECT id FROM "Commande" WHERE id = ${commandeId} FOR UPDATE`;
+      if (await tx.walletTransaction.findFirst({ where: { commandeId, type: "CREDIT" }, select: { id: true } })) return false;
+    }
     const wallet = await tx.wallet.upsert({
       where: { tenantId },
       create: {
@@ -261,9 +270,10 @@ export async function crediterWallet(
         await logFraisPasserelleTx(tx, taux, frais, devise, `Frais NotchPay${reference ? ` · ${reference}` : ""}`, reference);
       }
     }
+    return true;
   });
 
-  return { montantNet, montantCommission };
+  return credite ? { montantNet, montantCommission } : { montantNet: 0, montantCommission: 0 };
 }
 
 // ─── Reprendre une vente en ligne remboursée ──────────────────────────────────

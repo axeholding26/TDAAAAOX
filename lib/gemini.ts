@@ -54,56 +54,15 @@ Nom: ${nom}
 Description: ${description || "Produit digital"}
 
 Réponds uniquement en JSON : [{"question":"...","reponse":"..."},...]
-Les questions doivent être pratiques (accès, remboursement, format, délai…).`,
+Les questions doivent être pratiques (accès, format…). N'invente aucune politique (remboursement, délai, garantie) : si la description ne la donne pas, ne pose pas la question.`,
         },
       ],
       600, true);
     const json = texte.match(/\[[\s\S]*\]/)?.[0];
     return JSON.parse(json || "[]");
   } catch {
-    return [
-      { question: "Comment accéder au contenu après achat ?", reponse: "Un lien de téléchargement vous sera envoyé par email immédiatement après confirmation de votre paiement." },
-      { question: "Puis-je obtenir un remboursement ?", reponse: "Contactez notre support dans les 7 jours suivant l'achat si vous rencontrez un problème avec votre commande." },
-    ];
-  }
-}
-
-// Générer des avis clients de démonstration à la création d'une boutique —
-// pour qu'une boutique neuve inspire confiance dès le premier jour plutôt
-// que d'afficher une section "Avis" vide. Marqués verifie:false côté
-// appelant (jamais affichés avec un badge "achat vérifié").
-export async function genererAvisDemo(
-  nomBoutique: string,
-  categorie: string,
-  produitsNoms: string[]
-): Promise<Array<{ note: number; titre: string; commentaire: string; clientNom: string }>> {
-  try {
-    const texte = await completion(
-      [
-        { role: "system", content: SYSTEME_PROMPT },
-        {
-          role: "user",
-          content: `Génère 7 avis clients réalistes et variés pour cette boutique africaine :
-Boutique: ${nomBoutique}
-Catégorie: ${categorie}
-Quelques produits: ${produitsNoms.slice(0, 5).join(", ") || "produits variés"}
-
-Avis positifs (note 4 ou 5 sur 5), tons et longueurs variés (certains courts, certains plus détaillés),
-prénoms/noms africains variés et réalistes, français naturel (pas de tournures robotiques).
-
-Réponds uniquement en JSON : [{"note":5,"titre":"...","commentaire":"...","clientNom":"..."},...]`,
-        },
-      ],
-      900, true);
-    const json = texte.match(/\[[\s\S]*\]/)?.[0];
-    const avis = JSON.parse(json || "[]");
-    return Array.isArray(avis) ? avis.slice(0, 8) : [];
-  } catch {
-    return [
-      { note: 5, titre: "Très satisfaite", commentaire: "Commande reçue rapidement, produit conforme à la description. Je recommande !", clientNom: "Aminata D." },
-      { note: 5, titre: "Excellent service", commentaire: "Livraison rapide et bon accueil. Je repasserai commande.", clientNom: "Kwame O." },
-      { note: 4, titre: "Bonne expérience", commentaire: "Produit de qualité, un peu de retard à la livraison mais rien de grave.", clientNom: "Fatou S." },
-    ];
+    // Pas de FAQ inventée (politique de remboursement, délais…) : le marchand la rédige.
+    return [];
   }
 }
 

@@ -164,8 +164,10 @@ export default function BoutiquePage() {
           telephone: form.telephone, adresse: form.adresse,
           logoUrl: form.logoUrl, bannerUrl: form.bannerUrl, themeId: form.themeId,
           metaTitle: form.metaTitle, metaDescription: form.metaDescription,
-          socialLinks: { facebook: form.facebook, instagram: form.instagram, tiktok: form.tiktok, twitter: form.twitter },
+          // Fusion avec l'existant : ces objets JSON portent d'autres clés que ce formulaire ne gère pas
+          socialLinks: { ...(tenant?.socialLinks || {}), facebook: form.facebook, instagram: form.instagram, tiktok: form.tiktok, twitter: form.twitter },
           parametresLivraison: {
+            ...(tenant?.parametresLivraison || {}),
             gratuite: form.livraisonGratuite,
             frais: parseFloat(form.fraisLivraison) || 0,
             minimum: parseFloat(form.livraisonMin) || 0,

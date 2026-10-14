@@ -1,6 +1,7 @@
 // Exécuteur MCP — reçoit un nom d'outil + arguments et l'exécute via le bon connecteur
 import { prisma } from "@/lib/prisma";
 import { lireConnexion, enregistrerConnexion } from "@/lib/connect";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { posterFacebook, posterInstagram, creerCampagneAds, statsPageFacebook } from "./connectors/meta";
 import { envoyerMessageWhatsApp, envoyerTemplateWhatsApp } from "./connectors/whatsapp";
 import { envoyerGmail, rafraichirTokenGoogle } from "./connectors/gmail";
@@ -38,11 +39,12 @@ async function getGmailToken(tenantId: string): Promise<string | null> {
   return cfg.access_token ?? null;
 }
 
-// WhatsApp de la boutique ; `numeroAxso` : à défaut, numéro d'Axso (messages unitaires seulement).
-async function getWhatsApp(tenantId: string, numeroAxso = true): Promise<{ token: string; phoneId: string } | null> {
+// WhatsApp de la boutique uniquement : un envoi marchand ne part jamais du numéro d'Axso
+// (réservé aux notifications système, lib/whatsapp.ts).
+async function getWhatsApp(tenantId: string): Promise<{ token: string; phoneId: string } | null> {
   const cfg = await getConfig(tenantId, "whatsapp");
-  const token = cfg?.accessToken || (numeroAxso ? process.env.WHATSAPP_TOKEN : undefined);
-  const phoneId = (cfg?.config as any)?.phone_number_id || (numeroAxso ? process.env.WHATSAPP_PHONE_NUMBER_ID : undefined);
+  const token = cfg?.accessToken;
+  const phoneId = (cfg?.config as any)?.phone_number_id;
   return token && phoneId ? { token, phoneId } : null;
 }
 
@@ -146,6 +148,10 @@ export async function executerOutilMcp(
     }
 
     // ── WHATSAPP ─────────────────────────────────────────────────────────────
+    // Palier 0 au-delà du quota mensuel : WhatsApp verrouillé (lib/plans-catalogue.ts, FAQ).
+    if (toolName.startsWith("whatsapp_") && await quotaCommandesAtteint(tenantId)) {
+      return { succes: false, resultat: "Quota mensuel de commandes atteint : WhatsApp est verrouillé jusqu'au mois prochain ou au passage au Palier Pro." };
+    }
     if (toolName === "whatsapp_envoyer_message") {
       // Identifiants passés en paramètre : modifier process.env le temps d'un envoi mélangeait
       // les numéros de deux boutiques servies en même temps.
@@ -159,7 +165,7 @@ export async function executerOutilMcp(
 
     if (toolName === "whatsapp_diffusion") {
       // Diffusion marketing : numéro de la boutique uniquement, jamais celui d'Axso.
-      const wa = await getWhatsApp(tenantId, false);
+      const wa = await getWhatsApp(tenantId);
       if (!wa) return { succes: false, resultat: "WhatsApp de la boutique non connecté — allez dans Connecteurs" };
 
       const clients = await prisma.client.findMany({
@@ -193,7 +199,7 @@ export async function executerOutilMcp(
     }
 
     if (toolName === "whatsapp_envoyer_template") {
-      const wa = await getWhatsApp(tenantId, false);
+      const wa = await getWhatsApp(tenantId);
       if (!wa) return { succes: false, resultat: "WhatsApp de la boutique non connecté — allez dans Connecteurs" };
       const res = await envoyerTemplateWhatsApp({ telephone: args.telephone, templateNom: args.template_nom, variables: args.variables }, wa);
       if (!res.succes) return { succes: false, resultat: `Erreur template WhatsApp : ${res.erreur}` };

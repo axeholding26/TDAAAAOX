@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { peutTeleverser } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { categorieFichier, TAILLE_MAX } from "@/lib/types-fichiers";
 import { dossierBoutique } from "@/lib/fichiers-boutique";
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const tenantId = (session?.user as any)?.tenantId as string | undefined;
     if (!session || !tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    if (!(await peutTeleverser(session))) return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
 
     const formData = await req.formData();
     const file = formData.get("file") as File | null;

@@ -354,7 +354,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
             <a href={`/${slug}/mon-compte?lien=${done.trackingToken}`}
               className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-semibold text-sm hover:opacity-80 transition-all opacity-80"
               style={{ color: theme.accent }}>
-              <User size={16} />{" "}{t("Mon compte — toutes mes commandes")}
+              <User size={16} />{" "}{t("Mon espace client")}
             </a>
           )}
         </div>

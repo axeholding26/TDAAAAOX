@@ -124,7 +124,7 @@ export function HeroSection() {
                   <div key={p.nom}>
                     <div className="aspect-square rounded-xl overflow-hidden bg-gray-100"><img src={p.src} alt="" className="w-full h-full object-cover" /></div>
                     <p className="mt-1.5 text-[9.5px] font-semibold text-gray-800 truncate">{tr(p.nom)}</p>
-                    <p className="text-[9.5px] font-extrabold" style={{ color: "#F5A623" }}>{p.prix} XOF</p>
+                    <p className="text-[9.5px] font-extrabold" style={{ color: "#F5A623" }}>{p.prix} FCFA</p>
                   </div>
                 ))}
               </div>
@@ -136,7 +136,7 @@ export function HeroSection() {
             <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#111111" }}><Bell size={15} style={{ color: "#F5A623" }} /></span>
             <div className="min-w-0">
               <p className="text-[12px] font-extrabold text-[#111111]">{tr("Nouvelle commande")}</p>
-              <p className="text-[11px] text-gray-500 truncate">{tr("Sac cabas en cuir")} · 24 900 XOF</p>
+              <p className="text-[11px] text-gray-500 truncate">{tr("Sac cabas en cuir")} · 24 900 FCFA</p>
             </div>
           </div>
 
@@ -145,7 +145,7 @@ export function HeroSection() {
             <span className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#FF7900" }}><Check size={16} className="text-white" strokeWidth={3} /></span>
             <div>
               <p className="text-[12px] font-extrabold text-[#111111]">{tr("Orange Money reçu")}</p>
-              <p className="text-[11px] text-gray-500">+24 900 XOF</p>
+              <p className="text-[11px] text-gray-500">+24 900 FCFA</p>
             </div>
           </div>
 

@@ -3,8 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
-
-const PALIER_PRIX: Record<string, number> = { palier1: 6000, palier2: 20000 };
+import { PALIER_PRIX } from "@/lib/abonnement-paiement";
 
 export async function POST(req: NextRequest) {
   const session = await auth();

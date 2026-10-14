@@ -1,5 +1,6 @@
 // Agent Veille — intelligence marché africain, tendances, pricing concurrentiel
 import { NextRequest, NextResponse } from "next/server";
+import { refusAgentIA } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
@@ -261,6 +262,8 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   const tenantId = (session?.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const refus = await refusAgentIA(session);
+  if (refus) return NextResponse.json({ error: refus.error, message: refus.error }, { status: refus.status });
   const body = schema.parse(await req.json());
   const memoire = await readAllMemory(tenantId, "agent-veille");
 

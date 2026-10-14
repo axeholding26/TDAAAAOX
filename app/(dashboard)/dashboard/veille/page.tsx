@@ -53,27 +53,30 @@ export default function VeillePage() {
     setAnalysing(true);
     setRapport("");
     try {
-      const res = await fetch("/api/ai/universal", {
+      // /api/ai/chat : texte seul, sans outils ni accès au web — l'IA ne voit pas le concurrent.
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [{
             role: "user",
-            content: `Analyse la veille concurrentielle pour ce concurrent/marché : "${form.promptAnalyse}".
+            content: `Voici ce que je sais d'un concurrent/marché : "${form.promptAnalyse}".
+
+Tu n'as AUCUN accès à son site, à ses prix ni à ses chiffres : tu ne connais que ma description ci-dessus. Formule uniquement des HYPOTHÈSES À VÉRIFIER, sans inventer de chiffres, de prix ni de faits sur ce concurrent, et commence par le rappeler en une ligne.
 
 Fournis :
-1. Points forts du concurrent
-2. Points faibles / opportunités pour moi
-3. Stratégie de prix recommandée
-4. Actions à prendre immédiatement
-5. Mots-clés SEO qu'ils utilisent probablement
+1. Points forts possibles du concurrent (à vérifier)
+2. Opportunités possibles pour moi
+3. Comment vérifier ces hypothèses (quoi regarder, où)
+4. Pistes d'actions si elles se confirment
+5. Mots-clés SEO à tester
 
-Format: liste claire avec emojis. Adapté marché africain.`,
+Format: liste claire. Adapté marché africain.`,
           }],
         }),
       });
       const data = await res.json();
-      setRapport(data.reponse || "");
+      setRapport(res.ok && data.reponse ? `Hypothèses IA à vérifier (non basées sur des données réelles du concurrent)\n\n${data.reponse}` : "");
     } catch { toast.error(t("Erreur analyse")); }
     finally { setAnalysing(false); }
   }
@@ -225,7 +228,7 @@ Format: liste claire avec emojis. Adapté marché africain.`,
 
               {rapport && (
                 <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-                  <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><BarChart2 size={12} />{" "}{t("Rapport IA :")}</p>
+                  <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><BarChart2 size={12} />{" "}{t("Hypothèses IA à vérifier — l'IA n'a pas accès aux données du concurrent :")}</p>
                   <pre className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed font-sans">{t(rapport)}</pre>
                 </div>
               )}

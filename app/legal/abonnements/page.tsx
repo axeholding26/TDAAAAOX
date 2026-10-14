@@ -6,39 +6,41 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Conditions d'abonnement — AXSO",
+  title: "Conditions d'abonnement",
 };
 
+const SUPPORT = "Support WhatsApp (lun-ven, 8h-20h)";
 const PLANS = [
-  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement", inclus: ["60 commandes/mois", "1 boutique", "Axia essentielle", "Support communauté"], accent: "#6b7280" },
-  { nom: "Pro", prix: "6 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Commandes illimitées", "Axia avancée", "Analytics", "Support prioritaire"], accent: "#F5A623", popular: true },
-  { nom: "Illimité", prix: "20 000 XOF/mois", engagement: "Mensuel, résiliable à tout moment", inclus: ["Tout inclus sans limite", "Axia complète", "Boutiques illimitées", "Support 24/7"], accent: "#7c3aed" },
+  { nom: "Essentiel", prix: "Gratuit", engagement: "Sans engagement ni limite de durée", inclus: ["60 commandes/mois", "1 boutique", "Axia essentielle", SUPPORT], accent: "#6b7280" },
+  { nom: "Pro", prix: "6 000 FCFA / 30 jours", engagement: "Prépayé, sans renouvellement automatique", inclus: ["Commandes illimitées", "Axia avancée", "Analytics avancés", SUPPORT], accent: "#F5A623", popular: true },
+  { nom: "Illimité", prix: "20 000 FCFA / 30 jours", engagement: "Prépayé, sans renouvellement automatique", inclus: ["Tout inclus sans limite", "Axia complète", "Boutiques illimitées", SUPPORT], accent: "#7c3aed" },
 ];
 
+// Reflète lib/abonnement.ts (planActif, expirationApresPaiement) et lib/abonnement-paiement.ts (30 jours, XAF).
 const SECTIONS = [
   {
     titre: "1. Souscription",
-    contenu: `L'abonnement à AXSO est souscrit en ligne via notre plateforme. Vous choisissez votre plan au moment de l'inscription ou depuis votre tableau de bord. L'activation est immédiate. Le plan Essentiel est gratuit et sans limite de durée.`,
+    contenu: `Vous choisissez votre plan depuis votre tableau de bord (Abonnement). Le plan Essentiel est gratuit, sans limite de durée, et permet jusqu'à 60 commandes par mois calendaire. Les plans Pro et Illimité sont activés dès la confirmation de votre paiement. L'abonnement vaut pour votre compte : toutes les boutiques dont vous êtes propriétaire bénéficient du meilleur plan en cours.`,
   },
   {
-    titre: "2. Facturation",
-    contenu: `Les abonnements payants sont facturés mensuellement, par anticipation, via NotchPay : Mobile Money (Orange Money, MTN MoMo) ou carte bancaire. La facture est émise le 1er de chaque mois et disponible dans votre espace marchand.`,
+    titre: "2. Paiement",
+    contenu: `Les plans payants sont prépayés pour 30 jours, en FCFA, via NotchPay par Orange Money ou MTN Mobile Money. Il n'y a aucun prélèvement automatique : rien n'est débité sans une action de votre part, et il n'y a donc rien à résilier. Pour continuer après 30 jours, vous effectuez simplement un nouveau paiement.`,
   },
   {
-    titre: "3. Résiliation",
-    contenu: `Vous pouvez résilier votre abonnement à tout moment depuis votre tableau de bord (Paramètres > Abonnement > Résilier). La résiliation prend effet à la fin de la période en cours. Aucun remboursement prorata n'est effectué pour le mois en cours, sauf erreur de notre part.`,
+    titre: "3. Renouvellement",
+    contenu: `Si vous renouvelez le même plan avant son expiration, les 30 nouveaux jours s'ajoutent aux jours qu'il vous restait : vous ne perdez aucun jour payé.`,
   },
   {
     titre: "4. Changement de plan",
-    contenu: `Vous pouvez upgrader ou downgrader votre plan à tout moment. L'upgrade est immédiat et proratisé. Le downgrade prend effet à la fin de la période en cours. Un downgrade vers le plan Essentiel est toujours possible gratuitement.`,
+    contenu: `Passer à un autre plan payant prend effet dès la confirmation du paiement, pour 30 jours à compter de ce jour. Ce changement n'est pas proratisé : les jours restants du plan précédent ne sont ni reportés ni remboursés. Revenir au plan Essentiel est gratuit et immédiat depuis votre tableau de bord ; les jours payés restants sont alors perdus.`,
   },
   {
-    titre: "5. Défaut de paiement",
-    contenu: `En cas de défaut de paiement, AXSO adresse une notification et accorde un délai de 7 jours pour régulariser. Passé ce délai, l'accès aux fonctionnalités payantes est suspendu. Les données sont conservées 30 jours supplémentaires pour permettre la régularisation ou l'export.`,
+    titre: "5. Fin de la période payée",
+    contenu: `À la fin des 30 jours, si vous n'avez pas renouvelé, votre compte repasse automatiquement au plan Essentiel. Vos boutiques, produits et commandes sont conservés ; les limites du plan Essentiel s'appliquent de nouveau, notamment 60 commandes par mois. Vous pouvez reprendre un plan payant à tout moment.`,
   },
   {
     titre: "6. Modifications tarifaires",
-    contenu: `AXSO se réserve le droit de modifier ses tarifs. Toute modification est notifiée 30 jours à l'avance par email. Sans opposition dans ce délai, les nouveaux tarifs s'appliquent. Vous restez libre de résilier si les nouveaux tarifs ne vous conviennent pas.`,
+    contenu: `AXSO peut faire évoluer ses tarifs. Une période déjà payée n'est jamais affectée : un nouveau tarif ne s'applique qu'aux paiements suivants.`,
   },
 ];
 
@@ -54,7 +56,7 @@ export default async function AbonnementsPage() {
             <CreditCard size={14} className="inline-block mr-1.5" />{t("Légal")}
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">{t("Conditions d'abonnement")}</h1>
-          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 1er juillet 2026")}</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 14 octobre 2026")}</p>
 
           {/* Plans recap */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">

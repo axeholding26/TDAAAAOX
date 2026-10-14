@@ -7,7 +7,7 @@ import { MANIFESTE_LIBRAIRIE } from "@/lib/axso-design-manifest";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Thèmes — AXSO",
+  title: "Thèmes",
   description: "Choisissez votre design de boutique parmi la bibliothèque AXSO Design — des designs prêts à l'emploi conçus pour l'Afrique.",
 };
 
@@ -103,7 +103,7 @@ export default async function ThemesPage() {
           </div>
 
           <div className="mt-14 text-center">
-            <p className="text-[#808080] text-sm mb-5">{t("Tous les thèmes sont inclus dans tous les plans. Changez à tout moment.")}</p>
+            <p className="text-[#808080] text-sm mb-5">{t("Les designs sont inclus dans tous les plans. À l'inscription, Axia vous en propose 4 adaptés à votre activité : ce sont ceux que vous pourrez ensuite appliquer depuis le Constructeur.")}</p>
             <Link href="/inscription"
               className="inline-block font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105"
               style={{ background: "linear-gradient(135deg,#F5A623,#d4880d)", color: "#080808", boxShadow: "0 8px 30px rgba(245,166,35,0.35)" }}>

@@ -9,6 +9,7 @@
   "crons": [
     { "path": "/api/cron/surveillance-fournisseurs", "schedule": "0 4 * * *" },
     { "path": "/api/cron/pos/alertes", "schedule": "30 4 * * *" },
-    { "path": "/api/cron/automatisations", "schedule": "0 7 * * *" }
+    { "path": "/api/cron/automatisations", "schedule": "0 7 * * *" },
+    { "path": "/api/cron/paiements", "schedule": "0 5 * * *" }
   ]
 }

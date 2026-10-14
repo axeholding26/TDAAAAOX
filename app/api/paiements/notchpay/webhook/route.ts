@@ -1,14 +1,13 @@
 // NotchPay Webhook — point d'entrée unique pour paiements storefront, abonnements et retraits.
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifierSignatureWebhook, verifierPaiementNotchPay, paiementCouvre } from "@/lib/notchpay";
+import { verifierSignatureWebhook } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
-import { appliquerStatutTransfert, activerAbonnementPaye } from "@/lib/wallet";
+import { appliquerStatutTransfert } from "@/lib/wallet";
+import { confirmerPaiementAbonnement, lireRefAbonnement } from "@/lib/abonnement-paiement";
 import { rembourserPaiementCommissionEchoue } from "@/lib/affiliation";
 
 export const maxDuration = 60;
-
-const PALIER_PRIX: Record<string, number> = { palier1: 6000, palier2: 20000 };
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
@@ -45,8 +44,10 @@ export async function POST(req: NextRequest) {
       await traiterEvenementAbonnement(type, merchantRef, notchpayRef, data);
     }
   } catch (err) {
+    // 500 : NotchPay renverra l'événement. Sans danger, tout le traitement est idempotent
+    // (prise atomique de la commande, crédit unique par commande, activation unique par référence).
     console.error("[notchpay/webhook] erreur traitement:", err);
-    // On accuse quand même réception pour éviter les retentatives infinies de NotchPay
+    return NextResponse.json({ error: "Erreur de traitement" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
@@ -70,33 +71,16 @@ async function traiterEvenementCommande(type: string, merchantRef: string, notch
 
 // ─── Achat/renouvellement d'abonnement ────────────────────────────────────────
 async function traiterEvenementAbonnement(type: string, merchantRef: string, notchpayRef: string, data: any) {
-  // Format : SUB-{tenantId}-{plan}-{timestamp}
-  const parts = merchantRef.split("-");
-  const tenantId = parts[1];
-  const plan = parts[2];
-  if (!tenantId || !PALIER_PRIX[plan]) return;
+  const cible = lireRefAbonnement(merchantRef);
+  if (!cible) return;
 
   if (type === "payment.failed" || type === "payment.canceled" || type === "payment.expired") {
-    await prisma.tenant.updateMany({ where: { id: tenantId, planPendingRef: { in: [notchpayRef, merchantRef].filter(Boolean) } }, data: { planPendingRef: null } });
+    await prisma.tenant.updateMany({ where: { id: cible.tenantId, planPendingRef: { in: [notchpayRef, merchantRef].filter(Boolean) } }, data: { planPendingRef: null } });
     return;
   }
-
   if (type !== "payment.complete") return;
-
-  // Le plan n'est activé que si le prix du palier a réellement été payé.
-  const reference = notchpayRef || merchantRef;
-  const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch(() => data);
-  if (!paiementCouvre(transaction, PALIER_PRIX[plan], "XAF")) {
-    console.error("[notchpay/webhook] abonnement refusé : montant insuffisant", { merchantRef, attendu: PALIER_PRIX[plan], recu: transaction?.amount, devise: transaction?.currency, statut: transaction?.status });
-    return;
-  }
-
-  // Revenu d'abonnement = 100% Axso, net du frais de traitement NotchPay réel
-  // (jamais deviné — lu directement sur la transaction).
-  const fees = transaction?.fees;
-  const frais = Array.isArray(fees) ? fees.reduce((s: number, f: any) => s + (Number(f?.amount) || 0), 0) : 0;
-
-  await activerAbonnementPaye({ tenantId, plan, jours: 30, montant: PALIER_PRIX[plan], frais, devise: "XAF", reference });
+  // Le plan n'est activé que si le prix du palier a réellement été payé (relu chez NotchPay).
+  await confirmerPaiementAbonnement(notchpayRef || merchantRef, data);
 }
 
 // ─── Transfert sortant (retrait wallet ou commission d'affilié) ───────────────

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 
 // GET — cash COD collecté par un livreur, non encore remis au marchand.
@@ -12,13 +13,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const userId = (session.user as any)?.id;
   const tenantId = (session.user as any)?.tenantId;
-  const role = (session.user as any)?.role;
 
   const livreur = await prisma.livreur.findUnique({ where: { id } });
   if (!livreur) return NextResponse.json({ error: "Introuvable" }, { status: 404 });
 
   const estLeLivreur = livreur.userId === userId;
-  const estLeMarchand = (role === "owner" || role === "editeur") && livreur.tenantId === tenantId;
+  // Marchand = droit « commandes » sur la boutique du livreur (jamais déduit de User.role).
+  const estLeMarchand = !!tenantId && livreur.tenantId === tenantId && !(await requireNiveau(session, "commandes", "lecture"));
   if (!estLeLivreur && !estLeMarchand) {
     return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }

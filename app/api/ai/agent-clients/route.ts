@@ -1,5 +1,6 @@
 // Agent Clients — segmentation, analyse comportementale, relance personnalisée
 import { NextResponse } from "next/server";
+import { refusAgentIA } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AVEC_EMAIL_REEL } from "@/lib/email";
@@ -232,6 +233,8 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
+    const refus = await refusAgentIA(session);
+    if (refus) return NextResponse.json({ error: refus.error, message: refus.error }, { status: refus.status });
 
     const { messages } = schema.parse(await request.json());
     const result = await runAgent(PROMPT, messages, OUTILS, tenantId, executeOutil);

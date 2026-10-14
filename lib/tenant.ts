@@ -7,8 +7,10 @@ import { COOKIE_APERCU, lireJetonApercu } from "@/lib/builder/apercu";
 /**
  * Ids des boutiques accessibles à un compte : celles qu'il possède
  * (ProprietaireBoutique) et celles où il est membre d'équipe actif.
- * Rattrape au passage le lien propriétaire des comptes créés avant que
- * l'inscription ne l'écrive (User.tenantId renseigné, aucun lien).
+ * La propriété ne se déduit JAMAIS de User.tenantId (boutique active, réécrite
+ * par /api/boutiques/switch, aussi renseignée pour un membre invité) : seul
+ * rattrapage, un compte ancien sans aucune boutique ni équipe, sur une boutique
+ * qui n'a encore aucun propriétaire.
  */
 export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire: string[]; membre: string[] }> {
   const user = await prisma.user.findUnique({
@@ -16,21 +18,18 @@ export async function boutiquesDuCompte(userId: string): Promise<{ proprietaire:
     select: {
       tenantId: true, role: true,
       boutiques: { select: { tenantId: true } },
-      membresEquipe: { where: { statut: "actif" }, select: { tenantId: true } },
+      membresEquipe: { select: { tenantId: true, statut: true } },
     },
   });
   if (!user) return { proprietaire: [], membre: [] };
 
   const proprietaire = user.boutiques.map(b => b.tenantId);
-  if (user.tenantId && (user.role === "owner" || user.role === "admin") && !proprietaire.includes(user.tenantId)) {
-    await prisma.proprietaireBoutique.upsert({
-      where: { userId_tenantId: { userId, tenantId: user.tenantId } },
-      create: { userId, tenantId: user.tenantId, role: "owner" },
-      update: {},
-    });
+  if (user.tenantId && user.role === "owner" && !proprietaire.length && !user.membresEquipe.length
+    && !(await prisma.proprietaireBoutique.findFirst({ where: { tenantId: user.tenantId }, select: { id: true } }))) {
+    await prisma.proprietaireBoutique.create({ data: { userId, tenantId: user.tenantId, role: "owner" } });
     proprietaire.push(user.tenantId);
   }
-  return { proprietaire, membre: user.membresEquipe.map(m => m.tenantId) };
+  return { proprietaire, membre: user.membresEquipe.filter(m => m.statut === "actif").map(m => m.tenantId) };
 }
 
 /**

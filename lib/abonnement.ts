@@ -30,7 +30,7 @@ export async function planActif(tenantId: string): Promise<{ plan: Palier; actif
 }
 
 // Nombre de commandes créées depuis le début du mois calendaire courant —
-// base du quota Palier 0 (30/mois). Compte toutes les commandes reçues, y
+// base du quota Palier 0 (60/mois). Compte toutes les commandes reçues, y
 // compris au-delà du quota (elles continuent d'arriver, voir
 // quotaCommandesAtteint pour ce que le quota bloque réellement) — sauf les
 // paiements en ligne jamais aboutis : la commande est créée avant le paiement,

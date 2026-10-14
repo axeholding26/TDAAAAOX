@@ -1,5 +1,7 @@
 // Agent Livraison — routing livreurs, statuts commandes, exceptions
 import { NextResponse } from "next/server";
+import { refusAgentIA } from "@/lib/permissions-server";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { runAgent, type AgentTool, type ToolExecutor } from "@/lib/agent-runner";
@@ -160,7 +162,8 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
       case "mettre_a_jour_statut": {
         const r = await changerStatutCommande({ commandeId: args.commandeId, statut: args.statut, echecRaison: args.raison, acteur: { type: "marchand", tenantId, source: "axia" } });
         if (!r.ok) return { succes: false, resultat: r.error };
-        if (args.numeroSuivi) await prisma.commande.update({ where: { id: args.commandeId }, data: { numeroSuivi: args.numeroSuivi } });
+        // Clôturer reste permis au-delà du quota Palier 0 (cycle-livraison), pas modifier le suivi.
+        if (args.numeroSuivi && !(await quotaCommandesAtteint(tenantId))) await prisma.commande.updateMany({ where: { id: args.commandeId, tenantId }, data: { numeroSuivi: args.numeroSuivi } });
         return { succes: true, resultat: `✅ Commande ${r.numero} → statut : ${r.statut}` };
       }
 
@@ -193,10 +196,12 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
+    const refus = await refusAgentIA(session);
+    if (refus) return NextResponse.json({ error: refus.error, message: refus.error }, { status: refus.status });
 
     // Mêmes droits qu'à la main, et actions sensibles soumises à l'accord du marchand
-    const refus = await requireNiveau(session, "commandes", "lecture");
-    if (refus) return NextResponse.json({ message: refus.error }, { status: refus.status });
+    const refusNiveau = await requireNiveau(session, "commandes", "lecture");
+    if (refusNiveau) return NextResponse.json({ message: refusNiveau.error }, { status: refusNiveau.status });
     const { messages } = schema.parse(await request.json());
     const executer: ToolExecutor = (nom, args, tid) =>
       estSensible(nom) ? demanderConfirmation(tid, nom, args, "agent-livraison", true) : executeOutil(nom, args, tid);

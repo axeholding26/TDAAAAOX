@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
 import { initierTransfertNotchPay } from "./notchpay";
 import { livrerBundle } from "./bundle-delivery";
+import { notifierMarchand } from "./notifications-marchand";
 
 // ─── Codes ──────────────────────────────────────────────────────────────────
 
@@ -294,10 +295,12 @@ export async function payerCommissionsAffilie(params: {
           data: { statut, reference: (transfer?.reference ?? transfer?.id)?.toString() },
         });
       }
-    } catch {
-      // Le transfert a échoué avant de renvoyer un statut exploitable —
-      // l'affilié ne doit jamais rester "payé" sans avoir reçu l'argent.
-      await rembourserPaiementCommissionEchoue(paiement.id);
+    } catch (err: any) {
+      // Refus explicite de NotchPay : rien n'est parti, le marchand est recrédité.
+      // Toute autre erreur (délai, coupure réseau) : le transfert est peut-être parti —
+      // jamais recrédité à l'aveugle, le statut final arrive par le webhook transfer.*.
+      if (err?.status === 400 || err?.status === 422) await rembourserPaiementCommissionEchoue(paiement.id);
+      else console.error("[affiliation] transfert de commission au statut incertain", paiement.id, err);
     }
   }
 
@@ -376,22 +379,19 @@ export async function traiterPaiementDigital(params: {
     },
   });
 
-  await crediterWallet({
-    tenantId: commande.tenantId,
-    montantBrut: commande.montantTotal,
-    tauxCommission,
-    devise: commande.devise,
-    description: `Vente digitale #${commande.id.slice(-6).toUpperCase()}`,
-    commandeId: commande.id,
-    reference,
-    fraisPasserelle,
-  });
-
-  // Livraison — un mécanisme distinct par type de produit digital.
+  // Livraison — un mécanisme distinct par type de produit digital. Faite AVANT le crédit :
+  // le client a payé, ses accès ne dépendent jamais du portefeuille du marchand.
+  // Rejouable (finalisation reprise après une erreur) : une commande déjà livrée ne l'est pas deux fois.
+  // ponytail: contrôle par commande, pas par produit — une livraison interrompue au milieu ne complète pas les produits restants.
+  const dejaLivree = (await Promise.all([
+    prisma.telechargement.count({ where: { commandeId: commande.id } }),
+    prisma.accesFormation.count({ where: { commandeId: commande.id } }),
+    prisma.cleLicence.count({ where: { commandeId: commande.id } }),
+  ])).some((n) => n > 0);
   const crypto = await import("crypto");
   // Accès à vie par défaut ; seule une durée choisie par le marchand sur le produit le limite.
 
-  for (const produit of produits) {
+  for (const produit of dejaLivree ? [] : produits) {
     try {
       if (produit.type === "digital") {
         // Legacy — un seul fichier direct.
@@ -433,6 +433,15 @@ export async function traiterPaiementDigital(params: {
           });
           if (count) break;
         }
+        if (!(await prisma.cleLicence.count({ where: { commandeId: commande.id, licenceProduitId: produit.licenceProduit.id } }))) {
+          // Clés épuisées entre la commande et le paiement : le client a payé sans recevoir sa clé.
+          await notifierMarchand({
+            tenantId: commande.tenantId, commandeId: commande.id, type: "stock_faible",
+            titre: "Client payé sans clé de licence",
+            message: `Plus aucune clé disponible : ${commande.clientNom} (${commande.clientEmail}) a payé sans recevoir sa clé. Ajoute des clés puis envoie-lui la sienne, ou rembourse la commande.`,
+            lien: `/dashboard/commandes/${commande.id}`,
+          }).catch(() => {});
+        }
       } else if (produit.type === "bundle") {
         // Résout et livre chaque élément inclus (fichier/licence/digital) — déjà
         // implémenté dans lib/bundle-delivery.ts, jamais appelé jusqu'ici.
@@ -448,5 +457,16 @@ export async function traiterPaiementDigital(params: {
   await prisma.commande.update({
     where: { id: commande.id },
     data: { paiementStatut: "completed", statut: "livree", livraisonStatut: "livree", livreeAt: new Date() },
+  });
+
+  await crediterWallet({
+    tenantId: commande.tenantId,
+    montantBrut: commande.montantTotal,
+    tauxCommission,
+    devise: commande.devise,
+    description: `Vente digitale #${commande.id.slice(-6).toUpperCase()}`,
+    commandeId: commande.id,
+    reference,
+    fraisPasserelle,
   });
 }

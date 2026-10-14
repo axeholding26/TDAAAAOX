@@ -6,6 +6,7 @@
  */
 import {
   hasGemini,
+  hasDeepSeek,
   completionWithToolsAuto,
   streamGemini,
   type ToolDefinition,
@@ -75,7 +76,7 @@ export async function runAgent(
   const prevMessages = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
   const synthMessages = [...prevMessages, { role: "user" as const, content: synthMsg }];
 
-  if (hasGemini()) {
+  if (hasGemini() || hasDeepSeek()) { // streamGemini bascule seul sur DeepSeek
     try {
       let reponse = "";
       for await (const token of streamGemini(systemPrompt, synthMessages, 4000)) {
@@ -190,7 +191,7 @@ export function runAgentStream(
         { role: "user", content: synthesisMsg },
       ];
 
-      if (hasGemini()) {
+      if (hasGemini() || hasDeepSeek()) { // streamGemini bascule seul sur DeepSeek
         try {
           for await (const token of streamGemini(systemPrompt, synthMessages, 4000)) {
             send({ type: "token", text: token });

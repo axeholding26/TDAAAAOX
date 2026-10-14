@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refusAgentIA } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -142,6 +143,8 @@ export async function POST(request: Request) {
 
     const tenantId = (session.user as any)?.tenantId;
     if (!tenantId) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
+    const refus = await refusAgentIA(session, false);
+    if (refus) return NextResponse.json({ error: refus.error, message: refus.error }, { status: refus.status });
 
     const body = await request.json();
     const { messages } = schema.parse(body);

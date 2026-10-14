@@ -134,14 +134,6 @@ export function hrefBoutique(slug: string, lien?: string | null): string | undef
   return `/${slug}/${l}`;
 }
 
-// Clé d'un numéro de téléphone : ses 9 derniers chiffres. Même numéro avec ou sans
-// indicatif, espaces ou tirets (+237 6 99 12 34 56 = 699123456 ; +33 6… = 06…).
-// ponytail: 9 chiffres = numéros nationaux de 9 chiffres (CM, SN, FR…) ; un pays à 8 chiffres
-// saisi sans indicatif ne correspondrait pas — passer à une table d'indicatifs si besoin.
-export function cleTelephone(tel?: string | null): string {
-  return (tel ?? "").replace(/\D/g, "").slice(-9);
-}
-
 // ── Adresse des boutiques : sous-domaine (modèle Shopify) — nom.axsoafrica.com ──
 // Actif dès que NEXT_PUBLIC_AXSO_DOMAIN est un vrai domaine (DNS générique *.domaine) ;
 // sur *.vercel.app aucun sous-domaine générique n'existe : on reste en domaine/nom.

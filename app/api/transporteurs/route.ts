@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -47,6 +48,8 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
     const { code, actif, apiKey, tarif } = body;
+    if (!tenantId) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+    if (await quotaCommandesAtteint(tenantId)) return NextResponse.json({ error: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", message: "Quota de commandes du Palier 0 atteint ce mois-ci — passez à un palier supérieur pour continuer à gérer vos commandes.", code: "quota_atteint" }, { status: 403 });
     if (!code) return NextResponse.json({ message: "code requis" }, { status: 400 });
 
     const tenant = await prisma.tenant.findUnique({

@@ -495,8 +495,8 @@ export default function CreerFichierPage() {
       const id: string = dataP.produit.id;
       setProduitId(id);
 
-      // 2. Enregistrer la config fichier
-      await fetch(`/api/produits/digitaux/${id}`, {
+      // 2. Enregistrer la config fichier (chaque étape vérifiée : pas de « publié » si l'une échoue)
+      const resC = await fetch(`/api/produits/digitaux/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -508,23 +508,26 @@ export default function CreerFichierPage() {
           },
         }),
       });
+      if (!resC.ok) throw new Error(tr("Produit créé en brouillon, mais ses réglages n'ont pas été enregistrés"));
 
       // 3. Rattacher les fichiers uploadés
       if (etat.fichiers.length > 0) {
-        await fetch(`/api/produits/digitaux/${id}/fichiers`, {
+        const resF = await fetch(`/api/produits/digitaux/${id}/fichiers`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fichiers: etat.fichiers }),
         });
+        if (!resF.ok) throw new Error(tr("Produit créé en brouillon, mais ses fichiers n'ont pas été rattachés"));
       }
 
       // 4. Publier si demandé
       if (publier) {
-        await fetch(`/api/produits/digitaux/${id}`, {
+        const resPub = await fetch(`/api/produits/digitaux/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
+        if (!resPub.ok) throw new Error(tr("Produit créé en brouillon, mais la publication a échoué"));
         toast.success(tr("Produit publié avec succès !"));
         router.push(`/dashboard/produits/${id}`);
       } else {
@@ -542,11 +545,12 @@ export default function CreerFichierPage() {
       // Produit déjà créé → juste publier
       setSaving(true);
       try {
-        await fetch(`/api/produits/digitaux/${produitId}`, {
+        const res = await fetch(`/api/produits/digitaux/${produitId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ actif: true }),
         });
+        if (!res.ok) throw new Error();
         toast.success(tr("Produit publié !"));
         router.push(`/dashboard/produits/${produitId}`);
       } catch { toast.error(tr("Erreur lors de la publication")); }

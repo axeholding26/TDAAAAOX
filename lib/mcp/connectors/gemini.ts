@@ -1,7 +1,8 @@
 // Connecteur MCP Gemini (Google) — génération de texte, email HTML, traduction, analyse
 // Chaque tenant peut utiliser sa propre clé API Gemini ou la clé globale Axso
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
+// gemini-3.5-flash refuse thinkingBudget:0 (400) : niveau minimal à la place (voir lib/llm-client.ts).
 
 export interface GeminiResult {
   succes: boolean;
@@ -28,7 +29,7 @@ export async function genererTexte(params: {
     const response = await client.models.generateContent({
       model: MODEL,
       contents: [{ role: "user", parts: [{ text: params.prompt }] }],
-      config: { systemInstruction, maxOutputTokens: params.maxTokens ?? 1024, thinkingConfig: { thinkingBudget: 0 } },
+      config: { systemInstruction, maxOutputTokens: params.maxTokens ?? 1024, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     return { succes: true, resultat: response.text ?? "" };
   } catch (err: any) {
@@ -64,7 +65,7 @@ Retourne UNIQUEMENT le HTML complet, sans commentaires.`;
     const response = await client.models.generateContent({
       model: MODEL,
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { maxOutputTokens: 4096, thinkingConfig: { thinkingBudget: 0 } },
+      config: { maxOutputTokens: 4096, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     const html = response.text ?? "";
     return { succes: true, resultat: html, donnees: { longueur: html.length } };
@@ -95,7 +96,7 @@ Style : persuasif, adapté au e-commerce africain, 80-120 mots, mets en avant la
     const response = await client.models.generateContent({
       model: MODEL,
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
+      config: { maxOutputTokens: 512, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     return { succes: true, resultat: response.text ?? "" };
   } catch (err: any) {
@@ -128,7 +129,7 @@ Marché : Afrique francophone. Ton local, authentique, engageant.`;
     const response = await client.models.generateContent({
       model: MODEL,
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: { maxOutputTokens: 768, thinkingConfig: { thinkingBudget: 0 } },
+      config: { maxOutputTokens: 768, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     return { succes: true, resultat: response.text ?? "" };
   } catch (err: any) {
@@ -165,7 +166,7 @@ export async function traduire(params: {
         role: "user",
         parts: [{ text: `Traduis ce texte du ${source} vers le ${cible}. Retourne UNIQUEMENT la traduction, sans introduction ni explication :\n\n${params.texte}` }],
       }],
-      config: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
+      config: { maxOutputTokens: 1024, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     const traduction = response.text ?? "";
     return { succes: true, resultat: traduction, donnees: { langue: cible } };
@@ -198,7 +199,7 @@ export async function analyserImageProduit(params: {
           { text: question },
         ],
       }],
-      config: { maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } },
+      config: { maxOutputTokens: 512, thinkingConfig: { thinkingLevel: ThinkingLevel.MINIMAL } },
     });
     return { succes: true, resultat: response.text ?? "" };
   } catch (err: any) {

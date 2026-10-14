@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
-import { commandesParTelephone } from "@/lib/compte-acheteur";
 
 // GET /api/clients-acheteurs/commandes?token=xxx&slug=xxx
 export async function GET(req: Request) {
@@ -14,20 +13,25 @@ export async function GET(req: Request) {
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
   if (!tenant) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
 
-  const compte = await prisma.compteAcheteur.findFirst({
+  // Session ouverte par un lien de suivi : uniquement CETTE commande (voir connexion/route.ts).
+  const lien = token.startsWith("lien:") ? token.slice(5) : null;
+  const compteLien = lien
+    ? await prisma.commande.findFirst({ where: { tenantId: tenant.id, trackingToken: lien }, select: { id: true, clientNom: true } })
+    : null;
+  // Anciennes sessions « téléphone » (email null) : refusées, elles ouvraient toutes les
+  // commandes d'un numéro sans preuve de possession.
+  const compte = lien ? null : await prisma.compteAcheteur.findFirst({
     where: {
       token,
       tenantId: tenant.id,
       tokenExpire: { gt: new Date() },
+      email: { not: null },
     },
   });
 
-  if (!compte) return NextResponse.json({ error: "Session expirée" }, { status: 401 });
+  if (!compte && !compteLien) return NextResponse.json({ error: "Session expirée" }, { status: 401 });
 
-  // Uniquement l'identifiant prouvé à la connexion : l'email, ou le téléphone (compte sans email).
-  const parIdentifiant = compte.email
-    ? { clientEmail: compte.email }
-    : { id: { in: (await commandesParTelephone(tenant.id, compte.telephone ?? "")).map((c) => c.id) } };
+  const parIdentifiant = compteLien ? { id: compteLien.id } : { clientEmail: compte!.email };
   const commandes = await prisma.commande.findMany({
     where: { tenantId: tenant.id, ...parIdentifiant },
     omit: { livreurToken: true }, // accès livreur au suivi GPS : jamais côté client
@@ -44,7 +48,9 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({
-    compte: { id: compte.id, email: compte.email, nom: compte.nom, telephone: compte.telephone },
+    compte: compte
+      ? { id: compte.id, email: compte.email, nom: compte.nom, telephone: compte.telephone }
+      : { id: null, email: null, nom: compteLien!.clientNom, telephone: null },
     // Achat digital payé : accès (fichiers, formation, clés) par sa page d'accès — jamais
     // l'adresse brute du fichier, qui se partagerait sans contrôle.
     commandes: commandes.map((c) => ({

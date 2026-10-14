@@ -10,7 +10,7 @@
  * - Réponse finale JAMAIS vide (fallback déterministe sur les résultats d'outils)
  * - Exécution d'outil isolée : un outil qui échoue ne fait pas planter la conversation
  */
-import { hasGemini, completionWithToolsAuto, streamGemini, type ToolDefinition } from "@/lib/llm-client";
+import { hasGemini, hasDeepSeek, completionWithToolsAuto, streamGemini, type ToolDefinition } from "@/lib/llm-client";
 
 export type AxiaTool = ToolDefinition;
 export interface AxiaResult { reponse: string; actions: string[]; }
@@ -176,7 +176,7 @@ export async function runAxia(
   const prevMessages = messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }));
   const synthMessages = [...prevMessages, { role: "user" as const, content: synthMsg }];
 
-  if (hasGemini()) {
+  if (hasGemini() || hasDeepSeek()) { // streamGemini bascule seul sur DeepSeek
     try {
       const reponse = await withDeadline(
         withRetry(async () => {
@@ -244,7 +244,7 @@ export function runAxiaStream(
       const synthesisMsg = toolResults.length > 0 ? buildSynthesisUserMessage(originalQuestion, toolResults) : originalQuestion;
       const synthMessages: Array<{ role: "user" | "assistant"; content: string }> = [...prevMessages, { role: "user", content: synthesisMsg }];
 
-      if (hasGemini()) {
+      if (hasGemini() || hasDeepSeek()) { // streamGemini bascule seul sur DeepSeek
         try {
           let gotToken = false;
           await withDeadline((async () => {

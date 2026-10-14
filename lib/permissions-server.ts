@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { redirect } from "next/navigation";
 import { boutiquesDuCompte } from "./tenant";
+import { planActif } from "./abonnement";
+import { palierAuMoins, type Palier } from "./plans";
 import { TOUT_ECRITURE, grillePourMembre, type ModuleKey, type GrillePermissions } from "./permissions";
 
 // Fonctions serveur du système de permissions équipe — jamais importées
@@ -59,6 +61,35 @@ export async function requireNiveau(session: any, module: ModuleKey, minimum: "l
   if (niveau === "aucun") return { status: 403, error: "Accès non autorisé à ce module" };
   if (minimum === "ecriture" && niveau !== "ecriture") return { status: 403, error: "Lecture seule — action non autorisée" };
   return null;
+}
+
+/** Accès complet à la boutique active (propriétaire, ou membre aux droits complets). */
+export async function accesComplet(session: any): Promise<boolean> {
+  return Object.values(await permissionsSession(session)).every((n) => n === "ecriture");
+}
+
+/**
+ * Agents IA qui agissent sans confirmation (/api/ai/agent-*, copilote) : ils
+ * touchent plusieurs modules à la fois, donc réservés à un accès complet sur la
+ * boutique (même règle que deleguer_vers_agent d'AXIA, lib/axia/droits.ts).
+ * `palierPro` : agents autonomes promis à partir du Palier Pro.
+ */
+export async function refusAgentIA(session: any, palierPro = true): Promise<{ status: number; error: string } | null> {
+  if (!(await accesComplet(session))) return { status: 403, error: "Les agents IA sont réservés au propriétaire de la boutique" };
+  if (palierPro) return refusPalier(session?.user?.tenantId, "palier1", "L'accès aux agents IA");
+  return null;
+}
+
+/** 403 clair si la boutique n'a pas le palier requis (contrôle serveur des fonctions payantes). */
+export async function refusPalier(tenantId: string | undefined, requis: Palier, quoi = "Cette fonctionnalité"): Promise<{ status: number; error: string } | null> {
+  if (!tenantId) return { status: 401, error: "Non autorisé" };
+  if (palierAuMoins((await planActif(tenantId)).plan, requis)) return null;
+  return { status: 403, error: `${quoi} ${requis === "palier2" ? "nécessite le Palier Illimité" : "est disponible à partir du Palier Pro"}.` };
+}
+
+/** Envoi de fichiers : membre actif ayant l'écriture sur au moins un module (jamais lecture seule ni suspendu). */
+export async function peutTeleverser(session: any): Promise<boolean> {
+  return Object.values(await permissionsSession(session)).some((n) => n === "ecriture");
 }
 
 /** Page serveur du tableau de bord : même règle que le menu — sans accès au module, retour à l'accueil. */

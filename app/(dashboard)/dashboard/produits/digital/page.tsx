@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package, TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore, Search, X, Users, BarChart2, Send, Ban, RefreshCw, Loader2, AlertCircle, Check, Eye, Clock, Infinity, FileDown, Key, Sparkles } from "lucide-react";
+import { Plus, Download, BookOpen, Monitor, FileText, Music, Video, Package, TrendingUp, Shield, MoreHorizontal, Copy, Archive, ArchiveRestore, Search, X, Users, BarChart2, Send, Ban, RefreshCw, Loader2, AlertCircle, Check, Eye, Clock, Infinity, FileDown, Key } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 
@@ -13,131 +13,6 @@ const DIGITAL_TUTORIAL_STEPS = [
   { Icon: Search,     titre: "Recherche & filtres",             description: "Filtre par type ou statut, ou cherche un produit par nom. Les pastilles en dessous affichent le nombre de produits par type." },
   { Icon: Users,      titre: "Clients & Liens",                 description: "Depuis chaque produit, ouvre l'onglet \"Clients & Liens\" pour renvoyer un lien de téléchargement ou révoquer une clé de licence." },
 ];
-
-// ─── Nouveau système : types digitaux avancés ─────────────────────────────────
-
-type NouveauProduit = {
-  id: string;
-  nom: string;
-  prix: number;
-  actif: boolean;
-  type: string;
-  images: string[];
-  createdAt: string;
-  _count: { lignesCommande: number };
-  produitFichier?: { _count: { fichiers: number } } | null;
-  licenceProduit?: { _count: { cles: number }; cles: { id: string }[] } | null;
-  bundleProduit?: { _count: { elements: number } } | null;
-};
-
-const NOUVEAU_TYPE_CONFIG: Record<string, { icon: any; label: string; color: string; bg: string }> = {
-  fichier:   { icon: FileDown, label: "Fichier(s)",  color: "#1B2A4A", bg: "#1B2A4A12" },
-  licence:   { icon: Key,      label: "Licence",     color: "#16a34a", bg: "#16a34a12" },
-  bundle:    { icon: Package,  label: "Bundle",      color: "#F5A623", bg: "#F5A62312" },
-  formation: { icon: BookOpen, label: "Formation",   color: "#0ea5e9", bg: "#0ea5e912" },
-};
-
-function NouveauxProduitsSection({ devise }: { devise: string }) {
-  const tr = useT();
-  const [produits, setProduits] = useState<NouveauProduit[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetch("/api/produits/digitaux")
-      .then((r) => r.json())
-      .then((d) => { setProduits(d.produits ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, []);
-
-  if (loading) return null;
-  if (!produits.length) return null;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-[#F5A623]" />
-          <h2 className="text-sm font-semibold text-[#111111]">{tr("Nouveau système")}</h2>
-          <span className="text-xs text-[#AAAAAA] bg-[#F5F5F5] px-2 py-0.5 rounded-full">
-            {produits.length}
-          </span>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {produits.map((p) => {
-          const cfg = NOUVEAU_TYPE_CONFIG[p.type] ?? NOUVEAU_TYPE_CONFIG.fichier;
-          const Icone = cfg.icon;
-          const thumb = p.images[0];
-
-          let meta = "";
-          if (p.type === "fichier" && p.produitFichier) {
-            const n = p.produitFichier._count.fichiers;
-            meta = `${n} fichier${n !== 1 ? "s" : ""}`;
-          } else if (p.type === "licence" && p.licenceProduit) {
-            const dispo = p.licenceProduit.cles.length;
-            const total = p.licenceProduit._count.cles;
-            meta = `${dispo > 0 ? dispo : 0} / ${total} clés dispo`;
-          } else if (p.type === "bundle" && p.bundleProduit) {
-            const n = p.bundleProduit._count.elements;
-            meta = `${n} produit${n !== 1 ? "s" : ""}`;
-          }
-
-          return (
-            <Link
-              key={p.id}
-              href={`/dashboard/produits/${p.id}`}
-              className="bg-white border border-[#E8E8E8] rounded-2xl overflow-hidden hover:border-[#D0D0D0] hover:shadow-sm transition-all group flex flex-col"
-            >
-              <div className="aspect-video bg-[#F5F5F5] relative overflow-hidden flex-shrink-0">
-                {thumb ? (
-                  <img src={thumb} alt={p.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-1.5" style={{ background: cfg.bg }}>
-                    <Icone size={28} style={{ color: cfg.color }} />
-                    <span className="text-[10px] font-semibold" style={{ color: cfg.color }}>{tr(cfg.label)}</span>
-                  </div>
-                )}
-                <div className="absolute top-2 left-2">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ color: cfg.color, background: cfg.bg }}>
-                    <Icone size={9} /> {tr(cfg.label)}
-                  </span>
-                </div>
-                {!p.actif && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full bg-black/50 border border-white/20">{tr("Brouillon")}</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-4 flex-1 flex flex-col">
-                <p className="text-sm font-semibold text-[#111111] line-clamp-2 mb-1">{tr(p.nom)}</p>
-                {meta && <p className="text-[11px] text-[#AAAAAA] mb-2">{tr(meta)}</p>}
-                <div className="mt-auto flex items-center justify-between">
-                  <span className="text-base font-bold text-[#F5A623]">{formatMontant(p.prix, devise)}</span>
-                  <div className="flex items-center gap-1 text-[11px] text-[#AAAAAA]">
-                    <TrendingUp size={10} className="text-[#16A34A]" />
-                    {tr(p._count.lignesCommande)} vente{p._count.lignesCommande !== 1 ? "s" : ""}
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-        <Link
-          href="/dashboard/produits/digital/nouveau"
-          className="border-2 border-dashed border-[#E8E8E8] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-center hover:border-[#D0D0D0] hover:bg-[#F9F9F9] transition-all group"
-        >
-          <div className="w-10 h-10 rounded-xl bg-[#F5F5F5] flex items-center justify-center group-hover:bg-[#EDEDED] transition-colors">
-            <Plus size={18} className="text-[#AAAAAA]" />
-          </div>
-          <span className="text-xs font-medium text-[#AAAAAA]">{tr("Nouveau produit")}</span>
-        </Link>
-      </div>
-      <div className="border-t border-[#F0F0F0] pt-4">
-        <p className="text-xs text-[#AAAAAA] font-medium uppercase tracking-wider">{tr("Produits classiques")}</p>
-      </div>
-    </div>
-  );
-}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -165,6 +40,7 @@ type Produit = {
   fichierUrl: string | null;
   fichierNom: string | null;
   fichierTaille: number | null;
+  type: string;
   meta: DigitalMeta;
   downloadCount: number;
   _count: { telechargements: number; lignesCommande: number };
@@ -204,6 +80,11 @@ const TYPE_LABELS: Record<string, { label: string; icon: any; color: string; bg:
   audio:    { label: "Audio",     icon: Music,     color: "#db2777", bg: "#fdf2f8" },
   video:    { label: "Vidéo",     icon: Video,     color: "#dc2626", bg: "#fef2f2" },
   autre:    { label: "Autre",     icon: Package,   color: "#6b7280", bg: "#f9fafb" },
+  // Types du nouveau système (Produit.type)
+  fichier:   { label: "Fichier(s)", icon: FileDown, color: "#1B2A4A", bg: "#eef1f6" },
+  licence:   { label: "Licence",    icon: Key,      color: "#16a34a", bg: "#f0fdf4" },
+  formation: { label: "Formation",  icon: BookOpen, color: "#0ea5e9", bg: "#f0f9ff" },
+  bundle:    { label: "Bundle",     icon: Package,  color: "#F5A623", bg: "#fffbeb" },
 };
 
 const LICENCE_LABELS: Record<string, string> = {
@@ -638,14 +519,15 @@ function ProductCard({
                   >
                     <Eye size={13} />{" "}{tr("Modifier")}
                   </Link>
-                  <button
+                  {/* La duplication ne recopie que l'ancien format « digital » (pas clés, fichiers, modules) */}
+                  {produit.type === "digital" && <button
                     onClick={handleDuplicate}
                     disabled={duplicating}
                     className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors"
                   >
                     {duplicating ? <Loader2 size={13} className="animate-spin" /> : <Copy size={13} />}
                     {tr("Dupliquer")}
-                  </button>
+                  </button>}
                   <button
                     onClick={handleToggle}
                     disabled={toggling}
@@ -780,11 +662,12 @@ export default function DigitalProduitsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   async function handleToggleStatus(id: string, actif: boolean) {
-    await fetch("/api/produits-digitaux", {
+    const res = await fetch("/api/produits-digitaux", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, actif }),
-    });
+    }).catch(() => null);
+    if (!res?.ok) { alert(tr("Changement de statut impossible")); return; }
     setProduits((prev) => prev.map((p) => (p.id === id ? { ...p, actif } : p)));
     if (stats) {
       setStats({
@@ -850,7 +733,6 @@ export default function DigitalProduitsPage() {
       </div>
 
       {/* ── Produits nouveau système ── */}
-      <NouveauxProduitsSection devise={devise} />
 
       {/* ── Stats cards ── */}
       {stats && (

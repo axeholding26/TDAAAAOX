@@ -5,21 +5,29 @@ import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
 export const metadata: Metadata = {
-  title: "Politique Cookies — AXSO",
+  title: "Politique Cookies",
 };
 
+// Liste vérifiée dans le code (cookies posés par Auth.js, proxy.ts, app/api/**, LangueSelecteur, DeviseVitrine…).
 const COOKIES = [
-  { nom: "session_token", type: "Essentiel", duree: "Session", desc: "Maintient votre session de connexion. Nécessaire au fonctionnement." },
-  { nom: "csrf_token", type: "Essentiel", duree: "Session", desc: "Protection contre les attaques CSRF. Nécessaire à la sécurité." },
-  { nom: "tenant_pref", type: "Fonctionnel", duree: "1 an", desc: "Mémorise vos préférences d'interface (langue, thème)." },
-  { nom: "_axso_analytics", type: "Analyse", duree: "13 mois", desc: "Statistiques d'utilisation anonymisées pour améliorer la plateforme." },
-  { nom: "cart_id", type: "Fonctionnel", duree: "30 jours", desc: "Sauvegarde le contenu de votre panier." },
+  { nom: "authjs.session-token", type: "Essentiel", duree: "30 jours", desc: "Maintient votre connexion (préfixé __Secure- en HTTPS)." },
+  { nom: "authjs.csrf-token", type: "Essentiel", duree: "Session", desc: "Protège les formulaires de connexion (préfixé __Host- en HTTPS)." },
+  { nom: "axso_pos_appareil", type: "Essentiel", duree: "180 jours", desc: "Reconnaît un appareil de caisse autorisé par le marchand." },
+  { nom: "axso_oauth_etat", type: "Essentiel", duree: "10 minutes", desc: "Sécurise la connexion d'un outil externe à votre compte." },
+  { nom: "langue", type: "Fonctionnel", duree: "1 an", desc: "Mémorise la langue choisie (français ou anglais)." },
+  { nom: "axso_pays", type: "Fonctionnel", duree: "1 an", desc: "Mémorise le pays choisi sur une boutique pour afficher les prix dans votre devise." },
+  { nom: "axso_apercu", type: "Fonctionnel", duree: "Session", desc: "Affiche l'aperçu de la boutique dans l'éditeur (marchands)." },
+  { nom: "axso_brouillon", type: "Fonctionnel", duree: "1 heure", desc: "Donne accès à l'aperçu d'une version brouillon de la boutique (marchands)." },
+  { nom: "aff_ref", type: "Mesure", duree: "30 jours (selon le programme)", desc: "Attribue votre commande à l'affilié qui vous a recommandé la boutique." },
+  { nom: "axso_xp", type: "Mesure", duree: "1 an", desc: "Nombre aléatoire, sans donnée personnelle, qui fixe la version vue lors d'un test A/B de boutique." },
+  { nom: "Pixels Facebook, TikTok, Snapchat, Google", type: "Tiers", duree: "Selon le service", desc: "Ajoutés par certains marchands sur leur boutique uniquement, pour mesurer leurs publicités." },
 ];
 
 const TYPES: Record<string, { color: string; desc: string }> = {
-  Essentiel:   { color: "#F5A623", desc: "Indispensables au fonctionnement — ne peuvent pas être refusés." },
-  Fonctionnel: { color: "#7c3aed", desc: "Améliorent votre expérience — peuvent être désactivés." },
-  Analyse:     { color: "#0ea5e9", desc: "Statistiques anonymisées — peuvent être refusés." },
+  Essentiel:   { color: "#F5A623", desc: "Indispensables au fonctionnement : connexion et sécurité." },
+  Fonctionnel: { color: "#7c3aed", desc: "Mémorisent vos choix : langue, pays, aperçus." },
+  Mesure:      { color: "#0ea5e9", desc: "Attribution des ventes aux affiliés et tests A/B des boutiques." },
+  Tiers:       { color: "#10b981", desc: "Déposés par les services publicitaires choisis par un marchand, sur sa boutique seulement." },
 };
 
 export default async function CookiesPage() {
@@ -34,12 +42,12 @@ export default async function CookiesPage() {
             <Cookie size={14} className="inline-block mr-1.5" />{t("Légal")}
           </span>
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">{t("Politique Cookies")}</h1>
-          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 1er juillet 2026")}</p>
+          <p className="text-[#8C8C8C] text-sm mb-14">{t("Dernière mise à jour : 14 octobre 2026")}</p>
 
           <div className="prose max-w-none space-y-10">
             <div className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>
               <h2 className="text-lg font-bold mb-4" style={{ color: "#F5A623" }}>{t("Qu'est-ce qu'un cookie ?")}</h2>
-              <p className="text-[#595959] leading-relaxed text-sm">{t("Un cookie est un petit fichier texte déposé sur votre appareil lors de la visite d'un site web. AXSO utilise des cookies pour assurer le bon fonctionnement de la plateforme, mémoriser vos préférences et analyser l'utilisation de nos services de façon anonymisée.")}</p>
+              <p className="text-[#595959] leading-relaxed text-sm">{t("Un cookie est un petit fichier texte déposé sur votre appareil lors de la visite d'un site web. AXSO utilise des cookies pour assurer le bon fonctionnement de la plateforme et mémoriser vos préférences.")}</p>
             </div>
 
             <div className="pb-10 border-b" style={{ borderColor: "rgba(0,0,0,0.07)" }}>

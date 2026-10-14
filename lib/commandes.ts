@@ -17,6 +17,13 @@ export const CANAL = {
   POS: "pos",
 } as const;
 
+// Client inactif : a déjà commandé, mais aucune commande depuis `jours` jours
+// (filtre Prisma sur Client — jamais la date d'inscription).
+export function clientsInactifs(jours: number) {
+  const depuis = new Date(Date.now() - jours * 86400000);
+  return { AND: [{ commandes: { some: {} } }, { commandes: { none: { createdAt: { gte: depuis } } } }] };
+}
+
 // Accès à un contenu digital acheté : commande payée (non remboursée) et lien
 // ni révoqué par le marchand ni arrivé au terme de la durée qu'il a choisie.
 export function accesDigitalOuvert(expireAt: Date | null, paiementStatut: string | null | undefined): boolean {
