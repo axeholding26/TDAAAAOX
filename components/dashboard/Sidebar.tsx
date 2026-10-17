@@ -20,6 +20,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { BoutiqueSwitcher } from "@/components/dashboard/BoutiqueSwitcher";
+import { AvatarCompte } from "@/components/dashboard/AvatarCompte";
 import {
   Home, ShoppingCart, Monitor, Users, Package, Download,
   Star, Truck, MessageSquare, BarChart3, Megaphone,
@@ -579,15 +580,14 @@ export function Sidebar({ boutiqueNom, boutiqueSlug, userInitials, palier, permi
             pathname.startsWith("/dashboard/profil") ? "bg-[#FFF7ED]" : "hover:bg-[#FFF7ED]",
           )}
         >
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-white text-[13px] font-bold"
+          <AvatarCompte
+            nom="" lettres={t(userInitials) || "A"}
+            className="w-9 h-9 rounded-xl text-white text-[13px] font-bold"
             style={{
               background: "linear-gradient(135deg,#F5A623,#D4911A)",
               boxShadow: "0 2px 8px rgba(245,166,35,0.3)",
             }}
-          >
-            {t(userInitials) || "A"}
-          </div>
+          />
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold text-[#111111] leading-tight">{t("Mon compte")}</div>
             <div className="text-[11px] text-[#999999] leading-none mt-1">{t("Profil et sécurité")}</div>

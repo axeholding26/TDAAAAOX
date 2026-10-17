@@ -1,6 +1,6 @@
 "use client";
 // Photo de profil de la personne connectée, partout dans l'espace marchand (en-tête, menu mobile,
-// Mon profil). Hors de la session (une image importée dépasserait la taille du cookie) : lue une
+// barre latérale, Mon profil). Hors de la session (une image importée dépasserait la taille du cookie) : lue une
 // fois via /api/compte, puis mise à jour en direct par l'événement EVENEMENT_PHOTO. Sans photo : initiales.
 import { useEffect, useState, type CSSProperties } from "react";
 import { initiales } from "@/lib/utils";
@@ -16,7 +16,7 @@ export function annoncerPhoto(url: string | null) {
   window.dispatchEvent(new CustomEvent(EVENEMENT_PHOTO, { detail: url }));
 }
 
-export function AvatarCompte({ nom, className = "", style, classeInitiales = "" }: { nom: string; className?: string; style?: CSSProperties; classeInitiales?: string }) {
+export function AvatarCompte({ nom, lettres, className = "", style, classeInitiales = "" }: { nom: string; lettres?: string; className?: string; style?: CSSProperties; classeInitiales?: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let actif = true;
@@ -29,7 +29,7 @@ export function AvatarCompte({ nom, className = "", style, classeInitiales = "" 
     <span className={`overflow-hidden flex items-center justify-center flex-shrink-0 ${className}`} style={style}>
       {url
         ? <img src={url} alt="" className="w-full h-full object-cover" onError={() => setUrl(null)} />
-        : <span className={classeInitiales}>{initiales(nom) || "?"}</span>}
+        : <span className={classeInitiales}>{lettres || initiales(nom) || "?"}</span>}
     </span>
   );
 }
