@@ -11,6 +11,34 @@
 // Constructeur, pour toutes les boutiques existantes sans migration.
 import { parse, type HTMLElement as El } from "node-html-parser";
 import type { BlockNode, ThemeConfig } from "./theme-config";
+import { MANIFESTE_LIBRAIRIE } from "./axso-design-manifest";
+
+// Nom d'origine des designs (« HALLE », « CIRCUIT »…), comparé sans accents, casse ni ponctuation.
+const cleNom = (s: string) => s.normalize("NFD").replace(/[^\p{L}\p{N}]/gu, "").toUpperCase();
+const NOMS_DESIGNS = new Set(MANIFESTE_LIBRAIRIE.map((e) => cleNom(e.nom)));
+const echapper = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+
+/**
+ * Logo et « © 2026 HALLE » qui portent encore le nom du design → nom de la boutique, précédé
+ * de son logo s'il a été envoyé (hauteur liée au texte : proportionné dans chaque design).
+ * L'emplacement est marqué data-axso-nom : même enregistré ainsi par le Constructeur, il suit
+ * les changements de nom et de logo. Un logo écrit à la main dans le Constructeur est gardé.
+ */
+function nommerBoutique(racine: El, nom: string, logoUrl?: string | null) {
+  const image = logoUrl && /^(https:\/\/|\/)/.test(logoUrl)
+    ? `<img src="${echapper(logoUrl)}" alt="" style="height:1.6em;width:auto;max-width:3em;object-fit:contain;display:inline-block;vertical-align:middle;margin-right:.45em;">`
+    : "";
+  for (const logo of racine.querySelectorAll(".logo")) {
+    if (!logo.hasAttribute("data-axso-nom") && !NOMS_DESIGNS.has(cleNom(logo.text))) continue;
+    logo.setAttribute("data-axso-nom", "");
+    logo.set_content(image + echapper(nom));
+  }
+  for (const s of racine.querySelectorAll("footer span[data-axso-nom]")) s.set_content(echapper(nom));
+  for (const f of racine.querySelectorAll("footer")) {
+    const html = f.innerHTML.replace(/(©\s*\d{4}\s+)([^<—|]+?)(?=\s*(?:—|\||<|$))/g, (m, debut: string, ancien: string) => (NOMS_DESIGNS.has(cleNom(ancien)) ? `${debut}<span data-axso-nom>${echapper(nom)}</span>` : m));
+    if (html !== f.innerHTML) f.set_content(html);
+  }
+}
 
 const CHAMPS_HTML = ["builderHtml", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome"] as const;
 
@@ -175,9 +203,10 @@ function adapterDigital(racine: El, slug: string) {
 
 // `options.slug` : indispensable pour une section de pied de page seule sans
 // aucun lien (Aube, Cadran), d'où l'adresse ne peut pas se déduire.
-export interface OptionsLiens { slug?: string; collections?: CollectionLien[]; digital?: boolean }
+// `options.nom` / `options.logoUrl` : nom et logo de la boutique, à la place du nom du design (logo, copyright).
+export interface OptionsLiens { slug?: string; collections?: CollectionLien[]; digital?: boolean; nom?: string; logoUrl?: string | null }
 
-export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, collections, digital }: OptionsLiens = {}): string | undefined {
+export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, collections, digital, nom, logoUrl }: OptionsLiens = {}): string | undefined {
   if (!html) return html;
   const avecChrome = /<(header|footer)\b/.test(html);
   if (!avecChrome && !digital) return html;
@@ -188,6 +217,7 @@ export function corrigerLiensHtml(html: string | undefined, { slug: slugConnu, c
   racine.querySelectorAll("footer").forEach((f) => corrigerPied(f, slug, collections));
   // Boutique digitale : le bouton devient « Mes achats » (adapterDigital), il reste.
   if (digital) adapterDigital(racine, slug); else retirerPanier(racine, slug);
+  if (nom?.trim()) nommerBoutique(racine, nom.trim(), logoUrl);
   return racine.toString();
 }
 

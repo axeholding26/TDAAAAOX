@@ -396,6 +396,21 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
 }
 
 // ─── Panel Couleurs ───────────────────────────────────────────────────────────
+/** Logo de la boutique — le même que dans Ma boutique → Apparence (Tenant.logoUrl). Affiché avec le nom dans l'en-tête et le pied du design. */
+export function PanelLogo({ tenant, onChange }: { tenant: any; onChange: (url: string) => Promise<boolean> }) {
+  const tr = useT();
+  const [erreur, setErreur] = useState(false);
+  const changer = async (url: string) => setErreur(!(await onChange(url)));
+  return (
+    <div className="p-4 space-y-3">
+      <p className="text-[12px] text-gray-600 leading-relaxed">{tr("Ton logo s'affiche à côté du nom de ta boutique, en haut et en bas de chaque page. C'est le même logo que dans Ma boutique → Apparence.")}</p>
+      <ImageUpload label={tr("Logo")} value={tenant?.logoUrl || ""} aspectRatio="circle" onChange={changer} onRemove={() => changer("")} />
+      <p className="text-[12px] text-gray-500">{tr("Nom affiché")} : <strong className="text-gray-800">{tenant?.nomBoutique}</strong>{" "}— <Link href="/dashboard/boutique" className="text-[#F5A623] underline">{tr("modifier dans Ma boutique")}</Link></p>
+      {erreur && <p className="text-[12px] text-red-600">{tr("Le logo n'a pas pu être enregistré. Réessaie.")}</p>}
+    </div>
+  );
+}
+
 export function PanelCouleurs({ config, setColors }: any) {
   const tr = useT();
   const FIELDS = [

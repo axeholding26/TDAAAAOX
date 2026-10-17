@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
-import { Image as ImageIcon, Save, Monitor, LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2, Sparkles, X, Undo2, AlertCircle } from "lucide-react";
+import { Image as ImageIcon, BadgeCheck, Save, Monitor, LayoutGrid, Palette, Type, LayoutTemplate, MousePointer2, Code2, Sparkles, X, Undo2, AlertCircle } from "lucide-react";
 import { resolveThemeConfig, mergeThemeConfig, type ThemeConfig, DEFAULT_PRODUCT_SECTIONS } from "@/lib/theme-config";
 import { BoutiqueBuilder } from "./boutique/BoutiqueBuilder";
-import { PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
+import { PanelLogo, PanelCouleurs, PanelTypo, PanelLayout, PanelMedias, PanelAnimations, PanelBoutons, PanelModeles, PanelAvance, PanelPageSections, PanelProduit } from "./panels";
 import { corrigerLiensDesign } from "@/lib/liens-design";
 import { useT } from "@/components/I18nProvider";
 
@@ -110,7 +110,7 @@ export default function BuilderPage() {
     } else {
       resolved = resolveThemeConfig(data.themeId, tenantConfig);
     }
-    resolved = corrigerLiensDesign(resolved, { slug: data.slug, digital: resolved.modeBoutique === "digital" }); // mêmes liens d'en-tête / pied que la vitrine
+    resolved = corrigerLiensDesign(resolved, { slug: data.slug, digital: resolved.modeBoutique === "digital", nom: data.nomBoutique, logoUrl: data.logoUrl }); // mêmes liens, nom et logo d'en-tête / pied que la vitrine
     setConfig(resolved);
     setOriginalConfig(resolved);
   }, []);
@@ -207,6 +207,16 @@ export default function BuilderPage() {
   const updateCustomSection = useCallback((id: string, patch: any) => {
     set(p => ({ ...p, customSections: (p.customSections || []).map(s => s.id === id ? { ...s, config: { ...s.config, ...patch } } : s) }));
   }, [set]);
+
+  // Logo de la boutique (Tenant.logoUrl, pas le design) : enregistré tout de suite, puis l'aperçu le montre.
+  const changerLogo = useCallback(async (url: string) => {
+    if (!tenant) return false;
+    const res = await fetch("/api/tenants", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl: url }) });
+    if (!res.ok) return false;
+    setTenant((t: any) => ({ ...t, logoUrl: url }));
+    setConfig((c) => c && corrigerLiensDesign(c, { slug: tenant.slug, digital: c.modeBoutique === "digital", nom: tenant.nomBoutique, logoUrl: url }));
+    return true;
+  }, [tenant]);
 
   const handleSave = useCallback(async () => {
     if (!config || !tenant) return;
@@ -394,6 +404,7 @@ export default function BuilderPage() {
             contact: <PanelPageSections config={config} set={set} pageKey="contactPage" titre={tr("Contact")} />,
           }}
           reglages={[
+            { id: "logo", label: "Logo", desc: "Logo affiché avec le nom de la boutique", Icon: BadgeCheck, contenu: <PanelLogo tenant={tenant} onChange={changerLogo} /> },
             { id: "couleurs", label: "Couleurs", desc: "Palette de la boutique", Icon: Palette, contenu: <PanelCouleurs config={config} setColors={setColors} /> },
             { id: "typo", label: "Typographie", desc: "Polices des titres et du texte", Icon: Type, contenu: <PanelTypo config={config} setFonts={setFonts} /> },
             { id: "layout", label: "Mise en page", desc: "Largeur, espacements, cartes produits", Icon: LayoutTemplate, contenu: <PanelLayout config={config} setLayout={setLayout} set={set} /> },

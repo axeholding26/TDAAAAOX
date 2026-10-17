@@ -192,7 +192,7 @@ export async function resolveConfigVitrine(themeId: string, tenantId: string, sa
     resolveThemeConfigAsync(themeId, tenantId, apercu ?? (variante ? { ...savedConfig, ...variante } : savedConfig)),
     // Liens du pied de page vers chaque collection (voir lib/liens-design.ts).
     prisma.collection.findMany({ where: { tenantId, actif: true }, orderBy: { createdAt: "desc" }, select: { slug: true, nom: true } }),
-    prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, nomBoutique: true, logoUrl: true } }),
   ]);
-  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId), { slug: tenant?.slug, collections, digital: cfg.modeBoutique === "digital" }));
+  return appliquerConstructeur(corrigerLiensDesign(await rafraichirGrillesProduits(cfg, themeId, tenantId), { slug: tenant?.slug, collections, digital: cfg.modeBoutique === "digital", nom: tenant?.nomBoutique, logoUrl: tenant?.logoUrl }));
 }

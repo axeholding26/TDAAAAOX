@@ -1,7 +1,7 @@
-// GET /api/preview-theme?fichier=aube-site.html&nom=Ma+Boutique&produits=[...]&devise=XAF
+// GET /api/preview-theme?fichier=aube-site.html&produits=[...]&devise=XAF
 // Sert le HTML du template avec les données de l'utilisateur injectées :
 // - grilles accueil/boutique remplies avec les cartes des vrais produits (comme la vitrine)
-// - Logo remplacé par le nom de la boutique
+// - Nom du design gardé (HALLE, AUBE…) : seule la vraie vitrine prend le nom de la boutique
 // - devise/fmt correcte
 // - &digital=1 : adapté à une boutique digitale (lib/liens-design.ts)
 // - Vue "home" forcée, navigations désactivées pour le mode aperçu
@@ -33,7 +33,6 @@ function replaceFmt(html: string, newFmt: string): string {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fichier = searchParams.get("fichier") || "";
-  const nom = searchParams.get("nom") || "Ma Boutique";
   const devise = searchParams.get("devise") || "XAF";
   const raw = searchParams.get("produits") || "[]";
 
@@ -67,10 +66,6 @@ export async function GET(request: Request) {
   // Override fmt pour utiliser la bonne devise
   const safeDev = /^[A-Z]{3}$/.test(devise) ? devise : "XAF"; // code devise uniquement : rien d'autre n'entre dans le script
   const fmtOverride = `function fmt(n){ return n.toLocaleString('fr-FR') + ' ${safeDev}'; }`;
-
-  // Injection du nom dans la balise logo (regex tolérante)
-  const safeNom = nom.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  html = html.replace(/(<[^>]+class="[^"]*\blogo\b[^"]*"[^>]*>)[^<]*/g, (_m, balise: string) => balise + safeNom);
 
   html = adapterDocument(html, searchParams.get("digital") === "1"); // sans bouton Panier, comme la vitrine
 
