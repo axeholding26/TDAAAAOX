@@ -80,7 +80,9 @@ export default function SuiviPage() {
     charger(numero, telephone);
   }
 
-  const etapeActuelle = commande ? ORDRE.indexOf(commande.statut) : -1;
+  // Tentative manquée : la commande reste à l'étape « En route » (le livreur repassera), avec un message.
+  const echec         = commande?.statut === "tentative_echouee";
+  const etapeActuelle = commande ? ORDRE.indexOf(echec ? "expediee" : commande.statut) : -1;
   const annulee       = commande?.statut === "annulee";
   const livree        = commande?.statut === "livree";
 
@@ -205,7 +207,7 @@ export default function SuiviPage() {
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full"
                       style={{ background: "rgba(245,166,35,0.09)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.22)" }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
-                      {t(ETAPES.find(e => e.statut === commande.statut)?.label) ?? t(commande.statut)}
+                      {echec ? t("Livraison à reprogrammer") : t(ETAPES.find(e => e.statut === commande.statut)?.label) ?? t(commande.statut)}
                     </span>
                   )}
                   {/* Refresh */}
@@ -251,6 +253,14 @@ export default function SuiviPage() {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {echec && (
+                <div className="flex items-center gap-3 rounded-xl p-4 mt-4"
+                  style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.13)" }}>
+                  <X size={16} className="text-red-400 shrink-0" />
+                  <p className="text-red-300 text-[13px]">{t("Le livreur n'a pas pu vous livrer")}{commande.echecRaison ? ` (${t(commande.echecRaison)})` : ""}. {t("Il repassera : la boutique vous recontactera pour convenir d'un nouveau passage.")}</p>
                 </div>
               )}
 

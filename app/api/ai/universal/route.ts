@@ -728,8 +728,9 @@ const OUTILS: OutilDef[] = [
       type: "object" as const,
       properties: {
         nom: { type: "string" },
-        type: { type: "string", enum: ["panier_abandonne", "bienvenue", "apres_achat", "anniversaire", "inactif"] },
-        canal: { type: "string", enum: ["email", "sms", "whatsapp"] },
+        type: { type: "string", enum: ["panier_abandonne", "bienvenue", "apres_achat", "inactif"], description: "panier_abandonne = paiement en ligne commencé mais pas payé ; inactif = sans commande depuis delaiHeures" },
+        canal: { type: "string", enum: ["email", "whatsapp"] },
+        // Variables du message : {{nom}} (prénom du client), {{boutique}}, {{lien}} (lien de la boutique).
         message: { type: "string" },
         sujet: { type: "string" },
         delaiHeures: { type: "number" },

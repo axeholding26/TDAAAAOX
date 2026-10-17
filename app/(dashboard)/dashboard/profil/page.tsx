@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { User, Mail, ShieldCheck, Store, LogOut, Eye, EyeOff, Loader2, Check, Crown, CalendarDays, KeyRound, ArrowLeftRight } from "lucide-react";
-import { MediaUpload } from "@/components/ui/MediaUpload";
+import { User, Mail, ShieldCheck, Store, LogOut, Eye, EyeOff, Loader2, Check, Crown, CalendarDays, KeyRound, ArrowLeftRight, Camera, Trash2, ImagePlus } from "lucide-react";
+import { ACCEPT, importerMedia } from "@/components/ui/MediaUpload";
+import { annoncerPhoto } from "@/components/dashboard/AvatarCompte";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import { useT } from "@/components/I18nProvider";
 
@@ -43,6 +44,7 @@ export default function ProfilPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setCompte((c) => (c ? { ...c, ...data } : c));
+      if ("image" in patch) annoncerPhoto(data.image ?? null); // en-tête, menu mobile, AXIA
       toast.success(t(message));
       router.refresh(); // nom du header
     } catch (e) {
@@ -68,11 +70,9 @@ export default function ProfilPage() {
       <section className="ax-card overflow-hidden">
         <div className="h-20 sm:h-24 bg-gradient-to-r from-[#FFF3DC] via-[#FDE7B8] to-[#F5A623]/60" />
         <div className="px-5 sm:px-6 pb-5 -mt-10 sm:-mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#111111] flex items-center justify-center flex-shrink-0">
-            {compte.image
-              ? <img src={compte.image} alt="" className="w-full h-full object-cover" />
-              : <span className="text-[26px] font-bold text-[#F5A623]">{initiales(affiche)}</span>}
-          </div>
+          <CadrePhoto image={compte.image} initiales={initiales(affiche)} occupe={enregistrement}
+            onChoisie={(url) => majCompte({ image: url }, "Photo mise à jour")}
+            onRetirer={() => majCompte({ image: null }, "Photo retirée")} />
           <div className="min-w-0 flex-1 sm:pb-1">
             <p className="text-[18px] font-bold text-[#111111] truncate">{t(affiche)}</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[12.5px] text-[#888888]">
@@ -83,15 +83,6 @@ export default function ProfilPage() {
           <span className="self-start sm:self-end inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-semibold bg-[#FFF8EC] text-[#B45309] border border-[#FDE68A]">
             <Crown size={12} /> {t(ROLES[compte.role]) ?? t(compte.role)}
           </span>
-        </div>
-        <div className="px-5 sm:px-6 pb-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2.5 items-center">
-          <MediaUpload type="image" onUrl={(url) => majCompte({ image: url }, "Photo mise à jour")} />
-          {compte.image && (
-            <button onClick={() => majCompte({ image: null }, "Photo retirée")} disabled={enregistrement}
-              className="h-9 px-4 rounded-lg text-[13px] font-medium text-[#DC2626] border border-[#FECACA] hover:bg-[#FEF2F2] disabled:opacity-50">
-              {t("Retirer la photo")}
-            </button>
-          )}
         </div>
       </section>
 
@@ -230,5 +221,70 @@ function MotDePasse({ aMotDePasse }: { aMotDePasse: boolean }) {
         </form>
       )}
     </section>
+  );
+}
+
+/**
+ * Photo de profil : tout se fait en cliquant sur le cadre. Sans photo, il ouvre le choix du fichier ;
+ * avec photo, un petit menu propose de la changer ou de la retirer.
+ */
+function CadrePhoto({ image, initiales, occupe, onChoisie, onRetirer }: {
+  image: string | null; initiales: string; occupe: boolean; onChoisie: (url: string) => void; onRetirer: () => void;
+}) {
+  const t = useT();
+  const fichier = useRef<HTMLInputElement>(null);
+  const cadre = useRef<HTMLDivElement>(null);
+  const [menu, setMenu] = useState(false);
+  const [progression, setProgression] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!menu) return;
+    const fermer = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !cadre.current?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("mousedown", fermer);
+    document.addEventListener("keydown", fermer);
+    return () => { document.removeEventListener("mousedown", fermer); document.removeEventListener("keydown", fermer); };
+  }, [menu]);
+
+  const envoyer = async (f?: File) => {
+    if (fichier.current) fichier.current.value = "";
+    if (!f) return;
+    if (!f.type.startsWith("image/")) return void toast.error(t("Choisis une image (JPG, PNG, WebP…)"));
+    if (f.size > 10 * 1024 * 1024) return void toast.error(t("Image trop lourde (10 Mo maximum)"));
+    setProgression(0);
+    const url = await importerMedia("image", f, setProgression);
+    setProgression(null);
+    if (url) onChoisie(url); else toast.error(t("Import impossible : stockage des fichiers indisponible."));
+  };
+  const choisir = () => { setMenu(false); fichier.current?.click(); };
+  const enCours = occupe || progression !== null;
+
+  return (
+    <div ref={cadre} className="relative flex-shrink-0">
+      <input ref={fichier} type="file" accept={ACCEPT.image} className="hidden" onChange={(e) => envoyer(e.target.files?.[0])} />
+      <button type="button" disabled={enCours} onClick={() => (image ? setMenu((m) => !m) : choisir())}
+        aria-label={image ? t("Changer ou retirer la photo de profil") : t("Ajouter une photo de profil")} aria-haspopup={image ? "menu" : undefined} aria-expanded={image ? menu : undefined}
+        className="group relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-[#111111] flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#F5A623]/40 disabled:cursor-wait">
+        {image
+          ? <img src={image} alt="" className="w-full h-full object-cover" />
+          : <span className="text-[26px] font-bold text-[#F5A623]">{initiales}</span>}
+        <span className={`absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/55 text-white transition-opacity ${enCours ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"}`}>
+          {enCours
+            ? <><Loader2 size={20} className="animate-spin" />{progression !== null && <span className="text-[11px] font-semibold">{progression} %</span>}</>
+            : <><Camera size={20} /><span className="text-[11px] font-semibold">{image ? t("Modifier") : t("Ajouter")}</span></>}
+        </span>
+      </button>
+      {menu && (
+        <div role="menu" className="absolute left-full top-1 ml-3 z-20 w-52 p-1.5 rounded-xl bg-white border border-[#ECECEC] shadow-[0_16px_40px_-12px_rgba(0,0,0,.22)]">
+          <button role="menuitem" type="button" onClick={choisir} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-[#111111] hover:bg-[#F5F5F5]">
+            <ImagePlus size={15} className="text-[#D4911A]" />{" "}{t("Changer la photo")}
+          </button>
+          <button role="menuitem" type="button" onClick={() => { setMenu(false); onRetirer(); }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] text-[#DC2626] hover:bg-[#FEF2F2]">
+            <Trash2 size={15} />{" "}{t("Retirer la photo")}
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

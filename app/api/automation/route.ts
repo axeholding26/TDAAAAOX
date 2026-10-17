@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import { CANAUX_RELANCE, TYPES_RELANCE } from "@/lib/relances";
+
+// Seuls les types et canaux que le moteur sait envoyer (lib/relances.ts). Délai : jusqu'à 1 an (relance des inactifs).
+const champs = z.object({
+  nom: z.string().trim().min(1).max(120),
+  type: z.enum(TYPES_RELANCE),
+  canal: z.enum(CANAUX_RELANCE).default("email"),
+  delaiHeures: z.number().int().min(0).max(24 * 365).default(1),
+  sujet: z.string().max(200).nullish(),
+  message: z.string().trim().min(1).max(2000),
+  actif: z.boolean(),
+});
 
 export async function GET() {
   const session = await auth();
@@ -19,21 +32,10 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
-  const body = await req.json();
-  const { nom, type, delaiHeures, canal, sujet, message } = body;
-  if (!nom || !type || !message) {
-    return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
-  }
+  const lu = champs.omit({ actif: true }).safeParse(await req.json().catch(() => null));
+  if (!lu.success) return NextResponse.json({ error: "Champs invalides : nom, type (bienvenue, après achat, panier abandonné, inactif), canal (email ou WhatsApp) et message sont requis." }, { status: 400 });
 
-  const workflow = await prisma.automationWorkflow.create({
-    data: {
-      tenantId, nom, type,
-      delaiHeures: delaiHeures ?? 1,
-      canal: canal ?? "email",
-      sujet: sujet ?? null,
-      message,
-    },
-  });
+  const workflow = await prisma.automationWorkflow.create({ data: { tenantId, ...lu.data, sujet: lu.data.sujet ?? null } });
   return NextResponse.json({ workflow }, { status: 201 });
 }
 
@@ -42,9 +44,12 @@ export async function PATCH(req: Request) {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any)?.tenantId;
 
-  const body = await req.json();
-  const { id, ...data } = body;
+  const { id, ...corps } = await req.json().catch(() => ({}));
   if (!id) return NextResponse.json({ error: "ID requis" }, { status: 400 });
+  // Jamais tenantId ni les compteurs : seulement ce que le marchand règle.
+  const lu = champs.partial().safeParse(corps);
+  if (!lu.success) return NextResponse.json({ error: "Champs invalides" }, { status: 400 });
+  const data = lu.data;
 
   const existing = await prisma.automationWorkflow.findFirst({ where: { id, tenantId } });
   if (!existing) return NextResponse.json({ error: "Workflow introuvable" }, { status: 404 });

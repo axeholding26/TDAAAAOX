@@ -14,7 +14,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
     where: { OR: [{ trackingToken: token }, { livreurToken: token }] },
     select: {
       id: true, numero: true, statut: true, livraisonStatut: true,
-      clientNom: true, adresseExacte: true, adresseLivraison: true, ville: true,
+      clientNom: true, clientTelephone: true, adresseExacte: true, adresseLivraison: true, ville: true,
       latitudeClient: true, longitudeClient: true, mapsLienClient: true,
       livreurPosition: true, livreurNom: true, livreurTelephone: true,
       trackingToken: true, livreurToken: true, codeLivraison: true, expedieeAt: true, livreeAt: true, echecRaison: true,
@@ -32,6 +32,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
     commande: {
       ...commande,
       livreurToken: isLivreurToken ? commande.livreurToken : undefined,
+      // Le livreur doit pouvoir joindre le client ; la page de suivi du client n'en a pas besoin.
+      clientTelephone: isLivreurToken ? commande.clientTelephone : undefined,
       // Le code prouve la remise au client : jamais exposé au lien livreur, et inutile une fois livrée
       codeLivraison: !isLivreurToken && ["expediee", "tentative_echouee"].includes(commande.statut) ? commande.codeLivraison : undefined,
     },

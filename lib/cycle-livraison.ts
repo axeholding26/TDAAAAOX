@@ -10,7 +10,7 @@ import { TRANSITIONS_VALIDES, livraisonStatutPour } from "@/lib/commandes";
 import { capturerCommissionAffiliation } from "@/lib/affiliation";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { notifierMarchand } from "@/lib/notifications-marchand";
-import { notifierClientWhatsApp, notifierLivreurAssigneWhatsApp, notifierLivreurNouvelleCourse } from "@/lib/whatsapp";
+import { notifierClientWhatsApp, notifierLivreurAssigneWhatsApp, notifierLivreurCourseRetiree, notifierLivreurNouvelleCourse } from "@/lib/whatsapp";
 import { PAIEMENT } from "@/lib/commandes";
 import { compterVentes } from "@/lib/stock";
 import { libererCommande, rembourserCommande } from "@/lib/remboursement";
@@ -18,8 +18,10 @@ import { publier } from "@/lib/controle-ia/evenements";
 
 // "interface" : le marchand a cliqué lui-même, il reçoit le lien WhatsApp de secours dans la réponse.
 // "axia" : action d'AXIA (directe ou autorisée dans la bulle), le lien de secours part dans ses notifications.
+// "lien" : livreur sans compte, avec le lien de la course (QR montré par le marchand) — mêmes droits que l'appli livreur.
 export type Acteur =
   | { type: "livreur"; userId: string }
+  | { type: "lien"; token: string }
   | { type: "marchand"; tenantId: string; source: "interface" | "axia" };
 
 export type Resultat<T = {}> =
@@ -55,6 +57,19 @@ async function relayerWhatsAppNonEnvoye(p: { tenantId: string; commandeId: strin
   });
 }
 
+/** Le livreur perd la course (annulée ou confiée à un autre) : il est prévenu dans son appli et par WhatsApp. */
+async function retirerCourseAuLivreur(livreurId: string, c: { id: string; numero: string; tenantId: string; boutique: string }, motif: "annulee" | "reassignee") {
+  const livreur = await prisma.livreur.findUnique({ where: { id: livreurId }, select: { telephone: true } });
+  await prisma.notification.create({
+    data: {
+      livreurId, type: "course_retiree", commandeId: c.id,
+      titre: motif === "annulee" ? `Commande #${c.numero} annulée` : `Course #${c.numero} retirée`,
+      message: motif === "annulee" ? "La boutique a annulé cette commande : ne la livre pas." : "La boutique a confié cette course à un autre livreur : ne la livre pas.",
+    },
+  }).catch(() => {});
+  if (livreur?.telephone) await notifierLivreurCourseRetiree({ telephone: livreur.telephone, numero: c.numero, boutique: c.boutique, motif, tenantId: c.tenantId }).catch(() => {});
+}
+
 export async function changerStatutCommande(p: {
   commandeId: string;
   statut: string;
@@ -69,21 +84,27 @@ export async function changerStatutCommande(p: {
   });
   if (!commande) return { ok: false, status: 404, error: "Commande introuvable" };
 
-  if (acteur.type === "livreur") {
+  const parLivreur = acteur.type === "livreur" || acteur.type === "lien";
+  if (parLivreur && !["expediee", "livree", "tentative_echouee"].includes(statut)) {
+    return { ok: false, status: 403, error: "Le livreur peut seulement démarrer la livraison, marquer comme livré ou signaler un échec" };
+  }
+  if (acteur.type === "lien") {
+    // Lien remplacé au changement de livreur (assignerLivreurCommande) : l'ancien ne vaut plus rien.
+    if (!commande.livreurToken || commande.livreurToken !== acteur.token) return { ok: false, status: 403, error: "Lien de livraison invalide" };
+  } else if (acteur.type === "livreur") {
     // Pas de filtre tenantId : un livreur plateforme (tenantId null) assigné
     // doit pouvoir faire avancer la commande ; l'assignation suffit.
     const livreur = await prisma.livreur.findFirst({ where: { userId: acteur.userId }, select: { id: true, actif: true } });
     if (!livreur || commande.livreurId !== livreur.id) return { ok: false, status: 403, error: "Accès refusé" };
     if (!livreur.actif) return { ok: false, status: 403, error: "Compte livreur suspendu ou en attente de validation : la boutique termine la livraison" };
-    if (!["expediee", "livree", "tentative_echouee"].includes(statut)) {
-      return { ok: false, status: 403, error: "Le livreur peut seulement démarrer la livraison, marquer comme livré ou signaler un échec" };
-    }
   } else if (commande.tenantId !== acteur.tenantId) {
     return { ok: false, status: 404, error: "Commande introuvable" };
   }
 
   // Le quota ne bloque jamais ce qui protège le client ou clôt une course : annuler (et rembourser), livrer, signaler un échec.
-  if (!["annulee", "livree", "tentative_echouee"].includes(statut) && await quotaCommandesAtteint(commande.tenantId)) return QUOTA_ATTEINT;
+  // Ni le départ d'un livreur : la commande est déjà acceptée, et le quota du marchand ne le concerne pas.
+  const horsQuota = ["annulee", "livree", "tentative_echouee"].includes(statut) || (parLivreur && statut === "expediee");
+  if (!horsQuota && await quotaCommandesAtteint(commande.tenantId)) return QUOTA_ATTEINT;
 
   if (!(TRANSITIONS_VALIDES[commande.statut] || []).includes(statut)) {
     return { ok: false, status: 400, error: `Transition invalide : ${commande.statut} → ${statut}` };
@@ -91,7 +112,7 @@ export async function changerStatutCommande(p: {
 
   // Preuve de remise : le livreur doit saisir le code que seul le client a reçu.
   // Le marchand n'en a pas besoin. Les commandes parties avant l'ajout du code n'en ont pas.
-  if (acteur.type === "livreur" && statut === "livree" && commande.codeLivraison) {
+  if (parLivreur && statut === "livree" && commande.codeLivraison) {
     const bloque = { ok: false as const, status: 423, code: "code_bloque", error: "Trop de codes incorrects : demandez à la boutique de confirmer la livraison" };
     if (commande.codeEssais >= MAX_ESSAIS_CODE) return bloque;
     if (String(p.code ?? "").trim() !== commande.codeLivraison) {
@@ -162,10 +183,13 @@ export async function changerStatutCommande(p: {
   if (!applique) return { ok: false, status: 409, error: "La commande a changé entre-temps : rechargez la page" };
 
   if (statut === "livree") await capturerCommissionAffiliation(id).catch(() => {});
+  if (statut === "annulee" && commande.livreurId) {
+    await retirerCourseAuLivreur(commande.livreurId, { id, numero: commande.numero, tenantId: commande.tenantId, boutique: commande.tenant.nomBoutique }, "annulee");
+  }
   // Bus AXSO CONTROL (automatisations, webhooks) : livrée, et payée si le paiement se faisait à la livraison.
   if (statut === "livree") for (const type of dejaVente ? (["order.fulfilled"] as const) : (["order.fulfilled", "order.paid"] as const)) publier(commande.tenantId, type, { commandeId: id, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: commande.methodePaiement });
 
-  if (acteur.type === "livreur" && NOTIF_LIVREUR[statut]) {
+  if (parLivreur && NOTIF_LIVREUR[statut]) {
     await notifierMarchand({
       tenantId: commande.tenantId,
       type: NOTIF_LIVREUR[statut].type,
@@ -232,6 +256,10 @@ export async function assignerLivreurCommande(p: {
       ...(changement && commande.livreurToken ? { livreurToken: randomBytes(20).toString("hex"), livreurPosition: Prisma.DbNull } : {}),
     },
   });
+
+  if (changement && commande.livreurId) {
+    await retirerCourseAuLivreur(commande.livreurId, { id: commande.id, numero: commande.numero, tenantId: commande.tenantId, boutique: commande.tenant.nomBoutique }, "reassignee");
+  }
 
   let whatsappLivreurUrl: string | null = null;
   let whatsappClientUrl: string | null = null;

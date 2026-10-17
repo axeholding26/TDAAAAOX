@@ -105,13 +105,14 @@ export default function ComptabilitePage() {
       </div>
 
       {/* Bénéfice net — carte hero */}
-      <div className="rounded-2xl p-6" style={{ background: resultatPositif ? "linear-gradient(135deg,#10b981,#059669)" : "linear-gradient(135deg,#ef4444,#dc2626)" }}>
-        <p className="text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">{t("Bénéfice net de la période")}</p>
-        <p className="text-[26px] sm:text-[32px] font-black text-white flex items-center gap-2 break-all">
+      {/* Positif : jaune AXSO, texte noir (lisible) ; négatif : rouge, texte blanc. */}
+      <div className={`rounded-2xl p-6 ${resultatPositif ? "text-[#111111]" : "text-white"}`} style={{ background: resultatPositif ? "linear-gradient(135deg,#F5A623,#D4911A)" : "linear-gradient(135deg,#ef4444,#dc2626)" }}>
+        <p className="text-[11px] font-semibold opacity-70 uppercase tracking-widest mb-1">{t("Bénéfice net de la période")}</p>
+        <p className="text-[26px] sm:text-[32px] font-black flex items-center gap-2 break-all">
           {resultatPositif ? <TrendingUp size={26} /> : <TrendingDown size={26} />}
           {fmt(r.beneficeNet)}
         </p>
-        <p className="text-[12px] text-white/70 mt-1">
+        <p className="text-[12px] opacity-70 mt-1">
           {fmt(r.revenuHT ?? r.revenu)}{" "}{t("de revenu hors taxes −")}{" "}{fmt(r.coutMarchandises)}{" "}{t("de coût d'achat −")}{" "}{fmt(r.chargesExploitation)}{" "}{t("de charges d'exploitation")}
         </p>
       </div>

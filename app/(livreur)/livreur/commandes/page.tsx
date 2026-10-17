@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -7,9 +8,10 @@ import { formatDate, formatMontant } from "@/lib/utils";
 import { getT } from "@/lib/i18n/serveur";
 
 const STATUT_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  confirmee:      { label: "À récupérer", color: "#f59e0b", bg: "#f59e0b15" },
+  confirmee:      { label: "À récupérer", color: "#d4d4d4", bg: "#d4d4d415" },
   en_preparation: { label: "En préparation", color: "#7c3aed", bg: "#7c3aed15" },
-  expediee:       { label: "En livraison", color: "#3b82f6", bg: "#3b82f615" },
+  expediee:       { label: "En livraison", color: "#F5A623", bg: "#F5A62315" },
+  tentative_echouee: { label: "À retenter", color: "#f87171", bg: "#f8717115" },
   livree:         { label: "Livré", color: "#10b981", bg: "#10b98115" },
   annulee:        { label: "Annulé", color: "#ef4444", bg: "#ef444415" },
 };
@@ -34,7 +36,7 @@ export default async function HistoriquePage() {
   const stats = {
     total: commandes.length,
     livrees: commandes.filter((c) => c.statut === "livree").length,
-    enCours: commandes.filter((c) => ["confirmee", "en_preparation", "expediee"].includes(c.statut)).length,
+    enCours: commandes.filter((c) => STATUTS_COURSE_ACTIVE.includes(c.statut)).length,
   };
 
   return (
@@ -50,7 +52,7 @@ export default async function HistoriquePage() {
           <p className="text-gray-500 text-xs">{t("Total")}</p>
         </div>
         <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-[#3b82f6]">{t(stats.enCours)}</p>
+          <p className="text-lg font-bold text-[#F5A623]">{t(stats.enCours)}</p>
           <p className="text-gray-500 text-xs">{t("En cours")}</p>
         </div>
         <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-xl p-3 text-center">
@@ -68,7 +70,7 @@ export default async function HistoriquePage() {
             <Link
               key={cmd.id}
               href={`/livreur/commande/${cmd.id}`}
-              className="flex items-center gap-4 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-4 hover:border-[#1B4FD8]/20 transition-all"
+              className="flex items-center gap-4 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-4 hover:border-[#F5A623]/20 transition-all"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -84,7 +86,7 @@ export default async function HistoriquePage() {
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
+                <p className="text-[#F5A623] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
                 <p className="text-gray-500 text-xs">{formatDate(cmd.updatedAt)}</p>
               </div>
               <ChevronRight size={14} className="text-gray-500 flex-shrink-0" />

@@ -20,7 +20,7 @@ export async function GET() {
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
-  const refus = await requireNiveau(session, "clients", "lecture"); // livreurs : module Clients (voir Sidebar)
+  const refus = await requireNiveau(session, "commandes", "lecture"); // livreurs : module Commandes (Sidebar, lib/permissions-api.ts)
   if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   const livreurs = await prisma.livreur.findMany({
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Tenant introuvable" }, { status: 404 });
-  const refus = await requireNiveau(session, "clients", "ecriture");
+  const refus = await requireNiveau(session, "commandes", "ecriture");
   if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
 
   try {

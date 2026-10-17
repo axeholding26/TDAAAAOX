@@ -524,38 +524,28 @@ main > section, main > div > section {
 /* Place réservée au chevron, quel que soit le padding posé ailleurs. */
 select:not([multiple]):not([size]):not(.ax-langue) { padding-inline-end: 2.4rem !important; }
 
-/* Liste ouverte personnalisable (Chrome/Edge 135+) ; ailleurs, liste native. */
-@supports (appearance: base-select) {
-  select:not([multiple]):not([size]),
-  select:not([multiple]):not([size])::picker(select) { appearance: base-select; }
-  select::picker-icon { display: none; }
-  select::picker(select) {
-    margin-block: 6px;
-    padding: 6px;
-    border: 1px solid #ECECEC;
-    border-radius: 14px;
-    background: #fff;
-    color: #111;
-    box-shadow: 0 16px 40px -12px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.05);
-    max-height: min(360px, 60vh);
-    opacity: 1;
-    transform: none;
-    transition: opacity .16s ease, transform .16s var(--ax-ease-decel), display .16s allow-discrete, overlay .16s allow-discrete;
-  }
-  @starting-style { select:open::picker(select) { opacity: 0; transform: translateY(-4px); } }
-  select option {
-    padding: 9px 12px;
-    border-radius: 9px;
-    font-size: 14px;
-    gap: 10px;
-    cursor: pointer;
-    transition: background-color .12s ease;
-  }
-  select option:hover, select option:focus-visible { background: #F5F5F5; outline: none; }
-  select option:checked { background: rgba(245,166,35,.12); font-weight: 600; }
-  select option::checkmark { order: 1; margin-inline-start: auto; color: var(--accent); }
-  select option:disabled { color: #AAAAAA; cursor: default; background: none; }
+/* Liste ouverte des menus déroulants (components/ui/MenusDeroulants.tsx) : la même dans tous les
+   navigateurs sur ordinateur. Écrans tactiles : liste native du téléphone. */
+.ax-liste-deroulante {
+  position: fixed; z-index: 10050; overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; border: 1px solid #ECECEC; border-radius: 14px; background: #fff; color: #111;
+  box-shadow: 0 16px 40px -12px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.05);
+  font-family: 'Poppins','Century Gothic',system-ui,sans-serif;
+  animation: ax-liste-in .14s var(--ax-ease-decel, ease-out);
 }
+@keyframes ax-liste-in { from { opacity: 0; transform: translateY(-4px); } }
+.ax-liste-deroulante .ax-groupe { padding: 8px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: #999; }
+.ax-liste-deroulante .ax-choix {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 9px;
+  font-size: 13.5px; line-height: 1.35; cursor: pointer; user-select: none; transition: background-color .12s ease;
+}
+.ax-liste-deroulante .ax-choix.actif { background: #F5F5F5; }
+.ax-liste-deroulante .ax-choix[aria-selected="true"] { background: rgba(245,166,35,.12); font-weight: 600; }
+.ax-liste-deroulante .ax-choix[aria-selected="true"].actif { background: rgba(245,166,35,.2); }
+.ax-liste-deroulante .ax-choix[aria-disabled="true"] { color: #AAAAAA; cursor: default; background: none; }
+.ax-liste-deroulante .ax-choix > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ax-liste-deroulante .ax-choix > svg { flex-shrink: 0; color: #D4911A; }
+@media (prefers-reduced-motion: reduce) { .ax-liste-deroulante { animation: none; } }
 
 /* ── Menu des pays avec drapeaux (components/ui/SelectPays.tsx) ─────────── */
 .ax-select-pays {

@@ -7,7 +7,28 @@ import { toast } from "sonner";
 import { useT } from "@/components/I18nProvider";
 import { cheminImport } from "@/lib/televerser";
 
-const ACCEPT = { image: "image/jpeg,image/png,image/webp,image/gif,image/avif", video: "video/mp4,video/webm,video/quicktime" };
+export const ACCEPT = { image: "image/jpeg,image/png,image/webp,image/gif,image/avif", video: "video/mp4,video/webm,video/quicktime" };
+
+/**
+ * Envoi d'une image ou d'une vidéo dans le stockage (voir app/api/upload/client) ; renvoie son URL.
+ * Stockage indisponible (ex. BLOB_READ_WRITE_TOKEN absent en local) : une petite image est gardée en
+ * ligne (data URL), comme ImageUpload ; une vidéo, trop lourde pour la base, ne l'est jamais (null).
+ */
+export async function importerMedia(type: "image" | "video", file: File, onProgression?: (pct: number) => void): Promise<string | null> {
+  try {
+    const blob = await upload(await cheminImport(`${type}s`, file.name), file, {
+      access: "public",
+      handleUploadUrl: "/api/upload/client",
+      onUploadProgress: (e) => onProgression?.(Math.round(e.percentage)),
+    });
+    return blob.url;
+  } catch {
+    if (type === "image" && file.size <= 2 * 1024 * 1024) {
+      return new Promise<string>((ok) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.readAsDataURL(file); });
+    }
+    return null;
+  }
+}
 
 // Bouton « Importer depuis l'appareil » : l'image ou la vidéo part directement
 // dans le stockage (voir app/api/upload/client) et son URL remplace le champ.
@@ -21,21 +42,9 @@ export function MediaUpload({ type, onUrl }: { type: "image" | "video"; onUrl: (
     if (file.size > 100 * 1024 * 1024) return void toast.error(t("Fichier trop lourd (100 Mo maximum)"));
     setProgression(0);
     try {
-      const blob = await upload(await cheminImport(`${type}s`, file.name), file, {
-        access: "public",
-        handleUploadUrl: "/api/upload/client",
-        onUploadProgress: (e) => setProgression(Math.round(e.percentage)),
-      });
-      onUrl(blob.url);
-      toast.success(type === "video" ? t("Vidéo importée") : t("Image importée"));
-    } catch {
-      // Stockage indisponible (ex. BLOB_READ_WRITE_TOKEN absent en local) : une
-      // petite image est gardée en ligne (data URL), comme ImageUpload ; une
-      // vidéo, trop lourde pour la base, ne l'est jamais.
-      if (type === "image" && file.size <= 2 * 1024 * 1024) {
-        onUrl(await new Promise<string>((ok) => { const r = new FileReader(); r.onload = () => ok(r.result as string); r.readAsDataURL(file); }));
-        toast.success(t("Image importée"));
-      } else toast.error(t("Import impossible : stockage des fichiers indisponible. Colle plutôt un lien."));
+      const url = await importerMedia(type, file, setProgression);
+      if (url) { onUrl(url); toast.success(type === "video" ? t("Vidéo importée") : t("Image importée")); }
+      else toast.error(t("Import impossible : stockage des fichiers indisponible. Colle plutôt un lien."));
     } finally {
       setProgression(null);
       if (ref.current) ref.current.value = "";

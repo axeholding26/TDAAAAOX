@@ -5,7 +5,7 @@ import Link from "next/link";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import { Bell, ChevronDown, LogOut, Settings, User, ExternalLink, Store, ShoppingBag, DollarSign, Star, Package, AlertTriangle, MessageCircle, Info } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { initiales } from "@/lib/utils";
+import { AvatarCompte } from "@/components/dashboard/AvatarCompte";
 import type { Session } from "next-auth";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
 import { RechercheDashboard } from "@/components/dashboard/RechercheDashboard";
@@ -276,14 +276,11 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                 onMouseEnter={e => { if (!profileOpen) e.currentTarget.style.background = "rgba(0,0,0,.04)"; }}
                 onMouseLeave={e => { if (!profileOpen) e.currentTarget.style.background = "transparent"; }}
               >
-                <div style={{
+                <AvatarCompte nom={nom} style={{
                   width:"27px", height:"27px", borderRadius:"50%",
                   background:"linear-gradient(135deg,#F5A623,#d97706)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  fontSize:"10px", fontWeight:800, color:"#fff", flexShrink:0,
-                }}>
-                  {initiales(nom)}
-                </div>
+                  fontSize:"10px", fontWeight:800, color:"#fff",
+                }} />
                 <span className="hidden sm:block" style={{ fontSize:"12.5px", fontWeight:600, color:"#333", maxWidth:"80px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {t(nom.split(" ")[0])}
                 </span>

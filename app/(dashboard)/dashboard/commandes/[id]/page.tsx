@@ -328,13 +328,13 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                     <div className="w-24 h-24 flex-shrink-0" dangerouslySetInnerHTML={{ __html: qrLivreur }} />
                     <div className="text-[12px] text-gray-500 leading-relaxed">
                       <p className="font-semibold text-[#111111] text-[13px] mb-1">{t("QR du livreur")}</p>
-                      {t("À faire scanner par le livreur depuis cet écran, au départ. Ne l'imprime pas et ne le mets pas dans le colis. Le lien s'arrête quand la commande est livrée ou annulée, et change si tu changes de livreur.")}
+                      {t("À faire scanner par le livreur depuis cet écran, au départ : il démarre la course, partage sa position et confirme la livraison avec le code du client. Ne l'imprime pas et ne le mets pas dans le colis. Le lien s'arrête quand la commande est livrée ou annulée, et change si tu changes de livreur.")}
                     </div>
                   </div>
                 )}
                 {lienLivreur && STATUTS_COURSE_ACTIVE.includes(commande.statut) && (() => {
                   const livreurUrl = lienLivreur;
-                  const msg = encodeURIComponent(`🚚 *Livraison — ${(commande as any).tenant?.nomBoutique}*\n\nBonjour ! Vous êtes assigné à la livraison de la commande #${commande.numero}.\n\n👤 Client : ${commande.clientNom}\n📞 Tél : ${commande.clientTelephone}\n📍 Adresse : ${(commande as any).adresseExacte || commande.adresseLivraison}, ${commande.ville}\n${(commande as any).mapsLienClient ? `\n🗺️ Google Maps : ${(commande as any).mapsLienClient}\n` : ""}\n📡 Activez votre tracking GPS :\n${livreurUrl}\n\nMerci !`);
+                  const msg = encodeURIComponent(`🚚 *Livraison — ${(commande as any).tenant?.nomBoutique}*\n\nBonjour ! Vous êtes assigné à la livraison de la commande #${commande.numero}.\n\n👤 Client : ${commande.clientNom}\n📞 Tél : ${commande.clientTelephone}\n📍 Adresse : ${(commande as any).adresseExacte || commande.adresseLivraison}, ${commande.ville}\n${(commande as any).mapsLienClient ? `\n🗺️ Google Maps : ${(commande as any).mapsLienClient}\n` : ""}\n📡 Votre lien de course (démarrer, suivi GPS, confirmer avec le code du client) :\n${livreurUrl}\n\nMerci !`);
                   return (
                     <a href={`https://wa.me/?text=${msg}`}
                       target="_blank" rel="noopener noreferrer"

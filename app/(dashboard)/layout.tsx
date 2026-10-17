@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { NotificationSound } from "@/components/ui/NotificationSound";
@@ -47,6 +48,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <AlerteCommande />
       {/* AXIA prend la parole : constats, rappels, demandes d'accord. */}
       <AxiaBulle />
+      {/* Liste ouverte des menus déroulants, la même dans tous les navigateurs. */}
+      <MenusDeroulants />
     </AbonnementOverlayProvider>
     </I18nProvider>
   );

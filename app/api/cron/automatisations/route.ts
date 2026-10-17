@@ -9,13 +9,16 @@
 // /api/cron/publications. Un passage en retard n'est jamais perdu, seulement décalé.
 import { NextResponse } from "next/server";
 import { passeDuCron } from "@/lib/controle-ia/automatisations";
+import { passeRelances } from "@/lib/relances";
 
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || !(req.headers.get("x-cron-secret") === secret || req.headers.get("authorization") === `Bearer ${secret}`)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  return NextResponse.json(await passeDuCron());
+  // Relances automatiques (Campagnes → Relances) au même passage : lib/relances.ts.
+  const [automatisations, relances] = await Promise.all([passeDuCron(), passeRelances().catch((e) => ({ erreur: String(e?.message ?? e) }))]);
+  return NextResponse.json({ ...automatisations, relances });
 }
 
 export const POST = GET;

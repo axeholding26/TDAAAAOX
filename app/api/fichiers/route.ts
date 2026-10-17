@@ -3,11 +3,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { list, del } from "@vercel/blob";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { dossierBoutique, SOUS_DOSSIER_DIGITAL } from "@/lib/fichiers-boutique";
 
+async function boutiqueConnectee() {
+  return ((await auth())?.user as any)?.tenantId as string | undefined;
+}
 async function dossierConnecte() {
-  const tenantId = ((await auth())?.user as any)?.tenantId as string | undefined;
+  const tenantId = await boutiqueConnectee();
   return tenantId ? dossierBoutique(tenantId) : null;
+}
+
+/**
+ * Images de produits hébergées ailleurs (image générée par l'IA, lien collé) : elles font partie de la
+ * boutique, comme sur Shopify, mais ne sont pas dans son dossier. Listées à part, jamais supprimables ici.
+ */
+async function imagesProduitsExternes(tenantId: string, dejaListees: Set<string>) {
+  const produits = await prisma.produit.findMany({ where: { tenantId }, select: { id: true, nom: true, images: true, updatedAt: true } });
+  return produits.flatMap((p) => p.images
+    .filter((url) => /^https?:\/\//.test(url) && !dejaListees.has(url))
+    .map((url, i) => ({ url, nom: p.images.length > 1 ? `${p.nom} (${i + 1})` : p.nom, type: "image" as const, taille: null, date: p.updatedAt.toISOString(), externe: true, produitId: p.id })));
 }
 
 export async function GET(req: NextRequest) {
@@ -27,10 +42,14 @@ export async function GET(req: NextRequest) {
       nom: b.pathname.split("/").pop() ?? b.pathname,
       type: b.pathname.startsWith(`${dossier}videos/`) ? "video" : b.pathname.startsWith(`${dossier}documents/`) ? "document" : "image",
       taille: b.size,
-      date: b.uploadedAt,
-    }))
-    .sort((a, b) => +new Date(b.date) - +new Date(a.date));
-  return NextResponse.json({ fichiers, cursor: hasMore ? cursor : null });
+      date: b.uploadedAt.toISOString(),
+    }));
+  // Première page seulement (toutes ou images) : les images de produits hébergées ailleurs.
+  const externes = !searchParams.get("cursor") && (!type || type === "image")
+    ? await imagesProduitsExternes((await boutiqueConnectee())!, new Set(fichiers.map((f) => f.url)))
+    : [];
+  const tous = [...fichiers, ...externes].sort((a, b) => +new Date(b.date) - +new Date(a.date));
+  return NextResponse.json({ fichiers: tous, cursor: hasMore ? cursor : null });
 }
 
 export async function DELETE(req: NextRequest) {

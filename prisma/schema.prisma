@@ -254,6 +254,7 @@ model Client {
   pays           String?
   totalCommandes Int      @default(0)
   totalDepense   Float    @default(0)
+  relancesRefuseesLe DateTime? // désinscrit des relances automatiques (lien en bas de chaque message)
   createdAt      DateTime @default(now())
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
@@ -1417,8 +1418,21 @@ model AutomationWorkflow {
   conversions    Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  envois         RelanceEnvoyee[]
 
   @@index([tenantId, type, actif])
+}
+
+// Relance déjà envoyée (lib/relances.ts) : une seule fois par workflow et par événement
+// (cle = client, commande ou « client:dernière commande »). Réservée avant l'envoi.
+model RelanceEnvoyee {
+  id         String   @id @default(cuid())
+  workflowId String
+  cle        String
+  createdAt  DateTime @default(now())
+  workflow   AutomationWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, cle])
 }
 
 // =====================

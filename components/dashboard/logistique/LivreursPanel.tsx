@@ -45,15 +45,23 @@ export function LivreursPanel() {
   const [pays, setPays] = useState("");
   useEffect(() => { fetch("/api/tenants/moi").then(r => r.json()).then(d => setPays(d?.tenant?.pays ?? "")).catch(() => {}); }, []);
 
+  // Une erreur (droits, réseau) est dite : sinon elle passait pour « aucun livreur », ou le chargement ne finissait jamais.
   async function charger() {
     setLoading(true);
-    const [r1, r2] = await Promise.all([
-      fetch("/api/livreurs").then(r => r.json()),
-      fetch("/api/livreurs/plateforme").then(r => r.json()),
-    ]);
-    setMesPlateforme(r1.livreurs || []);
-    setPlateforme(r2.livreurs || []);
-    setLoading(false);
+    const lire = (url: string) => fetch(url).then(async r => {
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || "Impossible de charger les livreurs");
+      return (d.livreurs || []) as Livreur[];
+    });
+    try {
+      const [miens, autres] = await Promise.all([lire("/api/livreurs"), lire("/api/livreurs/plateforme")]);
+      setMesPlateforme(miens);
+      setPlateforme(autres);
+    } catch (err: any) {
+      toast.error(t(err.message || "Impossible de charger les livreurs"));
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { charger(); }, []);

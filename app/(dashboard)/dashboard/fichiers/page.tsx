@@ -6,7 +6,8 @@ import { televerser } from "@/lib/televerser";
 import { TYPES_FICHIERS } from "@/lib/types-fichiers";
 import { useT } from "@/components/I18nProvider";
 
-interface Fichier { url: string; nom: string; type: "image" | "video" | "document"; taille: number; date: string }
+// externe : image d'un produit hébergée ailleurs (IA, lien collé) — affichée, jamais supprimée d'ici.
+interface Fichier { url: string; nom: string; type: "image" | "video" | "document"; taille: number | null; date: string; externe?: boolean; produitId?: string }
 type Filtre = "tous" | "image" | "video" | "document";
 const ACCEPTES = [...TYPES_FICHIERS.image, ...TYPES_FICHIERS.video, ...TYPES_FICHIERS.document];
 const categorieDe = (type: string) => (TYPES_FICHIERS.image.includes(type) ? "image" : TYPES_FICHIERS.video.includes(type) ? "video" : "document");
@@ -161,7 +162,7 @@ function Carte({ fichier: f, onSupprime }: { fichier: Fichier; onSupprime: () =>
       </a>
       <div className="p-2.5">
         <p className="text-[13px] font-medium text-gray-800 truncate" title={nomLisible(f.nom)}>{nomLisible(f.nom)}</p>
-        <p className="text-[12px] text-gray-400">{taille(f.taille)} · {new Date(f.date).toLocaleDateString()}</p>
+        <p className="text-[12px] text-gray-400">{f.externe ? t("Lien externe · image produit") : `${taille(f.taille ?? 0)} · ${new Date(f.date).toLocaleDateString()}`}</p>
         {confirmer ? (
           <div className="mt-2 space-y-1.5">
             <p className="text-[12px] text-red-600 leading-snug">{t("Supprimer ? Il disparaîtra aussi des pages qui l'utilisent.")}</p>
@@ -177,9 +178,11 @@ function Carte({ fichier: f, onSupprime }: { fichier: Fichier; onSupprime: () =>
             <button onClick={copier} className="flex-1 h-8 flex items-center justify-center gap-1 rounded-md border border-gray-200 text-[12.5px] text-gray-600 hover:border-gray-300">
               {copie ? <Check size={13} className="text-green-600" /> : <Copy size={13} />}{" "}{copie ? t("Copié") : t("Copier le lien")}
             </button>
-            <button onClick={() => setConfirmer(true)} title={t("Supprimer")} aria-label={t("Supprimer")} className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200">
-              <Trash2 size={13} />
-            </button>
+            {!f.externe && (
+              <button onClick={() => setConfirmer(true)} title={t("Supprimer")} aria-label={t("Supprimer")} className="w-8 h-8 flex items-center justify-center rounded-md border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200">
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         )}
       </div>

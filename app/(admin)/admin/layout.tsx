@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { getAdminSession } from "@/lib/admin-auth";
 import { I18nProvider } from "@/components/I18nProvider";
 import { getLangue, dico } from "@/lib/i18n/serveur";
@@ -13,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <I18nProvider langue={await getLangue()} dico={await dico("admin", "dashboard")}>
     <div className="min-h-screen flex flex-col md:flex-row" style={{ background: "#111111", fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <AdminNav email={session.email} role={session.role} />
+      <MenusDeroulants />
       <main className="flex-1 overflow-auto">
         <div className="max-w-7xl mx-auto p-4 sm:p-8 lg:p-10">
           {children}

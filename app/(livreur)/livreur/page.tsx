@@ -9,9 +9,9 @@ import { getT } from "@/lib/i18n/serveur";
 import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
 
 const STATUT: Record<string, { label: string; color: string; bg: string }> = {
-  confirmee:      { label: "À récupérer",   color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  confirmee:      { label: "À récupérer",   color: "#d4d4d4", bg: "rgba(212,212,212,0.08)" },
   en_preparation: { label: "Préparation",   color: "#a78bfa", bg: "rgba(167,139,250,0.1)" },
-  expediee:       { label: "En livraison",  color: "#60a5fa", bg: "rgba(96,165,250,0.1)" },
+  expediee:       { label: "En livraison",  color: "#F5A623", bg: "rgba(245,166,35,0.1)" },
   tentative_echouee: { label: "À retenter", color: "#f87171", bg: "rgba(248,113,113,0.1)" },
   livree:         { label: "Livré ✓",       color: "#34d399", bg: "rgba(52,211,153,0.1)" },
 };
@@ -37,8 +37,8 @@ export default async function LivreurDashboard() {
       include: { lignes: { take: 3 } },
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutJour } } }),
-    prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", updatedAt: { gte: debutSemaine } } }),
+    prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", livreeAt: { gte: debutJour } } }),
+    prisma.commande.count({ where: { livreurId: livreur.id, statut: "livree", livreeAt: { gte: debutSemaine } } }),
     // Même filtre que /api/livreurs/[id]/encaissements (côté marchand) : livré en COD, pas encore remis
     prisma.commande.findMany({
       where: { livreurId: livreur.id, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false },
@@ -73,8 +73,8 @@ export default async function LivreurDashboard() {
     <div className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 lg:items-start">
       {/* Hero card */}
       <div className="relative rounded-3xl overflow-hidden lg:col-span-2">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1B4FD8]/20 via-[#1B4FD8]/5 to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#1B4FD820,_transparent_60%)]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F5A623]/20 via-[#F5A623]/5 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#F5A62320,_transparent_60%)]" />
         <div className="relative p-6">
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -105,7 +105,7 @@ export default async function LivreurDashboard() {
           {/* Stats du jour */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
-              <p className="text-2xl font-bold text-[#1B4FD8]">{commandesActives.length}</p>
+              <p className="text-2xl font-bold text-[#F5A623]">{commandesActives.length}</p>
               <p className="text-gray-400 text-xs mt-1">{t("En cours")}</p>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 text-center border border-white/10">
@@ -141,7 +141,7 @@ export default async function LivreurDashboard() {
         <div className={`space-y-3 ${commandesActives.length === 1 ? "lg:col-span-2" : ""}`}>
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold flex items-center gap-2">
-              <Zap size={16} className="text-[#1B4FD8]" />
+              <Zap size={16} className="text-[#F5A623]" />
               {t("Livraison en cours")}
             </h2>
             <span className="text-xs px-2 py-1 rounded-lg font-medium"
@@ -160,7 +160,7 @@ export default async function LivreurDashboard() {
 
           {/* Détails commande */}
           {/* Pas de lien dans un lien (HTML invalide → erreur d'hydratation, et Maps/WhatsApp ouvraient la fiche) */}
-          <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#1B4FD8]/30 rounded-2xl p-4 transition-all">
+          <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 hover:border-[#F5A623]/30 rounded-2xl p-4 transition-all">
               <Link href={`/livreur/commande/${commandePrioritaire.id}`} className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <p className="text-white font-bold">{t(commandePrioritaire.clientNom)}</p>
@@ -174,7 +174,7 @@ export default async function LivreurDashboard() {
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-[#1B4FD8] font-bold text-lg">{formatMontant(commandePrioritaire.montantTotal, commandePrioritaire.devise)}</p>
+                  <p className="text-[#F5A623] font-bold text-lg">{formatMontant(commandePrioritaire.montantTotal, commandePrioritaire.devise)}</p>
                   <p className="text-gray-500 text-xs">{commandePrioritaire.lignes.length} article{commandePrioritaire.lignes.length > 1 ? "s" : ""}</p>
                 </div>
               </Link>
@@ -184,7 +184,7 @@ export default async function LivreurDashboard() {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${commandePrioritaire.adresseLivraison}, ${commandePrioritaire.ville}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#60a5fa] py-2.5 rounded-xl text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-gray-200 py-2.5 rounded-xl text-sm"
                 >
                   <Map size={14} />{" "}{t("Maps")}
                 </a>
@@ -213,7 +213,7 @@ export default async function LivreurDashboard() {
               const st = STATUT[cmd.statut] || STATUT.confirmee;
               return (
                 <Link key={cmd.id} href={`/livreur/commande/${cmd.id}`}>
-                  <div className="flex items-center gap-3 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-3.5 hover:border-[#1B4FD8]/20 transition-all">
+                  <div className="flex items-center gap-3 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-2xl p-3.5 hover:border-[#F5A623]/20 transition-all">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: st.bg }}>
                       <Package size={16} style={{ color: st.color }} />
                     </div>
@@ -224,7 +224,7 @@ export default async function LivreurDashboard() {
                       </p>
                     </div>
                     <div className="flex flex-col items-end flex-shrink-0">
-                      <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
+                      <p className="text-[#F5A623] text-sm font-bold">{formatMontant(cmd.montantTotal, cmd.devise)}</p>
                       <span className="text-[10px] mt-0.5" style={{ color: st.color }}>{t(st.label)}</span>
                     </div>
                     <ChevronRight size={14} className="text-gray-500" />
@@ -239,8 +239,8 @@ export default async function LivreurDashboard() {
       {/* Aucune commande */}
       {commandesActives.length === 0 && (
         <div className="lg:col-span-2 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-10 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#1B4FD8]/10 flex items-center justify-center mx-auto mb-4">
-            <Package size={28} className="text-[#1B4FD8]" />
+          <div className="w-16 h-16 rounded-2xl bg-[#F5A623]/10 flex items-center justify-center mx-auto mb-4">
+            <Package size={28} className="text-[#F5A623]" />
           </div>
           <p className="text-white font-semibold">{t("Aucune livraison assignée")}</p>
           <p className="text-gray-500 text-sm mt-2">{t("Votre responsable vous assignera la prochaine commande")}</p>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Bike, MapPin, Navigation, Radio, Square, XCircle, CheckCircle } from "lucide-react";
+import { Bike, MapPin, Navigation, Radio, Square, XCircle, CheckCircle, Phone, MessageCircle } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 export default function LivreurPage() {
@@ -14,6 +14,10 @@ export default function LivreurPage() {
   const [telephone, setTelephone] = useState("");
   const [lastPos, setLastPos] = useState<{lat:number;lng:number}|null>(null);
   const [updateCount, setUpdateCount] = useState(0);
+  const [envoi, setEnvoi] = useState(false);
+  const [code, setCode] = useState("");
+  const [echecOuvert, setEchecOuvert] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const watchRef = useRef<number|null>(null);
   const intervalRef = useRef<NodeJS.Timeout|null>(null);
 
@@ -96,6 +100,26 @@ export default function LivreurPage() {
     }, 30000);
   }
 
+  // Même circuit que l'appli livreur (lib/cycle-livraison.ts) : démarrer, livrer avec le code du client, signaler un échec.
+  async function changerStatut(statut: "expediee" | "livree" | "tentative_echouee", echecRaison?: string) {
+    setEnvoi(true); setMessage(null);
+    const r = await fetch(`/api/tracking/${params.token}/statut`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ statut, echecRaison, code: statut === "livree" ? code : undefined }),
+    }).catch(() => null);
+    setEnvoi(false);
+    const d = r ? await r.json().catch(() => ({})) : {};
+    if (!r || !r.ok) {
+      setMessage(t(d.error) || t("Connexion impossible. Vérifiez votre réseau et réessayez."));
+      if (d.code === "code_incorrect") setCode("");
+      return;
+    }
+    setCommande((c: any) => ({ ...c, statut }));
+    setEchecOuvert(false);
+    if (statut === "expediee") { if (status !== "tracking") startTracking(); return; }
+    stopTracking();
+  }
+
   function stopTracking() {
     if (watchRef.current !== null) navigator.geolocation?.clearWatch(watchRef.current);
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -164,10 +188,18 @@ export default function LivreurPage() {
             </div>
           )}
 
-          <button onClick={startTracking}
-            style={{ width:"100%", padding:"16px", borderRadius:16, background:"linear-gradient(135deg,#F5A623,#e09520)", color:"black", border:"none", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
-            <Radio size={18} />{" "}{t("Démarrer le partage de position")}
-          </button>
+          {commande?.statut === "expediee" ? (
+            <button onClick={startTracking}
+              style={{ width:"100%", padding:"16px", borderRadius:16, background:"linear-gradient(135deg,#F5A623,#e09520)", color:"black", border:"none", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+              <Radio size={18} />{" "}{t("Reprendre le partage de position")}
+            </button>
+          ) : (
+            <button onClick={() => changerStatut("expediee")} disabled={envoi || !commande}
+              style={{ width:"100%", padding:"16px", borderRadius:16, background:"linear-gradient(135deg,#F5A623,#e09520)", color:"black", border:"none", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8, opacity: envoi ? 0.6 : 1 }}>
+              <Navigation size={18} />{" "}{envoi ? t("Démarrage...") : t("Démarrer la livraison")}
+            </button>
+          )}
+          <p style={{ fontSize:11, color:"#666", textAlign:"center", marginTop:8 }}>{t("Le client sera prévenu et pourra suivre votre position")}</p>
         </div>
       )}
 
@@ -203,6 +235,52 @@ export default function LivreurPage() {
         </div>
       )}
 
+      {commande && !["livree", "annulee"].includes(commande.statut) && status !== "done" && (
+        <div style={{ width:"100%", maxWidth:360, marginTop:20 }}>
+          {commande.clientTelephone && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:16 }}>
+              <a href={`tel:${commande.clientTelephone}`} style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"11px", borderRadius:12, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", color:"#DDD", fontSize:13, fontWeight:600, textDecoration:"none" }}>
+                <Phone size={14} />{" "}{t("Appeler le client")}
+              </a>
+              <a href={`https://wa.me/${String(commande.clientTelephone).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, padding:"11px", borderRadius:12, background:"rgba(34,197,94,0.1)", border:"1px solid rgba(34,197,94,0.25)", color:"#22c55e", fontSize:13, fontWeight:600, textDecoration:"none" }}>
+                <MessageCircle size={14} /> WhatsApp
+              </a>
+            </div>
+          )}
+
+          {commande.statut === "expediee" && (
+            <>
+              <form onSubmit={e => { e.preventDefault(); changerStatut("livree"); }}>
+                <label htmlFor="code-livraison" style={{ fontSize:11, color:"#888", display:"block", marginBottom:6, textAlign:"center" }}>{t("Demandez au client son code de livraison (reçu par WhatsApp)")}</label>
+                <div style={{ display:"flex", gap:8 }}>
+                  <input id="code-livraison" value={code} onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="one-time-code" placeholder="• • • •"
+                    style={{ flex:1, minWidth:0, padding:"13px", borderRadius:14, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:22, letterSpacing:"0.4em", textAlign:"center", fontFamily:"monospace", outline:"none" }} />
+                  <button type="submit" disabled={envoi || code.length !== 4}
+                    style={{ padding:"0 18px", borderRadius:14, background:"#22c55e", color:"black", border:"none", fontWeight:700, fontSize:14, cursor:"pointer", opacity: envoi || code.length !== 4 ? 0.4 : 1, display:"flex", alignItems:"center", gap:6 }}>
+                    <CheckCircle size={16} />{" "}{t("Livré")}
+                  </button>
+                </div>
+              </form>
+              {echecOuvert ? (
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:12 }}>
+                  {["Client absent", "Client injoignable", "Refus du colis", "Adresse introuvable"].map(r => (
+                    <button key={r} onClick={() => changerStatut("tentative_echouee", r)} disabled={envoi}
+                      style={{ padding:"10px", borderRadius:12, background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.25)", color:"#f87171", fontSize:12, fontWeight:600, cursor:"pointer" }}>{t(r)}</button>
+                  ))}
+                  <button onClick={() => setEchecOuvert(false)} style={{ gridColumn:"span 2", padding:"6px", background:"none", border:"none", color:"#666", fontSize:12, cursor:"pointer" }}>{t("Annuler")}</button>
+                </div>
+              ) : (
+                <button onClick={() => setEchecOuvert(true)} disabled={envoi}
+                  style={{ width:"100%", marginTop:12, padding:"11px", borderRadius:12, background:"none", border:"1px solid rgba(239,68,68,0.25)", color:"#f87171", fontSize:13, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                  <XCircle size={14} />{" "}{t("Signaler un échec")}
+                </button>
+              )}
+            </>
+          )}
+          {message && <p role="alert" style={{ marginTop:12, fontSize:13, color:"#f87171", textAlign:"center" }}>{message}</p>}
+        </div>
+      )}
+
       {status === "error" && (
         <div style={{ textAlign:"center" }}>
           <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><XCircle size={48} color="#ef4444" /></div>
@@ -214,7 +292,9 @@ export default function LivreurPage() {
       {status === "done" && (
         <div style={{ textAlign:"center" }}>
           <div style={{ display:"flex", justifyContent:"center", marginBottom:16 }}><CheckCircle size={48} color="#22c55e" /></div>
-          <div style={{ fontSize:16, fontWeight:600, color:"#22c55e" }}>{t("Partage terminé")}</div>
+          <div style={{ fontSize:16, fontWeight:600, color: commande?.statut === "tentative_echouee" ? "#f87171" : "#22c55e" }}>
+            {commande?.statut === "livree" ? t("Livraison confirmée — merci !") : commande?.statut === "tentative_echouee" ? t("Échec signalé : la boutique et le client sont prévenus.") : t("Partage terminé")}
+          </div>
           <p style={{ fontSize:13, color:"#666", marginTop:8 }}>{updateCount}{" "}{t("position(s) envoyée(s)")}</p>
         </div>
       )}

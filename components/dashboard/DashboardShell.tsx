@@ -6,7 +6,7 @@ import { Sparkles, ShoppingCart, Store, Users } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { BoutiqueSwitcher } from "@/components/dashboard/BoutiqueSwitcher";
 import { Header } from "@/components/dashboard/Header";
-import { initiales } from "@/lib/utils";
+import { AvatarCompte } from "@/components/dashboard/AvatarCompte";
 import { RechercheDashboard } from "@/components/dashboard/RechercheDashboard";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { QuotaBanner } from "@/components/dashboard/QuotaBanner";
@@ -151,8 +151,8 @@ function MobileHeader({ boutiqueNom, permissions, nom }: { boutiqueNom?: string;
         )}
         <div className="flex items-center gap-2 flex-shrink-0">
         <RechercheDashboard permissions={permissions} mobile />
-        <Link href="/dashboard/profil" aria-label={t("Mon profil")} className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f] flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-xs font-bold">{initiales(nom) || "?"}</span>
+        <Link href="/dashboard/profil" aria-label={t("Mon profil")} className="flex-shrink-0">
+          <AvatarCompte nom={nom} className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F5A623] to-[#e8950f]" classeInitiales="text-white text-xs font-bold" />
         </Link>
         </div>
       </div>

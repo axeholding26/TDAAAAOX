@@ -99,6 +99,9 @@ async function envoyerMessage(telephone: string, message: string, tenantId?: str
   return envoyerViaCloudAPI(telephone, message);
 }
 
+/** Message libre envoyé automatiquement (relances, lib/relances.ts) : vrai si parti. */
+export const envoyerWhatsApp = (telephone: string, message: string, tenantId: string) => envoyerMessage(telephone, message, tenantId);
+
 // Construit un lien wa.me cliquable pour le marchand (fallback sans API)
 export function buildWhatsAppLink(telephone: string, message: string): string | null {
   const numero = telephone.replace(/\D/g, "");
@@ -166,6 +169,13 @@ export async function notifierLivreurAssigneWhatsApp(params: {
 
 // Prévient le livreur d'une nouvelle course : la notification dans l'appli ne
 // suffit pas, il ne la voit que s'il a l'appli ouverte. Lien direct vers la fiche.
+/** Course annulée ou confiée à un autre livreur : prévenir celui qui l'avait (il est peut-être déjà en route). */
+export async function notifierLivreurCourseRetiree(params: { telephone: string; numero: string; boutique: string; motif: "annulee" | "reassignee"; tenantId: string }): Promise<boolean> {
+  const raison = params.motif === "annulee" ? "a été *annulée* par la boutique" : "a été *confiée à un autre livreur*";
+  const message = `⛔ *Course retirée*\n\nLa commande *#${params.numero}* — *${params.boutique}* ${raison}.\nNe la livre pas. En cas de doute, contacte la boutique.`;
+  return envoyerMessage(params.telephone, message, params.tenantId);
+}
+
 export async function notifierLivreurNouvelleCourse(params: {
   telephone: string;
   numero: string;

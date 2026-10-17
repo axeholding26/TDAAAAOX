@@ -1,4 +1,5 @@
 "use client";
+import { AvatarCompte } from "@/components/dashboard/AvatarCompte";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Send, Mic, LayoutDashboard, History, Sparkles, PanelLeft, Plus, Volume2, VolumeX, Phone, Paperclip, X, Copy, Check, RotateCcw, Square, MessageSquare, Bell } from "lucide-react";
@@ -703,7 +704,7 @@ export function AxiaHomeClient() {
                       style={m.role === "user" ? { background: "#F5A623" } : { background: "rgba(255,255,255,0.08)" }}>
                       {m.role === "assistant"
                         ? <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
-                        : <span className="text-[11px] font-bold text-[#111111]">{tr((nomBoutique ?? "M")[0])}</span>}
+                        : <AvatarCompte nom={nomBoutique ?? "M"} className="w-full h-full" classeInitiales="text-[11px] font-bold text-[#111111]" />}
                     </div>
                     <div className="flex flex-col gap-1.5" style={{ maxWidth: "85%" }}>
                       {m.imageUrl && (

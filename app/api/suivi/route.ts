@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       id: true,
       numero: true,
       statut: true,
+      echecRaison: true,
       paiementStatut: true,
       adresseLivraison: true,
       ville: true,

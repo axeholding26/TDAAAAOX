@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Gift, Clock, Sparkles } from "lucide-react";
+import { Trash2, Eye, MousePointer, Megaphone, Zap, Mail, MessageSquare, Phone, Trophy, ShoppingCart, Smile, Package, Clock, Sparkles } from "lucide-react";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
 import { toast } from "sonner";
@@ -118,7 +118,6 @@ const TYPE_CONFIG: Record<string,{label:string;icon:any}> = {
   panier_abandonne:{label:"Panier abandonné",icon:ShoppingCart},
   bienvenue:{label:"Bienvenue",icon:Smile},
   apres_achat:{label:"Après achat",icon:Package},
-  anniversaire:{label:"Anniversaire",icon:Gift},
   inactif:{label:"Client inactif",icon:Clock},
 };
 const CANAL_ICONS: Record<string,any> = { email:Mail, sms:Phone, whatsapp:MessageSquare };
@@ -175,7 +174,7 @@ function OngletAutomation() {
             </select>
             <select value={form.canal} onChange={e=>setForm(v=>({...v,canal:e.target.value}))}
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none">
-              {["email","sms","whatsapp"].map(c=><option key={c} value={c}>{t(c)}</option>)}
+              {[["email","Email"],["whatsapp","WhatsApp"]].map(([c,l])=><option key={c} value={c}>{t(l)}</option>)}
             </select>
             <input placeholder={t("Délai (heures)")} type="number" value={form.delaiHeures} onChange={e=>setForm(v=>({...v,delaiHeures:+e.target.value}))}
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
@@ -183,6 +182,10 @@ function OngletAutomation() {
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>}
             <textarea placeholder={t("Message")} value={form.message} onChange={e=>setForm(v=>({...v,message:e.target.value}))}
               rows={3} className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none resize-none col-span-2"/>
+            <p className="col-span-2 text-[11px] text-gray-400 leading-relaxed">
+              {t("Variables : {{nom}} (prénom du client), {{boutique}}, {{lien}} (lien de ta boutique). Un lien de désinscription est ajouté à chaque message.")}{" "}
+              {form.type==="panier_abandonne" ? t("Panier abandonné : paiement en ligne commencé mais pas finalisé.") : form.type==="inactif" ? t("Client inactif : aucune commande depuis le délai choisi (ex. 720 h = 30 jours).") : ""}
+            </p>
           </div>
           <div className="flex gap-2">
             <button onClick={creer} disabled={!form.nom||!form.message||saving}
@@ -203,8 +206,12 @@ function OngletAutomation() {
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-semibold text-[#111] truncate">{t(w.nom)}</p>
               <p className="text-[11px] text-gray-400 flex items-center gap-1">
-                <CanalIcon size={10}/> {t(tc.label)} · {w.delaiHeures}{t("h ·")}{" "}{w.declenchements}{" "}{t("déclenchements")}
+                <CanalIcon size={10}/> {t(tc.label)} · {w.delaiHeures}{t("h ·")}{" "}{w.declenchements}{" "}{t("message(s) envoyé(s)")}
               </p>
+              {/* Anciens workflows (anniversaire, SMS) : le moteur ne peut pas les envoyer — on le dit. */}
+              {(!TYPE_CONFIG[w.type] || w.canal === "sms") && (
+                <p className="text-[11px] text-red-500 mt-0.5">{w.canal === "sms" ? t("Non envoyé : aucun service SMS n'est branché. Recrée-le en email ou WhatsApp.") : t("Non envoyé : aucune date de naissance n'est enregistrée pour tes clients.")}</p>
+              )}
             </div>
             <button onClick={()=>toggle(w.id,w.actif)} aria-label={t("Activer / désactiver")}
               className={`relative inline-flex h-5 w-9 rounded-full transition-colors ${w.actif?"bg-[#F5A623]":"bg-gray-200"}`}>

@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -30,6 +31,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("livreur")}>
     <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <MenusDeroulants />
       {/* Fond étoilé subtil */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#F5A623]/5 to-transparent" />

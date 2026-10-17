@@ -29,7 +29,7 @@ const ETAPES = [
 const RAISONS_ECHEC = ["Client absent", "Client injoignable", "Refus du colis", "Adresse introuvable"];
 
 const STATUT_COLOR: Record<string, string> = {
-  confirmee: "#f59e0b", en_preparation: "#a78bfa", expediee: "#60a5fa", livree: "#34d399",
+  confirmee: "#d4d4d4", en_preparation: "#a78bfa", expediee: "#F5A623", livree: "#34d399", tentative_echouee: "#f87171",
 };
 
 export default function CommandeLivreurPage() {
@@ -90,12 +90,14 @@ export default function CommandeLivreurPage() {
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-64">
-      <div className="w-8 h-8 border-2 border-[#1B4FD8] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#F5A623] border-t-transparent rounded-full animate-spin" />
     </div>
   );
   if (!commande) return <div className="text-center py-16 text-gray-400">{t("Commande introuvable")}</div>;
 
-  const etapeActuelle = ETAPES.findIndex(e => e.statut === commande.statut);
+  // Après un échec, la course reste à l'étape « En livraison » : le livreur peut la relancer.
+  const echec = commande.statut === "tentative_echouee";
+  const etapeActuelle = ETAPES.findIndex(e => e.statut === (echec ? "expediee" : commande.statut));
   const peutLivrer = commande.statut === "expediee";
   const peutDemarrer = ["confirmee", "en_preparation", "tentative_echouee"].includes(commande.statut);
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${commande.adresseLivraison}, ${commande.ville}`)}`;
@@ -115,7 +117,7 @@ export default function CommandeLivreurPage() {
             <h1 className="text-xl font-bold text-white mt-1">{t(commande.clientNom)}</h1>
           </div>
           <div className="text-right">
-            <p className="text-[#1B4FD8] font-bold text-xl">{formatMontant(commande.montantTotal, commande.devise)}</p>
+            <p className="text-[#F5A623] font-bold text-xl">{formatMontant(commande.montantTotal, commande.devise)}</p>
             <p className="text-gray-500 text-xs mt-0.5">{t("Livraison :")}{" "}{formatMontant(commande.montantLivraison, commande.devise)}</p>
           </div>
         </div>
@@ -124,12 +126,12 @@ export default function CommandeLivreurPage() {
         <div className="flex items-center gap-1 mt-4">
           {ETAPES.map((e, i) => (
             <div key={e.statut} className="flex-1 h-1 rounded-full" style={{
-              backgroundColor: i <= etapeActuelle ? STATUT_COLOR[commande.statut] || "#1B4FD8" : "#1a1a1a"
+              backgroundColor: i <= etapeActuelle ? STATUT_COLOR[commande.statut] || "#F5A623" : "#1a1a1a"
             }} />
           ))}
         </div>
-        <p className="text-xs mt-2" style={{ color: STATUT_COLOR[commande.statut] || "#1B4FD8" }}>
-          {t(ETAPES[etapeActuelle]?.label)}
+        <p className="text-xs mt-2" style={{ color: STATUT_COLOR[commande.statut] || "#F5A623" }}>
+          {echec ? t("Échec de livraison — à relancer") : t(ETAPES[etapeActuelle]?.label)}
         </p>
       </div>
 
@@ -144,8 +146,8 @@ export default function CommandeLivreurPage() {
       {/* Adresse + Contact */}
       <div className="bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5 space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#1B4FD8]/10 flex items-center justify-center flex-shrink-0">
-            <MapPin size={16} className="text-[#1B4FD8]" />
+          <div className="w-9 h-9 rounded-xl bg-[#F5A623]/10 flex items-center justify-center flex-shrink-0">
+            <MapPin size={16} className="text-[#F5A623]" />
           </div>
           <div>
             <p className="text-white font-semibold">{t(commande.adresseLivraison)}</p>
@@ -155,7 +157,7 @@ export default function CommandeLivreurPage() {
 
         <div className="grid grid-cols-2 gap-3">
           <a href={mapsUrl} target="_blank" rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 bg-[#3b82f6]/10 border border-[#3b82f6]/20 text-[#60a5fa] py-3 rounded-2xl text-sm font-medium">
+            className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-gray-200 py-3 rounded-2xl text-sm font-medium">
             <Navigation size={15} />{" "}{t("Google Maps")}
           </a>
           <a href={waUrl} target="_blank" rel="noopener noreferrer"
@@ -168,14 +170,14 @@ export default function CommandeLivreurPage() {
           className="flex items-center gap-3 w-full bg-[#161616] border border-white/5 text-gray-300 py-3 px-4 rounded-2xl text-sm hover:bg-[#222] transition-colors">
           <Phone size={14} className="text-gray-400" />
           <span>{t(commande.clientTelephone)}</span>
-          <span className="ml-auto text-[#1B4FD8] text-xs font-medium">{t("Appeler")}</span>
+          <span className="ml-auto text-[#F5A623] text-xs font-medium">{t("Appeler")}</span>
         </a>
       </div>
 
       {/* Articles */}
       <div className="lg:col-span-2 bg-gradient-to-br from-[#141414] to-[#0d0d0d] border border-white/5 rounded-3xl p-5">
         <h2 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-          <Package size={14} className="text-[#1B4FD8]" />{" "}{t("Articles")}
+          <Package size={14} className="text-[#F5A623]" />{" "}{t("Articles")}
         </h2>
         <div className="space-y-3">
           {commande.lignes.map((ligne, i) => (
@@ -191,7 +193,7 @@ export default function CommandeLivreurPage() {
                 <p className="text-white text-sm font-medium">{t(ligne.nom)}</p>
                 <p className="text-gray-500 text-xs">{t("Qté :")}{" "}{ligne.quantite}</p>
               </div>
-              <p className="text-[#1B4FD8] text-sm font-bold">{formatMontant(ligne.prix * ligne.quantite, commande.devise)}</p>
+              <p className="text-[#F5A623] text-sm font-bold">{formatMontant(ligne.prix * ligne.quantite, commande.devise)}</p>
             </div>
           ))}
         </div>
@@ -209,7 +211,7 @@ export default function CommandeLivreurPage() {
           <div className="max-w-2xl mx-auto">
             {peutDemarrer ? (
               <button onClick={() => changerStatut("expediee")} disabled={isPending}
-                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-[#1B4FD8] to-[#3b82f6] text-white font-bold py-4 rounded-2xl text-lg transition-all disabled:opacity-50 shadow-xl shadow-blue-500/20">
+                className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-[#F5A623] to-[#e09520] text-black font-bold py-4 rounded-2xl text-lg transition-all disabled:opacity-50 shadow-xl shadow-[#F5A623]/20">
                 <Navigation size={22} />
                 {isPending ? t("Démarrage...") : t("Démarrer la livraison")}
               </button>

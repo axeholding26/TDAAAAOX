@@ -81,7 +81,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button onClick={copier}
       className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 text-xs font-medium hover:bg-gray-50 transition-all flex-shrink-0">
-      {copied ? <><Check size={12} className="text-green-500" />{" "}{t("Copiée")}</> : <><Copy size={12} />{" "}{t("Copier")}</>}
+      {copied ? <><Check size={12} className="text-[#D4911A]" />{" "}{t("Copiée")}</> : <><Copy size={12} />{" "}{t("Copier")}</>}
     </button>
   );
 }
@@ -108,8 +108,8 @@ export default function FeedsPage() {
       <ModuleTutorial moduleKey="feeds" titre={t("Flux produits")} sousTitre={t("Diffuse ton catalogue ailleurs")} steps={FEEDS_TUTORIAL_STEPS} />
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-          <Package size={22} className="text-white" />
+        <div className="w-12 h-12 rounded-2xl bg-[#111111] flex items-center justify-center">
+          <Package size={22} className="text-[#F5A623]" />
         </div>
         <div>
           <div className="flex items-center gap-2">
@@ -121,12 +121,12 @@ export default function FeedsPage() {
       </div>
 
       {/* Comment Shopify fait */}
-      <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-5">
+      <div className="bg-[#F5A623]/[0.07] border border-[#F5A623]/25 rounded-2xl p-5">
         <div className="flex items-start gap-3">
-          <Info size={18} className="text-indigo-500 flex-shrink-0 mt-0.5" />
+          <Info size={18} className="text-[#D4911A] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-indigo-800">{t("Comment Shopify fait ses Ads")}</p>
-            <p className="text-sm text-indigo-700 mt-1 leading-relaxed">
+            <p className="text-sm font-semibold text-[#111111]">{t("Comment Shopify fait ses Ads")}</p>
+            <p className="text-sm text-gray-700 mt-1 leading-relaxed">
               {t("Shopify ne lance pas les pubs lui-même. Il génère des")}{" "}<strong>{t("flux produits XML/CSV")}</strong>{" "}{t("que Google, Meta et TikTok consomment automatiquement. Les plateformes créent ensuite des")}{" "}<strong>{t("Dynamic Ads")}</strong>{" "}{t("— elles montrent automatiquement le bon produit à la bonne personne en retargeting.")}
               <br /><strong>{t("AXSO fait exactement la même chose.")}</strong>
             </p>
@@ -195,7 +195,7 @@ export default function FeedsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   {/* Avantages */}
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><CheckCircle size={12} className="text-green-500" />{" "}{t("Avantages")}</p>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 flex items-center gap-1"><CheckCircle size={12} className="text-[#D4911A]" />{" "}{t("Avantages")}</p>
                     <ul className="space-y-1.5">
                       {plat.avantages.map((a) => (
                         <li key={a} className="flex items-start gap-2 text-xs text-gray-600">
@@ -228,17 +228,16 @@ export default function FeedsPage() {
       </div>
 
       {/* Google Shopping gratuit — CTA spécial */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6">
+      <div className="bg-[#F5A623]/[0.07] border border-[#F5A623]/25 rounded-2xl p-6">
         <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center flex-shrink-0"><Gift size={22} className="text-green-600" /></div>
+          <div className="w-12 h-12 rounded-2xl bg-[#111111] flex items-center justify-center flex-shrink-0"><Gift size={22} className="text-[#F5A623]" /></div>
           <div>
-            <p className="font-bold text-green-800 text-base">{t("Google Shopping GRATUIT — À faire en priorité")}</p>
-            <p className="text-green-700 text-sm mt-1 leading-relaxed">
+            <p className="font-bold text-[#111111] text-base">{t("Google Shopping GRATUIT — À faire en priorité")}</p>
+            <p className="text-gray-700 text-sm mt-1 leading-relaxed">
               {t("Depuis 2020, Google permet à tous les marchands d'apparaître dans Google Shopping GRATUITEMENT. Soumets ton feed Google maintenant → tes produits apparaissent dans les résultats de recherche en 24-72h sans payer un centime.")}
             </p>
             <a href="https://merchants.google.com" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-xl font-semibold text-sm text-white"
-              style={{ background: "linear-gradient(135deg, #4285F4, #34a853)" }}>
+              className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-xl font-semibold text-sm text-[#111111] bg-[#F5A623] hover:bg-[#D4911A] transition-colors">
               <ExternalLink size={14} />{" "}{t("Ouvrir Google Merchant Center")}
             </a>
           </div>
