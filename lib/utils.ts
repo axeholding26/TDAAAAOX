@@ -135,10 +135,11 @@ export function hrefBoutique(slug: string, lien?: string | null): string | undef
 }
 
 // ── Adresse des boutiques : sous-domaine (modèle Shopify) — nom.axsoafrica.com ──
-// Actif dès que NEXT_PUBLIC_AXSO_DOMAIN est un vrai domaine (DNS générique *.domaine) ;
-// sur *.vercel.app aucun sous-domaine générique n'existe : on reste en domaine/nom.
+// Sur demande seulement (NEXT_PUBLIC_SOUS_DOMAINES=1), une fois le DNS générique *.domaine
+// branché (Cloudflare + domaine générique dans Vercel). Sans lui, nom.axsoafrica.com ne
+// répond pas : les liens et QR codes partaient dans le vide. Par défaut : domaine/nom.
 const DOMAINE_AXSO = process.env.NEXT_PUBLIC_AXSO_DOMAIN || "";
-export const SOUS_DOMAINES_ACTIFS = !!DOMAINE_AXSO && !DOMAINE_AXSO.endsWith(".vercel.app");
+export const SOUS_DOMAINES_ACTIFS = process.env.NEXT_PUBLIC_SOUS_DOMAINES === "1" && !!DOMAINE_AXSO && !DOMAINE_AXSO.endsWith(".vercel.app");
 
 /** "https://nom.axsoafrica.com" ; null quand les sous-domaines ne sont pas actifs. */
 export function adresseBoutique(slug: string): string | null {
