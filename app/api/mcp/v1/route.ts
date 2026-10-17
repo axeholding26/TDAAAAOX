@@ -60,7 +60,11 @@ export async function POST(req: Request) {
       return rpc(m.id, { result: {
         protocolVersion: VERSIONS.includes(m.params?.protocolVersion) ? m.params.protocolVersion : VERSIONS[0],
         capabilities: { tools: {} },
-        serverInfo: { name: "axso", title: "Axso", version: "1.0.0" },
+        // icons / websiteUrl (spécification MCP 2025-11-25) : logo affiché par les clients qui les lisent.
+        serverInfo: {
+          name: "axso", title: "Axso", version: "1.0.0", websiteUrl: await origineSite(),
+          icons: [{ src: `${await origineSite()}/icon.png`, mimeType: "image/png", sizes: ["512x512"] }],
+        },
         instructions: CONSIGNES,
       } });
     }

@@ -2,7 +2,7 @@
 // à Axso, choisit la boutique et les droits. L'IA ne voit jamais ses identifiants : elle
 // reçoit un code à usage unique, échangé contre un jeton (app/api/oauth/token).
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { boutiquesDuCompte } from "@/lib/tenant";
 import { planActif } from "@/lib/abonnement";
@@ -62,6 +62,14 @@ async function decider(formData: FormData) {
   retour(d, { code });
 }
 
+/** Déconnexion puis retour sur cette même demande via la page de connexion d'Axso (pas la page d'Auth.js). */
+async function changerDeCompte(formData: FormData) {
+  "use server";
+  const d = Object.fromEntries(CHAMPS.map((c) => [c, String(formData.get(c) ?? "")])) as Demande;
+  const ici = `/oauth/authorize?${new URLSearchParams({ ...d, response_type: "code", code_challenge_method: "S256" })}`;
+  await signOut({ redirectTo: `/connexion?callbackUrl=${encodeURIComponent(ici)}` });
+}
+
 const ERREURS: Record<string, string> = {
   plan: "Le pilotage par une IA externe est disponible à partir du Palier Pro. Passe au Palier Pro dans Axso, puis relance la connexion.",
   boutique: "Choisis au moins une boutique rattachée à ton compte.",
@@ -84,11 +92,9 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     redirect(`/connexion?callbackUrl=${encodeURIComponent(ici)}`);
   }
 
-  const ici = `/oauth/authorize?${new URLSearchParams(sp as Record<string, string>)}`;
   // La session n'est pas revérifiée en base : un compte supprimé garde son cookie. On montre donc
   // qui est connecté, avec de quoi changer de compte (sinon « aucune boutique » sans explication).
   const compte = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
-  const changerDeCompte = `/api/auth/signout?callbackUrl=${encodeURIComponent(`/connexion?callbackUrl=${encodeURIComponent(ici)}`)}`;
   const liste = compte ? await boutiques(userId) : [];
   const active = (session?.user as any)?.tenantId as string | undefined;
 
@@ -104,7 +110,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
         </div>
 
         <p className="text-xs text-gray-500">
-          {compte ? <>Connecté avec <strong>{compte.email}</strong></> : "Ce compte n'existe plus"} · <a href={changerDeCompte} className="underline">Changer de compte</a>
+          {compte ? <>Connecté avec <strong>{compte.email}</strong></> : "Ce compte n'existe plus"} · <button type="submit" formAction={changerDeCompte} className="underline hover:text-[#D4911A]">Changer de compte</button>
         </p>
 
         {sp.erreur && ERREURS[sp.erreur] && <p className="text-sm text-red-600 bg-red-50 rounded-xl p-3">{ERREURS[sp.erreur]}</p>}

@@ -90,6 +90,11 @@ export function AxiaHomeClient() {
   const fileRef        = useRef<HTMLInputElement>(null);
   const recognRef      = useRef<any>(null);
   const audioRef       = useRef<HTMLAudioElement | null>(null);
+  // Mode vocal : n° de la lecture en cours (une lecture plus récente rend les anciennes caduques),
+  // énoncé gardé en mémoire (Chrome perd onend si l'objet est ramassé), écoute voulue (relance auto).
+  const lectureRef     = useRef(0);
+  const enonceRef      = useRef<SpeechSynthesisUtterance | null>(null);
+  const ecouteRef      = useRef(false);
   const bestVoiceRef   = useRef<SpeechSynthesisVoice | null>(null);
   const premiumTtsFailedRef = useRef(false);
   const abortRef       = useRef<AbortController | null>(null);
@@ -151,11 +156,17 @@ export function AxiaHomeClient() {
   const speakBrowserFallback = useCallback((cleanText: string, onDone?: () => void) => {
     if (typeof window === "undefined" || !window.speechSynthesis) { onDone?.(); return; }
     window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(cleanText.slice(0, 600));
+    const texte = cleanText.slice(0, 600);
+    const utt = new SpeechSynthesisUtterance(texte);
     utt.lang = "fr-FR"; utt.rate = 1.08; utt.pitch = 1.03;
     if (bestVoiceRef.current) utt.voice = bestVoiceRef.current;
-    utt.onend = () => onDone?.();
-    utt.onerror = () => onDone?.();
+    // Chrome oublie parfois onend (énoncé ramassé, speak juste après cancel) : sans ce filet,
+    // l'appel restait bloqué après la première réponse. ponytail: durée estimée (~15 caractères/s).
+    const filet = setTimeout(() => onDone?.(), 3000 + texte.length * 70);
+    const fin = () => { clearTimeout(filet); onDone?.(); };
+    utt.onend = fin;
+    utt.onerror = fin;
+    enonceRef.current = utt;
     window.speechSynthesis.speak(utt);
   }, []);
 
@@ -163,10 +174,13 @@ export function AxiaHomeClient() {
     if (typeof window === "undefined") return;
     window.speechSynthesis?.cancel();
     audioRef.current?.pause();
-    if (!ttsRef.current) { onDone?.(); return; }
+    const lecture = ++lectureRef.current;
+    let fini = false;
+    const done = onDone && (() => { if (!fini) { fini = true; onDone(); } });
+    if (!ttsRef.current) { done?.(); return; }
     const cleanText = text.replace(/[*_`#>\-]/g, "").trim();
-    if (!cleanText) { onDone?.(); return; }
-    if (premiumTtsFailedRef.current) { speakBrowserFallback(cleanText, onDone); return; }
+    if (!cleanText) { done?.(); return; }
+    if (premiumTtsFailedRef.current) { speakBrowserFallback(cleanText, done); return; }
     (async () => {
       try {
         const res = await fetch("/api/ai/axia/voix", {
@@ -176,22 +190,29 @@ export function AxiaHomeClient() {
         });
         if (!res.ok) throw new Error(`tts ${res.status}`);
         const blob = await res.blob();
+        // Une lecture plus récente a commencé (ex. la réponse arrive avant la phrase d'attente) :
+        // on ne joue pas celle-ci, sinon deux voix se chevauchent ou AXIA parle pendant l'écoute.
+        if (lecture !== lectureRef.current) { done?.(); return; }
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
         audioRef.current = audio;
-        audio.onended = () => { URL.revokeObjectURL(url); onDone?.(); };
-        audio.onerror = () => { URL.revokeObjectURL(url); speakBrowserFallback(cleanText, onDone); };
+        audio.onended = () => { URL.revokeObjectURL(url); done?.(); };
+        audio.onerror = () => { URL.revokeObjectURL(url); speakBrowserFallback(cleanText, done); };
         await audio.play();
       } catch {
         premiumTtsFailedRef.current = true;
-        speakBrowserFallback(cleanText, onDone);
+        if (lecture === lectureRef.current) speakBrowserFallback(cleanText, done);
+        else done?.();
       }
     })();
   }, [speakBrowserFallback]);
 
   const speakThenListen = useCallback((text: string) => {
     setVoicePhase("speaking");
-    speak(text, () => { if (voiceModeRef.current) setTimeout(() => startListening(), 250); });
+    // Fin de lecture ignorée si une écoute a déjà repris entre-temps (bulle touchée pendant qu'AXIA parle).
+    let lecture = -1; // -1 : lecture terminée tout de suite (voix coupée), rien n'a pu la remplacer
+    speak(text, () => { if (voiceModeRef.current && (lecture === -1 || lectureRef.current === lecture)) setTimeout(() => startListening(), 250); });
+    lecture = lectureRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [speak]);
 
@@ -286,6 +307,7 @@ export function AxiaHomeClient() {
           else next.push({ role: "assistant", content: `Erreur : ${err.message}` });
           return next;
         });
+        if (voiceModeRef.current) speakThenListen("Désolée, je n'ai pas pu répondre. Tu peux répéter ?");
       }
     } finally {
       setLoading(false);
@@ -349,10 +371,13 @@ export function AxiaHomeClient() {
     if (!voiceModeRef.current) return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setVoicePhase("idle"); return; }
+    lectureRef.current++; // toute lecture en cours ou à venir devient caduque
     window.speechSynthesis?.cancel();
     audioRef.current?.pause();
+    try { recognRef.current?.abort(); } catch {}
     const rec = new SR();
     rec.lang = "fr-FR"; rec.continuous = false; rec.interimResults = true;
+    ecouteRef.current = true;
     rec.onresult = (e: any) => {
       let interim = "", final = "";
       for (const r of e.results) {
@@ -360,17 +385,25 @@ export function AxiaHomeClient() {
         else interim += r[0].transcript;
       }
       setInterimText(interim || final);
-      if (final) { setInterimText(""); sendRef.current(final); }
+      if (final) { ecouteRef.current = false; setInterimText(""); sendRef.current(final); }
     };
-    rec.onend = () => { if (voiceModeRef.current && !loadingRef.current) setVoicePhase("idle"); };
-    rec.onerror = () => setVoicePhase("idle");
+    // Chrome coupe le micro après un silence ou une phrase : tant que l'appel est ouvert et
+    // qu'on attend la parole du marchand, l'écoute repart seule (comme un vrai appel).
+    rec.onend = () => {
+      if (recognRef.current !== rec || !voiceModeRef.current || loadingRef.current) return; // ancienne écoute remplacée
+      if (ecouteRef.current) setTimeout(() => { if (ecouteRef.current && voiceModeRef.current) startListening(); }, 300);
+      else setVoicePhase(p => (p === "listening" ? "idle" : p));
+    };
+    // Micro refusé ou absent : inutile de relancer en boucle.
+    rec.onerror = (e: any) => { if (e?.error === "not-allowed" || e?.error === "service-not-allowed" || e?.error === "audio-capture") { ecouteRef.current = false; setVoicePhase("idle"); } };
     recognRef.current = rec;
     setVoicePhase("listening");
     setInterimText("");
-    rec.start();
+    try { rec.start(); } catch { /* déjà en cours */ }
   }, []);
 
   const stopListening = useCallback(() => {
+    ecouteRef.current = false;
     recognRef.current?.stop();
     setVoicePhase("idle");
     setInterimText("");
