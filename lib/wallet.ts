@@ -334,6 +334,15 @@ export function telCameroun(saisie: string): string | null {
   return /^6\d{8}$/.test(d) ? `+237${d}` : null;
 }
 
+/** Opérateur d'un numéro camerounais (+2376…) d'après son préfixe : MTN 67 / 650-654, Orange 69 / 655-659.
+ *  ponytail: préfixes sûrs seulement ; 68x et 62x (partagés ou récents) → null, versement à la main. */
+export function operateurCameroun(tel: string | null): "mtn" | "orange" | null {
+  const d = tel?.replace(/\D/g, "").replace(/^237/, "") ?? "";
+  if (/^67/.test(d) || /^65[0-4]/.test(d)) return "mtn";
+  if (/^69/.test(d) || /^65[5-9]/.test(d)) return "orange";
+  return null;
+}
+
 export async function initierRetrait(params: RetraitParams) {
   const { tenantId, methode, operateur, notes } = params;
   const destinataire = params.destinataire.trim();

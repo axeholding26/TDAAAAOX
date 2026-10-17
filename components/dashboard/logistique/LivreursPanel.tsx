@@ -6,6 +6,7 @@ import { Truck, Plus, Phone, MapPin, Loader2, Globe } from "lucide-react";
 import { LiveFleetMap } from "@/components/dashboard/logistique/LiveFleetMap";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
+import { lireReglagesLivraison, normaliserZone } from "@/lib/livraison-reglages";
 
 const LIVREURS_TUTORIAL_STEPS = [
   { Icon: Plus,   titre: "Crée un compte livreur",         description: "Ajoute un livreur à ton équipe avec nom, téléphone, véhicule et zone de couverture." },
@@ -43,7 +44,13 @@ export function LivreursPanel() {
     nom: "", email: "", telephone: "", password: "", vehicule: "moto", zone: "",
   });
   const [pays, setPays] = useState("");
-  useEffect(() => { fetch("/api/tenants/moi").then(r => r.json()).then(d => setPays(d?.tenant?.pays ?? "")).catch(() => {}); }, []);
+  const [zonesBoutique, setZonesBoutique] = useState<string[]>([]);
+  useEffect(() => {
+    fetch("/api/tenants/moi").then(r => r.json()).then(d => {
+      setPays(d?.tenant?.pays ?? "");
+      setZonesBoutique(lireReglagesLivraison(d?.tenant?.parametresLivraison).zones.map(z => z.nom));
+    }).catch(() => {});
+  }, []);
 
   // Une erreur (droits, réseau) est dite : sinon elle passait pour « aucun livreur », ou le chargement ne finissait jamais.
   async function charger() {
@@ -203,9 +210,25 @@ export function LivreursPanel() {
                 <input
                   value={form.zone}
                   onChange={(e) => setForm({ ...form, zone: e.target.value })}
-                  placeholder={t("Dakar centre, Plateau...")}
+                  placeholder={zonesBoutique.length ? zonesBoutique.slice(0, 2).join(", ") : t("Dakar centre, Plateau...")}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50"
                 />
+                {/* Les mêmes noms que les zones de la boutique : le livreur est alors proposé en tête pour ces commandes. */}
+                {zonesBoutique.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {zonesBoutique.map(z => {
+                      const choisies = form.zone.split(",").map(x => x.trim()).filter(Boolean);
+                      const actif = choisies.some(x => normaliserZone(x) === normaliserZone(z));
+                      return (
+                        <button key={z} type="button"
+                          onClick={() => setForm({ ...form, zone: (actif ? choisies.filter(x => normaliserZone(x) !== normaliserZone(z)) : [...choisies, z]).join(", ") })}
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${actif ? "bg-[#F5A623] border-[#F5A623] text-[#111111] font-semibold" : "border-gray-200 text-gray-600 hover:border-[#F5A623]"}`}>
+                          {z}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 

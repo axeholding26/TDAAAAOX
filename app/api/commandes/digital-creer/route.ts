@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande } from "@/lib/utils";
 import { prixClient, reductionPromo } from "@/lib/pricing";
-import { fraisLivraisonServeur } from "@/lib/livraison";
+import { fraisLivraisonServeur, poidsPanier, verifierZone } from "@/lib/livraison";
+import { villeCommande } from "@/lib/livraison-reglages";
+import { hasNotchPay } from "@/lib/notchpay";
+import { paiementEnLigneDisponible } from "@/lib/paiement-pays";
 import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
@@ -27,6 +30,10 @@ export async function POST(req: NextRequest) {
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant || tenant.statut !== "active") {
       return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
+    }
+    // Sans paiement en ligne possible, la commande ne serait jamais payable : refusée avant d'être créée.
+    if (!hasNotchPay() || !paiementEnLigneDisponible(tenant.devise)) {
+      return NextResponse.json({ error: "Le paiement en ligne n'est pas encore disponible pour cette boutique" }, { status: 409 });
     }
 
     // Refuse la commande avant paiement si un produit digital ne peut plus être
@@ -64,7 +71,9 @@ export async function POST(req: NextRequest) {
     const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
     const reduction = reductionPromo(promo, sousTotal);
-    const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, pays: codePays(client?.pays), zone, montantCommande: sousTotal - reduction }) : 0;
+    const erreurZone = aExpedier ? await verifierZone(tenantId, codePays(client?.pays), zone) : null;
+    if (erreurZone) return NextResponse.json({ error: erreurZone }, { status: 400 });
+    const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, pays: codePays(client?.pays), zone, poids: await poidsPanier(tenantId, lignes), montantCommande: sousTotal - reduction }) : 0;
     const total = sousTotal - reduction + montantLivraison;
     const devise = tenant.devise;
 
@@ -107,7 +116,7 @@ export async function POST(req: NextRequest) {
         clientEmail: client.email,
         clientTelephone: client.telephone || "",
         adresseLivraison: aExpedier ? client.adresse.trim() : "Digital",
-        ville: aExpedier ? (zone || client.ville).trim() : "Digital",
+        ville: aExpedier ? villeCommande(zone, client.ville) || "—" : "Digital",
         montantLivraison,
         // Suivi de l'expédition (page /tracking) et facture, comme une commande physique.
         trackingToken: aExpedier ? randomBytes(20).toString("hex") : null,

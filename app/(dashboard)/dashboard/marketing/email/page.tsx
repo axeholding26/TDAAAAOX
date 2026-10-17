@@ -21,9 +21,9 @@ interface Campagne {
 
 const SEGMENTS = [
   { value: "tous",     label: "Tous les clients",          Icon: Users    },
-  { value: "vip",      label: "VIP (≥ 50 000 dépensés)", Icon: Gem   },
+  { value: "vip",      label: "VIP (2× la dépense moyenne)", Icon: Gem   },
   { value: "nouveaux", label: "Nouveaux (≤ 1 commande)",   Icon: UserPlus },
-  { value: "inactifs", label: "Inactifs (30+ jours)",      Icon: Moon     },
+  { value: "inactifs", label: "Inactifs (aucun achat en 30 jours)", Icon: Moon },
 ];
 
 const TEMPLATES = [
@@ -197,8 +197,8 @@ export default function EmailMarketingPage() {
       {/* Providers connectés */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {[
-          { key: "resend", label: "Resend",      Icon: Send, actif: stats?.providers.resend, desc: "Emails transactionnels jusqu'à 50/envoi" },
-          { key: "gmail",  label: "Gmail OAuth", Icon: Mail, actif: stats?.providers.gmail,  desc: "Votre compte Gmail professionnel" },
+          { key: "resend", label: "Resend",      Icon: Send, actif: stats?.providers.resend, desc: "Jusqu'à 2 000 destinataires par campagne" },
+          { key: "gmail",  label: "Gmail OAuth", Icon: Mail, actif: stats?.providers.gmail,  desc: "Votre compte Gmail · 200 destinataires par campagne" },
         ].map((p) => (
           <button
             key={p.key}
@@ -358,6 +358,9 @@ export default function EmailMarketingPage() {
                 {sending ? tr("Envoi...") : tr("Envoyer ({0})", nbDest)}
               </button>
             </div>
+            <p className="text-[11.5px] text-[#AAAAAA] text-center">
+              {tr("Chaque e-mail contient un lien de désinscription. Les clients désinscrits ne sont jamais comptés ni contactés.")}
+            </p>
           </div>
         </div>
       )}

@@ -7,6 +7,10 @@ import { activerAbonnementPaye } from "./wallet";
 
 export const PALIER_PRIX: Record<string, number> = { palier1: 6000, palier2: 20000 };
 
+/** Devise de facturation : XOF pour une boutique d'Afrique de l'Ouest (même prix, parité fixe 1 XOF = 1 XAF),
+ *  sinon XAF. Avant, tout le monde payait en XAF, même au Sénégal ou en Côte d'Ivoire. */
+export const deviseAbonnement = (deviseBoutique?: string | null) => (deviseBoutique?.toUpperCase() === "XOF" ? "XOF" : "XAF");
+
 /** Référence marchande SUB-{tenantId}-{plan}-{horodatage} → boutique et palier. */
 export function lireRefAbonnement(ref: string): { tenantId: string; plan: string } | null {
   const [prefixe, tenantId, plan] = ref.split("-");
@@ -18,14 +22,15 @@ export async function confirmerPaiementAbonnement(reference: string, secours?: a
   const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch(() => secours);
   const cible = lireRefAbonnement(String(transaction?.merchant_reference ?? transaction?.trxref ?? ""));
   if (!cible) return false;
-  if (!paiementCouvre(transaction, PALIER_PRIX[cible.plan], "XAF")) {
+  const devise = deviseAbonnement(transaction?.currency);
+  if (!paiementCouvre(transaction, PALIER_PRIX[cible.plan], devise)) {
     console.error("[abonnement] paiement refusé : montant insuffisant ou non abouti", { reference, attendu: PALIER_PRIX[cible.plan], recu: transaction?.amount, devise: transaction?.currency, statut: transaction?.status });
     return false;
   }
   // Revenu d'abonnement = 100 % Axso, net du frais NotchPay réel (lu sur la transaction).
   const fees = transaction?.fees;
   const frais = Array.isArray(fees) ? fees.reduce((s: number, f: any) => s + (Number(f?.amount) || 0), 0) : 0;
-  return activerAbonnementPaye({ tenantId: cible.tenantId, plan: cible.plan, jours: 30, montant: PALIER_PRIX[cible.plan], frais, devise: "XAF", reference });
+  return activerAbonnementPaye({ tenantId: cible.tenantId, plan: cible.plan, jours: 30, montant: PALIER_PRIX[cible.plan], frais, devise, reference });
 }
 
 /** Paiement d'abonnement en attente pour cette boutique : vérifié chez NotchPay et activé s'il est payé. */

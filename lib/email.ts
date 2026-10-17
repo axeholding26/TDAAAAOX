@@ -276,3 +276,26 @@ export async function envoyerEmailTexte(params: { a: string; repondreA: string; 
     text: params.texte,
   });
 }
+
+// Campagne e-mail d'une boutique : envoi par lots de 100 (API batch de Resend), lien de
+// désinscription en en-tête (bouton « Se désabonner » de Gmail). Renvoie le nombre réellement accepté.
+export async function envoyerCampagneEmail(params: {
+  boutique: string; repondreA?: string | null; sujet: string;
+  messages: { a: string; html: string; desinscription: string }[];
+}): Promise<number> {
+  const resend = getResendClient();
+  if (!resend) return 0;
+  const from = `${params.boutique.replace(/[<>"\r\n]/g, "")} via Axso <noreply@axsoafrica.com>`;
+  let acceptes = 0;
+  for (let i = 0; i < params.messages.length; i += 100) {
+    const lot = params.messages.slice(i, i + 100).map((m) => ({
+      from, to: m.a, subject: params.sujet, html: m.html,
+      ...(params.repondreA ? { replyTo: params.repondreA } : {}),
+      headers: { "List-Unsubscribe": `<${m.desinscription}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" },
+    }));
+    const { data, error } = await resend.batch.send(lot);
+    if (error) { console.error("[email] campagne refusée par Resend :", error.message); break; } // même refus pour les lots suivants
+    acceptes += data?.data?.length ?? lot.length;
+  }
+  return acceptes;
+}

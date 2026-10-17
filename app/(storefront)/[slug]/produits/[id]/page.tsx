@@ -12,6 +12,7 @@ import { habillageDesign } from "@/components/storefront/templates/HabillageDesi
 import { ViewContentTracker } from "@/components/storefront/ViewContentTracker";
 import { StorefrontNavbar } from "@/components/storefront/StorefrontNavbar";
 import { ProductPageClient } from "@/components/storefront/ProductPageClient";
+import { lireReglagesPaiement } from "@/lib/paiement-pays";
 
 interface Props {
   params: Promise<{ slug: string; id: string }>;
@@ -194,6 +195,8 @@ export default async function ProduitPage({ params }: Props) {
     radius,
     whatsapp: tenant.whatsapp ?? null,
     whatsappNumero: tenant.whatsappNumero ?? null,
+    // Paramètres → Moyens de paiement : la commande WhatsApp ajoute son bouton à chaque fiche, sans Constructeur.
+    commandeWhatsApp: lireReglagesPaiement(tenant.parametresPaiement).whatsapp,
     productPage: fiche ?? null,
     layout: cfg.layout ?? null,
     boutons: cfg.boutons ?? null,

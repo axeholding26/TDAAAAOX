@@ -1187,7 +1187,8 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
         <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
         <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
         {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
-        <Bascule label={tr("Bouton WhatsApp")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+        <Bascule label={tr("Bouton « Contacter via WhatsApp »")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+        <p className="text-[11.5px] text-gray-400">{tr("Si vous acceptez la commande WhatsApp (Paramètres → Moyens de paiement), le bouton « Commander via WhatsApp » s'ajoute tout seul à vos fiches et remplace celui-ci.")}</p>
       </Bloc>
     );
     case "trust": return (

@@ -11,8 +11,8 @@ export async function GET(req: Request) {
 
   // Public access: fetch active popups for a storefront
   if (tenantSlug) {
-    const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug } });
-    if (!tenant) return NextResponse.json({ popups: [] });
+    const tenant = await prisma.tenant.findUnique({ where: { slug: tenantSlug }, select: { id: true, statut: true } });
+    if (!tenant || tenant.statut !== "active") return NextResponse.json({ popups: [] });
 
     const popups = await prisma.popupCampagne.findMany({
       where: { tenantId: tenant.id, actif: true },
@@ -51,6 +51,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Champs requis manquants" }, { status: 400 });
   }
 
+  const invalide = valider(body);
+  if (invalide) return NextResponse.json({ error: invalide }, { status: 400 });
   const popup = await prisma.popupCampagne.create({
     data: {
       tenantId, nom,
@@ -59,7 +61,7 @@ export async function POST(req: Request) {
       delaiSec: delaiSec ?? 5,
       titre, message,
       ctaTexte: ctaTexte ?? null,
-      ctaUrl: ctaUrl ?? null,
+      ctaUrl: ctaUrl || null,
       imageUrl: imageUrl ?? null,
       codePromo: codePromo ?? null,
     },
@@ -93,10 +95,22 @@ export async function PATCH(req: Request) {
   if (!existing) return NextResponse.json({ error: "Popup introuvable" }, { status: 404 });
 
   // Champs modifiables seulement (avant : le corps entier allait à Prisma, tenantId compris).
+  const invalide = valider(body);
+  if (invalide) return NextResponse.json({ error: invalide }, { status: 400 });
   const data: Record<string, unknown> = {};
   for (const k of CHAMPS_MODIFIABLES) if (k in body) data[k] = body[k];
   const popup = await prisma.popupCampagne.update({ where: { id }, data });
   return NextResponse.json({ popup });
+}
+
+// Valeurs que la vitrine sait afficher ; lien du bouton : page de la boutique (« produits ») ou site web, jamais « javascript: ».
+const TYPES = ["popup", "bandeau", "slide_in"], DECLENCHEURS = ["delai", "exit_intent", "scroll", "premiere_visite"];
+function valider(b: Record<string, any>): string | null {
+  if ("type" in b && !TYPES.includes(b.type)) return "Type de popup inconnu";
+  if ("declencheur" in b && !DECLENCHEURS.includes(b.declencheur)) return "Déclencheur inconnu";
+  if ("delaiSec" in b && !(Number.isInteger(b.delaiSec) && b.delaiSec >= 0 && b.delaiSec <= 300)) return "Délai entre 0 et 300 secondes";
+  if (b.ctaUrl && /^[a-z][a-z0-9+.-]*:/i.test(String(b.ctaUrl)) && !/^https?:\/\//i.test(String(b.ctaUrl))) return "Lien du bouton : une page de la boutique (produits) ou une adresse https://";
+  return null;
 }
 
 const CHAMPS_MODIFIABLES = ["nom", "type", "declencheur", "delaiSec", "titre", "message", "ctaTexte", "ctaUrl", "imageUrl", "codePromo", "actif"] as const;

@@ -17,6 +17,7 @@ import { trackTikTokEvent } from "./TikTokPixel";
 import { trackSnapchatEvent } from "./SnapchatPixel";
 import { useT } from "@/components/I18nProvider";
 import { PAYS_OPTIONS, exempleTelephone, codePays } from "@/lib/devise-convert";
+import { moyensEnLigne, moyensPhysique, type ReglagesPaiement } from "@/lib/paiement-pays";
 
 export interface ParametresCommande {
   demanderEmail?: boolean;
@@ -29,6 +30,8 @@ interface Props {
   slug: string; devise: string; tenantId: string; nomBoutique: string; logoUrl?: string;
   parametresCommande?: ParametresCommande;
   paysBoutique?: string; // code ISO2 — pays présélectionné dans le formulaire
+  paiement: ReglagesPaiement; // moyens acceptés par la boutique (Paramètres → Moyens de paiement)
+  enLigneDispo: boolean;      // NotchPay configuré et devise de la boutique encaissable en ligne
 }
 
 /** Nom du pays de la boutique (présélectionné), sinon Sénégal. */
@@ -48,7 +51,7 @@ function GpsStep({ label, steps }: { label: string; steps: string[] }) {
 }
 
 // ─── Récapitulatif commande ───────────────────────────────────────────────────
-function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }: any) {
+function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison, delaiLivraison }: any) {
   const t = useT();
   const { fmt, converti } = usePrix();
   return (
@@ -74,7 +77,7 @@ function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }
         {codePromo && <div className="flex justify-between text-green-500 mb-1"><span>{t("Code :")}{" "}{t(codePromo)}</span><Check size={14} /></div>}
         {fraisLivraison !== null && fraisLivraison !== undefined && (
           <div className="flex justify-between mb-1 opacity-70">
-            <span>{t("Livraison")}</span>
+            <span>{t("Livraison")}{delaiLivraison ? <span className="opacity-60">{" · "}{t(delaiLivraison)}</span> : null}</span>
             <span>{fraisLivraison > 0 ? fmt(fraisLivraison, devise) : t("Gratuite")}</span>
           </div>
         )}
@@ -92,6 +95,19 @@ function Recap({ theme, devise, items, total, codePromo, label, fraisLivraison }
   );
 }
 
+// Zones proposées par la boutique (Ma boutique → Livraison), choisies dans une liste quand le client
+// est livré dans le pays de la boutique : le tarif du quartier s'applique sans faute de frappe.
+function useZones(slug: string) {
+  const [zones, setZones] = useState<string[]>([]);
+  useEffect(() => {
+    fetch(`/api/boutique/${slug}/zones`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.zones)) setZones(d.zones); })
+      .catch(() => {});
+  }, [slug]);
+  return zones;
+}
+
 // ─── Input stylisé ────────────────────────────────────────────────────────────
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   const t = useT();
@@ -106,7 +122,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT PHYSIQUE — Paiement à la livraison → WhatsApp
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique, onCommandee }: any) {
+function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePromo, viderPanier, parametresCommande, paysBoutique, paiement, enLigneDispo, onCommandee }: any) {
   const t = useT();
   const { fmt } = usePrix();
   const searchParams = useSearchParams();
@@ -114,8 +130,11 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const demanderEmail = cfg.demanderEmail ?? true;
   const demanderGps = cfg.demanderGps ?? true;
   const champPerso = cfg.champPersonnalise?.actif ? cfg.champPersonnalise.label : null;
-  const [loadingCanal, setLoadingCanal] = useState<"whatsapp" | "direct" | null>(null);
-  const [popup, setPopup] = useState<"whatsapp" | "direct" | null>(null);
+  const [loadingCanal, setLoadingCanal] = useState<"whatsapp" | "direct" | "en_ligne" | null>(null);
+  // Commande payée en ligne : créée, puis réglée sur NotchPay (montant du serveur, commission comprise).
+  const [aPayerEnLigne, setAPayerEnLigne] = useState<{ commandeId: string; montant: number } | null>(null);
+  // ?canal=whatsapp (bouton « Commander via WhatsApp » de la fiche) : formulaire WhatsApp ouvert d'emblée.
+  const [popup, setPopup] = useState<"whatsapp" | "direct" | null>(() => (searchParams?.get("canal") === "whatsapp" && paiement.whatsapp ? "whatsapp" : null));
   const loading = loadingCanal !== null;
   const [done, setDone] = useState<{ commandeId: string; numero: string; viaWhatsapp: boolean; whatsappUrl: string | null; trackingToken?: string } | null>(null);
   const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique), email: "" });
@@ -124,9 +143,10 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsBloque, setGpsBloque] = useState(false);
   const [adresseExacte, setAdresseExacte] = useState("");
-  const [zones, setZones] = useState<string[]>([]);
+  const zones = useZones(slug);
   const [zone, setZone] = useState("");
   const [fraisLivraison, setFraisLivraison] = useState<number | null>(null);
+  const [delaiLivraison, setDelaiLivraison] = useState("");
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   // Les quartiers du marchand ne concernent que les livraisons dans le pays de la boutique.
   const zonesActives = codePays(form.pays) === paysBoutique ? zones : [];
@@ -144,30 +164,27 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
     try { return localStorage.getItem("axso_ref"); } catch { return null; }
   }, [searchParams]);
 
-  // Zones configurées par le marchand (dashboard/parametres/zones)
-  useEffect(() => {
-    fetch(`/api/boutique/${slug}/zones`)
-      .then(r => r.json())
-      .then(d => { if (Array.isArray(d.zones) && d.zones.length > 0) setZones(d.zones); })
-      .catch(() => {});
-  }, [slug]);
-
   // Frais de livraison en direct selon le pays (et le quartier) choisis —
   // estimation affichée seulement : le montant facturé est recalculé côté
   // serveur dans whatsapp-creer/route.ts (lib/livraison.ts).
   const attendQuartier = zonesActives.length > 0 && !zoneChoisie;
+  // Sans liste de zones (ou hors du pays de la boutique), la ville saisie sert de zone : une règle de ville s'applique aussi.
+  const zoneEnvoyee = zonesActives.length ? zoneChoisie : form.ville.trim();
+  const lignesPoids = JSON.stringify(items.map((i: any) => ({ produitId: i.produitId, quantite: i.quantite })));
   useEffect(() => {
-    if (attendQuartier) { setFraisLivraison(null); return; }
+    if (attendQuartier) { setFraisLivraison(null); setDelaiLivraison(""); return; }
     let annule = false;
-    fetch("/api/livraison/calculer", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tenantId, pays: form.pays, zone: zoneChoisie, montantCommande: total }),
-    })
-      .then(r => r.json())
-      .then(d => { if (!annule && d.options?.[0]) setFraisLivraison(d.options[0].frais); })
-      .catch(() => {});
-    return () => { annule = true; };
-  }, [form.pays, zoneChoisie, attendQuartier, tenantId, total]);
+    const minuterie = setTimeout(() => { // la ville se tape lettre par lettre
+      fetch("/api/livraison/calculer", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tenantId, pays: form.pays, zone: zoneEnvoyee, items: JSON.parse(lignesPoids), montantCommande: total }),
+      })
+        .then(r => r.json())
+        .then(d => { if (!annule && d.options?.[0]) { setFraisLivraison(d.options[0].frais); setDelaiLivraison(d.options[0].delai || ""); } })
+        .catch(() => {});
+    }, 350);
+    return () => { annule = true; clearTimeout(minuterie); };
+  }, [form.pays, zoneEnvoyee, attendQuartier, tenantId, total, lignesPoids]);
 
   const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
@@ -257,7 +274,10 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
     obtenirPosition();
   }
 
-  async function commander(canal: "whatsapp" | "direct") {
+  // Selon le pays du client : paiement à la livraison seulement dans le pays de la boutique (sauf réglage contraire).
+  const moyens = moyensPhysique(paiement, { paysClient: codePays(form.pays), paysBoutique, enLigneDispo });
+
+  async function commander(canal: "whatsapp" | "direct" | "en_ligne") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error(t("Nom et téléphone obligatoires")); return; }
     if (attendQuartier) { toast.error(t("Sélectionnez votre zone de livraison")); return; }
     // WhatsApp : onglet ouvert PENDANT le clic — ouvert après la requête, il
@@ -273,7 +293,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
           tenantId, slug, canal,
           client: form,
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
-          total, devise, codePromo, zone: zoneChoisie || undefined,
+          total, devise, codePromo, zone: zoneEnvoyee || undefined,
           codeAffiliation: codeRef || undefined,
           localisation: gps ? { lat: gps.lat, lng: gps.lng, adresseExacte: adresseExacte || form.adresse } : null,
           champPersonnalise: champPerso && champPersoValeur.trim() ? { label: champPerso, valeur: champPersoValeur.trim() } : undefined,
@@ -281,6 +301,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      if (canal === "en_ligne") { setAPayerEnLigne({ commandeId: data.commandeId, montant: data.montantTotal }); return; } // vente comptée au paiement
       trackPixelEvent("Purchase", {
         content_ids: items.map((i: any) => i.produitId),
         contents: items.map((i: any) => ({ id: i.produitId, quantity: i.quantite })),
@@ -305,6 +326,20 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
     } finally {
       setLoadingCanal(null);
     }
+  }
+
+  if (aPayerEnLigne) {
+    return (
+      <div className="max-w-lg mx-auto py-8 space-y-4">
+        <div className="rounded-2xl border p-5" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}20` }}>
+          <h2 className="font-bold font-playfair text-base mb-1 flex items-center gap-2"><Lock size={16} />{" "}{t("Paiement sécurisé")}</h2>
+          <p className="text-xs opacity-60 mb-4">{t("Votre commande est réservée. Elle est confirmée dès le paiement reçu.")}</p>
+          <NotchPayCheckout commandeId={aPayerEnLigne.commandeId} montant={aPayerEnLigne.montant} devise={devise}
+            clientEmail={form.email} clientNom={form.nom} clientTelephone={form.telephone} paysClient={codePays(form.pays)}
+            onError={(msg) => toast.error(t(msg))} />
+        </div>
+      </div>
+    );
   }
 
   // Succès
@@ -697,24 +732,46 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
       {/* Récap + CTA */}
       <div>
         <div className="space-y-4">
-          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Votre commande")} fraisLivraison={fraisLivraison} />
+          <Recap theme={theme} devise={devise} items={items} total={total} codePromo={codePromo} label={t("Votre commande")} fraisLivraison={fraisLivraison} delaiLivraison={delaiLivraison} />
 
-          <button onClick={() => setPopup("whatsapp")} disabled={loading}
-            className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
-            style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.4)" }}>
-            {loadingCanal === "whatsapp" ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
-            {loadingCanal === "whatsapp" ? t("Création de la commande…") : t("Commander via WhatsApp")}
-          </button>
+          {moyens.whatsapp && (
+            <button onClick={() => setPopup("whatsapp")} disabled={loading}
+              className="w-full py-4 rounded-2xl font-bold text-base transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg"
+              style={{ background: "#25D366", color: "#fff", boxShadow: "0 4px 20px rgba(37,211,102,0.4)" }}>
+              {loadingCanal === "whatsapp" ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
+              {loadingCanal === "whatsapp" ? t("Création de la commande…") : t("Commander via WhatsApp")}
+            </button>
+          )}
 
-          <button onClick={() => setPopup("direct")} disabled={loading}
-            className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 border-2"
-            style={{ borderColor: theme.accent, color: theme.accent, background: `${theme.accent}08` }}>
-            {loadingCanal === "direct" ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}
-            {loadingCanal === "direct" ? t("Création de la commande…") : t("Commander maintenant")}
-          </button>
+          {moyens.livraison && (
+            <button onClick={() => setPopup("direct")} disabled={loading}
+              className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3 border-2"
+              style={{ borderColor: theme.accent, color: theme.accent, background: `${theme.accent}08` }}>
+              {loadingCanal === "direct" ? <Loader2 size={16} className="animate-spin" /> : <ClipboardList size={16} />}
+              {loadingCanal === "direct" ? t("Création de la commande…") : t("Commander · paiement à la livraison")}
+            </button>
+          )}
 
-          <div className="flex items-center gap-2 text-xs opacity-40 justify-center">
-            <Lock size={10} />{" "}{t("Commande sécurisée · Paiement à la livraison")}
+          {moyens.enLigne && (
+            <button onClick={() => commander("en_ligne")} disabled={loading || attendQuartier}
+              className="w-full py-3.5 rounded-2xl font-bold text-sm transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-3"
+              style={{ background: theme.accent, color: "#fff" }}>
+              {loadingCanal === "en_ligne" ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+              {loadingCanal === "en_ligne" ? t("Préparation du paiement…") : t("Payer en ligne")}
+            </button>
+          )}
+
+          {!moyens.whatsapp && !moyens.livraison && !moyens.enLigne && (
+            <p className="text-sm text-center rounded-2xl border p-4 leading-relaxed" style={{ borderColor: `${theme.accent}30` }}>
+              {t("Cette boutique ne propose pas encore de moyen de paiement pour une livraison dans votre pays. Contactez-la pour commander.")}
+            </p>
+          )}
+
+          <div className="flex items-center gap-2 text-xs opacity-40 justify-center text-center">
+            <Lock size={10} className="flex-shrink-0" />{" "}
+            {moyens.enLigne
+              ? t("En ligne : {0} · frais de service inclus", t(moyensEnLigne(codePays(form.pays))))
+              : t("Commande sécurisée · Paiement à la livraison")}
           </div>
         </div>
       </div>
@@ -725,7 +782,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
 // ═══════════════════════════════════════════════════════════════════════════════
 // CHECKOUT DIGITAL — Paiement NotchPay · Wallet Axso · Livraison instantanée
 // ═══════════════════════════════════════════════════════════════════════════════
-function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, paysBoutique }: any) {
+function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codePromo, paysBoutique, enLigneDispo }: any) {
   const t = useT();
   const { aPayer } = usePrix();
   const searchParams = useSearchParams();
@@ -737,6 +794,9 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   // Dropshipping : payé en ligne mais expédié (adresse requise, suivi au lieu d'un téléchargement).
   const expedier = items[0]?.type === "dropshipping";
+  const zones = useZones(slug);
+  const [zone, setZone] = useState("");
+  const zonesActives = expedier && codePays(form.pays) === paysBoutique ? zones : [];
   // Montant réel calculé par le serveur (frais de livraison inclus), affiché à l'étape de paiement.
   const [aRegler, setARegler] = useState<{ total: number; livraison: number } | null>(null);
 
@@ -762,6 +822,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
       toast.error(t("Adresse et ville de livraison obligatoires"));
       return;
     }
+    if (zonesActives.length && !zone) { toast.error(t("Sélectionnez votre zone de livraison")); return; }
     setLoading(true);
     try {
       const res = await fetch("/api/commandes/digital-creer", {
@@ -773,7 +834,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
           items: items.map((i: any) => ({ produitId: i.produitId, nom: i.nom, prix: i.prix, quantite: i.quantite, variante: i.variante, imageUrl: i.imageUrl })),
           total, devise, codePromo,
           codeAffiliation: codeRef || null,
-          zone: expedier ? form.ville : undefined,
+          zone: expedier ? (zonesActives.length ? zone : form.ville) : undefined,
         }),
       });
       const data = await res.json();
@@ -819,6 +880,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
               clientEmail={form.email}
               clientNom={form.nom}
               clientTelephone={form.telephone}
+              paysClient={codePays(form.pays)}
               onError={(msg) => toast.error(t(msg))}
             />
           </div>
@@ -837,6 +899,18 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Paiement en ligne impossible (NotchPay non configuré, ou devise de la boutique non couverte) :
+  // dit avant le formulaire, plutôt qu'un refus au moment de payer.
+  if (!enLigneDispo) {
+    return (
+      <div className="max-w-lg mx-auto py-12 text-center space-y-3">
+        <CreditCard size={28} className="mx-auto opacity-40" />
+        <p className="font-semibold">{t("Le paiement en ligne n'est pas encore disponible pour cette boutique.")}</p>
+        <p className="text-sm opacity-60">{t("Contactez la boutique pour acheter ce produit.")}</p>
       </div>
     );
   }
@@ -894,6 +968,14 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
                     <input value={form.adresse} onChange={e => set("adresse", e.target.value)} placeholder={t("Rue, quartier, numéro, point de repère…")} className={inp} style={inpStyle} />
                   </Field>
                 </div>
+                {zonesActives.length > 0 && (
+                  <Field label={t("Zone de livraison")} required>
+                    <select value={zone} onChange={e => setZone(e.target.value)} className={inp} style={inpStyle}>
+                      <option value="" style={{ backgroundColor: theme.surface }}>{t("Sélectionnez votre zone…")}</option>
+                      {zonesActives.map(z => <option key={z} value={z} style={{ backgroundColor: theme.surface }}>{t(z)}</option>)}
+                    </select>
+                  </Field>
+                )}
                 <Field label={t("Ville")} required>
                   <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={t("Dakar")} className={inp} style={inpStyle} />
                 </Field>
@@ -906,7 +988,7 @@ function CheckoutDigital({ theme, devise, tenantId, items, total, codePromo, pay
         <div className="flex items-center gap-3 p-4 rounded-2xl border" style={{ borderColor: `${theme.accent}15`, background: `${theme.accent}05` }}>
           <CreditCard size={16} style={{ color: theme.accent }} className="flex-shrink-0" />
           <p className="text-xs opacity-60 leading-relaxed">
-            {t("Paiement sécurisé par")}{" "}<span className="font-bold" style={{ color: "#111111" }}>NotchPay</span>{" "}{t("· Orange Money, MTN MoMo, carte bancaire · Chiffrement SSL 256-bit")}
+            {t("Paiement sécurisé par")}{" "}<span className="font-bold" style={{ color: "#111111" }}>NotchPay</span>{" · "}{t(moyensEnLigne(codePays(form.pays)))}{" · "}{t("Chiffrement SSL 256-bit")}
           </p>
         </div>
       </div>
@@ -950,7 +1032,7 @@ export interface ArticleCommande {
 // Pas de panier : on commande UN produit, choisi sur sa fiche (Commander →
 // /checkout?produit=…). L'article et son prix viennent du serveur (page
 // checkout), jamais du navigateur ; le serveur les recalcule de toute façon.
-export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande, paysBoutique, article }: Props & { article: ArticleCommande | null }) {
+export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoUrl, parametresCommande, paysBoutique, paiement, enLigneDispo, article }: Props & { article: ArticleCommande | null }) {
   const t = useT();
   const items = useMemo(() => (article ? [article] : []), [article]);
   const sousTotal = article ? article.prix * article.quantite : 0;
@@ -987,7 +1069,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
     );
   }
 
-  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande, paysBoutique };
+  const commonProps = { theme, slug, devise, tenantId, nomBoutique, logoUrl, items, total, codePromo, viderPanier, parametresCommande, paysBoutique, paiement, enLigneDispo };
 
   return (
     <>
@@ -995,7 +1077,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
       {!commandee && <div className="max-w-xl mx-auto mb-5">
         {typePanier === "physique" && (
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{ background: "rgba(16,185,129,0.1)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)" }}>
-            <Package size={14} />{" "}{t("Commande physique · Paiement à la livraison")}
+            <Package size={14} />{" "}{paiement.enLigne && enLigneDispo ? t("Commande physique · À la livraison ou en ligne") : t("Commande physique · Paiement à la livraison")}
           </div>
         )}
         {typePanier === "digital" && (

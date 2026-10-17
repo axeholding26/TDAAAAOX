@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { UserCheck, ChevronDown, Bike, Car, User, Check } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { livreurCouvre } from "@/lib/livraison-reglages";
 
 type Livreur = { id: string; nom: string; vehicule: string; zone: string | null; disponible?: boolean; coursesEnCours?: number };
 
@@ -12,13 +13,15 @@ interface Props {
   livreurActuelNom?: string;
   livreurs: Livreur[];
   statut?: string;
+  villeCommande?: string | null; // « Akwa, Douala » : les livreurs de la zone passent en tête
 }
 
 const VEHICULE_ICON: Record<string, any> = {
   moto: Bike, voiture: Car, velo: Bike, a_pied: User,
 };
 
-export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom, livreurs, statut }: Props) {
+export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom, livreurs: tous, statut, villeCommande }: Props) {
+  const livreurs = [...tous].sort((a, b) => Number(livreurCouvre(b.zone, villeCommande)) - Number(livreurCouvre(a.zone, villeCommande)));
   const t = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -109,6 +112,7 @@ export function AssignerLivreur({ commandeId, livreurActuelId, livreurActuelNom,
                 {l.disponible !== undefined && (
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${l.disponible ? "bg-green-400" : "bg-gray-500"}`} />
                 )}
+                {livreurCouvre(l.zone, villeCommande) && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-[#FFF7ED] text-[#D4911A]">{t("Même zone")}</span>}
                 {l.id === livreurId && <Check size={10} className="ml-auto text-[#F5A623]" />}
               </p>
               {(l.zone || l.coursesEnCours !== undefined) && (

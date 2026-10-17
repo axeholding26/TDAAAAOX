@@ -2,6 +2,7 @@
 // Conforme aux exigences Meta: vérification de signature, statuts, fenêtre 24h
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { lireReglagesLivraison } from "@/lib/livraison-reglages";
 import { lireConnexion, lireConnexionPar } from "@/lib/connect";
 import { createHmac, timingSafeEqual } from "crypto";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
@@ -207,12 +208,14 @@ async function autoRepondre(tenantId: string, de: string, messageRecu: string, p
   ]);
   const devise = tenant.devise ?? "";
   const catalogue = produits.map(p => `- ${p.nom} : ${p.prix} ${devise} — ${p.type === "digital" ? "disponible (produit digital)" : p.stock > 0 ? `en stock (${p.stock})` : "en rupture"}`).join("\n");
-  const pl = (tenant.parametresLivraison ?? {}) as { frais?: number; minimum?: number; gratuite?: boolean };
-  const livraison = regles.length
-    ? regles.map(r => `- ${r.nom} (${decrireRegle(r)}) : ${r.gratuit ? "gratuit" : `${r.frais} ${devise}`}, délai ${r.delai}`).join("\n")
-    : pl.gratuite ? "Livraison offerte."
-    : pl.frais != null ? `Frais de livraison : ${pl.frais} ${devise}${pl.minimum ? `, offerte dès ${pl.minimum} ${devise}` : ""}.`
-    : "Non renseignée.";
+  // Même ordre que le calcul (lib/livraison.ts) : la gratuité passe avant tout, puis zones, règles, tarif standard.
+  const pl = lireReglagesLivraison(tenant.parametresLivraison);
+  const livraison = pl.gratuite ? "Livraison offerte." : [
+    ...pl.zones.filter(z => z.frais != null).map(z => `- Zone ${z.nom} : ${z.frais} ${devise}${z.delai ? `, délai ${z.delai}` : ""}`),
+    ...regles.map(r => `- ${r.nom} (${decrireRegle(r)}) : ${r.gratuit ? "gratuit" : `${r.frais} ${devise}`}${r.delai ? `, délai ${r.delai}` : ""}`),
+    `- Ailleurs : ${pl.frais} ${devise}${pl.delai ? `, délai ${pl.delai}` : ""}`,
+    pl.minimum ? `Offerte dès ${pl.minimum} ${devise} d'achat.` : "",
+  ].filter(Boolean).join("\n");
 
   const systeme = `Tu es l'assistant automatique WhatsApp de la boutique "${tenant.nomBoutique}". Style : ${cfg.personnalite ?? "professionnel"}. Langue : ${cfg.langue ?? "fr"}. Réponds naturellement en 2-3 phrases.
 Si on te demande si tu es un robot, dis honnêtement que tu es l'assistant automatique de la boutique et que l'équipe peut prendre le relais.

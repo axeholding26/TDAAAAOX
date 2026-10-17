@@ -1241,7 +1241,7 @@ const executeOutil: ToolExecutor = async (nom, args, tenantId) => {
         const paysZone = paysDepuisTexte(zone);
         const pays = paysZone?.length === 1 ? paysZone[0] : (paysZone ? "" : tenant?.pays ?? "");
         const options = await calculerOptionsLivraison({ tenantId, pays, zone: paysZone ? "" : zone, poids, montantCommande });
-        const lignes = options.map((o) => `• ${o.nom} (${o.transporteur ?? "Standard"}) : ${o.gratuit ? "Gratuit" : `${o.frais} ${dev}`} — ${o.delai}`).join("\n");
+        const lignes = options.map((o) => `• ${o.nom} (${o.transporteur ?? "Standard"}) : ${o.gratuit ? "Gratuit" : `${o.frais} ${dev}`}${o.delai ? ` — ${o.delai}` : ""}`).join("\n");
         return { succes: true, resultat: `Frais de livraison pour ${zone} (${poids}kg, ${montantCommande} ${dev}):\n${lignes}` };
       }
 

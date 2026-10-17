@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { hrefBoutique } from "@/lib/utils";
 
 interface Popup {
   id: string;
@@ -26,7 +27,8 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
   const t = useT();
   const [popups, setPopups] = useState<Popup[]>([]);
   const [visible, setVisible] = useState<string | null>(null);
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const affichee = useRef<string | null>(null);
+  const suivante = useRef<() => void>(() => setVisible(null));
 
   useEffect(() => {
     fetch(`/api/popups?slug=${slug}`)
@@ -35,69 +37,61 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
       .catch(() => null);
   }, [slug]);
 
+  // Déclencheurs. Une popup à la fois (les autres attendent leur tour), chacune au plus une fois par
+  // visite, affichage compté quel que soit le déclencheur. Avant : seule la première popup « après délai »
+  // s'affichait (la boucle s'arrêtait dessus), « Au scroll » ne faisait rien, la sortie ne marchait que sur
+  // ordinateur, réapparaissait à chaque fois et n'était jamais comptée.
   useEffect(() => {
     if (!popups.length) return;
+    const lire = (cle: string) => { try { return sessionStorage.getItem(cle); } catch { return null; } };
+    const vues = new Set<string>(JSON.parse(lire("axso_popups_seen") ?? "[]"));
+    const enAttente: string[] = [];
+    const montrer = (p: Popup) => {
+      if (vues.has(p.id)) return;
+      vues.add(p.id);
+      try { sessionStorage.setItem("axso_popups_seen", JSON.stringify([...vues])); } catch {}
+      fetch("/api/popups", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: p.id, trackView: true }) }).catch(() => null);
+      if (affichee.current) enAttente.push(p.id);
+      else { affichee.current = p.id; setVisible(p.id); }
+    };
+    suivante.current = () => { affichee.current = enAttente.shift() ?? null; setVisible(affichee.current); };
 
-    // Session-based tracking
-    const seen = new Set<string>(JSON.parse(sessionStorage.getItem("axso_popups_seen") ?? "[]"));
-
-    for (const popup of popups) {
-      if (seen.has(popup.id) || dismissed.has(popup.id)) continue;
-
-      if (popup.declencheur === "premiere_visite") {
-        const key = `axso_pv_${popup.id}`;
-        if (localStorage.getItem(key)) continue;
-        localStorage.setItem(key, "1");
-      }
-
-      if (popup.declencheur === "delai") {
-        const timer = setTimeout(() => {
-          setVisible(popup.id);
-          seen.add(popup.id);
-          sessionStorage.setItem("axso_popups_seen", JSON.stringify([...seen]));
-          // Track view
-          fetch("/api/popups", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: popup.id, trackView: true }),
-          }).catch(() => null);
-        }, popup.delaiSec * 1000);
-        return () => clearTimeout(timer);
-      }
-
-      if (popup.declencheur === "premiere_visite") {
-        setTimeout(() => {
-          setVisible(popup.id);
-          seen.add(popup.id);
-          sessionStorage.setItem("axso_popups_seen", JSON.stringify([...seen]));
-        }, 500);
+    const minuteries: ReturnType<typeof setTimeout>[] = [];
+    for (const p of popups) {
+      if (p.declencheur === "delai") minuteries.push(setTimeout(() => montrer(p), Math.max(0, p.delaiSec) * 1000));
+      if (p.declencheur === "premiere_visite") {
+        const cle = `axso_pv_${p.id}`;
+        let deja = false;
+        try { deja = !!localStorage.getItem(cle); localStorage.setItem(cle, "1"); } catch {}
+        if (!deja) minuteries.push(setTimeout(() => montrer(p), 500));
       }
     }
-  }, [popups, dismissed]);
 
-  // Exit intent
-  useEffect(() => {
-    const exitPopup = popups.find((p) => p.declencheur === "exit_intent");
-    if (!exitPopup) return;
-
-    function onMouseLeave(e: MouseEvent) {
-      if (e.clientY <= 5 && !dismissed.has(exitPopup!.id)) {
-        setVisible(exitPopup!.id);
-      }
-    }
-    document.addEventListener("mouseleave", onMouseLeave);
-    return () => document.removeEventListener("mouseleave", onMouseLeave);
-  }, [popups, dismissed]);
+    const auScroll = popups.filter((p) => p.declencheur === "scroll");
+    const sortie = popups.filter((p) => p.declencheur === "exit_intent");
+    let plusBas = 0;
+    const onScroll = () => {
+      const y = window.scrollY, total = document.documentElement.scrollHeight - window.innerHeight;
+      if (total > 0 && y / total >= 0.5) auScroll.forEach(montrer); // moitié de la page lue
+      // Sortie sur téléphone : remontée franche vers le haut après avoir lu un peu (le geste avant de quitter).
+      plusBas = Math.max(plusBas, y);
+      if (plusBas > 400 && plusBas - y > 250) sortie.forEach(montrer);
+    };
+    const onQuitte = (e: MouseEvent) => { if (e.clientY <= 5) sortie.forEach(montrer); }; // ordinateur : souris vers la barre d'onglets
+    window.addEventListener("scroll", onScroll, { passive: true });
+    document.addEventListener("mouseleave", onQuitte);
+    return () => {
+      minuteries.forEach(clearTimeout);
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("mouseleave", onQuitte);
+    };
+  }, [popups]);
 
   const current = visible ? popups.find((p) => p.id === visible) : null;
 
   if (!current) return null;
 
-  function dismiss() {
-    if (!current) return;
-    setDismissed((prev) => new Set([...prev, current.id]));
-    setVisible(null);
-  }
+  const dismiss = () => suivante.current();
 
   function handleCta() {
     if (!current) return;
@@ -107,9 +101,9 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: current.id, trackClick: true }),
     }).catch(() => null);
-    if (current.ctaUrl) {
-      window.location.href = current.ctaUrl;
-    }
+    // « produits » → /boutique/produits (comme les boutons du Constructeur) ; jamais un lien « javascript: ».
+    const lien = hrefBoutique(slug, current.ctaUrl);
+    if (lien && !/^javascript:/i.test(lien)) window.location.href = lien;
     dismiss();
   }
 
@@ -125,6 +119,28 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
           )}
         </div>
         <button onClick={dismiss} className="shrink-0 hover:bg-white/10 p-1 rounded"><X size={14} /></button>
+      </div>
+    );
+  }
+
+  // Slide-in : carte dans le coin, sans voile ni blocage de la page.
+  if (current.type === "slide_in") {
+    return (
+      <div className="fixed bottom-4 right-4 left-4 sm:left-auto z-[100] sm:w-80 bg-white rounded-2xl shadow-2xl p-5 border border-[#F0F0F0]">
+        <button onClick={dismiss} aria-label={t("Fermer")} className="absolute top-2.5 right-2.5 p-1.5 rounded-lg hover:bg-[#F5F5F5]">
+          <X size={14} className="text-[#888]" />
+        </button>
+        {current.imageUrl && <img src={current.imageUrl} alt="" className="w-full h-28 object-cover rounded-xl mb-3" />}
+        <h3 className="text-[15px] font-bold text-[#111] mb-1 pr-6">{t(current.titre)}</h3>
+        <p className="text-[13px] text-[#666] mb-3">{t(current.message)}</p>
+        {current.codePromo && (
+          <p className="text-[15px] font-bold tracking-widest text-center rounded-lg py-2 mb-3 bg-[#FFF8EC]" style={{ color: accentColor }}>{t(current.codePromo)}</p>
+        )}
+        {current.ctaTexte && (
+          <button onClick={handleCta} className="w-full py-2.5 rounded-xl text-white font-semibold text-[13px]" style={{ background: accentColor }}>
+            {t(current.ctaTexte)}
+          </button>
+        )}
       </div>
     );
   }

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Loader2, Lock, AlertCircle, Smartphone } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { moyensEnLigne } from "@/lib/paiement-pays";
 
 export function NotchPayCheckout({
   commandeId,
@@ -10,6 +11,7 @@ export function NotchPayCheckout({
   clientEmail,
   clientNom,
   clientTelephone,
+  paysClient,
   onError,
 }: {
   commandeId: string;
@@ -18,6 +20,7 @@ export function NotchPayCheckout({
   clientEmail: string;
   clientNom: string;
   clientTelephone?: string;
+  paysClient?: string | null; // ISO2 : moyens affichés selon le pays du client
   onError?: (msg: string) => void;
 }) {
   const t = useT();
@@ -76,7 +79,7 @@ export function NotchPayCheckout({
         )}
       </button>
       <p className="flex items-center justify-center gap-1.5 text-center text-xs text-gray-400">
-        <Smartphone size={12} />{" "}{t("Orange Money, MTN MoMo & carte bancaire · Paiement sécurisé NotchPay")}
+        <Smartphone size={12} />{" "}{t(moyensEnLigne(paysClient))}{" · "}{t("Paiement sécurisé NotchPay")}
       </p>
     </div>
   );

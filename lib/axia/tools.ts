@@ -1,6 +1,7 @@
 // Axia — surface d'outils complète (actions boutique + connecteurs MCP + délégation experte)
 import { lienBoutique } from "@/lib/origine-site";
 import { calculerOptionsLivraison, paysDepuisTexte, decrireRegle } from "@/lib/livraison";
+import { lireReglagesLivraison, trouverZone } from "@/lib/livraison-reglages";
 import { prisma } from "@/lib/prisma";
 import { synchroniserFournisseurs } from "@/lib/sync-fournisseurs";
 import { creerRetour, mettreAJourRetour } from "@/lib/remboursement";
@@ -1103,12 +1104,12 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         ]);
         const devise = tenant?.devise ?? "XAF";
         const prodLines = produits.map(p => `- ${p.nom} (${p.type}, ${p.prix} ${devise}, ${p.ventes} ventes, image: ${p.images?.length ? "oui" : "non"})`).join("\n");
-        const livraison = (tenant?.parametresLivraison as any) || {};
+        const livraison = lireReglagesLivraison(tenant?.parametresLivraison);
         const livraisonResume = livraison.gratuite
           ? "gratuite pour tous"
-          : livraison.frais != null ? `${livraison.frais} ${devise}${livraison.minimum > 0 ? `, offerte dès ${livraison.minimum}` : ""}` : "non configurée";
+          : `${livraison.frais} ${devise}${livraison.minimum > 0 ? `, offerte dès ${livraison.minimum}` : ""}`;
         const statutLabel = tenant?.statut === "brouillon" ? "brouillon (pas encore publiée)" : tenant?.statut === "pause" ? "en pause" : "publiée";
-        const ctx = `Boutique: ${tenant?.nomBoutique} | Statut: ${statutLabel} | Pays: ${tenant?.pays ?? "?"} | Devise: ${devise} | Catégorie: ${tenant?.categorie ?? "?"}\nContact — WhatsApp: ${tenant?.whatsapp || "non renseigné"} | Téléphone: ${tenant?.telephone || "non renseigné"} | Email: ${tenant?.email || "non renseigné"} | Adresse: ${tenant?.adresse || "non renseignée"}\nLivraison : ${livraisonResume}${livraison.zones?.length ? ` — zones : ${livraison.zones.join(", ")}` : ""}\nProduits actifs (${produits.length}):\n${prodLines || "aucun"}\nCommandes confirmées: ${nbCommandes} | Clients inscrits: ${nbClients}`;
+        const ctx = `Boutique: ${tenant?.nomBoutique} | Statut: ${statutLabel} | Pays: ${tenant?.pays ?? "?"} | Devise: ${devise} | Catégorie: ${tenant?.categorie ?? "?"}\nContact — WhatsApp: ${tenant?.whatsapp || "non renseigné"} | Téléphone: ${tenant?.telephone || "non renseigné"} | Email: ${tenant?.email || "non renseigné"} | Adresse: ${tenant?.adresse || "non renseignée"}\nLivraison : ${livraisonResume}${livraison.zones.length ? ` — zones : ${livraison.zones.map((z) => (z.frais != null ? `${z.nom} (${z.frais} ${devise})` : z.nom)).join(", ")}` : ""}\nProduits actifs (${produits.length}):\n${prodLines || "aucun"}\nCommandes confirmées: ${nbCommandes} | Clients inscrits: ${nbClients}`;
         return { succes: true, resultat: ctx };
       }
 
@@ -1183,18 +1184,23 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { parametresLivraison: true } });
         if (!tenant) return { succes: false, resultat: "Boutique introuvable" };
         const actuel = (tenant.parametresLivraison as any) || {};
+        const lu = lireReglagesLivraison(actuel);
+        // Zones données par nom : une zone gardée garde son tarif et son délai.
+        const zones = Array.isArray(args.zones)
+          ? lireReglagesLivraison({ zones: args.zones.map((n: string) => trouverZone(lu.zones, n) ?? n) }).zones
+          : lu.zones;
         const parametresLivraison = {
           ...actuel,
-          gratuite: args.gratuite ?? actuel.gratuite ?? false,
-          frais: args.frais ?? actuel.frais ?? 0,
-          minimum: args.minimumGratuit ?? actuel.minimum ?? 0,
-          zones: args.zones ?? actuel.zones ?? [],
+          gratuite: args.gratuite ?? lu.gratuite,
+          frais: args.frais ?? lu.frais,
+          minimum: args.minimumGratuit ?? lu.minimum,
+          zones,
         };
         await prisma.tenant.update({ where: { id: tenantId }, data: { parametresLivraison } });
         const resume = parametresLivraison.gratuite
           ? "livraison gratuite pour tous"
           : `${parametresLivraison.frais} de frais${parametresLivraison.minimum > 0 ? `, offerte dès ${parametresLivraison.minimum}` : ""}`;
-        return { succes: true, resultat: `✅ Livraison configurée : ${resume}${parametresLivraison.zones.length ? ` — zones : ${parametresLivraison.zones.join(", ")}` : ""}` };
+        return { succes: true, resultat: `✅ Livraison configurée : ${resume}${zones.length ? ` — zones : ${zones.map((z) => z.nom).join(", ")}` : ""}` };
       }
 
       case "ajouter_regle_livraison": {
@@ -1647,7 +1653,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         const paysZone = paysDepuisTexte(zone);
         const pays = paysZone?.length === 1 ? paysZone[0] : (paysZone ? "" : tenant?.pays ?? "");
         const options = await calculerOptionsLivraison({ tenantId, pays, zone: paysZone ? "" : zone, poids, montantCommande });
-        const lignes = options.map((o) => `• ${o.nom} (${o.transporteur ?? "Standard"}) : ${o.gratuit ? "Gratuit" : `${o.frais} ${dev}`} — ${o.delai}`).join("\n");
+        const lignes = options.map((o) => `• ${o.nom} (${o.transporteur ?? "Standard"}) : ${o.gratuit ? "Gratuit" : `${o.frais} ${dev}`}${o.delai ? ` — ${o.delai}` : ""}`).join("\n");
         return { succes: true, resultat: `Frais de livraison pour ${zone} (${poids}kg, ${montantCommande} ${dev}):\n${lignes}` };
       }
 

@@ -20,6 +20,7 @@ import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { SelectPays } from "@/components/ui/SelectPays";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 import { useT } from "@/components/I18nProvider";
+import { lireReglagesLivraison, normaliserZone, type ZoneLivraison } from "@/lib/livraison-reglages";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Store,   titre: "Complétez votre profil",        description: "Nom, description, contacts, pays... Chaque champ rempli fait grimper votre score de complétion vers 100%." },
@@ -94,8 +95,10 @@ export default function BoutiquePage() {
     logoUrl: "", bannerUrl: "", themeId: "terre-et-or",
     metaTitle: "", metaDescription: "",
     facebook: "", instagram: "", tiktok: "", twitter: "",
-    livraisonGratuite: false, fraisLivraison: "0", livraisonMin: "0", zonesLivraison: "",
+    livraisonGratuite: false, fraisLivraison: "0", livraisonMin: "0", delaiLivraison: "", zones: [] as ZoneLivraison[],
   });
+  // Règles avancées (Logistique → Livraison) : rappelées ici pour que les deux réglages se voient.
+  const [regles, setRegles] = useState<{ zone: string; actif: boolean }[]>([]);
   const [savedForm, setSavedForm] = useState<typeof form | null>(null);
 
   useEffect(() => {
@@ -105,7 +108,7 @@ export default function BoutiquePage() {
         setTenant(t);
         setStatutLocal(t.statut || "active");
         const social = t.socialLinks || {};
-        const livraison = t.parametresLivraison || {};
+        const livraison = lireReglagesLivraison(t.parametresLivraison);
         const loaded = {
           nomBoutique: t.nomBoutique || "", description: t.description || "",
           pays: t.pays || "", whatsapp: t.whatsapp || "", email: t.email || "",
@@ -114,15 +117,16 @@ export default function BoutiquePage() {
           metaTitle: t.metaTitle || "", metaDescription: t.metaDescription || "",
           facebook: social.facebook || "", instagram: social.instagram || "",
           tiktok: social.tiktok || "", twitter: social.twitter || "",
-          livraisonGratuite: livraison.gratuite || false,
-          fraisLivraison: String(livraison.frais || 0), livraisonMin: String(livraison.minimum || 0),
-          zonesLivraison: (livraison.zones || []).join(", "),
+          livraisonGratuite: livraison.gratuite,
+          fraisLivraison: String(livraison.frais), livraisonMin: String(livraison.minimum),
+          delaiLivraison: livraison.delai, zones: livraison.zones,
         };
         setForm(loaded);
         setSavedForm(loaded);
       }
     });
     chargerBoutiques();
+    fetch("/api/livraison/regles").then(r => r.json()).then(d => setRegles(d.regles ?? [])).catch(() => {});
   }, []);
 
   function chargerBoutiques() {
@@ -171,7 +175,8 @@ export default function BoutiquePage() {
             gratuite: form.livraisonGratuite,
             frais: parseFloat(form.fraisLivraison) || 0,
             minimum: parseFloat(form.livraisonMin) || 0,
-            zones: form.zonesLivraison.split(",").map((z: string) => z.trim()).filter(Boolean),
+            delai: form.delaiLivraison.trim(),
+            zones: lireReglagesLivraison({ zones: form.zones }).zones,
           },
         }),
       });
@@ -228,7 +233,7 @@ export default function BoutiquePage() {
       !!form.pays,
       !!(form.facebook || form.instagram || form.tiktok || form.twitter),
       !!(form.metaTitle && form.metaDescription),
-      !!form.zonesLivraison,
+      form.zones.length > 0,
     ];
     return Math.round((checks.filter(Boolean).length / checks.length) * 100);
   }, [form]);
@@ -238,7 +243,7 @@ export default function BoutiquePage() {
     apparence: !!form.logoUrl && !!form.bannerUrl,
     seo: !!form.metaTitle && !!form.metaDescription,
     reseaux: !!(form.facebook || form.instagram || form.tiktok || form.twitter),
-    livraison: !!form.zonesLivraison,
+    livraison: form.zones.length > 0,
     boutiques: autresBoutiques.length > 1,
     avance: true,
   };
@@ -514,14 +519,19 @@ export default function BoutiquePage() {
                 </button>
               </div>
               {!form.livraisonGratuite && (
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   <div>
-                    <label className={labelCls}>{tr("Frais de livraison")}</label>
+                    <label className={labelCls}>{tr("Tarif standard")}</label>
                     <input type="number" value={form.fraisLivraison} onChange={e => set("fraisLivraison", e.target.value)}
                       min="0" className={inputCls} />
                   </div>
                   <div>
-                    <label className={labelCls}>{tr("Minimum pour livraison gratuite (0 = désactivé)")}</label>
+                    <label className={labelCls}>{tr("Délai standard")}</label>
+                    <input value={form.delaiLivraison} onChange={e => set("delaiLivraison", e.target.value)}
+                      placeholder={tr("Ex : 24 à 48 h")} maxLength={40} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>{tr("Gratuite dès (0 = jamais)")}</label>
                     <input type="number" value={form.livraisonMin} onChange={e => set("livraisonMin", e.target.value)}
                       min="0" className={inputCls} />
                   </div>
@@ -529,13 +539,25 @@ export default function BoutiquePage() {
               )}
               <div>
                 <label className={labelCls}>{tr("Zones de livraison")}</label>
-                <ZonesInput value={form.zonesLivraison} onChange={v => set("zonesLivraison", v)} />
+                <p className="text-[11.5px] text-[#AAAAAA] leading-snug mb-2">
+                  {tr("Le client choisit sa zone au moment de commander (livraisons dans votre pays). Frais vides = tarif standard.")}
+                </p>
+                <ZonesEditor zones={form.zones} onChange={v => set("zones", v)} gratuite={form.livraisonGratuite}
+                  zonesAvancees={new Set(regles.filter(r => r.actif && r.zone.trim()).map(r => normaliserZone(r.zone)))} />
               </div>
-              <p className="text-[11.5px] text-[#888888] bg-[#FAFAFA] border border-[#F0F0F0] rounded-2xl p-3.5 leading-relaxed">
-                {form.livraisonGratuite
-                  ? tr("Tous vos clients bénéficient de la livraison gratuite, quelle que soit la zone.")
-                  : `Vos clients paient ${form.fraisLivraison || 0} pour la livraison${parseFloat(form.livraisonMin) > 0 ? `, offerte dès ${form.livraisonMin}` : ""}.`}
-              </p>
+              <div className="text-[11.5px] text-[#888888] bg-[#FAFAFA] border border-[#F0F0F0] rounded-2xl p-3.5 leading-relaxed space-y-1">
+                <p>
+                  {form.livraisonGratuite
+                    ? tr("Livraison gratuite pour tous vos clients, quelles que soient la zone et les règles avancées.")
+                    : `${tr("Vos clients paient le tarif de leur zone, sinon")} ${form.fraisLivraison || 0}${form.delaiLivraison.trim() ? ` (${form.delaiLivraison.trim()})` : ""}${parseFloat(form.livraisonMin) > 0 ? ` — ${tr("offerte dès")} ${form.livraisonMin}, ${tr("zones et règles avancées comprises")}` : ""}.`}
+                </p>
+                {!form.livraisonGratuite && regles.some(r => r.actif && !r.zone.trim()) && (
+                  <p>
+                    {tr("Vos règles avancées par pays, poids ou montant remplacent le tarif standard quand elles s'appliquent.")}{" "}
+                    <Link href="/dashboard/logistique?tab=livraison" className="font-semibold text-[#111111] underline underline-offset-2">{tr("Voir les règles")}</Link>
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -796,41 +818,50 @@ function LongueurBadge({ n, min, max }: { n: number; min: number; max: number })
   );
 }
 
-// ─── Saisie des zones de livraison (chips) ──────────────────────────────────
-function ZonesInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+// ─── Zones de livraison : une ligne par zone (nom, frais, délai) ─────────────
+function ZonesEditor({ zones, onChange, gratuite, zonesAvancees }: { zones: ZoneLivraison[]; onChange: (v: ZoneLivraison[]) => void; gratuite: boolean; zonesAvancees: Set<string> }) {
   const tr = useT();
-  const zones = value.split(",").map(z => z.trim()).filter(Boolean);
   const [draft, setDraft] = useState("");
 
-  function addZone() {
-    const v = draft.trim();
-    if (!v || zones.includes(v)) { setDraft(""); return; }
-    onChange([...zones, v].join(", "));
+  function ajouter() {
+    const nom = draft.trim();
+    if (nom && !zones.some(z => normaliserZone(z.nom) === normaliserZone(nom))) onChange([...zones, { nom, frais: null, delai: "" }]);
     setDraft("");
   }
-  function removeZone(z: string) {
-    onChange(zones.filter(x => x !== z).join(", "));
-  }
+  const modifier = (i: number, maj: Partial<ZoneLivraison>) => onChange(zones.map((z, j) => (j === i ? { ...z, ...maj } : z)));
 
   return (
-    <div>
-      <div className="flex flex-wrap gap-1.5 mb-2 min-h-[26px]">
-        {zones.map(z => (
-          <span key={z} className="inline-flex items-center gap-1 leading-none pl-3 pr-1.5 py-1.5 rounded-full text-[11.5px] font-medium"
-            style={{ background: "#F5A6231A", color: "#111111", border: "1px solid #F5A62355" }}>
-            {tr(z)}
-            <button type="button" onClick={() => removeZone(z)} className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-[#FDE68A] transition-colors">
-              <X size={9} />
-            </button>
-          </span>
-        ))}
-        {!zones.length && <p className="text-[11.5px] text-[#CCCCCC] leading-tight py-1">{tr("Aucune zone ajoutée pour l'instant")}</p>}
-      </div>
+    <div className="space-y-2">
+      {zones.map((z, i) => (
+        <div key={i} className="flex items-center gap-2 p-2 rounded-2xl border border-[#F0F0F0] bg-[#FAFAFA]">
+          <div className="flex-1 min-w-0 pl-2">
+            <p className="text-[13px] font-semibold text-[#111111] truncate leading-tight">{z.nom}</p>
+            {zonesAvancees.has(normaliserZone(z.nom)) && (
+              <p className="text-[10.5px] text-[#D4911A] leading-tight mt-0.5">{tr("Tarif fixé par une règle avancée (Logistique)")}</p>
+            )}
+          </div>
+          {!gratuite && (
+            <>
+              <input type="number" min="0" value={z.frais ?? ""} aria-label={tr("Frais de la zone")}
+                onChange={e => modifier(i, { frais: e.target.value === "" ? null : Math.max(0, parseFloat(e.target.value) || 0) })}
+                placeholder={tr("Standard")} className="w-24 bg-white border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12.5px] outline-none focus:border-[#F5A623]/50 placeholder:text-[#CCCCCC]" />
+              <input value={z.delai} maxLength={40} aria-label={tr("Délai de la zone")}
+                onChange={e => modifier(i, { delai: e.target.value })}
+                placeholder={tr("Délai")} className="w-24 bg-white border border-[#E8E8E8] rounded-xl px-3 py-2 text-[12.5px] outline-none focus:border-[#F5A623]/50 placeholder:text-[#CCCCCC]" />
+            </>
+          )}
+          <button type="button" onClick={() => onChange(zones.filter((_, j) => j !== i))} aria-label={tr("Retirer la zone")}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#999999] hover:bg-[#FDE68A] hover:text-[#111111] transition-colors flex-shrink-0">
+            <X size={13} />
+          </button>
+        </div>
+      ))}
+      {!zones.length && <p className="text-[11.5px] text-[#CCCCCC] leading-tight py-1">{tr("Aucune zone : le client tape simplement sa ville")}</p>}
       <div className="flex gap-2">
         <input value={draft} onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addZone(); } }}
-          placeholder={tr("Ex: Dakar, Thiès, Saint-Louis…")} className={inputCls} />
-        <button type="button" onClick={addZone}
+          onKeyDown={e => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); ajouter(); } }}
+          placeholder={tr("Ajouter une zone : Akwa, Bonapriso…")} maxLength={60} className={inputCls} />
+        <button type="button" onClick={ajouter} aria-label={tr("Ajouter la zone")}
           className="px-4 rounded-2xl flex items-center justify-center flex-shrink-0 hover:opacity-90 transition-all"
           style={{ background: "#111111", color: "#fff" }}>
           <Plus size={14} />

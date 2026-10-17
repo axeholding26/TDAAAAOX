@@ -3,9 +3,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { lireConnexion } from "@/lib/connect";
-import { AVEC_EMAIL_REEL } from "@/lib/email";
+import { AVEC_EMAIL_REEL, envoyerCampagneEmail } from "@/lib/email";
 import { integrationActive } from "@/lib/integrations";
 import { envoyerGmail, rafraichirTokenGoogle } from "@/lib/mcp/connectors/gmail";
+import { lienDesinscription } from "@/lib/relances";
+
+export const maxDuration = 60;
+
+const JOUR = 86_400_000;
+// ponytail: plafond par campagne (Vercel coupe à 60 s) ; au-delà, envoi en tâche de fond par lots.
+const MAX_RESEND = 2000, MAX_GMAIL = 200; // Gmail : un message à la fois, et quota d'environ 500/jour
+
+/** Clients d'un segment, avec un vrai e-mail et pas désinscrits. Mêmes règles pour le compteur et l'envoi.
+ *  VIP : au moins deux fois la dépense moyenne de la boutique (un seuil fixe ne valait rien hors XAF/XOF). */
+async function filtreSegment(tenantId: string, segment?: string) {
+  const where: Record<string, any> = { tenantId, ...AVEC_EMAIL_REEL, relancesRefuseesLe: null };
+  if (segment === "vip") {
+    const { _avg } = await prisma.client.aggregate({ where: { tenantId, totalDepense: { gt: 0 } }, _avg: { totalDepense: true } });
+    where.totalDepense = { gte: Math.max(1, (_avg.totalDepense ?? 0) * 2) };
+  }
+  if (segment === "nouveaux") where.totalCommandes = { lte: 1 };
+  // Inactifs : client depuis plus de 30 jours, aucune commande ces 30 derniers jours.
+  if (segment === "inactifs") Object.assign(where, { createdAt: { lte: new Date(Date.now() - 30 * JOUR) }, commandes: { none: { createdAt: { gte: new Date(Date.now() - 30 * JOUR) } } } });
+  return where;
+}
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -26,12 +47,9 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === "stats") {
-    const [nbClients, nbVip, nbNouveaux, nbInactifs] = await Promise.all([
-      prisma.client.count({ where: { tenantId } }),
-      prisma.client.count({ where: { tenantId, totalDepense: { gte: 50000 } } }),
-      prisma.client.count({ where: { tenantId, totalCommandes: { lte: 1 } } }),
-      prisma.client.count({ where: { tenantId, createdAt: { lte: new Date(Date.now() - 30 * 86400000) }, totalCommandes: { lte: 0 } } }),
-    ]);
+    const [nbClients, nbVip, nbNouveaux, nbInactifs] = await Promise.all(
+      ["tous", "vip", "nouveaux", "inactifs"].map(async (seg) => prisma.client.count({ where: await filtreSegment(tenantId, seg) })),
+    );
 
     // Check connected providers
     const [gmail, resend] = await Promise.all([
@@ -54,7 +72,7 @@ export async function POST(req: NextRequest) {
   const tenantId = (session.user as any)?.tenantId;
 
   if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
-  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true } });
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, email: true } });
   if (!tenant) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
 
   const { sujet, corps, segment, provider = "resend" } = await req.json().catch(() => ({}));
@@ -62,23 +80,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sujet et corps requis" }, { status: 400 });
   }
 
-  // Construire le filtre segment
-  const whereClients: any = { tenantId, ...AVEC_EMAIL_REEL };
-  if (segment === "vip") whereClients.totalDepense = { gte: 50000 };
-  if (segment === "inactifs") {
-    whereClients.createdAt = { lte: new Date(Date.now() - 30 * 86400000) };
-    whereClients.totalCommandes = { lte: 0 };
-  }
-  if (segment === "nouveaux") whereClients.totalCommandes = { lte: 1 };
-
   const clients = await prisma.client.findMany({
-    where: whereClients,
-    select: { email: true, nom: true },
-    take: 100,
+    where: await filtreSegment(tenantId, segment),
+    select: { id: true, email: true, nom: true },
+    orderBy: { createdAt: "desc" },
+    take: MAX_RESEND,
   });
+  const message = async (c: (typeof clients)[number]) => {
+    const desinscription = await lienDesinscription(c.id);
+    return { a: c.email!, desinscription, html: construireHtml(corps, c.nom, tenant.nomBoutique, desinscription) };
+  };
 
   let envoyes = 0;
   let source = "aucun";
+  let cible = clients.length;
 
   // ── Envoi via Gmail OAuth ─────────────────────────────────────────────────
   if (provider === "gmail" && integrationActive("gmail")) {
@@ -89,40 +104,22 @@ export async function POST(req: NextRequest) {
 
     if (accessToken) {
       source = "gmail";
-      for (const client of clients) {
-        if (!client.email) continue;
-        const html = construireHtml(corps, client.nom, tenant.nomBoutique);
+      cible = Math.min(clients.length, MAX_GMAIL);
+      for (const client of clients.slice(0, MAX_GMAIL)) {
+        const m = await message(client);
         // Compté seulement si Gmail accepte l'envoi (avant : compté même en cas d'échec).
-        const r = await envoyerGmail({ accessToken, a: client.email, sujet, corpsHtml: html }).catch(() => ({ succes: false }));
+        const r = await envoyerGmail({ accessToken, a: m.a, sujet, corpsHtml: m.html }).catch(() => ({ succes: false }));
         if (r.succes) envoyes++;
         await pause(150);
       }
     }
   }
 
-  // ── Envoi via Resend ──────────────────────────────────────────────────────
-  if (provider === "resend" || envoyes === 0) {
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      source = "resend";
-      for (const client of clients.slice(0, 50)) {
-        if (!client.email) continue;
-        const html = construireHtml(corps, client.nom, tenant.nomBoutique);
-        try {
-          const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              from: `${tenant.nomBoutique} <noreply@axsoafrica.com>`,
-              to: [client.email!],
-              subject: sujet,
-              html,
-            }),
-          });
-          if (res.ok) envoyes++;
-        } catch {}
-      }
-    }
+  // ── Envoi via Resend (par lots de 100 : avant, 50 au plus et le reste jamais envoyé) ──
+  if ((provider === "resend" || envoyes === 0) && process.env.RESEND_API_KEY) {
+    source = "resend";
+    cible = clients.length;
+    envoyes = await envoyerCampagneEmail({ boutique: tenant.nomBoutique, repondreA: tenant.email, sujet, messages: await Promise.all(clients.map(message)) });
   }
 
   // ── Historique DB ─────────────────────────────────────────────────────────
@@ -133,17 +130,21 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     success: true,
     envoyes,
-    total: clients.length,
+    total: cible,
     source,
     ...(envoyes === 0 && { error: "Aucun e-mail n'a pu être envoyé." }),
   });
 }
 
-function construireHtml(corps: string, nom: string | null, boutique: string) {
+const echapper = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function construireHtml(corps: string, nom: string | null, boutique: string, desinscription: string) {
   // « Abonné newsletter » : inscrit sans nom (app/api/storefront/[slug]/newsletter).
   const prenom = (nom === "Abonné newsletter" ? "" : (nom ?? "").split(" ")[0]) || "Client";
-  const text = corps
-    .replace(/\{prenom\}/g, prenom)
+  // Tout est échappé : le nom vient du formulaire de la boutique, le texte du marchand est du texte simple.
+  boutique = echapper(boutique);
+  const text = echapper(corps)
+    .replace(/\{prenom\}/g, echapper(prenom))
     .replace(/\{boutique\}/g, boutique)
     .replace(/\n/g, "<br>");
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -155,7 +156,7 @@ function construireHtml(corps: string, nom: string | null, boutique: string) {
   <div style="padding:32px 40px;color:#374151;font-size:15px;line-height:1.7">${text}</div>
   <div style="padding:20px 40px 32px;border-top:1px solid #f3f4f6;color:#9ca3af;font-size:12px">
     Vous recevez cet email car vous êtes client de <strong>${boutique}</strong>.<br>
-    Propulsé par <a href="https://axsoafrica.com" style="color:#F5A623;text-decoration:none">Axso</a>
+    <a href="${echapper(desinscription)}" style="color:#9ca3af">Se désinscrire</a> · Propulsé par <a href="https://axsoafrica.com" style="color:#F5A623;text-decoration:none">Axso</a>
   </div>
 </div>
 </body></html>`;

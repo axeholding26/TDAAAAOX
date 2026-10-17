@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { PAYS_OPTIONS, GROUPES_PAYS } from "@/lib/devise-convert";
+import { lireReglagesLivraison, normaliserZone, trouverZone } from "@/lib/livraison-reglages";
 
 export type OptionLivraison = {
   id: string;
@@ -11,15 +12,16 @@ export type OptionLivraison = {
   gratuit: boolean;
 };
 
-// Tarifs de livraison, modèle Shopify : chaque ReglePort couvre une liste de
-// pays (vide = tous) et, en option, un quartier/ville précis de ces pays.
-// Le pays de l'adresse du client décide ; parmi les règles qui correspondent,
-// seules les plus précises comptent (quartier > pays > tous les pays) — une
-// règle « International » ne s'applique donc plus à une livraison locale.
-// Sans règle applicable : réglages « Ma boutique → Livraison » (frais fixes,
-// gratuité dès un minimum). Utilisé par /api/livraison/calculer (affichage
-// checkout) et par les routes de création de commande (calcul serveur
-// autoritaire — jamais confiance en un montant envoyé par le client).
+// Tarifs de livraison, modèle Shopify. Ordre de précision (la plus précise gagne) :
+//   1. règle avancée de quartier (Logistique → Livraison, ReglePort.zone)
+//   2. tarif de la zone dans Ma boutique → Livraison (pays de la boutique seulement)
+//   3. règle avancée du pays, puis « tous les pays »
+//   4. tarif standard de Ma boutique → Livraison
+// Puis la gratuité de Ma boutique (« pour tous » ou dès un minimum) s'applique à tout : avant,
+// elle ne valait que sans aucune règle, et une règle de pays la faisait payer quand même.
+// Les règles au poids utilisent le poids du panier (poidsPanier). Utilisé par
+// /api/livraison/calculer (affichage checkout) et par les routes de création de commande
+// (calcul serveur autoritaire — jamais confiance en un montant envoyé par le client).
 export async function calculerOptionsLivraison(params: {
   tenantId: string;
   pays?: string | null; // code ISO2 du client
@@ -29,16 +31,18 @@ export async function calculerOptionsLivraison(params: {
 }): Promise<OptionLivraison[]> {
   const { tenantId, poids = 0, montantCommande = 0 } = params;
   const pays = params.pays?.toUpperCase() ?? "";
-  const zone = params.zone?.trim().toLowerCase() ?? "";
+  const zone = normaliserZone(params.zone);
 
-  const regles = await prisma.reglePort.findMany({
-    where: { tenantId, actif: true },
-    orderBy: { frais: "asc" },
-  });
+  const [regles, tenant] = await Promise.all([
+    prisma.reglePort.findMany({ where: { tenantId, actif: true }, orderBy: { frais: "asc" } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { parametresLivraison: true, pays: true } }),
+  ]);
+  const reglages = lireReglagesLivraison(tenant?.parametresLivraison);
+  const zoneBoutique = pays && pays === tenant?.pays?.toUpperCase() ? trouverZone(reglages.zones, params.zone) : undefined;
 
   const precision = (r: (typeof regles)[number]) => {
     if (r.pays.length && !r.pays.includes(pays)) return -1;
-    if (r.zone.trim()) return r.zone.trim().toLowerCase() === zone ? 2 : -1;
+    if (r.zone.trim()) return normaliserZone(r.zone) === zone && !!zone ? 2 : -1;
     return r.pays.length ? 1 : 0;
   };
   const candidates = regles.filter((r) =>
@@ -48,36 +52,48 @@ export async function calculerOptionsLivraison(params: {
     (r.montantMax === null || montantCommande <= r.montantMax));
   const meilleure = Math.max(-1, ...candidates.map(precision));
 
-  const options: OptionLivraison[] = candidates.filter((r) => precision(r) === meilleure).map((r) => {
-    const fraisTotal = r.gratuit ? 0 : r.frais + Math.max(0, poids - r.poidsMin) * r.fraisKg;
-    return {
-      id: r.id,
-      nom: r.nom,
-      transporteur: r.transporteur,
-      modeLivraison: r.modeLivraison,
-      delai: r.delai,
-      frais: fraisTotal,
-      gratuit: r.gratuit || fraisTotal === 0,
-    };
-  });
-
-  if (options.length === 0) {
-    const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { parametresLivraison: true } });
-    const pl = (tenant?.parametresLivraison ?? {}) as { gratuite?: boolean; frais?: number; minimum?: number };
-    const offerte = !!pl.gratuite || (!!pl.minimum && montantCommande >= pl.minimum);
-    const frais = offerte ? 0 : Number(pl.frais) || 0;
-    options.push({
-      id: "default",
-      nom: "Livraison standard",
-      transporteur: null,
-      modeLivraison: "livreur_local",
-      delai: "7-14 jours",
-      frais,
-      gratuit: frais === 0,
+  let options: OptionLivraison[];
+  if (meilleure < 2 && zoneBoutique?.frais != null) {
+    options = [{
+      id: "zone", nom: `Livraison ${zoneBoutique.nom}`, transporteur: null, modeLivraison: "livreur_local",
+      delai: zoneBoutique.delai || reglages.delai, frais: zoneBoutique.frais, gratuit: zoneBoutique.frais === 0,
+    }];
+  } else if (candidates.length) {
+    options = candidates.filter((r) => precision(r) === meilleure).map((r) => {
+      const frais = r.gratuit ? 0 : r.frais + Math.max(0, poids - r.poidsMin) * r.fraisKg;
+      return { id: r.id, nom: r.nom, transporteur: r.transporteur, modeLivraison: r.modeLivraison, delai: r.delai, frais, gratuit: r.gratuit || frais === 0 };
     });
+  } else {
+    options = [{
+      id: "default", nom: "Livraison standard", transporteur: null, modeLivraison: "livreur_local",
+      delai: zoneBoutique?.delai || reglages.delai, frais: reglages.frais, gratuit: reglages.frais === 0,
+    }];
   }
 
-  return options;
+  const offerte = reglages.gratuite || (reglages.minimum > 0 && montantCommande >= reglages.minimum);
+  return offerte ? options.map((o) => ({ ...o, frais: 0, gratuit: true })) : options;
+}
+
+/** Poids du panier en kg : Produit.poids (kg) × quantité (la boutique en ligne vend à l'unité ; la pesée est en caisse, sans livraison). */
+export async function poidsPanier(tenantId: string, lignes: { produitId: string; quantite: number }[]) {
+  if (!lignes.length) return 0;
+  const produits = await prisma.produit.findMany({
+    where: { tenantId, id: { in: lignes.map((l) => String(l.produitId)) } },
+    select: { id: true, poids: true },
+  });
+  return lignes.reduce((total, l) => {
+    const p = produits.find((x) => x.id === String(l.produitId));
+    const q = Math.max(0, Number(l.quantite) || 0);
+    return total + (p?.poids ?? 0) * q;
+  }, 0);
+}
+
+/** Zone obligatoire : la boutique propose des zones et le client est livré dans son pays. Erreur à afficher, sinon null. */
+export async function verifierZone(tenantId: string, pays: string | null | undefined, zone: string | null | undefined) {
+  const tenant = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { parametresLivraison: true, pays: true } });
+  const { zones } = lireReglagesLivraison(tenant?.parametresLivraison);
+  if (!zones.length || !pays || pays.toUpperCase() !== tenant?.pays?.toUpperCase()) return null;
+  return trouverZone(zones, zone) ? null : "Sélectionnez votre zone de livraison";
 }
 
 // Frais serveur autoritaire pour un pays/quartier + une règle donnée.

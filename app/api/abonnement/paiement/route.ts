@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
-import { PALIER_PRIX } from "@/lib/abonnement-paiement";
+import { PALIER_PRIX, deviseAbonnement } from "@/lib/abonnement-paiement";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   try {
     const { transaction, authorizationUrl } = await initierPaiementNotchPay({
       amount: PALIER_PRIX[plan],
-      currency: "XAF",
+      currency: deviseAbonnement(tenant.devise),
       email: tenant.email,
       name: tenant.nomBoutique,
       phone: tenant.whatsapp,

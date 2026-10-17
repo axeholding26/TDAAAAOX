@@ -11,6 +11,8 @@ import { habillageDesign } from "@/components/storefront/templates/HabillageDesi
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { Lock } from "lucide-react";
 import { getT } from "@/lib/i18n/serveur";
+import { hasNotchPay } from "@/lib/notchpay";
+import { lireReglagesPaiement, paiementEnLigneDisponible } from "@/lib/paiement-pays";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -44,6 +46,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
   if (!tenant || !(await boutiqueVisible(tenant))) notFound();
 
   const article = await articleCommande(tenant.id, tenant.commissionRate ?? 0.1, await searchParams);
+  const paiement = { paiement: lireReglagesPaiement(tenant.parametresPaiement), enLigneDispo: hasNotchPay() && paiementEnLigneDisponible(tenant.devise) };
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, (tenant.themeConfig as Record<string, any>) || {});
   const theme = cfg.colors;
 
@@ -54,7 +57,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
       <Habillage>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <CheckoutForm paysBoutique={tenant.pays} theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique}
-            logoUrl={tenant.logoUrl || undefined} parametresCommande={(tenant.parametresCommande as any) || {}} article={article} />
+            logoUrl={tenant.logoUrl || undefined} parametresCommande={(tenant.parametresCommande as any) || {}} article={article} {...paiement} />
         </div>
       </Habillage>
     );
@@ -87,7 +90,7 @@ export default async function CheckoutPage({ params, searchParams }: Props) {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <CheckoutForm paysBoutique={tenant.pays} theme={theme} slug={slug} devise={tenant.devise} tenantId={tenant.id} nomBoutique={tenant.nomBoutique} logoUrl={tenant.logoUrl || undefined}
-          parametresCommande={(tenant.parametresCommande as any) || {}} article={article} />
+          parametresCommande={(tenant.parametresCommande as any) || {}} article={article} {...paiement} />
       </div>
 
       <footer className="border-t py-8 text-center text-sm opacity-50" style={{ borderColor: `${theme.accent}20` }}>

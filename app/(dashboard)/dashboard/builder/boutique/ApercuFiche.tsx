@@ -7,6 +7,7 @@ import { StorefrontTypography } from "@/components/storefront/StorefrontTypograp
 import { ficheDuProduit } from "@/lib/fiche-produit";
 import { create } from "zustand";
 import { useT } from "@/components/I18nProvider";
+import { lireReglagesPaiement } from "@/lib/paiement-pays";
 
 // Fiche en cours d'édition (null = template global) — partagée entre le
 // panneau « Fiche produit » et cet aperçu.
@@ -82,6 +83,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
                 id: tenant?.id ?? "", slug: tenant?.slug ?? "", nomBoutique: tenant?.nomBoutique ?? "", devise: tenant?.devise ?? "XAF",
                 certifie: !!tenant?.certifie, accent: c.accent, fond: c.fond, texte: c.texte, surface: c.surface, radius: config.radius,
                 whatsapp: tenant?.whatsapp ?? null, whatsappNumero: tenant?.whatsappNumero ?? null,
+                commandeWhatsApp: lireReglagesPaiement(tenant?.parametresPaiement).whatsapp,
                 productPage: (produitId ? ficheDuProduit(config, produitId) : config.productPage) ?? null, layout: config.layout ?? null, boutons: config.boutons ?? null,
                 boutiqueDigitale: config.modeBoutique === "digital",
               }}

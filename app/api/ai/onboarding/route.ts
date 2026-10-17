@@ -102,10 +102,11 @@ export async function POST(request: Request) {
       const slugExiste = await prisma.tenant.findUnique({ where: { slug } });
       if (slugExiste || !slugBoutiqueValide(slug)) slug = `${slug.slice(0, 50)}-${Date.now().toString(36)}`;
 
+      // Clés lues par le calcul des frais (lib/livraison-reglages.ts) : avant, locale / nationale /
+      // gratuiteA étaient enregistrées mais jamais lues, et la boutique démarrait avec 0 de frais.
       const parametresLivraison = plan.livraison ? {
-        locale: plan.livraison.locale,
-        nationale: plan.livraison.nationale,
-        gratuiteA: plan.livraison.gratuite,
+        frais: plan.livraison.locale,
+        minimum: plan.livraison.gratuite,
       } : {};
 
       // Transformer les sections du plan IA en CustomSection pour le themeConfig

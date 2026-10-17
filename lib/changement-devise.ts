@@ -52,14 +52,14 @@ export async function convertirDeviseBoutique(tx: Tx, tenantId: string, ancienne
   await tx.$executeRaw`UPDATE "Affilie" SET ${conv("commissionTotal")}, ${conv("commissionPending")} WHERE "tenantId" = ${t}`;
   await tx.$executeRaw`UPDATE "CommissionAffilie" SET ${conv("montantCommission")}, ${conv("valeurCommande")} WHERE "tenantId" = ${t}`;
 
-  // Réglages de livraison simples (JSON) : montants locale / nationale / gratuiteA
+  // Réglages Ma boutique → Livraison (JSON) : frais, minimum, tarif de chaque zone
+  // (+ anciennes clés locale / nationale / gratuiteA). Avant, frais et minimum restaient dans l'ancienne devise.
   const tenant = await tx.tenant.findUnique({ where: { id: t }, select: { parametresLivraison: true } });
   const pl = (tenant?.parametresLivraison ?? {}) as Record<string, any>;
   const arrondi = (x: number) => Math.round(x * ratio * 10 ** d) / 10 ** d;
-  if (["locale", "nationale", "gratuiteA"].some((k) => typeof pl[k] === "number")) {
-    const maj = { ...pl };
-    for (const k of ["locale", "nationale", "gratuiteA"]) if (typeof pl[k] === "number") maj[k] = arrondi(pl[k]);
-    await tx.tenant.update({ where: { id: t }, data: { parametresLivraison: maj } });
-  }
+  const maj: Record<string, any> = { ...pl };
+  for (const k of ["frais", "minimum", "locale", "nationale", "gratuiteA"]) if (typeof pl[k] === "number") maj[k] = arrondi(pl[k]);
+  if (Array.isArray(pl.zones)) maj.zones = pl.zones.map((z: any) => (z && typeof z === "object" && typeof z.frais === "number" ? { ...z, frais: arrondi(z.frais) } : z));
+  if (JSON.stringify(maj) !== JSON.stringify(pl)) await tx.tenant.update({ where: { id: t }, data: { parametresLivraison: maj } });
   return { ratio };
 }

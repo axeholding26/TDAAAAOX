@@ -1,6 +1,6 @@
 import { finAcces, metaDigital } from "./commandes";
 import { prisma } from "./prisma";
-import { crediterWallet } from "./wallet";
+import { crediterWallet, operateurCameroun, telCameroun } from "./wallet";
 import { initierTransfertNotchPay } from "./notchpay";
 import { livrerBundle } from "./bundle-delivery";
 import { notifierMarchand } from "./notifications-marchand";
@@ -219,6 +219,15 @@ export async function payerCommissionsAffilie(params: {
   const affilie = await prisma.affilie.findFirst({ where: { id: affilieId, tenantId } });
   if (!affilie) throw new Error("Affilié introuvable");
   if (!affilie.telephone) throw new Error("Numéro de téléphone du bénéficiaire requis pour le paiement");
+  // Versement automatique : seulement vers un numéro camerounais d'opérateur reconnu, en XAF (seul cas
+  // couvert par NotchPay ici). Avant, tout partait sur MTN Cameroun : un affilié Orange ou d'un autre
+  // pays voyait son transfert échouer. Vérifié AVANT le débit du wallet : rien n'est bloqué pour rien.
+  const tel = telCameroun(affilie.telephone);
+  const operateur = operateurCameroun(tel);
+  const { devise } = (await prisma.wallet.findUnique({ where: { tenantId }, select: { devise: true } })) ?? {};
+  if (!operateur || devise !== "XAF") {
+    throw new Error("Versement automatique possible seulement vers un numéro MTN ou Orange du Cameroun, en XAF. Versez cette commission vous-même à l'affilié.");
+  }
 
   const commissions = await prisma.commissionAffilie.findMany({
     where: { tenantId, affilieId, statut: "approuvee" },
@@ -276,12 +285,11 @@ export async function payerCommissionsAffilie(params: {
 
   if (process.env.NOTCHPAY_PUBLIC_KEY && process.env.NOTCHPAY_PRIVATE_KEY) {
     try {
-      const wallet = await prisma.wallet.findUnique({ where: { tenantId } });
       const { transfer } = await initierTransfertNotchPay({
         amount: montant,
-        currency: wallet?.devise ?? "XAF",
-        channel: "cm.mtn", // formulaire affilié n'a pas encore de sélecteur d'opérateur — MTN par défaut
-        beneficiaryData: { name: affilie.nom, phone: affilie.telephone, country: "CM" },
+        currency: "XAF",
+        channel: `cm.${operateur}`,
+        beneficiaryData: { name: affilie.nom, phone: tel!, country: "CM" },
         reference: `AXSO-AFF-${paiement.id}`,
         description: "Commission affiliation Axso",
       });

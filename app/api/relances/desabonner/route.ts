@@ -1,5 +1,6 @@
-// Lien en bas de chaque relance automatique (lib/relances.ts) : le client ne reçoit plus les
-// relances de cette boutique. Lien signé : on ne peut désinscrire que soi-même.
+// Lien en bas de chaque relance automatique (lib/relances.ts) et de chaque campagne e-mail : le client
+// ne reçoit plus les messages marketing de cette boutique. Lien signé : on ne peut désinscrire que soi-même.
+// POST : désinscription en un clic depuis le bouton « Se désabonner » de Gmail (List-Unsubscribe-Post).
 import { prisma } from "@/lib/prisma";
 import { signatureValide } from "@/lib/relances";
 
@@ -18,5 +19,7 @@ export async function GET(req: Request) {
   const client = await prisma.client.update({ where: { id: clientId }, data: { relancesRefuseesLe: new Date() }, select: { tenant: { select: { nomBoutique: true } } } }).catch(() => null);
   if (!client) return page("Lien invalide", "Ce lien de désinscription n'est plus valide.", 404);
   const boutique = client.tenant.nomBoutique.replace(/[<>&"]/g, "");
-  return page("C'est noté", `Vous ne recevrez plus les messages automatiques de ${boutique}. Vos commandes et leur suivi ne changent pas.`);
+  return page("C'est noté", `Vous ne recevrez plus les messages marketing de ${boutique}. Vos commandes et leur suivi ne changent pas.`);
 }
+
+export const POST = GET;

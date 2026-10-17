@@ -6,6 +6,7 @@ import { AgentActiveIndicator } from "@/components/dashboard/AgentActiveIndicato
 import { FulfillmentKanban } from "@/components/dashboard/logistique/FulfillmentKanban";
 import { useT } from "@/components/I18nProvider";
 import { PAYS_OPTIONS, GROUPES_PAYS } from "@/lib/devise-convert";
+import { lireReglagesLivraison, trouverZone } from "@/lib/livraison-reglages";
 
 interface ReglePort {
   id: string;
@@ -80,8 +81,7 @@ export function LivraisonPanel() {
     ]).then(([{ regles }, data, tenantData]) => {
       setRegles(regles ?? []);
       setCommandes(data?.commandes ?? []);
-      const zones = tenantData?.tenant?.parametresLivraison?.zones ?? [];
-      if (zones.length > 0) setZonesConfigurees(zones);
+      setZonesConfigurees(lireReglagesLivraison(tenantData?.tenant?.parametresLivraison).zones.map((z) => z.nom));
       const paysT = tenantData?.tenant?.pays ?? "";
       setPaysBoutique(paysT);
       if (paysT) setForm((f) => ({ ...f, pays: [paysT] }));
@@ -301,6 +301,10 @@ export function LivraisonPanel() {
                         )}
                       </div>
                       <p className="text-[11px] text-[#888]">{resumePays(r.pays)}{r.zone ? ` · ${r.zone}` : ""} · {tx(r.delai)} {r.transporteur ? `· ${r.transporteur}` : ""}</p>
+                      {/* Dans le pays de la boutique, le client choisit sa zone dans la liste : un quartier absent n'est jamais choisi. */}
+                      {r.zone.trim() && zonesConfigurees.length > 0 && (!r.pays.length || r.pays.includes(paysBoutique)) && !trouverZone(zonesConfigurees.map((nom) => ({ nom, frais: null, delai: "" })), r.zone) && (
+                        <p className="text-[10.5px] font-medium text-[#B45309] mt-0.5">{tx("« {0} » n'est pas dans vos zones (Ma boutique → Livraison) : vos clients ne peuvent pas la choisir.", r.zone)}</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right shrink-0">

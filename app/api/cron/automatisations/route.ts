@@ -10,15 +10,18 @@
 import { NextResponse } from "next/server";
 import { passeDuCron } from "@/lib/controle-ia/automatisations";
 import { passeRelances } from "@/lib/relances";
+import { reconcilierPaiements } from "@/lib/reconciliation-paiements";
 
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
   if (!secret || !(req.headers.get("x-cron-secret") === secret || req.headers.get("authorization") === `Bearer ${secret}`)) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  // Relances automatiques (Campagnes → Relances) au même passage : lib/relances.ts.
-  const [automatisations, relances] = await Promise.all([passeDuCron(), passeRelances().catch((e) => ({ erreur: String(e?.message ?? e) }))]);
-  return NextResponse.json({ ...automatisations, relances });
+  // Au même passage : relances automatiques (lib/relances.ts) et vérification des paiements NotchPay
+  // (lib/reconciliation-paiements.ts) — appelée souvent, elle confirme un paiement sans webhook en minutes.
+  const erreur = (e: any) => ({ erreur: String(e?.message ?? e) });
+  const [automatisations, relances, paiements] = await Promise.all([passeDuCron(), passeRelances().catch(erreur), reconcilierPaiements().catch(erreur)]);
+  return NextResponse.json({ ...automatisations, relances, paiements });
 }
 
 export const POST = GET;

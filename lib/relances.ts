@@ -25,7 +25,7 @@ export const CANAUX_RELANCE = ["email", "whatsapp"] as const;
 const HEURE = 3_600_000;
 const FENETRE = 7 * 24 * HEURE;
 const MAX_PAR_PASSAGE = 50; // par workflow : le reste part au passage suivant
-const PAIEMENTS_EN_LIGNE = ["notchpay", "stripe"];
+const PAIEMENTS_EN_LIGNE = ["notchpay", "en_attente"]; // en_attente : commande créée, page de paiement jamais ouverte
 
 interface Cible { cle: string; clientId: string; nom: string; email: string | null; telephone: string | null }
 

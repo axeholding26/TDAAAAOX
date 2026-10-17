@@ -11,6 +11,7 @@
 // (les sorties de stock restent celles de lib/stock.ts).
 import { prisma } from "../prisma";
 import { calculerOptionsLivraison } from "../livraison";
+import { zoneDeVille } from "../livraison-reglages";
 import { codePays } from "../devise-convert";
 import { contexteCalcul } from "./acces";
 import { evaluerProduit } from "./produit-source";
@@ -112,7 +113,7 @@ export async function routerCommande(tenantId: string, commandeId: string) {
   });
 
   const poids = commande.lignes.reduce((s, l) => s + (l.produit.poids ?? 0) * l.quantite, 0);
-  const options = await calculerOptionsLivraison({ tenantId, pays, zone: commande.ville, poids, montantCommande: commande.montantSousTotal });
+  const options = await calculerOptionsLivraison({ tenantId, pays, zone: zoneDeVille(commande.ville), poids, montantCommande: commande.montantSousTotal });
   const transporteur = options[0] ?? null; // triées par frais croissants
 
   return {

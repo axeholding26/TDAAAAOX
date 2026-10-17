@@ -261,6 +261,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
             <AssignerLivreur
               commandeId={commande.id}
               livreurActuelId={commande.livreurId || null}
+              villeCommande={commande.ville}
               livreurs={livreurs.map(l => ({
                 id: l.id,
                 nom: l.nom,

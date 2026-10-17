@@ -19,7 +19,7 @@ const TABS = [
 
 // ─── Onglet Popups ────────────────────────────────────────────────────────────
 const TYPE_LABELS: Record<string, string> = { popup: "Popup centré", bandeau: "Bandeau haut", slide_in: "Slide-in coin" };
-const DECL_LABELS: Record<string, string> = { delai: "Après délai", exit_intent: "Exit intent", scroll: "Au scroll", premiere_visite: "1ère visite" };
+const DECL_LABELS: Record<string, string> = { delai: "Après un délai", exit_intent: "Au départ du visiteur", scroll: "À mi-page", premiere_visite: "Première visite" };
 
 function OngletPopups() {
   const t = useT();
@@ -79,10 +79,21 @@ function OngletPopups() {
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none col-span-2"/>
             <textarea placeholder={t("Message")} value={form.message} onChange={e=>setForm(v=>({...v,message:e.target.value}))}
               rows={2} className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none resize-none col-span-2"/>
-            <input placeholder={t("Texte CTA")} value={form.ctaTexte} onChange={e=>setForm(v=>({...v,ctaTexte:e.target.value}))}
+            {form.declencheur==="delai" && (
+              <label className="col-span-2 flex items-center gap-2 text-[12px] text-gray-500">
+                {t("Afficher après")}
+                <input type="number" min={0} max={300} value={form.delaiSec} onChange={e=>setForm(v=>({...v,delaiSec:Math.max(0,Number(e.target.value)||0)}))}
+                  className="w-20 border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
+                {t("secondes")}
+              </label>
+            )}
+            <input placeholder={t("Texte du bouton")} value={form.ctaTexte} onChange={e=>setForm(v=>({...v,ctaTexte:e.target.value}))}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
+            {/* Sans lien, le bouton fermait seulement la popup. */}
+            <input placeholder={t("Lien du bouton (produits, https://…)")} value={form.ctaUrl} onChange={e=>setForm(v=>({...v,ctaUrl:e.target.value}))}
               className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
             <input placeholder={t("Code promo")} value={form.codePromo} onChange={e=>setForm(v=>({...v,codePromo:e.target.value}))}
-              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none"/>
+              className="border border-gray-200 rounded-xl px-3 py-2 text-[12px] outline-none col-span-2"/>
           </div>
           <div className="flex gap-2">
             <button onClick={creer} disabled={!form.nom||!form.titre||!form.message||saving}

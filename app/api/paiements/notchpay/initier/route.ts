@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
+import { paiementEnLigneDisponible } from "@/lib/paiement-pays";
 
 export const maxDuration = 30;
 
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     if (commande.paiementStatut !== "pending" && commande.paiementStatut !== "failed") return NextResponse.json({ error: "Commande déjà payée ou remboursée" }, { status: 409 });
     // Une commande à payer à la livraison (prix sans commission) ne se paie pas en ligne.
     if (commande.methodePaiement.includes("cod") || commande.statut === "annulee") return NextResponse.json({ error: "Cette commande ne se paie pas en ligne" }, { status: 409 });
+    if (!paiementEnLigneDisponible(commande.devise)) return NextResponse.json({ error: `Le paiement en ligne n'accepte pas encore le ${commande.devise}` }, { status: 409 });
     // Montant, devise et client : ceux de la commande enregistrée, jamais ceux envoyés par le navigateur.
     const clientEmail = commande.clientEmail || body.clientEmail;
     if (!clientEmail && !commande.clientTelephone) return NextResponse.json({ error: "Email ou téléphone du client requis" }, { status: 400 });

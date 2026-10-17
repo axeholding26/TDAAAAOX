@@ -67,7 +67,7 @@ export interface ProductPageClientProps {
   tenant: {
     id: string; slug: string; nomBoutique: string; devise: string; certifie: boolean;
     accent: string; fond: string; texte: string; surface: string; radius: string;
-    whatsapp: string | null; whatsappNumero: string | null;
+    whatsapp: string | null; whatsappNumero: string | null; commandeWhatsApp?: boolean;
     productPage?: { layout?: string; sections?: ProdSection[] } | null;
     layout?: { largeurContainer?: string } | null;
     boutons?: { style?: string; taille?: string; hover?: string } | null;
@@ -1233,9 +1233,10 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   // Pas de panier : on commande ce produit directement — formulaire de commande
   // puis WhatsApp du marchand (physique) ou paiement en ligne (dropshipping).
-  function commander() {
+  function commander(canal?: "whatsapp") {
     if (enRupture) return;
     const q = new URLSearchParams({ produit: produit.id, quantite: String(quantite) });
+    if (canal) q.set("canal", canal); // le formulaire WhatsApp s'ouvre directement
     if (selectedVariante) q.set("variante", `${selectedVariante.nom}: ${selectedVariante.valeur}`);
     router.push(`/${slug}/checkout?${q}`);
   }
@@ -1360,7 +1361,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   texte={cfg.texteBouton || produit.texteBoutonAchat || tx("Acheter")} fond={btnFond} couleurTexte={btnTexte} radius={btnRadiusPx} desactive={enRupture} />
               ) : (
               <div className="space-y-2.5">
-                <button onClick={commander} disabled={enRupture}
+                <button onClick={() => commander()} disabled={enRupture}
                   className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
                   style={{
                     ...btnAchatSizing,
@@ -1374,7 +1375,14 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   <ShoppingBag size={18} />
                   {enRupture ? tx("Indisponible") : (tx(cfg.texteBouton) || tx(produit.texteBoutonAchat) || tx("Commander"))}
                 </button>
-                {cfg.afficherWhatsApp !== false && waNum && (
+                {/* Commande WhatsApp acceptée (Paramètres → Moyens de paiement) : vraie commande, suivie et facturée. */}
+                {tenant.commandeWhatsApp && waNum && produit.type === "physique" ? (
+                  <button onClick={() => commander("whatsapp")} disabled={enRupture}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] transition-all hover:opacity-90 disabled:opacity-35"
+                    style={{ background: "#25D366", color: "#fff" }}>
+                    <MessageCircle size={16} />{" "}{tx("Commander via WhatsApp")}
+                  </button>
+                ) : cfg.afficherWhatsApp !== false && waNum && (
                   <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] border-2 transition-all hover:opacity-80"
                     style={{ borderColor: "rgba(37,211,102,0.35)", color: "#25D366", background: "rgba(37,211,102,0.05)" }}>

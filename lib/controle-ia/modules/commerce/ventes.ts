@@ -8,7 +8,8 @@ import { PAIEMENT } from "@/lib/commandes";
 import { changerStatutCommande } from "@/lib/cycle-livraison";
 import { RuptureStock, sortirStock } from "@/lib/stock";
 import { prixClient } from "@/lib/pricing";
-import { fraisLivraisonServeur } from "@/lib/livraison";
+import { fraisLivraisonServeur, poidsPanier } from "@/lib/livraison";
+import { villeCommande } from "@/lib/livraison-reglages";
 import { codePays } from "@/lib/devise-convert";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { formatMontant, genererNumeroCommande } from "@/lib/utils";
@@ -143,7 +144,7 @@ export const OUTILS_VENTES: Outil[] = [
       const ville = texte(a, "city", { max: 80 }) ?? texte(saisi, "city", { max: 80 }) ?? client.ville;
       const pays = client.pays ?? tenant.pays;
       const sousTotal = lignes.reduce((s, l) => s + l.prix * l.quantite, 0);
-      const livraison = await fraisLivraisonServeur({ tenantId, pays: codePays(pays), zone, montantCommande: sousTotal });
+      const livraison = await fraisLivraisonServeur({ tenantId, pays: codePays(pays), zone, poids: await poidsPanier(tenantId, lignes), montantCommande: sousTotal });
 
       try {
         // Création et sortie du stock dans la même transaction : une rupture annule tout.
@@ -151,7 +152,7 @@ export const OUTILS_VENTES: Outil[] = [
           const cree = await tx.commande.create({
             data: {
               tenantId, numero: genererNumeroCommande(), clientId: client.id, clientNom: client.nom, clientEmail: client.email?.includes("@") ? client.email : null, clientTelephone: client.telephone!,
-              adresseLivraison: adresse || "À préciser", adresseExacte: adresse || null, ville: zone || ville || "—", pays: pays || "—",
+              adresseLivraison: adresse || "À préciser", adresseExacte: adresse || null, ville: villeCommande(zone, ville) || "—", pays: pays || "—",
               montantSousTotal: sousTotal, montantLivraison: livraison, montantTotal: sousTotal + livraison, devise: tenant.devise,
               statut: "en_attente", paiementStatut: PAIEMENT.ATTENTE, methodePaiement: "direct_cod",
               trackingToken: jeton(), livreurToken: jeton(), noteClient: texte(a, "note", { max: 500 }) ?? null,
