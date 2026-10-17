@@ -5,6 +5,17 @@ import { cookies } from "next/headers";
 import { COOKIE_APERCU, lireJetonApercu } from "@/lib/builder/apercu";
 
 /**
+ * Boutique publiée : les rappels « pas encore publiée » (notification de création,
+ * constat AXIA) deviennent faux — on les retire. Appelé par chaque chemin de publication.
+ */
+export async function oublierRappelsBrouillon(tenantId: string) {
+  await Promise.all([
+    prisma.notificationMarchand.deleteMany({ where: { tenantId, type: "boutique_a_completer" } }),
+    prisma.axiaProposition.updateMany({ where: { tenantId, type: "boutique_brouillon", statut: { in: ["nouveau", "vu"] } }, data: { statut: "execute" } }),
+  ]);
+}
+
+/**
  * Ids des boutiques accessibles à un compte : celles qu'il possède
  * (ProprietaireBoutique) et celles où il est membre d'équipe actif.
  * La propriété ne se déduit JAMAIS de User.tenantId (boutique active, réécrite
