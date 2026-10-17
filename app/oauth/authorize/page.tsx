@@ -84,7 +84,12 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
     redirect(`/connexion?callbackUrl=${encodeURIComponent(ici)}`);
   }
 
-  const liste = await boutiques(userId);
+  const ici = `/oauth/authorize?${new URLSearchParams(sp as Record<string, string>)}`;
+  // La session n'est pas revérifiée en base : un compte supprimé garde son cookie. On montre donc
+  // qui est connecté, avec de quoi changer de compte (sinon « aucune boutique » sans explication).
+  const compte = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  const changerDeCompte = `/api/auth/signout?callbackUrl=${encodeURIComponent(`/connexion?callbackUrl=${encodeURIComponent(ici)}`)}`;
+  const liste = compte ? await boutiques(userId) : [];
   const active = (session?.user as any)?.tenantId as string | undefined;
 
   return (
@@ -98,10 +103,14 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
           </p>
         </div>
 
+        <p className="text-xs text-gray-500">
+          {compte ? <>Connecté avec <strong>{compte.email}</strong></> : "Ce compte n'existe plus"} · <a href={changerDeCompte} className="underline">Changer de compte</a>
+        </p>
+
         {sp.erreur && ERREURS[sp.erreur] && <p className="text-sm text-red-600 bg-red-50 rounded-xl p-3">{ERREURS[sp.erreur]}</p>}
 
         {liste.length === 0 ? (
-          <p className="text-sm text-gray-600">Aucune boutique n&apos;est rattachée à ce compte.</p>
+          <p className="text-sm text-gray-600">Aucune boutique n&apos;est rattachée à ce compte. Si tu as une boutique sur un autre compte, clique sur « Changer de compte ».</p>
         ) : (
           <>
             <fieldset className="space-y-1.5">
