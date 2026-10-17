@@ -57,7 +57,9 @@ export async function POST(req: Request) {
     const nouveau = String(randomInt(0, 1_000_000)).padStart(6, "0");
     await prisma.codeVerification.updateMany({ where: { email: id, utilise: false }, data: { utilise: true } });
     await prisma.codeVerification.create({ data: { email: id, code: `${empreinte(nouveau)}:0`, expireAt: new Date(Date.now() + DUREE_CODE_MS) } });
-    await envoyerCodeAcheteur(email, nouveau, tenant.nomBoutique);
+    if (!(await envoyerCodeAcheteur(email, nouveau, tenant.nomBoutique).then(() => true, () => false))) {
+      return NextResponse.json({ error: INDISPONIBLE, code: "envoi_indisponible" }, { status: 503 });
+    }
     return NextResponse.json({ ok: true }); // même réponse que l'email ait des achats ou non
   }
 

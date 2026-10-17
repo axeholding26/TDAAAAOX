@@ -28,9 +28,12 @@ export async function POST(req: NextRequest) {
   if (!ok) return NextResponse.json({ error: "Email ou mot de passe incorrect" }, { status: 401 });
 
   const code = await creerCodeVerification(user.email!);
-  await envoyerCodeVerification(user.email!, code, user.name ?? undefined).catch((err) => {
+  // Le code est obligatoire pour se connecter : s'il ne part pas, le dire plutôt que faire attendre un email qui n'arrivera pas.
+  const envoye = await envoyerCodeVerification(user.email!, code, user.name ?? undefined).then(() => true, (err) => {
     console.error("[2fa/demander] envoi email échoué:", err);
+    return false;
   });
+  if (!envoye) return NextResponse.json({ error: "Impossible d'envoyer le code de connexion pour le moment — réessaie dans quelques minutes ou contacte le support" }, { status: 503 });
 
   return NextResponse.json({ success: true, skip2fa: false });
 }

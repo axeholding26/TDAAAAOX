@@ -23,6 +23,14 @@ function getResendClient(): Resend | null {
   return new Resend(apiKey);
 }
 
+// Resend ne lève pas d'exception quand il refuse un envoi (domaine non vérifié, quota…) :
+// il renvoie { error }. Ici le refus est journalisé et signalé par false.
+async function envoyer(resend: Resend, message: Parameters<Resend["emails"]["send"]>[0]): Promise<boolean> {
+  const { error } = await resend.emails.send(message);
+  if (error) console.error("[email] envoi refusé par Resend :", error.message); // pas le sujet : il peut contenir un code
+  return !error;
+}
+
 // Code de double authentification (connexion)
 export async function envoyerCodeVerification(email: string, code: string, nom?: string) {
   const resend = getResendClient();
@@ -30,7 +38,7 @@ export async function envoyerCodeVerification(email: string, code: string, nom?:
     console.warn("Resend non configuré — code 2FA non envoyé");
     return;
   }
-  await resend.emails.send({
+  const ok = await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Ton code de connexion Axso`,
@@ -44,6 +52,7 @@ export async function envoyerCodeVerification(email: string, code: string, nom?:
       </div>
     `,
   });
+  if (!ok) throw new Error("Code non envoyé : Resend a refusé l'email");
 }
 
 // Code de connexion à l'espace client d'une boutique (acheteur, sans mot de passe).
@@ -54,7 +63,7 @@ export async function envoyerCodeAcheteur(email: string, code: string, boutique:
     return;
   }
   const nom = boutique.replace(/[&<>"]/g, "");
-  await resend.emails.send({
+  const ok = await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Votre code d'accès ${nom}`,
@@ -67,6 +76,7 @@ export async function envoyerCodeAcheteur(email: string, code: string, boutique:
       </div>
     `,
   });
+  if (!ok) throw new Error("Code non envoyé : Resend a refusé l'email");
 }
 
 // Code de réinitialisation de mot de passe
@@ -76,7 +86,7 @@ export async function envoyerCodeReinitialisation(email: string, code: string, n
     console.warn("Resend non configuré — code de réinitialisation non envoyé");
     return;
   }
-  await resend.emails.send({
+  const ok = await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: email,
     subject: `${code} — Réinitialisation de ton mot de passe Axso`,
@@ -90,6 +100,7 @@ export async function envoyerCodeReinitialisation(email: string, code: string, n
       </div>
     `,
   });
+  if (!ok) throw new Error("Code non envoyé : Resend a refusé l'email");
 }
 
 // Alerte nouvelle commande envoyée au marchand
@@ -104,7 +115,7 @@ export async function envoyerAlerteNouvelleCommande(params: {
 }) {
   const resend = getResendClient();
   if (!resend) return;
-  await resend.emails.send({
+  await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Nouvelle commande ${params.numeroCommande} — ${params.montantTotal} ${params.devise}`,
@@ -140,7 +151,7 @@ export async function envoyerConfirmationCommande(params: {
 
   if (params.lienAcces) {
     const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-    await resend.emails.send({
+    await envoyer(resend, {
       from: "Axso <noreply@axsoafrica.com>",
       to: params.email,
       subject: `Votre achat est disponible — ${params.boutique}`,
@@ -165,7 +176,7 @@ export async function envoyerConfirmationCommande(params: {
     .map((p) => `- ${p.nom} x${p.quantite} : ${p.prix * p.quantite} ${params.devise}`)
     .join("\n");
 
-  await resend.emails.send({
+  await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Confirmation commande ${params.numeroCommande} — ${params.boutique}`,
@@ -196,7 +207,7 @@ export async function envoyerInvitationEquipe(params: {
     console.warn("Resend non configuré — invitation équipe non envoyée par email (lien affiché dans l'UI)");
     return;
   }
-  await resend.emails.send({
+  await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Tu es invité·e à rejoindre l'équipe de ${params.boutique}`,
@@ -227,7 +238,7 @@ export async function envoyerMessageContact(params: {
     console.warn("Resend non configuré — message de contact non transmis par email");
     return;
   }
-  await resend.emails.send({
+  await envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: params.emailMarchand,
     replyTo: params.emailClient,
@@ -257,13 +268,11 @@ export async function envoyerDemandeDevis(params: { emailFournisseur: string; em
 export async function envoyerEmailTexte(params: { a: string; repondreA: string; boutique: string; sujet: string; texte: string }): Promise<boolean> {
   const resend = getResendClient();
   if (!resend) return false;
-  const { error } = await resend.emails.send({
+  return envoyer(resend, {
     from: `${params.boutique.replace(/[<>"\r\n]/g, "")} via Axso <noreply@axsoafrica.com>`,
     to: params.a,
     replyTo: params.repondreA,
     subject: params.sujet,
     text: params.texte,
   });
-  if (error) console.warn("[envoyerEmailTexte]", params.sujet, error.message);
-  return !error;
 }

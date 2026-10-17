@@ -414,11 +414,15 @@ function PropositionsDesign({
   nomBoutique, produits, devise, vente, digital,
 }: {
   themeIds: string[]; selectedId: string; onSelect:(id:string)=>void;
-  nomBoutique?:string; produits?:{nom:string;prix:number;description?:string}[];
+  nomBoutique?:string; produits?:{nom:string;prix:number;description?:string;imageUrl?:string}[];
   devise?:string; vente?:string; digital?:boolean;
 }) {
   const tr = useT();
-  const produitsParam = encodeURIComponent(JSON.stringify((produits||[]).slice(0,6)));
+  // Comme components/dashboard/ApercuDesign.tsx::parametresApercu : seulement ce que l'aperçu lit, et jamais
+  // d'image data: (des centaines de Ko) — l'URL dépasserait la limite de Vercel (414 URI_TOO_LONG dans l'iframe).
+  const produitsParam = encodeURIComponent(JSON.stringify((produits||[]).slice(0,6).map(p => ({
+    nom: p.nom, prix: p.prix, image: /^https?:\/\//.test(p.imageUrl ?? "") ? p.imageUrl : "",
+  }))));
   const nomParam      = encodeURIComponent(nomBoutique || "Ma Boutique");
   const devParam      = encodeURIComponent(devise || "XAF");
 
