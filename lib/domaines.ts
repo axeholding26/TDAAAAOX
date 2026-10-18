@@ -40,6 +40,48 @@ export async function ajouterDomaineVercel(domaine: string): Promise<{ ok: boole
   return { ok: false, erreur: r.corps?.error?.message ?? `Vercel a refusé le domaine (${r.status})` };
 }
 
+// ── Sous-domaines nom.axsoafrica.com ───────────────────────────────────────────
+// Le DNS reste chez Cloudflare (CNAME * → cname.vercel-dns.com, non proxifié) : Vercel n'accepte
+// un domaine générique que s'il gère le DNS lui-même, donc chaque boutique publiée est déclarée
+// au projet une par une (Vercel émet alors son certificat HTTPS).
+const sousDomainesPossibles = () => vercelConfigure() && !!DOMAINE_APP && !DOMAINE_APP.startsWith("localhost") && !DOMAINE_APP.endsWith(".vercel.app");
+
+// Garde-fou : une boutique n'utilise son sous-domaine (redirection, liens, QR) qu'une fois Vercel
+// l'ayant accepté (Tenant.sousDomaineAt). Refus (limite de domaines du plan, jeton expiré, panne) :
+// elle reste sur axsoafrica.com/nom, qui marche toujours, et bascule seule au passage suivant du cron.
+
+/** À la publication d'une boutique. Ne lève jamais : un échec est rattrapé par synchroniserSousDomaines(). */
+export async function declarerSousDomaine(slug: string) {
+  if (!sousDomainesPossibles()) return;
+  const r = await ajouterDomaineVercel(`${slug}.${DOMAINE_APP}`).catch((e) => ({ ok: false, erreur: String(e?.message ?? e) }));
+  if (!r.ok) return console.error(`[domaines] ${slug}.${DOMAINE_APP} non déclaré à Vercel : ${r.erreur}`);
+  await prisma.tenant.updateMany({ where: { slug, sousDomaineAt: null }, data: { sousDomaineAt: new Date() } }).catch(() => {});
+}
+
+/** Cron : déclare les sous-domaines des boutiques publiées absents du projet (boutiques existantes, échecs). */
+export async function synchroniserSousDomaines(max = 50) {
+  if (!sousDomainesPossibles()) return { ignore: "VERCEL_API_TOKEN, VERCEL_PROJECT_ID ou NEXT_PUBLIC_AXSO_DOMAIN manquant" };
+  const presents = new Set<string>();
+  let suite: number | null = null;
+  do {
+    const r = await vercel(`/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains?limit=100${suite ? `&until=${suite}` : ""}`);
+    if (!r.ok) throw new Error(r.corps?.error?.message ?? `Vercel ${r.status}`);
+    for (const d of r.corps.domains ?? []) presents.add(d.name);
+    suite = r.corps.pagination?.next ?? null;
+  } while (suite);
+  const boutiques = await prisma.tenant.findMany({ where: { statut: "active" }, select: { slug: true } });
+  const manquants = boutiques.map((b) => `${b.slug}.${DOMAINE_APP}`).filter((d) => !presents.has(d));
+  const erreurs: string[] = [];
+  for (const d of manquants.slice(0, max)) {
+    const r = await ajouterDomaineVercel(d).catch((e) => ({ ok: false, erreur: String(e?.message ?? e) }));
+    if (r.ok) presents.add(d); else erreurs.push(`${d} : ${r.erreur}`);
+  }
+  // Marque prêtes celles que Vercel connaît (déjà présentes ou ajoutées à l'instant).
+  const prets = boutiques.map((b) => b.slug).filter((s) => presents.has(`${s}.${DOMAINE_APP}`));
+  await prisma.tenant.updateMany({ where: { slug: { in: prets }, sousDomaineAt: null }, data: { sousDomaineAt: new Date() } });
+  return { declares: Math.min(max, manquants.length) - erreurs.length, restants: Math.max(0, manquants.length - max), erreurs };
+}
+
 export async function retirerDomaineVercel(domaine: string) {
   await vercel(`/v9/projects/${process.env.VERCEL_PROJECT_ID}/domains/${domaine}`, { method: "DELETE" }).catch(() => {});
 }
@@ -100,13 +142,13 @@ export async function domainePrincipal(slug: string): Promise<string | null> {
   return t?.customDomain ?? null;
 }
 
-// ── Boutique publiée ? (redirection axsoafrica.com/nom → nom.axsoafrica.com, proxy.ts) ──
+// ── Boutique publiée ET sous-domaine accepté par Vercel ? (redirection axsoafrica.com/nom → nom.axsoafrica.com, liens) ──
 const cacheExiste = new Map<string, { existe: boolean; expire: number }>();
 
-export async function boutiqueExiste(slug: string): Promise<boolean> {
+export async function sousDomainePret(slug: string): Promise<boolean> {
   const c = cacheExiste.get(slug);
   if (c && c.expire > Date.now()) return c.existe;
-  const existe = !!(await prisma.tenant.findFirst({ where: { slug, statut: "active" }, select: { id: true } }).catch(() => null));
+  const existe = !!(await prisma.tenant.findFirst({ where: { slug, statut: "active", sousDomaineAt: { not: null } }, select: { id: true } }).catch(() => null));
   cacheExiste.set(slug, { existe, expire: Date.now() + 60_000 });
   return existe;
 }

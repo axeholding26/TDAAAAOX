@@ -1128,6 +1128,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         if (tenant?.statut !== "brouillon") return { succes: false, resultat: "La boutique est en pause ou suspendue — utilise les réglages de la boutique pour la réactiver." };
         await prisma.tenant.update({ where: { id: tenantId }, data: { statut: "active" } });
         await (await import("@/lib/tenant")).oublierRappelsBrouillon(tenantId);
+        await (await import("@/lib/domaines")).declarerSousDomaine(tenant.slug);
         return { succes: true, resultat: `✅ Boutique publiée — elle est maintenant visible sur /${tenant.slug}` };
       }
 

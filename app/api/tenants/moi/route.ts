@@ -15,6 +15,7 @@ export async function GET() {
     select: {
       id: true,
       slug: true,
+      sousDomaineAt: true,
       nomBoutique: true,
       description: true,
       categorie: true,

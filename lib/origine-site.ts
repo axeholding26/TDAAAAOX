@@ -2,7 +2,7 @@
 // ou localhost) — sert à fabriquer des liens absolus (QR codes) sans dépendre de
 // NEXT_PUBLIC_APP_URL. Serveur uniquement.
 import { headers } from "next/headers";
-import { domainePrincipal } from "./domaines";
+import { domainePrincipal, sousDomainePret } from "./domaines";
 import { adresseBoutique } from "./utils";
 
 export async function origineSite(): Promise<string> {
@@ -25,12 +25,12 @@ export async function origineAxso(): Promise<string> {
 /**
  * Lien public d'une page de boutique : sur son domaine personnalisé s'il est actif
  * (https://maboutique.com/tracking/…), sinon sur son sous-domaine AXSO
- * (https://slug.axsoafrica.com/tracking/…), à défaut en …/slug/tracking/….
+ * (https://slug.axsoafrica.com/tracking/…) s'il est accepté par Vercel, à défaut en …/slug/tracking/….
  * `chemin` commence par « / » ou est vide.
  */
 export async function lienBoutique(slug: string, chemin = ""): Promise<string> {
   const domaine = await domainePrincipal(slug);
   if (domaine) return `https://${domaine}${chemin}`;
-  const sousDomaine = adresseBoutique(slug);
+  const sousDomaine = (await sousDomainePret(slug)) ? adresseBoutique(slug) : null;
   return sousDomaine ? `${sousDomaine}${chemin}` : `${await origineAxso()}/${slug}${chemin}`;
 }

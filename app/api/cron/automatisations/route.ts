@@ -14,6 +14,7 @@ import { passeRelances } from "@/lib/relances";
 import { reconcilierPaiements } from "@/lib/reconciliation-paiements";
 import { passeRappelsLive } from "@/lib/live/service";
 import { traiterTaches } from "@/lib/academie/studio";
+import { synchroniserSousDomaines } from "@/lib/domaines";
 
 export const maxDuration = 60;
 
@@ -24,10 +25,12 @@ export async function GET(req: Request) {
   // (lib/reconciliation-paiements.ts) — appelée souvent, elle confirme un paiement sans webhook en minutes.
   const erreur = (e: any) => ({ erreur: String(e?.message ?? e) });
   // Rappels des événements live (lib/live/service.ts) : idempotents, rattrapés au passage suivant.
-  const [automatisations, relances, paiements, imports, rappelsLive, studio] = await Promise.all([passeDuCron(), passeRelances().catch(erreur), reconcilierPaiements().catch(erreur), reprendreImportsEchus().catch(erreur), passeRappelsLive().catch(erreur),
+  const [automatisations, relances, paiements, imports, rappelsLive, studio, sousDomaines] = await Promise.all([passeDuCron(), passeRelances().catch(erreur), reconcilierPaiements().catch(erreur), reprendreImportsEchus().catch(erreur), passeRappelsLive().catch(erreur),
     // File de l'AI Course Studio (lib/academie/studio.ts) : reprend les tâches dues de toutes les boutiques.
-    traiterTaches({ demarrerAvant: Date.now() + 10_000, max: 2 }).catch(erreur)]);
-  return NextResponse.json({ ...automatisations, relances, paiements, imports, rappelsLive, studio });
+    traiterTaches({ demarrerAvant: Date.now() + 10_000, max: 2 }).catch(erreur),
+    // Sous-domaines nom.axsoafrica.com des boutiques publiées non encore déclarés à Vercel (lib/domaines.ts).
+    synchroniserSousDomaines().catch(erreur)]);
+  return NextResponse.json({ ...automatisations, relances, paiements, imports, rappelsLive, studio, sousDomaines });
 }
 
 export const POST = GET;

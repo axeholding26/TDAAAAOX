@@ -205,17 +205,17 @@ export default function BoutiquePage() {
   }
 
   function copierLien() {
-    navigator.clipboard.writeText(adresseBoutique(tenant!.slug) ?? `${window.location.origin}/${tenant!.slug}`);
+    navigator.clipboard.writeText((tenant!.sousDomaineAt ? adresseBoutique(tenant!.slug) : null) ?? `${window.location.origin}/${tenant!.slug}`);
     setCopied(true); setTimeout(() => setCopied(false), 2000);
   }
 
   function partager() {
-    const url = adresseBoutique(tenant!.slug) ?? `${window.location.origin}/${tenant!.slug}`;
+    const url = (tenant!.sousDomaineAt ? adresseBoutique(tenant!.slug) : null) ?? `${window.location.origin}/${tenant!.slug}`;
     if (navigator.share) navigator.share({ title: form.nomBoutique || "Ma Boutique", url }).catch(() => {});
     else copierLien();
   }
 
-  const urlProd = tenant && hote ? (adresseBoutique(tenant.slug)?.replace(/^https?:\/\//, "") ?? `${hote}/${tenant.slug}`) : "";
+  const urlProd = tenant && hote ? ((tenant.sousDomaineAt ? adresseBoutique(tenant.slug) : null)?.replace(/^https?:\/\//, "") ?? `${hote}/${tenant.slug}`) : "";
   // Aperçu décoratif — palette AXSO jaune & noir (jamais bleu ni marron).
   // Le choix du design réel de la boutique se fait dans Theme Studio
   // (voir bannière ci-dessous).

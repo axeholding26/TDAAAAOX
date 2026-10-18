@@ -5,6 +5,7 @@ import { tauxDuJour } from "@/lib/taux-change";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { oublierRappelsBrouillon } from "@/lib/tenant";
+import { declarerSousDomaine } from "@/lib/domaines";
 import { mergeThemeConfig, appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { FORMAT_PIXEL } from "@/lib/pixels";
@@ -127,7 +128,10 @@ export async function PATCH(request: Request) {
           return tx.tenant.update({ where: { id: tenantId }, data: champs });
         }, { timeout: 30000 })
       : await prisma.tenant.update({ where: { id: tenantId }, data: champs });
-    if (actuel?.statut === "brouillon" && champs.statut === "active") await oublierRappelsBrouillon(tenantId);
+    if (actuel?.statut === "brouillon" && champs.statut === "active") {
+      await oublierRappelsBrouillon(tenantId);
+      await declarerSousDomaine(tenant.slug);
+    }
 
     // Invalider le cache de toutes les pages storefront de cette boutique
     revalidatePath(`/${tenant.slug}`, "layout");

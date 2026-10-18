@@ -2,7 +2,7 @@
 // Routage par sous-domaine ou domaine custom
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { domainePrincipal, slugPourDomaine, boutiqueExiste } from "@/lib/domaines";
+import { domainePrincipal, slugPourDomaine, sousDomainePret } from "@/lib/domaines";
 import { auth } from "@/lib/auth";
 import { requireNiveau, refusPalier } from "@/lib/permissions-server";
 import { moduleApi, palierApi } from "@/lib/permissions-api";
@@ -114,7 +114,7 @@ export async function proxy(request: NextRequest) {
     const domaine = await domainePrincipal(premier);
     if (domaine) return NextResponse.redirect(`https://${domaine}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
     // Sous-domaines actifs : axsoafrica.com/nom/… → nom.axsoafrica.com/… (anciens liens et QR codes compris).
-    if (SOUS_DOMAINES_ACTIFS && hostname === DOMAINE_APP && await boutiqueExiste(premier)) {
+    if (SOUS_DOMAINES_ACTIFS && hostname === DOMAINE_APP && await sousDomainePret(premier)) {
       const proto = DOMAINE_APP.startsWith("localhost") ? "http" : "https";
       return NextResponse.redirect(`${proto}://${premier}.${DOMAINE_APP}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
     }
