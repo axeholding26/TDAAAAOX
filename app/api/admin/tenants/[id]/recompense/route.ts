@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { recompenserBoutique, reponseErreur } from "@/lib/admin-actions";
+import { journaliser } from "@/lib/command-center/serveur";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getAdminSession();
@@ -11,6 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { montant, raison, emoji, titre } = await req.json().catch(() => ({}));
   try {
     await recompenserBoutique(id, { montant, raison, emoji, titre });
+    await journaliser(session, "boutique.recompense", "Tenant", id, undefined, { montant, raison, emoji, titre });
     return NextResponse.json({ success: true });
   } catch (err) {
     return reponseErreur(err);

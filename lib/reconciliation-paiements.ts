@@ -2,6 +2,7 @@
 // n'arrive jamais et que le client ne revient pas sur la page de confirmation.
 // - commande en attente avec une transaction NotchPay → revérifiée et confirmée si payée ;
 // - commande payée en ligne jamais créditée (erreur pendant la finalisation) → finalisée ;
+// - livraison numérique incomplète ou e-mail du lien en échec → reprise ;
 // - abonnement payé mais palier pas encore activé → activé ;
 // - produit physique à payer en ligne, jamais payé après 24 h → annulée, stock rendu.
 // Tout est idempotent. Appelée par cron/paiements (une fois par jour) et cron/automatisations
@@ -12,12 +13,13 @@ import { PAIEMENT } from "@/lib/commandes";
 import { confirmerPaiementCommande, finaliserPaiementCommande } from "@/lib/paiement-commande";
 import { verifierAbonnementEnAttente } from "@/lib/abonnement-paiement";
 import { rendreStock } from "@/lib/stock";
+import { reprendreLivraisons } from "@/lib/livraison-numerique";
 
 const JOUR = 86_400_000;
 
 export async function reconcilierPaiements() {
   const maintenant = Date.now();
-  const bilan = { verifiees: 0, finalisees: 0, abonnements: 0, liberees: 0, erreurs: 0 };
+  const bilan = { verifiees: 0, finalisees: 0, livraisons: 0, abonnements: 0, liberees: 0, erreurs: 0 };
   const essayer = async (f: () => Promise<unknown>) => { try { await f(); } catch (e) { bilan.erreurs++; console.error("[reconciliation-paiements]", e); } };
 
   // ponytail: 100 éléments par catégorie et par passage (60 s) ; passer à des paquets si le volume l'exige.
@@ -33,6 +35,9 @@ export async function reconcilierPaiements() {
   });
   const creditees = new Set((await prisma.walletTransaction.findMany({ where: { type: "CREDIT", commandeId: { in: payees.map((c) => c.id) } }, select: { commandeId: true } })).map((t) => t.commandeId));
   for (const c of payees.filter((c) => !creditees.has(c.id)).slice(0, 100)) { bilan.finalisees++; await essayer(() => finaliserPaiementCommande(c.id)); }
+
+  // Livraisons numériques incomplètes ou e-mail du lien en échec : reprises (idempotent).
+  await essayer(async () => { bilan.livraisons = await reprendreLivraisons(); });
 
   const abonnements = await prisma.tenant.findMany({ where: { planPendingRef: { not: null } }, select: { id: true }, take: 100 });
   for (const t of abonnements) await essayer(async () => { if (await verifierAbonnementEnAttente(t.id)) bilan.abonnements++; });

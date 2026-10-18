@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ExternalLink, BadgeCheck, Settings2 } from "lucide-react";
 import Link from "next/link";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { PLATFORM_TENANT_SLUG } from "@/lib/wallet";
 import { TenantStatutToggle } from "@/components/admin/TenantStatutToggle";
 import { getT } from "@/lib/i18n/serveur";
@@ -14,8 +14,8 @@ interface Props {
 
 export default async function AdminBoutiquesPage({ searchParams }: Props) {
   const t = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("boutiques");
+  if (!session) redirect("/admin?refus=1");
   const { q } = await searchParams;
 
   const boutiques = await prisma.tenant.findMany({

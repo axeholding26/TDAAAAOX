@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle, XCircle, Download, Zap, Package, MessageCircle, Check, X, GraduationCap, KeyRound } from "lucide-react";
+import { CheckCircle, XCircle, Download, Zap, Package, MessageCircle, Check, X, GraduationCap, KeyRound, Clock, Lock } from "lucide-react";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
 import { CopyableKey } from "@/components/storefront/CopyableKey";
@@ -31,26 +31,30 @@ interface Props {
       variante: string | null;
       quantite: number;
       prix: number;
-      produit: { id: string; type: string | null; fichierUrl: string | null; fichierNom: string | null } | null;
+      produit: { id: string; type: string | null; fichierNom: string | null } | null;
     }>;
   };
   paye: boolean;
   echoue: boolean;
   isCOD: boolean;
   isDigital: boolean;
-  lignesDigitales: Props["commande"]["lignes"];
+  /** Payé, mais ouvert sans la clé signée de l'e-mail / du retour de paiement : accès masqués. */
+  accesVerrouille: boolean;
+  /** Resend a confirmé l'envoi du lien (journal de livraison). */
+  emailEnvoye: boolean;
   // Formes exactes issues de requêtes Prisma avec include variables — typées
   // en any[] volontairement (comme le JSX inline d'origine, jamais typé
   // strictement ici) plutôt que de dupliquer les types Prisma générés.
   telechargements: readonly any[];
   accesFormations: readonly any[];
+  accesLive?: readonly { id: string; token: string; titre: string }[];
   clesLicence: readonly any[];
   nomProduit: Map<string, string>;
 }
 
 export async function ConfirmationDigitaleContent({
   theme, slug, devise, commande, paye, echoue, isCOD, isDigital,
-  lignesDigitales, telechargements, accesFormations, clesLicence, nomProduit,
+  accesVerrouille, emailEnvoye, telechargements, accesFormations, accesLive = [], clesLicence, nomProduit,
 }: Props) {
   const t = await getT();
   return (
@@ -81,17 +85,30 @@ export async function ConfirmationDigitaleContent({
           <p className="opacity-70 text-lg mb-1">{t("Merci")}{" "}{t(commande.clientNom)}</p>
           <p className="opacity-40 text-sm">{t("Le vendeur va vous contacter pour organiser la livraison.")}</p>
         </div>
+      ) : isDigital && !paye ? (
+        <div className="text-center mb-10">
+          {/* Le webhook NotchPay confirme en quelques secondes : la page se recharge seule. */}
+          <meta httpEquiv="refresh" content="6" />
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
+            style={{ backgroundColor: `${theme.accent}20`, border: `2px solid ${theme.accent}` }}>
+            <Clock size={36} style={{ color: theme.accent }} />
+          </div>
+          <h1 className="text-2xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>{t("Paiement en cours de confirmation")}</h1>
+          <p className="opacity-60 text-sm">{t("Vos accès apparaîtront ici dès que le paiement sera confirmé. Cette page se met à jour automatiquement.")}</p>
+        </div>
       ) : isDigital ? (
         <div className="text-center mb-10">
           <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
             style={{ backgroundColor: `${theme.accent}20`, border: `2px solid ${theme.accent}` }}>
             <Zap size={36} style={{ color: theme.accent }} />
           </div>
-          <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>
-            {paye ? t("Achat confirmé !") : t("Commande reçue !")}
-          </h1>
-          <p className="opacity-70 text-lg mb-1">{t("Merci")}{" "}{t(commande.clientNom)}{" "}{t("— votre fichier est prêt !")}</p>
-          <p className="opacity-40 text-sm">{t("Un lien de téléchargement a été envoyé à votre email.")}</p>
+          <h1 className="text-3xl font-bold font-playfair mb-2" style={{ color: theme.accent }}>{t("Achat confirmé !")}</h1>
+          <p className="opacity-70 text-lg mb-1">{t("Merci")}{" "}{t(commande.clientNom)}</p>
+          <p className="opacity-40 text-sm">
+            {emailEnvoye
+              ? t("Le lien d'accès vous a aussi été envoyé par e-mail.")
+              : t("Gardez cette page : vos accès y restent disponibles, ainsi que dans « Mon compte ».")}
+          </p>
         </div>
       ) : (
         <div className="text-center mb-10">
@@ -103,46 +120,25 @@ export async function ConfirmationDigitaleContent({
             {paye ? t("Commande confirmée !") : t("Commande reçue !")}
           </h1>
           <p className="opacity-70 text-lg mb-1">{t("Merci pour votre commande,")}{" "}{t(commande.clientNom)}</p>
-          <p className="opacity-40 text-sm">{t("Un email de confirmation vous a été envoyé.")}</p>
+          <p className="opacity-40 text-sm">{t("Le vendeur prépare votre commande.")}</p>
         </div>
       )}
 
-      {/* ── Téléchargements digitaux ──────────────────────────────── */}
-      {lignesDigitales.length > 0 && (paye || !echoue) && (
-        <div className="rounded-2xl border p-6 mb-4 space-y-4"
-          style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
-          <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
-            <Download size={16} />{" "}{t("Vos téléchargements")}
-          </h3>
-          <div className="space-y-3">
-            {lignesDigitales.map((ligne) => (
-              <div key={ligne.id} className="flex items-center justify-between gap-4 p-3 rounded-xl"
-                style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">{t(ligne.nom)}</p>
-                  <p className="text-xs opacity-50 mt-0.5">{t(ligne.produit?.fichierNom) || t("Fichier digital")}</p>
-                </div>
-                <a
-                  href={ligne.produit!.fichierUrl!}
-                  download={ligne.produit?.fichierNom || ligne.nom}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 transition-all hover:opacity-90"
-                  style={{ backgroundColor: theme.accent, color: theme.fond }}>
-                  <Download size={14} />{" "}{t("Télécharger")}
-                </a>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 text-xs opacity-50">
-            <Zap size={11} style={{ color: theme.accent }} />
-            {t("Liens valides 7 jours · Accès depuis votre email également")}
-          </div>
+      {/* ── Accès masqués : page ouverte sans la clé signée ─────────── */}
+      {accesVerrouille && (
+        <div className="rounded-2xl border p-6 mb-4 text-center space-y-3"
+          style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40` }}>
+          <Lock size={20} className="mx-auto" style={{ color: theme.accent }} />
+          <p className="text-sm opacity-80">{t("Pour votre sécurité, vos téléchargements s'ouvrent avec le lien reçu par e-mail ou depuis votre espace client.")}</p>
+          <Link href={`/${slug}/mon-compte`} className="inline-block px-6 py-2.5 rounded-xl text-sm font-bold"
+            style={{ backgroundColor: theme.accent, color: theme.fond }}>
+            {t("Accéder à mes achats")}
+          </Link>
         </div>
       )}
 
       {/* ── Fichiers (nouveau système multi-fichiers) ─────────────── */}
-      {telechargements.length > 0 && (paye || !echoue) && (
+      {telechargements.length > 0 && paye && (
         <div className="rounded-2xl border p-6 mb-4 space-y-4"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
@@ -150,20 +146,23 @@ export async function ConfirmationDigitaleContent({
           </h3>
           <div className="space-y-3">
             {telechargements.map((dl) => {
-              const fichiers = dl.produit.produitFichier?.fichiers ?? [];
+              const fichiers: Array<{ id: string; nom: string }> = dl.produit.fichiers;
               const nom = nomProduit.get(dl.produitId) ?? dl.produit.nom;
-              if (fichiers.length === 0) return null;
-              if (dl.produit.produitFichier?.motDePasse) {
+              if (dl.produit.protege) {
                 return <LockedDownloads key={dl.id} token={dl.token} nom={nom} accent={theme.accent} fond={theme.fond} />;
               }
+              // Produit à fichier unique (ancien format) : un seul lien, toujours via le jeton.
+              const liens = fichiers.length
+                ? fichiers.map((f) => ({ id: f.id, nom: f.nom, href: `/api/telechargements/${dl.token}?fichier=${f.id}` }))
+                : [{ id: dl.id, nom: dl.produit.fichierNom || nom, href: `/api/telechargements/${dl.token}` }];
               return (
                 <div key={dl.id} className="p-3 rounded-xl" style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
                   <p className="text-sm font-semibold mb-2">{t(nom)}</p>
                   <div className="space-y-2">
-                    {fichiers.map((f: any) => (
+                    {liens.map((f) => (
                       <div key={f.id} className="flex items-center justify-between gap-3">
                         <span className="text-xs opacity-60 truncate">{t(f.nom)}</span>
-                        <a href={`/api/telechargements/${dl.token}?fichier=${f.id}`}
+                        <a href={f.href} rel="nofollow noreferrer"
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold flex-shrink-0 transition-all hover:opacity-90"
                           style={{ backgroundColor: theme.accent, color: theme.fond }}>
                           <Download size={12} />{" "}{t("Télécharger")}
@@ -177,13 +176,13 @@ export async function ConfirmationDigitaleContent({
           </div>
           <div className="flex items-center gap-2 text-xs opacity-50">
             <Zap size={11} style={{ color: theme.accent }} />
-            {t("Accès valide 1 an · Retrouvez ce lien dans votre email de confirmation")}
+            {telechargements.some((dl) => dl.expireAt) ? t("Accès limité dans le temps par le vendeur · Retrouvez vos achats dans « Mon compte »") : t("Accès à vie · Retrouvez vos achats dans « Mon compte »")}
           </div>
         </div>
       )}
 
       {/* ── Formations ───────────────────────────────────────────── */}
-      {accesFormations.length > 0 && (paye || !echoue) && (
+      {accesFormations.length > 0 && paye && (
         <div className="rounded-2xl border p-6 mb-4 space-y-3"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
@@ -206,8 +205,26 @@ export async function ConfirmationDigitaleContent({
         </div>
       )}
 
+      {/* ── Événements live / bootcamps (lib/live) ───────────────── */}
+      {accesLive.length > 0 && paye && (
+        <div className="rounded-2xl border p-6 mb-4 space-y-3" style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40` }}>
+          <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>
+            <GraduationCap size={16} />{" "}{t("Vos places")}
+          </h3>
+          {accesLive.map((a) => (
+            <div key={a.id} className="flex items-center justify-between gap-4 p-3 rounded-xl" style={{ backgroundColor: `${theme.accent}08`, border: `1px solid ${theme.accent}20` }}>
+              <p className="text-sm font-semibold truncate">{a.titre}</p>
+              <a href={`/${slug}/live/${a.token}`} className="px-4 py-2 rounded-xl text-sm font-bold flex-shrink-0 hover:opacity-90" style={{ backgroundColor: theme.accent, color: theme.fond }}>
+                {t("Mon espace")}
+              </a>
+            </div>
+          ))}
+          <p className="text-xs opacity-50">{t("Le lien de connexion s'affiche dans votre espace peu avant le début. Ce lien vous est personnel.")}</p>
+        </div>
+      )}
+
       {/* ── Licences ─────────────────────────────────────────────── */}
-      {clesLicence.length > 0 && (paye || !echoue) && (
+      {clesLicence.length > 0 && paye && (
         <div className="rounded-2xl border p-6 mb-4 space-y-3"
           style={{ backgroundColor: theme.surface, borderColor: `${theme.accent}40`, boxShadow: `0 0 0 1px ${theme.accent}20, 0 8px 32px ${theme.accent}12` }}>
           <h3 className="font-bold text-base flex items-center gap-2" style={{ color: theme.accent }}>

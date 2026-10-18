@@ -22,6 +22,11 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/livreurs/inscription", null],
   ["/api/equipe/accepter", null],
   ["/api/popups", null],
+  // Live Academy : inscription gratuite et espace inscrit (jeton) ; communauté = jeton OU session,
+  // droits vérifiés dans la route (lib/live/communaute.ts, module « produits » pour le formateur).
+  ["/api/live/inscription", null],
+  ["/api/live/acces", null],
+  ["/api/live/communaute", null],
   // finance
   ["/api/affiliation/paiements", "finance"],
   ["/api/pos/comptabilite", "finance"],
@@ -67,6 +72,8 @@ const MODULES_API: [string, ModuleKey | null][] = [
   ["/api/entrepots", "produits"],
   ["/api/fournisseurs", "produits"],
   ["/api/formations", "produits"],
+  ["/api/live", "produits"], // événements, bootcamps (console organisateur)
+  ["/api/academie", "produits"], // AI Course Studio (le tuteur apprenant est sous /api/apprenant, jeton)
   ["/api/licences", "produits"],
   ["/api/magic-import", "produits"],
   ["/api/sourcing/commandes", "commandes"],

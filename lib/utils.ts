@@ -156,6 +156,7 @@ export const SLUGS_RESERVES = new Set([
   "rejoindre", "suivi", "temoignages", "themes", "tutorials", "livreur", "test", "dev", "staging", "preview",
   "oauth", // écran d'autorisation des IA externes (app/oauth)
   "scanner", // interface du téléphone-scanner de la caisse (app/scanner)
+  "depot", // dépôt de fichiers d'un import IA (app/depot)
 ]);
 
 /** Un slug doit être une étiquette DNS valide (3 à 63 caractères) et ne pas être réservé. */

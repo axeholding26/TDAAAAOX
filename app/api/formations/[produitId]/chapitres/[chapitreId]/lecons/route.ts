@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { appliquerPedagogie, leconPedagogie } from "@/lib/formation/editeur";
 
 type Ctx = { params: Promise<{ produitId: string; chapitreId: string }> };
 
@@ -24,8 +25,12 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     const chapitre = await verifChapitre(produitId, chapitreId, tenantId);
     if (!chapitre) return NextResponse.json({ error: "Chapitre introuvable" }, { status: 404 });
 
-    const { titre, type = "texte", contenu, videoType, videoUrl, audioUrl, duree, gratuite } = await req.json();
+    const body = await req.json();
+    const { titre, type = "texte", contenu, videoType, videoUrl, audioUrl, duree, gratuite } = body;
     if (!titre?.trim()) return NextResponse.json({ error: "titre requis" }, { status: 400 });
+    if (!["texte", "video", "audio", "quiz", "devoir"].includes(type)) return NextResponse.json({ error: "type invalide" }, { status: 400 });
+    const peda = leconPedagogie.safeParse(body);
+    if (!peda.success) return NextResponse.json({ error: peda.error.issues[0]?.message ?? "Données invalides" }, { status: 400 });
 
     const lecon = await prisma.lecon.create({
       data: {
@@ -41,8 +46,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
         ordre:     chapitre._count.lecons,
       },
     });
+    await appliquerPedagogie({ type: "lecon", id: lecon.id, formationId: chapitre.formationId }, peda.data);
 
-    return NextResponse.json({ lecon }, { status: 201 });
+    const complete = await prisma.lecon.findUnique({ where: { id: lecon.id }, include: { quiz: true, ressources: { orderBy: { ordre: "asc" } } } });
+    return NextResponse.json({ lecon: complete }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }

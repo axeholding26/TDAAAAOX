@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { accesDigitalOuvert } from "@/lib/commandes";
+import { controlerJeton } from "@/lib/livraison-numerique";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 // Mot de passe du fichier : limité pour empêcher de le deviner à la chaîne.
@@ -21,8 +21,9 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
     const dl = await prisma.telechargement.findUnique({ where: { token } });
     if (!dl) return NextResponse.json({ ok: false, error: "Lien invalide ou expiré" }, { status: 404 });
-    const commande = await prisma.commande.findUnique({ where: { id: dl.commandeId }, select: { paiementStatut: true } });
-    if (!accesDigitalOuvert(dl.expireAt, commande?.paiementStatut)) return NextResponse.json({ ok: false, error: "Lien expiré ou révoqué, ou achat non payé" }, { status: 403 });
+    const commande = await prisma.commande.findUnique({ where: { id: dl.commandeId }, select: { paiementStatut: true, statut: true } });
+    const refus = controlerJeton({ dl, commande });
+    if (refus) return NextResponse.json({ ok: false, error: refus.error }, { status: refus.status });
 
     const produit = await prisma.produit.findUnique({
       where: { id: dl.produitId },

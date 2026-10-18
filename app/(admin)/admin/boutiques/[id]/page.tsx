@@ -3,15 +3,15 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { ExternalLink, ArrowLeft, BadgeCheck, Package, ShoppingCart, Users, Wallet } from "lucide-react";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { getWalletResume } from "@/lib/wallet";
 import { BoutiqueActionsPanel } from "@/components/admin/BoutiqueActionsPanel";
 import { getT } from "@/lib/i18n/serveur";
 
 export default async function AdminBoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("boutiques");
+  if (!session) redirect("/admin?refus=1");
   const { id } = await params;
 
   const tenant = await prisma.tenant.findUnique({

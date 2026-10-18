@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Package, Download, Plus, PackagePlus, Tags, type LucideIcon } from "lucide-react";
+import { Package, Download, Plus, PackagePlus, Tags, Sparkles, GraduationCap, Video, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/I18nProvider";
 
@@ -20,8 +20,11 @@ interface SubNavItem {
 // "Catégories" tant qu'il n'y a pas de CRUD dédié, pas de "Variantes de
 // prix" tant que ça reste une gestion par produit sans liste autonome).
 const SOUS_NAV: SubNavItem[] = [
-  { href: "/dashboard/produits", label: "Tous les produits", Icon: Package, excludePrefix: ["/dashboard/produits/digital", "/dashboard/produits/categories", "/dashboard/produits/nouveau", "/dashboard/produits/creer"] },
+  { href: "/dashboard/produits", label: "Tous les produits", Icon: Package, excludePrefix: ["/dashboard/produits/digital", "/dashboard/produits/categories", "/dashboard/produits/nouveau", "/dashboard/produits/creer", "/dashboard/produits/imports-ia", "/dashboard/produits/studio", "/dashboard/produits/live"] },
   { href: "/dashboard/produits/digital", label: "Produits digitaux", Icon: Download },
+  { href: "/dashboard/produits/imports-ia", label: "Imports IA", Icon: Sparkles },
+  { href: "/dashboard/produits/studio", label: "Studio de cours IA", Icon: GraduationCap },
+  { href: "/dashboard/produits/live", label: "Live & bootcamps", Icon: Video },
   { href: "/dashboard/produits/categories", label: "Catégories", Icon: Tags },
   { href: "/dashboard/produits/nouveau", label: "Nouveau produit", Icon: Plus },
   { href: "/dashboard/produits/creer", label: "Nouveau produit digital", Icon: PackagePlus },

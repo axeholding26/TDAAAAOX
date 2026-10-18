@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { executerAction } from "@/lib/axia-admin/outils";
+import { journaliser } from "@/lib/command-center/serveur";
 
 const schema = z.object({ id: z.string(), decision: z.enum(["accepter", "refuser"]) });
 
@@ -28,5 +29,6 @@ export async function POST(req: Request) {
   const action = await prisma.adminAxiaAction.findUniqueOrThrow({ where: { id } });
   const r = await executerAction(action.outil, action.args as Record<string, any>, session.userId);
   await prisma.adminAxiaAction.update({ where: { id }, data: { statut: r.succes ? "execute" : "echec", resultat: r.resultat } });
+  if (r.succes) await journaliser(session, `axia.${action.outil}`, "AdminAxiaAction", id, undefined, { args: action.args, resultat: r.resultat });
   return NextResponse.json({ ok: true, succes: r.succes, resultat: r.resultat });
 }

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin-auth";
+import { getAdminSessionPour } from "@/lib/admin-auth";
 import { getPlatformTenantId, getOrCreateWallet, getWalletResume } from "@/lib/wallet";
 
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const session = await getAdminSessionPour("finances");
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
 
   const platformTenantId = await getPlatformTenantId();
   // Tant qu'aucune commission/abonnement n'a encore été crédité, aucune ligne

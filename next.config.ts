@@ -1,12 +1,18 @@
 import path from "path";
 import type { NextConfig } from "next";
 
+// Live Academy (lib/live/visio.ts) : un serveur Jitsi auto-hébergé (JITSI_DOMAIN) est intégré
+// en iframe dans la page de l'inscrit — seul ce domaine est ajouté à frame-src et reçoit le droit
+// caméra/micro. Sans JITSI_DOMAIN, rien ne change : meet.jit.si s'ouvre dans un nouvel onglet.
+const JITSI = process.env.JITSI_DOMAIN?.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+const JITSI_ORIGINE = JITSI && /^[a-z0-9.-]+(:\d+)?$/i.test(JITSI) ? `https://${JITSI}` : "";
+
 const OWASP_HEADERS = [
   { key: "X-Frame-Options",           value: "SAMEORIGIN" },
   { key: "X-Content-Type-Options",    value: "nosniff" },
   { key: "X-XSS-Protection",          value: "1; mode=block" },
   { key: "Referrer-Policy",           value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy",        value: "camera=(self), microphone=(self), geolocation=(self)" },
+  { key: "Permissions-Policy",        value: JITSI_ORIGINE ? `camera=(self "${JITSI_ORIGINE}"), microphone=(self "${JITSI_ORIGINE}"), display-capture=(self "${JITSI_ORIGINE}"), geolocation=(self)` : "camera=(self), microphone=(self), geolocation=(self)" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
   {
     key: "Content-Security-Policy",
@@ -20,7 +26,7 @@ const OWASP_HEADERS = [
       "connect-src 'self' https:",
       "font-src 'self' data: https://fonts.gstatic.com",
       // Lecteurs vidéo intégrés (blocs Vidéo) — sans eux : « Ce contenu est bloqué ».
-      "frame-src 'self' https://www.openstreetmap.org https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com",
+      "frame-src 'self' https://www.openstreetmap.org https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com" + (JITSI_ORIGINE ? ` ${JITSI_ORIGINE}` : ""),
       "frame-ancestors 'self'",
     ].join("; "),
   },

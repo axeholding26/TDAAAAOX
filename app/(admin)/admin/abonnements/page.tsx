@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { CreditCard, Zap, Crown, AlertTriangle } from "lucide-react";
-import { getAdminSession } from "@/lib/admin-auth";
+import { getAdminSessionPour } from "@/lib/admin-auth";
 import { PLATFORM_TENANT_SLUG, getPlatformTenantId } from "@/lib/wallet";
 import { getT } from "@/lib/i18n/serveur";
 
@@ -14,8 +14,8 @@ const PALIERS = [
 
 export default async function AdminAbonnementsPage() {
   const tx = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("abonnements");
+  if (!session) redirect("/admin?refus=1");
 
   const filtreBoutiques = { slug: { not: PLATFORM_TENANT_SLUG } };
   const now = new Date();

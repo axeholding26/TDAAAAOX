@@ -100,6 +100,17 @@ export async function domainePrincipal(slug: string): Promise<string | null> {
   return t?.customDomain ?? null;
 }
 
+// ── Boutique publiée ? (redirection axsoafrica.com/nom → nom.axsoafrica.com, proxy.ts) ──
+const cacheExiste = new Map<string, { existe: boolean; expire: number }>();
+
+export async function boutiqueExiste(slug: string): Promise<boolean> {
+  const c = cacheExiste.get(slug);
+  if (c && c.expire > Date.now()) return c.existe;
+  const existe = !!(await prisma.tenant.findFirst({ where: { slug, statut: "active" }, select: { id: true } }).catch(() => null));
+  cacheExiste.set(slug, { existe, expire: Date.now() + 60_000 });
+  return existe;
+}
+
 /** À appeler après tout changement de domaine (sur cette instance ; les autres expirent en 60 s). */
 export function oublierDomaine(slug: string, domaine?: string | null) {
   cacheSlug.delete(slug);

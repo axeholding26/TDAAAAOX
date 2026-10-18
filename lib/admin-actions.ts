@@ -4,6 +4,7 @@
 // complet) reste à la charge de l'appelant.
 import { prisma } from "@/lib/prisma";
 import { crediterBonusWallet, getPlatformTenantId, initierRetrait } from "@/lib/wallet";
+import { estRoleAdmin, type RoleAdmin } from "@/lib/command-center/rbac";
 
 export class ErreurAdmin extends Error {
   constructor(message: string, public status = 400) { super(message); }
@@ -72,8 +73,21 @@ export async function supprimerPostAxsocial(id: string) {
 export async function revoquerMembreAdmin(id: string, parUserId: string) {
   if (id === parUserId) throw new ErreurAdmin("Impossible de te révoquer toi-même");
   const user = await prisma.user.findUnique({ where: { id } });
-  if (!user || user.role !== "admin_lecteur") throw new ErreurAdmin("Seuls les comptes en lecture seule peuvent être révoqués ici");
+  if (!user || !roleInvitable(user.role)) throw new ErreurAdmin("Seuls les membres de l'équipe (hors Super admin) peuvent être révoqués ici");
   await prisma.user.delete({ where: { id } });
+  return { email: user.email, role: user.role };
+}
+
+/** Rôles attribuables depuis l'équipe : tous les rôles admin sauf Super admin (jamais promu ni révoqué par ici). */
+export const roleInvitable = (r: unknown): r is Exclude<RoleAdmin, "admin"> => estRoleAdmin(r) && r !== "admin";
+
+export async function changerRoleMembre(id: string, role: unknown, parUserId: string) {
+  if (!roleInvitable(role)) throw new ErreurAdmin("Rôle invalide");
+  if (id === parUserId) throw new ErreurAdmin("Impossible de changer ton propre rôle");
+  const user = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+  if (!user || !roleInvitable(user.role)) throw new ErreurAdmin("Membre introuvable ou Super admin", 404);
+  await prisma.user.update({ where: { id }, data: { role } });
+  return { avant: user.role, apres: role };
 }
 
 export async function retirerWalletPlateforme(r: { montant: number; methode: string; destinataire: string; operateur?: string; notes?: string }) {

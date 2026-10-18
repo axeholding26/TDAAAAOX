@@ -11,6 +11,8 @@ import { AssignerLivreur } from "@/components/dashboard/AssignerLivreur";
 import { getT } from "@/lib/i18n/serveur";
 import { qrSvg } from "@/lib/qr";
 import { lienBoutique } from "@/lib/origine-site";
+import { lienAccesCommande } from "@/lib/livraison-numerique";
+import { RenvoyerLienDigital } from "@/components/dashboard/RenvoyerLienDigital";
 
 const STATUT_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
   en_attente:    { label: "En attente",      icon: Clock,        color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
@@ -53,6 +55,15 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
   ]);
 
   if (!commande) notFound();
+
+  // Livraison numérique : journal + droits délivrés (jamais l'adresse du fichier).
+  const [journalDigital, jetons, nbFormations, nbCles] = await Promise.all([
+    prisma.livraisonDigitale.findUnique({ where: { commandeId: id } }),
+    prisma.telechargement.findMany({ where: { commandeId: id }, select: { id: true, nbTelechargements: true, revoqueAt: true, dernierTelechargementAt: true, produit: { select: { nom: true } } } }),
+    prisma.accesFormation.count({ where: { commandeId: id } }),
+    prisma.cleLicence.count({ where: { commandeId: id } }),
+  ]);
+  const lienAccesDigital = journalDigital ? await lienAccesCommande(commande.tenant.slug, id) : null;
 
   const statutInfo = STATUT_CONFIG[commande.statut] || STATUT_CONFIG.en_attente;
   const StatutIcon = statutInfo.icon;
@@ -185,6 +196,50 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
               )}
             </div>
           </div>
+
+          {/* Livraison numérique */}
+          {journalDigital && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-6">
+              <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
+                <Share2 size={14} className="text-[#F5A623]" />
+                {t("Livraison numérique")}
+              </h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">{t("Accès")}</span>
+                  <span className={`text-xs px-2 py-1 rounded-lg font-medium ${journalDigital.statut === "livree" ? "bg-green-500/20 text-green-600" : journalDigital.statut === "revoquee" ? "bg-gray-200 text-gray-600" : "bg-red-500/20 text-red-500"}`}>
+                    {t(({ livree: "Livrés", partielle: "Incomplets", echec: "Échec", en_cours: "En cours", revoquee: "Révoqués" } as Record<string, string>)[journalDigital.statut] ?? journalDigital.statut)}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">{t("E-mail au client")}</span>
+                  <span className="text-[#111111] text-xs">
+                    {t(({ envoye: "Envoyé", echec: "Échec d'envoi", sans_email: "Pas d'e-mail", en_attente: "Pas encore envoyé" } as Record<string, string>)[journalDigital.emailStatut] ?? journalDigital.emailStatut)}
+                    {journalDigital.emailEnvoyeAt ? ` · ${dateRelative(journalDigital.emailEnvoyeAt)}` : ""}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">{t("Tentatives")}</span>
+                  <span className="text-[#111111] text-xs">{journalDigital.tentatives}{" "}{t("livraison(s)")}{" · "}{journalDigital.emailTentatives}{" "}{t("e-mail(s)")}</span>
+                </div>
+                {jetons.map((j) => (
+                  <div key={j.id} className="flex justify-between text-xs">
+                    <span className="text-gray-500 truncate">{t(j.produit.nom)}</span>
+                    <span className="text-[#111111]">{j.revoqueAt ? t("Révoqué") : `${j.nbTelechargements} ${t("téléchargement(s)")}`}</span>
+                  </div>
+                ))}
+                {(nbFormations > 0 || nbCles > 0) && (
+                  <p className="text-xs text-gray-500">{nbFormations > 0 ? `${nbFormations} ${t("accès formation")}` : ""}{nbFormations > 0 && nbCles > 0 ? " · " : ""}{nbCles > 0 ? `${nbCles} ${t("clé(s) de licence")}` : ""}</p>
+                )}
+                {journalDigital.derniereErreur && journalDigital.statut !== "revoquee" && (
+                  <p className="text-xs text-red-500">{t(journalDigital.derniereErreur)}</p>
+                )}
+                {journalDigital.statut !== "revoquee" && commande.paiementStatut === "completed" && lienAccesDigital && (
+                  <RenvoyerLienDigital commandeId={commande.id} lienAcces={lienAccesDigital} />
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Note client */}
           {commande.noteClient && (

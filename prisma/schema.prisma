@@ -39,6 +39,7 @@ model Tenant {
   parametresPaiement  Json     @default("{}")
   parametresLivraison Json     @default("{}")
   tauxTVA             Float    @default(0)
+  plafondIAMensuel    Float?   // Chantier AI COURSE STUDIO : plafond IA du mois en FCFA (null = défaut prudent, lib/academie/regles.ts)
   juridiction         String   @default("CM") // code pays ISO pour TVA
   kycStatut           String   @default("non_soumis") // non_soumis | en_cours | valide | rejete
   kycDocUrl           String?
@@ -82,6 +83,7 @@ model Tenant {
   stockMouvements        StockMouvement[]
   lotsTracabilite        LotTracabilite[]
   chargesExploitation    ChargeExploitation[]
+  avisPlateforme         AvisPlateforme?
 }
 
 // =====================
@@ -159,6 +161,8 @@ model Produit {
   formation       Formation?
   licenceProduit  LicenceProduit?
   bundleProduit   BundleProduit?
+  evenement       Evenement?       // Live Academy (type "evenement")
+  bootcamp        Bootcamp?        // Bootcamp OS (type "bootcamp")
   inclusEnBundle  ElementBundle[]  @relation("InclusDansBundle")
   offresFournisseurs ProduitFournisseur[] // Supplier Intelligence : offres comparées pour ce produit
 
@@ -192,8 +196,14 @@ model Telechargement {
   expireAt   DateTime? // null = accès à vie (tant que la commande est payée) ; date passée = lien révoqué par le marchand
   telecharge Boolean  @default(false)
   createdAt  DateTime @default(now())
+  // Chantier LIVRAISON NUMÉRIQUE
+  revoqueAt         DateTime? // remboursement, annulation ou révocation marchand : le jeton ne sert plus
+  nbTelechargements Int       @default(0)
+  dernierTelechargementAt DateTime?
 
   produit  Produit  @relation(fields: [produitId], references: [id])
+
+  @@index([commandeId])
 }
 
 // =====================
@@ -1737,6 +1747,10 @@ model Formation {
   dureeMin  Int?     // durée totale estimée en minutes
   certif    Boolean  @default(false) // certificat de complétion généré
   createdAt DateTime @default(now())
+  // Cœur pédagogique : critères du certificat (pris en compte seulement si certif = true)
+  certifLeconsPct     Int     @default(100) // % de leçons terminées exigé
+  certifQuizRequis    Boolean @default(true) // tous les quiz réussis (note min du quiz)
+  certifDevoirsRequis Boolean @default(true) // tous les devoirs validés par le formateur
 
   produit   Produit    @relation(fields: [produitId], references: [id], onDelete: Cascade)
   chapitres Chapitre[]
@@ -1749,6 +1763,11 @@ model Chapitre {
   ordre       Int      @default(0)
   actif       Boolean  @default(true)
   createdAt   DateTime @default(now())
+  // Cœur pédagogique — défauts = comportement d'avant (publié, sans prérequis ni drip)
+  statut      String    @default("publie") // brouillon | publie | archive
+  prerequis   String[]  @default([])       // ids de chapitres à terminer avant
+  dripJours   Int?                         // ouvert X jours après l'inscription
+  dripDate    DateTime?                    // ouvert à partir de cette date
 
   formation Formation @relation(fields: [formationId], references: [id], onDelete: Cascade)
   lecons    Lecon[]
@@ -1768,9 +1787,17 @@ model Lecon {
   gratuite   Boolean  @default(false)  // aperçu libre sans achat
   actif      Boolean  @default(true)
   createdAt  DateTime @default(now())
+  // Cœur pédagogique — type peut aussi valoir "quiz" | "devoir" ; défauts = comportement d'avant
+  statut     String    @default("publie") // brouillon | publie | archive
+  prerequis  String[]  @default([])       // ids de leçons à terminer avant
+  dripJours  Int?
+  dripDate   DateTime?
 
   chapitre     Chapitre           @relation(fields: [chapitreId], references: [id], onDelete: Cascade)
   progressions ProgressionLecon[]
+  quiz         QuizLecon?
+  ressources   RessourceLecon[]
+  rendus       RenduDevoir[]
 }
 
 model ProgressionLecon {
@@ -1781,6 +1808,10 @@ model ProgressionLecon {
   complete    Boolean   @default(false)
   completedAt DateTime?
   createdAt   DateTime  @default(now())
+  position    Int?                         // reprise vidéo/audio (secondes)
+  favori      Boolean   @default(false)
+  note        String?   @db.Text           // notes personnelles de l'apprenant
+  majAt       DateTime  @default(now()) @updatedAt
 
   lecon Lecon @relation(fields: [leconId], references: [id], onDelete: Cascade)
 
@@ -1799,10 +1830,14 @@ model AccesFormation {
   token       String   @unique
   clientEmail String
   createdAt   DateTime @default(now())
+  revoqueAt          DateTime? // remboursement / annulation (lib/livraison-numerique.ts)
+  derniereLeconId    String?   // reprise
+  derniereActiviteAt DateTime?
 
   produit Produit @relation(fields: [produitId], references: [id])
 
   @@index([produitId])
+  @@index([clientEmail])
 }
 
 // =====================
@@ -2959,6 +2994,14 @@ model TacheIA {
   erreur      String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  // Chantier AI COURSE STUDIO : file persistée (types « studio_* »), reprise par route + cron
+  cible              String?   // StudioCours ou StudioElement visé
+  tentatives         Int       @default(0)
+  maxTentatives      Int       @default(3)
+  coutEstime         Float?    // FCFA, annoncé avant lancement
+  coutReel           Float?
+  verrouAt           DateTime? // une seule exécution à la fois
+  prochaineTentative DateTime?
 
   @@index([tenantId, createdAt])
 }
@@ -3149,4 +3192,569 @@ model AgentManifeste {
   updatedAt   DateTime @updatedAt
 
   @@unique([tenantId, agentId])
+}
+
+// =====================
+// COMMAND CENTER (pilotage Axso)
+// =====================
+// Réglages du Command Center : seuils d'alerte, objectifs, pondérations du score
+// santé, étape d'activation, rapports planifiés, tâches assignées (lib/command-center/reglages.ts).
+model ReglageAdmin {
+  cle       String   @id
+  valeur    Json
+  majPar    String?
+  updatedAt DateTime @updatedAt
+}
+
+// Journal des actions administratives Axso (changement de plan, suspension, réglages…).
+model AuditAdmin {
+  id         String   @id @default(cuid())
+  adminId    String
+  adminEmail String
+  action     String
+  entite     String
+  entiteId   String?
+  avant      Json?
+  apres      Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entite, entiteId])
+}
+
+// Avis d'un marchand sur Axso (pas sur ses produits) : un par boutique, publié sur
+// la landing seulement après validation dans /admin/avis et avec son accord.
+model AvisPlateforme {
+  id           String    @id @default(cuid())
+  tenantId     String    @unique
+  userId       String
+  note         Int
+  texte        String    @db.Text
+  auteurNom    String
+  auteurRole   String?
+  ville        String?
+  consentement Boolean   @default(false)
+  statut       String    @default("en_attente") // en_attente | approuve | refuse
+  motifRefus   String?
+  moderePar    String?
+  modereLe     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([statut, updatedAt])
+}
+
+// =====================
+// IMPORT IA → BOUTIQUE (lib/import-creations) — une création transmise par une IA externe
+// (MCP, REST, lien de dépôt) ou générée par Axso devient un produit numérique.
+// Statuts : received → validated → stored → product_created → assets_attached →
+// ready_for_review → published ; failed / retrying (tentatives temporisées).
+// =====================
+model ImportCreation {
+  id                 String    @id @default(cuid())
+  tenantId           String
+  source             String    // mcp | rest | depot | axso
+  fournisseur        String    // claude, chatgpt, gemini, axso…
+  creePar            String    // connexionId ou userId
+  cleIdempotence     String?
+  statut             String    @default("received")
+  publierAuto        Boolean   @default(false)
+  metadonnees        Json      @default("{}") // nom, description, prix, devise, catégorie, bénéfices, SEO, instructions
+  produitId          String?
+  tentatives         Int       @default(0)
+  prochaineTentative DateTime?
+  derniereErreur     String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  fichiers FichierImport[]
+
+  @@unique([tenantId, cleIdempotence])
+  @@index([tenantId, createdAt])
+}
+
+model FichierImport {
+  id         String   @id @default(cuid())
+  importId   String
+  tenantId   String
+  role       String   // fichier (livré à l'acheteur) | visuel
+  nom        String
+  sourceUrl  String?  // adresse https fournie par l'IA (re-téléchargée en cas de reprise)
+  mime       String?
+  taille     Int?
+  sha256     String?
+  url        String?  // stockage durable ; jamais renvoyée à l'IA ni au client pour un fichier
+  cle        String?
+  statut     String   @default("en_attente") // en_attente | stocke | echec
+  erreur     String?
+  createdAt  DateTime @default(now())
+
+  import ImportCreation @relation(fields: [importId], references: [id], onDelete: Cascade)
+
+  @@index([importId])
+  @@index([tenantId, sha256])
+}
+
+// ─── Chantier LIVRAISON NUMÉRIQUE ─────────────────────────────────────────────
+// Journal de livraison d'une commande digitale payée : une ligne par commande
+// (idempotence), statut des accès, de l'e-mail, tentatives et dernière erreur
+// (jamais de secret ni de jeton). Repris par la réconciliation et le bouton
+// marchand « Renvoyer le lien ».
+model LivraisonDigitale {
+  id              String    @id @default(cuid())
+  commandeId      String    @unique
+  tenantId        String
+  statut          String    @default("en_cours")   // en_cours | livree | partielle | echec | revoquee
+  emailStatut     String    @default("en_attente") // en_attente | envoye | echec | sans_email
+  tentatives      Int       @default(0)
+  emailTentatives Int       @default(0)
+  derniereErreur  String?
+  verrouAt        DateTime? // une seule exécution à la fois (webhook, page, cron, marchand)
+  livreeAt        DateTime?
+  emailEnvoyeAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId, statut])
+}
+
+// ─── Chantier CŒUR PÉDAGOGIQUE (lib/formation/) ──────────────────────────────
+// Quiz corrigés côté serveur, devoirs corrigés par le formateur, ressources de
+// leçon servies par une route contrôlée, certificats vérifiables.
+// « apprenant » = e-mail de la commande, ou "commande:<id>" sans e-mail.
+model QuizLecon {
+  id            String   @id @default(cuid())
+  leconId       String   @unique
+  noteMin       Int      @default(70)  // % pour réussir
+  tentativesMax Int?                   // null = illimité
+  questions     Json     @default("[]") // [{id,type,enonce,options,bonnes,acceptees,points,explication}] — jamais envoyé tel quel au navigateur
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  lecon      Lecon           @relation(fields: [leconId], references: [id], onDelete: Cascade)
+  tentatives TentativeQuiz[]
+}
+
+model TentativeQuiz {
+  id         String   @id @default(cuid())
+  quizId     String
+  leconId    String
+  produitId  String
+  apprenant  String
+  commandeId String
+  reponses   Json
+  score      Int      // 0-100
+  reussi     Boolean
+  createdAt  DateTime @default(now())
+
+  quiz QuizLecon @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId, apprenant])
+  @@index([produitId])
+}
+
+model RenduDevoir {
+  id         String    @id @default(cuid())
+  leconId    String
+  produitId  String
+  apprenant  String
+  commandeId String
+  texte      String    @db.Text
+  statut     String    @default("soumis") // soumis | valide | a_refaire
+  note       Int?      // 0-100, facultative
+  feedback   String?   @db.Text
+  corrigeAt  DateTime?
+  corrigePar String?   // userId du formateur
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  lecon Lecon @relation(fields: [leconId], references: [id], onDelete: Cascade)
+
+  @@unique([leconId, apprenant])
+  @@index([produitId, statut])
+}
+
+model RessourceLecon {
+  id        String   @id @default(cuid())
+  leconId   String
+  nom       String
+  url       String   // stockage de la boutique ; jamais envoyée à l'apprenant
+  mime      String?
+  taille    Int?
+  ordre     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  lecon Lecon @relation(fields: [leconId], references: [id], onDelete: Cascade)
+
+  @@index([leconId])
+}
+
+// Attestation interne (pas un diplôme accrédité). Données figées à la délivrance
+// pour rester vérifiables même si la formation change.
+model Certificat {
+  id             String    @id @default(cuid())
+  code           String    @unique // 80 bits aléatoires, ex. AXC-7K2M-9QXD-4RTA-H8VW
+  produitId      String
+  tenantId       String
+  apprenant      String
+  nom            String
+  formationTitre String
+  boutiqueNom    String
+  delivreAt      DateTime  @default(now())
+  revoqueAt      DateTime?
+  revoqueMotif   String?
+  revoquePar     String?   // userId, ou "remboursement"
+
+  @@unique([produitId, apprenant])
+  @@index([tenantId])
+}
+
+// ─── Chantier LIVE ACADEMY + BOOTCAMPS + COMMUNAUTÉ (lib/live/) ──────────────
+// Événement live vendable (Produit type "evenement") ou séance d'un bootcamp
+// (bootcampId, sans produit). Le lien de salle n'est jamais envoyé au navigateur
+// hors de la fenêtre d'accès d'un inscrit (lib/live/regles.ts).
+model Evenement {
+  id               String    @id @default(cuid())
+  tenantId         String
+  produitId        String?   @unique
+  bootcampId       String?
+  type             String    @default("webinaire") // webinaire | masterclass | atelier | qr | classe | session
+  titre            String
+  description      String?
+  intervenants     Json      @default("[]") // [{ nom, role? }]
+  debut            DateTime
+  dureeMin         Int       @default(60)
+  fuseau           String    @default("Africa/Douala")
+  recurrence       Json?     // classe récurrente : { frequence: "quotidienne"|"hebdomadaire", occurrences }
+  capacite         Int?      // null = illimitée
+  placesPrises     Int       @default(0)
+  statut           String    @default("programme") // programme | en_direct | termine | annule
+  fournisseur      String    @default("lien_externe") // lib/live/visio.ts
+  lienSalle        String?   // réunion externe (Zoom/Meet/Teams) : révélée aux seuls inscrits, dans la fenêtre
+  salleId          String?   // salle générée (Jitsi) : nom aléatoire non devinable
+  ouvertureMin     Int       @default(15) // lien révélé N minutes avant le début
+  rappels          Int[]     @default([1440, 60]) // minutes avant le début
+  lienSecours      String?
+  messageSecours   String?
+  ressources       Json      @default("[]") // [{ titre, url }]
+  replayUrl        String?
+  replayProduitId  String?   // produit « formation » créé pour vendre le replay
+  certificat       Boolean   @default(false)
+  annuleAt         DateTime?
+  raisonAnnulation String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  produit      Produit?          @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  bootcamp     Bootcamp?         @relation(fields: [bootcampId], references: [id], onDelete: Cascade)
+  inscriptions InscriptionLive[]
+  presences    PresenceLive[]
+  questions    QuestionLive[]
+  sondages     SondageLive[]
+
+  @@index([tenantId, debut])
+  @@index([bootcampId])
+}
+
+// Place d'un participant (événement OU bootcamp), gratuite ou issue d'une commande payée
+// (lib/livraison-numerique.ts). Le jeton (256 bits) est le lien personnel.
+model InscriptionLive {
+  id          String   @id @default(cuid())
+  tenantId    String
+  evenementId String?
+  bootcampId  String?
+  commandeId  String?
+  nom         String
+  email       String
+  token       String   @unique
+  statut      String   @default("inscrite") // inscrite | annulee | revoquee
+  role        String   @default("apprenant") // apprenant | mentor
+  createdAt   DateTime @default(now())
+
+  evenement Evenement?         @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+  bootcamp  Bootcamp?          @relation(fields: [bootcampId], references: [id], onDelete: Cascade)
+  presences PresenceLive[]
+  livrables LivrableBootcamp[]
+  rappels   RappelLive[]
+
+  @@unique([evenementId, email])
+  @@unique([bootcampId, email])
+  @@index([commandeId])
+}
+
+model PresenceLive {
+  id            String   @id @default(cuid())
+  evenementId   String
+  inscriptionId String
+  occurrence    Int      @default(0) // classe récurrente : n° de séance
+  source        String   @default("auto") // auto (a rejoint) | formateur (pointage)
+  rejointAt     DateTime @default(now())
+
+  evenement   Evenement       @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+  inscription InscriptionLive @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([evenementId, inscriptionId, occurrence])
+}
+
+// Journal des rappels : la clé unique rend chaque rappel idempotent (cron rejouable).
+model RappelLive {
+  id            String   @id @default(cuid())
+  inscriptionId String
+  cle           String   @unique // evenementId:occurrence:minutes
+  ok            Boolean  @default(false)
+  envoyeAt      DateTime @default(now())
+
+  inscription InscriptionLive @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+}
+
+model QuestionLive {
+  id            String   @id @default(cuid())
+  evenementId   String
+  inscriptionId String?
+  auteurNom     String
+  texte         String
+  reponse       String?
+  statut        String   @default("ouverte") // ouverte | repondue | masquee
+  createdAt     DateTime @default(now())
+
+  evenement Evenement @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+
+  @@index([evenementId])
+}
+
+model SondageLive {
+  id          String   @id @default(cuid())
+  evenementId String
+  question    String
+  options     String[]
+  ouvert      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  evenement Evenement         @relation(fields: [evenementId], references: [id], onDelete: Cascade)
+  votes     VoteSondageLive[]
+
+  @@index([evenementId])
+}
+
+model VoteSondageLive {
+  id            String @id @default(cuid())
+  sondageId     String
+  inscriptionId String
+  option        Int
+
+  sondage SondageLive @relation(fields: [sondageId], references: [id], onDelete: Cascade)
+
+  @@unique([sondageId, inscriptionId])
+}
+
+// Bootcamp = une cohorte (Produit type "bootcamp"). Nouvelle cohorte = duplication (modeleDeId).
+model Bootcamp {
+  id            String   @id @default(cuid())
+  tenantId      String
+  produitId     String   @unique
+  cohorte       String?
+  dateDebut     DateTime
+  dateFin       DateTime
+  fuseau        String   @default("Africa/Douala")
+  capacite      Int?
+  placesPrises  Int      @default(0)
+  jalons        Json     @default("[]") // [{ titre, date }]
+  seuilPresence Int      @default(75)  // % de séances suivies pour le certificat
+  seuilMissions Int      @default(100) // % de missions validées pour le certificat
+  certificat    Boolean  @default(false)
+  modeleDeId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  produit      Produit           @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  sessions     Evenement[]
+  missions     MissionBootcamp[]
+  inscriptions InscriptionLive[]
+}
+
+model MissionBootcamp {
+  id         String    @id @default(cuid())
+  bootcampId String
+  titre      String
+  consigne   String?   @db.Text
+  echeance   DateTime?
+  ordre      Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  bootcamp  Bootcamp           @relation(fields: [bootcampId], references: [id], onDelete: Cascade)
+  livrables LivrableBootcamp[]
+
+  @@index([bootcampId])
+}
+
+model LivrableBootcamp {
+  id            String    @id @default(cuid())
+  missionId     String
+  inscriptionId String
+  fichierUrl    String?   // stockage de la boutique (digitals/livrables/) : jamais listé dans Fichiers
+  fichierNom    String?
+  lien          String?
+  texte         String?   @db.Text
+  statut        String    @default("depose") // depose | valide | a_revoir
+  feedback      String?   @db.Text
+  note          Int?
+  deposeAt      DateTime  @default(now())
+  corrigeAt     DateTime?
+
+  mission     MissionBootcamp @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  inscription InscriptionLive @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, inscriptionId])
+}
+
+// Communauté d'un produit (formation, bootcamp, événement), réservée à ses inscrits.
+model EspaceCommunaute {
+  id        String   @id @default(cuid())
+  tenantId  String
+  produitId String   @unique
+  regles    String?  @db.Text
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  fils FilCommunaute[]
+}
+
+model FilCommunaute {
+  id         String   @id @default(cuid())
+  espaceId   String
+  type       String   @default("discussion") // discussion | question | annonce
+  titre      String
+  auteurCle  String   // e-mail de l'inscrit, ou "formateur"
+  auteurNom  String
+  auteurRole String   // apprenant | mentor | formateur
+  epingle    Boolean  @default(false)
+  resolu     Boolean  @default(false)
+  masque     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  espace   EspaceCommunaute    @relation(fields: [espaceId], references: [id], onDelete: Cascade)
+  messages MessageCommunaute[]
+
+  @@index([espaceId, createdAt])
+}
+
+model MessageCommunaute {
+  id           String   @id @default(cuid())
+  filId        String
+  auteurCle    String
+  auteurNom    String
+  auteurRole   String
+  texte        String   @db.Text
+  masque       Boolean  @default(false)
+  signalements Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  fil                FilCommunaute           @relation(fields: [filId], references: [id], onDelete: Cascade)
+  reactions          ReactionCommunaute[]
+  signalementsDetail SignalementCommunaute[]
+
+  @@index([filId, createdAt])
+}
+
+model ReactionCommunaute {
+  id        String @id @default(cuid())
+  messageId String
+  auteurCle String
+  emoji     String
+
+  message MessageCommunaute @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, auteurCle, emoji])
+}
+
+model SignalementCommunaute {
+  id        String   @id @default(cuid())
+  messageId String
+  auteurCle String
+  raison    String?
+  createdAt DateTime @default(now())
+
+  message MessageCommunaute @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, auteurCle])
+}
+
+// Créneau de mentorat proposé par le formateur, réservé par un inscrit (prise conditionnelle).
+model CreneauMentorat {
+  id         String    @id @default(cuid())
+  tenantId   String
+  produitId  String
+  mentorNom  String
+  debut      DateTime
+  dureeMin   Int       @default(30)
+  lien       String?   // révélé au seul apprenant qui a réservé
+  reserveCle String?
+  reserveNom String?
+  reserveAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([produitId, debut])
+}
+
+// ─── Chantier AI COURSE STUDIO (lib/academie/) ───────────────────────────────
+// Studio guidé de création de formation : brief → curriculum validé → leçons
+// générées une à une → contrôle qualité → aperçu → publication en Formation réelle.
+// Statuts d'un élément : brouillon | en_generation | a_verifier | valide | publie | archive.
+// Les tâches longues passent par TacheIA (types « studio_* ») ; le coût par UsageIA.
+model StudioCours {
+  id        String   @id @default(cuid())
+  tenantId  String
+  titre     String
+  brief     Json     // thème, public, niveau, objectifs, durée, langue, ton, prix, sources
+  etape     Int      @default(1) // 1 curriculum · 2 validation · 3 leçons · 4 contrôle · 5 aperçu · 6 publication
+  statut    String   @default("brouillon")
+  produitId String?  // formation créée à la publication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  elements StudioElement[]
+
+  @@index([tenantId, updatedAt])
+}
+
+model StudioElement {
+  id        String   @id @default(cuid())
+  studioId  String
+  tenantId  String
+  type      String   // positionnement | module | lecon | page_vente | email
+  parentId  String?  // leçon → module
+  ordre     Int      @default(0)
+  titre     String
+  contenu   Json     @default("{}")
+  statut    String   @default("brouillon")
+  version   Int      @default(1)
+  alertes   Json     @default("[]") // contrôle qualité : [{type, extrait, raison}]
+  erreur    String?
+  publieId  String?  // Chapitre ou Lecon créé à la publication
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studio   StudioCours     @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  versions StudioVersion[]
+
+  @@index([studioId, type, ordre])
+}
+
+// Historique réversible : l'état AVANT chaque modification (génération, édition, restauration).
+model StudioVersion {
+  id        String   @id @default(cuid())
+  elementId String
+  version   Int
+  titre     String
+  contenu   Json
+  origine   String   // ia | marchand | restauration
+  createdAt DateTime @default(now())
+
+  element StudioElement @relation(fields: [elementId], references: [id], onDelete: Cascade)
+
+  @@unique([elementId, version])
 }

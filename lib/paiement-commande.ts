@@ -1,7 +1,6 @@
 // Confirmation d'un paiement de commande storefront — appelé par le webhook NotchPay
 // et, en secours, par la page de confirmation si le webhook n'est pas encore arrivé.
 // Idempotent : ne fait rien si la commande est déjà marquée payée.
-import { lienBoutique } from "./origine-site";
 import { prisma } from "./prisma";
 import { crediterWallet } from "./wallet";
 import { traiterPaiementDigital, enregistrerConversionAffiliation, capturerCommissionAffiliation, TYPES_LIVRAISON_DIGITALE } from "./affiliation";
@@ -64,13 +63,23 @@ function fraisNotchPay(transaction: any): number {
   return 0;
 }
 
+/** La transaction NotchPay paie bien CETTE commande : aboutie, montant et devise couverts, référence liée. */
+export function transactionAppartient(transaction: any, commande: { id: string; montantTotal: number; devise: string; paiementReference: string | null }, reference: string): boolean {
+  const refMarchande = transaction?.merchant_reference ?? transaction?.trxref;
+  // Sans référence marchande renvoyée, seule la référence NotchPay enregistrée à l'initialisation fait foi.
+  const liee = refMarchande ? refMarchande === `ORD-${commande.id}` : !!commande.paiementReference && reference === commande.paiementReference && transaction?.reference === reference;
+  return liee && paiementCouvre(transaction, commande.montantTotal, commande.devise);
+}
+
 /**
- * `transactionEvenement` : données du webhook signé, utilisées seulement si l'API
- * NotchPay ne répond pas. Sans transaction vérifiable, rien n'est confirmé.
+ * Confirme une commande UNIQUEMENT sur la transaction relue chez NotchPay (API authentifiée
+ * par notre clé privée) : montant, devise et référence marchande contrôlés. Les données du
+ * webhook, même signées, ne suffisent jamais ; si NotchPay ne répond pas, l'erreur remonte
+ * (le webhook répond 500 et NotchPay le renverra ; la réconciliation repasse aussi).
  * Rejouable : un appel répété sur une commande déjà payée reprend seulement la
  * finalisation (crédit, livraison digitale, fournisseurs), qui est idempotente.
  */
-export async function confirmerPaiementCommande(commandeId: string, reference: string, transactionEvenement?: any) {
+export async function confirmerPaiementCommande(commandeId: string, reference: string) {
   const commande = await prisma.commande.findUnique({
     where: { id: commandeId },
     include: {
@@ -87,12 +96,14 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
 
   // Le montant réellement payé est relu chez NotchPay : une transaction « complete »
   // d'un autre montant, d'une autre devise ou d'une autre commande ne paie pas celle-ci.
-  const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch(() => transactionEvenement);
-  const refMarchande = transaction?.merchant_reference ?? transaction?.trxref;
-  if (!paiementCouvre(transaction, commande.montantTotal, commande.devise) || (refMarchande && refMarchande !== `ORD-${commandeId}`)) {
+  const transaction = await verifierPaiementNotchPay(reference).then((r) => r.transaction).catch((e) => {
+    if (e?.status === 404) return null; // transaction inconnue de NotchPay : refusée
+    throw e; // NotchPay injoignable : réessayé plus tard, jamais confirmé à l'aveugle
+  });
+  if (!transactionAppartient(transaction, commande, reference)) {
     console.error("[paiement-commande] paiement refusé : ne correspond pas à la commande", {
       commandeId, reference, attendu: `${commande.montantTotal} ${commande.devise}`,
-      recu: transaction ? `${transaction.amount} ${transaction.currency} (${transaction.status}, ${refMarchande ?? "sans référence"})` : "transaction introuvable",
+      recu: transaction ? `${transaction.amount} ${transaction.currency} (${transaction.status}, ${transaction.merchant_reference ?? transaction.trxref ?? "sans référence"})` : "transaction introuvable",
     });
     return;
   }
@@ -144,9 +155,10 @@ export async function confirmerPaiementCommande(commandeId: string, reference: s
   const hasDigital = commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://axsoafrica.com";
 
-  if (commande.clientEmail) {
+  // Achat digital : l'e-mail avec le lien d'accès part de la livraison (lib/livraison-numerique.ts),
+  // journalisé et retenté. Ici seulement la confirmation d'une commande physique.
+  if (commande.clientEmail && !hasDigital) {
     await envoyerConfirmationCommande({
-      lienAcces: hasDigital ? await lienBoutique(commande.tenant.slug, `/confirmation/${commande.id}`) : undefined,
       email: commande.clientEmail,
       nom: commande.clientNom,
       numeroCommande: commande.numero,

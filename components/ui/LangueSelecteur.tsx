@@ -9,11 +9,11 @@ export function choisirLangue(langue: Langue) {
   location.reload();
 }
 
-/** Menu de langue. `flottant` : pastille fixe en bas à gauche, masquée dans le dashboard (qui l'a dans son header). */
+/** Menu de langue. `flottant` : pastille fixe en bas à gauche, masquée dans le dashboard (qui l'a dans son header) et l'admin (barre latérale). */
 export function LangueSelecteur({ flottant = false }: { flottant?: boolean }) {
   const { langue } = useT();
   const pathname = usePathname();
-  if (flottant && pathname?.startsWith("/dashboard")) return null;
+  if (flottant && (pathname?.startsWith("/dashboard") || pathname?.startsWith("/admin"))) return null;
 
   return (
     <label

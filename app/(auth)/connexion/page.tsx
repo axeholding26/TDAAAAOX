@@ -9,6 +9,7 @@ import { schemaConnexion } from "@/lib/validations";
 import type { z } from "zod";
 import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Mail, ArrowLeft } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { estRoleAdmin } from "@/lib/command-center/rbac";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
@@ -47,7 +48,7 @@ function ConnexionForm() {
     const sessionRes = await fetch("/api/auth/session");
     const session    = await sessionRes.json();
     if (session?.user?.role === "livreur") router.push("/livreur");
-    else if (session?.user?.role === "admin" || session?.user?.role === "admin_lecteur") router.push("/admin");
+    else if (estRoleAdmin(session?.user?.role)) router.push("/admin");
     else router.push(callbackUrl);
     router.refresh();
   }

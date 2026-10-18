@@ -1,8 +1,7 @@
-import { finAcces, metaDigital } from "./commandes";
 import { prisma } from "./prisma";
 import { crediterWallet, operateurCameroun, telCameroun } from "./wallet";
 import { initierTransfertNotchPay } from "./notchpay";
-import { livrerBundle } from "./bundle-delivery";
+import { livrerCommandeDigitale } from "./livraison-numerique";
 import { notifierMarchand } from "./notifications-marchand";
 
 // ─── Codes ──────────────────────────────────────────────────────────────────
@@ -65,7 +64,7 @@ export const TYPES_PRODUIT_DIGITAL = new Set(["digital", "fichier", "formation",
 // paiement — contrairement à TYPES_PRODUIT_DIGITAL ci-dessus, inclut "bundle"
 // (qui doit toujours être résolu/livré via livrerBundle, même s'il ne compte
 // pas comme "digital" pour le calcul de commission).
-export const TYPES_LIVRAISON_DIGITALE = new Set(["digital", "fichier", "formation", "licence", "bundle"]);
+export const TYPES_LIVRAISON_DIGITALE = new Set(["digital", "fichier", "formation", "licence", "bundle", "evenement", "bootcamp"]); // evenement/bootcamp : place live (lib/live/service.ts)
 
 // Commission par défaut d'un produit digital sans taux personnalisé —
 // nettement supérieure au taux physique par défaut car sans coût de
@@ -376,96 +375,13 @@ export async function traiterPaiementDigital(params: {
   tauxCommission: number;
   fraisPasserelle?: number;
 }) {
-  const { commande, lignes, reference, tauxCommission, fraisPasserelle } = params;
+  const { commande, reference, tauxCommission, fraisPasserelle } = params;
 
-  const produits = await prisma.produit.findMany({
-    where: { id: { in: lignes.map((l) => l.produitId) }, type: { in: [...TYPES_LIVRAISON_DIGITALE] } },
-    select: {
-      id: true, type: true, fichierUrl: true, instructionsTelechargement: true,
-      produitFichier: true,
-      licenceProduit: true,
-    },
-  });
-
-  // Livraison — un mécanisme distinct par type de produit digital. Faite AVANT le crédit :
-  // le client a payé, ses accès ne dépendent jamais du portefeuille du marchand.
-  // Rejouable (finalisation reprise après une erreur) : une commande déjà livrée ne l'est pas deux fois.
-  // ponytail: contrôle par commande, pas par produit — une livraison interrompue au milieu ne complète pas les produits restants.
-  const dejaLivree = (await Promise.all([
-    prisma.telechargement.count({ where: { commandeId: commande.id } }),
-    prisma.accesFormation.count({ where: { commandeId: commande.id } }),
-    prisma.cleLicence.count({ where: { commandeId: commande.id } }),
-  ])).some((n) => n > 0);
-  const crypto = await import("crypto");
-  // Accès à vie par défaut ; seule une durée choisie par le marchand sur le produit le limite.
-
-  for (const produit of dejaLivree ? [] : produits) {
-    try {
-      if (produit.type === "digital") {
-        // Legacy — un seul fichier direct.
-        if (!produit.fichierUrl) continue;
-        const token = crypto.randomBytes(32).toString("hex");
-        await prisma.telechargement.create({
-          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: finAcces(metaDigital(produit.instructionsTelechargement).expirationAcces) },
-        });
-      } else if (produit.type === "fichier" && produit.produitFichier) {
-        // Nouveau système multi-fichiers — un token couvre tous les fichiers du produit
-        // (voir app/api/telechargements/[token] qui liste via ?fichier=<id>).
-        const token = crypto.randomBytes(32).toString("hex");
-        await prisma.telechargement.create({
-          data: { produitId: produit.id, commandeId: commande.id, token, expireAt: null },
-        });
-      } else if (produit.type === "formation") {
-        // Accès à vie au contenu de la formation, via token self-service.
-        const token = crypto.randomBytes(32).toString("hex");
-        await prisma.accesFormation.create({
-          data: { produitId: produit.id, commandeId: commande.id, token, clientEmail: commande.clientEmail },
-        });
-      } else if (produit.type === "licence" && produit.licenceProduit) {
-        // Attribue la prochaine clé disponible (générée/importée à l'avance par le
-        // marchand). Si le stock de clés est épuisé, on ne bloque pas la commande —
-        // le marchand doit en générer davantage, visible via ses stats de licence.
-        const expiry = produit.licenceProduit.dureeJours
-          ? new Date(Date.now() + produit.licenceProduit.dureeJours * 86400 * 1000)
-          : null;
-        // Prise conditionnelle : deux achats simultanés ne reçoivent jamais la même clé.
-        for (let essai = 0; essai < 5; essai++) {
-          const cle = await prisma.cleLicence.findFirst({
-            where: { licenceProduitId: produit.licenceProduit.id, statut: "disponible" },
-            orderBy: { createdAt: "asc" },
-          });
-          if (!cle) break;
-          const { count } = await prisma.cleLicence.updateMany({
-            where: { id: cle.id, statut: "disponible" },
-            data: { statut: "vendue", commandeId: commande.id, acheteurEmail: commande.clientEmail, expireAt: expiry },
-          });
-          if (count) break;
-        }
-        if (!(await prisma.cleLicence.count({ where: { commandeId: commande.id, licenceProduitId: produit.licenceProduit.id } }))) {
-          // Clés épuisées entre la commande et le paiement : le client a payé sans recevoir sa clé.
-          await notifierMarchand({
-            tenantId: commande.tenantId, commandeId: commande.id, type: "stock_faible",
-            titre: "Client payé sans clé de licence",
-            message: `Plus aucune clé disponible : ${commande.clientNom} (${commande.clientEmail}) a payé sans recevoir sa clé. Ajoute des clés puis envoie-lui la sienne, ou rembourse la commande.`,
-            lien: `/dashboard/commandes/${commande.id}`,
-          }).catch(() => {});
-        }
-      } else if (produit.type === "bundle") {
-        // Résout et livre chaque élément inclus (fichier/licence/digital) — déjà
-        // implémenté dans lib/bundle-delivery.ts, jamais appelé jusqu'ici.
-        await livrerBundle(commande.id, produit.id);
-      }
-    } catch (err) {
-      // Une livraison en échec ne doit jamais bloquer la confirmation des autres
-      // lignes ni du paiement lui-même — le marchand voit l'erreur dans ses logs.
-      console.error(`[traiterPaiementDigital] échec livraison produit ${produit.id} (${produit.type})`, err);
-    }
-  }
-
-  await prisma.commande.update({
-    where: { id: commande.id },
-    data: { paiementStatut: "completed", statut: "livree", livraisonStatut: "livree", livreeAt: new Date() },
-  });
+  // Livraison (jetons, accès, clés, e-mail) — lib/livraison-numerique.ts, idempotente et journalisée.
+  // Faite AVANT le crédit : le client a payé, ses accès ne dépendent jamais du portefeuille du marchand.
+  // Elle passe la commande à « livrée » quand tout est livré ; sinon le journal le signale au
+  // marchand et la réconciliation la reprend.
+  await livrerCommandeDigitale(commande.id);
 
   await crediterWallet({
     tenantId: commande.tenantId,

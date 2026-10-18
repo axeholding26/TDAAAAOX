@@ -19,6 +19,7 @@ import { rembourserPaiementNotchPay, hasNotchPay } from "./notchpay";
 import { notifierMarchand } from "./notifications-marchand";
 import { notifierClientWhatsApp } from "./whatsapp";
 import { formatMontant } from "./utils";
+import { revoquerAccesCommande } from "./livraison-numerique";
 
 type Tx = Prisma.TransactionClient;
 
@@ -38,6 +39,9 @@ export async function libererCommande(tx: Tx, p: { commandeId: string; motif: st
       data: { conversions: { decrement: 1 }, commissionTotal: { decrement: c.montantCommission }, commissionPending: { decrement: c.montantCommission } },
     });
   }
+
+  // Accès numériques coupés (jetons, clés de licence, journal) : remboursement comme annulation.
+  await revoquerAccesCommande(tx, p.commandeId);
 
   // Code promo rendu (une seule fois : le lien est retiré de la commande).
   const { codePromoId } = await tx.commande.findUniqueOrThrow({ where: { id: p.commandeId }, select: { codePromoId: true } });
@@ -92,7 +96,6 @@ export async function rembourserCommande(p: {
       await prisma.$transaction(async (tx) => {
         await compterVentes(tx, commande.id, -1);
         await libererCommande(tx, { commandeId: commande.id, motif: `Remboursement #${commande.numero}`, restock: p.restock });
-        await tx.cleLicence.updateMany({ where: { commandeId: commande.id, statut: "vendue" }, data: { statut: "revoquee" } });
       });
       break;
     } catch (err) {

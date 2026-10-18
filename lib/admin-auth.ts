@@ -1,7 +1,8 @@
 import { auth } from "./auth";
 import { prisma } from "./prisma";
+import { estRoleAdmin, peutVoir, type RoleAdmin, type Section } from "./command-center/rbac";
 
-export type RoleAdmin = "admin" | "admin_lecteur";
+export type { RoleAdmin };
 
 export interface AdminSession {
   userId: string;
@@ -16,13 +17,17 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   if (!session || !userId) return null;
   // Rôle relu en base à chaque appel : celui du jeton est figé à la connexion
   // (un admin rétrogradé garderait sinon l'accès jusqu'à l'expiration du cookie).
-  const role = (await prisma.user.findUnique({ where: { id: userId }, select: { role: true } }))?.role;
-  if (role !== "admin" && role !== "admin_lecteur") return null;
-  return {
-    userId,
-    email: session.user?.email ?? "",
-    role,
-  };
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, email: true } });
+  const role = user?.role;
+  if (!estRoleAdmin(role)) return null;
+  // E-mail relu en base aussi : c'est lui qui signe le journal d'audit.
+  return { userId, email: user?.email ?? session.user?.email ?? "", role };
+}
+
+/** Session admin autorisée à voir cette section (RBAC, lib/command-center/rbac.ts), sinon null. */
+export async function getAdminSessionPour(section: Section): Promise<AdminSession | null> {
+  const s = await getAdminSession();
+  return s && peutVoir(s.role, section) ? s : null;
 }
 
 // true uniquement pour le rôle "admin" complet — le rôle "admin_lecteur" ne

@@ -5,7 +5,7 @@ import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { finAcces, metaDigital } from "@/lib/commandes";
-import { randomUUID } from "crypto";
+import { nouveauJeton } from "@/lib/livraison-numerique";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     const limiteTelechargement = meta.limiteTelechargement as number | null ?? null;
 
     const expireAt = finAcces(expirationJours);
-    const token = randomUUID();
+    const token = nouveauJeton();
 
     await prisma.telechargement.create({
       data: {
@@ -132,7 +132,7 @@ export async function PATCH(req: NextRequest) {
       // Expirer immédiatement
       await prisma.telechargement.update({
         where: { token },
-        data: { expireAt: new Date(0) }, // epoch = déjà expiré
+        data: { expireAt: new Date(0), revoqueAt: new Date() },
       });
 
       return NextResponse.json({ success: true, message: "Accès révoqué avec succès" });
@@ -140,6 +140,9 @@ export async function PATCH(req: NextRequest) {
 
     // ── Action: regénérer un lien de téléchargement ──
     if (action === "resend" && orderId && productId) {
+      // Commande de CETTE boutique, payée : jamais de lien pour une commande d'ailleurs ou impayée.
+      const cmd = await prisma.commande.findFirst({ where: { id: orderId, tenantId, paiementStatut: "completed" }, select: { id: true } });
+      if (!cmd) return NextResponse.json({ message: "Commande introuvable ou non payée" }, { status: 404 });
       // Vérifier le produit
       const produit = await prisma.produit.findFirst({
         where: { id: productId, tenantId, type: "digital" },
@@ -163,7 +166,7 @@ export async function PATCH(req: NextRequest) {
       const limiteTelechargement = meta.limiteTelechargement as number | null ?? null;
 
       const expireAt = finAcces(expirationJours);
-      const newToken = randomUUID();
+      const newToken = nouveauJeton();
 
       await prisma.telechargement.create({
         data: {

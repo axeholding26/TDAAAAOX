@@ -24,7 +24,7 @@ type Produit = ProductPageClientProps["produit"];
 // (variantes, avis…) restent visibles pendant le réglage.
 const EXEMPLE: Produit = {
   id: "exemple", nom: "Produit d'exemple", description: "Une courte description de votre produit, affichée sous le prix.", descriptionIA: null,
-  images: [], prixAffiche: 15000, prixCompareAffiche: 19000, remise: 21, stock: 12, type: "physique", fichierUrl: null, fichierNom: null,
+  images: [], prixAffiche: 15000, prixCompareAffiche: 19000, remise: 21, stock: 12, type: "physique", fichierNom: null,
   categorie: null, marque: null, collections: [], noteMoyenne: 4.5,
   variantes: [
     { id: "t-s", nom: "Taille", valeur: "S", prix: null, stock: 5 }, { id: "t-m", nom: "Taille", valeur: "M", prix: null, stock: 5 },

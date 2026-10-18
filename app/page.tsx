@@ -11,8 +11,10 @@ import { CtaFinal } from "@/components/marketing/CtaFinal";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import { PauseHorsEcran } from "@/components/marketing/PauseHorsEcran";
 import { Preloader } from "@/components/marketing/Preloader";
+import { avisPublies } from "@/lib/avis-plateforme";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const avis = await avisPublies(8);
   return (
     <main className="overflow-x-clip bg-white text-gray-900">
       {/* overflow-x-clip, pas -hidden : « hidden » fait de <main> une seconde zone de défilement
@@ -25,7 +27,7 @@ export default function HomePage() {
       <AxiaSection/>
       <VideoSection/>
       <TarifsSection/>
-      <TemoignagesSection/>
+      <TemoignagesSection reels={avis}/>
       <FaqSection/>
       <CtaFinal/>
       <FooterMarketing/>

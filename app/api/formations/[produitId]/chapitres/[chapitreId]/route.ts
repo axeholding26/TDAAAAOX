@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { appliquerPedagogie, chapitrePedagogie } from "@/lib/formation/editeur";
 
 type Ctx = { params: Promise<{ produitId: string; chapitreId: string }> };
 
@@ -27,8 +28,12 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const data: any = {};
     if ("titre" in body) data.titre = body.titre.trim();
     if ("actif"  in body) data.actif  = body.actif;
+    const peda = chapitrePedagogie.safeParse(body);
+    if (!peda.success) return NextResponse.json({ error: peda.error.issues[0]?.message ?? "Données invalides" }, { status: 400 });
 
-    const updated = await prisma.chapitre.update({ where: { id: chapitreId }, data });
+    await prisma.chapitre.update({ where: { id: chapitreId }, data });
+    await appliquerPedagogie({ type: "chapitre", id: chapitreId, formationId: chapitre.formationId }, peda.data);
+    const updated = await prisma.chapitre.findUnique({ where: { id: chapitreId } });
     return NextResponse.json({ chapitre: updated });
   } catch {
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });

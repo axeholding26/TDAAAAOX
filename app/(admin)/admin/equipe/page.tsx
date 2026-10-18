@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { AdminEquipePanel } from "@/components/admin/AdminEquipePanel";
 import { getT } from "@/lib/i18n/serveur";
 
 export default async function AdminEquipePage() {
   const t = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("equipe");
+  if (!session) redirect("/admin?refus=1");
 
   return (
     <div className="space-y-8">

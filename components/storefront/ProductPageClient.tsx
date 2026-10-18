@@ -50,7 +50,7 @@ export interface ProductPageClientProps {
   produit: {
     id: string; nom: string; description: string | null; descriptionIA: string | null;
     images: string[]; videos?: string[]; prixAffiche: number; prixCompareAffiche: number | null;
-    remise: number; stock: number; type: string; fichierUrl: string | null;
+    remise: number; stock: number; type: string;
     fichierNom: string | null; categorie: string | null; marque: string | null;
     variantes: Variante[]; avis: Avis[];
     collections: { nom: string; slug: string }[]; noteMoyenne: number;

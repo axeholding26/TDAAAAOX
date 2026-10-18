@@ -6,5 +6,6 @@ import { MODULE as creatif } from "./creatif";
 import { MODULE as automatisation } from "./automatisation";
 import { MODULE as objectifs } from "./objectifs";
 import { MODULE as builder } from "./builder";
+import { MODULE as imports } from "./imports";
 
-export const MODULES_IA: ModuleIA[] = [commerce, marche, creatif, automatisation, objectifs, builder];
+export const MODULES_IA: ModuleIA[] = [commerce, marche, creatif, automatisation, objectifs, builder, imports];

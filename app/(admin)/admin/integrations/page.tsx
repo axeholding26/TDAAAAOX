@@ -2,15 +2,15 @@
 // ce serveur, et ce que chacune active. Réservé au super-admin ; aucune valeur n'est affichée.
 import { redirect } from "next/navigation";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour } from "@/lib/admin-auth";
 import { etatIntegrations } from "@/lib/integrations";
 import { getT } from "@/lib/i18n/serveur";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminIntegrationsPage() {
-  const session = await getAdminSession();
-  if (!estAdminComplet(session)) redirect(session ? "/admin" : "/dashboard");
+  const session = await getAdminSessionPour("integrations");
+  if (!session) redirect("/admin?refus=1");
   const t = await getT();
   const etats = etatIntegrations();
   const manquantes = etats.filter((e) => !e.active);

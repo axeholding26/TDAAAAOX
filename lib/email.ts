@@ -142,16 +142,17 @@ export async function envoyerConfirmationCommande(params: {
   boutique: string;
   // Achat digital payé : lien vers la page d'accès (fichiers, formation, clés) — comme Chariow.
   lienAcces?: string;
-}) {
+}): Promise<boolean> {
+  // true seulement si Resend a accepté l'envoi : jamais « e-mail envoyé » sans cette confirmation.
   const resend = getResendClient();
   if (!resend) {
     console.warn("Resend non configuré — email non envoyé");
-    return;
+    return false;
   }
 
   if (params.lienAcces) {
     const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-    await envoyer(resend, {
+    return envoyer(resend, {
       from: "Axso <noreply@axsoafrica.com>",
       to: params.email,
       subject: `Votre achat est disponible — ${params.boutique}`,
@@ -169,14 +170,13 @@ export async function envoyerConfirmationCommande(params: {
         </div>
       `,
     });
-    return;
   }
 
   const lignesProduits = params.produits
     .map((p) => `- ${p.nom} x${p.quantite} : ${p.prix * p.quantite} ${params.devise}`)
     .join("\n");
 
-  await envoyer(resend, {
+  return envoyer(resend, {
     from: "Axso <noreply@axsoafrica.com>",
     to: params.email,
     subject: `Confirmation commande ${params.numeroCommande} — ${params.boutique}`,

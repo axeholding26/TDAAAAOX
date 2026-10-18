@@ -1,0 +1,198 @@
+// « Ask Axso » : reconnaît l'intention d'une question et y répond UNIQUEMENT avec
+// des valeurs calculées par le moteur (aucun texte généré librement, aucune donnée
+// inventée). Une explication non démontrée est marquée comme hypothèse.
+import type { ContexteCC } from "./serveur";
+import type { ReponseCopilote } from "@/components/command-center/Copilote";
+import { mesurer, ventiler, METRIQUES, type Mesure } from "./moteur";
+import { attribuer, entonnoir, statsMarchands, radarChurn, radarExpansion, impactFonctions, INSUFFISANT } from "./insights";
+import { formatValeur, formatVariation } from "./format";
+import { nomPays, NOM_PLAN, PRIX_PLAN, PAYS } from "./types";
+import { qs } from "./contexte";
+import { peutVoir, sectionDe, type Section } from "./rbac";
+
+const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const a = (q: string, ...mots: string[]) => mots.some((m) => q.includes(m));
+
+type Rep = Omit<ReponseCopilote, "question">;
+const metr = (m: Mesure): Rep["metriques"][number] => ({ nom: m.nom, valeur: formatValeur(m.valeur, m.format), variation: m.variation == null ? undefined : formatVariation(m.variation, m.format), ton: m.statut === "bon" ? "good" : m.statut === "mauvais" ? "bad" : "neutre" });
+
+export function repondre(c0: ContexteCC, question: string): ReponseCopilote {
+  const q = norm(question);
+  // Un pays cité dans la question (« MRR Cameroun ») restreint le périmètre, comme le filtre pays.
+  const iso = c0.filtres.pays ? null : Object.entries(PAYS).find(([, nom]) => q.includes(norm(nom)))?.[0];
+  const c: ContexteCC = iso ? { ...c0, filtres: { ...c0.filtres, pays: iso }, vue: c0.vue.sous(`pays:${iso}`, () => new Set(c0.vue.marchands.filter((x) => x.pays === iso).map((x) => x.id))) } : c0;
+  const v = c.vue, f = c.fen, ctx = qs(c.filtres);
+  const href = (p: string) => p + ctx;
+  const m = (id: string) => mesurer(v, id, f.cur, f.prev, 2);
+  const voit = (s: Section) => peutVoir(c.session.role, s);
+  const refus = (s: Section): ReponseCopilote | null => (voit(s) ? null : { question, reponse: "Votre rôle ne donne pas accès à ces données.", preuves: [], metriques: [], entites: [], actions: [], confiance: "elevee", hypothese: false });
+  const perimetre = `Période : ${f.libelle.toLowerCase()} (${f.libelleComp})${c.filtres.pays ? ` · périmètre : ${nomPays(c.filtres.pays)}` : ""}.`;
+  const fin = (r: Rep): ReponseCopilote => ({ question, ...r, preuves: [...r.preuves, perimetre] });
+
+  // 1. Plan pour augmenter le MRR
+  if (a(q, "plan", "augmenter", "increase", "grow") && a(q, "mrr", "revenu", "revenue")) {
+    const r = refus("revenus"); if (r) return r;
+    const mrr = v.mrr(v.maintenant), cible = mrr * 1.2, ecart = cible - mrr;
+    const stats = statsMarchands(v);
+    const exp = radarExpansion(v, stats), churn = radarChurn(v, stats, c.reglages.poids_sante);
+    const potExp = exp.reduce((s, e) => s + e.revenuPotentiel, 0);
+    const risque = churn.reduce((s, x) => s + (v.mrrParMarchand(v.maintenant).get(x.marchand.id) ?? 0), 0);
+    const gratuitsActifs = v.marchands.filter((x) => x.plan === "palier0" && (stats.get(x.id)?.commandes30 ?? 0) >= 5).length;
+    const leviers = [
+      { nom: "Upgrades détectés (Expansion Radar)", montant: potExp, detail: `${exp.length} marchands` },
+      { nom: "MRR à sauver (Churn Radar)", montant: risque, detail: `${churn.length} marchands à risque` },
+      { nom: "Conversion de 10 % des gratuits actifs vers Pro", montant: Math.round(gratuitsActifs * 0.1) * PRIX_PLAN.palier1, detail: `${gratuitsActifs} gratuits avec ≥ 5 commandes / 30 j` },
+    ];
+    const couvert = leviers.reduce((s, l) => s + l.montant, 0);
+    if (!mrr) return fin({ reponse: "Le MRR actuel est nul : il n'y a pas encore de base pour calculer un plan de +20 %. Priorité : obtenir les premiers abonnements payants.", preuves: [], metriques: [], entites: [], actions: [{ titre: "Voir les candidats à l'upgrade", href: href("/admin/succes-client#expansion") }], confiance: "elevee", hypothese: false });
+    return fin({
+      reponse: `Objectif : passer de ${formatValeur(mrr, "xaf")} à ${formatValeur(cible, "xaf")} de MRR (+${formatValeur(ecart, "xaf")}).\nLes trois leviers identifiés représentent ${formatValeur(couvert, "xaf")}, soit ${Math.round((couvert / ecart) * 100)} % de l'écart${couvert >= ecart ? " : l'objectif est atteignable si une partie suffisante de ces leviers est convertie." : " : ils ne suffisent pas seuls, il faudra aussi de l'acquisition."}`,
+      preuves: leviers.map((l) => `${l.nom} : ${formatValeur(l.montant, "xaf")} (${l.detail})`),
+      metriques: [metr(m("mrr")), metr(m("churn")), metr(m("conversion_payante")), metr(m("nrr"))],
+      entites: exp.slice(0, 5).map((e) => ({ nom: e.marchand.nom, detail: `→ ${e.planRecommande === "entreprise" ? "Grand compte" : NOM_PLAN[e.planRecommande]}`, href: href(`/admin/marchands/${e.marchand.id}`) })),
+      actions: [
+        { titre: `Contacter les ${exp.length} candidats à l'upgrade`, href: href("/admin/succes-client#expansion") },
+        { titre: `Sécuriser les ${churn.length} marchands à risque`, href: href("/admin/succes-client") },
+        { titre: "Activer les gratuits les plus actifs (offre Pro)", href: href("/admin/marchands?plan=palier0") },
+      ],
+      confiance: "moyenne", hypothese: true,
+    });
+  }
+
+  // 2. Churn / marchands à risque
+  if (a(q, "churn", "partir", "risque", "at risk", "quitter", "perdre")) {
+    const r = refus("succes"); if (r) return r;
+    const churn = radarChurn(v, statsMarchands(v), c.reglages.poids_sante);
+    const total = churn.reduce((s, x) => s + x.revenuRisque, 0);
+    const raisons = new Map<string, number>();
+    for (const x of churn) for (const s of x.raisons) { const k = s.replace(/\d+/g, "N"); raisons.set(k, (raisons.get(k) ?? 0) + 1); }
+    return fin({
+      reponse: churn.length ? `${churn.length} marchand${churn.length > 1 ? "s présentent" : " présente"} un risque de churn d'au moins 50 %, pour ${formatValeur(total, "xaf")} de revenu mensuel en jeu. Le risque est un score calculé à partir de signaux d'activité (pas un modèle prédictif entraîné).` : "Aucun marchand générant du revenu ne présente actuellement de risque de churn élevé.",
+      preuves: [...raisons].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, n]) => `Signal « ${k.replace("N", "plusieurs")} » chez ${n} marchand${n > 1 ? "s" : ""}`),
+      metriques: [metr(m("churn")), metr(m("nrr"))],
+      entites: churn.slice(0, 8).map((x) => ({ nom: x.marchand.nom, detail: `${Math.round(x.risque * 100)} % · ${formatValeur(x.revenuRisque, "xaf")}`, href: href(`/admin/marchands/${x.marchand.id}`) })),
+      actions: [{ titre: "Ouvrir le Churn Radar", href: href("/admin/succes-client") }, ...(churn[0] ? [{ titre: `${churn[0].action} (${churn[0].marchand.nom})` }] : [])],
+      confiance: "moyenne", hypothese: false,
+    });
+  }
+
+  // 3. Activation
+  if (a(q, "activation", "onboarding")) {
+    const r = refus("croissance"); if (r) return r;
+    const fa = entonnoir(v, f.cur), fb = entonnoir(v, f.prev), mes = m("activation");
+    const ecarts = fa.etapes.slice(1).map((e, i) => ({ nom: e.nom, a: e.tauxEtape, b: fb.etapes[i + 1].tauxEtape, d: e.tauxEtape - fb.etapes[i + 1].tauxEtape })).sort((x, y) => x.d - y.d);
+    const assez = fa.etapes[0].nombre >= 20 && fb.etapes[0].nombre >= 20;
+    const pire = ecarts[0];
+    return fin({
+      reponse: mes.valeur == null ? "Pas assez d'inscriptions de plus de 14 jours sur la période pour mesurer l'activation." : !assez ? `Taux d'activation : ${formatValeur(mes.valeur, "pct")} (${formatVariation(mes.variation, "pct")}). ${INSUFFISANT}` : `Taux d'activation : ${formatValeur(mes.valeur, "pct")} (${formatVariation(mes.variation, "pct")}). L'étape qui a le plus reculé est « ${pire.nom} » : ${formatValeur(pire.b, "pct")} → ${formatValeur(pire.a, "pct")} des marchands passent cette étape.`,
+      preuves: ecarts.map((e) => `${e.nom} : ${formatValeur(e.b, "pct")} → ${formatValeur(e.a, "pct")}`),
+      metriques: [metr(mes), metr(m("nouveaux_marchands"))],
+      entites: [], actions: [{ titre: "Analyser l'entonnoir d'activation", href: href("/admin/croissance#activation") }],
+      confiance: assez ? "elevee" : "faible", hypothese: false,
+    });
+  }
+
+  // 4. Meilleurs marchés
+  if (a(q, "marche", "market", "pays", "countr", "geograph")) {
+    const r = refus("geographie"); if (r) return r;
+    const cur = ventiler(v, "gmv", f.cur, "pays"), prev = ventiler(v, "gmv", f.prev, "pays");
+    const pays = [...cur].map(([p, g]) => ({ p, g, cr: prev.get(p) ? (g - prev.get(p)!) / prev.get(p)! : null })).filter((x) => x.g > 0).sort((x, y) => y.g - x.g);
+    if (!pays.length) return fin({ reponse: "Aucun GMV sur la période : impossible de classer les marchés.", preuves: [], metriques: [], entites: [], actions: [], confiance: "elevee", hypothese: false });
+    const croissance = pays.filter((x) => x.cr != null && x.g >= pays[0].g * 0.05).sort((x, y) => y.cr! - x.cr!)[0];
+    return fin({
+      reponse: `Premier marché : ${nomPays(pays[0].p)} avec ${formatValeur(pays[0].g, "xaf")} de GMV.${croissance ? ` Plus forte croissance : ${nomPays(croissance.p)} (${formatVariation(croissance.cr, "nombre")}).` : ""}`,
+      preuves: pays.slice(0, 5).map((x) => `${nomPays(x.p)} : ${formatValeur(x.g, "xaf")}${x.cr != null ? ` (${formatVariation(x.cr, "nombre")})` : ""}`),
+      metriques: [metr(m("gmv")), metr(m("north_star"))],
+      entites: pays.slice(0, 8).map((x) => ({ nom: nomPays(x.p), detail: formatValeur(x.g, "xaf"), href: `/admin/geographie${qs(c.filtres, { pays: x.p })}` })),
+      actions: [{ titre: "Voir l'analyse géographique", href: href("/admin/geographie") }],
+      confiance: "elevee", hypothese: false,
+    });
+  }
+
+  // 5. Fonctionnalités à promouvoir
+  if (a(q, "fonctionnalit", "feature", "promouvoir", "promote")) {
+    const r = refus("produit"); if (r) return r;
+    const fns = impactFonctions(v, f).filter((x) => ["pos", "axia", "livraison", "marketing"].includes(x.fonction));
+    const cotes = fns.filter((x) => x.gmvParAdopteur != null && x.gmvParAutre).map((x) => ({ ...x, ratio: x.gmvParAdopteur! / x.gmvParAutre! })).sort((x, y) => y.ratio - x.ratio);
+    if (!cotes.length) return fin({ reponse: "Pas assez de marchands (20 par groupe minimum) pour comparer l'effet des fonctionnalités.", preuves: [], metriques: [], entites: [], actions: [{ titre: "Voir l'adoption des fonctionnalités", href: href("/admin/produit") }], confiance: "faible", hypothese: false });
+    const top = cotes[0];
+    return fin({
+      reponse: `À promouvoir en priorité : ${top.nom}. Ses utilisateurs génèrent ${formatValeur(top.ratio, "ratio")} plus de GMV que les autres marchands actifs, alors que seuls ${formatValeur(top.adoption, "pct")} des actifs l'utilisent. C'est une corrélation : les marchands déjà performants adoptent peut-être plus volontiers cette fonctionnalité.`,
+      preuves: cotes.map((x) => `${x.nom} : adoption ${formatValeur(x.adoption, "pct")}, GMV ×${x.ratio.toFixed(2)} vs non-utilisateurs${x.retentionAdopteurs != null && x.retentionAutres != null ? `, rétention ${formatValeur(x.retentionAdopteurs, "pct")} vs ${formatValeur(x.retentionAutres, "pct")}` : ""}`),
+      metriques: [metr(m("adoption_ia"))], entites: [],
+      actions: [{ titre: `Campagne de découverte de ${top.nom} auprès des non-utilisateurs`, href: href("/admin/produit") }],
+      confiance: "moyenne", hypothese: true,
+    });
+  }
+
+  // 6. Meilleurs marchands
+  if (a(q, "top", "meilleur", "best") && a(q, "marchand", "merchant", "boutique")) {
+    const r = refus("marchands"); if (r) return r;
+    const g = new Map<string, number>();
+    for (const x of v.payees(f.cur)) g.set(x.marchandId, (g.get(x.marchandId) ?? 0) + x.montant);
+    const top = [...g].sort((x, y) => y[1] - x[1]).slice(0, 10);
+    const total = [...g.values()].reduce((s, x) => s + x, 0);
+    return fin({
+      reponse: top.length ? `Les 10 premiers marchands réalisent ${formatValeur(top.reduce((s, x) => s + x[1], 0) / (total || 1), "pct")} du GMV de la période. Premier : ${v.parId.get(top[0][0])?.nom} (${formatValeur(top[0][1], "xaf")}).` : "Aucune vente sur la période.",
+      preuves: [], metriques: [metr(m("gmv")), metr(m("north_star"))],
+      entites: top.map(([id, x]) => ({ nom: v.parId.get(id)?.nom ?? id, detail: formatValeur(x, "xaf"), href: href(`/admin/marchands/${id}`) })),
+      actions: [{ titre: "Ouvrir la table des marchands", href: href("/admin/marchands") }], confiance: "elevee", hypothese: false,
+    });
+  }
+
+  // 7. Paiements échoués
+  if (a(q, "paiement", "payment", "echec", "failed")) {
+    const r = refus("paiements"); if (r) return r;
+    const ech = v.commandesW(f.cur).filter((x) => x.statut === "echouee");
+    const parMethode = new Map<string, number>(), parPays = new Map<string, number>();
+    for (const x of ech) { parMethode.set(x.methode, (parMethode.get(x.methode) ?? 0) + 1); const p = v.parId.get(x.marchandId)?.pays ?? "?"; parPays.set(p, (parPays.get(p) ?? 0) + 1); }
+    const att = attribuer(v, "echecs_paiement", f);
+    return fin({
+      reponse: `${ech.length} paiement${ech.length > 1 ? "s" : ""} échoué${ech.length > 1 ? "s" : ""} sur la période. ${att?.texte ?? INSUFFISANT}`,
+      preuves: [...[...parMethode].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k, n]) => `Moyen « ${k} » : ${n} échecs`), ...[...parPays].sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k, n]) => `${nomPays(k)} : ${n} échecs`)],
+      metriques: [metr(m("succes_paiement")), metr(m("echecs_paiement"))], entites: [],
+      actions: [{ titre: "Analyser les paiements", href: href("/admin/paiements") }], confiance: att ? "elevee" : "moyenne", hypothese: false,
+    });
+  }
+
+  // 8. Axia IA
+  if (a(q, "axia", " ia", "ai ", "intelligence", "ai usage")) {
+    const r = refus("ia"); if (r) return r;
+    return fin({
+      reponse: `Axia a reçu ${formatValeur(m("requetes_ia").valeur, "nombre")} requêtes pour un coût estimé de ${formatValeur(m("cout_ia").valeur, "xaf")}. ${formatValeur(m("adoption_ia").valeur, "pct")} des marchands actifs l'utilisent.`,
+      preuves: [], metriques: [metr(m("requetes_ia")), metr(m("adoption_ia")), metr(m("cout_ia"))], entites: [],
+      actions: [{ titre: "Voir l'intelligence Axia", href: href("/admin/ia") }], confiance: "elevee", hypothese: false,
+    });
+  }
+
+  // 9. Une métrique nommée (« pourquoi le GMV a baissé ? », « MRR Cameroun »)
+  const cible = METRIQUES.find((x) => q.includes(norm(x.nom)) || q.includes(x.id.replace("_", " "))) ?? (a(q, "revenu", "revenue") ? METRIQUES.find((x) => x.id === "revenu") : undefined);
+  if (cible) {
+    const r = refus(sectionDe(cible.page)); if (r) return r;
+    const mes = m(cible.id);
+    const att = cible.additive ? attribuer(v, cible.id, f) : null;
+    const mouvements = cible.id === "mrr" || cible.id === "revenu" ? v.mouvementsMrr(f.cur) : null;
+    // La question peut partir d'une prémisse fausse (« pourquoi ça a baissé ? » alors que ça monte) : on la corrige.
+    const baisse = a(q, "baiss", "chut", "drop", "fall", "decline", "recul"), hausse = a(q, "hausse", "augment", "rise", "grow", "monte");
+    const contredit = mes.variation != null && ((baisse && mes.variation > 0) || (hausse && mes.variation < 0)) ? `${cible.nom} n'a pas ${baisse ? "baissé" : "augmenté"} : il a ${mes.variation > 0 ? "progressé" : "reculé"}. ` : "";
+    return fin({
+      reponse: `${contredit}${cible.nom} : ${formatValeur(mes.valeur, cible.format)} (${formatVariation(mes.variation, cible.format)} ${f.libelleComp}).\n${att ? att.texte : a(q, "pourquoi", "why", "cause") ? INSUFFISANT : ""}`.trim(),
+      preuves: [
+        `Définition : ${cible.description} (${cible.formule}).`,
+        `Valeur de comparaison : ${formatValeur(mes.precedente, cible.format)}.`,
+        ...(att?.segments.map((s) => `${s.nom} : ${s.delta > 0 ? "+" : "−"}${formatValeur(Math.abs(s.delta), cible.format)}`) ?? []),
+        ...(mouvements ? [`MRR : +${formatValeur(mouvements.nouveau, "xaf")} nouveau, +${formatValeur(mouvements.expansion, "xaf")} expansion, −${formatValeur(mouvements.contraction, "xaf")} contraction, −${formatValeur(mouvements.churn, "xaf")} churn`] : []),
+      ],
+      metriques: [metr(mes)], entites: [],
+      actions: [{ titre: `Explorer ${cible.nom}`, href: href(cible.page) }],
+      confiance: att ? "elevee" : "moyenne", hypothese: false,
+    });
+  }
+
+  return {
+    question,
+    reponse: "Je ne sais pas encore répondre à cette question avec les données disponibles. Essayez une métrique (MRR, GMV, churn, activation…), un pays, les marchands à risque, les meilleurs marchés ou les fonctionnalités à promouvoir.",
+    preuves: [], metriques: [], entites: [], actions: [{ titre: "Explorer les données", href: href("/admin/explorer") }], confiance: "faible", hypothese: false,
+  };
+}
+

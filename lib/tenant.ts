@@ -1,6 +1,7 @@
 // Résolution multi-tenant pour Axso
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { estRoleAdmin } from "@/lib/command-center/rbac";
 import { cookies } from "next/headers";
 import { COOKIE_APERCU, lireJetonApercu } from "@/lib/builder/apercu";
 
@@ -55,5 +56,5 @@ export async function boutiqueVisible(tenant: { id: string; statut: string }): P
   const session = await auth();
   const role = (session?.user as any)?.role;
   // Propriétaire (aperçu) ou admin AXSO (modération depuis /admin/boutiques).
-  return (session?.user as any)?.tenantId === tenant.id || role === "admin" || role === "admin_lecteur";
+  return (session?.user as any)?.tenantId === tenant.id || estRoleAdmin(role);
 }

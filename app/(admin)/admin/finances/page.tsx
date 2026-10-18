@@ -3,7 +3,7 @@ import { commissionsParBoutiqueXAF, totalCommissionsXAF } from "@/lib/finances-a
 import { redirect } from "next/navigation";
 import { formatMontant, formatDate } from "@/lib/utils";
 import { DollarSign, TrendingUp, AlertCircle, Receipt } from "lucide-react";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { AdminWalletPanel } from "@/components/admin/AdminWalletPanel";
 import { AdminRetraitsManuels } from "@/components/admin/AdminRetraitsManuels";
 import { getPlatformTenantId } from "@/lib/wallet";
@@ -11,8 +11,8 @@ import { getT } from "@/lib/i18n/serveur";
 
 export default async function AdminFinancesPage() {
   const tx = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("finances");
+  if (!session) redirect("/admin?refus=1");
 
   const platformTenantId = await getPlatformTenantId();
   const platformWallet = await prisma.wallet.findUnique({ where: { tenantId: platformTenantId } });

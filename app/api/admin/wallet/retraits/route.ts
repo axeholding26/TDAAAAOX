@@ -1,13 +1,14 @@
 // Circuit manuel des retraits : tout ce que NotchPay ne sait pas envoyer seul
 // (autre opérateur que MTN/Orange Cameroun, autre devise, virement bancaire).
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSession, getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
+import { journaliser } from "@/lib/command-center/serveur";
 import { cloturerRetraitManuel } from "@/lib/wallet";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const session = await getAdminSessionPour("finances");
+  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
 
   const retraits = await prisma.retrait.findMany({
     where: { statut: "en_attente", reference: null },
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Requête invalide" }, { status: 400 });
   }
   try {
+    const avant = await prisma.retrait.findUnique({ where: { id }, select: { statut: true, montant: true, devise: true, tenantId: true } });
     await cloturerRetraitManuel(id, action === "payer");
+    await journaliser(session, `retrait.${action}`, "Retrait", id, avant, { statut: action === "payer" ? "paye" : "refuse" });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err?.message ?? "Erreur" }, { status: 400 });

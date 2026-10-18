@@ -1,7 +1,8 @@
 import { NavbarMarketing } from "@/components/marketing/NavbarMarketing";
 import { FooterMarketing } from "@/components/marketing/FooterMarketing";
 import Link from "next/link";
-import { Star, Quote, ArrowRight } from "lucide-react";
+import { Star, Quote, ArrowRight, BadgeCheck } from "lucide-react";
+import { avisPublies } from "@/lib/avis-plateforme";
 import type { Metadata } from "next";
 import { getT } from "@/lib/i18n/serveur";
 
@@ -110,6 +111,7 @@ const LOGOS = [
 
 export default async function TemoignagesPage() {
   const tr = await getT();
+  const avis = await avisPublies(30);
   return (
     <main className="bg-white text-[#111111] min-h-screen" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <NavbarMarketing />
@@ -154,6 +156,29 @@ export default async function TemoignagesPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Avis vérifiés (déposés par les marchands, validés par Axso) ── */}
+      {avis.length > 0 && (
+        <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-20">
+          <div className="max-w-6xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-black text-[#111111] mb-3 text-center">{tr("Avis vérifiés")}</h2>
+            <p className="text-center text-[#737373] mb-10">{tr("Déposés par des marchands Axso depuis leur tableau de bord.")}</p>
+            <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+              {avis.map((a) => (
+                <div key={a.id} className="break-inside-avoid rounded-2xl border p-6" style={{ background: "rgba(0,0,0,0.02)", borderColor: "rgba(0,0,0,0.07)" }}>
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div className="flex gap-0.5" aria-label={`${a.note} / 5`}>{Array.from({ length: 5 }, (_, i) => <Star key={i} size={13} fill={i < a.note ? "#F5A623" : "none"} style={{ color: i < a.note ? "#F5A623" : "#D4D4D4" }} />)}</div>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700"><BadgeCheck size={11} />{tr("Avis vérifié")}</span>
+                  </div>
+                  <p className="text-[#595959] text-sm leading-relaxed mb-4">« {a.texte} »</p>
+                  <p className="font-bold text-[#111111] text-sm">{a.auteurNom}</p>
+                  <p className="text-[#808080] text-xs">{[a.auteurRole, a.ville].filter(Boolean).join(" · ")}{a.auteurRole || a.ville ? " · " : ""}<Link href={`/${a.slug}`} className="underline hover:text-[#111111]">{a.boutique}</Link></p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Grid témoignages ── */}
       <section className="px-6 sm:px-10 lg:px-16 xl:px-24 pb-28">

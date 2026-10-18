@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { AffiliationIncitationBanner } from "@/components/dashboard/AffiliationIncitationBanner";
+import { AvisAxsoCarte } from "@/components/dashboard/AvisAxsoCarte";
+import { eligibiliteAvis } from "@/lib/avis-plateforme";
+import { accesComplet } from "@/lib/permissions-server";
 import { AxiaProNotice } from "@/components/dashboard/AxiaProNotice";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
@@ -188,6 +191,12 @@ export default async function DashboardPage() {
   const d = await getData(tenantId);
   // Membre sans droit finance (caissier…) : chiffre d'affaires masqué, comme le menu Finance.
   const voitFinance = (await permissionsSession(session)).finance !== "aucun";
+  // Avis sur Axso : proposé au propriétaire une fois éligible (1re vente ou 14 jours), ou affiché s'il existe déjà.
+  // Facultatif : une erreur ici ne doit jamais empêcher l'accueil de s'afficher.
+  const avisAxso = (await accesComplet(session))
+    ? await prisma.avisPlateforme.findUnique({ where: { tenantId }, select: { note: true, texte: true, auteurNom: true, auteurRole: true, ville: true, statut: true, motifRefus: true } }).catch(() => undefined)
+    : undefined;
+  const proposerAvis = avisAxso !== undefined && (avisAxso !== null || (await eligibiliteAvis(tenantId).catch(() => ({ eligible: false }))).eligible);
   const montant = (v: number, devise: string) => (voitFinance ? formatMontant(v, devise) : "—");
   const prenom     = session.user?.name?.split(" ")[0] ?? "Marchand";
   const conversion = d.visitors > 0 ? ((d.monthCount / d.visitors) * 100).toFixed(1) : "0";
@@ -303,6 +312,7 @@ export default async function DashboardPage() {
 
       <AxiaProNotice />
       {!d.programmeAffiliationActif && <AffiliationIncitationBanner />}
+      {proposerAvis && <AvisAxsoCarte avis={avisAxso ?? null} nomParDefaut={session.user?.name ?? ""} />}
 
       {/* ── Pulse du jour ──────────────────────────────────────────── */}
       <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border border-[#F0F0F0] bg-white flex-wrap">

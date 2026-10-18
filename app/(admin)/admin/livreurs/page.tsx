@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { formatDate, dateRelative } from "@/lib/utils";
 import { Truck, MapPin, CheckCircle, XCircle, Bike, Car, Package, Navigation, UserCheck, ExternalLink } from "lucide-react";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSession, getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { changerActivationLivreur } from "@/lib/admin-actions";
 import { revalidatePath } from "next/cache";
 import { getT } from "@/lib/i18n/serveur";
@@ -48,8 +48,8 @@ const C = {
 
 export default async function AdminLivreursPage() {
   const t = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("livreurs");
+  if (!session) redirect("/admin?refus=1");
   const peutModifier = estAdminComplet(session);
 
   const [livreurs, livrees, echecs, enCours] = await Promise.all([

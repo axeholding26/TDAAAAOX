@@ -4,7 +4,7 @@ import { ficheDuProduit } from "@/lib/fiche-produit";
 import { prisma } from "@/lib/prisma";
 import { boutiqueVisible } from "@/lib/tenant";
 import { auth } from "@/lib/auth";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { pourcentageRemise } from "@/lib/utils";
 import { prixClient } from "@/lib/pricing";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
@@ -63,6 +63,8 @@ export default async function ProduitPage({ params }: Props) {
   }
 
   if (!produit || produit.tenantId !== tenant.id || !produit.actif) notFound();
+  // Événement live / bootcamp : page d'inscription dédiée (date, places, billetterie).
+  if (produit.type === "evenement" || produit.type === "bootcamp") redirect(`/${slug}/evenements/${produit.id}`);
 
   // Un marchand AXSO connecté (autre que le propriétaire de cette boutique)
   // peut devenir affilié de ce produit précis s'il l'autorise — bouton
@@ -140,7 +142,6 @@ export default async function ProduitPage({ params }: Props) {
     remise,
     stock: produit.stock,
     type: produit.type,
-    fichierUrl: produit.fichierUrl,
     fichierNom: produit.fichierNom,
     categorie: produit.categorie,
     marque: (produit as any).marque ?? null,

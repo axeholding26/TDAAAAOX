@@ -36,6 +36,10 @@ const REGLES: Record<string, Regle> = {
   pos_ventes_jour: L("finance"), pos_marge: L("finance"), pos_caisse_performante: L("finance"), pos_rapport: L("finance"),
   pos_produits_rupture: L("produits"), pos_produits_dormants: L("produits"), pos_quoi_commander: L("produits"),
   pos_comparer_fournisseurs: E("produits"), pos_relance_client: E("clients"),
+  // Académie (lib/axia/academie-tools.ts)
+  academie_lister_studios: L("produits"), academie_estimer_generation: L("produits"), academie_controle_qualite: L("produits"), academie_tester_tuteur: E("produits"),
+  academie_creer_studio: E("produits"), academie_lancer_generation: E("produits"), academie_publier_formation: E("produits"),
+  academie_progression_apprenants: L("clients"), academie_relance_apprenant: E("clients"),
   pos_preparer_bon_commande: E("produits"), pos_preparer_inventaire: E("produits"), pos_preparer_transfert: E("produits"), pos_preparer_promotion: E("marketing"),
 };
 

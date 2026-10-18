@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { TYPES_LIVRAISON_DIGITALE } from "@/lib/affiliation";
+import { cleAccesCommande } from "@/lib/livraison-numerique";
+import { mesFormations } from "@/lib/formation/parcours";
 
 // GET /api/clients-acheteurs/commandes?token=xxx&slug=xxx
 export async function GET(req: Request) {
@@ -47,15 +49,20 @@ export async function GET(req: Request) {
     take: 50,
   });
 
+  // Mes formations : seulement les achats payés et non annulés de CE compte (ou de CETTE commande via le lien).
+  const formations = await mesFormations(commandes.filter((c) => c.paiementStatut === "completed" && c.statut !== "annulee").map((c) => c.id));
+
   return NextResponse.json({
+    formations,
     compte: compte
       ? { id: compte.id, email: compte.email, nom: compte.nom, telephone: compte.telephone }
       : { id: null, email: null, nom: compteLien!.clientNom, telephone: null },
     // Achat digital payé : accès (fichiers, formation, clés) par sa page d'accès — jamais
     // l'adresse brute du fichier, qui se partagerait sans contrôle.
-    commandes: commandes.map((c) => ({
-      ...c,
-      accesDigital: c.paiementStatut === "completed" && c.lignes.some((l) => TYPES_LIVRAISON_DIGITALE.has(l.produit.type)),
-    })),
+    commandes: commandes.map((c) => {
+      const accesDigital = c.paiementStatut === "completed" && c.statut !== "annulee" && c.lignes.some((l) => TYPES_LIVRAISON_DIGITALE.has(l.produit.type));
+      // Clé signée de la page d'accès : l'acheteur a prouvé son e-mail (code) ou détient le lien de suivi.
+      return { ...c, accesDigital, cleAcces: accesDigital ? cleAccesCommande(c.id) : null };
+    }),
   });
 }

@@ -2,11 +2,11 @@
 // Routage par sous-domaine ou domaine custom
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { domainePrincipal, slugPourDomaine } from "@/lib/domaines";
+import { domainePrincipal, slugPourDomaine, boutiqueExiste } from "@/lib/domaines";
 import { auth } from "@/lib/auth";
 import { requireNiveau, refusPalier } from "@/lib/permissions-server";
 import { moduleApi, palierApi } from "@/lib/permissions-api";
-import { SLUGS_RESERVES } from "@/lib/utils";
+import { SLUGS_RESERVES, SOUS_DOMAINES_ACTIFS } from "@/lib/utils";
 import { COOKIE_XP, OPTIONS_COOKIE_XP, cookieVisiteurXp } from "@/lib/builder/experiences";
 
 // Test A/B du Builder (lib/builder/experiences.ts) : un nouveau visiteur de vitrine reçoit sa
@@ -88,6 +88,13 @@ export async function proxy(request: NextRequest) {
       const domaine = await domainePrincipal(slug);
       const reste = pathname === `/${slug}` || pathname.startsWith(`/${slug}/`) ? pathname.slice(slug.length + 1) : pathname;
       if (domaine) return NextResponse.redirect(`https://${domaine}${reste || "/"}${request.nextUrl.search}`, 308);
+      // Adresse propre : nom.axsoafrica.com/produit et non nom.axsoafrica.com/nom/produit
+      // (les liens internes de la vitrine restent en /nom/… : on les nettoie ici, routeur client compris).
+      if (pathname === `/${slug}` || pathname.startsWith(`/${slug}/`)) {
+        const propre = request.nextUrl.clone();
+        propre.pathname = pathname.slice(slug.length + 1) || "/";
+        return NextResponse.redirect(propre, 308);
+      }
     }
 
     const xp = await repartitionXp(request, slug);
@@ -106,6 +113,11 @@ export async function proxy(request: NextRequest) {
   if (premier && !SLUGS_RESERVES.has(premier) && (request.method === "GET" || request.method === "HEAD") && request.cookies.get("axso_apercu")?.value !== "1") {
     const domaine = await domainePrincipal(premier);
     if (domaine) return NextResponse.redirect(`https://${domaine}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
+    // Sous-domaines actifs : axsoafrica.com/nom/… → nom.axsoafrica.com/… (anciens liens et QR codes compris).
+    if (SOUS_DOMAINES_ACTIFS && hostname === DOMAINE_APP && await boutiqueExiste(premier)) {
+      const proto = DOMAINE_APP.startsWith("localhost") ? "http" : "https";
+      return NextResponse.redirect(`${proto}://${premier}.${DOMAINE_APP}${pathname.slice(premier.length + 1) || "/"}${request.nextUrl.search}`, 308);
+    }
   }
 
   const xp = premier && !SLUGS_RESERVES.has(premier) ? await repartitionXp(request, premier) : null;

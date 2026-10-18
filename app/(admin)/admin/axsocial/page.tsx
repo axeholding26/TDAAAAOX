@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { AdminAxsocialPanel } from "@/components/admin/AdminAxsocialPanel";
 import { getT } from "@/lib/i18n/serveur";
 
 export default async function AdminAxsocialPage() {
   const t = await getT();
-  const session = await getAdminSession();
-  if (!session) redirect("/dashboard");
+  const session = await getAdminSessionPour("axsocial");
+  if (!session) redirect("/admin?refus=1");
 
   return (
     <div className="space-y-8">

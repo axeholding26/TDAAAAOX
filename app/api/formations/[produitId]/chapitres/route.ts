@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: Ctx) {
       include: {
         chapitres: {
           include: {
-            lecons: { orderBy: { ordre: "asc" } },
+            lecons: { orderBy: { ordre: "asc" }, include: { quiz: true, ressources: { orderBy: { ordre: "asc" } } } },
             _count: { select: { lecons: true } },
           },
           orderBy: { ordre: "asc" },

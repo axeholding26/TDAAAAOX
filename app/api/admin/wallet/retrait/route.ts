@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
 import { retirerWalletPlateforme, reponseErreur } from "@/lib/admin-actions";
+import { journaliser } from "@/lib/command-center/serveur";
 
 export async function POST(req: NextRequest) {
   const session = await getAdminSession();
@@ -10,6 +11,7 @@ export async function POST(req: NextRequest) {
   const { montant, methode, destinataire, operateur, notes } = await req.json().catch(() => ({}));
   try {
     const retrait = await retirerWalletPlateforme({ montant, methode, destinataire, operateur, notes });
+    await journaliser(session, "wallet.retrait", "Retrait", retrait.id, undefined, { montant, methode, destinataire, operateur, notes });
     return NextResponse.json({ success: true, retrait });
   } catch (err) {
     return reponseErreur(err);

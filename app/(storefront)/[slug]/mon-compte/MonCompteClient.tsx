@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Package, Download, LogOut, User, Eye } from "lucide-react";
+import { Package, Download, LogOut, User, Eye, GraduationCap, Award } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 
 interface Compte {
@@ -31,6 +31,12 @@ interface Commande {
   }>;
   facture: { numero: string; statut: string } | null;
   accesDigital: boolean; // achat digital payé : page d'accès aux fichiers / formation / clés
+  cleAcces?: string | null; // clé signée de la page d'accès
+}
+
+interface MaFormation {
+  produitId: string; nom: string; image: string | null; token: string;
+  pct: number; total: number; terminees: number; demarree: boolean; certificat: string | null;
 }
 
 const STATUT_CONFIG: Record<string, { label: string; color: string }> = {
@@ -55,6 +61,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
   const [view, setView] = useState<"identifiant" | "code" | "compte">("identifiant");
   const [compte, setCompte] = useState<Compte | null>(null);
   const [commandes, setCommandes] = useState<Commande[]>([]);
+  const [formations, setFormations] = useState<MaFormation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
@@ -66,6 +73,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
     if (res.ok) {
       setCompte(data.compte);
       setCommandes(data.commandes ?? []);
+      setFormations(data.formations ?? []);
       setView("compte");
     } else {
       localStorage.removeItem(`axso_buyer_token_${slug}`);
@@ -214,6 +222,31 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
           </div>
         </div>
 
+        {/* Mes formations */}
+        {formations.length > 0 && (
+          <>
+            <h2 className="text-[14px] font-semibold text-[#111] mb-3 flex items-center gap-2"><GraduationCap size={15} />{" "}{t("Mes formations")}</h2>
+            <div className="space-y-3 mb-6">
+              {formations.map((f) => (
+                <div key={f.produitId} className="bg-white border border-[#F0F0F0] rounded-xl p-4 flex items-center gap-3">
+                  {f.image ? <img src={f.image} alt="" className="w-12 h-12 rounded-lg object-cover bg-[#F5F5F5]" /> : <div className="w-12 h-12 rounded-lg bg-[#F5F5F5] flex items-center justify-center"><GraduationCap size={18} className="text-[#BBB]" /></div>}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#111] truncate">{f.nom}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex-1 h-1.5 rounded-full bg-[#F0F0F0] overflow-hidden"><div className="h-full bg-[#F5A623]" style={{ width: `${f.pct}%` }} /></div>
+                      <span className="text-[11px] text-[#888] whitespace-nowrap">{f.terminees}/{f.total} · {f.pct}%</span>
+                    </div>
+                    {f.certificat && <p className="text-[11px] text-[#B45309] mt-1 flex items-center gap-1"><Award size={11} />{" "}{t("Attestation obtenue")}</p>}
+                  </div>
+                  <Link href={`/${slug}/formation/${f.token}`} className="px-3 py-2 rounded-xl text-[12px] font-semibold text-white whitespace-nowrap" style={{ background: "#111" }}>
+                    {f.pct >= 100 ? t("Revoir") : f.demarree ? t("Reprendre") : t("Commencer")}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Commandes */}
         <h2 className="text-[14px] font-semibold text-[#111] mb-3">{t("Mes commandes")}</h2>
         {commandes.length === 0 ? (
@@ -257,7 +290,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
                   </div>
 
                   {c.accesDigital && (
-                    <Link href={`/${slug}/confirmation/${c.id}`}
+                    <Link href={`/${slug}/confirmation/${c.id}?k=${c.cleAcces ?? ""}`}
                       className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[13px] font-semibold text-white" style={{ background: "#111" }}>
                       <Download size={14} />{" "}{t("Accéder à mon achat")}
                     </Link>

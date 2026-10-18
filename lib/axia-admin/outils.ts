@@ -3,6 +3,7 @@
 // Lecture libre ; toute action passe par une demande d'accord (AdminAxiaAction)
 // que seul l'admin qui l'a demandée peut autoriser (app/api/admin/axia/actions).
 import { prisma } from "@/lib/prisma";
+import { ROLES_ADMIN } from "@/lib/command-center/rbac";
 import type { AgentTool, ToolExecutor } from "@/lib/agent-runner";
 import { PLATFORM_TENANT_SLUG, getPlatformTenantId, getWalletResume } from "@/lib/wallet";
 import { totalCommissionsXAF } from "@/lib/finances-admin";
@@ -117,7 +118,7 @@ export const executerLecture: ToolExecutor = async (name, args) => {
       return ok(posts.map((p) => `• id ${p.id} — ${p.createdAt.toLocaleDateString("fr-FR")} — « ${(p.contenu ?? "").slice(0, 100)} » — ${p._count.reactions} réactions, ${p._count.commentaires} commentaires`).join("\n"));
     }
     case "lister_equipe_admin": {
-      const membres = await prisma.user.findMany({ where: { role: { in: ["admin", "admin_lecteur"] } }, select: { id: true, email: true, name: true, role: true } });
+      const membres = await prisma.user.findMany({ where: { role: { in: [...ROLES_ADMIN] } }, select: { id: true, email: true, name: true, role: true } });
       return ok(membres.map((m) => `• ${m.name ?? m.email} (${m.email}, id ${m.id}) — ${m.role === "admin" ? "admin complet" : "lecture seule"}`).join("\n"));
     }
     case "lister_livreurs": {

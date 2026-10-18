@@ -1,9 +1,16 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight, Star, BadgeCheck } from "lucide-react";
+import type { AvisPublic } from "@/lib/avis-plateforme";
 import { useT } from "@/components/I18nProvider";
 
-const temoignages = [
+type Temoignage = { nom: string; role: string; pays: string; note: number; texte: string; avatar: string; couleur: string; verifie?: boolean };
+
+const COULEURS = ["#F5A623", "#10b981", "#111111", "#3b82f6", "#7c3aed"];
+
+// Témoignages d'exemple, conservés pour l'instant (décision du 17/10/2026) : les avis réels
+// validés dans /admin/avis passent devant eux. À retirer quand il y aura assez d'avis réels.
+const temoignages: Temoignage[] = [
   {
     nom: "Fatou N.", role: "Cosmétiques · Douala-Akwa · Plan Pro depuis 3 mois", pays: "CM", note: 5,
     texte: "Avant AXSO, je vendais sur WhatsApp et je perdais des commandes tous les jours. Avec AXSO, j'encaisse tout via Orange Money directement.",
@@ -33,8 +40,16 @@ function generateParticles(): Particle[] {
   }));
 }
 
-export function TemoignagesSection() {
+export function TemoignagesSection({ reels = [] }: { reels?: AvisPublic[] }) {
   const tr = useT();
+  const liste: Temoignage[] = [
+    ...reels.map((a, i) => ({
+      nom: a.auteurNom, pays: a.pays.length === 2 ? a.pays.toUpperCase() : a.pays, note: a.note, texte: a.texte, verifie: true,
+      role: [a.auteurRole, a.boutique, a.ville].filter(Boolean).join(" · "),
+      avatar: a.auteurNom.trim().charAt(0).toUpperCase(), couleur: COULEURS[i % COULEURS.length],
+    })),
+    ...temoignages,
+  ];
   const [actif, setActif] = useState(0);
   const [dir, setDir] = useState<"left" | "right">("right");
   const [visible, setVisible] = useState(false);
@@ -67,12 +82,12 @@ export function TemoignagesSection() {
     setDir(direction);
     setActif((p) =>
       direction === "right"
-        ? (p + 1) % temoignages.length
-        : (p - 1 + temoignages.length) % temoignages.length
+        ? (p + 1) % liste.length
+        : (p - 1 + liste.length) % liste.length
     );
   };
 
-  const t = temoignages[actif];
+  const t = liste[actif];
 
   return (
     <section ref={sectionRef} className="py-16 sm:py-24 bg-white relative overflow-hidden" id="temoignages">
@@ -156,7 +171,7 @@ export function TemoignagesSection() {
                 animation: `${dir === "right" ? "slideRevealRight" : "slideRevealLeft"} 0.4s cubic-bezier(0.23,1,0.32,1) both`,
               }}
             >
-              "{tr(t.texte)}"
+              "{t.verifie ? t.texte : tr(t.texte)}"
             </blockquote>
 
             <div
@@ -177,10 +192,11 @@ export function TemoignagesSection() {
               </div>
               <div className="text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-900 font-bold text-base sm:text-lg">{tr(t.nom)}</span>
+                  <span className="text-gray-900 font-bold text-base sm:text-lg">{t.verifie ? t.nom : tr(t.nom)}</span>
+                  {t.verifie && <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700"><BadgeCheck size={11} />{tr("Avis vérifié")}</span>}
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{tr(t.pays)}</span>
                 </div>
-                <p className="text-gray-400 text-xs sm:text-sm">{tr(t.role)}</p>
+                <p className="text-gray-400 text-xs sm:text-sm">{t.verifie ? t.role : tr(t.role)}</p>
               </div>
             </div>
           </div>
@@ -202,7 +218,7 @@ export function TemoignagesSection() {
             <ChevronLeft size={18} />
           </button>
           <div className="flex gap-2">
-            {temoignages.map((_, i) => (
+            {liste.map((_, i) => (
               <button
                 key={i}
                 onClick={() => { setDir(i > actif ? "right" : "left"); setActif(i); }}

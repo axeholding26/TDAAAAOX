@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { runAgent, type ToolExecutor } from "@/lib/agent-runner";
-import { getAdminSession, estAdminComplet } from "@/lib/admin-auth";
+import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { getPlatformTenantId } from "@/lib/wallet";
 import { OUTILS_LECTURE, OUTILS_ACTION, estActionAdmin, executerLecture, decrireAction } from "@/lib/axia-admin/outils";
 import { consigneLangue } from "@/lib/axia/style";
@@ -35,8 +35,9 @@ const CONSIGNE_LECTEUR = `─── DROITS ───
 Ton interlocuteur est un admin en lecture seule : tu ne peux faire aucune action. S'il en demande une, dis-lui qu'elle est réservée à un admin complet.`;
 
 export async function POST(req: Request) {
-  const session = await getAdminSession();
-  if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  // Les outils d'Axia admin lisent toute la plateforme, finances comprises : réservé aux rôles qui voient les finances.
+  const session = await getAdminSessionPour("finances");
+  if (!session) return NextResponse.json({ error: "Votre rôle ne donne pas accès à Axia admin" }, { status: 403 });
   const complet = estAdminComplet(session);
   const rl = aiLimiter.check(`admin:${session.userId}`);
   if (!rl.success) return rateLimitResponse(rl.reset);

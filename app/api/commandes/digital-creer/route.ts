@@ -10,6 +10,7 @@ import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { COOKIE_XP, noterConversion } from "@/lib/builder/experiences";
+import { refusVenteLive } from "@/lib/live/service";
 
 // Formulaire public : limite par IP (partagée avec whatsapp-creer).
 const limiteCommande = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "commande-vitrine" });
@@ -88,6 +89,11 @@ export async function POST(req: NextRequest) {
       }
       if (p.type === "licence" && p.licenceProduit && p.licenceProduit.cles.length === 0) {
         return NextResponse.json({ error: `"${p.nom}" est en rupture de clés de licence — contactez le vendeur` }, { status: 409 });
+      }
+      // Live / bootcamp : refusé avant paiement s'il est complet, annulé, terminé ou gratuit (inscription directe).
+      if (p.type === "evenement" || p.type === "bootcamp") {
+        const refus = await refusVenteLive(p.id, p.prix);
+        if (refus) return NextResponse.json({ error: `"${p.nom}" : ${refus}` }, { status: 409 });
       }
     }
 

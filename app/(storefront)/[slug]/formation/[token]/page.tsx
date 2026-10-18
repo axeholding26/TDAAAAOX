@@ -1,75 +1,55 @@
 export const dynamic = "force-dynamic";
 
 import { prisma } from "@/lib/prisma";
-import { accesDigitalOuvert } from "@/lib/commandes";
 import { notFound } from "next/navigation";
 import { resolveConfigVitrine } from "@/lib/vitrine-design";
 import { FormationPlayer } from "@/components/storefront/FormationPlayer";
+import { chargerParcours, delivrerCertificatSiEligible } from "@/lib/formation/parcours";
 
 interface Props {
   params: Promise<{ slug: string; token: string }>;
 }
 
-// Portail self-service d'accès à une formation achetée — même principe que le
-// portail affilié : token opaque non devinable dans l'URL, aucun compte requis.
+// Portail self-service d'accès à une formation achetée — jeton opaque non devinable dans l'URL,
+// aucun compte requis. Contrôles (paiement confirmé, remboursement, révocation) : lib/formation/parcours.ts.
+// Seule la STRUCTURE du cours est envoyée ici ; le contenu de chaque leçon est chargé à la
+// demande par /api/apprenant/[token]/lecons/[id], et jamais pour une leçon verrouillée.
 export default async function FormationAccessPage({ params }: Props) {
   const { slug, token } = await params;
-
-  const acces = await prisma.accesFormation.findUnique({
-    where: { token },
-    include: {
-      produit: {
-        include: {
-          formation: {
-            include: {
-              chapitres: {
-                where: { actif: true },
-                orderBy: { ordre: "asc" },
-                include: { lecons: { where: { actif: true }, orderBy: { ordre: "asc" } } },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-  if (!acces || !acces.produit.formation) notFound();
-  // Accès à vie tant que l'achat est payé : un remboursement le coupe.
-  const commande = await prisma.commande.findUnique({ where: { id: acces.commandeId }, select: { paiementStatut: true } });
-  if (!accesDigitalOuvert(null, commande?.paiementStatut)) notFound();
+  const p = await chargerParcours(token);
+  if (!p || p.slug !== slug) notFound();
 
   const tenant = await prisma.tenant.findUnique({ where: { slug } });
-  if (!tenant || tenant.id !== acces.produit.tenantId) notFound();
-
+  if (!tenant) notFound();
   const cfg = await resolveConfigVitrine(tenant.themeId, tenant.id, tenant.themeConfig as Record<string, any>);
   const { colors: c } = cfg;
-
-  const leconIds = acces.produit.formation.chapitres.flatMap((ch) => ch.lecons.map((l) => l.id));
-  const progressions = leconIds.length
-    ? await prisma.progressionLecon.findMany({ where: { leconId: { in: leconIds }, clientEmail: acces.clientEmail } })
-    : [];
-  const completedIds = progressions.filter((p) => p.complete).map((p) => p.leconId);
+  const certificat = await delivrerCertificatSiEligible(p);
 
   return (
     <div style={{ backgroundColor: c.fond, color: c.texte, minHeight: "100vh" }}>
       <FormationPlayer
-        commandeId={acces.commandeId}
-        clientEmail={acces.clientEmail}
+        token={token}
         nomBoutique={tenant.nomBoutique}
         logoUrl={tenant.logoUrl}
-        produitNom={acces.produit.nom}
-        niveau={acces.produit.formation.niveau}
-        certif={acces.produit.formation.certif}
-        chapitres={acces.produit.formation.chapitres.map((ch) => ({
+        produitNom={p.produitNom}
+        niveau={p.formation.niveau}
+        certif={p.formation.certif}
+        certificatCode={certificat && !certificat.revoqueAt ? certificat.code : null}
+        derniereLeconId={p.acces.derniereLeconId}
+        chapitres={p.chapitres.map((ch) => ({
           id: ch.id,
           titre: ch.titre,
-          lecons: ch.lecons.map((l) => ({
-            id: l.id, titre: l.titre, type: l.type, contenu: l.contenu,
-            videoType: l.videoType, videoUrl: l.videoUrl, audioUrl: l.audioUrl,
-            duree: l.duree, gratuite: l.gratuite,
-          })),
+          lecons: ch.lecons.map((l) => {
+            const v = p.verrous.get(l.id);
+            return {
+              id: l.id, titre: l.titre, type: l.type, duree: l.duree, gratuite: l.gratuite,
+              verrou: !v || v.ouvert ? null : v.raison === "drip" ? `S'ouvre le ${v.disponibleLe.toLocaleDateString("fr-FR")}` : `Termine d'abord : ${v.manque.join(", ")}`,
+              reussi: l.type === "quiz" ? p.quizReussis.has(l.id) : l.type === "devoir" ? p.devoirs.get(l.id) === "valide" : null,
+            };
+          }),
         }))}
-        completedIds={completedIds}
+        completedIds={[...p.completes]}
+        favoriIds={[...p.favoris]}
         accent={c.accent}
         fond={c.fond}
         texte={c.texte}

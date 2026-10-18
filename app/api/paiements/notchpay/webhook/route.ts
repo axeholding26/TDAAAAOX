@@ -66,7 +66,8 @@ async function traiterEvenementCommande(type: string, merchantRef: string, notch
 
   if (type !== "payment.complete") return;
 
-  await confirmerPaiementCommande(commandeId, notchpayRef || merchantRef, data);
+  // Rien n'est cru sur parole : la transaction est relue chez NotchPay (montant, devise, référence).
+  await confirmerPaiementCommande(commandeId, notchpayRef || merchantRef);
 }
 
 // ─── Achat/renouvellement d'abonnement ────────────────────────────────────────

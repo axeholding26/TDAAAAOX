@@ -6,6 +6,7 @@ import { put, del } from "@vercel/blob";
 import type { MediaIA, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { dossierBoutique } from "@/lib/fichiers-boutique";
+import { telechargerSur } from "@/lib/import-creations/telechargement";
 import { Refus, cleSupprimable, dimensionsPng, indisponible, urlTelechargeable, type Usage } from "./creation/regles";
 
 /** Ce qu'un moteur rend : des octets, ou l'adresse où il a déposé le fichier. */
@@ -23,13 +24,15 @@ export async function telecharger(url: string, type: keyof typeof MAX, o: { ente
   const data = /^data:([^;,]+);base64,([\s\S]+)$/.exec(url);
   if (data) return { donnees: Buffer.from(data[2], "base64"), mime: data[1] };
   if (!urlTelechargeable(url)) throw new Refus("INVALID_INPUT", "Adresse de fichier refusée (https public uniquement).");
-  const r = await fetch(url, { headers: o.entetes, redirect: o.suivre ? "follow" : "error", signal: AbortSignal.timeout(25_000) }).catch(() => null);
-  if (!r?.ok) throw indisponible("Fichier source inaccessible.");
-  const mime = (r.headers.get("content-type") ?? "").split(";")[0].trim() || MIME_DEFAUT[type];
+  // Téléchargement protégé (lib/import-creations) : IP vérifiée à la connexion (DNS rebinding),
+  // chaque redirection revérifiée — l'ancien fetch ne contrôlait que le nom d'hôte.
+  const r = await telechargerSur(url, MAX[type], 25_000, o.suivre ? 0 : 3, o.entetes ?? {}).catch((e) => {
+    if (/volumineux/.test(String(e?.message))) throw new Refus("INVALID_INPUT", "Fichier source trop volumineux.");
+    throw indisponible("Fichier source inaccessible.");
+  });
+  const mime = r.mime || MIME_DEFAUT[type];
   if (!mime.startsWith(`${type}/`) && mime !== "application/octet-stream") throw new Refus("INVALID_INPUT", `Le fichier source n'est pas de type ${type}.`);
-  if (Number(r.headers.get("content-length") ?? 0) > MAX[type]) throw new Refus("INVALID_INPUT", "Fichier source trop volumineux.");
-  const donnees = Buffer.from(await r.arrayBuffer());
-  if (donnees.length > MAX[type]) throw new Refus("INVALID_INPUT", "Fichier source trop volumineux.");
+  const donnees = r.donnees;
   return { donnees, mime: mime === "application/octet-stream" ? MIME_DEFAUT[type] : mime };
 }
 

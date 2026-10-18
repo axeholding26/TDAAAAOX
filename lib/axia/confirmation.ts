@@ -44,6 +44,9 @@ const SENSIBLES: Record<string, string> = {
   pos_preparer_promotion: "Préparer une promotion (inactive)",
   pos_preparer_inventaire: "Ouvrir un inventaire",
   pos_preparer_transfert: "Préparer un transfert de stock (brouillon)",
+  // Académie (lib/axia/academie-tools.ts) : génération IA payante, publication
+  academie_lancer_generation: "Lancer une génération IA de formation (coût estimé débité du plafond IA)",
+  academie_publier_formation: "Publier le studio en formation (inactive)",
 };
 
 // Connecteurs (Meta, WhatsApp, Gmail, SMS…) : tout ce qui publie ou envoie.

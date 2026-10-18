@@ -31,6 +31,7 @@ import { reglagesTheme } from "./reglages-theme";
 import { findNode } from "@/lib/block-tree";
 import { FONTS } from "@/lib/theme-fonts";
 import { AXIA_POS_TOOLS, executerOutilPos } from "./pos-tools";
+import { AXIA_ACADEMIE_TOOLS, executerOutilAcademie } from "./academie-tools";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -978,7 +979,7 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
       properties: {
         agent: {
           type: "string",
-          enum: ["produits", "marketing", "analytics", "clients", "livraisons", "boutique", "revenus", "contenu", "commandes", "sourcing", "wallet"],
+          enum: AXIA_AGENTS.map((a) => a.id),
           description: "L'agent spécialisé à activer selon le domaine de la tâche",
         },
         tache: { type: "string", description: "Description précise de ce que l'agent doit accomplir, avec tout le contexte nécessaire" },
@@ -989,6 +990,8 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   },
   // ─── CAISSE & MAGASIN (lib/axia/pos-tools.ts) ─────────────────────────────
   ...AXIA_POS_TOOLS,
+  // ─── ACADÉMIE (lib/axia/academie-tools.ts) ────────────────────────────────
+  ...AXIA_ACADEMIE_TOOLS,
 ];
 
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
@@ -1928,6 +1931,7 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
       default: {
         if (nom.startsWith("pos_")) return executerOutilPos(nom, args, tenantId);
+        if (nom.startsWith("academie_")) return executerOutilAcademie(nom, args, tenantId);
         const MCP_PREFIXES = ["meta_", "whatsapp_", "gmail_", "sms_", "tiktok_", "google_ads_", "higgsfield_"];
         if (MCP_PREFIXES.some(p => nom.startsWith(p))) {
           const res = await executerOutilMcp(nom, args, tenantId);

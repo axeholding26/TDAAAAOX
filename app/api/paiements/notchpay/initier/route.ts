@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { paiementEnLigneDisponible } from "@/lib/paiement-pays";
+import { cleAccesCommande } from "@/lib/livraison-numerique";
 
 export const maxDuration = 30;
 
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
       phone: commande.clientTelephone || undefined,
       description: description ?? `Commande Axso #${commande.numero}`,
       reference: merchantRef,
-      callback: `${origin}/${commande.tenant.slug}/confirmation/${commandeId}`,
+      // Clé d'accès signée : seule la personne qui a payé (ou reçu l'e-mail) ouvre la page des accès.
+      callback: `${origin}/${commande.tenant.slug}/confirmation/${commandeId}?k=${cleAccesCommande(commandeId)}`,
     });
 
     await prisma.commande.update({
