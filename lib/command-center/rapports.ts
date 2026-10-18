@@ -1,10 +1,11 @@
 // Contenu des 7 rapports du Command Center (page /admin/rapports/[type] et e-mail
 // du cron /api/cron/rapports-command-center). Module pur : une Vue + des fenêtres
 // en entrée, des sections (KPIs, puces, tableaux) en sortie.
-import { JOUR, type Fenetre, type Fenetres } from "./contexte";
+import { JOUR, debutJour, type Fenetre, type Fenetres } from "./contexte";
 import { mesurer, ventiler, tranche, type Vue, type Mesure, type Format } from "./moteur";
 import { variations, santeMarchand, NOM_STATUT, type Alerte, type Priorite, type RisqueChurn, type Expansion, type ImpactFonction, type StatsMarchand, type StatutSante } from "./insights";
-import { formatValeur, formatVariation, dateLongue } from "./format";
+import { formatValeur, formatVariation, formats, T_FR } from "./format";
+import type { T } from "@/lib/i18n";
 import { NOM_RAPPORT, type RapportPlanifie, type Reglages } from "./reglages";
 import type { Section } from "./rbac";
 import { nomPays, NOM_PLAN, SOURCES_ACQ, NOM_TYPE_IA, type TypeIA } from "./types";
@@ -33,13 +34,14 @@ export interface Rapport { type: TypeRapport; titre: string; periode: string; li
 export interface AnalyseRapport { stats: Map<string, StatsMarchand>; churn: RisqueChurn[]; expansion: Expansion[]; fonctions: ImpactFonction[]; alertes: Alerte[]; priorites: Priorite[] }
 
 /** Fenêtre propre à une fréquence : hier, 7 derniers jours, mois civil précédent (UTC). */
-export function fenetreFrequence(fr: Frequence, maintenant: number): Fenetres {
-  const jour = Math.floor(maintenant / JOUR) * JOUR;
-  if (fr === "quotidien") return { cur: { debut: jour - JOUR, fin: jour }, prev: { debut: jour - 2 * JOUR, fin: jour - JOUR }, libelle: `Hier (${dateLongue(jour - JOUR)})`, libelleComp: "vs avant-hier" };
-  if (fr === "hebdomadaire") return { cur: { debut: jour - 7 * JOUR, fin: jour }, prev: { debut: jour - 14 * JOUR, fin: jour - 7 * JOUR }, libelle: "7 derniers jours complets", libelleComp: "vs 7 jours précédents" };
-  const d = new Date(maintenant), a = d.getUTCFullYear(), m = d.getUTCMonth();
-  const debut = Date.UTC(a, m - 1, 1), fin = Date.UTC(a, m, 1);
-  return { cur: { debut, fin }, prev: { debut: Date.UTC(a, m - 2, 1), fin: debut }, libelle: new Date(debut).toLocaleDateString("fr-FR", { month: "long", year: "numeric", timeZone: "UTC" }), libelleComp: "vs mois précédent" };
+export function fenetreFrequence(fr: Frequence, maintenant: number, t: T = T_FR): Fenetres {
+  const jour = debutJour(maintenant);
+  if (fr === "quotidien") return { cur: { debut: jour - JOUR, fin: jour }, prev: { debut: jour - 2 * JOUR, fin: jour - JOUR }, libelle: t("Hier ({0})", formats(t).dateLongue(jour - JOUR)), libelleComp: t("vs avant-hier") };
+  if (fr === "hebdomadaire") return { cur: { debut: jour - 7 * JOUR, fin: jour }, prev: { debut: jour - 14 * JOUR, fin: jour - 7 * JOUR }, libelle: t("7 derniers jours complets"), libelleComp: t("vs 7 jours précédents") };
+  // Mois civils à l'heure de Douala (UTC+1).
+  const H = 3_600_000, d = new Date(maintenant + H), a = d.getUTCFullYear(), m = d.getUTCMonth();
+  const debut = Date.UTC(a, m - 1, 1) - H, fin = Date.UTC(a, m, 1) - H;
+  return { cur: { debut, fin }, prev: { debut: Date.UTC(a, m - 2, 1) - H, fin: debut }, libelle: new Date(debut).toLocaleDateString(t.loc, { month: "long", year: "numeric", timeZone: "Africa/Douala" }), libelleComp: t("vs mois précédent") };
 }
 
 const k = (v: Vue, ids: string[], f: Fenetres) => ids.map((id) => mesurer(v, id, f.cur, f.prev, 12));
@@ -56,13 +58,14 @@ function parDimension(v: Vue, w: Fenetre, ids: { id: string; nom: string }[], di
   return { id, titre, colonnes: [{ cle: "segment", nom: dim === "pays" ? "Pays" : dim === "plan" ? "Plan" : "Canal" }, ...ids.map((x) => ({ cle: x.id, nom: x.nom, format: fmt(x.id), droite: true }))], lignes: lignes as LigneRapport[] };
 }
 
-function tableauVariations(v: Vue, f: Fenetres): SectionRapport {
-  const vars = variations(v, f);
+function tableauVariations(v: Vue, f: Fenetres, t: T): SectionRapport {
+  const { formatValeur, formatVariation } = formats(t);
+  const vars = variations(v, f, undefined, t);
   const ligne = (x: (typeof vars)[number]): LigneRapport => ({ _id: x.id, metrique: x.nom, avant: formatValeur(x.mesure.precedente, x.mesure.format), apres: formatValeur(x.mesure.valeur, x.mesure.format), variation: formatVariation(x.mesure.variation, x.mesure.format), cause: x.cause });
   const colonnes = [{ cle: "metrique", nom: "Métrique" }, { cle: "avant", nom: "Avant", droite: true }, { cle: "apres", nom: "Après", droite: true }, { cle: "variation", nom: "Variation", droite: true }, { cle: "cause", nom: "Cause probable" }];
   const bonnes = vars.filter((x) => x.mesure.statut === "bon").slice(0, 5), mauvaises = vars.filter((x) => x.mesure.statut === "mauvais").slice(0, 5);
   return {
-    id: "changements", titre: "Changements", note: `Variations significatives ${f.libelleComp}. Une cause n'est citée que si les données la soutiennent ; corrélation ≠ causalité.`,
+    id: "changements", titre: "Changements", note: t("Variations significatives {0}. Une cause n'est citée que si les données la soutiennent ; corrélation ≠ causalité.", t(f.libelleComp)),
     tableaux: [
       { id: "hausses", titre: "Évolutions favorables", colonnes, lignes: bonnes.map(ligne), vide: "Aucune évolution favorable significative." },
       { id: "baisses", titre: "Évolutions défavorables", colonnes, lignes: mauvaises.map(ligne), vide: "Aucune évolution défavorable significative." },
@@ -73,13 +76,13 @@ function tableauVariations(v: Vue, f: Fenetres): SectionRapport {
 const lienAlerte = (a: Alerte) => ({ texte: `${a.titre} — ${a.detail}`, lien: a.lien });
 
 /** Construit un rapport. `a` = analyses du contexte (seuils, radars, priorités) ; `f` = fenêtre du rapport. */
-export function construireRapport(type: TypeRapport, v: Vue, f: Fenetres, a: AnalyseRapport, r: Reglages): Rapport {
+export function construireRapport(type: TypeRapport, v: Vue, f: Fenetres, a: AnalyseRapport, r: Reglages, t: T = T_FR): Rapport {
   const s: SectionRapport[] = [];
   const w = f.cur;
   switch (type) {
     case "quotidien": {
       s.push({ id: "hier", titre: "Hier", kpis: k(v, ["revenu", "gmv", "commandes", "nouveaux_marchands"], f) });
-      s.push(tableauVariations(v, f));
+      s.push(tableauVariations(v, f, t));
       const email = new Set(r.seuils.filter((x) => x.canal === "email").map((x) => `seuil:${x.id}`));
       const alertesEmail = a.alertes.filter((x) => email.has(x.id));
       if (alertesEmail.length) s.push({ id: "alertes", titre: "Alertes", note: "Seuils au canal e-mail actuellement franchis.", puces: alertesEmail.map((x) => ({ ...lienAlerte(x), ton: "mauvais" as const })) });
@@ -92,7 +95,7 @@ export function construireRapport(type: TypeRapport, v: Vue, f: Fenetres, a: Ana
     }
     case "croissance": {
       s.push({ id: "kpis", titre: "Indicateurs de croissance", kpis: k(v, ["nouveaux_marchands", "marchands_actifs", "north_star", "activation", "conversion_payante", "churn", "wau", "mau"], f) });
-      s.push(tableauVariations(v, f));
+      s.push(tableauVariations(v, f, t));
       const tabs = [parDimension(v, w, [{ id: "nouveaux_marchands", nom: "Nouveaux marchands" }, { id: "marchands_actifs", nom: "Marchands actifs" }], "pays", "Par pays", "pays")];
       if (!v.ds.manques.includes("acquisition")) tabs.push(parDimension(v, w, [{ id: "nouveaux_marchands", nom: "Nouveaux marchands" }], "source", "Par canal d'acquisition", "canaux"));
       s.push({ id: "segments", titre: "Répartition", tableaux: tabs, note: v.ds.manques.includes("acquisition") ? "Canal d'acquisition non enregistré dans cette source de données." : undefined });
@@ -157,13 +160,22 @@ export function construireRapport(type: TypeRapport, v: Vue, f: Fenetres, a: Ana
       break;
     }
   }
-  return { type, titre: INFO_RAPPORT[type].titre, periode: f.libelle, libelleComp: f.libelleComp, fen: f, sections: s };
+  // Traduction des libellés (titres, colonnes, cellules texte) : la clé est le texte français, inchangé hors dictionnaire.
+  const tr = (x: string | undefined) => (x == null ? x : t(x));
+  const sections = s.map((x) => ({
+    ...x, titre: t(x.titre), note: tr(x.note), vide: tr(x.vide), kpis: x.kpis?.map((m) => ({ ...m, nom: t(m.nom) })),
+    tableaux: x.tableaux?.map((tb) => ({
+      ...tb, titre: t(tb.titre), vide: tr(tb.vide), colonnes: tb.colonnes.map((c) => ({ ...c, nom: t(c.nom) })),
+      lignes: tb.lignes.map((l) => Object.fromEntries(Object.entries(l).map(([cle, val]) => [cle, cle !== "_id" && typeof val === "string" ? t(val) : val])) as LigneRapport),
+    })),
+  }));
+  return { type, titre: INFO_RAPPORT[type].titre, periode: t(f.libelle), libelleComp: t(f.libelleComp), fen: f, sections };
 }
 
 /** Valeur d'une cellule en texte (e-mail, export). */
-export function texteCellule(v: string | number | null | undefined, f?: ColonneRapport["format"]): string {
+export function texteCellule(v: string | number | null | undefined, f?: ColonneRapport["format"], t: T = T_FR): string {
   if (v == null || v === "") return "—";
-  return typeof v === "number" && f && f !== "texte" ? formatValeur(v, f) : String(v);
+  return typeof v === "number" && f && f !== "texte" ? formats(t).formatValeur(v, f) : String(v);
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

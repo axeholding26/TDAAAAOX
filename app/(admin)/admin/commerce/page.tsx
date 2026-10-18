@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { contexteCC } from "@/lib/command-center/serveur";
 import { mesurer, valeur, ventiler } from "@/lib/command-center/moteur";
-import { JOUR, lien, type Fenetre } from "@/lib/command-center/contexte";
+import { JOUR, lien, debutJour, debutAnnee, type Fenetre } from "@/lib/command-center/contexte";
 import { nomPays } from "@/lib/command-center/types";
-import { formatValeur } from "@/lib/command-center/format";
-import { mesureLibre, tauxRachat, tranches, etiquette, grouper } from "@/lib/command-center/commerce";
+import { formats } from "@/lib/command-center/format";
+import { getT } from "@/lib/i18n/serveur";
+import { mesureLibre, tauxRachat, tranches, grouper } from "@/lib/command-center/commerce";
 import { EnTetePage, Carte, Kpi, GrilleKpi, Delta, ListeBarres, EtatVide, Note, Fraicheur, Tableau } from "@/components/command-center/ui";
 import { BoutonPDF } from "@/components/command-center/client";
 import { Courbes, Barres } from "@/components/command-center/graphiques";
@@ -12,6 +13,12 @@ import { Courbes, Barres } from "@/components/command-center/graphiques";
 const SANTE = ["gmv", "commandes", "panier_moyen", "annulation", "remboursement"] as const;
 
 export default async function Commerce({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const tx = await getT();
+  const { formatValeur } = formats(tx);
+  // Étiquette d'axe (même règle que etiquette() de lib/command-center/commerce.ts, dans la langue affichée).
+  const etiquette = (x: number, w: Fenetre) => w.fin - w.debut < 2 * JOUR
+    ? new Date(x).toLocaleTimeString(tx.loc, { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" })
+    : new Date(x).toLocaleDateString(tx.loc, { day: "numeric", month: "short", timeZone: "Africa/Douala" });
   const c = await contexteCC("commerce", searchParams);
   const { vue: v, fen: f, filtres } = c;
   const L = (p: string, s = {}) => lien(p, filtres, s);
@@ -29,16 +36,16 @@ export default async function Commerce({ searchParams }: { searchParams: Promise
   ];
 
   // Commerce Health : fenêtres fixes, indépendantes de la période choisie, chacune comparée à la précédente de même durée.
-  const minuit = Math.floor(t / JOUR) * JOUR;
+  const minuit = debutJour(t);
   const fen: { nom: string; w: Fenetre; d: number }[] = [
     { nom: "Aujourd'hui", w: { debut: minuit, fin: t + 1 }, d: JOUR },
     { nom: "Hier", w: { debut: minuit - JOUR, fin: minuit }, d: JOUR },
     { nom: "7 j", w: { debut: t - 7 * JOUR, fin: t + 1 }, d: 7 * JOUR },
     { nom: "30 j", w: { debut: t - 30 * JOUR, fin: t + 1 }, d: 30 * JOUR },
     { nom: "90 j", w: { debut: t - 90 * JOUR, fin: t + 1 }, d: 90 * JOUR },
-    { nom: "YTD", w: { debut: Date.UTC(new Date(t).getUTCFullYear(), 0, 1), fin: t + 1 }, d: 365 * JOUR },
+    { nom: "YTD", w: { debut: debutAnnee(t), fin: t + 1 }, d: 365 * JOUR },
   ];
-  const NOMS: Record<string, string> = { gmv: "GMV", commandes: "Commandes", panier_moyen: "Panier moyen", annulation: "Taux d'annulation", remboursement: "Taux de remboursement" };
+  const NOMS: Record<string, string> = { gmv: "GMV", commandes: tx("Commandes"), panier_moyen: tx("Panier moyen"), annulation: tx("Taux d'annulation"), remboursement: tx("Taux de remboursement") };
   const debutDonnees = c.ds.commandes[0]?.date ?? t;
   const sante = SANTE.map((id) => {
     const ligne: Record<string, ReactNode> = { m: <span className="font-medium">{NOMS[id]}</span> };
@@ -55,45 +62,45 @@ export default async function Commerce({ searchParams }: { searchParams: Promise
   const serie = decoupe.map((w) => ({ x: etiquette(w.debut, f.cur), gmv: valeur(v, "gmv", w) ?? 0, commandes: valeur(v, "commandes", w) ?? 0 }));
 
   const payees = v.payees(f.cur);
-  const canaux = [...grouper(payees, (x) => x.canal)].map(([k, l]) => ({ cle: k, nom: k === "pos" ? "Caisse (POS)" : "En ligne", valeur: l.reduce((s, x) => s + x.montant, 0), sous: `${l.length.toLocaleString("fr-FR")} cmd` }));
+  const canaux = [...grouper(payees, (x) => x.canal)].map(([k, l]) => ({ cle: k, nom: tx(k === "pos" ? "Caisse (POS)" : "En ligne"), valeur: l.reduce((s, x) => s + x.montant, 0), sous: tx("{0} cmd", l.length.toLocaleString(tx.loc)) }));
   const parInd = [...ventiler(v, "gmv", f.cur, "industrie")].filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1]).slice(0, 10);
   const parPays = [...ventiler(v, "gmv", f.cur, "pays")].filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
   return (
     <div className="space-y-5">
-      <EnTetePage eyebrow="Commerce" titre="Commerce" sousTitre={<>Ventes des marchands Axso · <span className="cc-faint">{f.libelle} {f.libelleComp}</span></>}
+      <EnTetePage eyebrow="Commerce" titre={tx("Commerce")} sousTitre={<>{tx("Ventes des marchands Axso")} · <span className="cc-faint">{tx(f.libelle)} {tx(f.libelleComp)}</span></>}
         actions={<><Fraicheur genereA={c.ds.genereA} source={c.ds.source} erreur={c.erreur} /><BoutonPDF /></>} />
-      {c.erreur && <Note ton="warn">{c.erreur}</Note>}
+      {c.erreur && <Note ton="warn">{tx(c.erreur)}</Note>}
 
-      <GrilleKpi>{kpis.map((m) => <Kpi key={m.id} m={m} filtres={filtres} libelleComp={f.libelleComp} />)}</GrilleKpi>
+      <GrilleKpi>{kpis.map((m) => <Kpi key={m.id} m={{ ...m, nom: tx(m.nom), description: tx(m.description), formule: tx(m.formule) }} filtres={filtres} libelleComp={tx(f.libelleComp)} />)}</GrilleKpi>
 
-      <Carte titre="Commerce Health" sousTitre="Fenêtres fixes, indépendantes de la période choisie · variation vs la fenêtre précédente de même durée (YTD : vs même période l'an dernier)">
-        <Tableau colonnes={[{ cle: "m", nom: "Indicateur" }, ...fen.map((x) => ({ cle: x.nom, nom: x.nom, droite: true }))]} lignes={sante} />
+      <Carte titre="Commerce Health" sousTitre={tx("Fenêtres fixes, indépendantes de la période choisie · variation vs la fenêtre précédente de même durée (YTD : vs même période l'an dernier)")}>
+        <Tableau colonnes={[{ cle: "m", nom: tx("Indicateur") }, ...fen.map((x) => ({ cle: x.nom, nom: tx(x.nom), droite: true }))]} lignes={sante} />
       </Carte>
 
       <div className="grid gap-3 lg:grid-cols-2">
-        <Carte titre="GMV" sousTitre={f.libelle}>
-          {payees.length ? <Courbes donnees={serie} series={[{ cle: "gmv", nom: "GMV" }]} format="xaf" /> : <EtatVide titre="Aucune commande payée" explication="Le GMV apparaîtra dès la première commande payée sur ce périmètre." />}
+        <Carte titre="GMV" sousTitre={tx(f.libelle)}>
+          {payees.length ? <Courbes donnees={serie} series={[{ cle: "gmv", nom: "GMV" }]} format="xaf" /> : <EtatVide titre={tx("Aucune commande payée")} explication={tx("Le GMV apparaîtra dès la première commande payée sur ce périmètre.")} />}
         </Carte>
-        <Carte titre="Commandes payées" sousTitre={f.libelle}>
-          {payees.length ? <Barres donnees={serie} series={[{ cle: "commandes", nom: "Commandes" }]} format="nombre" /> : <EtatVide titre="Aucune commande payée" />}
+        <Carte titre={tx("Commandes payées")} sousTitre={tx(f.libelle)}>
+          {payees.length ? <Barres donnees={serie} series={[{ cle: "commandes", nom: tx("Commandes") }]} format="nombre" /> : <EtatVide titre={tx("Aucune commande payée")} />}
         </Carte>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        <Carte titre="Par canal" sousTitre="GMV en ligne vs caisse en boutique">
+        <Carte titre={tx("Par canal")} sousTitre={tx("GMV en ligne vs caisse en boutique")}>
           <ListeBarres format="xaf" lignes={canaux.sort((a, b) => b.valeur - a.valeur)} />
         </Carte>
-        <Carte id="industries" titre="Par industrie" sousTitre="GMV · cliquer pour filtrer">
-          <ListeBarres format="xaf" lignes={parInd.map(([k, x]) => ({ cle: k, nom: k, valeur: x, href: L("/admin/commerce", { industrie: k }) }))} />
+        <Carte id="industries" titre={tx("Par industrie")} sousTitre={tx("GMV · cliquer pour filtrer")}>
+          <ListeBarres format="xaf" lignes={parInd.map(([k, x]) => ({ cle: k, nom: tx(k), valeur: x, href: L("/admin/commerce", { industrie: k }) }))} />
         </Carte>
-        <Carte titre="Par pays" sousTitre="GMV · cliquer pour filtrer">
-          <ListeBarres format="xaf" lignes={parPays.map(([k, x]) => ({ cle: k, nom: nomPays(k), valeur: x, href: L("/admin/commerce", { pays: k }) }))} />
+        <Carte titre={tx("Par pays")} sousTitre={tx("GMV · cliquer pour filtrer")}>
+          <ListeBarres format="xaf" lignes={parPays.map(([k, x]) => ({ cle: k, nom: tx(nomPays(k)), valeur: x, href: L("/admin/commerce", { pays: k }) }))} />
         </Carte>
       </div>
 
-      <Carte titre="Conversion des boutiques">
-        <EtatVide titre="Conversion non mesurée" explication="Axso n'enregistre pas encore les visites des boutiques marchandes : impossible de calculer visites → commandes. Il faut tracer les pages vues des vitrines (événement côté boutique) pour obtenir ce taux." />
+      <Carte titre={tx("Conversion des boutiques")}>
+        <EtatVide titre={tx("Conversion non mesurée")} explication={tx("Axso n'enregistre pas encore les visites des boutiques marchandes : impossible de calculer visites → commandes. Il faut tracer les pages vues des vitrines (événement côté boutique) pour obtenir ce taux.")} />
       </Carte>
     </div>
   );

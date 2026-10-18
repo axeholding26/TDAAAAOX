@@ -82,20 +82,29 @@ export const JOUR = 86_400_000;
 export interface Fenetre { debut: number; fin: number }
 export interface Fenetres { cur: Fenetre; prev: Fenetre; libelle: string; libelleComp: string }
 
-/** Fenêtre courante et fenêtre de comparaison. Jours calendaires en UTC (Afrique centrale/ouest : UTC+0/+1). */
+/** Fuseau de référence d'Axso : Africa/Douala = UTC+1 toute l'année (pas d'heure d'été). */
+export const FUSEAU = "Africa/Douala";
+const DECALAGE = 3_600_000;
+/** Minuit (heure de Douala) du jour contenant t. */
+export const debutJour = (t: number) => Math.floor((t + DECALAGE) / JOUR) * JOUR - DECALAGE;
+/** 1er janvier 00:00 (heure de Douala) de l'année contenant t, décalé de `n` années. */
+export const debutAnnee = (t: number, n = 0) => Date.UTC(new Date(t + DECALAGE).getUTCFullYear() + n, 0, 1) - DECALAGE;
+/** Lundi 00:00 (heure de Douala) de la semaine contenant t (l'epoch tombe un jeudi : +3 jours pour caler sur lundi). */
+export const debutSemaine = (t: number) => Math.floor((t + DECALAGE + 3 * JOUR) / (7 * JOUR)) * 7 * JOUR - 3 * JOUR - DECALAGE;
+
+/** Fenêtre courante et fenêtre de comparaison. Jours calendaires à l'heure de Douala (UTC+1). */
 export function fenetres(f: Filtres, maintenant: number): Fenetres {
-  const aujourdhui = Math.floor(maintenant / JOUR) * JOUR;
-  const an = new Date(maintenant).getUTCFullYear();
+  const aujourdhui = debutJour(maintenant);
   let cur: Fenetre;
   switch (f.periode) {
     case "aujourdhui": cur = { debut: aujourdhui, fin: maintenant }; break;
     case "hier": cur = { debut: aujourdhui - JOUR, fin: aujourdhui }; break;
     case "7j": cur = { debut: maintenant - 7 * JOUR, fin: maintenant }; break;
     case "90j": cur = { debut: maintenant - 90 * JOUR, fin: maintenant }; break;
-    case "ytd": cur = { debut: Date.UTC(an, 0, 1), fin: maintenant }; break;
-    case "annee_prec": cur = { debut: Date.UTC(an - 1, 0, 1), fin: Date.UTC(an, 0, 1) }; break;
+    case "ytd": cur = { debut: debutAnnee(maintenant), fin: maintenant }; break;
+    case "annee_prec": cur = { debut: debutAnnee(maintenant, -1), fin: debutAnnee(maintenant) }; break;
     case "perso": {
-      const d = Date.parse(`${f.du}T00:00:00Z`), a = Date.parse(`${f.au}T00:00:00Z`) + JOUR;
+      const d = Date.parse(`${f.du}T00:00:00+01:00`), a = Date.parse(`${f.au}T00:00:00+01:00`) + JOUR;
       cur = d < a ? { debut: d, fin: Math.min(a, maintenant) } : { debut: maintenant - 30 * JOUR, fin: maintenant };
       break;
     }

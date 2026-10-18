@@ -7,6 +7,8 @@ import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { getWalletResume } from "@/lib/wallet";
 import { BoutiqueActionsPanel } from "@/components/admin/BoutiqueActionsPanel";
 import { getT } from "@/lib/i18n/serveur";
+import { convertirMontant } from "@/lib/devise-convert";
+import { tauxDuJour } from "@/lib/taux-change";
 
 export default async function AdminBoutiqueDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = await getT();
@@ -14,11 +16,12 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
   if (!session) redirect("/admin?refus=1");
   const { id } = await params;
 
+  const taux = await tauxDuJour();
   const tenant = await prisma.tenant.findUnique({
     where: { id },
     include: {
       _count: { select: { produits: true, commandes: true, clients: true } },
-      commissions: { where: { statut: "captured" }, select: { montantCommission: true } },
+      commissions: { where: { statut: "captured" }, select: { montantCommission: true, devise: true } },
     },
   });
   if (!tenant) notFound();
@@ -27,7 +30,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
     getWalletResume(id),
     prisma.badgeMarchand.findMany({ where: { tenantId: id }, orderBy: { obtenueAt: "desc" }, take: 10 }),
   ]);
-  const revenuGenere = tenant.commissions.reduce((s, c) => s + c.montantCommission, 0);
+  const revenuGenere = tenant.commissions.reduce((s, c) => s + convertirMontant(c.montantCommission, c.devise, tenant.devise, taux), 0); // devise de la commission → devise actuelle de la boutique
 
   const statutBadge = { active: { l: "Active", c: "#16A34A" }, suspendu: { l: "Suspendue", c: "#F5A623" }, supprime: { l: "Supprimée", c: "#DC2626" } }[tenant.statut] ?? { l: tenant.statut, c: "#AAAAAA" };
 

@@ -28,8 +28,8 @@ export function tranches(w: Fenetre, n = 12): Fenetre[] {
 /** Étiquette d'axe : l'heure si la fenêtre fait moins de 2 jours, sinon la date. */
 export function etiquette(t: number, w: Fenetre): string {
   return w.fin - w.debut < 2 * JOUR
-    ? new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })
-    : new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "UTC" });
+    ? new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Douala" })
+    : new Date(t).toLocaleDateString("fr-FR", { day: "numeric", month: "short", timeZone: "Africa/Douala" });
 }
 
 /** Clients ayant passé ≥ 2 commandes payées ÷ clients identifiés ayant payé (sur la fenêtre). */

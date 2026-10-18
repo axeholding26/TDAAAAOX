@@ -3,7 +3,8 @@
 // rayon proportionnel à la métrique choisie (aire ∝ valeur), clic = filtre pays.
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatValeur, formatVariation } from "@/lib/command-center/format";
+import { formats } from "@/lib/command-center/format";
+import { useT } from "@/components/I18nProvider";
 
 export interface PointPays { iso: string; nom: string; lat: number; lng: number; marchands: number; gmv: number; commandes: number; croissance: number | null; href: string }
 
@@ -16,6 +17,7 @@ const echapper = (s: string) => s.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt
 
 export function CarteAfrique({ points, actif }: { points: PointPays[]; actif?: string }) {
   const router = useRouter();
+  const t = useT();
   const div = useRef<HTMLDivElement>(null);
   const carte = useRef<any>(null);
   const couche = useRef<any>(null);
@@ -48,6 +50,7 @@ export function CarteAfrique({ points, actif }: { points: PointPays[]; actif?: s
     import("leaflet").then((L) => {
       if (annule || !couche.current) return;
       couche.current.clearLayers();
+      const { formatValeur, formatVariation } = formats(t);
       const css = getComputedStyle(div.current!);
       const c = (v: string) => css.getPropertyValue(v).trim() || "#3987e5";
       const val = (p: PointPays) => (metrique === "croissance" ? Math.abs(p.croissance ?? 0) : p[metrique]);
@@ -59,7 +62,7 @@ export function CarteAfrique({ points, actif }: { points: PointPays[]; actif?: s
           radius: 4 + 24 * Math.sqrt(x / max), color: p.iso === actif ? c("--cc-accent") : couleur, weight: p.iso === actif ? 3 : 1.5, fillColor: couleur, fillOpacity: 0.35,
         });
         cercle.bindTooltip(
-          `<strong>${echapper(p.nom)}</strong><br/>${p.marchands} marchand${p.marchands > 1 ? "s" : ""} · ${formatValeur(p.gmv, "xaf")}<br/>${formatValeur(p.commandes, "nombre")} commandes · croissance ${formatVariation(p.croissance, "nombre")}`,
+          `<strong>${echapper(p.nom)}</strong><br/>${echapper(t(p.marchands > 1 ? "{0} marchands · {1}" : "{0} marchand · {1}", p.marchands, formatValeur(p.gmv, "xaf")))}<br/>${echapper(t("{0} commandes · croissance {1}", formatValeur(p.commandes, "nombre"), formatVariation(p.croissance, "nombre")))}`,
           { direction: "top", sticky: true },
         );
         cercle.on("click", () => router.push(p.href));
@@ -67,20 +70,20 @@ export function CarteAfrique({ points, actif }: { points: PointPays[]; actif?: s
       }
     });
     return () => { annule = true; };
-  }, [pret, metrique, points, actif, router]);
+  }, [pret, metrique, points, actif, router, t]);
 
   return (
     <div>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <style>{`.cc-tuiles-sombres{filter:invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.4)}`}</style>
-      <div className="flex flex-wrap items-center gap-1 mb-2 cc-no-print" role="group" aria-label="Taille des cercles">
-        <span className="cc-faint text-[12px] mr-1">Taille des cercles :</span>
+      <div className="flex flex-wrap items-center gap-1 mb-2 cc-no-print" role="group" aria-label={t("Taille des cercles")}>
+        <span className="cc-faint text-[12px] mr-1">{t("Taille des cercles :")}</span>
         {METRIQUES.map((m) => (
-          <button key={m.id} type="button" className={`cc-btn cc-btn-sm ${metrique === m.id ? "" : "cc-btn-ghost"}`} aria-pressed={metrique === m.id} onClick={() => setMetrique(m.id)}>{m.nom}</button>
+          <button key={m.id} type="button" className={`cc-btn cc-btn-sm ${metrique === m.id ? "" : "cc-btn-ghost"}`} aria-pressed={metrique === m.id} onClick={() => setMetrique(m.id)}>{t(m.nom)}</button>
         ))}
       </div>
-      <div ref={div} role="region" aria-label="Carte de l'Afrique : un cercle par pays, cliquer pour filtrer" className="w-full rounded-lg overflow-hidden border cc-sep" style={{ height: 420, background: "var(--cc-surface-2)" }} />
-      {!points.length && <p className="cc-faint text-[12px] mt-2">Aucun pays à afficher sur ce périmètre.</p>}
+      <div ref={div} role="region" aria-label={t("Carte de l'Afrique : un cercle par pays, cliquer pour filtrer")} className="w-full rounded-lg overflow-hidden border cc-sep" style={{ height: 420, background: "var(--cc-surface-2)" }} />
+      {!points.length && <p className="cc-faint text-[12px] mt-2">{t("Aucun pays à afficher sur ce périmètre.")}</p>}
     </div>
   );
 }

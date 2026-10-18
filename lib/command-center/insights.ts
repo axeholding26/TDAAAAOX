@@ -5,8 +5,9 @@
 import type { Marchand, PlanId, Fonction } from "./types";
 import { NOM_PLAN, PRIX_PLAN, nomPays, FONCTIONS, NOM_FONCTION, SOURCES_ACQ } from "./types";
 import { Vue, METRIQUE, mesurer, valeur, ventiler, tranche, sousVue, type Mesure } from "./moteur";
-import { JOUR, type Fenetre, type Fenetres } from "./contexte";
-import { formatValeur, formatVariation } from "./format";
+import { JOUR, debutSemaine, type Fenetre, type Fenetres } from "./contexte";
+import { formats, T_FR } from "./format";
+import type { T } from "@/lib/i18n";
 import type { Reglages, Seuil, PoidsSante } from "./reglages";
 import { NOM_ETAPE } from "./reglages";
 
@@ -20,10 +21,10 @@ export interface Variation {
 }
 
 const NOM_DIM = { pays: "pays", plan: "plan", source: "canal d'acquisition", industrie: "secteur" } as const;
-const libelleSegment = (dim: keyof typeof NOM_DIM, k: string) => dim === "pays" ? nomPays(k) : dim === "plan" ? NOM_PLAN[k as PlanId] ?? k : dim === "source" ? SOURCES_ACQ[k] ?? k : k;
+const libelleSegment = (dim: keyof typeof NOM_DIM, k: string, t: T = T_FR) => t(dim === "pays" ? nomPays(k) : dim === "plan" ? NOM_PLAN[k as PlanId] ?? k : dim === "source" ? SOURCES_ACQ[k] ?? k : k);
 
 /** Segment qui explique le plus une variation additive (≥ 40 % du delta, même sens). */
-export function attribuer(v: Vue, id: string, f: Fenetres): { texte: string; segments: { dim: string; cle: string; nom: string; delta: number }[] } | null {
+export function attribuer(v: Vue, id: string, f: Fenetres, t: T = T_FR): { texte: string; segments: { dim: string; cle: string; nom: string; delta: number }[] } | null {
   const total = (valeur(v, id, f.cur) ?? 0) - (valeur(v, id, f.prev) ?? 0);
   if (!total) return null;
   let meilleur: { dim: keyof typeof NOM_DIM; deltas: [string, number][]; part: number } | null = null;
@@ -43,10 +44,10 @@ export function attribuer(v: Vue, id: string, f: Fenetres): { texte: string; seg
     if (top.length && part >= 0.4 && (!meilleur || part > meilleur.part)) meilleur = { dim, deltas: top, part };
   }
   if (!meilleur) return null;
-  const noms = meilleur.deltas.filter(([, d]) => Math.abs(d) / Math.abs(total) >= 0.15).map(([k]) => libelleSegment(meilleur!.dim, k));
+  const noms = meilleur.deltas.filter(([, d]) => Math.abs(d) / Math.abs(total) >= 0.15).map(([k]) => libelleSegment(meilleur!.dim, k, t));
   return {
-    texte: `${Math.round(Math.min(1, meilleur.part) * 100)} % de la variation vient ${noms.length > 1 ? "des segments" : "du segment"} ${noms.join(" et ")} (${NOM_DIM[meilleur.dim]}).`,
-    segments: meilleur.deltas.map(([k, d]) => ({ dim: meilleur!.dim, cle: k, nom: libelleSegment(meilleur!.dim, k), delta: d })),
+    texte: t(noms.length > 1 ? "{0} % de la variation vient des segments {1} ({2})." : "{0} % de la variation vient du segment {1} ({2}).", Math.round(Math.min(1, meilleur.part) * 100), noms.join(t(" et ")), t(NOM_DIM[meilleur.dim])),
+    segments: meilleur.deltas.map(([k, d]) => ({ dim: meilleur!.dim, cle: k, nom: libelleSegment(meilleur!.dim, k, t), delta: d })),
   };
 }
 
@@ -72,7 +73,8 @@ const ACTIONS: Record<string, [string, string]> = {
 
 const VARIATIONS_SUIVIES = ["gmv", "revenu", "mrr", "commandes", "north_star", "nouveaux_marchands", "activation", "conversion_payante", "churn", "succes_paiement", "echecs_paiement", "requetes_ia", "adoption_ia", "panier_moyen", "livraison"];
 
-export function variations(v: Vue, f: Fenetres, ids = VARIATIONS_SUIVIES): Variation[] {
+export function variations(v: Vue, f: Fenetres, ids = VARIATIONS_SUIVIES, t: T = T_FR): Variation[] {
+  const { formatValeur, formatVariation } = formats(t);
   const out: Variation[] = [];
   for (const id of ids) {
     const m = METRIQUE[id];
@@ -81,26 +83,26 @@ export function variations(v: Vue, f: Fenetres, ids = VARIATIONS_SUIVIES): Varia
     const significatif = m.format === "pct" ? Math.abs(mes.variation) >= 0.02 : Math.abs(mes.variation) >= 0.05;
     const volume = m.format === "pct" || m.format === "xaf" ? true : Math.max(mes.valeur, mes.precedente) >= 10;
     if (!significatif || !volume) continue;
-    let cause = INSUFFISANT, etablie = false;
-    if (m.additive) { const a = attribuer(v, id, f); if (a) { cause = a.texte; etablie = true; } }
+    let cause = t(INSUFFISANT), etablie = false;
+    if (m.additive) { const a = attribuer(v, id, f, t); if (a) { cause = a.texte; etablie = true; } }
     else if (id === "activation") {
-      const fa = entonnoir(v, f.cur), fb = entonnoir(v, f.prev);
+      const fa = entonnoir(v, f.cur, t), fb = entonnoir(v, f.prev, t);
       const pires = fa.etapes.map((e, i) => ({ nom: e.nom, d: e.tauxEtape - fb.etapes[i].tauxEtape })).slice(1).sort((x, y) => x.d - y.d);
-      if (fa.etapes[0].nombre >= 20 && pires[0] && Math.abs(pires[0].d) >= 0.03) { cause = `Le passage à l'étape « ${pires[0].nom} » a le plus évolué (${formatVariation(pires[0].d, "pct")}).`; etablie = true; }
+      if (fa.etapes[0].nombre >= 20 && pires[0] && Math.abs(pires[0].d) >= 0.03) { cause = t("Le passage à l'étape « {0} » a le plus évolué ({1}).", pires[0].nom, formatVariation(pires[0].d, "pct")); etablie = true; }
     } else if (id === "panier_moyen" || id === "succes_paiement") {
       // Mesures de taux : on cherche le pays qui pèse le plus dans l'écart.
       const parPays = [...new Set(v.marchands.map((x) => x.pays))].map((p) => {
         const restreint = sousVue(v, new Set(v.marchands.filter((x) => x.pays === p).map((x) => x.id)));
         return { p, a: valeur(restreint, id, f.cur), b: valeur(restreint, id, f.prev), n: restreint.payees(f.cur).length };
       }).filter((x) => x.a != null && x.b != null && x.n >= 20).map((x) => ({ ...x, d: x.a! - x.b! })).sort((x, y) => (y.d - x.d) * Math.sign(mes.variation!));
-      if (parPays[0] && Math.sign(parPays[0].d) === Math.sign(mes.variation)) { cause = `Variation la plus forte : ${nomPays(parPays[0].p)} (${formatValeur(parPays[0].b, m.format)} → ${formatValeur(parPays[0].a, m.format)}).`; etablie = true; }
+      if (parPays[0] && Math.sign(parPays[0].d) === Math.sign(mes.variation)) { cause = t("Variation la plus forte : {0} ({1} → {2}).", t(nomPays(parPays[0].p)), formatValeur(parPays[0].b, m.format), formatValeur(parPays[0].a, m.format)); etablie = true; }
     }
     const bon = mes.variation * m.sens > 0;
     const delta = mes.valeur - mes.precedente;
     out.push({
-      id: `var:${id}`, metrique: id, nom: m.nom, mesure: mes, cause, causeEtablie: etablie,
-      impact: m.format === "pct" ? `${formatVariation(mes.variation, "pct")} (${formatValeur(mes.precedente, "pct")} → ${formatValeur(mes.valeur, "pct")})` : `${delta > 0 ? "+" : "−"}${formatValeur(Math.abs(delta), m.format)} sur la période`,
-      action: (ACTIONS[id]?.[bon ? 1 : 0] ?? "Analyser le détail de la métrique.").replace("—", "Aucune action requise."),
+      id: `var:${id}`, metrique: id, nom: t(m.nom), mesure: mes, cause, causeEtablie: etablie,
+      impact: m.format === "pct" ? `${formatVariation(mes.variation, "pct")} (${formatValeur(mes.precedente, "pct")} → ${formatValeur(mes.valeur, "pct")})` : t("{0} sur la période", `${delta > 0 ? "+" : "−"}${formatValeur(Math.abs(delta), m.format)}`),
+      action: t((ACTIONS[id]?.[bon ? 1 : 0] ?? "Analyser le détail de la métrique.").replace("—", "Aucune action requise.")),
       lien: m.page,
     });
   }
@@ -111,10 +113,10 @@ export function variations(v: Vue, f: Fenetres, ids = VARIATIONS_SUIVIES): Varia
 // ─── Entonnoir d'activation ─────────────────────────────────────────────────
 
 /** Entonnoir des inscrits de la fenêtre ayant eu 14 jours pour avancer ; étape comptée si atteinte sous 14 jours. */
-export function entonnoir(v: Vue, w: Fenetre) {
+export function entonnoir(v: Vue, w: Fenetre, t: T = T_FR) {
   const n = v.nouveauxMurs(w);
   const etapes = (["inscription", "boutique", "produit", "commande", "paiement"] as const).map((e) => ({
-    id: e, nom: e === "inscription" ? "Compte créé" : NOM_ETAPE[e], nombre: e === "inscription" ? n.length : n.filter((m) => v.active(m, e)).length,
+    id: e, nom: t(e === "inscription" ? "Compte créé" : NOM_ETAPE[e]), nombre: e === "inscription" ? n.length : n.filter((m) => v.active(m, e)).length,
   }));
   return { etapes: etapes.map((e, i) => ({ ...e, taux: n.length ? e.nombre / n.length : 0, tauxEtape: i === 0 ? 1 : etapes[i - 1].nombre ? e.nombre / etapes[i - 1].nombre : 0 })) };
 }
@@ -123,7 +125,7 @@ export function entonnoir(v: Vue, w: Fenetre) {
 
 export interface StatsMarchand {
   id: string; commandes30: number; commandesPrec30: number; gmv30: number; gmvPrec30: number; commission30: number;
-  joursInactif: number; fonctions30: Set<Fonction>; ia30: number; iaAvant: number; echecs30: number; ticketsOuverts: number;
+  joursInactif: number; fonctions30: Set<Fonction>; ia30: number; iaAvant: number; echecs30: number; ticketsOuverts: number | null;
   mrr: number; mrrAvant: number;
 }
 
@@ -134,7 +136,7 @@ export function statsMarchands(v: Vue): Map<string, StatsMarchand> {
   const s = new Map<string, StatsMarchand>(v.marchands.map((m) => [m.id, {
     id: m.id, commandes30: 0, commandesPrec30: 0, gmv30: 0, gmvPrec30: 0, commission30: 0,
     joursInactif: m.derniereActivite ? Math.max(0, Math.floor((t - m.derniereActivite) / JOUR)) : 999,
-    fonctions30: new Set(), ia30: 0, iaAvant: 0, echecs30: 0, ticketsOuverts: 0, mrr: mrr.get(m.id) ?? 0, mrrAvant: mrrAvant.get(m.id) ?? 0,
+    fonctions30: new Set(), ia30: 0, iaAvant: 0, echecs30: 0, ticketsOuverts: v.ds.manques.includes("tickets") ? null : 0, mrr: mrr.get(m.id) ?? 0, mrrAvant: mrrAvant.get(m.id) ?? 0,
   }]));
   for (const c of tranche(v.commandes, { debut: prev.debut, fin: cur.fin })) {
     const x = s.get(c.marchandId); if (!x) continue;
@@ -144,18 +146,19 @@ export function statsMarchands(v: Vue): Map<string, StatsMarchand> {
   }
   for (const e of tranche(v.fonctions, cur)) s.get(e.marchandId)?.fonctions30.add(e.fonction);
   for (const e of tranche(v.ia, { debut: t - 120 * JOUR, fin: cur.fin })) { const x = s.get(e.marchandId); if (x) { if (e.date >= cur.debut) x.ia30 += e.nombre; else x.iaAvant += e.nombre; } }
-  for (const k of v.ds.tickets) if (!k.resoluLe) { const x = s.get(k.marchandId); if (x) x.ticketsOuverts++; }
+  for (const k of v.ds.tickets) if (!k.resoluLe) { const x = s.get(k.marchandId); if (x && x.ticketsOuverts != null) x.ticketsOuverts++; }
   return s;
 }
 
 export type StatutSante = "croissance" | "sain" | "risque" | "critique";
 export const NOM_STATUT: Record<StatutSante, string> = { croissance: "En croissance", sain: "Sain", risque: "À risque", critique: "Critique" };
 
-export interface Sante { score: number; statut: StatutSante; criteres: Record<keyof PoidsSante, number>; signaux: string[]; croissance: number | null }
+export interface Sante { score: number; statut: StatutSante; criteres: Record<keyof PoidsSante, number | null>; signaux: string[]; croissance: number | null }
 
 const borne = (x: number) => Math.max(0, Math.min(1, x));
 
-export function santeMarchand(m: Marchand, s: StatsMarchand, poids: PoidsSante): Sante {
+export function santeMarchand(m: Marchand, s: StatsMarchand, poids: PoidsSante, t: T = T_FR): Sante {
+  const { formatVariation } = formats(t);
   const croissance = s.commandesPrec30 >= 3 ? (s.commandes30 - s.commandesPrec30) / s.commandesPrec30 : null;
   const criteres = {
     activite: borne(1 - s.joursInactif / 30),
@@ -164,19 +167,21 @@ export function santeMarchand(m: Marchand, s: StatsMarchand, poids: PoidsSante):
     usage: borne(s.fonctions30.size / 5),
     ia: borne(s.ia30 / 10),
     paiements: s.mrrAvant > 0 && s.mrr === 0 ? 0 : borne(1 - s.echecs30 / 5),
-    support: borne(1 - s.ticketsOuverts / 3),
-    croissance: croissance == null ? 0.5 : borne(0.5 + croissance),
+    // Non mesuré (tickets non suivis, historique de commandes trop court) : critère exclu, poids renormalisés — jamais une note inventée.
+    support: s.ticketsOuverts == null ? null : borne(1 - s.ticketsOuverts / 3),
+    croissance: croissance == null ? null : borne(0.5 + croissance),
   };
-  const total = Object.values(poids).reduce((a, b) => a + b, 0) || 1;
-  const score = Math.round((Object.keys(criteres) as (keyof PoidsSante)[]).reduce((a, k) => a + criteres[k] * poids[k], 0) / total * 100);
+  const mesures = (Object.keys(criteres) as (keyof PoidsSante)[]).filter((k) => criteres[k] != null);
+  const total = mesures.reduce((a, k) => a + poids[k], 0) || 1;
+  const score = Math.round(mesures.reduce((a, k) => a + criteres[k]! * poids[k], 0) / total * 100);
   const signaux: string[] = [];
-  if (s.joursInactif >= 7 && s.joursInactif < 999) signaux.push(`${s.joursInactif} jours sans activité`);
-  if (croissance != null && croissance <= -0.3) signaux.push(`commandes ${formatVariation(croissance, "nombre")} sur 30 jours`);
-  if (s.ia30 === 0 && s.iaAvant > 0) signaux.push("n'utilise plus Axia");
-  else if (s.ia30 === 0) signaux.push("aucun usage d'Axia");
-  if (s.echecs30 > 0) signaux.push(`${s.echecs30} paiement${s.echecs30 > 1 ? "s" : ""} échoué${s.echecs30 > 1 ? "s" : ""}`);
-  if (s.mrrAvant > 0 && s.mrr === 0) signaux.push("abonnement non renouvelé");
-  if (s.ticketsOuverts > 0) signaux.push(`${s.ticketsOuverts} ticket${s.ticketsOuverts > 1 ? "s" : ""} support ouvert${s.ticketsOuverts > 1 ? "s" : ""}`);
+  if (s.joursInactif >= 7 && s.joursInactif < 999) signaux.push(t("{0} jours sans activité", s.joursInactif));
+  if (croissance != null && croissance <= -0.3) signaux.push(t("commandes {0} sur 30 jours", formatVariation(croissance, "nombre")));
+  if (s.ia30 === 0 && s.iaAvant > 0) signaux.push(t("n'utilise plus Axia"));
+  else if (s.ia30 === 0) signaux.push(t("aucun usage d'Axia"));
+  if (s.echecs30 > 0) signaux.push(t(s.echecs30 > 1 ? "{0} paiements échoués" : "{0} paiement échoué", s.echecs30));
+  if (s.mrrAvant > 0 && s.mrr === 0) signaux.push(t("abonnement non renouvelé"));
+  if (s.ticketsOuverts) signaux.push(t(s.ticketsOuverts > 1 ? "{0} tickets support ouverts" : "{0} ticket support ouvert", s.ticketsOuverts));
   const statut: StatutSante = score < 40 ? "critique" : score < 60 ? "risque" : croissance != null && croissance >= 0.2 && s.commandes30 >= 5 ? "croissance" : "sain";
   return { score, statut, criteres, signaux, croissance };
 }
@@ -185,16 +190,16 @@ export function santeMarchand(m: Marchand, s: StatsMarchand, poids: PoidsSante):
 
 export interface RisqueChurn { marchand: Marchand; risque: number; raisons: string[]; revenuRisque: number; action: string; sante: Sante }
 
-export function radarChurn(v: Vue, stats: Map<string, StatsMarchand>, poids: PoidsSante): RisqueChurn[] {
+export function radarChurn(v: Vue, stats: Map<string, StatsMarchand>, poids: PoidsSante, t: T = T_FR): RisqueChurn[] {
   const out: RisqueChurn[] = [];
   for (const m of v.marchands) {
     const s = stats.get(m.id)!;
     // Ne concerne que les marchands qui apportent (ou apportaient) de la valeur.
     if (!(s.mrr > 0 || s.mrrAvant > 0 || s.commandesPrec30 >= 3 || s.commandes30 >= 3)) continue;
-    const sante = santeMarchand(m, s, poids);
+    const sante = santeMarchand(m, s, poids, t);
     const risque = Math.round(Math.max(0, Math.min(0.98, (100 - sante.score) / 100 * 1.15 - 0.05)) * 100) / 100;
     if (risque < 0.5) continue;
-    const action = s.mrrAvant > 0 && s.mrr === 0 ? "Relancer le renouvellement d'abonnement" : s.echecs30 > 0 ? "Vérifier les moyens de paiement du marchand" : s.joursInactif >= 14 ? "Lancer une campagne de rétention" : "Proposer un accompagnement (appel support)";
+    const action = t(s.mrrAvant > 0 && s.mrr === 0 ? "Relancer le renouvellement d'abonnement" : s.echecs30 > 0 ? "Vérifier les moyens de paiement du marchand" : s.joursInactif >= 14 ? "Lancer une campagne de rétention" : "Proposer un accompagnement (appel support)");
     out.push({ marchand: m, risque, raisons: sante.signaux, revenuRisque: Math.max(s.mrr, s.mrrAvant) + s.commission30, action, sante });
   }
   return out.sort((a, b) => b.risque * (1 + b.revenuRisque / 10000) - a.risque * (1 + a.revenuRisque / 10000));
@@ -202,16 +207,17 @@ export function radarChurn(v: Vue, stats: Map<string, StatsMarchand>, poids: Poi
 
 export interface Expansion { marchand: Marchand; score: number; raison: string; planRecommande: PlanId | "entreprise"; revenuPotentiel: number }
 
-export function radarExpansion(v: Vue, stats: Map<string, StatsMarchand>): Expansion[] {
+export function radarExpansion(v: Vue, stats: Map<string, StatsMarchand>, t: T = T_FR): Expansion[] {
+  const { formatValeur } = formats(t);
   const out: Expansion[] = [];
   for (const m of v.marchands) {
     const s = stats.get(m.id)!;
     if (m.plan === "palier0" && (s.commandes30 >= 40 || s.gmv30 >= 500_000)) {
-      out.push({ marchand: m, score: Math.round(Math.min(99, Math.max(s.commandes30 / 60, s.gmv30 / 1_500_000) * 100)), raison: s.commandes30 >= 40 ? `${s.commandes30} commandes en 30 jours (limite Essentiel : 60/mois)` : `${formatValeur(s.gmv30, "xaf")} de GMV en 30 jours sur le plan gratuit`, planRecommande: "palier1", revenuPotentiel: PRIX_PLAN.palier1 });
+      out.push({ marchand: m, score: Math.round(Math.min(99, Math.max(s.commandes30 / 60, s.gmv30 / 1_500_000) * 100)), raison: s.commandes30 >= 40 ? t("{0} commandes en 30 jours (limite Essentiel : 60/mois)", s.commandes30) : t("{0} de GMV en 30 jours sur le plan gratuit", formatValeur(s.gmv30, "xaf")), planRecommande: "palier1", revenuPotentiel: PRIX_PLAN.palier1 });
     } else if (m.plan === "palier1" && (s.gmv30 >= 3_000_000 || s.ia30 >= 40 || s.fonctions30.size >= 6)) {
-      out.push({ marchand: m, score: Math.round(Math.min(99, Math.max(s.gmv30 / 6_000_000, s.ia30 / 80, s.fonctions30.size / 8) * 100)), raison: s.gmv30 >= 3_000_000 ? `${formatValeur(s.gmv30, "xaf")} de GMV en 30 jours` : s.ia30 >= 40 ? `${s.ia30} requêtes Axia en 30 jours` : `${s.fonctions30.size} fonctionnalités utilisées`, planRecommande: "palier2", revenuPotentiel: PRIX_PLAN.palier2 - PRIX_PLAN.palier1 });
+      out.push({ marchand: m, score: Math.round(Math.min(99, Math.max(s.gmv30 / 6_000_000, s.ia30 / 80, s.fonctions30.size / 8) * 100)), raison: s.gmv30 >= 3_000_000 ? t("{0} de GMV en 30 jours", formatValeur(s.gmv30, "xaf")) : s.ia30 >= 40 ? t("{0} requêtes Axia en 30 jours", s.ia30) : t("{0} fonctionnalités utilisées", s.fonctions30.size), planRecommande: "palier2", revenuPotentiel: PRIX_PLAN.palier2 - PRIX_PLAN.palier1 });
     } else if (m.plan === "palier2" && s.gmv30 >= 20_000_000) {
-      out.push({ marchand: m, score: 90, raison: `${formatValeur(s.gmv30, "xaf")} de GMV en 30 jours : profil grand compte`, planRecommande: "entreprise", revenuPotentiel: 0 });
+      out.push({ marchand: m, score: 90, raison: t("{0} de GMV en 30 jours : profil grand compte", formatValeur(s.gmv30, "xaf")), planRecommande: "entreprise", revenuPotentiel: 0 });
     }
   }
   return out.sort((a, b) => b.score - a.score);
@@ -266,7 +272,8 @@ export interface SousScore { id: string; nom: string; score: number | null; prec
 
 const echelle = (x: number | null, zero: number, cent: number) => (x == null ? null : Math.round(borne((x - zero) / (cent - zero)) * 100));
 
-export function scoreAxso(v: Vue, f: Fenetres, stats: Map<string, StatsMarchand>, poids: PoidsSante): { global: number | null; precedent: number | null; sous: SousScore[] } {
+export function scoreAxso(v: Vue, f: Fenetres, stats: Map<string, StatsMarchand>, poids: PoidsSante, t: T = T_FR): { global: number | null; precedent: number | null; sous: SousScore[] } {
+  const { formatValeur, formatVariation } = formats(t);
   const calc = (w: Fenetre, prev: Fenetre) => {
     const val = (id: string, x = w) => valeur(v, id, x);
     const croissance = (id: string) => { const a = val(id), b = val(id, prev); return a == null || b == null || b === 0 ? null : (a - b) / b; };
@@ -291,17 +298,17 @@ export function scoreAxso(v: Vue, f: Fenetres, stats: Map<string, StatsMarchand>
   const a = calc(f.cur, f.prev);
   const b = calc(f.prev, { debut: f.prev.debut - (f.prev.fin - f.prev.debut), fin: f.prev.debut });
   const m = (id: string) => mesurer(v, id, f.cur, f.prev, 2);
-  const cause = (id: string) => { const x = m(id); return x.valeur == null ? `${x.nom} : pas de données` : `${x.nom} : ${formatValeur(x.valeur, x.format)} (${formatVariation(x.variation, x.format)})`; };
-  const sous: SousScore[] = [
+  const cause = (id: string) => { const x = m(id); return x.valeur == null ? t("{0} : pas de données", t(x.nom)) : `${t(x.nom)} : ${formatValeur(x.valeur, x.format)} (${formatVariation(x.variation, x.format)})`; };
+  const sous: SousScore[] = ([
     { id: "croissance", nom: "Croissance", causes: [cause("north_star"), cause("nouveaux_marchands")], recommandation: "Accélérer l'acquisition sur les canaux au meilleur LTV.", lien: "/admin/croissance" },
     { id: "revenus", nom: "Revenus", causes: [cause("revenu"), cause("mrr")], recommandation: "Pousser les upgrades détectés par l'Expansion Radar.", lien: "/admin/revenus" },
     { id: "retention", nom: "Rétention", causes: [cause("churn"), cause("nrr")], recommandation: "Traiter en priorité le Churn Radar.", lien: "/admin/succes-client" },
     { id: "produit", nom: "Produit", causes: [cause("activation")], recommandation: "Réduire les frictions de l'onboarding.", lien: "/admin/produit" },
-    { id: "infrastructure", nom: "Infrastructure", causes: [cause("succes_paiement"), `${v.ds.incidents.filter((i) => !i.resoluLe).length} incident(s) ouvert(s)`], recommandation: "Suivre le taux de succès des paiements avec le prestataire.", lien: "/admin/paiements" },
+    { id: "infrastructure", nom: "Infrastructure", causes: [cause("succes_paiement"), v.ds.manques.includes("incidents") ? t("Incidents non suivis") : t("{0} incident(s) ouvert(s)", v.ds.incidents.filter((i) => !i.resoluLe).length)], recommandation: "Suivre le taux de succès des paiements avec le prestataire.", lien: "/admin/paiements" },
     { id: "succes", nom: "Succès client", causes: ["Moyenne des scores santé des marchands actifs"], recommandation: "Appeler les marchands « À risque » à fort revenu.", lien: "/admin/succes-client" },
     { id: "ia", nom: "IA", causes: [cause("adoption_ia"), cause("requetes_ia")], recommandation: "Promouvoir Axia aux marchands qui ne l'utilisent pas.", lien: "/admin/ia" },
     { id: "operations", nom: "Opérations", causes: [cause("livraison"), cause("delai_livraison")], recommandation: "Analyser les échecs de livraison par zone.", lien: "/admin/operations" },
-  ].map((s) => ({ ...s, score: a[s.id as keyof typeof a], precedent: b[s.id as keyof typeof b] }));
+  ]).map((s) => ({ ...s, nom: t(s.nom), causes: s.causes.map((c) => t(c)), recommandation: t(s.recommandation), score: a[s.id as keyof typeof a], precedent: b[s.id as keyof typeof b] }));
   return { global: moyenne(sous.map((s) => s.score)), precedent: moyenne(sous.map((s) => s.precedent)), sous };
 }
 
@@ -322,27 +329,28 @@ export function evaluerSeuil(s: Seuil, mes: Mesure): boolean {
   return s.condition.endsWith("_inf") ? x < s.valeur : x > s.valeur;
 }
 
-export function alertes(v: Vue, f: Fenetres, r: Reglages, churn: RisqueChurn[], expansion: Expansion[], fonctions: ImpactFonction[]): Alerte[] {
+export function alertes(v: Vue, f: Fenetres, r: Reglages, churn: RisqueChurn[], expansion: Expansion[], fonctions: ImpactFonction[], t: T = T_FR): Alerte[] {
+  const { formatValeur, formatVariation } = formats(t);
   const out: Alerte[] = [];
   for (const s of r.seuils) {
     if (!METRIQUE[s.metrique]) continue;
     const mes = mesurer(v, s.metrique, f.cur, f.prev, 2);
     if (!evaluerSeuil(s, mes)) continue;
-    const quoi = s.condition.startsWith("variation") ? `${formatVariation(mes.variation, mes.format)} ${f.libelleComp}` : formatValeur(mes.valeur, mes.format);
+    const quoi = s.condition.startsWith("variation") ? `${formatVariation(mes.variation, mes.format)} ${t(f.libelleComp)}` : formatValeur(mes.valeur, mes.format);
     const seuil = s.condition.startsWith("variation") ? formatVariation(s.valeur, mes.format === "pct" ? "pct" : "nombre") : formatValeur(s.valeur, mes.format);
-    out.push({ id: `seuil:${s.id}`, categorie: s.gravite, metrique: s.metrique, titre: `${mes.nom} : ${quoi}`, detail: `Seuil franchi (${s.condition.endsWith("_inf") ? "<" : ">"} ${seuil}).`, lien: METRIQUE[s.metrique].page });
+    out.push({ id: `seuil:${s.id}`, categorie: s.gravite, metrique: s.metrique, titre: `${t(mes.nom)} : ${quoi}`, detail: t("Seuil franchi ({0} {1}).", s.condition.endsWith("_inf") ? "<" : ">", seuil), lien: METRIQUE[s.metrique].page });
   }
   const crit = churn.filter((c) => c.risque >= 0.7);
-  if (crit.length) out.push({ id: "churn:eleve", categorie: "alerte", titre: `${crit.length} marchand${crit.length > 1 ? "s" : ""} à risque de churn élevé`, detail: `${formatValeur(crit.reduce((s, c) => s + c.revenuRisque, 0), "xaf")} de revenu mensuel en jeu.`, lien: "/admin/succes-client", ids: crit.map((c) => c.marchand.id) });
+  if (crit.length) out.push({ id: "churn:eleve", categorie: "alerte", titre: t(crit.length > 1 ? "{0} marchands à risque de churn élevé" : "{0} marchand à risque de churn élevé", crit.length), detail: t("{0} de revenu mensuel en jeu.", formatValeur(crit.reduce((s, c) => s + c.revenuRisque, 0), "xaf")), lien: "/admin/succes-client", ids: crit.map((c) => c.marchand.id) });
   const pro = expansion.filter((e) => e.planRecommande === "palier1");
-  if (pro.length) out.push({ id: "exp:pro", categorie: "opportunite", titre: `${pro.length} marchand${pro.length > 1 ? "s" : ""} éligible${pro.length > 1 ? "s" : ""} au plan Pro`, detail: `Potentiel : +${formatValeur(pro.reduce((s, e) => s + e.revenuPotentiel, 0), "xaf")} de MRR.`, lien: "/admin/succes-client#expansion", ids: pro.map((e) => e.marchand.id) });
+  if (pro.length) out.push({ id: "exp:pro", categorie: "opportunite", titre: t(pro.length > 1 ? "{0} marchands éligibles au plan Pro" : "{0} marchand éligible au plan Pro", pro.length), detail: t("Potentiel : +{0} de MRR.", formatValeur(pro.reduce((s, e) => s + e.revenuPotentiel, 0), "xaf")), lien: "/admin/succes-client#expansion", ids: pro.map((e) => e.marchand.id) });
   const ill = expansion.filter((e) => e.planRecommande === "palier2");
-  if (ill.length) out.push({ id: "exp:illimite", categorie: "opportunite", titre: `${ill.length} marchand${ill.length > 1 ? "s" : ""} Pro prêt${ill.length > 1 ? "s" : ""} pour l'Illimité`, detail: `Potentiel : +${formatValeur(ill.reduce((s, e) => s + e.revenuPotentiel, 0), "xaf")} de MRR.`, lien: "/admin/succes-client#expansion", ids: ill.map((e) => e.marchand.id) });
+  if (ill.length) out.push({ id: "exp:illimite", categorie: "opportunite", titre: t(ill.length > 1 ? "{0} marchands Pro prêts pour l'Illimité" : "{0} marchand Pro prêt pour l'Illimité", ill.length), detail: t("Potentiel : +{0} de MRR.", formatValeur(ill.reduce((s, e) => s + e.revenuPotentiel, 0), "xaf")), lien: "/admin/succes-client#expansion", ids: ill.map((e) => e.marchand.id) });
   for (const fn of fonctions) {
     // Seules les fonctionnalités optionnelles : constructeur, stock, commandes et paiements sont des prérequis de la vente (comparaison absurde).
     if (fn.gmvParAdopteur == null || !fn.gmvParAutre || !["pos", "axia", "livraison", "marketing"].includes(fn.fonction)) continue;
     const x = fn.gmvParAdopteur / fn.gmvParAutre;
-    if (x >= 1.5) out.push({ id: `insight:${fn.fonction}`, categorie: "insight", titre: `Les marchands utilisant ${fn.nom} génèrent ${formatValeur(x, "ratio")} plus de GMV`, detail: `${fn.adopteurs} adopteurs comparés aux autres marchands actifs. Corrélation observée, pas une preuve de causalité.`, lien: "/admin/produit" });
+    if (x >= 1.5) out.push({ id: `insight:${fn.fonction}`, categorie: "insight", titre: t("Les marchands utilisant {0} génèrent {1} plus de GMV", t(fn.nom), formatValeur(x, "ratio")), detail: t("{0} adopteurs comparés aux autres marchands actifs. Corrélation observée, pas une preuve de causalité.", fn.adopteurs), lien: "/admin/produit" });
   }
   const ordre: CategorieAlerte[] = ["critique", "alerte", "opportunite", "insight"];
   return out.filter((a) => !r.ignores.includes(a.id)).sort((a, b) => ordre.indexOf(a.categorie) - ordre.indexOf(b.categorie));
@@ -352,13 +360,14 @@ export function alertes(v: Vue, f: Fenetres, r: Reglages, churn: RisqueChurn[], 
 
 export interface Priorite { id: string; titre: string; pourquoi: string; impact: "Élevé" | "Moyen" | "Faible"; urgence: "Immédiate" | "Cette semaine" | "Ce mois"; confiance: "Élevée" | "Moyenne" | "Faible"; revenuRisque: number; revenuOpportunite: number; lien: string; ids?: string[]; score: number }
 
-export function priorites(al: Alerte[], churn: RisqueChurn[], expansion: Expansion[], vars: Variation[]): Priorite[] {
+export function priorites(al: Alerte[], churn: RisqueChurn[], expansion: Expansion[], vars: Variation[], t: T = T_FR): Priorite[] {
+  const { formatVariation } = formats(t);
   const out: Priorite[] = [];
-  for (const a of al.filter((x) => x.categorie === "critique")) out.push({ id: a.id, titre: `Traiter : ${a.titre}`, pourquoi: a.detail, impact: "Élevé", urgence: "Immédiate", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: 0, lien: a.lien, score: 100 });
+  for (const a of al.filter((x) => x.categorie === "critique")) out.push({ id: a.id, titre: t("Traiter : {0}", a.titre), pourquoi: a.detail, impact: "Élevé", urgence: "Immédiate", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: 0, lien: a.lien, score: 100 });
   const risque = churn.filter((c) => c.risque >= 0.6);
-  if (risque.length) { const r = risque.reduce((s, c) => s + c.revenuRisque, 0); out.push({ id: "prio:churn", titre: `Contacter ${risque.length} marchand${risque.length > 1 ? "s" : ""} à risque de churn`, pourquoi: "Signaux d'inactivité, de baisse de commandes ou d'échecs de paiement.", impact: r >= 50_000 ? "Élevé" : "Moyen", urgence: "Cette semaine", confiance: "Moyenne", revenuRisque: r, revenuOpportunite: 0, lien: "/admin/succes-client", ids: risque.map((c) => c.marchand.id), score: 60 + Math.min(30, r / 5000) }); }
-  if (expansion.length) { const p = expansion.reduce((s, e) => s + e.revenuPotentiel, 0); out.push({ id: "prio:expansion", titre: `Proposer un upgrade à ${expansion.length} marchand${expansion.length > 1 ? "s" : ""}`, pourquoi: "Usage proche ou au-delà des limites de leur plan.", impact: p >= 50_000 ? "Élevé" : "Moyen", urgence: "Cette semaine", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: p, lien: "/admin/succes-client#expansion", ids: expansion.map((e) => e.marchand.id), score: 55 + Math.min(30, p / 5000) }); }
-  for (const a of al.filter((x) => x.categorie === "alerte" && !x.id.startsWith("churn"))) out.push({ id: a.id, titre: `Analyser : ${a.titre}`, pourquoi: a.detail, impact: "Moyen", urgence: "Cette semaine", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: 0, lien: a.lien, score: 50 });
+  if (risque.length) { const r = risque.reduce((s, c) => s + c.revenuRisque, 0); out.push({ id: "prio:churn", titre: t(risque.length > 1 ? "Contacter {0} marchands à risque de churn" : "Contacter {0} marchand à risque de churn", risque.length), pourquoi: t("Signaux d'inactivité, de baisse de commandes ou d'échecs de paiement."), impact: r >= 50_000 ? "Élevé" : "Moyen", urgence: "Cette semaine", confiance: "Moyenne", revenuRisque: r, revenuOpportunite: 0, lien: "/admin/succes-client", ids: risque.map((c) => c.marchand.id), score: 60 + Math.min(30, r / 5000) }); }
+  if (expansion.length) { const p = expansion.reduce((s, e) => s + e.revenuPotentiel, 0); out.push({ id: "prio:expansion", titre: t(expansion.length > 1 ? "Proposer un upgrade à {0} marchands" : "Proposer un upgrade à {0} marchand", expansion.length), pourquoi: t("Usage proche ou au-delà des limites de leur plan."), impact: p >= 50_000 ? "Élevé" : "Moyen", urgence: "Cette semaine", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: p, lien: "/admin/succes-client#expansion", ids: expansion.map((e) => e.marchand.id), score: 55 + Math.min(30, p / 5000) }); }
+  for (const a of al.filter((x) => x.categorie === "alerte" && !x.id.startsWith("churn"))) out.push({ id: a.id, titre: t("Analyser : {0}", a.titre), pourquoi: a.detail, impact: "Moyen", urgence: "Cette semaine", confiance: "Élevée", revenuRisque: 0, revenuOpportunite: 0, lien: a.lien, score: 50 });
   for (const x of vars.filter((x) => x.mesure.statut === "mauvais").slice(0, 3)) {
     if (out.some((p) => p.lien === x.lien && p.id.startsWith("seuil"))) continue;
     out.push({ id: `prio:${x.id}`, titre: x.action, pourquoi: `${x.nom} ${formatVariation(x.mesure.variation, x.mesure.format)}. ${x.cause}`, impact: Math.abs(x.mesure.variation!) >= 0.15 ? "Élevé" : "Moyen", urgence: "Cette semaine", confiance: x.causeEtablie ? "Moyenne" : "Faible", revenuRisque: 0, revenuOpportunite: 0, lien: x.lien, score: 40 + Math.min(20, Math.abs(x.mesure.variation!) * 100) });
@@ -368,22 +377,23 @@ export function priorites(al: Alerte[], churn: RisqueChurn[], expansion: Expansi
 
 // ─── Brief exécutif ─────────────────────────────────────────────────────────
 
-export function brief(v: Vue, f: Fenetres, vars: Variation[], churn: RisqueChurn[], expansion: Expansion[], prios: Priorite[]): { phrases: string[]; priorites: string[]; suffisant: boolean } {
+export function brief(v: Vue, f: Fenetres, vars: Variation[], churn: RisqueChurn[], expansion: Expansion[], prios: Priorite[], t: T = T_FR): { phrases: string[]; priorites: string[]; suffisant: boolean } {
+  const { formatValeur, formatVariation } = formats(t);
   const phrases: string[] = [];
   const rev = mesurer(v, "revenu", f.cur, f.prev, 2), gmv = mesurer(v, "gmv", f.cur, f.prev, 2), ns = mesurer(v, "north_star", f.cur, f.prev, 2);
-  if (!gmv.valeur && !rev.valeur && !ns.valeur) return { phrases: ["Pas encore assez d'activité sur cette période pour produire un résumé."], priorites: [], suffisant: false };
-  const sens = (x: Mesure) => (x.variation == null ? "" : x.variation > 0.005 ? ` (en hausse de ${formatVariation(x.variation, x.format).replace("+", "")} ${f.libelleComp})` : x.variation < -0.005 ? ` (en baisse de ${formatVariation(x.variation, x.format).replace("−", "")} ${f.libelleComp})` : " (stable)");
-  phrases.push(`Revenu Axso : ${formatValeur(rev.valeur, "xaf")}${sens(rev)}.`);
+  if (!gmv.valeur && !rev.valeur && !ns.valeur) return { phrases: [t("Pas encore assez d'activité sur cette période pour produire un résumé.")], priorites: [], suffisant: false };
+  const sens = (x: Mesure) => (x.variation == null ? "" : x.variation > 0.005 ? " " + t("(en hausse de {0} {1})", formatVariation(x.variation, x.format).replace("+", ""), t(f.libelleComp)) : x.variation < -0.005 ? " " + t("(en baisse de {0} {1})", formatVariation(x.variation, x.format).replace("−", ""), t(f.libelleComp)) : " " + t("(stable)"));
+  phrases.push(t("Revenu Axso : {0}{1}.", formatValeur(rev.valeur, "xaf"), sens(rev)));
   const vg = vars.find((x) => x.metrique === "gmv");
   phrases.push(`GMV : ${formatValeur(gmv.valeur, "xaf")}${sens(gmv)}.${vg?.causeEtablie ? " " + vg.cause : ""}`);
-  phrases.push(`${formatValeur(ns.valeur, "nombre")} marchands ont vendu sur la période${sens(ns)}.`);
+  phrases.push(t("{0} marchands ont vendu sur la période{1}.", formatValeur(ns.valeur, "nombre"), sens(ns)));
   const act = vars.find((x) => x.metrique === "activation");
-  if (act) phrases.push(`L'activation ${act.mesure.variation! > 0 ? "progresse" : "recule"} de ${formatVariation(Math.abs(act.mesure.variation!), "pct").replace("+", "")}. ${act.cause}`);
+  if (act) phrases.push(t(act.mesure.variation! > 0 ? "L'activation progresse de {0}. {1}" : "L'activation recule de {0}. {1}", formatVariation(Math.abs(act.mesure.variation!), "pct").replace("+", ""), act.cause));
   const pay = vars.find((x) => x.metrique === "echecs_paiement" && x.mesure.statut === "mauvais");
-  if (pay) phrases.push(`Les échecs de paiement augmentent de ${formatVariation(pay.mesure.variation, "nombre").replace("+", "")}. ${pay.cause}`);
-  if (expansion.length) phrases.push(`${expansion.length} marchand${expansion.length > 1 ? "s présentent" : " présente"} un fort potentiel d'upgrade.`);
+  if (pay) phrases.push(t("Les échecs de paiement augmentent de {0}. {1}", formatVariation(pay.mesure.variation, "nombre").replace("+", ""), pay.cause));
+  if (expansion.length) phrases.push(t(expansion.length > 1 ? "{0} marchands présentent un fort potentiel d'upgrade." : "{0} marchand présente un fort potentiel d'upgrade.", expansion.length));
   const risque = churn.filter((c) => c.risque >= 0.7);
-  if (risque.length) phrases.push(`${risque.length} marchand${risque.length > 1 ? "s sont" : " est"} à risque de churn élevé.`);
+  if (risque.length) phrases.push(t(risque.length > 1 ? "{0} marchands sont à risque de churn élevé." : "{0} marchand est à risque de churn élevé.", risque.length));
   return { phrases, priorites: prios.slice(0, 5).map((p) => p.titre), suffisant: true };
 }
 
@@ -392,7 +402,7 @@ export function brief(v: Vue, f: Fenetres, vars: Variation[], churn: RisqueChurn
 export interface Prevision { id: string; nom: string; format: Mesure["format"]; historique: { t: number; v: number }[]; projection: { t: number; prudent: number; attendu: number; ambitieux: number }[] }
 
 /** Tendance linéaire sur les 6 derniers mois (≥ 4 mois non nuls requis). PROJECTION, pas une donnée. */
-export function prevision(v: Vue, id: string, mois = 6): Prevision | null {
+export function prevision(v: Vue, id: string, mois = 6, tr: T = T_FR): Prevision | null {
   const m = METRIQUE[id];
   const t = v.maintenant;
   const historique = Array.from({ length: 12 }, (_, i) => {
@@ -408,17 +418,17 @@ export function prevision(v: Vue, id: string, mois = 6): Prevision | null {
     const h = k + 1, attendu = Math.max(0, derniere + pente * h), ecart = Math.abs(pente) * h * 0.5 + derniere * 0.03 * h;
     return { t: t + h * 30 * JOUR, prudent: Math.max(0, attendu - ecart), attendu, ambitieux: attendu + ecart };
   });
-  return { id, nom: m.nom, format: m.format, historique, projection };
+  return { id, nom: tr(m.nom), format: m.format, historique, projection };
 }
 
 // ─── Objectifs ──────────────────────────────────────────────────────────────
 
-export function objectifs(v: Vue, r: Reglages) {
+export function objectifs(v: Vue, r: Reglages, tr: T = T_FR) {
   const t = v.maintenant, w = { debut: t - 30 * JOUR, fin: t };
   return r.objectifs.map((o) => {
     const actuel = o.metrique === "pays" ? new Set(v.marchands.filter((m) => v.actifs(w).has(m.id)).map((m) => m.pays)).size : valeur(v, o.metrique, w);
     const def = METRIQUE[o.metrique];
-    return { ...o, nom: o.metrique === "pays" ? "Pays actifs" : def?.nom ?? o.metrique, format: o.metrique === "pays" ? ("nombre" as const) : def?.format ?? "nombre", actuel, progression: actuel == null ? null : Math.min(1, actuel / o.cible), periode: def?.instant || o.metrique === "pays" ? "aujourd'hui" : "30 derniers jours" };
+    return { ...o, nom: tr(o.metrique === "pays" ? "Pays actifs" : def?.nom ?? o.metrique), format: o.metrique === "pays" ? ("nombre" as const) : def?.format ?? "nombre", actuel, progression: actuel == null ? null : Math.min(1, actuel / o.cible), periode: tr(def?.instant || o.metrique === "pays" ? "aujourd'hui" : "30 derniers jours") };
   });
 }
 
@@ -429,7 +439,6 @@ export const SEMAINES_COHORTE = [1, 2, 4, 8, 12];
 /** Rétention par cohorte hebdomadaire d'inscription : part de la cohorte active pendant la semaine k. */
 export function cohortes(v: Vue, nb = 16) {
   const t = v.maintenant, S = 7 * JOUR;
-  const debutSemaine = (x: number) => Math.floor(x / S) * S;
   const actifsParSemaine = new Map<string, Set<number>>();
   const marque = (id: string, d: number) => { let s = actifsParSemaine.get(id); if (!s) actifsParSemaine.set(id, (s = new Set())); s.add(debutSemaine(d)); };
   for (const c of v.commandes) marque(c.marchandId, c.date);

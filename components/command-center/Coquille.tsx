@@ -16,6 +16,7 @@ import { LangueSelecteur } from "@/components/ui/LangueSelecteur";
 import { Copilote } from "./Copilote";
 import { Live } from "./Live";
 import { Notifications } from "./Notifications";
+import { useT } from "@/components/I18nProvider";
 
 export type Mode = "standard" | "ceo" | "analyste";
 
@@ -32,6 +33,7 @@ export function Coquille(props: { email: string; role: RoleAdmin; sections: Sect
 }
 
 function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: modeInitial, demo, children }: { email: string; role: RoleAdmin; sections: Section[]; theme: "dark" | "light"; mode: Mode; demo: boolean; children: ReactNode }) {
+  const t = useT();
   const chemin = usePathname();
   const params = useSearchParams();
   const router = useRouter();
@@ -44,7 +46,7 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
 
   useEffect(() => setMenu(false), [chemin]);
 
-  const changerTheme = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); poserCookie("cc_theme", t); };
+  const changerTheme = () => { const th = theme === "dark" ? "light" : "dark"; setTheme(th); poserCookie("cc_theme", th); };
   const changerMode = (m: Mode) => { setMode(m); poserCookie("cc_mode", m); router.refresh(); };
   // Les paramètres propres à une page (ex. métrique de l'Explorer, ?statut=) survivent au changement de filtre global.
   const naviguer = (s: Partial<Record<keyof Filtres, string | null>>) => {
@@ -64,61 +66,61 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
         className="flex items-center gap-2.5 px-2.5 h-8 rounded-md text-[13px] transition-colors"
         style={actif(n.href) ? { background: "var(--cc-surface-2)", color: "var(--cc-text)", boxShadow: "inset 2px 0 0 var(--cc-accent)" } : { color: "var(--cc-text-2)" }}>
         <Icone size={15} aria-hidden className="shrink-0" style={actif(n.href) ? { color: "var(--cc-accent)" } : undefined} />
-        <span className="truncate">{n.nom}</span>
+        <span className="truncate">{t(n.nom)}</span>
       </Link>
     );
   };
 
   const selecteurs = (
     <>
-      <select className="cc-select" aria-label="Période" value={filtres.periode} onChange={(e) => naviguer({ periode: e.target.value })}>
-        {PERIODES.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}
+      <select className="cc-select" aria-label={t("Période")} value={filtres.periode} onChange={(e) => naviguer({ periode: e.target.value })}>
+        {PERIODES.map((p) => <option key={p.id} value={p.id}>{t(p.nom)}</option>)}
       </select>
       {filtres.periode === "perso" && (
         <>
-          <input type="date" className="cc-input" aria-label="Du" defaultValue={filtres.du} onChange={(e) => e.target.value && naviguer({ du: e.target.value })} />
-          <input type="date" className="cc-input" aria-label="Au" defaultValue={filtres.au} onChange={(e) => e.target.value && naviguer({ au: e.target.value })} />
+          <input type="date" className="cc-input" aria-label={t("Du")} defaultValue={filtres.du} onChange={(e) => e.target.value && naviguer({ du: e.target.value })} />
+          <input type="date" className="cc-input" aria-label={t("Au")} defaultValue={filtres.au} onChange={(e) => e.target.value && naviguer({ au: e.target.value })} />
         </>
       )}
-      <select className="cc-select" aria-label="Comparaison" value={filtres.comparer} onChange={(e) => naviguer({ comparer: e.target.value })}>
-        <option value="prec">vs période précédente</option>
-        <option value="annee">vs année précédente</option>
+      <select className="cc-select" aria-label={t("Comparaison")} value={filtres.comparer} onChange={(e) => naviguer({ comparer: e.target.value })}>
+        <option value="prec">{t("vs période précédente")}</option>
+        <option value="annee">{t("vs année précédente")}</option>
       </select>
-      <select className="cc-select" aria-label="Pays" value={filtres.pays ?? ""} onChange={(e) => naviguer({ pays: e.target.value || null })}>
-        <option value="">Tous les pays</option>
-        {Object.entries(PAYS).filter(([k]) => k !== "FR").map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+      <select className="cc-select" aria-label={t("Pays")} value={filtres.pays ?? ""} onChange={(e) => naviguer({ pays: e.target.value || null })}>
+        <option value="">{t("Tous les pays")}</option>
+        {Object.entries(PAYS).filter(([k]) => k !== "FR").map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
       </select>
-      <select className="cc-select" aria-label="Plan" value={filtres.plan ?? ""} onChange={(e) => naviguer({ plan: e.target.value || null })}>
-        <option value="">Tous les plans</option>
-        {Object.entries(NOM_PLAN).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+      <select className="cc-select" aria-label={t("Plan")} value={filtres.plan ?? ""} onChange={(e) => naviguer({ plan: e.target.value || null })}>
+        <option value="">{t("Tous les plans")}</option>
+        {Object.entries(NOM_PLAN).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
       </select>
-      <select className="cc-select" aria-label="Segment" value={filtres.taille ?? ""} onChange={(e) => naviguer({ taille: e.target.value || null })}>
-        <option value="">Tous les segments</option>
-        <option value="grand">Gros GMV (≥ 2 M / 90 j)</option>
-        <option value="moyen">GMV moyen</option>
-        <option value="petit">Petit GMV</option>
+      <select className="cc-select" aria-label={t("Segment")} value={filtres.taille ?? ""} onChange={(e) => naviguer({ taille: e.target.value || null })}>
+        <option value="">{t("Tous les segments")}</option>
+        <option value="grand">{t("Gros GMV (≥ 2 M / 90 j)")}</option>
+        <option value="moyen">{t("GMV moyen")}</option>
+        <option value="petit">{t("Petit GMV")}</option>
       </select>
       {mode === "analyste" && (
         <>
-          <select className="cc-select" aria-label="Acquisition" value={filtres.acq ?? ""} onChange={(e) => naviguer({ acq: e.target.value || null })}>
-            <option value="">Toutes acquisitions</option>
-            {Object.entries(SOURCES_ACQ).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          <select className="cc-select" aria-label={t("Acquisition")} value={filtres.acq ?? ""} onChange={(e) => naviguer({ acq: e.target.value || null })}>
+            <option value="">{t("Toutes acquisitions")}</option>
+            {Object.entries(SOURCES_ACQ).map(([k, v]) => <option key={k} value={k}>{t(v)}</option>)}
           </select>
-          <select className="cc-select" aria-label="Ancienneté" value={filtres.anciennete ?? ""} onChange={(e) => naviguer({ anciennete: e.target.value || null })}>
-            <option value="">Toute ancienneté</option><option value="nouveau">Nouveaux (&lt; 30 j)</option><option value="etabli">Établis</option>
+          <select className="cc-select" aria-label={t("Ancienneté")} value={filtres.anciennete ?? ""} onChange={(e) => naviguer({ anciennete: e.target.value || null })}>
+            <option value="">{t("Toute ancienneté")}</option><option value="nouveau">{t("Nouveaux (< 30 j)")}</option><option value="etabli">{t("Établis")}</option>
           </select>
-          <select className="cc-select" aria-label="Activité" value={filtres.activite ?? ""} onChange={(e) => naviguer({ activite: e.target.value || null })}>
-            <option value="">Toute activité</option><option value="actif">Actifs (14 j)</option><option value="dormant">Dormants</option>
+          <select className="cc-select" aria-label={t("Activité")} value={filtres.activite ?? ""} onChange={(e) => naviguer({ activite: e.target.value || null })}>
+            <option value="">{t("Toute activité")}</option><option value="actif">{t("Actifs (14 j)")}</option><option value="dormant">{t("Dormants")}</option>
           </select>
         </>
       )}
       {demo && (
-        <div className="inline-flex rounded-md p-0.5 border" style={{ borderColor: "var(--cc-border-strong)" }} role="group" aria-label="Environnement de données">
+        <div className="inline-flex rounded-md p-0.5 border" style={{ borderColor: "var(--cc-border-strong)" }} role="group" aria-label={t("Environnement de données")}>
           {(["reel", "demo"] as const).map((s) => (
             <button key={s} onClick={() => naviguer({ source: s })} aria-pressed={filtres.source === s}
               className="px-2.5 h-[26px] rounded text-[12px] font-medium"
               style={filtres.source === s ? { background: s === "demo" ? "var(--cc-violet-bg)" : "var(--cc-surface-3)", color: s === "demo" ? "var(--cc-violet)" : "var(--cc-text)" } : { color: "var(--cc-text-3)" }}>
-              {s === "reel" ? "Réel" : "Démo"}
+              {s === "reel" ? t("Réel") : t("Démo")}
             </button>
           ))}
         </div>
@@ -135,11 +137,11 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
         <div className="h-14 px-4 flex items-center gap-2.5 border-b cc-sep">
           <img src={theme === "light" && !gestion ? "/logo.png" : "/logo-dark.png"} alt="Axso" className="h-6 w-auto" />
           <span className="cc-eyebrow" style={{ letterSpacing: "0.12em" }}>Command</span>
-          <button className="lg:hidden ml-auto cc-btn cc-btn-ghost cc-btn-sm" onClick={() => setMenu(false)} aria-label="Fermer le menu"><X size={15} /></button>
+          <button className="lg:hidden ml-auto cc-btn cc-btn-ghost cc-btn-sm" onClick={() => setMenu(false)} aria-label={t("Fermer le menu")}><X size={15} /></button>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5" aria-label="Navigation du Command Center">
+        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5" aria-label={t("Navigation du Command Center")}>
           {autorise.filter((n) => !n.gestion).map(lienNav)}
-          {autorise.some((n) => n.gestion) && <p className="cc-eyebrow px-2.5 pt-4 pb-1.5">Gestion</p>}
+          {autorise.some((n) => n.gestion) && <p className="cc-eyebrow px-2.5 pt-4 pb-1.5">{t("Gestion")}</p>}
           {autorise.filter((n) => n.gestion).map(lienNav)}
         </nav>
         <div className="p-2 border-t cc-sep">
@@ -148,9 +150,9 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0" style={{ background: "var(--cc-accent-bg)", color: "var(--cc-accent-text)" }}>{email.slice(0, 2).toUpperCase()}</div>
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-medium truncate">{email}</p>
-              <p className="text-[11px] cc-faint">{NOM_ROLE[role]}</p>
+              <p className="text-[11px] cc-faint">{t(NOM_ROLE[role])}</p>
             </div>
-            <button onClick={() => signOut({ callbackUrl: "/connexion" })} className="cc-btn cc-btn-ghost cc-btn-sm" aria-label="Déconnexion" title="Déconnexion"><LogOut size={14} /></button>
+            <button onClick={() => signOut({ callbackUrl: "/connexion" })} className="cc-btn cc-btn-ghost cc-btn-sm" aria-label={t("Déconnexion")} title={t("Déconnexion")}><LogOut size={14} /></button>
           </div>
         </div>
       </aside>
@@ -158,14 +160,14 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
       <div className="flex-1 min-w-0 flex flex-col">
         <header className="sticky top-0 z-30 border-b cc-sep cc-no-print" style={{ background: "color-mix(in srgb, var(--cc-bg) 88%, transparent)", backdropFilter: "blur(10px)" }}>
           <div className="h-14 px-3 sm:px-5 flex items-center gap-2">
-            <button className="lg:hidden cc-btn cc-btn-ghost cc-btn-sm" onClick={() => setMenu(true)} aria-label="Ouvrir le menu"><Menu size={17} /></button>
-            <button onClick={() => window.dispatchEvent(new Event("cc:recherche"))} className="cc-btn flex-1 min-w-0 sm:flex-none sm:w-64 justify-start" style={{ color: "var(--cc-text-3)" }} aria-label="Recherche globale (Ctrl+K)">
-              <Search size={14} /><span className="truncate">Rechercher, demander…</span>
+            <button className="lg:hidden cc-btn cc-btn-ghost cc-btn-sm" onClick={() => setMenu(true)} aria-label={t("Ouvrir le menu")}><Menu size={17} /></button>
+            <button onClick={() => window.dispatchEvent(new Event("cc:recherche"))} className="cc-btn flex-1 min-w-0 sm:flex-none sm:w-64 justify-start" style={{ color: "var(--cc-text-3)" }} aria-label={t("Recherche globale (Ctrl+K)")}>
+              <Search size={14} /><span className="truncate">{t("Rechercher, demander…")}</span>
               <kbd className="ml-auto hidden sm:inline text-[10.5px] px-1.5 rounded border cc-sep">Ctrl K</kbd>
             </button>
             <div className="ml-auto flex items-center gap-1 shrink-0">
               {!gestion && (
-                <button className="md:hidden cc-btn cc-btn-ghost cc-btn-sm relative" onClick={() => setFiltresMobile(!filtresMobile)} aria-expanded={filtresMobile} aria-label="Filtres">
+                <button className="md:hidden cc-btn cc-btn-ghost cc-btn-sm relative" onClick={() => setFiltresMobile(!filtresMobile)} aria-expanded={filtresMobile} aria-label={t("Filtres")}>
                   <SlidersHorizontal size={15} />{nbSegments > 0 && <span className="cc-badge cc-badge-accent" style={{ height: 16, padding: "0 5px" }}>{nbSegments}</span>}
                 </button>
               )}
@@ -174,29 +176,30 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
               <button onClick={() => window.dispatchEvent(new CustomEvent("cc:copilote", { detail: "" }))} className="cc-btn cc-btn-sm" style={{ borderColor: "var(--cc-accent)", color: "var(--cc-accent-text)" }}>
                 <Sparkles size={13} /><span className="hidden sm:inline">Ask Axso</span>
               </button>
-              <select className="cc-select hidden md:block" style={{ height: 26, fontSize: 12 }} aria-label="Mode d'affichage" value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
-                <option value="standard">Mode standard</option>
+              <select className="cc-select hidden md:block" style={{ height: 26, fontSize: 12 }} aria-label={t("Mode d'affichage")} value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
+                <option value="standard">{t("Mode standard")}</option>
                 <option value="ceo">CEO Mode</option>
                 <option value="analyste">Analyst Mode</option>
               </select>
-              {!gestion && <button onClick={changerTheme} className="cc-btn cc-btn-ghost cc-btn-sm" aria-label={theme === "dark" ? "Passer en thème clair" : "Passer en thème sombre"}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>}
+              {!gestion && <button onClick={changerTheme} className="cc-btn cc-btn-ghost cc-btn-sm" aria-label={theme === "dark" ? t("Passer en thème clair") : t("Passer en thème sombre")}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>}
             </div>
           </div>
           {!gestion && <div className="hidden md:flex flex-wrap items-center gap-1.5 px-5 pb-2.5">{selecteurs}</div>}
           {filtresMobile && !gestion && (
             <div className="md:hidden px-3 sm:px-5 pb-3 flex flex-wrap gap-1.5 [&>select]:flex-1 [&>select]:min-w-[140px]">
               {selecteurs}
-              <select className="cc-select md:hidden flex-1" aria-label="Mode d'affichage" value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
-                <option value="standard">Mode standard</option><option value="ceo">CEO Mode</option><option value="analyste">Analyst Mode</option>
+              <select className="cc-select md:hidden flex-1" aria-label={t("Mode d'affichage")} value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
+                <option value="standard">{t("Mode standard")}</option><option value="ceo">CEO Mode</option><option value="analyste">Analyst Mode</option>
               </select>
             </div>
           )}
         </header>
-        {filtres.source === "demo" && !gestion && (
+        {/* Hors démo autorisée (production), le serveur force la source réelle : ne pas annoncer des données fictives. */}
+        {demo && filtres.source === "demo" && !gestion && (
           <div className="px-3 sm:px-5 py-1.5 text-[12px] flex items-center gap-2 cc-no-print" style={{ background: "var(--cc-violet-bg)", color: "var(--cc-violet)" }} role="status">
             <FlaskConical size={13} aria-hidden />
-            <span><strong>Données de démonstration</strong> — fictives, générées pour présenter le Command Center. Elles ne sont jamais mélangées aux données réelles.</span>
-            <button className="underline ml-auto shrink-0" onClick={() => naviguer({ source: "reel" })}>Voir le réel</button>
+            <span><strong>{t("Données de démonstration")}</strong> — {t("fictives, générées pour présenter le Command Center. Elles ne sont jamais mélangées aux données réelles.")}</span>
+            <button className="underline ml-auto shrink-0" onClick={() => naviguer({ source: "reel" })}>{t("Voir le réel")}</button>
           </div>
         )}
         <main className="flex-1 min-w-0">

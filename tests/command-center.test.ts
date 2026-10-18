@@ -31,10 +31,10 @@ test("fenetres : durée, comparaison précédente et annuelle", () => {
   const a = fenetres(lireFiltres({ periode: "30j", comparer: "annee" }), T);
   assert.equal(a.cur.debut - a.prev.debut, 365 * JOUR);
   const p = fenetres(lireFiltres({ periode: "perso", du: "2026-10-01", au: "2026-10-10" }), T);
-  assert.equal(p.cur.debut, Date.UTC(2026, 9, 1));
-  assert.equal(p.cur.fin, Date.UTC(2026, 9, 11)); // jour de fin inclus
+  assert.equal(p.cur.debut, Date.UTC(2026, 9, 1) - 3_600_000); // minuit à Douala (UTC+1)
+  assert.equal(p.cur.fin, Date.UTC(2026, 9, 11) - 3_600_000); // jour de fin inclus
   const h = fenetres(lireFiltres({ periode: "hier" }), T);
-  assert.equal(h.cur.fin, Date.UTC(2026, 9, 17));
+  assert.equal(h.cur.fin, Date.UTC(2026, 9, 17) - 3_600_000);
 });
 
 const marchand = (id: string): Marchand => ({ id, nom: id, pays: "CM", plan: "palier1", industrie: "Mode", source: "organique", creeLe: T - 200 * JOUR, derniereActivite: T, actif: true, etapes: { boutique: null, produit: null, commande: null, paiement: null }, nbProduits: 0, produitsStockFaible: 0 });

@@ -3,7 +3,8 @@
 import { PLANS, PRIX_PLAN, type PlanId } from "./types";
 import { Vue, tranche, valeur } from "./moteur";
 import { JOUR, type Fenetre } from "./contexte";
-import { formatValeur } from "./format";
+import { formats, T_FR } from "./format";
+import type { T } from "@/lib/i18n";
 import type { StatsMarchand } from "./insights";
 
 /** Plan payé par marchand à l'instant t (dernier paiement couvrant t ; absent = Essentiel). */
@@ -73,21 +74,22 @@ export function analysePlans(v: Vue, w: Fenetre): LignePlan[] {
 }
 
 /** Recommandations : uniquement des constats chiffrés, avec un volume minimal. Sur les 30 derniers jours. */
-export function recommandationsPlans(v: Vue, stats: Map<string, StatsMarchand>): { texte: string; plan: PlanId }[] {
+export function recommandationsPlans(v: Vue, stats: Map<string, StatsMarchand>, t: T = T_FR): { texte: string; plan: PlanId }[] {
+  const { formatValeur } = formats(t);
   const out: { texte: string; plan: PlanId }[] = [];
   const parPlan = (p: PlanId) => v.marchands.filter((m) => m.plan === p).map((m) => stats.get(m.id)!).filter((s) => s.mrr > 0 || p === "palier0");
   const pro = parPlan("palier1");
   if (pro.length >= 10) {
     const sans = pro.filter((s) => !s.fonctions30.has("marketing") && !s.fonctions30.has("axia") && s.ia30 === 0).length;
     const part = sans / pro.length;
-    if (part >= 0.2) out.push({ plan: "palier1", texte: `${Math.round(part * 100)} % des marchands Pro payants (${sans}/${pro.length}) n'ont utilisé ni Marketing ni Axia sur 30 jours : risque de churn, à accompagner sur ces fonctions.` });
+    if (part >= 0.2) out.push({ plan: "palier1", texte: t("{0} % des marchands Pro payants ({1}/{2}) n'ont utilisé ni Marketing ni Axia sur 30 jours : risque de churn, à accompagner sur ces fonctions.", Math.round(part * 100), sans, pro.length) });
   }
   const ess = parPlan("palier0").filter((s) => s.commandes30 >= 40);
-  if (ess.length) out.push({ plan: "palier0", texte: `${ess.length} marchand${ess.length > 1 ? "s" : ""} Essentiel dépasse${ess.length > 1 ? "nt" : ""} 40 commandes sur 30 jours (limite du plan : 60/mois) : candidats au Pro (+${formatValeur(ess.length * PRIX_PLAN.palier1, "xaf")} de MRR potentiel).` });
+  if (ess.length) out.push({ plan: "palier0", texte: t(ess.length > 1 ? "{0} marchands Essentiel dépassent 40 commandes sur 30 jours (limite du plan : 60/mois) : candidats au Pro (+{1} de MRR potentiel)." : "{0} marchand Essentiel dépasse 40 commandes sur 30 jours (limite du plan : 60/mois) : candidat au Pro (+{1} de MRR potentiel).", ess.length, formatValeur(ess.length * PRIX_PLAN.palier1, "xaf")) });
   const ill = parPlan("palier2");
   if (ill.length >= 10) {
     const faibles = ill.filter((s) => s.commandes30 < 10).length, part = faibles / ill.length;
-    if (part >= 0.3) out.push({ plan: "palier2", texte: `${Math.round(part * 100)} % des marchands Illimité payants (${faibles}/${ill.length}) ont moins de 10 commandes sur 30 jours : risque de downgrade vers le Pro.` });
+    if (part >= 0.3) out.push({ plan: "palier2", texte: t("{0} % des marchands Illimité payants ({1}/{2}) ont moins de 10 commandes sur 30 jours : risque de downgrade vers le Pro.", Math.round(part * 100), faibles, ill.length) });
   }
   return out;
 }

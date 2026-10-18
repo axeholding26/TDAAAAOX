@@ -16,6 +16,7 @@ import { lireFiltres, fenetres, type Filtres, type Fenetres } from "./contexte";
 import { Vue } from "./moteur";
 import { REGLAGES_DEFAUT, SCHEMAS, type CleReglage, type Reglages } from "./reglages";
 import { statsMarchands, radarChurn, radarExpansion, impactFonctions, alertes, variations, priorites } from "./insights";
+import type { T } from "@/lib/i18n";
 
 const TTL = 60_000;
 let reel: { ds: Dataset; a: number } | null = null;
@@ -93,14 +94,15 @@ export async function contexteCC(section: Section, searchParams: SP): Promise<Co
 }
 
 /** Analyses lourdes partagées par plusieurs blocs d'une même page. */
-export function analyser(c: ContexteCC) {
+/** `t` : langue des textes produits (titres d'alertes, causes, priorités) ; français par défaut. */
+export function analyser(c: ContexteCC, t?: T) {
   const stats = statsMarchands(c.vue);
-  const churn = radarChurn(c.vue, stats, c.reglages.poids_sante);
-  const expansion = radarExpansion(c.vue, stats);
+  const churn = radarChurn(c.vue, stats, c.reglages.poids_sante, t);
+  const expansion = radarExpansion(c.vue, stats, t);
   const fonctions = impactFonctions(c.vue, c.fen);
-  const al = alertes(c.vue, c.fen, c.reglages, churn, expansion, fonctions);
-  const vars = variations(c.vue, c.fen);
-  return { stats, churn, expansion, fonctions, alertes: al, variations: vars, priorites: priorites(al, churn, expansion, vars).filter((p) => !c.reglages.ignores.includes(p.id)) };
+  const al = alertes(c.vue, c.fen, c.reglages, churn, expansion, fonctions, t);
+  const vars = variations(c.vue, c.fen, undefined, t);
+  return { stats, churn, expansion, fonctions, alertes: al, variations: vars, priorites: priorites(al, churn, expansion, vars, t).filter((p) => !c.reglages.ignores.includes(p.id)) };
 }
 
 const limiteCC = rateLimit({ windowMs: 60_000, max: 120, keyPrefix: "command-center" });

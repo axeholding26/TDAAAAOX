@@ -43,7 +43,7 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
-      toast.success(`${t("Membre invité")} : ${nomRole(form.role)}`);
+      toast.success(`${t("Membre invité")} : ${t(nomRole(form.role))}`);
       setForm({ email: "", password: "", name: "", role: "admin_lecteur" });
       charger();
     } catch (e: any) {
@@ -58,7 +58,7 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
       const res = await fetch(`/api/admin/equipe/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error);
-      toast.success(`${t("Rôle modifié")} : ${nomRole(role)}`);
+      toast.success(`${t("Rôle modifié")} : ${t(nomRole(role))}`);
       charger();
     } catch (e: any) {
       toast.error(t(e.message || "Erreur"));
@@ -98,7 +98,7 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
               className="px-3 py-2.5 text-sm rounded-lg border focus:outline-none" style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#FFFFFF" }} />
             <select aria-label={t("Rôle")} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
               className="px-3 py-2.5 text-sm rounded-lg border focus:outline-none" style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#FFFFFF" }}>
-              {ROLES_INVITABLES.map(r => <option key={r} value={r}>{NOM_ROLE[r]}</option>)}
+              {ROLES_INVITABLES.map(r => <option key={r} value={r}>{t(NOM_ROLE[r])}</option>)}
             </select>
           </div>
           <button type="submit" disabled={submitting}
@@ -133,12 +133,12 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
                   <span className="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
                     style={m.role === "admin" ? { background: "rgba(22,163,74,0.15)", color: "#16A34A" } : { background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>
                     {m.role === "admin" ? <ShieldCheck size={10} /> : <Eye size={10} />}
-                    {nomRole(m.role)}
+                    {t(nomRole(m.role))}
                   </span>
                   {peutInviter && m.role !== "admin" && m.id !== monId && (
                     <select aria-label={`${t("Rôle de")} ${m.email}`} value={m.role} onChange={e => changerRole(m.id, e.target.value)}
                       className="px-2 py-1 text-xs rounded-lg border focus:outline-none" style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#FFFFFF" }}>
-                      {ROLES_INVITABLES.map(r => <option key={r} value={r}>{NOM_ROLE[r]}</option>)}
+                      {ROLES_INVITABLES.map(r => <option key={r} value={r}>{t(NOM_ROLE[r])}</option>)}
                     </select>
                   )}
                   {peutInviter && m.role !== "admin" && m.id !== monId && (

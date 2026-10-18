@@ -4,12 +4,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, AlertOctagon, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
+import { useT } from "@/components/I18nProvider";
 
 type Alerte = { id: string; categorie: "critique" | "alerte" | "opportunite" | "insight"; titre: string; detail: string; lien: string };
 const ICONE = { critique: AlertOctagon, alerte: AlertTriangle, opportunite: Rocket, insight: Lightbulb };
 const TON = { critique: "var(--cc-bad)", alerte: "var(--cc-warn)", opportunite: "var(--cc-good)", insight: "var(--cc-info)" };
 
 export function Notifications({ contexte }: { contexte: string }) {
+  const t = useT();
   const [ouvert, setOuvert] = useState(false);
   const [alertes, setAlertes] = useState<Alerte[] | null>(null);
 
@@ -22,16 +24,16 @@ export function Notifications({ contexte }: { contexte: string }) {
   const urgentes = alertes?.filter((a) => a.categorie === "critique" || a.categorie === "alerte").length ?? 0;
   return (
     <div className="relative">
-      <button onClick={() => setOuvert(!ouvert)} className="cc-btn cc-btn-ghost cc-btn-sm relative" aria-label={`Alertes${urgentes ? ` : ${urgentes} à traiter` : ""}`} aria-expanded={ouvert}>
+      <button onClick={() => setOuvert(!ouvert)} className="cc-btn cc-btn-ghost cc-btn-sm relative" aria-label={urgentes ? t("Alertes : {0} à traiter", urgentes) : t("Alertes")} aria-expanded={ouvert}>
         <Bell size={15} />
         {urgentes > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ background: "var(--cc-bad)", color: "#fff" }}>{urgentes}</span>}
       </button>
       {ouvert && (
         <div className="absolute right-0 mt-2 w-[min(380px,92vw)] cc-card z-50 overflow-hidden" style={{ boxShadow: "var(--cc-shadow)" }}>
-          <div className="px-3 py-2.5 border-b cc-sep flex items-center justify-between"><p className="text-[13px] font-semibold">Alertes</p><Link href={`/admin/alertes${contexte}`} onClick={() => setOuvert(false)} className="text-[12px]" style={{ color: "var(--cc-accent-text)" }}>Tout voir</Link></div>
+          <div className="px-3 py-2.5 border-b cc-sep flex items-center justify-between"><p className="text-[13px] font-semibold">{t("Alertes")}</p><Link href={`/admin/alertes${contexte}`} onClick={() => setOuvert(false)} className="text-[12px]" style={{ color: "var(--cc-accent-text)" }}>{t("Tout voir")}</Link></div>
           <ul className="max-h-[60vh] overflow-y-auto">
             {!alertes && Array.from({ length: 3 }, (_, i) => <li key={i} className="p-3"><div className="cc-skel h-10" /></li>)}
-            {alertes?.length === 0 && <li className="p-6 text-center text-[12.5px] cc-faint">Aucune alerte sur ce périmètre.</li>}
+            {alertes?.length === 0 && <li className="p-6 text-center text-[12.5px] cc-faint">{t("Aucune alerte sur ce périmètre.")}</li>}
             {alertes?.slice(0, 12).map((a) => {
               const I = ICONE[a.categorie];
               return (

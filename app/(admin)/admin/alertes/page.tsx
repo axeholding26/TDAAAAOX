@@ -3,7 +3,8 @@ import { AlertOctagon, AlertTriangle, Lightbulb, Rocket, CheckCircle2, Settings2
 import { contexteCC, analyser } from "@/lib/command-center/serveur";
 import { METRIQUE, mesurer } from "@/lib/command-center/moteur";
 import { evaluerSeuil, type CategorieAlerte } from "@/lib/command-center/insights";
-import { formatValeur, formatVariation } from "@/lib/command-center/format";
+import { formats } from "@/lib/command-center/format";
+import { getT } from "@/lib/i18n/serveur";
 import { lien } from "@/lib/command-center/contexte";
 import { peutAgir } from "@/lib/command-center/rbac";
 import { EnTetePage, Carte, Badge, EtatVide, Note, Tableau, Fraicheur } from "@/components/command-center/ui";
@@ -21,32 +22,34 @@ const NOM_INSIGHT: Record<string, string> = { "churn:eleve": "Marchands à risqu
 
 export default async function Alertes({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const c = await contexteCC("alertes", searchParams);
+  const tx = await getT();
+  const { formatValeur, formatVariation } = formats(tx);
   const { vue: v, fen: f, filtres, session, reglages: r } = c;
-  const a = analyser(c);
+  const a = analyser(c, tx);
   const agir = peutAgir(session.role);
   const L = (p: string) => lien(p, filtres);
 
   // Libellé lisible d'un insight ignoré (seuil → métrique ; variations / insights fonctionnalités → métrique).
   const nomIgnore = (id: string) => {
     const [t, k] = id.split(":");
-    if (t === "seuil") { const s = r.seuils.find((x) => x.id === k); return s ? `Seuil : ${METRIQUE[s.metrique]?.nom ?? s.metrique} (${COND[s.condition]})` : "Seuil supprimé"; }
-    if (t === "prio" && k?.startsWith("var")) return `Priorité : ${METRIQUE[id.split(":")[2]]?.nom ?? id}`;
-    if (t === "insight") return `Insight fonctionnalité : ${k}`;
-    return NOM_INSIGHT[id] ?? id;
+    if (t === "seuil") { const s = r.seuils.find((x) => x.id === k); return s ? tx("Seuil : {0} ({1})", tx(METRIQUE[s.metrique]?.nom ?? s.metrique), tx(COND[s.condition])) : tx("Seuil supprimé"); }
+    if (t === "prio" && k?.startsWith("var")) return tx("Priorité : {0}", tx(METRIQUE[id.split(":")[2]]?.nom ?? id));
+    if (t === "insight") return tx("Insight fonctionnalité : {0}", k);
+    return tx(NOM_INSIGHT[id] ?? id);
   };
   const seuilsActifs = r.seuils.filter((s) => s.actif && METRIQUE[s.metrique]);
 
   return (
     <div className="space-y-5">
-      <EnTetePage eyebrow="Alert Center" titre="Risques & alertes" sousTitre={<>Seuils franchis, risques et opportunités détectés · <span className="cc-faint">{f.libelle} {f.libelleComp}</span></>}
-        actions={<><Fraicheur genereA={c.ds.genereA} source={c.ds.source} erreur={c.erreur} /><Link href={L("/admin/reglages#seuils")} className="cc-btn cc-btn-sm"><Settings2 size={13} />Seuils</Link></>} />
-      {c.erreur && <Note ton="warn">{c.erreur}</Note>}
+      <EnTetePage eyebrow="Alert Center" titre={tx("Risques & alertes")} sousTitre={<>{tx("Seuils franchis, risques et opportunités détectés")} · <span className="cc-faint">{tx(f.libelle)} {tx(f.libelleComp)}</span></>}
+        actions={<><Fraicheur genereA={c.ds.genereA} source={c.ds.source} erreur={c.erreur} /><Link href={L("/admin/reglages#seuils")} className="cc-btn cc-btn-sm"><Settings2 size={13} />{tx("Seuils")}</Link></>} />
+      {c.erreur && <Note ton="warn">{tx(c.erreur)}</Note>}
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" role="list" aria-label="Synthèse par gravité">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" role="list" aria-label={tx("Synthèse par gravité")}>
         {CATEGORIES.map((k) => { const n = a.alertes.filter((x) => x.categorie === k.id).length; const I = k.icone; return (
           <a key={k.id} href={`#${k.id}`} role="listitem" className="cc-card cc-hover p-3.5 flex items-center gap-3">
             <I size={18} className={`cc-${k.ton} shrink-0`} aria-hidden />
-            <div><p className="text-[12px] cc-muted">{k.nom}</p><p className="text-[21px] font-semibold cc-num">{n}</p></div>
+            <div><p className="text-[12px] cc-muted">{tx(k.nom)}</p><p className="text-[21px] font-semibold cc-num">{n}</p></div>
           </a>
         ); })}
       </div>
@@ -55,12 +58,12 @@ export default async function Alertes({ searchParams }: { searchParams: Promise<
         const liste = a.alertes.filter((x) => x.categorie === k.id);
         const I = k.icone;
         return (
-          <Carte key={k.id} id={k.id} titre={<span className="inline-flex items-center gap-2"><I size={15} className={`cc-${k.ton}`} aria-hidden />{k.nom}<Badge ton={k.ton}>{liste.length}</Badge></span>} pad={false}>
-            {!liste.length ? <p className="px-4 pb-4 flex items-center gap-2 text-[13px] cc-faint"><CheckCircle2 size={14} aria-hidden />{k.vide}</p> : (
+          <Carte key={k.id} id={k.id} titre={<span className="inline-flex items-center gap-2"><I size={15} className={`cc-${k.ton}`} aria-hidden />{tx(k.nom)}<Badge ton={k.ton}>{liste.length}</Badge></span>} pad={false}>
+            {!liste.length ? <p className="px-4 pb-4 flex items-center gap-2 text-[13px] cc-faint"><CheckCircle2 size={14} aria-hidden />{tx(k.vide)}</p> : (
               <ul className="divide-y cc-sep border-t cc-sep">
                 {liste.map((x) => (
                   <li key={x.id} className="px-4 py-3 flex gap-3">
-                    <I size={15} className={`cc-${k.ton} shrink-0 mt-0.5`} aria-label={k.nom} />
+                    <I size={15} className={`cc-${k.ton} shrink-0 mt-0.5`} aria-label={tx(k.nom)} />
                     <div className="min-w-0 flex-1">
                       <Link href={L(x.lien)} className="text-[13.5px] font-medium hover:underline">{x.titre}</Link>
                       <p className="cc-faint text-[12px] mt-0.5">{x.detail}</p>
@@ -75,25 +78,25 @@ export default async function Alertes({ searchParams }: { searchParams: Promise<
       })}
 
       <div className="grid gap-3 xl:grid-cols-[1.4fr_1fr]">
-        <Carte titre="Seuils actifs" sousTitre={`État sur la période courante (${f.libelle.toLowerCase()})`} actions={<Link href={L("/admin/reglages#seuils")} className="cc-btn cc-btn-ghost cc-btn-sm">Modifier</Link>}>
-          <Tableau vide="Aucun seuil actif."
-            colonnes={[{ cle: "metrique", nom: "Métrique" }, { cle: "condition", nom: "Condition" }, { cle: "actuel", nom: "Actuel", droite: true }, { cle: "gravite", nom: "Gravité" }, { cle: "canal", nom: "Canal" }, { cle: "etat", nom: "État" }]}
+        <Carte titre={tx("Seuils actifs")} sousTitre={tx("État sur la période courante ({0})", tx(f.libelle).toLowerCase())} actions={<Link href={L("/admin/reglages#seuils")} className="cc-btn cc-btn-ghost cc-btn-sm">{tx("Modifier")}</Link>}>
+          <Tableau vide={tx("Aucun seuil actif.")}
+            colonnes={[{ cle: "metrique", nom: tx("Métrique") }, { cle: "condition", nom: tx("Condition") }, { cle: "actuel", nom: tx("Actuel"), droite: true }, { cle: "gravite", nom: tx("Gravité") }, { cle: "canal", nom: tx("Canal") }, { cle: "etat", nom: tx("État") }]}
             lignes={seuilsActifs.map((s) => {
               const mes = mesurer(v, s.metrique, f.cur, f.prev, 2);
               const variation = s.condition.startsWith("variation");
               const franchi = evaluerSeuil(s, mes);
               return {
-                metrique: <span className="font-medium">{mes.nom}</span>,
-                condition: `${COND[s.condition]} ${variation ? formatVariation(s.valeur, mes.format === "pct" ? "pct" : "nombre") : formatValeur(s.valeur, mes.format)}`,
+                metrique: <span className="font-medium">{tx(mes.nom)}</span>,
+                condition: `${tx(COND[s.condition])} ${variation ? formatVariation(s.valeur, mes.format === "pct" ? "pct" : "nombre") : formatValeur(s.valeur, mes.format)}`,
                 actuel: variation ? formatVariation(mes.variation, mes.format) : formatValeur(mes.valeur, mes.format),
-                gravite: s.gravite === "critique" ? "Critique" : "Alerte",
-                canal: s.canal === "email" ? "E-mail" : "Tableau",
-                etat: mes.valeur == null && mes.variation == null ? <Badge>Données insuffisantes</Badge> : franchi ? <Badge ton={s.gravite === "critique" ? "bad" : "warn"}>Franchi</Badge> : <Badge ton="good">OK</Badge>,
+                gravite: tx(s.gravite === "critique" ? "Critique" : "Alerte"),
+                canal: tx(s.canal === "email" ? "E-mail" : "Tableau"),
+                etat: mes.valeur == null && mes.variation == null ? <Badge>{tx("Données insuffisantes")}</Badge> : franchi ? <Badge ton={s.gravite === "critique" ? "bad" : "warn"}>{tx("Franchi")}</Badge> : <Badge ton="good">OK</Badge>,
               };
             })} />
         </Carte>
-        <Carte titre="Alertes ignorées" sousTitre="Masquées du Command Center jusqu'à rétablissement">
-          {!r.ignores.length ? <EtatVide titre="Aucune alerte ignorée" /> : (
+        <Carte titre={tx("Alertes ignorées")} sousTitre={tx("Masquées du Command Center jusqu'à rétablissement")}>
+          {!r.ignores.length ? <EtatVide titre={tx("Aucune alerte ignorée")} /> : (
             <ul className="space-y-2">
               {r.ignores.map((id) => (
                 <li key={id} className="flex items-center justify-between gap-2 text-[13px]">

@@ -52,7 +52,8 @@ export default async function AdminLivreursPage() {
   if (!session) redirect("/admin?refus=1");
   const peutModifier = estAdminComplet(session);
 
-  const [livreurs, livrees, echecs, enCours] = await Promise.all([
+  const enCoursWhere = { livreurId: { not: null }, statut: { in: ["expediee", "tentative_echouee"] } };
+  const [livreurs, livrees, echecs, enCours, nbEnCours] = await Promise.all([
     prisma.livreur.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -64,7 +65,7 @@ export default async function AdminLivreursPage() {
     prisma.commande.groupBy({ by: ["livreurId"], where: { livreurId: { not: null }, statut: "livree" }, _count: true }),
     prisma.commande.groupBy({ by: ["livreurId"], where: { livreurId: { not: null }, echecCount: { gt: 0 } }, _sum: { echecCount: true } }),
     prisma.commande.findMany({
-      where: { livreurId: { not: null }, statut: { in: ["expediee", "tentative_echouee"] } },
+      where: enCoursWhere,
       orderBy: [{ expedieeAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
       take: 100,
       select: {
@@ -74,6 +75,8 @@ export default async function AdminLivreursPage() {
         livreur: { select: { nom: true, telephone: true } },
       },
     }),
+    // La liste est limitée à 100 lignes : le compteur, lui, compte tout.
+    prisma.commande.count({ where: enCoursWhere }),
   ]);
 
   const nbLivrees = new Map(livrees.map(g => [g.livreurId, g._count]));
@@ -87,7 +90,7 @@ export default async function AdminLivreursPage() {
     { label: "Total livreurs", value: livreurs.length, color: C.accent },
     { label: "À valider", value: aValider.length, color: aValider.length ? C.warning : C.text2 },
     { label: "Disponibles", value: disponibles, color: C.success },
-    { label: "Livraisons en cours", value: enCours.length, color: C.text2 },
+    { label: "Livraisons en cours", value: nbEnCours, color: C.text2 },
     { label: "Indépendants", value: independants.length, color: C.text2 },
   ];
 

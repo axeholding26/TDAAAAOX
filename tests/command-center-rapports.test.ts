@@ -18,14 +18,14 @@ test("calendrier : quotidien chaque jour, hebdo le lundi, mensuel le 1er (UTC)",
 });
 
 test("fenêtres : hier = jour civil précédent, mensuel = mois civil précédent", () => {
-  const t = Date.UTC(2026, 0, 15, 9);
+  const t = Date.UTC(2026, 0, 15, 9), H = 3_600_000;
   const h = fenetreFrequence("quotidien", t);
-  assert.equal(h.cur.debut, Date.UTC(2026, 0, 14));
+  assert.equal(h.cur.debut, Date.UTC(2026, 0, 14) - H); // minuit à Douala (UTC+1)
   assert.equal(h.cur.fin - h.cur.debut, JOUR);
   const m = fenetreFrequence("mensuel", t);
-  assert.equal(m.cur.debut, Date.UTC(2025, 11, 1));
-  assert.equal(m.cur.fin, Date.UTC(2026, 0, 1));
-  assert.equal(m.prev.debut, Date.UTC(2025, 10, 1));
+  assert.equal(m.cur.debut, Date.UTC(2025, 11, 1) - H);
+  assert.equal(m.cur.fin, Date.UTC(2026, 0, 1) - H);
+  assert.equal(m.prev.debut, Date.UTC(2025, 10, 1) - H);
 });
 
 test("chaque rapport se construit sur la démo et s'échappe en HTML", () => {

@@ -23,7 +23,8 @@ export default async function AdminFinancesPage() {
     totalCommissionsXAF({ statut: "pending" }),
     prisma.walletTransaction.aggregate({
       _sum: { montant: true },
-      where: { walletId: platformWallet?.id, type: "FRAIS" },
+      // Frais NotchPay des VENTES seulement : ceux des abonnements (référence SUB-…) ne sont pas prélevés sur la commission.
+      where: { walletId: platformWallet?.id, type: "FRAIS", OR: [{ reference: null }, { NOT: { reference: { startsWith: "SUB-" } } }] },
     }),
   ]);
 
@@ -161,8 +162,8 @@ export default async function AdminFinancesPage() {
                   <td className="px-5 py-3" style={{ color: "#AAAAAA" }}>{formatMontant(c.montantMarchand, c.devise)}</td>
                   <td className="px-5 py-3">
                     <span className="text-[10px] px-2 py-0.5 rounded-full"
-                      style={c.statut === "captured" ? { background: "rgba(22,163,74,0.15)", color: "#16A34A" } : { background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>
-                      {c.statut === "captured" ? tx("Capturée") : tx("En attente")}
+                      style={c.statut === "captured" ? { background: "rgba(22,163,74,0.15)", color: "#16A34A" } : c.statut === "remboursee" ? { background: "rgba(220,38,38,0.15)", color: "#DC2626" } : { background: "rgba(245,166,35,0.15)", color: "#F5A623" }}>
+                      {c.statut === "captured" ? tx("Capturée") : c.statut === "remboursee" ? tx("Remboursée") : tx("En attente")}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-xs" style={{ color: "#666666" }}>{formatDate(c.createdAt)}</td>

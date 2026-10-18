@@ -3,7 +3,8 @@
 import { METRIQUE, valeur, ventiler, type Vue } from "./moteur";
 import { JOUR, type Fenetre, type Fenetres } from "./contexte";
 import { NOM_PLAN, SOURCES_ACQ, nomPays, type PlanId } from "./types";
-import { formatValeur, formatVariation, dateCourte } from "./format";
+import { dateCourte, formats, T_FR } from "./format";
+import type { T } from "@/lib/i18n";
 
 export const DIMENSIONS = [
   { id: "aucune", nom: "Aucune" }, { id: "pays", nom: "Pays" }, { id: "plan", nom: "Plan" },
@@ -49,35 +50,36 @@ export function parTemps(v: Vue, id: string, w: Fenetre, g: Granularite) {
   return tranches(w, g).map((t) => ({ cle: String(t.debut), nom: dateCourte(t.debut), valeur: valeur(v, id, t), debut: t.debut }));
 }
 
-const pct = (x: number) => formatValeur(x, "pct");
-const evol = (a: number | null, b: number | null, f: string) => {
-  if (a == null || b == null) return null;
-  if (f === "pct") return formatVariation(a - b, "pct");
-  return b === 0 ? null : formatVariation((a - b) / Math.abs(b), "nombre");
-};
 
 /** Constat factuel calculé (jamais d'interprétation causale). */
-export function constat(id: string, dim: Dimension, lignes: { nom: string; valeur: number | null; precedente?: number | null; part?: number | null }[], cur: number | null, prev: number | null, libComp: string): string {
+export function constat(id: string, dim: Dimension, lignes: { nom: string; valeur: number | null; precedente?: number | null; part?: number | null }[], cur: number | null, prev: number | null, libComp: string, t: T = T_FR): string {
+  const F = formats(t);
   const m = METRIQUE[id];
-  const fmt = (x: number | null) => formatValeur(x, m.format);
+  const nom = t(m.nom), comp = t(libComp);
+  const fmt = (x: number | null) => F.formatValeur(x, m.format);
+  const evol = (a: number | null, b: number | null, f: string) => {
+    if (a == null || b == null) return null;
+    if (f === "pct") return F.formatVariation(a - b, "pct");
+    return b === 0 ? null : F.formatVariation((a - b) / Math.abs(b), "nombre");
+  };
   const ok = lignes.filter((l) => l.valeur != null);
-  if (!ok.length && cur == null) return "Pas de données pour cette métrique sur la période.";
+  if (!ok.length && cur == null) return t("Pas de données pour cette métrique sur la période.");
   if (dim === "aucune") {
     const e = evol(cur, prev, m.format);
-    return `${m.nom} : ${fmt(cur)}${e ? `, ${e} ${libComp} (${fmt(prev)})` : ""}.`;
+    return e ? t("{0} : {1}, {2} {3} ({4}).", nom, fmt(cur), e, comp, fmt(prev)) : t("{0} : {1}.", nom, fmt(cur));
   }
   if (dim === "temps") {
-    if (ok.length < 2) return "Pas assez de points pour décrire une tendance.";
+    if (ok.length < 2) return t("Pas assez de points pour décrire une tendance.");
     const max = ok.reduce((a, b) => (b.valeur! > a.valeur! ? b : a));
     const min = ok.reduce((a, b) => (b.valeur! < a.valeur! ? b : a));
     const e = evol(cur, prev, m.format);
-    return `${m.nom} : plus haut le ${max.nom} (${fmt(max.valeur)}), plus bas le ${min.nom} (${fmt(min.valeur)}).${e ? ` Sur la période : ${fmt(cur)}, ${e} ${libComp}.` : ""}`;
+    return t("{0} : plus haut le {1} ({2}), plus bas le {3} ({4}).", nom, max.nom, fmt(max.valeur), min.nom, fmt(min.valeur)) + (e ? " " + t("Sur la période : {0}, {1} {2}.", fmt(cur), e, comp) : "");
   }
-  if (ok.length < 2) return `Un seul segment présent : ${ok[0]?.nom ?? "—"} (${fmt(ok[0]?.valeur ?? null)}).`;
+  if (ok.length < 2) return t("Un seul segment présent : {0} ({1}).", ok[0]?.nom ?? "—", fmt(ok[0]?.valeur ?? null));
   const top = ok[0];
   const e = evol(top.valeur, top.precedente ?? null, m.format);
-  const tendance = e ? `, ${e.startsWith("−") ? "en baisse" : e === "0 %" || e === "0 pt" ? "stable" : "en hausse"} (${e}) ${libComp}` : "";
-  if (m.additive && top.part != null) return `${top.nom} représente ${pct(top.part)} du total (${fmt(top.valeur)})${tendance}. ${ok.length} segments au total.`;
+  const tendance = e ? t(e.startsWith("−") ? ", en baisse ({0}) {1}" : e === F.formatVariation(0, "nombre") || e === F.formatVariation(0, "pct") ? ", stable ({0}) {1}" : ", en hausse ({0}) {1}", e, comp) : "";
+  if (m.additive && top.part != null) return t("{0} représente {1} du total ({2}){3}. {4} segments au total.", top.nom, F.formatValeur(top.part, "pct"), fmt(top.valeur), tendance, ok.length);
   const bas = ok[ok.length - 1];
-  return `${top.nom} a la valeur la plus élevée (${fmt(top.valeur)})${tendance} ; la plus basse : ${bas.nom} (${fmt(bas.valeur)}).`;
+  return t("{0} a la valeur la plus élevée ({1}){2} ; la plus basse : {3} ({4}).", top.nom, fmt(top.valeur), tendance, bas.nom, fmt(bas.valeur));
 }

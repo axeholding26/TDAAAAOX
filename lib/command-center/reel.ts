@@ -29,9 +29,10 @@ function statut(c: { paiementStatut: string; statut: string }): StatutCommande {
 }
 
 export async function chargerReel(): Promise<Dataset> {
-  const [taux, tenants, cmds, produits, subs, usages, convs, stock, marketing] = await Promise.all([
+  const [taux, tenants, cmds, produits, subs, usages, convs, stock, marketing, builder] = await Promise.all([
     tauxDuJour(),
-    prisma.tenant.findMany({ where: { slug: { not: PLATFORM_TENANT_SLUG } }, select: { id: true, nomBoutique: true, pays: true, planType: true, categorie: true, statut: true, createdAt: true, updatedAt: true } }),
+    // Hors boutique interne de la plateforme et boutiques « systeme » (pas des marchands).
+    prisma.tenant.findMany({ where: { slug: { not: PLATFORM_TENANT_SLUG }, statut: { not: "systeme" } }, select: { id: true, nomBoutique: true, pays: true, planType: true, categorie: true, statut: true, createdAt: true } }),
     prisma.commande.findMany({
       where: { tenant: { slug: { not: PLATFORM_TENANT_SLUG } } },
       select: { id: true, tenantId: true, clientId: true, createdAt: true, montantTotal: true, devise: true, statut: true, paiementStatut: true, methodePaiement: true, canal: true, livreeAt: true, expedieeAt: true, echecCount: true, commission: { select: { montantCommission: true, devise: true, statut: true } } },
@@ -39,8 +40,9 @@ export async function chargerReel(): Promise<Dataset> {
     }),
     prisma.produit.groupBy({ by: ["tenantId"], _count: { _all: true }, _min: { createdAt: true } }),
     prisma.walletTransaction.findMany({ where: { reference: { startsWith: "SUB-" }, wallet: { tenant: { slug: PLATFORM_TENANT_SLUG } } }, select: { reference: true, createdAt: true }, orderBy: { createdAt: "asc" } }),
-    prisma.usageIA.findMany({ select: { tenantId: true, periode: true, type: true, nombre: true, cout: true } }),
-    prisma.axiaConversation.findMany({ select: { tenantId: true, updatedAt: true } }),
+    prisma.usageIA.findMany({ select: { tenantId: true, type: true, nombre: true, cout: true, updatedAt: true } }),
+    // Requêtes Axia = messages envoyés par le marchand (pas 1 par conversation).
+    prisma.$queryRaw<{ tenantId: string; updatedAt: Date; n: number }[]>`SELECT "tenantId", "updatedAt", (SELECT count(*)::int FROM jsonb_array_elements(CASE WHEN jsonb_typeof(messages) = 'array' THEN messages ELSE '[]'::jsonb END) m WHERE m->>'role' = 'user') AS n FROM "AxiaConversation"`,
     prisma.stockMouvement.findMany({ where: { type: { not: "vente" } }, select: { tenantId: true, createdAt: true } }),
     Promise.all([
       prisma.campagne.findMany({ select: { tenantId: true, createdAt: true } }),
@@ -48,11 +50,16 @@ export async function chargerReel(): Promise<Dataset> {
       prisma.campagneSMS.findMany({ select: { tenantId: true, createdAt: true } }),
       prisma.postPlanifie.findMany({ select: { tenantId: true, createdAt: true } }),
     ]).then((l) => l.flat()),
+    // Constructeur : publications / instantanés et brouillons de la vitrine (Tenant.updatedAt bouge aussi sur les actions admin et les tâches système).
+    Promise.all([
+      prisma.versionBoutique.findMany({ select: { tenantId: true, createdAt: true } }),
+      prisma.brouillonBoutique.findMany({ select: { tenantId: true, updatedAt: true } }).then((l) => l.map((b) => ({ tenantId: b.tenantId, createdAt: b.updatedAt }))),
+    ]).then((l) => l.flat()),
   ]);
   const stockFaible = await prisma.produit.groupBy({ by: ["tenantId"], where: { stock: { lte: 3 }, actif: true } as any, _count: { _all: true } }).catch(() => []);
 
   const ids = new Set(tenants.map((t) => t.id));
-  const commandes: Commande[] = cmds.map((c) => {
+  const commandes: Commande[] = cmds.filter((c) => ids.has(c.tenantId)).map((c) => {
     const pos = c.canal === "pos";
     const livraison: Commande["livraison"] = pos ? "sans_objet" : c.livreeAt ? "livree" : c.echecCount > 0 ? "echec" : c.expedieeAt ? "expediee" : "non_expediee";
     return {
@@ -64,14 +71,19 @@ export async function chargerReel(): Promise<Dataset> {
   });
 
   const abonnements: PaiementAbonnement[] = [];
+  // Une même référence SUB-… porte la ligne CREDIT et la ligne FRAIS NotchPay : un paiement = une référence.
+  const vues = new Set<string>();
   for (const s of subs) {
-    const ref = s.reference && lireRefAbonnement(s.reference);
+    if (!s.reference || vues.has(s.reference)) continue;
+    vues.add(s.reference);
+    const ref = lireRefAbonnement(s.reference);
     if (ref && ids.has(ref.tenantId)) abonnements.push({ marchandId: ref.tenantId, date: s.createdAt.getTime(), plan: ref.plan as PlanId, montant: PRIX_PLAN[ref.plan as PlanId] });
   }
 
   const ia: EvtIA[] = [
-    ...usages.map((u) => ({ marchandId: u.tenantId, date: new Date(`${u.periode}-15T12:00:00Z`).getTime(), type: TYPE_USAGE[u.type] ?? "agent", nombre: u.nombre, tokens: 0, cout: u.cout })),
-    ...convs.map((c) => ({ marchandId: c.tenantId, date: c.updatedAt.getTime(), type: "conversation" as TypeIA, nombre: 1, tokens: 0, cout: 0 })),
+    // Usage agrégé par mois : daté de sa dernière mise à jour (jamais dans le futur, contrairement au 15 du mois).
+    ...usages.map((u) => ({ marchandId: u.tenantId, date: u.updatedAt.getTime(), type: TYPE_USAGE[u.type] ?? "agent", nombre: u.nombre, tokens: 0, cout: u.cout })),
+    ...convs.filter((c) => c.n > 0).map((c) => ({ marchandId: c.tenantId, date: c.updatedAt.getTime(), type: "conversation" as TypeIA, nombre: c.n, tokens: 0, cout: 0 })),
   ].filter((e) => ids.has(e.marchandId)).sort((a, b) => a.date - b.date);
 
   // Usage des fonctionnalités, déduit des traces existantes (pas de suivi d'événements dédié pour l'instant).
@@ -82,7 +94,7 @@ export async function chargerReel(): Promise<Dataset> {
     ...ia.map((e) => ({ marchandId: e.marchandId, date: e.date, fonction: "axia" as const })),
     ...stock.map((s) => ({ marchandId: s.tenantId, date: s.createdAt.getTime(), fonction: "stock" as const })),
     ...marketing.map((m) => ({ marchandId: m.tenantId, date: m.createdAt.getTime(), fonction: "marketing" as const })),
-    ...tenants.map((t) => ({ marchandId: t.id, date: t.updatedAt.getTime(), fonction: "constructeur" as const })),
+    ...builder.map((b) => ({ marchandId: b.tenantId, date: b.createdAt.getTime(), fonction: "constructeur" as const })),
   ].filter((e) => ids.has(e.marchandId)).sort((a, b) => a.date - b.date);
 
   const prodPar = new Map(produits.map((p) => [p.tenantId, p]));
@@ -96,7 +108,7 @@ export async function chargerReel(): Promise<Dataset> {
 
   const marchands: Marchand[] = tenants.map((t) => ({
     id: t.id, nom: t.nomBoutique, pays: normPays(t.pays), plan: normPlan(t.planType), industrie: t.categorie || "Autre",
-    source: "inconnu", creeLe: t.createdAt.getTime(), derniereActivite: derniere.get(t.id) ?? t.updatedAt.getTime(), actif: t.statut === "active",
+    source: "inconnu", creeLe: t.createdAt.getTime(), derniereActivite: derniere.get(t.id) ?? t.createdAt.getTime(), actif: t.statut === "active",
     etapes: { boutique: t.createdAt.getTime(), produit: prodPar.get(t.id)?._min.createdAt?.getTime() ?? null, commande: premiere.get(t.id) ?? null, paiement: premierPaiement.get(t.id) ?? null },
     nbProduits: prodPar.get(t.id)?._count._all ?? 0, produitsStockFaible: faiblePar.get(t.id) ?? 0,
   }));

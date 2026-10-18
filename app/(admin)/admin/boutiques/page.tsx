@@ -7,6 +7,8 @@ import { getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { PLATFORM_TENANT_SLUG } from "@/lib/wallet";
 import { TenantStatutToggle } from "@/components/admin/TenantStatutToggle";
 import { getT } from "@/lib/i18n/serveur";
+import { convertirMontant } from "@/lib/devise-convert";
+import { tauxDuJour } from "@/lib/taux-change";
 
 interface Props {
   searchParams: Promise<{ q?: string }>;
@@ -18,6 +20,7 @@ export default async function AdminBoutiquesPage({ searchParams }: Props) {
   if (!session) redirect("/admin?refus=1");
   const { q } = await searchParams;
 
+  const taux = await tauxDuJour();
   const boutiques = await prisma.tenant.findMany({
     where: {
       slug: { not: PLATFORM_TENANT_SLUG },
@@ -26,7 +29,7 @@ export default async function AdminBoutiquesPage({ searchParams }: Props) {
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { produits: true, commandes: true, clients: true } },
-      commissions: { where: { statut: "captured" }, select: { montantCommission: true } },
+      commissions: { where: { statut: "captured" }, select: { montantCommission: true, devise: true } },
     },
   });
 
@@ -63,7 +66,7 @@ export default async function AdminBoutiquesPage({ searchParams }: Props) {
             </thead>
             <tbody className="divide-y" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
               {boutiques.map(b => {
-                const revenu = b.commissions.reduce((s, c) => s + c.montantCommission, 0);
+                const revenu = b.commissions.reduce((s, c) => s + convertirMontant(c.montantCommission, c.devise, b.devise, taux), 0); // devise de la commission → devise actuelle de la boutique
                 return (
                   <tr key={b.id} className="transition-colors hover:bg-white/[0.02]">
                     <td className={td}>

@@ -4,7 +4,11 @@
 // infobulle au survol, légende dès 2 séries.
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LineChart, Line, ComposedChart } from "recharts";
 import type { Format } from "@/lib/command-center/moteur";
-import { formatValeur } from "@/lib/command-center/format";
+import { formats } from "@/lib/command-center/format";
+import { useT } from "@/components/I18nProvider";
+
+/** Formatage dans la langue de l'interface. */
+const useFormat = () => formats(useT()).formatValeur;
 
 export type Point = { x: string } & Record<string, number | string | null>;
 export type Serie = { cle: string; nom: string; couleur?: string; pointille?: boolean };
@@ -13,6 +17,7 @@ const COULEURS = ["var(--cc-s1)", "var(--cc-s2)", "var(--cc-s3)", "var(--cc-s4)"
 const axe = { stroke: "var(--cc-text-3)", fontSize: 11, tickLine: false, axisLine: false } as const;
 
 function Bulle({ active, payload, label, format }: { active?: boolean; payload?: any[]; label?: string; format: Format }) {
+  const formatValeur = useFormat();
   if (!active || !payload?.length) return null;
   return (
     <div className="cc-card px-3 py-2 text-[12px]" style={{ boxShadow: "var(--cc-shadow)" }}>
@@ -29,6 +34,7 @@ function Bulle({ active, payload, label, format }: { active?: boolean; payload?:
 }
 
 export function Courbes({ donnees, series, format, hauteur = 240, aire = true, empile = false }: { donnees: Point[]; series: Serie[]; format: Format; hauteur?: number; aire?: boolean; empile?: boolean }) {
+  const formatValeur = useFormat();
   const Graph = aire ? AreaChart : LineChart;
   return (
     <ResponsiveContainer width="100%" height={hauteur}>
@@ -47,6 +53,7 @@ export function Courbes({ donnees, series, format, hauteur = 240, aire = true, e
 }
 
 export function Barres({ donnees, series, format, hauteur = 240, empile = false, horizontal = false }: { donnees: Point[]; series: Serie[]; format: Format; hauteur?: number; empile?: boolean; horizontal?: boolean }) {
+  const formatValeur = useFormat();
   return (
     <ResponsiveContainer width="100%" height={hauteur}>
       <BarChart data={donnees} layout={horizontal ? "vertical" : "horizontal"} margin={{ top: 8, right: 8, left: 0, bottom: 0 }} barGap={2}>
@@ -63,6 +70,7 @@ export function Barres({ donnees, series, format, hauteur = 240, empile = false,
 
 /** Waterfall MRR : début → + nouveau → + expansion → − contraction → − churn → fin. */
 export function Cascade({ etapes, format, hauteur = 240 }: { etapes: { nom: string; valeur: number; type: "total" | "plus" | "moins" }[]; format: Format; hauteur?: number }) {
+  const formatValeur = useFormat();
   let cumul = 0;
   const donnees = etapes.map((e) => {
     if (e.type === "total") { cumul = e.valeur; return { x: e.nom, base: 0, valeur: e.valeur, type: e.type }; }
@@ -91,6 +99,8 @@ export function Cascade({ etapes, format, hauteur = 240 }: { etapes: { nom: stri
 
 /** Historique + projection (3 scénarios), la projection en pointillés et clairement libellée. */
 export function Projection({ donnees, format, hauteur = 220 }: { donnees: Point[]; format: Format; hauteur?: number }) {
+  const t = useT();
+  const formatValeur = formats(t).formatValeur;
   return (
     <ResponsiveContainer width="100%" height={hauteur}>
       <ComposedChart data={donnees} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -99,10 +109,10 @@ export function Projection({ donnees, format, hauteur = 220 }: { donnees: Point[
         <YAxis {...axe} width={56} tickFormatter={(v) => formatValeur(v, format).replace(" FCFA", "")} />
         <Tooltip content={<Bulle format={format} />} />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "var(--cc-text-2)" }} />
-        <Area type="monotone" dataKey="historique" name="Réalisé" stroke="var(--cc-s1)" fill="var(--cc-s1)" fillOpacity={0.1} strokeWidth={2} dot={false} connectNulls />
-        <Line type="monotone" dataKey="ambitieux" name="Projection ambitieuse" stroke="var(--cc-s3)" strokeDasharray="4 4" strokeWidth={1.5} dot={false} connectNulls />
-        <Line type="monotone" dataKey="attendu" name="Projection attendue" stroke="var(--cc-s1)" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls />
-        <Line type="monotone" dataKey="prudent" name="Projection prudente" stroke="var(--cc-s2)" strokeDasharray="4 4" strokeWidth={1.5} dot={false} connectNulls />
+        <Area type="monotone" dataKey="historique" name={t("Réalisé")} stroke="var(--cc-s1)" fill="var(--cc-s1)" fillOpacity={0.1} strokeWidth={2} dot={false} connectNulls />
+        <Line type="monotone" dataKey="ambitieux" name={t("Projection ambitieuse")} stroke="var(--cc-s3)" strokeDasharray="4 4" strokeWidth={1.5} dot={false} connectNulls />
+        <Line type="monotone" dataKey="attendu" name={t("Projection attendue")} stroke="var(--cc-s1)" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls />
+        <Line type="monotone" dataKey="prudent" name={t("Projection prudente")} stroke="var(--cc-s2)" strokeDasharray="4 4" strokeWidth={1.5} dot={false} connectNulls />
       </ComposedChart>
     </ResponsiveContainer>
   );

@@ -5,6 +5,7 @@ import { CreditCard, Zap, Crown, AlertTriangle } from "lucide-react";
 import { getAdminSessionPour } from "@/lib/admin-auth";
 import { PLATFORM_TENANT_SLUG, getPlatformTenantId } from "@/lib/wallet";
 import { getT } from "@/lib/i18n/serveur";
+import { lireRefAbonnement } from "@/lib/abonnement-paiement";
 
 const PALIERS = [
   { id: "palier0", nom: "Essentiel", prix: 0, icon: CreditCard, color: "#AAAAAA" },
@@ -37,7 +38,8 @@ export default async function AdminAbonnementsPage() {
       where: {
         walletId: platformWallet?.id,
         description: { startsWith: "Abonnement" },
-        createdAt: { gte: new Date(now.getFullYear(), now.getMonth(), 1) },
+        // 1er du mois à 00:00 heure de Douala (UTC+1), pas l'heure du serveur.
+        createdAt: { gte: new Date(Date.UTC(new Date(now.getTime() + 3_600_000).getUTCFullYear(), new Date(now.getTime() + 3_600_000).getUTCMonth(), 1) - 3_600_000) },
       },
     }),
     prisma.tenant.findMany({
@@ -49,6 +51,10 @@ export default async function AdminAbonnementsPage() {
       where: { ...filtreBoutiques, planType: { in: ["palier1", "palier2"] }, planExpiresAt: { lt: now } },
     }),
   ]);
+
+  // Boutiques ayant réellement payé un abonnement en ligne (référence NotchPay SUB-{tenantId}-…) : un palier peut aussi être attribué par un admin, sans paiement.
+  const refsAbonnement = platformWallet ? await prisma.walletTransaction.findMany({ where: { walletId: platformWallet.id, reference: { startsWith: "SUB-" } }, select: { reference: true } }) : [];
+  const ontPaye = new Set(refsAbonnement.map((r) => (r.reference ? lireRefAbonnement(r.reference)?.tenantId : undefined)).filter(Boolean));
 
   const compteParPalier = Object.fromEntries(repartition.map(r => [r.planType, r._count]));
   const totalBoutiques = repartition.reduce((s, r) => s + r._count, 0);
@@ -82,7 +88,8 @@ export default async function AdminAbonnementsPage() {
       <div className="grid sm:grid-cols-3 gap-4">
         {PALIERS.map(p => {
           const Icon = p.icon;
-          const count = compteParPalier[p.id] ?? (p.id === "palier0" ? (compteParPalier["gratuit"] ?? 0) : 0);
+          // « gratuit » est l'ancien nom du palier Essentiel : les deux valeurs coexistent en base, on les additionne.
+          const count = (compteParPalier[p.id] ?? 0) + (p.id === "palier0" ? (compteParPalier["gratuit"] ?? 0) : 0);
           const pct = totalBoutiques > 0 ? Math.round((count / totalBoutiques) * 100) : 0;
           return (
             <div key={p.id} className="rounded-2xl p-5 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
@@ -102,7 +109,7 @@ export default async function AdminAbonnementsPage() {
       {/* Abonnés payants */}
       <div className="rounded-2xl overflow-hidden border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
         <div className="px-6 py-4 border-b" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-          <h2 className="font-semibold" style={{ color: "#ffffff" }}>{tx("Abonnés payants (Pro & Illimité)")}</h2>
+          <h2 className="font-semibold" style={{ color: "#ffffff" }}>{tx("Boutiques Pro & Illimité")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -129,7 +136,7 @@ export default async function AdminAbonnementsPage() {
                     <td className="px-5 py-3">
                       <span className="text-[10px] px-2 py-0.5 rounded-full"
                         style={expire ? { background: "rgba(220,38,38,0.15)", color: "#DC2626" } : { background: "rgba(22,163,74,0.15)", color: "#16A34A" }}>
-                        {expire ? tx("Expiré") : tx("Actif")}
+                        {expire ? tx("Expiré") : tx("Actif")}{!ontPaye.has(t.id) && <> · {tx("sans paiement en ligne")}</>}
                       </span>
                     </td>
                   </tr>

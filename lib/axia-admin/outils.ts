@@ -94,7 +94,7 @@ export const executerLecture: ToolExecutor = async (name, args) => {
     }
     case "lister_abonnements": {
       const boutiques = await prisma.tenant.findMany({
-        where: { ...filtreBoutiques, planType: { not: "palier0" } },
+        where: { ...filtreBoutiques, planType: { in: ["palier1", "palier2"] } }, // « gratuit » = ancien nom du palier Essentiel
         orderBy: { planExpiresAt: "asc" },
         take: 25,
         select: { id: true, nomBoutique: true, planType: true, planExpiresAt: true },
