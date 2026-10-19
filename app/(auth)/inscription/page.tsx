@@ -880,7 +880,8 @@ export default function InscriptionPage() {
   // Renvoie un message d'erreur, ou null une fois connecté.
   async function connecter(identifiants:{email:string;password:string}, codeSaisi?:string):Promise<string|null>{
     const lr = await signIn("credentials",{...identifiants,code:codeSaisi,redirect:false});
-    if(!lr?.ok){
+    // next-auth répond « ok » même quand la connexion est refusée : seul `error` le dit.
+    if(!lr?.ok || lr.error){
       if(codeSaisi) return "Code invalide ou expiré";
       window.location.href = "/connexion?inscription=success";
       return null;
