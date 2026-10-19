@@ -186,9 +186,10 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
           </div>
           {!gestion && <div className="hidden md:flex flex-wrap items-center gap-1.5 px-5 pb-2.5">{selecteurs}</div>}
           {filtresMobile && !gestion && (
-            <div className="md:hidden px-3 sm:px-5 pb-3 flex flex-wrap gap-1.5 [&>select]:flex-1 [&>select]:min-w-[140px]">
+            <div className="md:hidden px-3 sm:px-5 pb-3 grid grid-cols-2 gap-1.5 [&>*]:w-full [&>*]:min-w-0">
+              <p className="col-span-2 cc-eyebrow pt-1">{t("Filtres de toutes les pages")}</p>
               {selecteurs}
-              <select className="cc-select md:hidden flex-1" aria-label={t("Mode d'affichage")} value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
+              <select className="cc-select md:hidden col-span-2" aria-label={t("Mode d'affichage")} value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>
                 <option value="standard">{t("Mode standard")}</option><option value="ceo">CEO Mode</option><option value="analyste">Analyst Mode</option>
               </select>
             </div>

@@ -5,6 +5,7 @@ import { getAdminSession } from "@/lib/admin-auth";
 import { I18nProvider } from "@/components/I18nProvider";
 import { getLangue, dico } from "@/lib/i18n/serveur";
 import { AxiaAdmin } from "@/components/admin/AxiaAdmin";
+import { AlerteInscription } from "@/components/admin/AlerteInscription";
 import { Coquille, type Mode } from "@/components/command-center/Coquille";
 import { SECTIONS, peutVoir } from "@/lib/command-center/rbac";
 import { demoAutorisee } from "@/lib/command-center/serveur";
@@ -26,6 +27,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </Coquille>
       <MenusDeroulants />
       {peutVoir(session.role, "finances") && <AxiaAdmin />}
+      {/* Nouvel inscrit : son fort + carte */}
+      {peutVoir(session.role, "marchands") && <AlerteInscription />}
     </I18nProvider>
   );
 }

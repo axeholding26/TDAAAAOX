@@ -1,6 +1,8 @@
 "use client";
 // Cloche d'alertes : critiques et avertissements du contexte courant (chargés à l'ouverture
-// + un comptage au montage).
+// + un comptage au montage). Les alertes restent tant que leur cause dure ; la pastille ne
+// compte que celles pas encore vues (vues = cloche ouverte, mémorisé dans ce navigateur).
+// Une alerte dont le chiffre change (titre différent) redevient nouvelle.
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, AlertOctagon, AlertTriangle, Lightbulb, Rocket } from "lucide-react";
@@ -10,10 +12,18 @@ type Alerte = { id: string; categorie: "critique" | "alerte" | "opportunite" | "
 const ICONE = { critique: AlertOctagon, alerte: AlertTriangle, opportunite: Rocket, insight: Lightbulb };
 const TON = { critique: "var(--cc-bad)", alerte: "var(--cc-warn)", opportunite: "var(--cc-good)", insight: "var(--cc-info)" };
 
+const CLE_VUES = "cc_alertes_vues";
+const cleVue = (a: Alerte) => `${a.id}|${a.titre}`;
+function lireVues(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(CLE_VUES) || "[]")); } catch { return new Set(); }
+}
+
 export function Notifications({ contexte }: { contexte: string }) {
   const t = useT();
   const [ouvert, setOuvert] = useState(false);
   const [alertes, setAlertes] = useState<Alerte[] | null>(null);
+  const [vues, setVues] = useState<Set<string>>(new Set());
+  useEffect(() => { setVues(lireVues()); }, []);
 
   useEffect(() => {
     const c = new AbortController();
@@ -21,10 +31,20 @@ export function Notifications({ contexte }: { contexte: string }) {
     return () => c.abort();
   }, [contexte]);
 
-  const urgentes = alertes?.filter((a) => a.categorie === "critique" || a.categorie === "alerte").length ?? 0;
+  const urgentes = alertes?.filter((a) => (a.categorie === "critique" || a.categorie === "alerte") && !vues.has(cleVue(a))).length ?? 0;
+
+  function basculer() {
+    const o = !ouvert;
+    setOuvert(o);
+    if (!o || !alertes?.length) return;
+    // Ouvrir la cloche = tout voir : on ne garde que les clés des alertes encore actives.
+    const v = new Set(alertes.map(cleVue));
+    setVues(v);
+    try { localStorage.setItem(CLE_VUES, JSON.stringify([...v])); } catch { /* stockage indisponible */ }
+  }
   return (
     <div className="relative">
-      <button onClick={() => setOuvert(!ouvert)} className="cc-btn cc-btn-ghost cc-btn-sm relative" aria-label={urgentes ? t("Alertes : {0} à traiter", urgentes) : t("Alertes")} aria-expanded={ouvert}>
+      <button onClick={basculer} className="cc-btn cc-btn-ghost cc-btn-sm relative" aria-label={urgentes ? t("Alertes : {0} à traiter", urgentes) : t("Alertes")} aria-expanded={ouvert}>
         <Bell size={15} />
         {urgentes > 0 && <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center" style={{ background: "var(--cc-bad)", color: "#fff" }}>{urgentes}</span>}
       </button>
