@@ -1233,6 +1233,12 @@ export default function InscriptionPage() {
                     onNomChange={nom=>setPlan(p=>p?{...p,nomBoutique:nom}:p)}
                   />
                 )}
+                {/* Design choisi : modifiable pour revenir aux 4 propositions */}
+                {phase!=="plan" && (
+                  <UserMsg onModifier={modifiable?()=>setPhase("plan"):undefined}>
+                    🎨 {tr("Design")} {(MANIFESTE_LIBRAIRIE.find(x=>x.fichier===plan.themeId)||MANIFESTE_LIBRAIRIE[0]).nom}
+                  </UserMsg>
+                )}
               </>
             )}
 
