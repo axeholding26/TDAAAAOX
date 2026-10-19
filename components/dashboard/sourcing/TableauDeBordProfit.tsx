@@ -229,7 +229,7 @@ export function TableauDeBordProfit() {
                       {topProduits.map((p) => (
                         <li key={p.produitId} className="py-2.5 sm:flex sm:items-center sm:gap-4">
                           <Link href={`/dashboard/produits/${p.produitId}`} className="text-[13px] font-semibold text-[#111111] hover:text-[#B45309] sm:flex-1 min-w-0 block truncate">{p.nom}</Link>
-                          <dl className="grid grid-cols-4 gap-2 mt-1.5 sm:mt-0 sm:w-[420px] text-right tabular-nums">
+                          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5 sm:mt-0 sm:w-[420px] text-right tabular-nums">
                             {[
                               { l: "Quantité", v: String(p.quantite) },
                               { l: "CA", v: fmt(p.ca) },

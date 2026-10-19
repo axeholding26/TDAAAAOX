@@ -301,7 +301,7 @@ export default function MagicImportPage() {
           <p className="text-gray-400 text-sm mb-8 max-w-md">
             {importedCount} produit{importedCount > 1 ? "s" : ""}{" "}{t("ajouté")}{importedCount > 1 ? "s" : ""}{" "}{t("à votre boutique avec des images Flux.1 haute définition. Axia peut maintenant les enrichir et les promouvoir.")}
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap justify-center gap-3">
             <Link href="/dashboard/produits"
               className="px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all">
               {t("Voir les produits")}

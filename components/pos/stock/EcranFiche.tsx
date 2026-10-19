@@ -29,7 +29,7 @@ export function EcranFiche() {
       <Onglets label="Vue de la fiche" actif={mode} onChange={setMode} onglets={[{ id: "complete", libelle: "Fiche complète" }, { id: "prix", libelle: "Contrôle prix" }, { id: "stock", libelle: "Contrôle stock" }]} />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <form className="flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); if (saisie.trim()) { setCible({ code: saisie.trim() }); setSaisie(""); } }}>
-          <Saisie label="Code-barres, référence ou numéro de série" value={saisie} onChange={(e) => setSaisie(e.target.value)} className="flex-1" autoComplete="off" />
+          <Saisie label="Code-barres, référence ou numéro de série" value={saisie} onChange={(e) => setSaisie(e.target.value)} className="min-w-0 flex-1" autoComplete="off" />
           <Bouton type="submit" variante="sombre">{t("Voir")}</Bouton>
         </form>
         <ChoixArticle label="Ou chercher par nom" caisseId={caisseId} onChoisir={(a) => setCible({ produitId: a.produitId, varianteId: a.varianteId })} />

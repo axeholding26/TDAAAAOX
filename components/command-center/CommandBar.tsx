@@ -84,7 +84,7 @@ export function CommandBar({ sections, contexte, source }: { sections: Section[]
         <div className="flex items-center gap-2 px-3 border-b cc-sep">
           <Search size={16} className="cc-faint" aria-hidden />
           <input ref={champ} value={q} onChange={(e) => { setQ(e.target.value); setSel(0); }} placeholder={t("Marchand, commande, métrique, pays… ou une question")}
-            className="flex-1 h-12 bg-transparent outline-none text-[14px]" aria-label={t("Rechercher")}
+            className="flex-1 min-w-0 h-12 bg-transparent outline-none text-[14px]" aria-label={t("Rechercher")}
             onKeyDown={(e) => { if (e.key === "ArrowDown") { e.preventDefault(); setSel((s) => Math.min(s + 1, resultats.length - 1)); } if (e.key === "ArrowUp") { e.preventDefault(); setSel((s) => Math.max(0, s - 1)); } if (e.key === "Enter" && resultats[sel]) choisir(resultats[sel]); }} />
           <kbd className="text-[10.5px] px-1.5 rounded border cc-sep cc-faint">{t("Échap")}</kbd>
         </div>

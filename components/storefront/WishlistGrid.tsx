@@ -78,7 +78,7 @@ export function WishlistGrid({
                   </div>
                   <div className="p-3.5">
                     <p className="font-medium text-sm leading-snug line-clamp-2 mb-2">{t(p.nom)}</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-x-2">
                       <span className="font-bold text-sm" style={{ color: accent }}>{fmt(p.prixAffiche, devise)}</span>
                       {remise > 0 && <span className="text-xs line-through" style={{ opacity: 0.35 }}>{fmt(p.prixCompareAffiche!, devise)}</span>}
                     </div>

@@ -146,7 +146,7 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
                 </select>
               </div>
               {form.methode === "mobile_money" && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {OPERATEURS.map(op => (
                     <button key={op.id} type="button" onClick={() => setForm(f => ({ ...f, operateur: op.id }))}
                       className="flex items-center gap-1.5 text-xs px-3 py-2 rounded-lg border transition-all"
@@ -179,15 +179,15 @@ export function AdminWalletPanel({ peutRetirer }: { peutRetirer: boolean }) {
             {wallet.retraits.map(r => {
               const s = STATUT_LABEL[r.statut] ?? { label: r.statut, color: "#AAAAAA" };
               return (
-                <div key={r.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.02)" }}>
-                  <div className="flex items-center gap-2.5">
+                <div key={r.id} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.02)" }}>
+                  <div className="flex items-center gap-2.5 min-w-0">
                     {r.methode === "mobile_money" ? <Smartphone size={13} style={{ color: "#AAAAAA" }} /> : <Building2 size={13} style={{ color: "#AAAAAA" }} />}
                     <div>
                       <p className="text-xs font-medium" style={{ color: "#ffffff" }}>{fmt(r.montant, r.devise)}</p>
-                      <p className="text-[10px]" style={{ color: "#AAAAAA" }}>{t(r.destinataire)}</p>
+                      <p className="text-[10px] [overflow-wrap:anywhere]" style={{ color: "#AAAAAA" }}>{t(r.destinataire)}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: `${s.color}18`, color: s.color }}>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: `${s.color}18`, color: s.color }}>
                     {t(s.label)}
                   </span>
                 </div>

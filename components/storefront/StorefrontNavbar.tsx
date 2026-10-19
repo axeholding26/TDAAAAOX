@@ -191,9 +191,9 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
     : "px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4";
 
   const logoNode = (
-    <Link href={`/${slug}`} className="flex-shrink-0 min-w-0 flex items-center gap-1.5">
+    <Link href={`/${slug}`} className="min-w-0 md:flex-shrink-0 flex items-center gap-1.5">
       {logoUrl ? (
-        <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[180px]" />
+        <img src={logoUrl} alt={nomBoutique} className="h-9 object-contain max-w-[150px] sm:max-w-[180px]" />
       ) : (
         <span className="text-xl font-bold font-playfair truncate" style={{ color: accent }}>
           {t(nomBoutique)}
@@ -362,7 +362,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
                 onChange={e => onQueryChange(e.target.value, "mobile")}
                 placeholder={t("Rechercher un produit…")}
                 autoComplete="off"
-                className="w-full pl-10 pr-3 py-2.5 text-sm rounded-xl outline-none"
+                className="w-full pl-10 pr-3 py-2.5 text-base sm:text-sm rounded-xl outline-none"
                 style={{ backgroundColor: `${accent}0f`, color: texte, border: `1px solid ${accent}20` }}
               />
             </form>
@@ -429,7 +429,7 @@ export function StorefrontNavbar({ slug, nomBoutique, logoUrl, accent, fond, tex
       <nav className={outerClass}>
         <div style={barBase} className={barClass}>
           <div className="hidden md:flex flex-1">{t(linksNode)}</div>
-          <div className="flex md:hidden">{t(logoNode)}</div>
+          <div className="flex md:hidden min-w-0">{t(logoNode)}</div>
           <div className="hidden md:flex flex-1 justify-center">{t(logoNode)}</div>
           <div className="flex flex-1 justify-end">{t(actionsNode)}</div>
         </div>

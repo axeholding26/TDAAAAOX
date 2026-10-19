@@ -213,7 +213,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Scheduler Social")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Planifiez vos posts avec l'IA — Instagram, TikTok, Facebook…")}</p>
@@ -241,7 +241,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
 
       {/* Filtres */}
       <div className="flex flex-wrap gap-3">
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {["tous", ...PLATEFORMES.map(p => p.id)].map(p => {
             const plat = PLATEFORMES.find(x => x.id === p);
             return (
@@ -253,7 +253,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
             );
           })}
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
           {["tous", "planifie", "publie", "annule"].map(s => (
             <button key={s} onClick={() => setFilterStatut(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filterStatut === s ? "bg-gray-800 text-white border-gray-800" : "bg-white border-gray-200 text-gray-500"}`}>

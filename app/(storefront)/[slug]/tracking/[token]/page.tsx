@@ -99,7 +99,7 @@ export default function TrackingPage() {
           <div style={{ textAlign:"center", marginBottom:12 }}>
             <img src="/logo-dark.png" alt={t("Axso")} style={{ height:26, objectFit:"contain" }} />
           </div>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
             <div>
               <div style={{ fontSize:11, color:"#F5A623", fontWeight:600, letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:4 }}>
                 {t(data.tenant?.nomBoutique)}
@@ -108,7 +108,7 @@ export default function TrackingPage() {
               <div style={{ fontSize:12, color:"#555", marginTop:2 }}>{t("Commande #")}{data.numero}</div>
             </div>
             {data.tenant?.logoUrl && (
-              <img src={data.tenant.logoUrl} alt="" style={{ height:40, objectFit:"contain", opacity:0.7 }} />
+              <img src={data.tenant.logoUrl} alt="" style={{ height:40, maxWidth:"40%", objectFit:"contain", opacity:0.7 }} />
             )}
           </div>
         </div>

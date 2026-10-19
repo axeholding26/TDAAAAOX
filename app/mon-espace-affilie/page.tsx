@@ -31,7 +31,7 @@ interface Compte {
 }
 
 const PERIODES = [7, 30, 90] as const;
-const inp = "w-full px-4 py-3 text-sm rounded-xl border outline-none";
+const inp = "w-full px-4 py-3 text-base sm:text-sm rounded-xl border outline-none";
 const inpStyle = { borderColor: "rgba(0,0,0,0.1)" };
 
 export default function MonEspaceAffiliePage() {

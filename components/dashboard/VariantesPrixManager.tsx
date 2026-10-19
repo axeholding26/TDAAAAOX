@@ -236,7 +236,7 @@ export function VariantesPrixManager({
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">{t("Disponible à partir du")}</label>
               <input type="date" value={form.dateDebut}

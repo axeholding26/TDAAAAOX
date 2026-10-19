@@ -113,7 +113,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
       )}
 
       {/* Métriques */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
         {[
           { label: "Impressions", val: c.impressions.toLocaleString() },
           { label: "Clics", val: c.clics.toLocaleString() },
@@ -128,7 +128,7 @@ function CampagneCard({ c, onStatut, onDelete }: { c: Campagne; onStatut: (id: s
       </div>
 
       {/* Budget */}
-      <div className="flex items-center justify-between mb-4 text-xs text-gray-500">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-4 text-xs text-gray-500">
         <span>{t("Dépensé:")}{" "}<strong className="text-gray-800">{c.depense.toLocaleString()} {t(c.devise)}</strong></span>
         <span>{t("Budget:")}{" "}<strong className="text-gray-800">{c.budget.toLocaleString()} {t(c.devise)}</strong></span>
       </div>
@@ -318,7 +318,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Publicité")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Gérez vos campagnes Meta, Google et TikTok")}</p>
@@ -339,7 +339,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
       </div>
 
       {/* Filtres plateformes */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button onClick={() => setFilterPlat("tous")}
           className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${filterPlat === "tous" ? "bg-gray-800 text-white border-gray-800" : "bg-white border-gray-200 text-gray-500"}`}>
           {t("Toutes")}
@@ -452,7 +452,7 @@ Adapté marché africain. UNIQUEMENT le JSON.`,
               {/* Objectif */}
               <div>
                 <label className="text-[12px] font-semibold text-[#555] block mb-2">{t("Objectif")}</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {OBJECTIFS.map(o => {
                     const Icone = o.icon;
                     return (

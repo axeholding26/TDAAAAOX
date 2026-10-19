@@ -114,7 +114,7 @@ export default function AxiaPage() {
   return (
     <div className="h-full flex flex-col min-h-0">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center gap-3 px-6 py-4 bg-white border-b border-gray-100">
+      <div className="flex-shrink-0 flex flex-wrap items-center gap-3 px-6 py-4 bg-white border-b border-gray-100">
         <div className="w-10 h-10 rounded-2xl overflow-hidden flex-shrink-0">
           <img src="/axia-icon.png" alt={t("Axia")} className="w-full h-full object-cover" />
         </div>
@@ -185,7 +185,7 @@ export default function AxiaPage() {
             onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); envoyer(); } }}
             placeholder={t("Pose une question à Axia…")}
             disabled={loading}
-            className="flex-1 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
+            className="flex-1 min-w-0 bg-transparent text-sm text-gray-900 outline-none placeholder:text-gray-400"
           />
           <button onClick={toggleVoice}
             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${listening ? "bg-red-100" : "hover:bg-gray-100"}`}>

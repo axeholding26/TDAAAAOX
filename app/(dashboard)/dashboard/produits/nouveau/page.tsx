@@ -300,8 +300,8 @@ function FormulaireProduit() {
   return (
     <div className="max-w-4xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
           <Link href="/dashboard/produits" className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-900 hover:border-[#F5A623]/30 transition-all">
             <ArrowLeft size={16} />
           </Link>
@@ -402,7 +402,7 @@ function FormulaireProduit() {
               <BarChart2 size={15} className="text-[#F5A623]" />
               <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Prix & Stock")}</h2>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="ax-label block mb-1.5">{tr("Prix de vente *")}</label>
                 <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} placeholder="0" min="0" className={inputClass} />
@@ -421,10 +421,10 @@ function FormulaireProduit() {
                     <label className="ax-label block mb-1.5">{tr("SKU / Référence")}</label>
                     <input value={form.sku} onChange={e => set("sku", e.target.value)} placeholder={tr("SKU-001")} className={inputClass} />
                   </div>
-                  <div>
+                  <div className="sm:col-span-2">
                     <label className="ax-label block mb-1.5">{tr("Code-barres (EAN/UPC)")}</label>
                     <div className="flex items-center gap-2">
-                      <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={`${inputClass} flex-1`} />
+                      <input value={form.codeBarres} onChange={e => set("codeBarres", e.target.value)} placeholder="ex: 6001234567890" className={`${inputClass} flex-1 min-w-0`} />
                       <button
                         type="button"
                         onClick={() => setScanBarcodeOuvert(true)}
@@ -470,7 +470,7 @@ function FormulaireProduit() {
                 <Truck size={15} className="text-emerald-500" />
                 <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Informations fournisseur")}</h2>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="ax-label block mb-1.5">{tr("Prix fournisseur (coût)")}</label>
                   <input type="number" value={form.prixFournisseur} onChange={e => set("prixFournisseur", e.target.value)} placeholder="0" min="0" className={inputClass} />
@@ -484,7 +484,7 @@ function FormulaireProduit() {
                 <label className="ax-label block mb-1.5">{tr("URL produit source")}</label>
                 <div className="flex gap-2">
                   <input value={form.urlFournisseur} onChange={e => set("urlFournisseur", e.target.value)}
-                    placeholder="https://aliexpress.com/item/..." className={`${inputClass} flex-1`} />
+                    placeholder="https://aliexpress.com/item/..." className={`${inputClass} flex-1 min-w-0`} />
                   {form.urlFournisseur && (
                     <a href={form.urlFournisseur} target="_blank" rel="noopener noreferrer"
                       className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-gray-400 hover:text-gray-700 transition-colors">
@@ -557,9 +557,9 @@ function FormulaireProduit() {
 
             {/* Images */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <label className="text-gray-600 text-xs font-medium">{tr("Images")}</label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button onClick={genererImageIA} disabled={genImage || !form.nom}
                     className="flex items-center gap-1.5 text-xs bg-[#F5A623]/10 text-[#F5A623] border border-[#F5A623]/20 px-3 py-1.5 rounded-lg hover:bg-[#F5A623]/20 transition-all disabled:opacity-50">
                     {genImage ? <Loader2 size={10} className="animate-spin" /> : <Zap size={10} />}{" "}{tr("Générer avec l'IA")}
@@ -576,7 +576,7 @@ function FormulaireProduit() {
                 <input value={imageInput} onChange={e => setImageInput(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") ajouterImageUrl(); }}
                   placeholder={tr("Ou collez une URL d'image...")}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400" />
+                  className="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-gray-900 text-sm focus:outline-none focus:border-[#F5A623]/50 placeholder:text-gray-400" />
                 <button onClick={ajouterImageUrl}
                   className="px-3 py-2 bg-[#F5A623]/10 border border-[#F5A623]/20 text-[#F5A623] rounded-xl text-sm hover:bg-[#F5A623]/20 transition-all">
                   <Plus size={15} />
@@ -589,7 +589,7 @@ function FormulaireProduit() {
                       <img src={img} alt="" className="w-full h-full object-cover" onError={e => (e.currentTarget.style.display = "none")} />
                       {i === 0 && <div className="absolute bottom-1 left-1 bg-[#F5A623] text-white text-[9px] px-1.5 py-0.5 rounded font-medium">{tr("Principale")}</div>}
                       <button onClick={() => set("images", form.images.filter((_, j) => j !== i))}
-                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        className="absolute top-1 right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                         <X size={9} className="text-white" />
                       </button>
                     </div>
@@ -743,9 +743,9 @@ function FormulaireProduit() {
               {variantes.length > 0 && (
                 <div className="space-y-1.5">
                   {variantes.map((v, idx) => (
-                    <div key={idx} className="flex items-center gap-3 bg-[#FAFAFA] rounded-xl px-3 py-2">
+                    <div key={idx} className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-[#FAFAFA] rounded-xl px-3 py-2">
                       <span className="text-[11px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-medium">{tr(v.nom)}</span>
-                      <span className="text-[12px] font-semibold text-[#111] flex-1">{tr(v.valeur)}</span>
+                      <span className="text-[12px] font-semibold text-[#111] flex-1 min-w-0 break-words">{tr(v.valeur)}</span>
                       {v.sku && <span className="text-[10px] text-[#AAA] font-mono">{tr(v.sku)}</span>}
                       <span className="text-[12px] text-[#F5A623] font-bold">{v.prix || form.prix} XAF</span>
                       <span className="text-[11px] text-[#888]">{tr("S:")}{v.stock}</span>

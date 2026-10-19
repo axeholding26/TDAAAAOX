@@ -184,17 +184,17 @@ export default async function AffiliationMarketplacePage({ searchParams }: Props
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#B3B3B3" }} />
               <input
                 name="q" defaultValue={q} placeholder={t("Rechercher un produit ou un marchand…")}
-                className="w-full pl-10 pr-4 py-3 text-sm rounded-xl border outline-none"
+                className="w-full pl-10 pr-4 py-3 text-base sm:text-sm rounded-xl border outline-none"
                 style={{ borderColor: "rgba(0,0,0,0.1)" }}
               />
             </div>
             {categories.length > 0 && (
-              <select name="cat" defaultValue={cat || ""} className="px-4 py-3 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+              <select name="cat" defaultValue={cat || ""} className="px-4 py-3 text-base sm:text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
                 <option value="">{t("Toutes catégories")}</option>
                 {categories.map((c) => <option key={c} value={c}>{t(c)}</option>)}
               </select>
             )}
-            <select name="tri" defaultValue={tri || "commission"} className="px-4 py-3 text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+            <select name="tri" defaultValue={tri || "commission"} className="px-4 py-3 text-base sm:text-sm rounded-xl border outline-none bg-white" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
               <option value="commission">{t("Commission la plus élevée")}</option>
               <option value="populaire">{t("Best-sellers")}</option>
             </select>

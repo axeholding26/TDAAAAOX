@@ -142,7 +142,7 @@ export function ChampNombre({ label, aide, valeur, onChange, suffixe, placeholde
     <Champ label={label} aide={aide}>
       <div className="flex items-center gap-2">
         <input type="number" inputMode="decimal" min={0} step={pas ?? "any"} value={valeur ?? ""} placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)))} className={CLASSE_CHAMP} />
+          onChange={(e) => onChange(e.target.value === "" ? undefined : Math.max(0, Number(e.target.value)))} className={`${CLASSE_CHAMP} min-w-0`} />
         {suffixe && <span className="text-[12px] text-[#666666] whitespace-nowrap">{suffixe}</span>}
       </div>
     </Champ>

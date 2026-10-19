@@ -243,7 +243,7 @@ function CustomersModal({
       <div className="relative bg-white rounded-2xl border border-[#E8E8E8] shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between p-5 border-b border-[#E8E8E8]">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-bold text-[#111111]">{tr(produit.nom)}</h2>
             <p className="text-xs text-[#AAAAAA] mt-0.5">
               {tr(produit.ventes)} vente{produit.ventes !== 1 ? "s" : ""} ·{" "}
@@ -298,9 +298,9 @@ function CustomersModal({
                       className="bg-[#F5F5F5] rounded-xl p-4 space-y-3"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-semibold text-[#111111]">{tr(c.clientNom)}</p>
-                          <p className="text-xs text-[#AAAAAA]">{tr(c.clientEmail)}</p>
+                          <p className="text-xs text-[#AAAAAA] break-all">{tr(c.clientEmail)}</p>
                           <p className="text-[11px] text-[#AAAAAA] mt-1">
                             #{tr(c.commandeNumero)} · {formatDate(c.achatDate)}
                           </p>
@@ -324,7 +324,7 @@ function CustomersModal({
                       </div>
 
                       {/* Actions */}
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button
                           onClick={() => resendLink(c.commandeId)}
                           disabled={!!actionLoading}
@@ -505,7 +505,7 @@ function ProductCard({
           <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
-              className="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-[#666666] hover:text-[#111111] opacity-0 group-hover:opacity-100 transition-all border border-[#E8E8E8]"
+              className="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-[#666666] hover:text-[#111111] md:opacity-0 md:group-hover:opacity-100 transition-all border border-[#E8E8E8]"
             >
               <MoreHorizontal size={14} />
             </button>
@@ -710,7 +710,7 @@ export default function DigitalProduitsPage() {
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex flex-wrap items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-[#111111] font-poppins">{tr("Produits Digitaux")}</h1>
             <BoutonRevoirTutoriel moduleKey="produits-digital" />
             {stats && (

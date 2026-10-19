@@ -191,7 +191,7 @@ export function TemoignagesSection({ reels = [] }: { reels?: AvisPublic[] }) {
                 {tr(t.avatar)}
               </div>
               <div className="text-left">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-gray-900 font-bold text-base sm:text-lg">{t.verifie ? t.nom : tr(t.nom)}</span>
                   {t.verifie && <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700"><BadgeCheck size={11} />{tr("Avis vérifié")}</span>}
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wide">{tr(t.pays)}</span>

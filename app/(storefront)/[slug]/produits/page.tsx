@@ -155,14 +155,14 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                 name="q"
                 defaultValue={q}
                 placeholder={t("Rechercher un produit…")}
-                className="w-full pl-10 pr-4 py-2.5 text-sm border focus:outline-none"
+                className="w-full pl-10 pr-4 py-2.5 text-base sm:text-sm border focus:outline-none"
                 style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
               />
             </div>
             <select
               name="tri"
               defaultValue={tri}
-              className="px-4 py-2.5 text-sm border focus:outline-none"
+              className="px-4 py-2.5 text-base sm:text-sm border focus:outline-none"
               style={{ backgroundColor: c.surface, borderColor: `${c.accent}25`, color: c.texte, borderRadius: radius }}
             >
               <option value="">{t("Plus récents")}</option>
@@ -326,7 +326,7 @@ export default async function ProduitsPage({ params, searchParams }: Props) {
                           {p.categorie && (
                             <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{t(p.categorie)}</p>
                           )}
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-x-2">
                             <span className="font-bold text-sm" style={{ color: c.accent }}>
                               <Prix montant={prixAffiche} devise={tenant.devise} />
                             </span>

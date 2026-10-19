@@ -453,7 +453,7 @@ function OngletAffilies() {
     <div className="space-y-4">
       {/* Barre filtres */}
       <div className="flex items-center gap-2">
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" />
           <input value={search} onChange={e => setSearch(e.target.value)}
             placeholder={tr("Rechercher un affilié…")}
@@ -476,7 +476,7 @@ function OngletAffilies() {
       {showForm && (
         <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
           <p className="text-[12px] font-bold text-[#111]">{tr("Ajouter un affilié")}</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {[
               { key: "nom", ph: "Nom complet *" },
               { key: "email", ph: "Email *" },
@@ -520,9 +520,9 @@ function OngletAffilies() {
                     <p className="text-[13px] font-semibold text-[#111]">{tr(a.nom)}</p>
                     <Badge statut={a.statut} />
                   </div>
-                  <p className="text-[11px] text-gray-400">{a.email}{a.telephone ? ` · ${a.telephone}` : ""}</p>
+                  <p className="text-[11px] text-gray-400 break-words">{a.email}{a.telephone ? ` · ${a.telephone}` : ""}</p>
                   <p className="text-[10px] font-mono text-[#F5A623] mt-0.5">{tr("Code:")}{" "}{tr(a.codeParrainage)}</p>
-                  <div className="flex items-center gap-4 mt-2 text-[11px] text-gray-400">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-gray-400">
                     <span><Eye size={10} className="inline mr-1"/>{tr(a.clics)} clics</span>
                     <span><ShoppingBag size={10} className="inline mr-1"/>{tr(a.conversions)} ventes</span>
                     <span className="text-[#F5A623] font-bold">{fmt(a.commissionTotal)}</span>
@@ -743,7 +743,7 @@ function OngletLiens() {
                         {copiedId === lien.id ? <CheckCheck size={11}/> : <Copy size={11}/>}
                       </button>
                     </div>
-                    <div className="mt-2 flex gap-4 text-[11px] text-gray-400">
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-400">
                       <span><Eye size={10} className="inline mr-1"/>{tr(lien.clics)} clics</span>
                       <span><ShoppingBag size={10} className="inline mr-1"/>{tr(lien.conversions)} ventes</span>
                       <span className="text-green-600 font-bold">+{fmt((lien.montantGenere ?? 0))}</span>
@@ -938,7 +938,7 @@ function OngletEntrante() {
         <strong>{tr("Comment ça marche :")}</strong>{" "}{tr("Ajoutez un programme d'affiliation où")}{" "}<em>vous</em>{" "}{tr("êtes affilié d'un autre marchand (Jumia Affiliate, Amazon Associates, un partenaire local...). Partagez votre lien, percevez une commission sur chaque vente.")}
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { label: "Programmes", v: stats.total },
           { label: "Actifs", v: stats.actifs, color: "#22c55e" },
@@ -954,13 +954,13 @@ function OngletEntrante() {
 
       <div className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
         <h2 className="text-[13px] font-bold text-[#111]">{tr("Ajouter un programme")}</h2>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input className={inp} placeholder={tr("Nom (ex: Jumia Affiliate)")} value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
           <input className={inp} placeholder={tr("Marchand / Plateforme")} value={form.marchand} onChange={e => setForm(f => ({ ...f, marchand: e.target.value }))} />
           <input className={inp} placeholder={tr("Lien d'affiliation")} value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} />
           <input className={inp} placeholder={tr("Catégorie (optionnel)")} value={form.categorie} onChange={e => setForm(f => ({ ...f, categorie: e.target.value }))} />
           <div className="flex gap-2">
-            <input className={inp} placeholder={tr("Commission %")} type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
+            <input className={`${inp} min-w-0`} placeholder={tr("Commission %")} type="number" value={form.commission} onChange={e => setForm(f => ({ ...f, commission: e.target.value }))} />
             <select className={inp} value={form.devise} onChange={e => setForm(f => ({ ...f, devise: e.target.value }))}>
               <option>XAF</option><option>EUR</option><option>USD</option>
             </select>
@@ -977,7 +977,7 @@ function OngletEntrante() {
           <div key={p.id} className="bg-white border border-gray-100 rounded-2xl p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-[13px] font-semibold text-[#111]">{tr(p.nom)}</p>
                   {p.categorie && <span className="text-[9.5px] bg-[#F0F0F0] text-[#666] px-2 py-0.5 rounded-full">{tr(p.categorie)}</span>}
                   {!p.actif && <span className="text-[9.5px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">{tr("Inactif")}</span>}

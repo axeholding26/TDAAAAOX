@@ -108,11 +108,11 @@ export default function FeedsPage() {
       <ModuleTutorial moduleKey="feeds" titre={t("Flux produits")} sousTitre={t("Diffuse ton catalogue ailleurs")} steps={FEEDS_TUTORIAL_STEPS} />
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-[#111111] flex items-center justify-center">
+        <div className="w-12 h-12 shrink-0 rounded-2xl bg-[#111111] flex items-center justify-center">
           <Package size={22} className="text-[#F5A623]" />
         </div>
-        <div>
-          <div className="flex items-center gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold text-gray-900 font-poppins">{t("Flux Produits (Feeds)")}</h1>
             <BoutonRevoirTutoriel moduleKey="feeds" />
           </div>
@@ -136,7 +136,7 @@ export default function FeedsPage() {
 
       {/* Stat produits */}
       {slug && (
-        <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4">
+        <div className="flex flex-wrap items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4">
           <div className="w-10 h-10 rounded-xl bg-[#F5A623]/10 flex items-center justify-center">
             <Package size={18} className="text-[#F5A623]" />
           </div>
@@ -158,13 +158,13 @@ export default function FeedsPage() {
           return (
             <div key={plat.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
               {/* Header carte */}
-              <div className="flex items-center justify-between p-5 border-b border-gray-50">
+              <div className="flex items-center justify-between gap-3 p-5 border-b border-gray-50">
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: plat.color + "15" }}>
                     <plat.Icon size={22} style={{ color: plat.color }} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <p className="font-bold text-gray-900">{t(plat.nom)}</p>
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: plat.badgeColor }}>
                         {t(plat.badge)}
@@ -181,7 +181,7 @@ export default function FeedsPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-600 block mb-2">{t("URL du flux à coller dans")}{" "}{t(plat.nom)}</label>
                   <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl p-3">
-                    <code className="text-xs text-gray-700 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+                    <code className="text-xs text-gray-700 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
                       {feedUrl}
                     </code>
                     <CopyButton text={feedUrl} />

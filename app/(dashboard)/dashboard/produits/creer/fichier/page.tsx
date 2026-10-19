@@ -96,11 +96,11 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Slug URL")}</label>
         <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-          <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-xs border-r border-gray-200">boutique.com/p/</span>
+          <span className="px-3 py-2.5 bg-gray-50 text-gray-400 text-xs border-r border-gray-200 flex-shrink-0">boutique.com/p/</span>
           <input
             value={e.slug}
             onChange={(ev) => set({ slug: ev.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })}
-            className="flex-1 px-3 py-2.5 text-sm focus:outline-none"
+            className="flex-1 min-w-0 px-3 py-2.5 text-sm focus:outline-none"
           />
         </div>
       </div>

@@ -92,7 +92,7 @@ export default async function AvisPage({ searchParams }: { searchParams: Promise
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex flex-wrap items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Avis clients")}</h1>
             <BoutonRevoirTutoriel moduleKey="avis" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
@@ -125,7 +125,7 @@ export default async function AvisPage({ searchParams }: { searchParams: Promise
             {t("Basé sur")}{" "}<span className="font-semibold text-[#666]">{totalAvis}</span> avis
           </p>
           {totalAvis > 0 && (
-            <div className="mt-4 flex items-center gap-4 pt-4 border-t border-[#F5F5F5] w-full justify-center">
+            <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 pt-4 border-t border-[#F5F5F5] w-full justify-center">
               <div className="flex items-center gap-1 text-[11.5px] text-[#16A34A]">
                 <CheckCircle2 size={11} /> {totalAvis - nonApprouves}{" "}{t("approuvés")}
               </div>
@@ -234,7 +234,7 @@ export default async function AvisPage({ searchParams }: { searchParams: Promise
                       <p className="text-[13px] font-semibold text-[#333] mb-1">{t(a.titre)}</p>
                     )}
                     {a.commentaire && (
-                      <p className="text-[12.5px] text-[#666666] leading-relaxed">{t(a.commentaire)}</p>
+                      <p className="text-[12.5px] text-[#666666] leading-relaxed break-words">{t(a.commentaire)}</p>
                     )}
                     <p className="text-[11px] text-[#CCCCCC] mt-2">
                       {a.produit?.nom && (

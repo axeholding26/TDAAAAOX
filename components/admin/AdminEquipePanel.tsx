@@ -118,15 +118,15 @@ export function AdminEquipePanel({ peutInviter, monId }: { peutInviter: boolean;
         ) : (
           <div className="divide-y" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
             {membres.map(m => (
-              <div key={m.id} className="flex items-center justify-between px-6 py-3.5">
-                <div className="flex items-center gap-3">
+              <div key={m.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                     style={{ background: "rgba(245,166,35,0.12)", color: "#F5A623" }}>
                     {(m.name || m.email).slice(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: "#FFFFFF" }}>{t(m.name) || m.email}</p>
-                    <p className="text-xs" style={{ color: "#AAAAAA" }}>{m.email}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium [overflow-wrap:anywhere]" style={{ color: "#FFFFFF" }}>{t(m.name) || m.email}</p>
+                    <p className="text-xs [overflow-wrap:anywhere]" style={{ color: "#AAAAAA" }}>{m.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">

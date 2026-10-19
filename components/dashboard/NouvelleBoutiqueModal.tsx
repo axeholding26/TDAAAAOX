@@ -157,7 +157,7 @@ export function NouvelleBoutiqueModal({ onClose, onCree }: { onClose: () => void
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">{t("Pays")}</label>
               <SelectPays value={pays} onChange={setPays} />

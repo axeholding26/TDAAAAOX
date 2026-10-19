@@ -119,6 +119,7 @@ export default async function ContactPage() {
                 .axso-input { background:#fff; border:1px solid rgba(0,0,0,0.1); color:#111111; width:100%; border-radius:12px; padding:14px 16px; font-size:14px; outline:none; transition:all .2s; font-family:inherit; }
                 .axso-input::placeholder { color:rgba(0,0,0,0.3); }
                 .axso-input:focus { border-color:rgba(245,166,35,0.5); box-shadow:0 0 0 3px rgba(245,166,35,0.08); }
+                @media (max-width:639px) { .axso-input { font-size:16px; } }
               `}</style>
 
               <form className="space-y-4" action="mailto:support@axsoafrica.com" method="get">

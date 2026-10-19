@@ -149,7 +149,7 @@ export default function ChampsCommandeManager({ produitId, initial }: Props) {
                           onChange={e => setOptInput(e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addOption(idx); }}}
                           placeholder={t("Ajouter une option…")}
-                          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
+                          className="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-[#F5A623]/50 bg-white"
                         />
                         <button
                           type="button"

@@ -205,7 +205,7 @@ export function FormationPlayer(p: Props) {
           <div className="p-4 space-y-4">
             <form onSubmit={chercher} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: `${p.accent}0d` }}>
               <Search size={14} className="opacity-50 flex-shrink-0" />
-              <input value={recherche} onChange={(e) => { setRecherche(e.target.value); if (!e.target.value) setResultats(null); }} placeholder={t("Rechercher dans le cours…")} aria-label={t("Rechercher dans le cours")} className="flex-1 min-w-0 bg-transparent text-sm outline-none" />
+              <input value={recherche} onChange={(e) => { setRecherche(e.target.value); if (!e.target.value) setResultats(null); }} placeholder={t("Rechercher dans le cours…")} aria-label={t("Rechercher dans le cours")} className="flex-1 min-w-0 bg-transparent text-base sm:text-sm outline-none" />
             </form>
             {resultats && (
               <div className="space-y-1">
@@ -416,7 +416,7 @@ function Notes({ initial, accent, onSave }: { initial: string; accent: string; o
       <div className="px-3 pb-3">
         <textarea value={note} onChange={(e) => { setNote(e.target.value); setEtat(""); }} onBlur={sauver} rows={4} maxLength={20000}
           placeholder={t("Tes notes personnelles sur cette leçon (visibles par toi seul)…")} aria-label={t("Mes notes")}
-          className="w-full rounded-lg p-2.5 text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} />
+          className="w-full rounded-lg p-2.5 text-base sm:text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} />
         <p className="text-[11px] opacity-60 h-4" aria-live="polite">{etat === "enregistrement" ? t("Enregistrement…") : etat === "ok" ? t("Enregistré") : etat === "erreur" ? t("Non enregistré — réessaie") : ""}</p>
       </div>
     </details>
@@ -464,7 +464,7 @@ function Quiz({ api, quiz, accent, fond, onReussi }: { api: string; quiz: NonNul
               <legend className="px-1 text-sm font-semibold">{i + 1}. {q.enonce} <span className="opacity-50 font-normal">({q.points} pt{q.points > 1 ? "s" : ""})</span></legend>
               {q.type === "courte" ? (
                 <input value={(reponses[q.id] as string) ?? ""} onChange={(e) => setReponses((r) => ({ ...r, [q.id]: e.target.value }))} maxLength={500}
-                  className="w-full mt-2 rounded-lg p-2.5 text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} aria-label={q.enonce} />
+                  className="w-full mt-2 rounded-lg p-2.5 text-base sm:text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} aria-label={q.enonce} />
               ) : (
                 <div className="mt-2 space-y-1.5">
                   {q.options.map((o, oi) => {
@@ -538,7 +538,7 @@ function Devoir({ api, rendu, accent, fond, onRendu }: { api: string; rendu: Con
       {statut && <p className="text-sm font-semibold" style={{ color: statut === "valide" ? "#16a34a" : statut === "a_refaire" ? "#dc2626" : accent }}>{t(STATUT_DEVOIR[statut] ?? statut)}{rendu?.note != null && statut !== "soumis" ? ` · ${rendu.note}/100` : ""}</p>}
       {rendu?.feedback && <div className="rounded-xl p-3 text-sm" style={{ background: `${accent}0d` }}><b>{t("Retour du formateur")} :</b> {rendu.feedback}</div>}
       <textarea value={texte} onChange={(e) => setTexte(e.target.value)} rows={8} maxLength={20000} disabled={statut === "valide"} required
-        placeholder={t("Ta réponse…")} aria-label={t("Ta réponse")} className="w-full rounded-xl p-3 text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} />
+        placeholder={t("Ta réponse…")} aria-label={t("Ta réponse")} className="w-full rounded-xl p-3 text-base sm:text-sm bg-transparent outline-none" style={{ border: `1px solid ${accent}25` }} />
       {statut !== "valide" && (
         <button type="submit" disabled={envoi || !texte.trim()} className="px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50" style={{ background: accent, color: fond }}>
           {envoi ? "…" : statut ? t("Mettre à jour mon rendu") : t("Rendre le devoir")}

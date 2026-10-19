@@ -64,8 +64,8 @@ export default function TransporteursPage() {
           <div key={t.code} className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="text-2xl">{tr(t.logo)}</span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[13px] font-semibold text-[#111]">{tr(t.nom)}</span>
                   <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t.zones.join(", ")}</span>
                 </div>

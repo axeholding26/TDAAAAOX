@@ -145,7 +145,7 @@ export function LivraisonPanel() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <AgentActiveIndicator label={tx("Agent Livraison actif")} />
         {tab === "regles" && (
           <button
@@ -288,9 +288,9 @@ export function LivraisonPanel() {
           ) : (
             <div className="space-y-2">
               {regles.map((r) => (
-                <div key={r.id} className={`bg-white border rounded-xl p-4 flex items-center justify-between gap-4 ${!r.actif ? "opacity-50" : ""}`} style={{ borderColor: "#F0F0F0" }}>
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "#FFF8EC" }}>
+                <div key={r.id} className={`bg-white border rounded-xl p-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 ${!r.actif ? "opacity-50" : ""}`} style={{ borderColor: "#F0F0F0" }}>
+                  <div className="flex items-center gap-3 flex-1 min-w-[10rem]">
+                    <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center" style={{ background: "#FFF8EC" }}>
                       <MapPin size={16} style={{ color: "#F5A623" }} />
                     </div>
                     <div className="min-w-0">

@@ -149,7 +149,7 @@ export function StorefrontPopups({ slug, accentColor = "#F5A623" }: Props) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4" onClick={dismiss}>
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 relative"
+        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={dismiss} className="absolute top-3 right-3 p-1.5 rounded-lg hover:bg-[#F5F5F5]">

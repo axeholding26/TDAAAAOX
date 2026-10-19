@@ -67,7 +67,7 @@ export default async function AdminAbonnementsPage() {
       </div>
 
       {/* Revenu abonnements */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="rounded-2xl p-5 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
           <p className="text-2xl font-bold" style={{ color: "#16A34A" }}>{formatMontant(revenuAbonnementsTotal._sum.montant || 0, "XAF")}</p>
           <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx("Revenu abonnements total")}</p>

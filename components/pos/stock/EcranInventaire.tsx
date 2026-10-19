@@ -245,7 +245,7 @@ function Comptage({ id, caisseId, onRetour }: { id: string; caisseId: string | n
                     if (exacte.trim() === "" || !Number.isInteger(entier) || entier < 0) { setAlerte("Saisissez une quantité valide."); return; }
                     compter({ produitId: dernier.produitId, varianteId: dernier.varianteId, quantite: entier, mode: "fixer" }, nouvelleCle());
                   }}>
-                    <Saisie label="Quantité exacte (recomptage)" inputMode="decimal" value={exacte} onChange={(e) => setExacte(e.target.value)} suffixe={dernier.uniteVente === "kg" ? "kg" : undefined} className="flex-1" />
+                    <Saisie label="Quantité exacte (recomptage)" inputMode="decimal" value={exacte} onChange={(e) => setExacte(e.target.value)} suffixe={dernier.uniteVente === "kg" ? "kg" : undefined} className="min-w-0 flex-1" />
                     <Bouton type="submit" variante="sombre">{t("Fixer")}</Bouton>
                   </form>
                 </div>

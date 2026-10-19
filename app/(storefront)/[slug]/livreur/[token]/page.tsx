@@ -158,12 +158,12 @@ export default function LivreurPage() {
           <div style={{ marginBottom:12 }}>
             <label htmlFor="livreur-nom" style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Votre nom (optionnel)")}</label>
             <input id="livreur-nom" value={nom} onChange={e => setNom(e.target.value)} placeholder={t("Ex: Moussa")}
-              style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+              style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:16, outline:"none", boxSizing:"border-box" }} />
           </div>
           <div style={{ marginBottom:20 }}>
             <label htmlFor="livreur-tel" style={{ fontSize:11, color:"#666", display:"block", marginBottom:6 }}>{t("Téléphone (optionnel)")}</label>
             <input id="livreur-tel" value={telephone} onChange={e => setTelephone(e.target.value)} placeholder={t("+237 6XX XX XX XX")} type="tel"
-              style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:14, outline:"none", boxSizing:"border-box" }} />
+              style={{ width:"100%", padding:"12px 16px", borderRadius:12, border:"1px solid rgba(255,255,255,0.1)", background:"rgba(255,255,255,0.06)", color:"white", fontSize:16, outline:"none", boxSizing:"border-box" }} />
           </div>
 
           {/* Adresse client */}

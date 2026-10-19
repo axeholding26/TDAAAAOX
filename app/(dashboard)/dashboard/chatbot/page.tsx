@@ -93,7 +93,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t("Chatbot WhatsApp IA")}</h1>
           <p className="text-gray-400 text-sm mt-0.5">{t("AXIA répond automatiquement à vos messages WhatsApp")}</p>
@@ -245,7 +245,7 @@ ${config.messageAccueil ? `Message d'accueil: ${config.messageAccueil}` : ""}`;
             onChange={e => setNewMotsCle(e.target.value)}
             onKeyDown={e => e.key === "Enter" && ajouterMotCle()}
             placeholder={t("Ajouter un mot-clé…")}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-300"
+            className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gray-300"
           />
           <button onClick={ajouterMotCle} className="px-3 py-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all">
             <Plus size={14}/>

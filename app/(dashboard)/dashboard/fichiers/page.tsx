@@ -108,7 +108,7 @@ export default function FichiersPage() {
             </div>
             <label className="flex-1 min-w-[200px] flex items-center gap-2 h-10 px-3 rounded-lg border border-gray-200 bg-white focus-within:border-[#F5A623]">
               <Search size={15} className="text-gray-400" />
-              <input value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder={t("Rechercher un fichier")} className="flex-1 text-[14px] outline-none bg-transparent" />
+              <input value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder={t("Rechercher un fichier")} className="flex-1 min-w-0 text-[14px] outline-none bg-transparent" />
             </label>
           </div>
 

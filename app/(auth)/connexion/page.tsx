@@ -10,6 +10,7 @@ import type { z } from "zod";
 import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Mail, ArrowLeft } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import { estRoleAdmin } from "@/lib/command-center/rbac";
+import { BoutonRenvoyerCode, demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
@@ -56,15 +57,11 @@ function ConnexionForm() {
   const onSubmit = async (data: FormConnexion) => {
     setErreur("");
     try {
-      const res = await fetch("/api/auth/2fa/demander", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, password: data.password }),
-      });
-      const result = await res.json();
-      if (!res.ok) { setErreur(result.error ?? result.message ?? "Email ou mot de passe incorrect"); return; }
+      let skip2fa: boolean;
+      try { skip2fa = await demanderCodeConnexion(data.email, data.password); }
+      catch (e: any) { setErreur(e.message); return; }
 
-      if (result.skip2fa) {
+      if (skip2fa) {
         await finaliserConnexion(data.email, data.password);
       } else {
         setIdentifiants({ email: data.email, password: data.password });
@@ -88,7 +85,7 @@ function ConnexionForm() {
   }
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-base sm:text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   if (etape === "code" && identifiants) {
@@ -126,13 +123,14 @@ function ConnexionForm() {
             aria-label={t("Code de vérification à 6 chiffres")}
             value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
             placeholder="000000"
-            className={inputCls + " text-center text-2xl tracking-[0.5em] font-bold"}
+            className={inputCls + " text-center text-2xl sm:text-2xl tracking-[0.5em] font-bold"}
           />
           <button type="submit" disabled={verifCode || code.length < 6}
             className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
             style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
             {verifCode ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Vérification...")}</> : t("Confirmer →")}
           </button>
+          <BoutonRenvoyerCode onRenvoyer={async () => { await demanderCodeConnexion(identifiants.email, identifiants.password); setCode(""); }} />
         </form>
       </div>
     );

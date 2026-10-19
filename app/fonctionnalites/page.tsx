@@ -78,9 +78,9 @@ export default async function FonctionnalitesPage() {
         <div className="max-w-4xl mx-auto grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden"
           style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
           {STATS.map((s, i) => (
-            <div key={s.label} className="py-10 px-6 text-center"
+            <div key={s.label} className="py-10 px-3 sm:px-6 text-center"
               style={{ background: i % 2 === 0 ? "rgba(245,166,35,0.04)" : "rgba(0,0,0,0.02)" }}>
-              <p className="text-4xl font-black mb-1" style={{ color: "#F5A623" }}>{s.n}</p>
+              <p className="text-3xl sm:text-4xl font-black mb-1" style={{ color: "#F5A623" }}>{s.n}</p>
               <p className="text-[#808080] text-sm">{t(s.label)}</p>
             </div>
           ))}

@@ -33,7 +33,7 @@ export function LockedDownloads({ token, nom, accent, fond }: { token: string; n
     }
   }
 
-  const inp = "flex-1 px-3 py-2 text-sm rounded-lg border outline-none";
+  const inp = "flex-1 min-w-0 px-3 py-2 text-base sm:text-sm rounded-lg border outline-none";
 
   if (!fichiers) {
     return (

@@ -150,7 +150,7 @@ export default async function CommandesPage({
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex flex-wrap items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Commandes")}</h1>
             <BoutonRevoirTutoriel moduleKey="commandes" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
@@ -172,7 +172,7 @@ export default async function CommandesPage({
         {statCards.map((s, i) => {
           const Icon = s.Icon;
           return (
-            <div key={i} className={`ax-card p-5 relative overflow-hidden group cursor-default ${s.accent ? "border-[#F5A623]/20" : ""}`}>
+            <div key={i} className={`ax-card p-4 sm:p-5 relative overflow-hidden group cursor-default ${s.accent ? "border-[#F5A623]/20" : ""}`}>
               {s.accent && (
                 <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px]"
                   style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
@@ -184,7 +184,7 @@ export default async function CommandesPage({
                   <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                 </div>
               </div>
-              <p className="text-[24px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
+              <p className="text-[18px] sm:text-[24px] [overflow-wrap:anywhere] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
                 {t(s.value)}
               </p>
             </div>
@@ -245,7 +245,7 @@ export default async function CommandesPage({
         </div>
       ) : (
         <div className="ax-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#F3F3F3] flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-[#F3F3F3] flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <p className="text-[13px] font-semibold text-[#111111]">
               {totalFiltre} commande{totalFiltre > 1 ? "s" : ""}
               {filtreStatut && filtreStatut !== "all" && (
@@ -315,7 +315,7 @@ export default async function CommandesPage({
                     </td>
                     <td className="px-3 py-4">
                       <Link href={`/dashboard/commandes/${c.id}`}
-                        className="w-7 h-7 rounded-lg border border-[#EBEBEB] flex items-center justify-center opacity-0 group-hover:opacity-100 hover:border-[#CCC] hover:bg-[#F5F5F5] transition-all">
+                        className="w-7 h-7 rounded-lg border border-[#EBEBEB] flex items-center justify-center md:opacity-0 md:group-hover:opacity-100 hover:border-[#CCC] hover:bg-[#F5F5F5] transition-all">
                         <ChevronRight size={13} className="text-[#888]" />
                       </Link>
                     </td>

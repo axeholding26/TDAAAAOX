@@ -82,12 +82,12 @@ export default function FaqManager({ produitId, initial, nom = "", description =
 
   return (
     <div className="p-5 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-gray-900">{t("FAQ du produit")}</h3>
           <p className="text-xs text-gray-400 mt-0.5">{t("Questions fréquentes affichées sur votre page boutique")}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={generer}
             disabled={genIA}
@@ -119,7 +119,7 @@ export default function FaqManager({ produitId, initial, nom = "", description =
                 className="w-full flex items-center gap-3 p-3.5 text-left hover:bg-gray-50 transition-colors"
               >
                 <GripVertical size={13} className="text-gray-300 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-800 flex-1 truncate">
+                <span className="text-sm font-medium text-gray-800 flex-1 min-w-0 truncate">
                   {t(item.question) || <span className="text-gray-400 italic font-normal">{t("Nouvelle question…")}</span>}
                 </span>
                 {open === idx

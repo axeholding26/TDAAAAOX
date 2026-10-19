@@ -160,7 +160,7 @@ export default async function RevenusPage() {
             <p className="text-[#717171] text-sm">{t("Pas encore de données")}</p>
           </div>
         ) : (
-          <div className="flex items-end gap-2 h-48">
+          <div className="flex items-end gap-1 sm:gap-2 h-48">
             {jours.map(([date, revenu]) => {
               const hauteur = Math.max((revenu / maxRevenu) * 100, 3);
               const jour = new Date(date).toLocaleDateString(t.loc, {
@@ -178,7 +178,7 @@ export default async function RevenusPage() {
                       {formatMontant(revenu, tenant.devise)}
                     </div>
                   </div>
-                  <span className="text-[#717171] text-[10px] text-center leading-tight">{t(jour)}</span>
+                  <span className="hidden sm:block text-[#717171] text-[10px] text-center leading-tight">{t(jour)}</span>
                 </div>
               );
             })}

@@ -154,17 +154,17 @@ function AvisForm({ tenantId, produitId, accent, surface, radius }: {
       {/* Fields */}
       <div className="grid sm:grid-cols-2 gap-3">
         <input value={nom} onChange={e => setNom(e.target.value)} placeholder={tx("Votre nom *")}
-          className="w-full px-3 py-2.5 text-sm outline-none transition-all"
+          className="w-full px-3 py-2.5 text-base sm:text-sm outline-none transition-all"
           style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={tx("Votre email *")}
-          className="w-full px-3 py-2.5 text-sm outline-none transition-all"
+          className="w-full px-3 py-2.5 text-base sm:text-sm outline-none transition-all"
           style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
       </div>
       <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={tx("Titre (optionnel)")}
-        className="w-full px-3 py-2.5 text-sm outline-none"
+        className="w-full px-3 py-2.5 text-base sm:text-sm outline-none"
         style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
       <textarea value={commentaire} onChange={e => setComment(e.target.value)} placeholder={tx("Votre commentaire…")} rows={3}
-        className="w-full px-3 py-2.5 text-sm outline-none resize-none"
+        className="w-full px-3 py-2.5 text-base sm:text-sm outline-none resize-none"
         style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
 
       {err && <p className="text-xs text-red-500">{tx(err)}</p>}
@@ -366,7 +366,7 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect, cfg }:
             )}
             {cfg.style === "liste" ? (
               <select value={current?.id ?? ""} onChange={e => onSelect(variants.find(v => v.id === e.target.value) ?? null)}
-                className={`w-full ${TAILLE[cfg.taille] ?? TAILLE.md} bg-transparent outline-none`}
+                className={`w-full ${TAILLE[cfg.taille] ?? TAILLE.md} max-sm:text-base bg-transparent outline-none`}
                 style={{ borderRadius: radius, border: `2px solid ${current ? accent : "rgba(0,0,0,0.12)"}` }}>
                 <option value="">{tx("Choisir")}{" "}{nom.toLowerCase()}…</option>
                 {variants.map(v => <option key={v.id} value={v.id} disabled={v.stock === 0}>{tx(v.valeur)}{v.stock === 0 ? tx(" (épuisé)") : ""}</option>)}
@@ -963,7 +963,7 @@ function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, co
         <label key={c.type} className="block">
           <span className="block text-[13px] font-semibold mb-1.5">{tx(c.label)}</span>
           <input type={c.type} required autoFocus={i === 0} value={c.valeur} onChange={(e) => c.maj(e.target.value)} placeholder={c.ph} autoComplete={c.auto}
-            className="w-full h-12 px-4 rounded-xl border bg-white text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
+            className="w-full h-12 px-4 rounded-xl border bg-white text-base sm:text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
         </label>
       ))}
       <button type="submit" disabled={!valide || envoi}
@@ -1281,7 +1281,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             </p>
           )}
           <div className="flex items-start justify-between gap-3">
-            <h1 className="text-3xl sm:text-4xl font-bold leading-tight">{tx(produit.nom)}</h1>
+            <h1 className="min-w-0 break-words text-3xl sm:text-4xl font-bold leading-tight">{tx(produit.nom)}</h1>
             <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
           </div>
           {produit.avis.length > 0 && (

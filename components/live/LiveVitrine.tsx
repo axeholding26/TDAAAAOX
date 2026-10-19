@@ -9,7 +9,7 @@ import { useT } from "@/components/I18nProvider";
 import { usePrix } from "@/components/storefront/DeviseVitrine";
 import { Communaute } from "@/components/live/Communaute";
 
-const champ = "w-full h-11 px-3 rounded-xl border bg-white text-[15px] text-[#111] outline-none";
+const champ = "w-full h-11 px-3 rounded-xl border bg-white text-base sm:text-[15px] text-[#111] outline-none";
 const date = (d: string | Date, fuseau?: string) => {
   try { return new Date(d).toLocaleString("fr-FR", { dateStyle: "full", timeStyle: "short", timeZone: fuseau, timeZoneName: "short" }); }
   catch { return new Date(d).toLocaleString("fr-FR"); }
@@ -213,7 +213,7 @@ export function EspaceLive({ token, accent }: { token: string; accent: string })
               <div className="rounded-2xl border border-black/10 p-4 space-y-2">
                 <p className="font-semibold text-sm">{t("Poser une question à l'intervenant")}</p>
                 <div className="flex gap-2">
-                  <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={1000} className={champ} placeholder={t("Votre question")} />
+                  <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={1000} className={`${champ} min-w-0`} placeholder={t("Votre question")} />
                   <button disabled={!!envoi || question.trim().length < 3} onClick={async () => { if (await agir({ action: "question", texte: question }, "q")) setQuestion(""); }} className="px-4 rounded-xl text-white font-semibold disabled:opacity-40" style={{ background: accent }}>{t("Envoyer")}</button>
                 </div>
                 {d.questions.map((q: any) => (
@@ -254,7 +254,7 @@ export function EspaceLive({ token, accent }: { token: string; accent: string })
                     )}
                     {r?.statut !== "valide" && (
                       <div className="space-y-2">
-                        <textarea rows={3} value={l.texte} onChange={(e) => setLivrable({ ...livrable, [m.id]: { ...l, texte: e.target.value } })} placeholder={t("Votre réponse")} className="w-full px-3 py-2 rounded-xl border text-[#111]" />
+                        <textarea rows={3} value={l.texte} onChange={(e) => setLivrable({ ...livrable, [m.id]: { ...l, texte: e.target.value } })} placeholder={t("Votre réponse")} className="w-full px-3 py-2 rounded-xl border text-base sm:text-sm text-[#111]" />
                         <input type="url" value={l.lien} onChange={(e) => setLivrable({ ...livrable, [m.id]: { ...l, lien: e.target.value } })} placeholder={t("Lien (https, facultatif)")} className={champ} />
                         <input type="file" onChange={(e) => setLivrable({ ...livrable, [m.id]: { ...l, fichier: e.target.files?.[0] ?? null } })} className="text-sm" />
                         <button disabled={envoi === m.id} onClick={() => deposer(m.id)} className="px-4 py-2 rounded-xl text-white font-semibold" style={{ background: accent }}>{envoi === m.id ? <Loader2 size={15} className="animate-spin" /> : t(r ? "Déposer à nouveau" : "Déposer")}</button>

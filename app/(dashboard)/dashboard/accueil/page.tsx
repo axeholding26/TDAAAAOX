@@ -658,12 +658,12 @@ export default async function DashboardPage() {
               const good = continueRate !== null && continueRate >= 50;
 
               return (
-                <div key={step.label} className="flex items-center gap-2 flex-1">
+                <div key={step.label} className="flex items-center gap-2 flex-1 min-w-0">
                   {/* Step */}
-                  <div className="flex-1 rounded-2xl border p-4 text-center"
+                  <div className="flex-1 min-w-0 rounded-2xl border p-2.5 sm:p-4 text-center"
                     style={{ background: step.bg, borderColor: `${step.color}20` }}>
                     <div className="flex justify-center mb-1"><step.Icon size={20} style={{ color: step.color }} /></div>
-                    <p className="text-[24px] font-black text-[#111111] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    <p className="text-[20px] sm:text-[24px] font-black text-[#111111] leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
                       {step.value.toLocaleString(t.loc)}
                     </p>
                     <p className="text-[11px] font-semibold mt-1.5" style={{ color: step.color }}>{t(step.label)}</p>
@@ -679,7 +679,7 @@ export default async function DashboardPage() {
 
                   {/* Connector */}
                   {!isLast && (
-                    <div className="flex flex-col items-center gap-1 flex-shrink-0 w-10">
+                    <div className="hidden sm:flex flex-col items-center gap-1 flex-shrink-0 w-10">
                       <span className={`text-[10px] font-bold leading-none ${good ? "text-[#16A34A]" : "text-[#DC2626]"}`}>
                         {continueRate}%
                       </span>

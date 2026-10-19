@@ -365,12 +365,12 @@ export default async function StorefrontPage({ params }: Props) {
     <>
       <ScrollReveal type={revealType("vedettes")} vitesse={vitesseGlobale} delay={staggerDelay()}>
         <section className={`${CONTAINER} mx-auto px-4 sm:px-6 lg:px-8 ${SECTION_PY}`}>
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between gap-4 mb-10">
             <div>
               <span className="text-xs font-semibold uppercase tracking-widest mb-2 block" style={{ color: c.accent }}>{t("Sélection")}</span>
               <h2 className="text-3xl sm:text-4xl font-bold font-playfair">{t(sec.vedettes.titre)}</h2>
             </div>
-            <Link href={`/${slug}/produits`} className="text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: c.accent }}>
+            <Link href={`/${slug}/produits`} className="flex-shrink-0 text-sm font-semibold hover:opacity-70 transition-opacity" style={{ color: c.accent }}>
               {t("Voir tout →")}
             </Link>
           </div>
@@ -425,7 +425,7 @@ export default async function StorefrontPage({ params }: Props) {
                     </div>
                     <div className="p-4">
                       <h3 className="font-medium text-sm mb-2 line-clamp-2 leading-snug">{t(p.nom)}</h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
                           <Prix montant={prixAffiche} devise={tenant.devise} />
                         </span>

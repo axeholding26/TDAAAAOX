@@ -761,7 +761,7 @@ function StatCard({ Icon, label, value }: { Icon: any; label: string; value: num
   const tr = useT();
   return (
     <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-[#FAFAFA] border border-[#F0F0F0]">
-      <div className="w-8 h-8 rounded-xl bg-white border border-[#EFEFEF] flex items-center justify-center flex-shrink-0">
+      <div className="w-8 h-8 rounded-xl bg-white border border-[#EFEFEF] hidden sm:flex items-center justify-center flex-shrink-0">
         <Icon size={13} className="text-[#F5A623]" />
       </div>
       <div className="min-w-0 leading-tight">

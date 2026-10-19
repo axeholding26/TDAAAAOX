@@ -59,7 +59,7 @@ export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) 
               <p className="text-sm font-medium" style={{ color: "#ffffff" }}>
                 {r.montant.toLocaleString("fr-FR")} {r.devise} — {r.nomBoutique}
               </p>
-              <p className="text-xs" style={{ color: "#AAAAAA" }}>
+              <p className="text-xs [overflow-wrap:anywhere]" style={{ color: "#AAAAAA" }}>
                 {r.methode === "mobile_money" ? `Mobile Money ${r.operateur ?? ""}` : t("Virement bancaire")} → {r.destinataire} · {new Date(r.createdAt).toLocaleDateString("fr-FR")}
               </p>
               {r.notes && <p className="text-xs mt-0.5" style={{ color: "#D97706" }}>{r.notes}</p>}

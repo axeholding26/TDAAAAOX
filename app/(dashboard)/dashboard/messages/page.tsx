@@ -249,10 +249,10 @@ function CommentThread({ postId, initial, myNom, myLogo, count }: { postId: stri
         {comments.map(c => (
           <div key={c.id} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 10 }}>
             <Avatar nom={c.auteur} size={28} />
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ background: C.gray50, borderRadius: "4px 14px 14px 14px", padding: "8px 12px" }}>
                 <span style={{ fontWeight: 800, fontSize: 11.5, color: C.gray900 }}>{tr(c.auteur)}</span>
-                <p style={{ margin: "2px 0 0", fontSize: 13, color: C.gray700, lineHeight: 1.5 }}>{tr(c.contenu)}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 13, color: C.gray700, lineHeight: 1.5, overflowWrap: "anywhere" }}>{tr(c.contenu)}</p>
               </div>
               <div style={{ display: "flex", gap: 12, marginTop: 3, paddingLeft: 4 }}>
                 <span style={{ fontSize: 10, color: C.gray400 }}>{timeAgo(c.createdAt)}</span>
@@ -275,7 +275,7 @@ function CommentThread({ postId, initial, myNom, myLogo, count }: { postId: stri
           onFocusCapture={e => (e.currentTarget.style.borderColor = C.orange)} onBlurCapture={e => (e.currentTarget.style.borderColor = C.gray200)}>
           <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
             onKeyDown={e => e.key === "Enter" && !e.shiftKey && submit()}
-            placeholder={tr("Écrire un commentaire...")} style={{ flex: 1, background: "none", border: "none", outline: "none", fontSize: 13, color: C.gray700 }} />
+            placeholder={tr("Écrire un commentaire...")} style={{ flex: 1, minWidth: 0, background: "none", border: "none", outline: "none", fontSize: 13, color: C.gray700 }} />
           <button onClick={submit} disabled={loading || !text.trim()} style={{ background: "none", border: "none", cursor: "pointer", color: text.trim() ? C.orange : C.gray300, transition: "color .15s" }}>
             {loading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Send size={14} />}
           </button>
@@ -369,7 +369,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
         </div>
 
         {/* Text */}
-        {post.contenu && <div style={{ padding: "0 16px 12px", fontSize: 14.5, color: C.gray800, lineHeight: 1.65, fontWeight: 400 }}>{tr(post.contenu)}</div>}
+        {post.contenu && <div style={{ padding: "0 16px 12px", fontSize: 14.5, color: C.gray800, lineHeight: 1.65, fontWeight: 400, overflowWrap: "anywhere" }}>{tr(post.contenu)}</div>}
 
         {/* Milestone */}
         {post.type === "milestone" && post.scoreLabel && (
@@ -392,7 +392,7 @@ function PostCard({ post, myTenantId, myNom, myLogo, onDelete, onRepost }: {
             <div style={{ width: 96, background: C.gray50, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
               {post.produitImg ? <img src={post.produitImg} alt={post.produitNom} style={{ width: "100%", height: 96, objectFit: "cover" }} /> : <ShoppingBag size={28} color={C.gray300} />}
             </div>
-            <div style={{ padding: "14px 16px", flex: 1 }}>
+            <div style={{ padding: "14px 16px", flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: 14, color: C.gray900 }}>{tr(post.produitNom)}</div>
               {post.produitPrix && <div style={{ fontWeight: 900, fontSize: 18, color: C.orange, marginTop: 4, letterSpacing: "-0.5px" }}>{fmt(post.produitPrix)}</div>}
               <button style={{ marginTop: 10, fontSize: 12, fontWeight: 800, color: C.white, background: C.orange, border: "none", borderRadius: 999, padding: "6px 18px", cursor: "pointer", boxShadow: `0 2px 8px rgba(245,166,35,0.35)` }}>{tr("Voir le produit →")}</button>
@@ -559,7 +559,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
 
       <div style={{ display: "flex", gap: 12 }}>
         <Avatar url={myLogo} nom={myNom} size={40} ring />
-        <div style={{ flex: 1 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <textarea value={contenu}
             onChange={e => { setContenu(e.target.value); setCharCount(e.target.value.length); }}
             onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
@@ -575,8 +575,8 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
 
           {tab === "milestone" && (
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <input value={scoreValeur} onChange={e => setScoreValeur(e.target.value)} placeholder={tr("Valeur")} type="number" style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
-              <input value={scoreLabel} onChange={e => setScoreLabel(e.target.value)} placeholder={tr("Label (ex: commandes ce mois)")} style={{ flex: 3, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+              <input value={scoreValeur} onChange={e => setScoreValeur(e.target.value)} placeholder={tr("Valeur")} type="number" style={{ flex: 1, minWidth: 0, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+              <input value={scoreLabel} onChange={e => setScoreLabel(e.target.value)} placeholder={tr("Label (ex: commandes ce mois)")} style={{ flex: 3, minWidth: 0, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
             </div>
           )}
 
@@ -585,7 +585,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
               {sondageOptions.map((opt, i) => (
                 <div key={i} style={{ display: "flex", gap: 6 }}>
                   <input value={opt} onChange={e => { const o = [...sondageOptions]; o[i] = e.target.value; setSondageOptions(o); }}
-                    placeholder={tr("Option {0}", i + 1)} style={{ flex: 1, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
+                    placeholder={tr("Option {0}", i + 1)} style={{ flex: 1, minWidth: 0, border: `1.5px solid ${C.gray200}`, borderRadius: 12, padding: "9px 13px", fontSize: 13, outline: "none", color: C.gray700, fontFamily: "inherit" }} />
                   {sondageOptions.length > 2 && <button onClick={() => setSondageOptions(sondageOptions.filter((_, j) => j !== i))} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray300, padding: 6 }}><X size={14} /></button>}
                 </div>
               ))}
@@ -598,7 +598,7 @@ function PostCreator({ myNom, myLogo, onPost }: { myNom: string; myLogo?: string
       </div>
 
       {/* Footer */}
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.gray100}` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", rowGap: 8, marginTop: 14, paddingTop: 12, borderTop: `1px solid ${C.gray100}` }}>
         {[<Image key="img" size={17} />, <Video key="vid" size={17} />, <AtSign key="at" size={17} />, <Hash key="hash" size={17} />, <Smile key="smile" size={17} />].map((Icon, i) => (
           <button key={i} style={{ background: "none", border: "none", cursor: "pointer", color: C.gray300, padding: "6px", borderRadius: 8, transition: "color .15s" }}
             onMouseEnter={e => (e.currentTarget.style.color = C.orange)} onMouseLeave={e => (e.currentTarget.style.color = C.gray300)}>
@@ -879,15 +879,15 @@ export default function AxsocialPage() {
         </button>
         <button onClick={() => setFullscreen(f => !f)} style={{ display: "flex", alignItems: "center", gap: 6, borderRadius: 999, padding: "8px 14px", fontSize: 12, fontWeight: 700, border: `1px solid ${C.gray200}`, background: fullscreen ? C.gray900 : C.white, color: fullscreen ? C.white : C.gray700, cursor: "pointer" }}>
           {fullscreen ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          {fullscreen ? tr("Réduire") : tr("Plein écran")}
+          <span className="hidden sm:inline">{fullscreen ? tr("Réduire") : tr("Plein écran")}</span>
         </button>
       </div>
 
       {/* 3-col layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "230px 1fr 258px", gap: 18, alignItems: "flex-start" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[230px_1fr_258px]" style={{ gap: 18, alignItems: "flex-start" }}>
 
         {/* ── LEFT ── */}
-        <div style={{ position: "sticky", top: fullscreen ? 18 : 76 }}>
+        <div className="hidden lg:block" style={{ position: "sticky", top: fullscreen ? 18 : 76 }}>
           {/* Profile */}
           <div style={{ background: C.white, borderRadius: 20, border: `1px solid ${C.gray100}`, overflow: "hidden", marginBottom: 10 }}>
             <div style={{ height: 60, background: `linear-gradient(135deg, ${C.orange}, ${C.orangeDark})` }} />

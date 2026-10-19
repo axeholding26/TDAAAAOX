@@ -110,12 +110,12 @@ export default function ChargesPage() {
 
       {stats && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold text-[#111]">{fmt(stats.total)}</p>
+          <div className="min-w-0 bg-white border border-gray-100 rounded-2xl p-4">
+            <p className="text-[17px] sm:text-[20px] [overflow-wrap:anywhere] font-bold text-[#111]">{fmt(stats.total)}</p>
             <p className="text-[10.5px] text-gray-400 mt-0.5">{t("Total enregistré")}</p>
           </div>
-          <div className="bg-white border border-gray-100 rounded-2xl p-4">
-            <p className="text-[20px] font-bold text-amber-500">{fmt(stats.enAttente)}</p>
+          <div className="min-w-0 bg-white border border-gray-100 rounded-2xl p-4">
+            <p className="text-[17px] sm:text-[20px] [overflow-wrap:anywhere] font-bold text-amber-500">{fmt(stats.enAttente)}</p>
             <p className="text-[10.5px] text-gray-400 mt-0.5">{t("En attente de paiement")}</p>
           </div>
         </div>

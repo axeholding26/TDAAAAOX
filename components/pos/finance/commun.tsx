@@ -77,9 +77,9 @@ export function Carte({ titre, children, actions, className = "" }: { titre?: st
 export function Chiffre({ label, valeur, aide, fort, ton }: { label: string; valeur: string; aide?: string; fort?: boolean; ton?: "positif" | "danger" }) {
   const t = useT();
   return (
-    <div className={`rounded-2xl border p-4 ${fort ? "border-[#111111] bg-[#111111] text-white" : "border-[#E8E8E8] bg-white text-[#111111]"}`}>
+    <div className={`min-w-0 rounded-2xl border p-4 ${fort ? "border-[#111111] bg-[#111111] text-white" : "border-[#E8E8E8] bg-white text-[#111111]"}`}>
       <p className={`text-[10.5px] font-semibold uppercase tracking-wide ${fort ? "text-white/70" : "text-[#666666]"}`}>{t(label)}</p>
-      <p className={`mt-1 text-[20px] font-bold leading-tight tabular-nums ${ton === "danger" ? "text-[#B91C1C]" : ton === "positif" ? "text-[#15803D]" : ""}`}>{valeur}</p>
+      <p className={`mt-1 text-[17px] font-bold leading-tight tabular-nums [overflow-wrap:anywhere] sm:text-[20px] ${ton === "danger" ? "text-[#B91C1C]" : ton === "positif" ? "text-[#15803D]" : ""}`}>{valeur}</p>
       {aide && <p className={`mt-0.5 text-[11px] ${fort ? "text-white/70" : "text-[#888888]"}`}>{t(aide)}</p>}
     </div>
   );

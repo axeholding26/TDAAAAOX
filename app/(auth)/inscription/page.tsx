@@ -9,7 +9,7 @@ import { z } from "zod";
 import {
   ArrowRight, Check, Loader2, Sparkles, Send, CheckCircle2,
   Store, Globe, Palette, User, Lock, Phone, Mail, ChevronRight, Eye, EyeOff,
-  X, Bell, Info, AlertCircle, Wand2, Star, Package, Download,
+  X, Bell, Info, AlertCircle, Wand2, Star, Package, Download, Pencil,
   type LucideIcon,
 } from "lucide-react";
 import type { PlanBoutique } from "@/lib/ai-agent";
@@ -18,6 +18,7 @@ import { exempleTelephone } from "@/lib/devise-convert";
 import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { useT } from "@/components/I18nProvider";
+import { BoutonRenvoyerCode, demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
 const NAVY    = "#111111";   // noir AXSO (--axso-navy)
@@ -105,6 +106,7 @@ const CSS = `
     .rep { padding-left: 0 !important; }
     .rep > form, .rep > div { max-width: none !important; }
     .insc-main { padding-left: 16px !important; padding-right: 16px !important; }
+    .field, .rep > input, .rep textarea { font-size: 16px !important; }
   }
 
   ::-webkit-scrollbar { width: 4px; }
@@ -166,7 +168,7 @@ const schemaCompte = z.object({
 });
 type CompteData = z.infer<typeof schemaCompte>;
 
-type Phase = "welcome"|"q-type"|"q-vente"|"q-nom"|"q-pays"|"analyse"|"plan"|"q-compte"|"creation"|"succes";
+type Phase = "welcome"|"q-type"|"q-vente"|"q-nom"|"q-pays"|"analyse"|"plan"|"q-compte"|"creation"|"code"|"succes";
 // Uniquement deux types possibles — un marchand vend soit du physique, soit
 // du digital, jamais "les deux" en tant que catégorie de boutique (un
 // marchand avec un catalogue mixte choisit simplement "physique", le champ
@@ -280,9 +282,10 @@ function AxiaMsg({ children, delay=0 }: { children:React.ReactNode; delay?:numbe
   );
 }
 
-function UserMsg({ children }: { children:React.ReactNode }) {
+function UserMsg({ children, onModifier }: { children:React.ReactNode; onModifier?:()=>void }) {
+  const tr = useT();
   return (
-    <div className="msg-in" style={{ display:"flex", justifyContent:"flex-end" }}>
+    <div className="msg-in" style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
       <div style={{
         background:`linear-gradient(135deg,${YELLOW}14,${YELLOW_D}0a)`,
         border:`1.5px solid ${BORDER}`,
@@ -290,8 +293,15 @@ function UserMsg({ children }: { children:React.ReactNode }) {
         padding:"11px 16px", maxWidth:"72%",
         color:NAVY, fontSize:14, lineHeight:1.65,
         fontFamily:"'Inter',sans-serif",
-        boxShadow:"0 1px 6px rgba(10,22,40,.05)",
+        boxShadow:"0 1px 6px rgba(10,22,40,.05)", overflowWrap:"anywhere",
       }}>{children}</div>
+      {onModifier && (
+        <button type="button" onClick={onModifier}
+          style={{ display:"inline-flex", alignItems:"center", gap:5, padding:"4px 8px", border:"none", background:"transparent",
+            color:MUTED, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"'Inter',sans-serif" }}>
+          <Pencil size={12}/>{tr("Modifier")}
+        </button>
+      )}
     </div>
   );
 }
@@ -726,37 +736,68 @@ export default function InscriptionPage() {
   const [erreur,setErreur]         = useState("");
   const [loading,setLoading]       = useState(false);
   const [steps,setSteps]           = useState<string[]>([]);
+  // Connexion automatique après création : le code reçu par email (double authentification) est demandé ici.
+  const [compteCree,setCompteCree] = useState<{email:string;password:string}|null>(null);
+  const [code,setCode]             = useState("");
+  const [erreurCode,setErreurCode] = useState("");
+  const [verifCode,setVerifCode]   = useState(false);
 
   useEffect(()=>{
     setTimeout(()=>bottomRef.current?.scrollIntoView({behavior:"smooth"}),100);
   },[phase,steps.length]);
 
-  const submitType = useCallback((type:TypeBoutique)=>{
+  // Modifier une réponse : on revient à sa question (réponse pré-remplie). Les réponses
+  // suivantes sont gardées. Réponse inchangée → retour là où on était ; réponse changée →
+  // question suivante encore vide, sinon nouvelle analyse par AXIA avec les réponses à jour.
+  const [reprise,setReprise] = useState<Phase|null>(null);
+  const RANG: Partial<Record<Phase,number>> = { "q-type":0, "q-vente":1, "q-nom":2, "q-pays":3 };
+  const rang = RANG[phase] ?? 4;
+  const modifiable = ["q-type","q-vente","q-nom","q-pays","plan","q-compte"].includes(phase) && !loading;
+  const modifier = (q:Phase)=>{
+    setReprise(r=>r ?? phase);
+    setErreur("");
+    if(q==="q-vente") setVenteInput(vente);
+    if(q==="q-nom") setNomInput(nomChoisi);
+    setPhase(q);
+  };
+  const suite = (change:boolean, depuis:number)=>{
+    if(reprise && !change){ setPhase(reprise); setReprise(null); return; }
+    if(reprise) toast("info","C'est modifié — Axia en tient compte ✨");
+    setReprise(null);
+    const questions:[string,Phase][] = [[vente,"q-vente"],[nomChoisi,"q-nom"],[paysCode,"q-pays"]];
+    const prochaine = questions.slice(depuis).find(([v])=>!v);
+    setPhase(prochaine ? prochaine[1] : "analyse");
+  };
+
+  const submitType = (type:TypeBoutique)=>{
     setTypeBoutique(type);
     const label = type==="physique" ? "produits physiques" : "produits digitaux";
-    toast("info",`C'est noté — ${label}. Parle-moi de ton projet 👇`);
-    setPhase("q-vente");
-  },[toast]);
+    if(!reprise) toast("info",`C'est noté — ${label}. Parle-moi de ton projet 👇`);
+    suite(type!==typeBoutique,0);
+  };
 
-  const submitVente = useCallback(()=>{
-    if(!venteInput.trim()) return;
-    setVente(venteInput.trim());
-    toast("info","Bien noté ! Une dernière chose avant l'analyse 👇");
-    setPhase("q-nom");
-  },[venteInput,toast]);
+  const submitVente = ()=>{
+    const v = venteInput.trim();
+    if(!v) return;
+    setVente(v);
+    if(!reprise) toast("info","Bien noté ! Une dernière chose avant l'analyse 👇");
+    suite(v!==vente,1);
+  };
 
-  const submitNom = useCallback(()=>{
-    if(!nomInput.trim()) return;
-    setNomChoisi(nomInput.trim());
-    toast("info",`"${nomInput.trim()}" — j'adore ! Axia analyse ton projet… ✨`);
-    setPhase("q-pays");
-  },[nomInput,toast]);
+  const submitNom = ()=>{
+    const n = nomInput.trim();
+    if(!n) return;
+    setNomChoisi(n);
+    if(!reprise) toast("info",`"${n}" — j'adore ! Axia analyse ton projet… ✨`);
+    suite(n!==nomChoisi,2);
+  };
 
-  const submitPays = useCallback((code:string,nom:string,dev:string)=>{
+  const submitPays = (code:string,nom:string,dev:string)=>{
+    const change = code!==paysCode;
     setPaysCode(code); setPaysNom(nom); setDevise(dev); setErreur("");
-    toast("info",`Marché ${nom} détecté — devise ${dev} 🌍`);
-    setTimeout(()=>setPhase("analyse"),600);
-  },[toast]);
+    if(!reprise) toast("info",`Marché ${nom} détecté — devise ${dev} 🌍`);
+    setTimeout(()=>suite(change,3),600);
+  };
 
   // Appel API analyse
   useEffect(()=>{
@@ -818,14 +859,17 @@ export default function InscriptionPage() {
       if(!res.ok) throw new Error(data.message);
       setSteps(STEPS_CREATION);
       toast("success","🎉 Ta boutique est prête — personnalise-la avant de la publier !");
-      setPhase("succes");
-      const lr = await signIn("credentials",{email:compteData.email,password:compteData.password,redirect:false});
-      // Rechargement complet (pas router.push) : on quitte de toute façon l'app
-      // marketing pour le dashboard authentifié, et un router.push() différé par
-      // setTimeout juste après un signIn() est un enchaînement fragile connu pour
-      // déclencher "Router action dispatched before initialization" côté client —
-      // window.location contourne entièrement le router App Router pour cette transition.
-      setTimeout(()=>{ window.location.href = lr?.ok?"/dashboard/builder?bienvenue=1":"/connexion?inscription=success"; },2000);
+      const identifiants = { email:compteData.email, password:compteData.password };
+      setCompteCree(identifiants);
+      try{
+        // Emails non configurés : pas de code, connexion directe.
+        if(await demanderCodeConnexion(identifiants.email,identifiants.password)) await connecter(identifiants);
+        else setPhase("code");
+      }catch(e:any){
+        // Compte créé mais code non parti : l'écran du code propose de le renvoyer.
+        setErreurCode(e.message);
+        setPhase("code");
+      }
     }catch(err:any){
       clearInterval(iv);
       setErreur(err.message||"Erreur.");
@@ -833,6 +877,29 @@ export default function InscriptionPage() {
       setPhase("q-compte");
     }finally{ setLoading(false); }
   },[plan,typeBoutique,themeIds,toast]);
+
+  async function connecter(identifiants:{email:string;password:string}, codeSaisi?:string){
+    const lr = await signIn("credentials",{...identifiants,code:codeSaisi,redirect:false});
+    if(!lr?.ok){
+      if(codeSaisi){ setErreurCode("Code invalide ou expiré"); return; }
+      window.location.href = "/connexion?inscription=success";
+      return;
+    }
+    setPhase("succes");
+    // Rechargement complet (pas router.push) : on quitte de toute façon l'app
+    // marketing pour le dashboard authentifié, et un router.push() différé par
+    // setTimeout juste après un signIn() est un enchaînement fragile connu pour
+    // déclencher "Router action dispatched before initialization" côté client —
+    // window.location contourne entièrement le router App Router pour cette transition.
+    setTimeout(()=>{ window.location.href = "/dashboard/builder?bienvenue=1"; },2000);
+  }
+
+  async function validerCode(e:React.FormEvent){
+    e.preventDefault();
+    if(!compteCree || code.length<6) return;
+    setErreurCode(""); setVerifCode(true);
+    try{ await connecter(compteCree,code); } finally{ setVerifCode(false); }
+  }
 
   return (
     <div style={{
@@ -1022,12 +1089,12 @@ export default function InscriptionPage() {
               <strong style={{color:YELLOW_D}}>{tr("Tu vas vendre quel type de produits ?")}</strong>
             </AxiaMsg>
             {phase==="q-type" && <TypeBoutiqueSelector onSelect={submitType}/>}
-            {typeBoutique&&phase!=="q-type" && (
-              <UserMsg>{tr(TYPE_BOUTIQUE_OPTIONS.find(o=>o.v===typeBoutique)?.titre)}</UserMsg>
+            {typeBoutique&&rang>0 && (
+              <UserMsg onModifier={modifiable?()=>modifier("q-type"):undefined}>{tr(TYPE_BOUTIQUE_OPTIONS.find(o=>o.v===typeBoutique)?.titre)}</UserMsg>
             )}
 
             {/* Q1 — Que vends-tu */}
-            {typeBoutique && (
+            {typeBoutique&&rang>=1 && (
               <AxiaMsg delay={80}>
                 <strong style={{color:YELLOW_D}}>{tr("Dis-moi ce que tu vends.")}</strong>{" "}
                 {tr("Plus tu es précis, plus ton site sera parfait.")}
@@ -1073,10 +1140,10 @@ export default function InscriptionPage() {
               </div>
             )}
 
-            {vente&&phase!=="q-vente" && <UserMsg>{tr(vente)}</UserMsg>}
+            {vente&&rang>1 && <UserMsg onModifier={modifiable?()=>modifier("q-vente"):undefined}>{tr(vente)}</UserMsg>}
 
             {/* Q1.5 — Nom de la boutique */}
-            {vente && (
+            {vente&&rang>=2 && (
               <AxiaMsg delay={80}>
                 <strong style={{color:YELLOW_D}}>{tr("Quel nom veux-tu donner à ta boutique ?")}</strong>
               </AxiaMsg>
@@ -1106,10 +1173,10 @@ export default function InscriptionPage() {
                 </button>
               </div>
             )}
-            {nomChoisi&&phase!=="q-nom" && <UserMsg>{tr(nomChoisi)}</UserMsg>}
+            {nomChoisi&&rang>2 && <UserMsg onModifier={modifiable?()=>modifier("q-nom"):undefined}>{tr(nomChoisi)}</UserMsg>}
 
             {/* Q2 — Pays */}
-            {nomChoisi&&(phase==="q-pays"||paysCode) && (
+            {nomChoisi&&rang>=3 && (
               <AxiaMsg delay={80}>
                 {tr("Dans quel pays es-tu basé ? Je vais adapter la devise, la livraison et le design à ton marché. 🌍")}
               </AxiaMsg>
@@ -1120,7 +1187,7 @@ export default function InscriptionPage() {
               </div>
             )}
             {phase==="q-pays" && <PaysSelector onSelect={submitPays}/>}
-            {paysNom&&phase!=="q-pays" && <UserMsg>📍 {tr(paysNom)}</UserMsg>}
+            {paysNom&&rang>3 && <UserMsg onModifier={modifiable?()=>modifier("q-pays"):undefined}>📍 {tr(paysNom)}</UserMsg>}
 
             {/* Analyse */}
             {phase==="analyse" && (
@@ -1133,7 +1200,7 @@ export default function InscriptionPage() {
             )}
 
             {/* Plan + 4 propositions */}
-            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && themeIds.length>0 && (
+            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="code"||phase==="succes") && plan && themeIds.length>0 && (
               <>
                 <AxiaMsg delay={0}>
                   <strong style={{color:YELLOW_D}}>{tr("J'ai analysé ton projet.")}</strong>{" "}{tr(messageIA)}
@@ -1153,7 +1220,7 @@ export default function InscriptionPage() {
             )}
 
             {/* Q3 — Compte */}
-            {(phase==="q-compte"||phase==="creation"||phase==="succes") && (
+            {(phase==="q-compte"||phase==="creation"||phase==="code"||phase==="succes") && (
               <>
                 <AxiaMsg delay={100}>
                   <span style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
@@ -1194,6 +1261,45 @@ export default function InscriptionPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Code reçu par email : dernière étape avant la connexion automatique */}
+            {phase==="code" && compteCree && (
+              <div className="msg-in scale-up rep" style={{ paddingLeft:47 }}>
+                <form onSubmit={validerCode} style={{
+                  background:SURFACE, border:`1.5px solid ${BORDER}`,
+                  borderRadius:18, padding:"18px 22px", display:"flex", flexDirection:"column", gap:14,
+                  boxShadow:"0 4px 20px rgba(10,22,40,.09)", maxWidth:440,
+                }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                    <Mail size={18} color={YELLOW}/>
+                    <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Sora',sans-serif", color:NAVY }}>
+                      {tr("Ta boutique est prête ! Vérifie ton email")}
+                    </span>
+                  </div>
+                  <p style={{ color:MID, fontSize:13, margin:0, overflowWrap:"anywhere" }}>
+                    {tr("Code envoyé à")}{" "}<strong>{compteCree.email}</strong>{" "}{tr("— valable 10 minutes.")}
+                  </p>
+                  <input
+                    className="field"
+                    type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
+                    aria-label={tr("Code de vérification à 6 chiffres")}
+                    value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,""))}
+                    placeholder="000000"
+                    style={{ textAlign:"center", fontSize:24, letterSpacing:"0.5em", fontWeight:700 }}
+                  />
+                  {erreurCode && (
+                    <div style={{ padding:"10px 14px", background:"#FEF2F2", border:`1px solid #FECACA`, borderRadius:10, fontSize:13, color:ERROR }}>
+                      {tr(erreurCode)}
+                    </div>
+                  )}
+                  <button type="submit" disabled={verifCode||code.length<6} className="btn-primary"
+                    style={{ padding:"14px 24px", borderRadius:13, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
+                    {verifCode ? <><Loader2 size={16} className="animate-spin"/>{" "}{tr("Vérification…")}</> : <>{tr("Accéder à ma boutique")}{" "}<ArrowRight size={16}/></>}
+                  </button>
+                  <BoutonRenvoyerCode onRenvoyer={async()=>{ await demanderCodeConnexion(compteCree.email,compteCree.password); setCode(""); setErreurCode(""); }}/>
+                </form>
               </div>
             )}
 

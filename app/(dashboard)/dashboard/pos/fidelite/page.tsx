@@ -93,7 +93,7 @@ export default function PageFidelite() {
               <Saisie label="Valeur d'un point à l'utilisation" type="number" inputMode="decimal" min={0} step="any" suffixe={devise} value={form.valeurPoint} onChange={(e) => setForm({ ...form, valeurPoint: e.target.value })}
                 aide="0 = les points ne servent qu'au niveau, ils ne se dépensent pas." />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:grid-cols-3">
               {(["silver", "gold", "vip"] as const).map((n) => (
                 <Saisie key={n} label={`${LIBELLES_NIVEAU[n]} ${t("à partir de")}`} type="number" inputMode="numeric" min={1} step={1} suffixe={t("pts")} value={form[n]} onChange={(e) => setForm({ ...form, [n]: e.target.value })} />
               ))}

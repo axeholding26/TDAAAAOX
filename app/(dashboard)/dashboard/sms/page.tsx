@@ -166,12 +166,12 @@ Réponds UNIQUEMENT avec le SMS, rien d'autre. Style africain, engageant, avec 1
           </div>
           <div className="divide-y divide-[#F9F9F9]">
             {histoCampagnes.slice(0, 5).map((c: any) => (
-              <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-[#FAFAFA] transition-colors">
-                <div>
+              <div key={c.id} className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-[#FAFAFA] transition-colors">
+                <div className="min-w-0">
                   <p className="text-[13px] font-medium text-[#222] truncate">{c.nom}</p>
                   <p className="text-[11.5px] text-[#AAAAAA]">{tr(c.segment)} · {new Date(c.createdAt).toLocaleDateString(tr.loc)}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 shrink-0">
                   <span className="text-xs text-gray-500">{c.nbEnvoyes}{" "}{tr("envoyés")}</span>
                   <span className={`text-[10.5px] font-semibold px-2.5 py-1 rounded-full border ${c.statut === "envoye" ? "bg-[#F0FDF4] text-[#16A34A] border-[#BBF7D0]" : "bg-[#F5F5F7] text-[#888] border-[#EBEBEB]"}`}>
                     {c.statut === "envoye" ? tr("✓ Envoyé") : tr("Brouillon")}

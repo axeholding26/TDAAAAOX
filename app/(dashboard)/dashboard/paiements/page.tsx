@@ -105,7 +105,7 @@ export default async function PaiementsPage() {
             <p className="text-sm opacity-75 mb-1">{t("Solde disponible")}</p>
             <p className="text-3xl font-bold">{formatMontant(wallet?.solde ?? 0, devise)}</p>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
             {[
               { label: "Reçu", value: formatMontant(wallet?.totalRecu ?? 0, devise), icon: ArrowDownLeft, color: "#059669" },
               { label: "Retiré", value: formatMontant(wallet?.totalRetire ?? 0, devise), icon: ArrowUpRight, color: "#6366f1" },
@@ -124,7 +124,7 @@ export default async function PaiementsPage() {
 
       {/* ── Transactions récentes ── */}
       <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+        <div className="p-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
           <h2 className="font-bold text-gray-900">{t("Transactions")}</h2>
           <span className="text-xs text-gray-400">{completed.length}{" "}{t("complétées ·")}{" "}{pending.length}{" "}{t("en attente")}</span>
         </div>

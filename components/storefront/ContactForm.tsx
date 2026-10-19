@@ -40,7 +40,7 @@ export function ContactForm({ slug, accent, texte, fond }: Props) {
     }
   }
 
-  const inputCls = "w-full px-4 py-3 rounded-xl text-sm outline-none transition-colors";
+  const inputCls = "w-full px-4 py-3 rounded-xl text-base sm:text-sm outline-none transition-colors";
   const inputStyle = { backgroundColor: `${accent}0a`, color: texte, border: `1px solid ${accent}20` };
 
   return (

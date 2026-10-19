@@ -125,8 +125,8 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <Key size={16} className="text-[#16a34a]" />
           <span className="font-semibold text-sm text-gray-900 dark:text-white">{t("Clés de licence")}</span>
           {stats && (
@@ -153,7 +153,7 @@ export default function ClesLicenceManager({ produitId }: { produitId: string })
 
       {/* Stats bar */}
       {stats && (
-        <div className="flex gap-4 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 text-xs border-b border-gray-100 dark:border-gray-700">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-800/50 text-xs border-b border-gray-100 dark:border-gray-700">
           {Object.entries(stats).map(([k, v]) => (
             <button
               key={k}

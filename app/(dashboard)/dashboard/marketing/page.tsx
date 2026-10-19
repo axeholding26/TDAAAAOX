@@ -154,7 +154,7 @@ export default async function MarketingPage() {
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.statClass}`}>
                     {tool.stat}
                   </span>
-                  <span className="text-xs font-medium text-[#717171] opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-xs font-medium text-[#717171] md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
                     {t("Accéder →")}
                   </span>
                 </div>
@@ -189,7 +189,7 @@ export default async function MarketingPage() {
             {codesPromo.map((code) => (
               <div
                 key={code.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-[#F4F4F4] border border-[#E8E8E8] hover:border-[#D0D0D0] transition-colors"
+                className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-[#F4F4F4] border border-[#E8E8E8] hover:border-[#D0D0D0] transition-colors"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <code className="text-sm font-mono font-bold px-3 py-1 rounded-lg bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">

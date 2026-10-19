@@ -141,7 +141,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap pt-1">
         <div>
-          <div className="flex items-center gap-2.5 mb-1">
+          <div className="flex flex-wrap items-center gap-2.5 mb-1">
             <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{tx("Clients")}{" "}<AgentActiveIndicator label={tx("Agent Clients actif")} /></h1>
             <BoutonRevoirTutoriel moduleKey="clients" />
             <span className="text-[11px] font-bold bg-[#F5F5F7] text-[#888888] border border-[#E8E8E8] px-2.5 py-0.5 rounded-full">
@@ -168,7 +168,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         {statCards.map((s, i) => {
           const Icon = s.Icon;
           return (
-            <div key={i} className={`ax-card p-5 relative overflow-hidden group cursor-default ${s.accent ? "border-[#F5A623]/20" : ""}`}>
+            <div key={i} className={`ax-card p-4 sm:p-5 relative overflow-hidden group cursor-default ${s.accent ? "border-[#F5A623]/20" : ""}`}>
               {s.accent && (
                 <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[20px]"
                   style={{ background: "linear-gradient(90deg, #F5A623, #FFD280, #F5A623)" }} />
@@ -180,7 +180,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
                   <Icon size={14} style={{ color: s.iconColor }} strokeWidth={1.8} />
                 </div>
               </div>
-              <p className="text-[22px] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
+              <p className="text-[18px] sm:text-[22px] [overflow-wrap:anywhere] font-bold text-[#111111] leading-none tabular-nums tracking-tight">
                 {tx(s.value)}
               </p>
             </div>
@@ -213,7 +213,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         </div>
 
         {q && (
-          <div className="px-4 sm:px-5 py-2.5 border-b border-[#F3F3F3] flex items-center gap-2 text-[12.5px] text-[#666666]">
+          <div className="px-4 sm:px-5 py-2.5 border-b border-[#F3F3F3] flex flex-wrap items-center gap-2 text-[12.5px] text-[#666666]">
             {tx("Filtré sur «")}{" "}<strong className="text-[#111111]">{tx(q)}</strong> » · {sorted.length} client{sorted.length > 1 ? "s" : ""}
             <a href="/dashboard/clients" className="ml-auto font-semibold text-[#F5A623] hover:underline">{tx("Tout afficher")}</a>
           </div>

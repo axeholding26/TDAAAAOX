@@ -105,7 +105,7 @@ export default function ObjectifsPage() {
   return (
     <div className="space-y-6" style={{ fontFamily: "'Poppins','Century Gothic',system-ui,sans-serif" }}>
       <ModuleTutorial moduleKey="objectifs" titre={tr("Objectifs")} sousTitre={tr("Fixe et suis tes ambitions")} steps={OBJECTIFS_TUTORIAL_STEPS} />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Target size={18} className="text-[#F5A623]" />
@@ -154,7 +154,7 @@ export default function ObjectifsPage() {
               className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-[#F5A623]" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="ax-label block mb-1.5">{tr("Cible")}</label>
               <input type="number" min="0" value={form.cible} onChange={e => setForm(f => ({ ...f, cible: e.target.value }))}

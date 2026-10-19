@@ -47,9 +47,9 @@ export type FicheClientCaisseProps = {
 
 function Chiffre({ libelle, valeur, alerte }: { libelle: string; valeur: string; alerte?: boolean }) {
   return (
-    <div className="rounded-xl bg-[#FAFAFA] px-3 py-2">
+    <div className="min-w-0 rounded-xl bg-[#FAFAFA] px-3 py-2">
       <dt className="text-[10.5px] font-semibold uppercase tracking-wide text-[#888888]">{libelle}</dt>
-      <dd className={`mt-0.5 text-[15px] font-bold tabular-nums ${alerte ? "text-[#B91C1C]" : "text-[#111111]"}`}>{valeur}</dd>
+      <dd className={`mt-0.5 text-[15px] font-bold tabular-nums [overflow-wrap:anywhere] ${alerte ? "text-[#B91C1C]" : "text-[#111111]"}`}>{valeur}</dd>
     </div>
   );
 }
@@ -131,7 +131,7 @@ export function FicheClientCaisse({ clientId, caisseId, onAvoirCree, onUtiliserA
             {conversion.avertissement && <p role="alert" className="mt-2 text-[12.5px] font-semibold text-[#B45309]">{conversion.avertissement}</p>}
             {pointsUtilisables && (
               <form className="mt-2 flex items-end gap-2" onSubmit={(e) => { e.preventDefault(); convertir(); }}>
-                <Saisie className="flex-1" label="Points à utiliser" type="number" inputMode="numeric" min={1} max={c.points} step={1} value={points}
+                <Saisie className="min-w-0 flex-1" label="Points à utiliser" type="number" inputMode="numeric" min={1} max={c.points} step={1} value={points}
                   onChange={(e) => setPoints(e.target.value)} erreur={conversion.erreur}
                   aide={Number(points) > 0 ? `= ${fmt(Math.floor(Number(points)) * f.valeurPoint)} ${t("d'avoir, à dépenser par le moyen de paiement « Avoir »")}` : undefined} />
                 <Bouton type="submit" variante="sombre" charge={conversion.enCours} icone={<Gift size={15} aria-hidden />}>{t("Changer en avoir")}</Bouton>

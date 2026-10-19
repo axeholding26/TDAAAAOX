@@ -35,7 +35,7 @@ function SlugInput({ value, onChange }: { value: string; onChange: (v: string) =
         value={value}
         onChange={(e) => onChange(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
         placeholder="ma-cle-licence"
-        className="flex-1 px-3 py-2.5 text-sm bg-white focus:outline-none text-gray-900"
+        className="flex-1 min-w-0 px-3 py-2.5 text-sm bg-white focus:outline-none text-gray-900"
       />
     </div>
   );

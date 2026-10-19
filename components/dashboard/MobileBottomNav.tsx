@@ -1,13 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingCart, X, BarChart3, TrendingUp, Megaphone, Truck, Star, Settings, Palette, Globe2, Calendar, Search, MessageSquare, Store, Paintbrush, CreditCard, Package2, Bot, Zap, Wallet } from "lucide-react";
 import {
   IconAccueil, IconProduits, IconAxia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
+import { MESSAGE_PRO } from "@/components/dashboard/AxiaBulle";
 import { palierAuMoins, type Palier } from "@/lib/plans";
 import type { ModuleKey, Niveau } from "@/lib/permissions";
 
@@ -90,6 +91,19 @@ export function MobileBottomNav({ permissions }: { permissions?: Record<ModuleKe
   const onglets = MAIN_TABS.filter(autorise);
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const router = useRouter();
+  // Bouton AXIA : choix « Discuter » (page AXIA) ou « Assister » (fenêtre sur la page en cours,
+  // gérée par AxiaBulle). Le compteur vient d'AxiaBulle (propositions en attente).
+  const [choixAxia, setChoixAxia] = useState(false);
+  const [compteAxia, setCompteAxia] = useState(0);
+  useEffect(() => {
+    const maj = (e: Event) => setCompteAxia((e as CustomEvent<number>).detail || 0);
+    window.addEventListener("axia:compte", maj);
+    window.dispatchEvent(new Event("axia:rafraichir"));
+    return () => window.removeEventListener("axia:compte", maj);
+  }, []);
+  useEffect(() => { setChoixAxia(false); }, [pathname]);
+  const ouvrirAxia = () => (palierAuMoins(palier, "palier1") ? setChoixAxia((v) => !v) : openAbonnement("palier1", MESSAGE_PRO));
 
   // "/dashboard" est l'interface AXIA plein écran réelle (voir
   // app/(dashboard)/dashboard/page.tsx) — /dashboard/axia est une ancienne
@@ -100,6 +114,8 @@ export function MobileBottomNav({ permissions }: { permissions?: Record<ModuleKe
 
   return (
     <>
+      {choixAxia && <div className="md:hidden fixed inset-0 z-40" onClick={() => setChoixAxia(false)} aria-hidden />}
+
       {/* ── Îlot flottant ── */}
       <div
         className="md:hidden fixed z-50 left-1/2 -translate-x-1/2"
@@ -108,17 +124,33 @@ export function MobileBottomNav({ permissions }: { permissions?: Record<ModuleKe
         <div className="relative flex items-end">
 
           {/* Axia — flottante au-dessus du centre */}
-          <Link
-            href="/dashboard"
-            className="absolute left-1/2 -translate-x-1/2 -top-10 z-10 flex flex-col items-center gap-0.5"
-          >
-            <div
-              className="transition-transform active:scale-90"
-              style={{ filter: `drop-shadow(0 4px 14px rgba(17,17,17,${axiaActive ? "0.55" : "0.35"}))` }}
+          <div className="absolute left-1/2 -translate-x-1/2 -top-10 z-10 flex flex-col items-center">
+            {choixAxia && (
+              <div className="absolute bottom-[calc(100%+10px)] left-1/2 -translate-x-1/2 flex gap-2" style={{ animation: "axiaChoix .18s ease-out" }}>
+                <button onClick={() => { setChoixAxia(false); router.push("/dashboard"); }}
+                  className="px-4 py-2.5 rounded-full bg-[#111111] text-white text-[13px] font-semibold shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                  {t("Discuter")}
+                </button>
+                <button onClick={() => { setChoixAxia(false); window.dispatchEvent(new Event("axia:assister")); }}
+                  className="px-4 py-2.5 rounded-full bg-[#F5A623] text-white text-[13px] font-semibold shadow-lg whitespace-nowrap active:scale-95 transition-transform">
+                  {t("Assister")}
+                </button>
+              </div>
+            )}
+            <button
+              onClick={ouvrirAxia}
+              aria-label={t("Ouvrir AXIA")}
+              aria-expanded={choixAxia}
+              className="relative transition-transform active:scale-90"
+              style={{ filter: `drop-shadow(0 4px 14px rgba(17,17,17,${axiaActive || choixAxia ? "0.55" : "0.35"}))` }}
             >
               <IconAxia size={52} />
-            </div>
-          </Link>
+              {compteAxia > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center">{compteAxia}</span>
+              )}
+            </button>
+            <style>{`@keyframes axiaChoix { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }`}</style>
+          </div>
 
           {/* Pilule */}
           <div

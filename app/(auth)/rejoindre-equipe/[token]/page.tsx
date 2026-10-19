@@ -60,7 +60,7 @@ export default function RejoindreEquipePage({ params }: { params: Promise<{ toke
   }
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-base sm:text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   return (

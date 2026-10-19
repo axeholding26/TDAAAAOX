@@ -33,7 +33,7 @@ export function AffiliateAccountPanel() {
     toast.success(t("Compte affilié prêt ! Cliquez sur \"Devenir affilié\" sur n'importe quel produit ci-dessous."));
   }
 
-  const inp = "w-full px-4 py-2.5 text-sm rounded-xl border outline-none";
+  const inp = "w-full px-4 py-2.5 text-base sm:text-sm rounded-xl border outline-none";
   const inpStyle = { borderColor: "rgba(0,0,0,0.1)" };
 
   if (profil === undefined) return null; // évite un flash avant lecture du localStorage

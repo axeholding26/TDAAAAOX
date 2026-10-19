@@ -76,7 +76,7 @@ function Fournisseurs() {
       <Carte>
         <form onSubmit={(e) => { e.preventDefault(); setSelection([]); setComparer(false); setAppliques(filtres); }} className="space-y-3">
           <div className="flex gap-2">
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#AAAAAA]" />
               <input {...champ("q")} className={`${CLASSE_CHAMP} pl-9`} placeholder={t("Produit recherché, ex. écouteurs Bluetooth")} />
             </div>

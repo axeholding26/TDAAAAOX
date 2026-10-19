@@ -300,8 +300,8 @@ export function FormulairePromotion({ ouverte, onFermer, promotion, autres, maga
                   {b.paliers.map((p, i) => {
                     const majPalier = (m: Partial<Palier>) => maj({ paliers: b.paliers.map((x, j) => (j === i ? { ...x, ...m } : x)) });
                     return (
-                      <div key={i} className="grid grid-cols-3 gap-2">
-                        <Saisie label="À partir de" type="number" inputMode="decimal" min={0} step="any" value={p.minQuantite} onChange={(e) => majPalier({ minQuantite: e.target.value })} aide={i === 0 ? "Pièces ou kilos." : undefined} />
+                      <div key={i} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        <Saisie className="col-span-2 sm:col-span-1" label="À partir de" type="number" inputMode="decimal" min={0} step="any" value={p.minQuantite} onChange={(e) => majPalier({ minQuantite: e.target.value })} aide={i === 0 ? "Pièces ou kilos." : undefined} />
                         <Saisie label="Prix unitaire" type="number" inputMode="decimal" min={0} step="any" suffixe={devise} value={p.prix} onChange={(e) => majPalier({ prix: e.target.value, pct: "" })} />
                         <Saisie label="ou remise" type="number" inputMode="decimal" min={0} max={100} step="any" suffixe="%" value={p.pct} onChange={(e) => majPalier({ pct: e.target.value, prix: "" })} />
                       </div>

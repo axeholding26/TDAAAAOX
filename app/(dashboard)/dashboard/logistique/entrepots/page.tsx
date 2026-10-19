@@ -109,7 +109,7 @@ export default function EntrepotsPage() {
       {/* Form */}
       <div className="bg-white border border-[#F0F0F0] rounded-2xl p-5 space-y-3">
         <h2 className="text-[14px] font-bold text-[#111]">{editId ? t("Modifier l'entrepôt") : t("Nouvel entrepôt")}</h2>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <input className={inp} placeholder={t("Nom (ex: Entrepôt Douala)")} value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
           <input className={inp} placeholder={t("Ville")} value={form.ville} onChange={e => setForm(f => ({ ...f, ville: e.target.value }))} />
           <input className={inp} placeholder={t("Adresse")} value={form.adresse} onChange={e => setForm(f => ({ ...f, adresse: e.target.value }))} />
@@ -138,16 +138,16 @@ export default function EntrepotsPage() {
       {/* List */}
       <div className="space-y-2">
         {entrepots.map(e => (
-          <div key={e.id} className="bg-white border border-[#F0F0F0] rounded-2xl p-4 flex items-center gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
+          <div key={e.id} className="bg-white border border-[#F0F0F0] rounded-2xl p-4 flex flex-wrap items-center gap-x-4 gap-y-3">
+            <div className="flex-1 min-w-[12rem]">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[14px] font-semibold text-[#111]">{t(e.nom)}</span>
                 {e.principal && <span className="text-[10px] bg-[#F5A623]/15 text-[#F5A623] px-2 py-0.5 rounded-full font-bold">{t("Principal")}</span>}
                 {!e.actif && <span className="text-[10px] bg-[#F0F0F0] text-[#AAA] px-2 py-0.5 rounded-full">{t("Inactif")}</span>}
               </div>
               <p className="text-[12px] text-[#888] mt-0.5">{[e.adresse, e.ville, e.pays].filter(Boolean).join(", ")} · {t(e._count.stocks)}{" "}{t("SKU(s)")}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {!e.principal && (
                 <button onClick={() => setPrincipal(e)} className="text-[11px] text-[#F5A623] border border-[#F5A623]/30 px-2 py-1 rounded-lg">
                   {t("Définir principal")}

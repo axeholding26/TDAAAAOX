@@ -41,17 +41,17 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
       </Link>
 
       <div className="flex items-start justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-lg font-bold flex-shrink-0"
             style={{ background: "rgba(245,166,35,0.1)", border: "1px solid rgba(245,166,35,0.2)", color: "#F5A623" }}>
             {tenant.nomBoutique.slice(0, 2).toUpperCase()}
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t(tenant.nomBoutique)}</h1>
               {tenant.certifie && <BadgeCheck size={18} style={{ color: "#F5A623" }} />}
             </div>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
               <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 hover:underline" style={{ color: "#F5A623" }}>
                 {tenant.slug} <ExternalLink size={9} />
               </a>
@@ -76,7 +76,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
               <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${s.color}15`, border: `1px solid ${s.color}25` }}>
                 <Icon size={16} style={{ color: s.color }} />
               </div>
-              <p className="text-xl font-bold" style={{ color: "#ffffff" }}>{t(s.value)}</p>
+              <p className="text-xl font-bold [overflow-wrap:anywhere]" style={{ color: "#ffffff" }}>{t(s.value)}</p>
               <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{t(s.label)}</p>
             </div>
           );

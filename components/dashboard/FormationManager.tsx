@@ -110,14 +110,14 @@ function QuizEditeur({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => vo
       </div>
       {quiz.questions.map((q, i) => (
         <div key={q.id} className="bg-white rounded-lg border border-gray-100 p-3 space-y-2">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <select value={q.type} onChange={(e) => majQ(i, { type: e.target.value as QuestionQuiz["type"], bonnes: [], options: e.target.value === "vrai_faux" ? [] : q.options })} className={cls}>
               <option value="qcm">{tr("Choix unique")}</option>
               <option value="multiple">{tr("Choix multiples")}</option>
               <option value="vrai_faux">{tr("Vrai / Faux")}</option>
               <option value="courte">{tr("Réponse courte")}</option>
             </select>
-            <input value={q.enonce} onChange={(e) => majQ(i, { enonce: e.target.value })} placeholder={tr("Question")} className={`${cls} flex-1`} />
+            <input value={q.enonce} onChange={(e) => majQ(i, { enonce: e.target.value })} placeholder={tr("Question")} className={`${cls} flex-1 min-w-[8rem]`} />
             <input type="number" min={1} value={q.points} onChange={(e) => majQ(i, { points: Number(e.target.value) || 1 })} title={tr("Points")} className={`${cls} w-14`} />
             <button onClick={() => onChange({ ...quiz, questions: quiz.questions.filter((_, j) => j !== i) })} className="p-1 text-gray-400 hover:text-red-500"><Trash2 size={12} /></button>
           </div>
@@ -132,7 +132,7 @@ function QuizEditeur({ quiz, onChange }: { quiz: Quiz; onChange: (q: Quiz) => vo
                     onChange={(e) => majQ(i, { bonnes: q.type === "multiple" ? (e.target.checked ? [...q.bonnes, oi] : q.bonnes.filter((x) => x !== oi)) : [oi] })} />
                   {q.type === "vrai_faux" ? <span className="text-xs">{tr(o)}</span> : (
                     <>
-                      <input value={o} onChange={(e) => majQ(i, { options: q.options.map((x, k) => (k === oi ? e.target.value : x)) })} className={`${cls} flex-1`} />
+                      <input value={o} onChange={(e) => majQ(i, { options: q.options.map((x, k) => (k === oi ? e.target.value : x)) })} className={`${cls} flex-1 min-w-0`} />
                       <button onClick={() => majQ(i, { options: q.options.filter((_, k) => k !== oi), bonnes: q.bonnes.filter((b) => b !== oi).map((b) => (b > oi ? b - 1 : b)) })} className="text-gray-300 hover:text-red-500"><X size={11} /></button>
                     </>
                   )}
@@ -169,7 +169,7 @@ function RessourcesEditeur({ ressources, onChange }: { ressources: Ressource[]; 
   return (
     <div className="space-y-1 text-xs">
       {ressources.map((r, i) => (
-        <div key={i} className="flex items-center gap-2 text-gray-700"><Paperclip size={11} /><span className="flex-1 truncate">{r.nom}</span>
+        <div key={i} className="flex items-center gap-2 text-gray-700"><Paperclip size={11} className="flex-shrink-0" /><span className="flex-1 min-w-0 truncate">{r.nom}</span>
           <button onClick={() => onChange(ressources.filter((_, j) => j !== i))} className="text-gray-300 hover:text-red-500"><X size={11} /></button>
         </div>
       ))}
@@ -321,7 +321,7 @@ function LeconForm({
       <ReglagesPedagogie valeur={peda} onChange={setPeda} candidats={autres.filter((a) => a.id !== leconId)} libellePrerequis="Leçons à terminer avant" />
 
       {/* Durée + Accès libre */}
-      <div className="flex gap-3 items-center">
+      <div className="flex flex-wrap gap-3 items-center">
         <div className="flex items-center gap-1.5 flex-1">
           <Clock size={13} className="text-gray-400" />
           <input
@@ -435,7 +435,7 @@ function ChapitreRow({
               onChange={(e) => setTitre(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && saveTitre()}
               onClick={(e) => e.stopPropagation()}
-              className="flex-1 px-2 py-0.5 rounded border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#F5A623]"
+              className="flex-1 min-w-0 px-2 py-0.5 rounded border border-gray-300 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#F5A623]"
               autoFocus
             />
           ) : (
@@ -488,13 +488,13 @@ function ChapitreRow({
                 <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${l.actif ? "border-gray-100 bg-gray-50 dark:bg-gray-800/30" : "border-gray-100 bg-gray-50 opacity-50"} group`}>
                   <GripVertical size={12} className="text-gray-300 cursor-grab" />
                   {typeIcon(l.type)}
-                  <span className="flex-1 text-xs text-gray-700 truncate">{tr(l.titre)}</span>
+                  <span className="flex-1 min-w-0 text-xs text-gray-700 truncate">{tr(l.titre)}</span>
                   {l.statut && l.statut !== "publie" && <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">{tr(l.statut === "brouillon" ? "Brouillon" : "Archivé")}</span>}
                   {(l.dripJours || l.dripDate || l.prerequis?.length) ? <Lock size={10} className="text-gray-400 flex-shrink-0" /> : null}
                   {l.ressources?.length ? <Paperclip size={10} className="text-gray-400 flex-shrink-0" /> : null}
                   {l.gratuite && <span className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-medium flex-shrink-0">{tr("Aperçu")}</span>}
                   {l.duree && <span className="text-[10px] text-gray-400 flex-shrink-0">{tr(dureeLabel(l.duree))}</span>}
-                  <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <button onClick={() => setEditLecon(l.id)} className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700"><Edit2 size={11} /></button>
                     <button onClick={() => toggleLeconActif(l)} className="p-1 rounded hover:bg-white text-gray-400 hover:text-gray-700">{l.actif ? <Eye size={11} /> : <EyeOff size={11} />}</button>
                     <button onClick={() => deleteLecon(l.id)} className="p-1 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={11} /></button>
@@ -583,8 +583,8 @@ export default function FormationManager({ produitId }: { produitId: string }) {
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex flex-wrap items-center gap-2 min-w-0">
           <BookOpen size={16} className="text-[#F5A623]" />
           <span className="font-semibold text-sm text-gray-900 dark:text-white">{tr("Contenu de la formation")}</span>
           {!loading && (
@@ -626,7 +626,7 @@ export default function FormationManager({ produitId }: { produitId: string }) {
             onKeyDown={(e) => e.key === "Enter" && ajouterChapitre()}
             placeholder={tr("Titre du chapitre…")}
             autoFocus
-            className="flex-1 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40"
+            className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#F5A623]/40"
           />
           <button onClick={ajouterChapitre} disabled={saving || !newTitre.trim()} className="px-3 py-2 rounded-lg bg-[#F5A623] text-[#111111] text-xs font-medium disabled:opacity-50 hover:bg-[#D4911A] transition-colors">
             {saving ? <Loader2 size={13} className="animate-spin" /> : tr("Ajouter")}

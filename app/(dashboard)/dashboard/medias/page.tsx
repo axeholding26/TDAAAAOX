@@ -65,7 +65,7 @@ function MediaCard({ media, onDelete, onCopy }: { media: Media; onDelete: (id: s
 
         {/* Overlay actions */}
         {url && media.statut === "pret" && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+          <div className="absolute inset-0 bg-black/40 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             {estVideo && (
               <button className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center hover:bg-white/30 transition-all">
                 <Play size={16} className="text-white ml-0.5"/>
@@ -180,7 +180,7 @@ export default function MediasPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{tr("Médiathèque IA")}</h1>
           <p className="text-gray-400 text-sm mt-0.5">{tr("Vidéos et images générées par IA")}</p>
@@ -264,7 +264,7 @@ export default function MediasPage() {
       {/* ── Modal Génération ── */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div>
                 <h2 className="font-bold text-gray-900 text-lg">{tr("Générer un média IA")}</h2>

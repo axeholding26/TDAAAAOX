@@ -195,7 +195,7 @@ export default function PageCredit() {
           <div className="space-y-5 text-[13px]">
             {erreur && <EtatPos compact code={erreur.code} message={erreur.message} onReessayer={() => charger(ouvert.id)} />}
             {confirmation && <p role="status" className="rounded-xl border border-[#BBF7D0] bg-[#ECFDF5] px-3 py-2 text-[12.5px] font-semibold text-[#15803D]">{confirmation}</p>}
-            <dl className="grid grid-cols-3 gap-2">
+            <dl className="grid gap-2 sm:grid-cols-3">
               {[["Autorisé", client?.plafond ?? 0], ["Utilisé", client?.utilise ?? 0], ["Disponible", client && !client.bloque && !client.bloqueAuto ? client.disponible : 0]].map(([l, v]) => (
                 <div key={l as string} className="rounded-xl bg-[#FAFAFA] px-3 py-2"><dt className="text-[10.5px] font-semibold uppercase tracking-wide text-[#888888]">{t(l as string)}</dt><dd className="mt-0.5 text-[15px] font-bold tabular-nums">{fmt(v as number)}</dd></div>
               ))}

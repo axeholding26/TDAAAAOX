@@ -41,7 +41,7 @@ export function NewsletterForm({ slug, placeholder, cta, inputStyle, buttonStyle
     <form onSubmit={envoyer} className="flex flex-col sm:flex-row gap-3 justify-center">
       <input type="text" name="site_web" value={siteWeb} onChange={(e) => setSiteWeb(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={placeholder} autoComplete="email"
-        className="flex-1 px-5 py-3.5 text-sm border focus:outline-none max-w-sm" style={inputStyle} />
+        className="flex-1 px-5 py-3.5 text-base sm:text-sm border focus:outline-none max-w-sm" style={inputStyle} />
       <button type="submit" disabled={envoi} className="px-7 py-3.5 text-sm font-semibold transition-all hover:opacity-90 disabled:opacity-50" style={buttonStyle}>
         {cta}
       </button>

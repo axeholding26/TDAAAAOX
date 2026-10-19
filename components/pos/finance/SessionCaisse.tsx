@@ -388,7 +388,7 @@ function ModaleFermeture({ devise, attendu, caisseId, onFermer, onFermee }: { de
           <Saisie label="Espèces comptées" inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} autoFocus />
         )}
 
-        <div className="grid grid-cols-3 gap-2" aria-live="polite">
+        <div className="grid gap-2 sm:grid-cols-3" aria-live="polite">
           <Chiffre label="Espèces attendues" valeur={reference !== null ? fmt(reference) : "—"} />
           <Chiffre label="Espèces comptées" valeur={saisi ? fmt(compte) : "—"} />
           <Chiffre label="Écart" valeur={ecart === null ? "—" : `${ecart > 0 ? "+" : ecart < 0 ? "− " : ""}${fmt(Math.abs(ecart))}`} fort ton={ecart ? "danger" : undefined} aide={ecart === null ? undefined : ecart === 0 ? "Le compte est bon" : ecart < 0 ? "Il manque de l'argent" : "Il y a trop d'argent"} />

@@ -82,7 +82,7 @@ export function AdminAxsocialPanel({ peutPublier }: { peutPublier: boolean }) {
             className="w-full px-4 py-3 text-sm rounded-xl border focus:outline-none resize-none"
             style={{ background: "#141414", borderColor: "rgba(255,255,255,0.1)", color: "#FFFFFF" }}
           />
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs" style={{ color: "#666666" }}>{contenu.length}/2000</span>
             <button onClick={publier} disabled={submitting}
               className="flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl disabled:opacity-50"

@@ -70,7 +70,7 @@ export function TuteurIA(p: { api: string; leconId: string | null; quiz: boolean
       )}
       <form onSubmit={(e) => { e.preventDefault(); demander("question", question); }} className="flex gap-2 px-4 pb-4 pt-1">
         <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={800} placeholder={p.quiz ? t("Demande un indice…") : t("Pose ta question…")}
-          className="flex-1 px-3 py-2 rounded-xl text-sm bg-transparent outline-none" style={{ border: `1px solid ${p.accent}30` }} />
+          className="flex-1 min-w-0 px-3 py-2 rounded-xl text-base sm:text-sm bg-transparent outline-none" style={{ border: `1px solid ${p.accent}30` }} />
         <button type="submit" disabled={envoi || question.trim().length < 2} aria-label={t("Envoyer")} className="px-3 rounded-xl disabled:opacity-40" style={{ background: p.accent, color: p.fond }}><Send size={14} /></button>
       </form>
     </div>

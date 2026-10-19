@@ -143,7 +143,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
             {view === "identifiant" ? (
               <div>
                 <label className="block text-[11px] text-[#888] mb-1">{t("Email utilisé lors de l'achat")}</label>
-                <input type="email" required autoFocus autoComplete="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-[13px]" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input type="email" required autoFocus autoComplete="email" className="w-full border border-[#E5E5E5] rounded-xl px-3 py-2.5 text-base sm:text-[13px]" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             ) : (
               <div>
@@ -185,14 +185,14 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
     <div className={habille ? "py-10" : "min-h-screen bg-[#FAFAFA]"}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#F5A623] flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 flex-shrink-0 rounded-full bg-[#F5A623] flex items-center justify-center">
               <User size={18} className="text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[15px] font-semibold text-[#111]">{t(compte?.nom)}</p>
-              <p className="text-[12px] text-[#888]">{compte?.email ?? compte?.telephone}</p>
+              <p className="text-[12px] text-[#888] break-all">{compte?.email ?? compte?.telephone}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export function MonCompteClient({ habille = false, lien }: { habille?: boolean; 
           </div>
           <div className="bg-white rounded-xl border border-[#F0F0F0] p-4">
             <p className="text-[11px] text-[#888]">{t("Total dépensé")}</p>
-            <p className="text-2xl font-bold text-[#111]">
+            <p className="text-xl sm:text-2xl font-bold text-[#111] break-words">
               {commandes
                 .filter((c) => !["annulee", "remboursee"].includes(c.statut))
                 .reduce((s, c) => s + c.montantTotal, 0)

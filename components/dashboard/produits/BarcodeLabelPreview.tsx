@@ -55,7 +55,7 @@ export function BarcodeLabelPreview({ value, nom, prix }: Props) {
 
   return (
     <div className="mt-2 p-3 bg-gray-50 border border-gray-100 rounded-xl flex flex-col items-center gap-2">
-      <svg ref={svgRef} />
+      <svg ref={svgRef} className="max-w-full h-auto" />
       <button
         type="button"
         onClick={imprimer}

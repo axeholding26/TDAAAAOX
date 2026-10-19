@@ -102,7 +102,7 @@ export function Copilote({ contexte }: { contexte: string }) {
         <div ref={bas} />
       </div>
       <form className="p-3 border-t cc-sep flex gap-2" onSubmit={(e) => { e.preventDefault(); demander(q); }}>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Posez une question sur Axso…")} className="cc-input flex-1" maxLength={300} aria-label={t("Question")} autoFocus />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Posez une question sur Axso…")} className="cc-input flex-1 min-w-0" maxLength={300} aria-label={t("Question")} autoFocus />
         <button className="cc-btn cc-btn-primary" disabled={charge || !q.trim()} aria-label={t("Envoyer")}><Send size={14} /></button>
       </form>
     </aside>

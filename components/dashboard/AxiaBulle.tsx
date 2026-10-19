@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { X, Volume2, VolumeX, MessageCircle, Check, Loader2 } from "lucide-react";
+import { X, Volume2, VolumeX, MessageCircle, Check, Loader2, Send } from "lucide-react";
 import { IconAxia } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
@@ -11,12 +11,15 @@ import { palierAuMoins } from "@/lib/plans";
 // Bulle AXIA en bas à droite du dashboard : AXIA y prend la parole d'elle-même
 // (constats sur la boutique, rappels) et y demande l'accord du marchand avant
 // toute action sensible. Données : app/api/axia/propositions.
+// Sa fenêtre sert aussi à discuter avec AXIA sans quitter la page (« Assister ») :
+// sur mobile, le bouton rond est masqué et la fenêtre s'ouvre depuis le bouton
+// central de la barre du bas (MobileBottomNav, évènement « axia:assister »).
 
 type Action = { prompt?: string; lien?: string; libelle?: string; confirmation?: boolean } | null;
 interface Proposition { id: string; type: string; message: string; action: Action; statut: string }
 
 const ACCENT = "#F5A623";
-const MESSAGE_PRO = "AXIA, ton associée qui surveille ta boutique et te propose des actions, est disponible à partir du Palier Pro.";
+export const MESSAGE_PRO = "AXIA, ton associée qui surveille ta boutique et te propose des actions, est disponible à partir du Palier Pro.";
 const CLE_MUET = "axia_muet";
 
 // Son propre à AXIA (trois notes montantes, douces), distinct du carillon
@@ -71,6 +74,10 @@ export function AxiaBulle() {
   const [enCours, setEnCours] = useState<string | null>(null);
   const [retour, setRetour] = useState<{ succes: boolean; texte: string } | null>(null);
   const annonces = useRef(new Set<string>());
+  const [messages, setMessages] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
+  const [saisie, setSaisie] = useState("");
+  const [reflechit, setReflechit] = useState(false);
+  const finRef = useRef<HTMLDivElement>(null);
   // Le Constructeur a sa propre bulle AXIA au même endroit : ici, seules les demandes
   // d'accord s'affichent (au-dessus d'elle) ; les constats attendent la sortie du Constructeur.
   const surConstructeur = !!pathname?.startsWith("/dashboard/builder");
@@ -109,6 +116,49 @@ export function AxiaBulle() {
       document.removeEventListener("visibilitychange", auRetour);
     };
   }, [charger]);
+
+  // Compteur pour le bouton AXIA de la barre du bas (mobile).
+  useEffect(() => { window.dispatchEvent(new CustomEvent("axia:compte", { detail: liste.length })); }, [liste]);
+
+  useEffect(() => {
+    const assister = () => {
+      if (!pro) return openAbonnement("palier1", MESSAGE_PRO);
+      setPanneau(true);
+      setBulle(null);
+    };
+    window.addEventListener("axia:assister", assister);
+    return () => window.removeEventListener("axia:assister", assister);
+  }, [pro, openAbonnement]);
+
+  useEffect(() => { finRef.current?.scrollIntoView({ block: "end" }); }, [messages, reflechit, panneau]);
+
+  async function envoyer() {
+    const contenu = saisie.trim();
+    if (!contenu || reflechit) return;
+    const historique = [...messages, { role: "user" as const, content: contenu }];
+    setMessages(historique);
+    setSaisie("");
+    setReflechit(true);
+    try {
+      const envoyes = historique.map((m, i) => i === historique.length - 1
+        ? { ...m, content: `[Contexte : le marchand est sur la page ${pathname} du dashboard et te parle depuis la fenêtre AXIA, sans la quitter.] ${m.content}` }
+        : m);
+      const res = await fetch("/api/ai/axia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: envoyes, stream: false, fast: false }),
+      });
+      const data = await res.json();
+      setMessages((m) => [...m, { role: "assistant", content: data.reponse || t("Je n'ai pas pu traiter cette demande.") }]);
+      // AXIA a pu agir (produit, promo…) : la page et les propositions se mettent à jour.
+      router.refresh();
+      charger();
+    } catch {
+      setMessages((m) => [...m, { role: "assistant", content: t("AXIA a rencontré une erreur momentanée — réessaie dans un instant.") }]);
+    } finally {
+      setReflechit(false);
+    }
+  }
 
   function retirer(id: string) {
     setListe((l) => l.filter((p) => p.id !== id));
@@ -191,9 +241,9 @@ export function AxiaBulle() {
   }
 
   return (
-    <div className="fixed right-4 md:right-6 bottom-24 md:bottom-6 z-[60] flex flex-col items-end gap-3">
+    <div className="fixed right-4 md:right-6 bottom-[calc(env(safe-area-inset-bottom)+8.5rem)] md:bottom-6 z-[60] flex flex-col items-end gap-3">
       {panneau ? (
-        <div className="w-[340px] max-w-[calc(100vw-2rem)] max-h-[60vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-[#F0F0F0] overflow-hidden">
+        <div className="w-[360px] max-w-[calc(100vw-2rem)] h-[480px] max-h-[calc(100dvh-11rem)] md:max-h-[70vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-[#F0F0F0] overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#F0F0F0]">
             <p className="text-[13px] font-bold text-[#111]">AXIA</p>
             <div className="flex items-center gap-1">
@@ -205,12 +255,33 @@ export function AxiaBulle() {
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-2">
             {retour && <p className={`text-[12px] px-1 ${retour.succes ? "text-green-600" : "text-red-600"}`}>{retour.texte}</p>}
-            {liste.length ? liste.map(carte) : <p className="text-[12px] text-[#888] px-1 py-2">{t("Rien à signaler pour le moment. Je te préviens dès que je vois quelque chose.")}</p>}
+            {liste.map(carte)}
+            {!liste.length && !messages.length && <p className="text-[12px] text-[#888] px-1 py-2">{t("Rien à signaler pour le moment. Pose-moi une question ou demande-moi d'agir, sans quitter cette page.")}</p>}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[13px] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere] ${m.role === "user" ? "bg-[#111] text-white rounded-br-md" : "bg-[#F4F4F5] text-[#111] rounded-bl-md"}`}>
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            {reflechit && (
+              <div className="flex items-center gap-2 px-3 py-2 text-[13px] text-[#666]"><Loader2 size={13} className="animate-spin" style={{ color: ACCENT }} />{t("AXIA réfléchit…")}</div>
+            )}
+            <div ref={finRef} />
           </div>
+          <form onSubmit={(e) => { e.preventDefault(); envoyer(); }} className="flex items-center gap-2 p-2.5 border-t border-[#F0F0F0]">
+            <input value={saisie} onChange={(e) => setSaisie(e.target.value)} disabled={reflechit}
+              placeholder={t("Demande n'importe quoi à AXIA…")} aria-label={t("Message pour AXIA")}
+              className="flex-1 min-w-0 h-10 px-3 text-base md:text-[13px] rounded-xl border border-[#E0E0E0] outline-none focus:border-[#F5A623] disabled:opacity-50" />
+            <button type="submit" disabled={reflechit || !saisie.trim()} aria-label={t("Envoyer")}
+              className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl text-white disabled:opacity-40" style={{ background: ACCENT }}>
+              <Send size={15} />
+            </button>
+          </form>
           {pathname !== "/dashboard" && (
             <button onClick={() => { setPanneau(false); if (pro) router.push("/dashboard"); else openAbonnement("palier1", MESSAGE_PRO); }}
               className="flex items-center justify-center gap-2 px-4 py-3 text-[12px] font-semibold border-t border-[#F0F0F0] hover:bg-black/[.03] text-[#111]">
-              <MessageCircle size={13} /> {t("Parler à AXIA")}
+              <MessageCircle size={13} /> {t("Ouvrir en plein écran")}
             </button>
           )}
         </div>
@@ -225,7 +296,7 @@ export function AxiaBulle() {
       )}
 
       <button onClick={() => { if (!pro) return openAbonnement("palier1", MESSAGE_PRO); setPanneau((v) => !v); setBulle(null); }}
-        className="relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        className="relative w-14 h-14 rounded-full shadow-lg hidden md:flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
         style={{ background: ACCENT }} aria-label={t("Ouvrir AXIA")}>
         <IconAxia size={48} />
         {liste.length > 0 && (

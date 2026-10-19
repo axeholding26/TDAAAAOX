@@ -134,7 +134,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Rec
               {Object.entries(DOMAINES).map(([dom, { libelle }]) => (
                 <div key={dom} className="flex items-center justify-between gap-3">
                   <label htmlFor={`acces_${dom}`} className="text-sm text-gray-800">{libelle}</label>
-                  <select id={`acces_${dom}`} name={`acces_${dom}`} defaultValue="read" className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm">
+                  <select id={`acces_${dom}`} name={`acces_${dom}`} defaultValue="read" className="border border-gray-200 rounded-lg px-2 py-1.5 text-base sm:text-sm">
                     <option value="">Aucun accès</option>
                     <option value="read">Consulter</option>
                     <option value="write">Consulter et modifier</option>

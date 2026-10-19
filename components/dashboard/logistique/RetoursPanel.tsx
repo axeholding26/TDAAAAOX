@@ -207,7 +207,7 @@ export function RetoursPanel() {
                 {isExpanded && (
                   <div className="border-t border-[#F0F0F0] p-4 bg-[#FAFAFA]">
                     {r.description && <p className="text-[12px] text-[#555] mb-3">{t(r.description)}</p>}
-                    {r.clientEmail && <p className="text-[11px] text-[#888] mb-3">{t("Email client :")}{" "}{r.clientEmail}</p>}
+                    {r.clientEmail && <p className="text-[11px] text-[#888] mb-3 break-all">{t("Email client :")}{" "}{r.clientEmail}</p>}
                     {r.statut === "accepte" && r.type === "remboursement" && <p className="text-[11px] text-[#10b981] mb-3">{t("Commande remboursée.")}</p>}
                     {r.notes && <p className="text-[11px] text-[#666] mb-3 italic">{t("Note :")}{" "}{t(r.notes)}</p>}
                     <div className="flex gap-2 flex-wrap">

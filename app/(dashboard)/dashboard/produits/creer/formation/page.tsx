@@ -184,7 +184,7 @@ export default function CreerFormationPage() {
             {/* Niveau */}
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-2">{t("Niveau")}</label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {NIVEAUX.map(({ id, label, desc }) => (
                   <button
                     key={id}

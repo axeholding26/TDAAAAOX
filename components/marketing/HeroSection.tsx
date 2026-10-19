@@ -62,7 +62,7 @@ export function HeroSection() {
             <input
               type="email" required value={email} onChange={e => setEmail(e.target.value)}
               placeholder={tr("Entre ton email")} aria-label={tr("Entre ton email")}
-              className="flex-1 min-w-0 bg-transparent outline-none text-[15px] text-[#111111] placeholder:text-gray-400"
+              className="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-[15px] text-[#111111] placeholder:text-gray-400"
             />
             <button type="submit"
               className="flex items-center gap-1.5 rounded-full px-4 sm:px-6 h-12 text-[14px] font-bold text-white flex-shrink-0 transition-transform hover:scale-[1.03]"

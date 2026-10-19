@@ -116,7 +116,7 @@ Format: liste claire. Adapté marché africain.`,
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight inline-flex items-center gap-2">{t("Veille Concurrentielle")}{" "}<AgentActiveIndicator label={t("Agent Veille actif")} /></h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Surveillez vos concurrents, détectez les opportunités")}</p>
@@ -234,7 +234,7 @@ Format: liste claire. Adapté marché africain.`,
               )}
 
               {/* Infos manuelles */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { label: "Nom du concurrent *", field: "nomConcurrent", placeholder: "Boutique Wax & Co" },
                   { label: "URL / Réseaux", field: "urlConcurrent", placeholder: "https://instagram.com/..." },

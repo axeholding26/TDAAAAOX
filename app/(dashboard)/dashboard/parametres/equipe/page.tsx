@@ -343,7 +343,7 @@ export default function EquipePage() {
           <h2 className="text-[#111] font-semibold text-[13.5px]">{t("Inviter un membre")}</h2>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className={lbl}>{t("Prénom / Nom")}</label>
             <input value={form.nom} onChange={(e) => setForm((v) => ({ ...v, nom: e.target.value }))} placeholder={t("Ex: Aminata Diallo")} className={inp} />
@@ -376,7 +376,7 @@ export default function EquipePage() {
           <div className="rounded-xl p-4 space-y-2" style={{ background: "#F5A62310", border: "1px solid #F5A62330" }}>
             <p className="text-[12px] font-semibold text-[#111]">{t("Invitation envoyée à")}{" "}{t(lastInvite.nom)}{" "}{t("— partage ce lien :")}</p>
             <div className="flex items-center gap-2">
-              <input readOnly value={lastInvite.lienInvitation} onFocus={(e) => e.target.select()} className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[11.5px] text-gray-600 truncate" />
+              <input readOnly value={lastInvite.lienInvitation} onFocus={(e) => e.target.select()} className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 text-[11.5px] text-gray-600 truncate" />
               <button type="button" onClick={() => copierLien(lastInvite.lienInvitation)} className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0">
                 <Copy size={13} className="text-gray-500" />
               </button>

@@ -93,7 +93,7 @@ export default function AutomationPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-[20px] font-bold text-[#111111] tracking-tight">{t("Automation")}</h1>
           <p className="text-[12.5px] text-[#AAAAAA] mt-0.5">{t("Séquences marketing automatiques")}</p>

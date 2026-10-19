@@ -140,7 +140,7 @@ function ConfigPanel({ tenantId, onClose, onConnecte }: { tenantId: string; onCl
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)" }} onClick={onClose}>
-      <div className="w-full max-w-xl rounded-2xl overflow-hidden" style={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)" }} onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-xl rounded-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto" style={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.08)" }} onClick={e => e.stopPropagation()}>
 
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-white/8 flex items-start justify-between">
@@ -560,7 +560,7 @@ export default function WhatsAppPage() {
       <ModuleTutorial moduleKey="whatsapp" titre="WhatsApp" sousTitre={tr("Vends et discute via WhatsApp")} steps={WHATSAPP_TUTORIAL_STEPS} />
 
       {/* ── GAUCHE : Conversations ── */}
-      <div className={`${mobileThread ? "hidden" : "flex"} lg:flex flex-col border-r border-white/8 flex-shrink-0`} style={{ width: 320 }}>
+      <div className={`${mobileThread ? "hidden" : "flex"} lg:flex flex-col border-r border-white/8 flex-shrink-0 w-full lg:w-80`}>
         {/* Header */}
         <div className="p-4 border-b border-white/8 space-y-3">
           <div className="flex items-center justify-between">
@@ -760,7 +760,7 @@ export default function WhatsAppPage() {
                     onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); envoyer(); } }}
                     placeholder={tr("Tapez votre message… (Entrée pour envoyer)")}
                     rows={1}
-                    className="flex-1 border rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none"
+                    className="flex-1 min-w-0 border rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none resize-none"
                     style={{ background: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)", maxHeight: 120 }}
                     onFocus={e => (e.target.style.borderColor = "rgba(37,211,102,0.4)")}
                     onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}

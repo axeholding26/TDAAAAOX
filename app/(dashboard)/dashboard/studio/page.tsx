@@ -121,7 +121,7 @@ function TabVideo() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="text-gray-600 text-sm font-medium block mb-2">{tr("Durée")}</label>
             <div className="flex gap-2">
@@ -516,7 +516,7 @@ Adapté au marché africain francophone. Style authentique et engageant. Répond
       <div className="space-y-5">
         <div>
           <label className="text-gray-600 text-sm font-medium block mb-2">{tr("Plateforme")}</label>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {PLATFORMS.map(p => {
               const Icone = p.icon;
               return (

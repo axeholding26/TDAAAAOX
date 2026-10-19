@@ -181,7 +181,7 @@ export default async function CollectionPage({ params }: Props) {
                       {p.categorie && (
                         <p className="text-[10px] mb-2" style={{ opacity: 0.4 }}>{t(p.categorie)}</p>
                       )}
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-x-2">
                         <span className="font-bold text-sm" style={{ color: c.accent }}>
                           <Prix montant={prixAffiche} devise={tenant.devise} />
                         </span>

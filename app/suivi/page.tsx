@@ -139,7 +139,7 @@ export default function SuiviPage() {
               value={numero}
               onChange={e => setNumero(e.target.value.toUpperCase())}
               placeholder={t("AX-20240101-XXXX")}
-              className="flex-1 rounded-xl px-4 py-3 text-white font-mono text-[13px] outline-none transition-all"
+              className="flex-1 min-w-0 rounded-xl px-4 py-3 text-white font-mono text-base sm:text-[13px] outline-none transition-all"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
               onFocus={e => (e.target.style.borderColor = "rgba(245,166,35,0.4)")}
               onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.07)")}
@@ -160,7 +160,7 @@ export default function SuiviPage() {
             onChange={e => setTelephone(e.target.value)}
             type="tel" inputMode="tel" autoComplete="tel"
             placeholder={t("Téléphone utilisé pour commander")}
-            className="w-full rounded-xl px-4 py-3 text-white text-[13px] outline-none"
+            className="w-full rounded-xl px-4 py-3 text-white text-base sm:text-[13px] outline-none"
             style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
           />
           <p className="text-white/20 text-[11px]">{t("Le numéro figure sur votre confirmation de commande.")}</p>

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, ShieldCheck, ArrowLeft, Mail, KeyRound } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { BoutonRenvoyerCode } from "@/components/auth/BoutonRenvoyerCode";
 
 const ACCENT = "#F5A623";
 const ACCENT_DARK = "#d4880d";
@@ -20,21 +21,25 @@ export default function MotDePasseOubliePage() {
   const [erreur, setErreur] = useState("");
 
   const inputCls =
-    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-sm " +
+    "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-base sm:text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
+
+  async function envoyerCode() {
+    const res = await fetch("/api/auth/mot-de-passe-oublie/demander", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Erreur");
+  }
 
   async function demanderCode(e: React.FormEvent) {
     e.preventDefault();
     setErreur("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/mot-de-passe-oublie/demander", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur");
+      await envoyerCode();
       setEtape("code");
     } catch (e: any) {
       setErreur(e.message ?? "Erreur, réessaie");
@@ -125,7 +130,7 @@ export default function MotDePasseOubliePage() {
                   type="text" inputMode="numeric" maxLength={6} autoFocus
                   value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="000000"
-                  className={inputCls + " text-center text-2xl tracking-[0.5em] font-bold"}
+                  className={inputCls + " text-center text-2xl sm:text-2xl tracking-[0.5em] font-bold"}
                 />
                 <div className="relative">
                   <input type={showPass ? "text" : "password"} required value={nouveauMotDePasse}
@@ -141,6 +146,7 @@ export default function MotDePasseOubliePage() {
                   style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
                   {loading ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Réinitialisation...")}</> : t("Réinitialiser →")}
                 </button>
+                <BoutonRenvoyerCode onRenvoyer={async () => { await envoyerCode(); setCode(""); }} />
               </form>
             </>
           )}

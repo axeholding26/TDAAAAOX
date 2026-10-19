@@ -132,7 +132,7 @@ export function FacturesPanel() {
       <ModuleTutorial moduleKey="logistique-factures" titre={t("Factures")} sousTitre={t("Suivi de facturation")} steps={FACTURES_TUTORIAL_STEPS} />
       <div className="flex items-center justify-end gap-2">
         <input
-          className="border border-[#E5E5E5] rounded-lg px-3 py-2 text-[12px] w-48"
+          className="border border-[#E5E5E5] rounded-lg px-3 py-2 text-[12px] min-w-0 flex-1 sm:flex-none sm:w-48"
           placeholder={t("ID commande...")}
           value={genId}
           onChange={(e) => setGenId(e.target.value)}
@@ -140,7 +140,7 @@ export function FacturesPanel() {
         <button
           onClick={genFacture}
           disabled={generating || !genId.trim()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold disabled:opacity-50"
+          className="flex shrink-0 items-center gap-2 px-4 py-2 rounded-xl text-white text-[13px] font-semibold disabled:opacity-50"
           style={{ background: "#F5A623" }}
         >
           <Plus size={14} /> {generating ? t("Génération...") : t("Générer")}
@@ -148,7 +148,7 @@ export function FacturesPanel() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
           <p className="text-[11px] text-[#888] mb-1">{t("Total factures")}</p>
           <p className="text-2xl font-bold text-[#111]">{factures.length}</p>
@@ -157,7 +157,7 @@ export function FacturesPanel() {
           <p className="text-[11px] text-[#888] mb-1">{t("Factures payées")}</p>
           <p className="text-2xl font-bold" style={{ color: "#10b981" }}>{factures.filter((f) => f.statut === "payee").length}</p>
         </div>
-        <div className="bg-white border border-[#F0F0F0] rounded-xl p-4">
+        <div className="bg-white border border-[#F0F0F0] rounded-xl p-4 col-span-2 sm:col-span-1">
           <p className="text-[11px] text-[#888] mb-1">{t("Total facturé")}</p>
           <p className="text-2xl font-bold" style={{ color: "#F5A623" }}>{totalTTC.toLocaleString()}</p>
         </div>

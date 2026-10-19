@@ -139,7 +139,7 @@ export default async function AdminLivreursPage() {
               <div key={l.id} className="px-6 py-4 flex flex-wrap items-center gap-x-6 gap-y-2">
                 <div className="min-w-[180px] flex-1">
                   <p className="font-medium" style={{ color: C.text1 }}>{t(l.nom)}</p>
-                  <p className="text-xs" style={{ color: C.text2 }}>{l.user.email}</p>
+                  <p className="text-xs [overflow-wrap:anywhere]" style={{ color: C.text2 }}>{l.user.email}</p>
                 </div>
                 <a href={`tel:${l.telephone}`} className="font-mono text-xs" style={{ color: C.text2 }}>{l.telephone}</a>
                 <span className="text-xs" style={{ color: C.text2 }}>{t((VEHICULES[l.vehicule] || VEHICULES.moto).label)}{l.zone ? ` · ${l.zone}` : ""}</span>

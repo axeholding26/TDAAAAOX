@@ -706,7 +706,7 @@ export function AxiaHomeClient() {
                         ? <img src="/axia-icon.png" alt={tr("Axia")} className="w-full h-full object-cover" />
                         : <AvatarCompte nom={nomBoutique ?? "M"} className="w-full h-full" classeInitiales="text-[11px] font-bold text-[#111111]" />}
                     </div>
-                    <div className="flex flex-col gap-1.5" style={{ maxWidth: "85%" }}>
+                    <div className="flex flex-col gap-1.5 min-w-0 break-words" style={{ maxWidth: "85%" }}>
                       {m.imageUrl && (
                         <div className={`rounded-xl overflow-hidden border border-white/10 ${m.role === "user" ? "self-end" : ""}`} style={{ maxWidth: 200 }}>
                           <img src={m.imageUrl} alt="" className="w-full object-cover" />
@@ -728,7 +728,7 @@ export function AxiaHomeClient() {
                             )}
                           </div>
                           {m.role === "assistant" && text && !m.streaming && (
-                            <div className="absolute -bottom-2 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                            <div className="absolute -bottom-2 right-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex gap-1">
                               <button onClick={() => { navigator.clipboard.writeText(text); setCopiedIdx(i); setTimeout(() => setCopiedIdx(null), 1500); }}
                                 className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "rgba(20,20,20,0.9)", border: "1px solid rgba(255,255,255,0.1)" }} title={tr("Copier")}>
                                 {copiedIdx === i ? <Check size={10} className="text-emerald-400" /> : <Copy size={10} className="text-white/50" />}

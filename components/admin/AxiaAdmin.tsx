@@ -144,7 +144,7 @@ export function AxiaAdmin() {
 
       <div className="border-t border-[#F0F0F0] px-3 py-2.5 flex items-end gap-2 shrink-0">
         <textarea
-          className="flex-1 resize-none text-[13px] border-0 outline-none bg-transparent max-h-24 leading-relaxed text-[#111]"
+          className="flex-1 min-w-0 resize-none text-[13px] border-0 outline-none bg-transparent max-h-24 leading-relaxed text-[#111]"
           placeholder={t("Pose ta question…")}
           rows={1}
           value={input}

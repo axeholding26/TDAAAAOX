@@ -77,13 +77,13 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
     <div className="max-w-4xl space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/commandes" className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/30 transition-all">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link href="/dashboard/commandes" className="w-9 h-9 flex-shrink-0 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#F5A623] hover:border-[#F5A623]/30 transition-all">
             <ArrowLeft size={16} />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold text-[#111111] font-mono">{commande.numero}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h1 className="text-xl font-bold text-[#111111] font-mono break-all">{commande.numero}</h1>
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium"
                 style={{ color: statutInfo.color, backgroundColor: statutInfo.bg }}>
                 <StatutIcon size={11} />
@@ -100,7 +100,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
         {/* Colonne principale */}
         <div className="lg:col-span-2 space-y-5">
           {/* Articles commandés */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6">
+          <div className="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6">
             <h2 className="text-[#111111] font-semibold text-sm mb-4 flex items-center gap-2">
               <Package size={14} className="text-[#F5A623]" />
               {t("Articles (")}{commande.lignes.length})
@@ -174,9 +174,9 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 </span>
               </div>
               {commande.flutterwaveRef && (
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between gap-3 text-sm">
                   <span className="text-gray-400">{t("Référence")}</span>
-                  <span className="text-[#111111] font-mono text-xs">{commande.flutterwaveRef}</span>
+                  <span className="text-[#111111] font-mono text-xs break-all text-right">{commande.flutterwaveRef}</span>
                 </div>
               )}
 
@@ -263,8 +263,8 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                 <p className="text-[#111111] font-medium">{t(commande.clientNom)}</p>
                 {commande.client && <p className="text-gray-500 text-xs mt-0.5">{t(commande.client.totalCommandes)} commande(s)</p>}
               </div>
-              <a href={`mailto:${commande.clientEmail}`} className="flex items-center gap-2 text-gray-400 hover:text-[#F5A623] text-sm transition-colors">
-                <Mail size={13} className="text-gray-500" />
+              <a href={`mailto:${commande.clientEmail}`} className="flex items-center gap-2 min-w-0 break-all text-gray-400 hover:text-[#F5A623] text-sm transition-colors">
+                <Mail size={13} className="text-gray-500 flex-shrink-0" />
                 {t(commande.clientEmail)}
               </a>
               <a href={`tel:${commande.clientTelephone}`} className="flex items-center gap-2 text-gray-400 hover:text-[#F5A623] text-sm transition-colors">

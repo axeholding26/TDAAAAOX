@@ -186,7 +186,7 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
     return () => { annule = true; clearTimeout(minuterie); };
   }, [form.pays, zoneEnvoyee, attendQuartier, tenantId, total, lignesPoids]);
 
-  const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
+  const inp = "w-full px-4 py-3 rounded-xl border text-base sm:text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
   // ── Détection navigateur précise ─────────────────────────────────────────
@@ -810,7 +810,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
     try { return localStorage.getItem("axso_ref"); } catch { return null; }
   }, [searchParams]);
 
-  const inp = "w-full px-4 py-3 rounded-xl border text-sm transition-all focus:ring-2 focus:outline-none";
+  const inp = "w-full px-4 py-3 rounded-xl border text-base sm:text-sm transition-all focus:ring-2 focus:outline-none";
   const inpStyle = { backgroundColor: theme.surface, borderColor: `${theme.accent}30`, color: theme.texte, ["--tw-ring-color" as any]: `${theme.accent}40` };
 
   async function creerCommande() {
@@ -1123,7 +1123,7 @@ function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
   if (promo) {
     return (
       <div className="max-w-xl mx-auto mb-5 flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)" }}>
-        <span className="flex items-center gap-2 text-green-600 font-semibold"><Check size={15} />{" "}{t("Code {0} : -{1}", promo.code, fmt(promo.reduction, devise))}</span>
+        <span className="flex items-center gap-2 min-w-0 text-green-600 font-semibold"><Check size={15} className="flex-shrink-0" />{" "}{t("Code {0} : -{1}", promo.code, fmt(promo.reduction, devise))}</span>
         <button type="button" onClick={() => onChange(null)} className="text-xs opacity-60 hover:opacity-100">{t("Retirer")}</button>
       </div>
     );
@@ -1131,7 +1131,7 @@ function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
   return (
     <div className="max-w-xl mx-auto mb-5 flex gap-2">
       <input value={code} onChange={(e) => setCode(e.target.value)} onKeyDown={(e) => e.key === "Enter" && appliquer()} placeholder={t("Code promo")} aria-label={t("Code promo")}
-        className="flex-1 h-11 px-4 rounded-xl border bg-transparent text-sm outline-none" style={{ borderColor: `${theme.accent}30` }} />
+        className="flex-1 min-w-0 h-11 px-4 rounded-xl border bg-transparent text-base sm:text-sm outline-none" style={{ borderColor: `${theme.accent}30` }} />
       <button type="button" onClick={appliquer} disabled={verif || !code.trim()} className="h-11 px-5 rounded-xl text-sm font-semibold disabled:opacity-50"
         style={{ background: `${theme.accent}15`, color: theme.accent }}>
         {verif ? <Loader2 size={15} className="animate-spin" /> : t("Appliquer")}

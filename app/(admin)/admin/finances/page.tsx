@@ -85,7 +85,7 @@ export default async function AdminFinancesPage() {
       </div>
 
       {/* KPIs financiers */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Revenus capturés", value: formatMontant(revenuCapture, "XAF"), icon: TrendingUp, color: "#16A34A", desc: "Commissions libérées" },
           { label: "En attente", value: formatMontant(revenuPending, "XAF"), icon: AlertCircle, color: "#D97706", desc: "Après livraison" },
@@ -121,10 +121,10 @@ export default async function AdminFinancesPage() {
             return (
               <div key={t.tenantId} className="flex items-center gap-4">
                 <span className="text-sm w-5 text-right" style={{ color: "#666666" }}>{i + 1}</span>
-                <div className="flex-1">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm" style={{ color: "#ffffff" }}>{tx(tenant?.nomBoutique) || tx(t.tenantId)}</span>
-                    <span className="text-sm font-bold" style={{ color: "#16A34A" }}>{formatMontant(comm, t.devise)}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between gap-2 mb-1">
+                    <span className="text-sm truncate" style={{ color: "#ffffff" }}>{tx(tenant?.nomBoutique) || tx(t.tenantId)}</span>
+                    <span className="text-sm font-bold shrink-0" style={{ color: "#16A34A" }}>{formatMontant(comm, t.devise)}</span>
                   </div>
                   <div className="w-full rounded-full h-1.5" style={{ background: "rgba(255,255,255,0.08)" }}>
                     <div className="h-full rounded-full" style={{ width: `${(t.commissionXAF / maxComm) * 100}%`, background: "linear-gradient(90deg,#F5A623,#D4911A)" }} />
