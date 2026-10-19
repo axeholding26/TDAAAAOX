@@ -7,10 +7,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { schemaConnexion } from "@/lib/validations";
 import type { z } from "zod";
-import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe, Mail, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldCheck, Zap, Globe } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
 import { estRoleAdmin } from "@/lib/command-center/rbac";
-import { BoutonRenvoyerCode, demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
+import { demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
+import { EcranCode } from "@/components/auth/EcranCode";
 
 type FormConnexion = z.infer<typeof schemaConnexion>;
 
@@ -36,22 +37,22 @@ function ConnexionForm() {
   const [erreur,   setErreur]   = useState("");
   const [etape, setEtape] = useState<"identifiants" | "code">("identifiants");
   const [identifiants, setIdentifiants] = useState<{ email: string; password: string } | null>(null);
-  const [code, setCode] = useState("");
-  const [verifCode, setVerifCode] = useState(false);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormConnexion>({
     resolver: zodResolver(schemaConnexion),
   });
 
-  async function finaliserConnexion(email: string, password: string, code?: string) {
+  // Renvoie un message d'erreur, ou null une fois connecté.
+  async function finaliserConnexion(email: string, password: string, code?: string): Promise<string | null> {
     const result = await signIn("credentials", { email, password, code, redirect: false });
-    if (result?.error) { setErreur(code ? "Code invalide ou expiré" : "Email ou mot de passe incorrect"); return; }
+    if (result?.error) return code ? "Code invalide ou expiré" : "Email ou mot de passe incorrect";
     const sessionRes = await fetch("/api/auth/session");
     const session    = await sessionRes.json();
     if (session?.user?.role === "livreur") router.push("/livreur");
     else if (estRoleAdmin(session?.user?.role)) router.push("/admin");
     else router.push(callbackUrl);
     router.refresh();
+    return null;
   }
 
   const onSubmit = async (data: FormConnexion) => {
@@ -62,7 +63,8 @@ function ConnexionForm() {
       catch (e: any) { setErreur(e.message); return; }
 
       if (skip2fa) {
-        await finaliserConnexion(data.email, data.password);
+        const err = await finaliserConnexion(data.email, data.password);
+        if (err) setErreur(err);
       } else {
         setIdentifiants({ email: data.email, password: data.password });
         setEtape("code");
@@ -72,67 +74,18 @@ function ConnexionForm() {
     }
   };
 
-  async function onSubmitCode(e: React.FormEvent) {
-    e.preventDefault();
-    if (!identifiants || code.length < 6) return;
-    setErreur("");
-    setVerifCode(true);
-    try {
-      await finaliserConnexion(identifiants.email, identifiants.password, code);
-    } finally {
-      setVerifCode(false);
-    }
-  }
-
   const inputCls =
     "w-full bg-white border border-[#E5E5E5] rounded-xl px-4 py-3.5 text-[#111111] text-base sm:text-sm " +
     "placeholder:text-[#999999] focus:border-[#F5A623] focus:ring-2 focus:ring-[#F5A623]/15 focus:outline-none transition-all";
 
   if (etape === "code" && identifiants) {
     return (
-      <div
-        className="rounded-3xl p-8 border"
-        style={{
-          background: "#ffffff",
-          borderColor: "rgba(245,166,35,0.2)",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(245,166,35,0.06)",
-        }}
-      >
-        <button onClick={() => { setEtape("identifiants"); setErreur(""); setCode(""); }}
-          className="flex items-center gap-1.5 text-xs mb-4 hover:opacity-80 transition-opacity" style={{ color: "#808080" }}>
-          <ArrowLeft size={13} />{" "}{t("Retour")}
-        </button>
-
-        <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4"
-          style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.25)" }}>
-          <Mail size={18} style={{ color: ACCENT }} />
-        </div>
-        <h2 className="text-2xl font-bold text-[#111111] mb-1">{t("Vérifie ton email")}</h2>
-        <p className="text-[#808080] text-sm mb-7">{t("Code envoyé à")}{" "}<strong>{identifiants.email}</strong>{" "}{t("— valable 10 minutes.")}</p>
-
-        {erreur && (
-          <div className="rounded-xl p-3 text-sm text-center mb-5"
-            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
-            {t(erreur)}
-          </div>
-        )}
-
-        <form onSubmit={onSubmitCode} className="space-y-4">
-          <input
-            type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
-            aria-label={t("Code de vérification à 6 chiffres")}
-            value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
-            placeholder="000000"
-            className={inputCls + " text-center text-2xl sm:text-2xl tracking-[0.5em] font-bold"}
-          />
-          <button type="submit" disabled={verifCode || code.length < 6}
-            className="w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95"
-            style={{ background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT_DARK})`, color: "#080808", boxShadow: `0 8px 30px rgba(245,166,35,0.35)` }}>
-            {verifCode ? <><Loader2 size={16} className="animate-spin" />{" "}{t("Vérification...")}</> : t("Confirmer →")}
-          </button>
-          <BoutonRenvoyerCode onRenvoyer={async () => { await demanderCodeConnexion(identifiants.email, identifiants.password); setCode(""); }} />
-        </form>
-      </div>
+      <EcranCode
+        email={identifiants.email}
+        onValider={(code) => finaliserConnexion(identifiants.email, identifiants.password, code)}
+        onRenvoyer={async () => { await demanderCodeConnexion(identifiants.email, identifiants.password); }}
+        onRetour={() => { setEtape("identifiants"); setErreur(""); }}
+      />
     );
   }
 

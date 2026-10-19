@@ -18,7 +18,8 @@ import { exempleTelephone } from "@/lib/devise-convert";
 import { SelectPays, Drapeau } from "@/components/ui/SelectPays";
 import { MANIFESTE_LIBRAIRIE, detecterCategorie, choisir4Themes } from "@/lib/axso-design-manifest";
 import { useT } from "@/components/I18nProvider";
-import { BoutonRenvoyerCode, demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
+import { demanderCodeConnexion } from "@/components/auth/BoutonRenvoyerCode";
+import { EcranCode } from "@/components/auth/EcranCode";
 
 // ─── Palette AXSO (couleurs du logo) ─────────────────────────────────────────
 const NAVY    = "#111111";   // noir AXSO (--axso-navy)
@@ -738,9 +739,7 @@ export default function InscriptionPage() {
   const [steps,setSteps]           = useState<string[]>([]);
   // Connexion automatique après création : le code reçu par email (double authentification) est demandé ici.
   const [compteCree,setCompteCree] = useState<{email:string;password:string}|null>(null);
-  const [code,setCode]             = useState("");
   const [erreurCode,setErreurCode] = useState("");
-  const [verifCode,setVerifCode]   = useState(false);
 
   useEffect(()=>{
     setTimeout(()=>bottomRef.current?.scrollIntoView({behavior:"smooth"}),100);
@@ -878,13 +877,16 @@ export default function InscriptionPage() {
     }finally{ setLoading(false); }
   },[plan,typeBoutique,themeIds,toast]);
 
-  async function connecter(identifiants:{email:string;password:string}, codeSaisi?:string){
+  // Renvoie un message d'erreur, ou null une fois connecté.
+  async function connecter(identifiants:{email:string;password:string}, codeSaisi?:string):Promise<string|null>{
     const lr = await signIn("credentials",{...identifiants,code:codeSaisi,redirect:false});
     if(!lr?.ok){
-      if(codeSaisi){ setErreurCode("Code invalide ou expiré"); return; }
+      if(codeSaisi) return "Code invalide ou expiré";
       window.location.href = "/connexion?inscription=success";
-      return;
+      return null;
     }
+    // Code validé sur son écran : direction le Constructeur sans repasser par la discussion.
+    if(codeSaisi){ window.location.href = "/dashboard/builder?bienvenue=1"; return null; }
     setPhase("succes");
     // Rechargement complet (pas router.push) : on quitte de toute façon l'app
     // marketing pour le dashboard authentifié, et un router.push() différé par
@@ -892,13 +894,27 @@ export default function InscriptionPage() {
     // déclencher "Router action dispatched before initialization" côté client —
     // window.location contourne entièrement le router App Router pour cette transition.
     setTimeout(()=>{ window.location.href = "/dashboard/builder?bienvenue=1"; },2000);
+    return null;
   }
 
-  async function validerCode(e:React.FormEvent){
-    e.preventDefault();
-    if(!compteCree || code.length<6) return;
-    setErreurCode(""); setVerifCode(true);
-    try{ await connecter(compteCree,code); } finally{ setVerifCode(false); }
+  // Code reçu par email : écran seul, comme après la connexion.
+  if(phase==="code" && compteCree){
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 py-12" style={{ background:"#ffffff", fontFamily:"'Poppins','Century Gothic',system-ui,sans-serif" }}>
+        <div className="w-full max-w-md">
+          <Link href="/" className="flex justify-center mb-8">
+            <img src="/logo.png" alt="axso" style={{ height:72, width:"auto", objectFit:"contain" }}/>
+          </Link>
+          <EcranCode
+            email={compteCree.email}
+            titre="Ta boutique est prête ! Vérifie ton email"
+            erreurInitiale={erreurCode}
+            onValider={(code)=>connecter(compteCree,code)}
+            onRenvoyer={()=>demanderCodeConnexion(compteCree.email,compteCree.password).then(()=>{})}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1200,7 +1216,7 @@ export default function InscriptionPage() {
             )}
 
             {/* Plan + 4 propositions */}
-            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="code"||phase==="succes") && plan && themeIds.length>0 && (
+            {(phase==="plan"||phase==="q-compte"||phase==="creation"||phase==="succes") && plan && themeIds.length>0 && (
               <>
                 <AxiaMsg delay={0}>
                   <strong style={{color:YELLOW_D}}>{tr("J'ai analysé ton projet.")}</strong>{" "}{tr(messageIA)}
@@ -1220,7 +1236,7 @@ export default function InscriptionPage() {
             )}
 
             {/* Q3 — Compte */}
-            {(phase==="q-compte"||phase==="creation"||phase==="code"||phase==="succes") && (
+            {(phase==="q-compte"||phase==="creation"||phase==="succes") && (
               <>
                 <AxiaMsg delay={100}>
                   <span style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
@@ -1261,45 +1277,6 @@ export default function InscriptionPage() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Code reçu par email : dernière étape avant la connexion automatique */}
-            {phase==="code" && compteCree && (
-              <div className="msg-in scale-up rep" style={{ paddingLeft:47 }}>
-                <form onSubmit={validerCode} style={{
-                  background:SURFACE, border:`1.5px solid ${BORDER}`,
-                  borderRadius:18, padding:"18px 22px", display:"flex", flexDirection:"column", gap:14,
-                  boxShadow:"0 4px 20px rgba(10,22,40,.09)", maxWidth:440,
-                }}>
-                  <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                    <Mail size={18} color={YELLOW}/>
-                    <span style={{ fontWeight:700, fontSize:14, fontFamily:"'Sora',sans-serif", color:NAVY }}>
-                      {tr("Ta boutique est prête ! Vérifie ton email")}
-                    </span>
-                  </div>
-                  <p style={{ color:MID, fontSize:13, margin:0, overflowWrap:"anywhere" }}>
-                    {tr("Code envoyé à")}{" "}<strong>{compteCree.email}</strong>{" "}{tr("— valable 10 minutes.")}
-                  </p>
-                  <input
-                    className="field"
-                    type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} autoFocus
-                    aria-label={tr("Code de vérification à 6 chiffres")}
-                    value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,""))}
-                    placeholder="000000"
-                    style={{ textAlign:"center", fontSize:24, letterSpacing:"0.5em", fontWeight:700 }}
-                  />
-                  {erreurCode && (
-                    <div style={{ padding:"10px 14px", background:"#FEF2F2", border:`1px solid #FECACA`, borderRadius:10, fontSize:13, color:ERROR }}>
-                      {tr(erreurCode)}
-                    </div>
-                  )}
-                  <button type="submit" disabled={verifCode||code.length<6} className="btn-primary"
-                    style={{ padding:"14px 24px", borderRadius:13, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:10 }}>
-                    {verifCode ? <><Loader2 size={16} className="animate-spin"/>{" "}{tr("Vérification…")}</> : <>{tr("Accéder à ma boutique")}{" "}<ArrowRight size={16}/></>}
-                  </button>
-                  <BoutonRenvoyerCode onRenvoyer={async()=>{ await demanderCodeConnexion(compteCree.email,compteCree.password); setCode(""); setErreurCode(""); }}/>
-                </form>
               </div>
             )}
 
