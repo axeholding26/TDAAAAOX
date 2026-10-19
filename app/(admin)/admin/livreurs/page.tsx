@@ -112,7 +112,7 @@ export default async function AdminLivreursPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: C.text1 }}>{t("Livreurs")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{t("Livreurs")}</h1>
         <p className="text-sm mt-1" style={{ color: C.text2 }}>{livreurs.length}{" "}{t("livreurs sur la plateforme")}</p>
       </div>
 
@@ -197,7 +197,7 @@ export default async function AdminLivreursPage() {
                       <td className="px-5 py-3 text-xs" style={{ color: enRetard ? C.error : C.text2 }}>
                         {c.expedieeAt ? (
                           <>
-                            {c.expedieeAt.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                            {c.expedieeAt.toLocaleTimeString(t.loc, { hour: "2-digit", minute: "2-digit" })}
                             <span className="block text-[11px]" style={{ color: enRetard ? C.error : C.text3 }}>{dateRelative(c.expedieeAt)}</span>
                           </>
                         ) : (

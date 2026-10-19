@@ -92,14 +92,14 @@ export function AlerteInscription() {
         if (!lireMuet()) sonInscription();
         setAlertes((a) => [...nouveaux.reverse(), ...a].slice(0, 4));
         if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-          for (const u of nouveaux) new Notification(`🎉 ${u.role === "livreur" ? "Nouveau livreur" : "Nouveau marchand"}`, { body: [u.nom, u.boutique, u.email].filter(Boolean).join(" · "), tag: u.id });
+          for (const u of nouveaux) new Notification(`🎉 ${t(u.role === "livreur" ? "Nouveau livreur" : "Nouveau marchand")}`, { body: [u.nom, u.boutique, u.email].filter(Boolean).join(" · "), tag: u.id });
         }
       } catch { /* réseau : prochain tour */ }
     };
     verifier();
     const id = setInterval(verifier, 20_000);
     return () => { actif = false; clearInterval(id); };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function basculerSon() {
     const v = !muet;
@@ -133,7 +133,7 @@ export function AlerteInscription() {
             {t("Voir la fiche")}
           </Link>
           {"Notification" in globalThis && Notification.permission === "default" && (
-            <button onClick={() => Notification.requestPermission()} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
+            <button onClick={() => Notification.requestPermission().then(() => setAlertes((a) => [...a])) /* re-rendu : masque le bouton une fois choisi */} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
               {t("Activer les alertes système (quand l’onglet est en arrière-plan)")}
             </button>
           )}

@@ -28,11 +28,11 @@ export function Live({ source }: { source: Source }) {
   const age = d ? Math.round((Date.now() - d.a) / 1000) : null;
   return (
     <div className="relative">
-      <button onClick={() => setOuvert(!ouvert)} aria-expanded={ouvert} className="cc-btn cc-btn-sm" style={ouvert ? { borderColor: "var(--cc-good)", color: "var(--cc-good)" } : undefined}>
+      <button onClick={() => setOuvert(!ouvert)} aria-expanded={ouvert} aria-label={t("Activité en direct")} className="cc-btn cc-btn-sm" style={ouvert ? { borderColor: "var(--cc-good)", color: "var(--cc-good)" } : undefined}>
         {ouvert ? <span className="cc-live-dot" aria-hidden /> : <Radio size={13} aria-hidden />}<span className="font-semibold tracking-wide text-[11px] hidden sm:inline">LIVE</span>
       </button>
       {ouvert && (
-        <div className="absolute right-0 mt-2 w-[min(340px,92vw)] cc-card p-3 z-50" style={{ boxShadow: "var(--cc-shadow)" }} role="region" aria-label={t("Activité en direct")}>
+        <div className="fixed left-2 right-2 top-14 sm:absolute sm:left-auto sm:top-auto sm:right-0 sm:mt-2 sm:w-[340px] cc-card p-3 z-50" style={{ boxShadow: "var(--cc-shadow)" }} role="region" aria-label={t("Activité en direct")}>
           <div className="flex items-center gap-2 mb-2">
             <span className="cc-live-dot" aria-hidden />
             <p className="text-[13px] font-semibold">{t("En direct")}</p>

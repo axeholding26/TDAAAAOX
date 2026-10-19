@@ -11,6 +11,6 @@ export function TacheCase({ id, actif }: { id: string; actif: boolean }) {
   const [charge, setCharge] = useState(false);
   return (
     <input type="checkbox" className="mt-0.5" disabled={!actif || charge} aria-label={t("Marquer comme fait")}
-      onChange={async () => { setCharge(true); if (await envoyerAction({ type: "tache", id, statut: "fait" })) router.refresh(); setCharge(false); }} />
+      onChange={async () => { setCharge(true); if (await envoyerAction({ type: "tache", id, statut: "fait" }, t)) router.refresh(); setCharge(false); }} />
   );
 }

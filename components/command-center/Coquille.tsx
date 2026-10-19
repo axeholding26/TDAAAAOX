@@ -173,7 +173,7 @@ function CoquilleInterne({ email, role, sections, theme: themeInitial, mode: mod
               )}
               <Live source={filtres.source} />
               <Notifications contexte={contexte} />
-              <button onClick={() => window.dispatchEvent(new CustomEvent("cc:copilote", { detail: "" }))} className="cc-btn cc-btn-sm" style={{ borderColor: "var(--cc-accent)", color: "var(--cc-accent-text)" }}>
+              <button onClick={() => window.dispatchEvent(new CustomEvent("cc:copilote", { detail: "" }))} aria-label="Ask Axso" className="cc-btn cc-btn-sm" style={{ borderColor: "var(--cc-accent)", color: "var(--cc-accent-text)" }}>
                 <Sparkles size={13} /><span className="hidden sm:inline">Ask Axso</span>
               </button>
               <select className="cc-select hidden md:block" style={{ height: 26, fontSize: 12 }} aria-label={t("Mode d'affichage")} value={mode} onChange={(e) => changerMode(e.target.value as Mode)}>

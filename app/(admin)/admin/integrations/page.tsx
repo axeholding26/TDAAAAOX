@@ -18,7 +18,7 @@ export default async function AdminIntegrationsPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold text-white">{t("État des intégrations")}</h1>
+        <h1 className="text-2xl font-bold">{t("État des intégrations")}</h1>
         <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>
           {t("Ce que ce serveur a de configuré. Les valeurs ne sont jamais affichées : elles se règlent dans Vercel → Settings → Environment Variables, puis un redéploiement.")}
         </p>

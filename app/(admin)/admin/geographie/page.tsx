@@ -2,6 +2,7 @@ import Link from "next/link";
 import { contexteCC } from "@/lib/command-center/serveur";
 import { Vue, mesurer, ventiler } from "@/lib/command-center/moteur";
 import { lien } from "@/lib/command-center/contexte";
+import { peutVoir } from "@/lib/command-center/rbac";
 import { formats } from "@/lib/command-center/format";
 import { getT } from "@/lib/i18n/serveur";
 import { nomPays } from "@/lib/command-center/types";
@@ -22,7 +23,8 @@ export default async function Geographie({ searchParams }: { searchParams: Promi
   const t = await getT();
   const { formatValeur } = formats(t);
   const c = await contexteCC("geographie", searchParams);
-  const { vue: v, fen: f, filtres } = c;
+  const { vue: v, fen: f, filtres, session } = c;
+  const voirMarchands = peutVoir(session.role, "marchands");
   const L = (p: string, s = {}) => lien(p, filtres, s);
   const pays = filtres.pays;
 
@@ -46,7 +48,7 @@ export default async function Geographie({ searchParams }: { searchParams: Promi
     ];
 
   const industries = pays ? [...ventiler(v, "gmv", f.cur, "industrie")].filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1]).slice(0, 8) : [];
-  const topMarchands = pays ? [...grouper(v.payees(f.cur), (x) => x.marchandId)].map(([id, l]) => ({ cle: id, nom: v.parId.get(id)?.nom ?? id, valeur: l.reduce((s, x) => s + x.montant, 0) })).sort((a, b) => b.valeur - a.valeur).slice(0, 8) : [];
+  const topMarchands = pays ? [...grouper(v.payees(f.cur), (x) => x.marchandId)].map(([id, l]) => ({ cle: id, nom: v.parId.get(id)?.nom ?? id, valeur: l.reduce((s, x) => s + x.montant, 0), href: voirMarchands ? L(`/admin/marchands/${id}`) : undefined })).sort((a, b) => b.valeur - a.valeur).slice(0, 8) : [];
 
   const tableau = lignes.map((l) => ({
     _id: l.pays, _href: L("/admin/geographie", { pays: l.pays }), pays: l.nom, marchands: l.marchands, actifs: l.actifs, gmv: l.gmv, revenu: l.revenu,

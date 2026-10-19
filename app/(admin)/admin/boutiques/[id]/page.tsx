@@ -48,7 +48,7 @@ export default async function AdminBoutiqueDetailPage({ params }: { params: Prom
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t(tenant.nomBoutique)}</h1>
+              <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{t(tenant.nomBoutique)}</h1>
               {tenant.certifie && <BadgeCheck size={18} style={{ color: "#F5A623" }} />}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">

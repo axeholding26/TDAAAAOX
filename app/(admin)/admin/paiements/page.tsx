@@ -4,6 +4,7 @@ import { contexteCC } from "@/lib/command-center/serveur";
 import { mesurer } from "@/lib/command-center/moteur";
 import { lien } from "@/lib/command-center/contexte";
 import { nomPays } from "@/lib/command-center/types";
+import { peutVoir } from "@/lib/command-center/rbac";
 import { evaluerSeuil } from "@/lib/command-center/insights";
 import { formats } from "@/lib/command-center/format";
 import { getT } from "@/lib/i18n/serveur";
@@ -19,7 +20,8 @@ export default async function Paiements({ searchParams }: { searchParams: Promis
   const t = await getT();
   const { formatValeur } = formats(t);
   const n = (x: number) => x.toLocaleString(t.loc);
-  const { vue: v, fen: f, filtres } = c;
+  const { vue: v, fen: f, filtres, session } = c;
+  const voirMarchands = peutVoir(session.role, "marchands");
   const L = (p: string, s = {}) => lien(p, filtres, s);
 
   const cmds = v.commandesW(f.cur);
@@ -49,7 +51,7 @@ export default async function Paiements({ searchParams }: { searchParams: Promis
   );
 
   const echecs = cmds.filter((x) => x.statut === "echouee").reverse().slice(0, MAX_ECHECS).map((x) => ({
-    _id: x.id, marchand: v.parId.get(x.marchandId)?.nom ?? "—", pays: t(nomPays(v.parId.get(x.marchandId)?.pays ?? "")), montant: x.montant, moyen: t(nomMethode(x.methode)), date: x.date,
+    _id: x.id, _href: voirMarchands ? L(`/admin/marchands/${x.marchandId}`) : undefined, marchand: v.parId.get(x.marchandId)?.nom ?? "—", pays: t(nomPays(v.parId.get(x.marchandId)?.pays ?? "")), montant: x.montant, moyen: t(nomMethode(x.methode)), date: x.date,
   }));
 
   return (

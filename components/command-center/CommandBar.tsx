@@ -9,6 +9,7 @@ import { METRIQUES } from "@/lib/command-center/moteur";
 import { PAYS, NOM_FONCTION, FONCTIONS } from "@/lib/command-center/types";
 import { NOM_RAPPORT } from "@/lib/command-center/reglages";
 import { sectionDe, type Section } from "@/lib/command-center/rbac";
+import { avecQs } from "@/lib/command-center/contexte";
 import type { Source } from "@/lib/command-center/types";
 import { useT } from "@/components/I18nProvider";
 
@@ -38,12 +39,13 @@ export function CommandBar({ sections, contexte, source }: { sections: Section[]
   useEffect(() => { if (ouvert) { setQ(""); setSel(0); setTimeout(() => champ.current?.focus(), 10); } }, [ouvert]);
 
   const index = useMemo<Resultat[]>(() => {
-    const avec = (h: string) => (h.includes("?") ? h + contexte.replace("?", "&") : h + contexte);
+    // Le contexte va avant l'ancre : « /admin/croissance#activation?… » perdrait les filtres.
+    const avec = (h: string) => avecQs(h, contexte);
     return [
       ...NAV.filter((n) => voit(n.section)).map((n) => ({ id: `p:${n.href}`, type: "Page", titre: t(n.nom), fr: n.nom, sous: n.mots, href: n.gestion ? n.href : avec(n.href) })),
       ...METRIQUES.filter((m) => voit(sectionDe(m.page))).map((m) => ({ id: `m:${m.id}`, type: "Métrique", titre: t(m.nom), fr: `${m.nom} ${m.description}`, sous: t(m.description), href: avec(m.page) })),
       ...(voit("rapports") ? Object.entries(NOM_RAPPORT).map(([k, v]) => ({ id: `r:${k}`, type: "Rapport", titre: t(v), fr: v, href: avec(`/admin/rapports/${k}`) })) : []),
-      ...(voit("geographie") ? Object.entries(PAYS).map(([k, v]) => ({ id: `c:${k}`, type: "Pays", titre: t("Axso au {0}", t(v)).replace("au Côte", "en Côte").replace("au RD", "en RD"), fr: v, sous: t(v), href: `/admin/geographie${contexte}${contexte ? "&" : "?"}pays=${k}` })) : []),
+      ...(voit("geographie") ? Object.entries(PAYS).map(([k, v]) => ({ id: `c:${k}`, type: "Pays", titre: t("Axso au {0}", t(v)).replace("au Côte", "en Côte").replace("au RD", "en RD"), fr: v, sous: t(v), href: avec(`/admin/geographie?pays=${k}`) })) : []),
       ...(voit("produit") ? FONCTIONS.map((f) => ({ id: `f:${f}`, type: "Fonctionnalité", titre: t(NOM_FONCTION[f]), fr: NOM_FONCTION[f], href: avec("/admin/produit") })) : []),
       ...(voit("succes") ? [
         { id: "a:risque", type: "Action", titre: t("Marchands à risque de churn"), fr: "Marchands à risque de churn", sous: "show merchants at risk churn radar", href: avec("/admin/succes-client") },
@@ -68,7 +70,7 @@ export function CommandBar({ sections, contexte, source }: { sections: Section[]
     const n = sansAccent(q.trim());
     const locaux = !n ? index.filter((r) => r.type === "Page").slice(0, 8) : index.filter((r) => n.split(/\s+/).every((mot) => sansAccent(`${r.titre} ${r.fr ?? ""} ${r.sous ?? ""} ${r.type} ${t(r.type)}`).includes(mot))).slice(0, 12);
     const question: Resultat[] = q.trim().length > 3 && (QUESTION.test(q.trim()) || q.includes("?") || locaux.length === 0) ? [{ id: "q", type: "Question", titre: t("Demander à Axso : « {0} »", q.trim()), question: q.trim() }] : [];
-    return [...question, ...locaux, ...distants.map((d) => ({ ...d, href: d.href ? d.href + (contexte ? (d.href.includes("?") ? "&" : "?") + contexte.slice(1) : "") : d.href }))];
+    return [...question, ...locaux, ...distants.map((d) => ({ ...d, href: d.href && avecQs(d.href, contexte) }))];
   }, [q, index, distants, contexte, t]);
 
   const choisir = (r: Resultat) => {

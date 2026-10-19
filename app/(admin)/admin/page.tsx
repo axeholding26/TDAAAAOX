@@ -118,7 +118,7 @@ export default async function CommandCenter({ searchParams }: { searchParams: Pr
 
       {/* Priorités & alertes */}
       <div className="grid gap-3 xl:grid-cols-[1.6fr_1fr]">
-        <Carte titre="Today's priorities"sousTitre={tx("Classées par impact, urgence, confiance et revenu en jeu")}>
+        <Carte titre="Today's priorities" sousTitre={tx("Classées par impact, urgence, confiance et revenu en jeu")}>
           {!a.priorites.length ? <EtatVide titre={tx("Aucune priorité détectée")} explication={tx("Aucun seuil franchi, aucun marchand à risque ni opportunité d'upgrade sur ce périmètre.")} /> : (
             <ol className="divide-y cc-sep -mx-4">
               {a.priorites.slice(0, ceo ? 5 : 6).map((p, i) => (

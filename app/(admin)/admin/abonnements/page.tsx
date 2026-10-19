@@ -62,7 +62,7 @@ export default async function AdminAbonnementsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{tx("Abonnements")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{tx("Abonnements")}</h1>
         <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{tx("Répartition des paliers et revenus récurrents Axso")}</p>
       </div>
 

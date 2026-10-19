@@ -2,6 +2,7 @@ import Link from "next/link";
 import { contexteCC } from "@/lib/command-center/serveur";
 import { mesurer, valeur } from "@/lib/command-center/moteur";
 import { JOUR, lien } from "@/lib/command-center/contexte";
+import { peutVoir } from "@/lib/command-center/rbac";
 import type { Commande } from "@/lib/command-center/types";
 import { formats } from "@/lib/command-center/format";
 import { getT } from "@/lib/i18n/serveur";
@@ -19,7 +20,8 @@ const aExpedier = (c: Commande) => c.livraison !== "sans_objet" && (c.statut ===
 export default async function Operations({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [c, tx] = await Promise.all([contexteCC("operations", searchParams), getT()]);
   const { formatValeur, dateCourte } = formats(tx);
-  const { vue: v, fen: f, filtres } = c;
+  const { vue: v, fen: f, filtres, session } = c;
+  const voirMarchands = peutVoir(session.role, "marchands");
   const L = (p: string, s = {}) => lien(p, filtres, s);
   const t = v.maintenant;
 
@@ -69,7 +71,7 @@ export default async function Operations({ searchParams }: { searchParams: Promi
   ].map((s) => ({ ...s, nom: tx(s.nom), valeur: aLivrer.filter((x) => x.livraison === s.cle).length }));
 
   const echecs = enEchec.slice(-MAX_ECHECS).reverse().map((x) => ({
-    _id: x.id, marchand: v.parId.get(x.marchandId)?.nom ?? "—", type: tx(x.statut === "echouee" ? "Paiement" : "Livraison"), montant: x.montant, date: x.date,
+    _id: x.id, _href: voirMarchands ? L(`/admin/marchands/${x.marchandId}`) : undefined, marchand: v.parId.get(x.marchandId)?.nom ?? "—", type: tx(x.statut === "echouee" ? "Paiement" : "Livraison"), montant: x.montant, date: x.date,
   }));
 
   return (

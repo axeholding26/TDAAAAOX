@@ -30,7 +30,8 @@ export async function GET(req: NextRequest) {
     inscrits: inscrits.map((u) => ({
       id: u.id, nom: u.name, email: u.email, role: u.role, le: u.createdAt,
       boutique: (u.tenantId && boutiques.get(u.tenantId)) || null,
-      lien: u.role === "owner" && u.tenantId ? `/admin/marchands/${u.tenantId}` : "/admin/livreurs",
+      // Marchand sans boutique encore créée : la liste des marchands plutôt que celle des livreurs.
+      lien: u.role === "livreur" ? "/admin/livreurs" : u.tenantId ? `/admin/marchands/${u.tenantId}` : "/admin/marchands",
     })),
   });
 }

@@ -1,4 +1,8 @@
 {
+ "Aucune commission capturée pour l'instant": "No captured commissions yet",
+ "{0} boutiques": "{0} stores",
+ "{0} boutique": "{0} store",
+ "{0} : {1} inscrits ne l'ont pas atteinte, voir ces marchands": "{0}: {1} sign-ups did not reach it, view these merchants",
  "Total livreurs": "Total couriers",
  "Disponibles": "Available",
  "Indépendants": "Independent",
@@ -1641,5 +1645,6 @@
  "Nouveau marchand": "New merchant",
  "Activer le son": "Turn sound on",
  "Couper le son": "Mute sound",
- "Voir la fiche": "View profile"
+ "Voir la fiche": "View profile",
+ "Impossible de charger les alertes.": "Unable to load alerts."
 }

@@ -52,7 +52,7 @@ export default async function AdminFinancesPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{tx("Finances Axso")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{tx("Finances Axso")}</h1>
         <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{tx("Revenus de commission, abonnements et frais de paiement")}</p>
       </div>
 
@@ -85,7 +85,7 @@ export default async function AdminFinancesPage() {
       </div>
 
       {/* KPIs financiers */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {[
           { label: "Revenus capturés", value: formatMontant(revenuCapture, "XAF"), icon: TrendingUp, color: "#16A34A", desc: "Commissions libérées" },
           { label: "En attente", value: formatMontant(revenuPending, "XAF"), icon: AlertCircle, color: "#D97706", desc: "Après livraison" },
@@ -113,6 +113,7 @@ export default async function AdminFinancesPage() {
           {tx("Top boutiques par revenus générés")}
         </h2>
         <div className="space-y-3">
+          {!topBoutiques.length && <p className="text-xs" style={{ color: "#666666" }}>{tx("Aucune commission capturée pour l'instant")}</p>}
           {topBoutiques.map((t, i) => {
             const tenant = tenantMap[t.tenantId];
             const comm = t.commission;
@@ -169,6 +170,9 @@ export default async function AdminFinancesPage() {
                   <td className="px-5 py-3 text-xs" style={{ color: "#666666" }}>{formatDate(c.createdAt)}</td>
                 </tr>
               ))}
+              {!dernieresCommissions.length && (
+                <tr><td colSpan={8} className="px-5 py-8 text-center text-xs" style={{ color: "#666666" }}>{tx("Aucune commission")}</td></tr>
+              )}
             </tbody>
           </table>
         </div>

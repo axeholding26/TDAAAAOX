@@ -1,12 +1,18 @@
 // Command Center : fonctions pures critiques (filtres d'URL, fenêtres, MRR, churn, test A/B).
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { lireFiltres, fenetres, JOUR } from "@/lib/command-center/contexte";
+import { lireFiltres, fenetres, JOUR, avecQs } from "@/lib/command-center/contexte";
 import { Vue, valeur } from "@/lib/command-center/moteur";
 import { testZ, analyserExperience } from "@/lib/command-center/experiences";
 import type { Dataset, Marchand, PaiementAbonnement } from "@/lib/command-center/types";
 
 const T = Date.UTC(2026, 9, 17, 12); // « maintenant »
+
+test("avecQs : les filtres vont avant l'ancre", () => {
+  assert.equal(avecQs("/admin/succes-client#expansion", "?pays=CM"), "/admin/succes-client?pays=CM#expansion");
+  assert.equal(avecQs("/admin/geographie?pays=SN", "?periode=7j"), "/admin/geographie?pays=SN&periode=7j");
+  assert.equal(avecQs("/admin/revenus#plans", ""), "/admin/revenus#plans");
+});
 
 test("lireFiltres : valeurs inconnues ou malformées rejetées", () => {
   const f = lireFiltres({ source: "prod", periode: "999j", pays: "cm", plan: "palier9", industrie: "<script>", acq: "ads_meta", comparer: "annee" });

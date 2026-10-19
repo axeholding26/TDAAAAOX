@@ -8,7 +8,7 @@ import { attribuer, entonnoir, statsMarchands, radarChurn, radarExpansion, impac
 import { formats, T_FR } from "./format";
 import type { T } from "@/lib/i18n";
 import { nomPays, NOM_PLAN, PRIX_PLAN, PAYS } from "./types";
-import { qs } from "./contexte";
+import { qs, avecQs } from "./contexte";
 import { peutVoir, sectionDe, type Section } from "./rbac";
 
 const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -25,7 +25,7 @@ export function repondre(c0: ContexteCC, question: string, t: T = T_FR): Reponse
   const iso = c0.filtres.pays ? null : Object.entries(PAYS).find(([, nom]) => q.includes(norm(nom)))?.[0];
   const c: ContexteCC = iso ? { ...c0, filtres: { ...c0.filtres, pays: iso }, vue: c0.vue.sous(`pays:${iso}`, () => new Set(c0.vue.marchands.filter((x) => x.pays === iso).map((x) => x.id))) } : c0;
   const v = c.vue, f = c.fen, ctx = qs(c.filtres);
-  const href = (p: string) => p + ctx;
+  const href = (p: string) => avecQs(p, ctx); // le contexte va avant l'ancre (#expansion)
   const m = (id: string) => mesurer(v, id, f.cur, f.prev, 2);
   const voit = (s: Section) => peutVoir(c.session.role, s);
   const refus = (s: Section): ReponseCopilote | null => (voit(s) ? null : { question, reponse: t("Votre rôle ne donne pas accès à ces données."), preuves: [], metriques: [], entites: [], actions: [], confiance: "elevee", hypothese: false });

@@ -51,7 +51,7 @@ export default function AdminFournisseurs() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-[22px] font-bold text-white">{t("Fournisseurs à vérifier")}</h1>
+        <h1 className="text-[22px] font-bold">{t("Fournisseurs à vérifier")}</h1>
         <p className="text-[13px] text-[#AAAAAA] mt-1 max-w-2xl">{t("Documents, audits et vérifications retirées après une modification du marchand, en attente de contrôle. Cherchez un fournisseur pour vérifier son identité ou son entreprise, corriger ou retirer une vérification. Ne marquez « vérifié » que ce que vous avez contrôlé vous-même à la source, et indiquez cette source : elle est affichée au marchand.")}</p>
         <form onSubmit={(e) => { e.preventDefault(); setQ(saisie.trim()); }} className="flex items-center gap-2 flex-wrap mt-3">
           <input value={saisie} onChange={(e) => setSaisie(e.target.value)} placeholder={t("Nom du fournisseur…")} aria-label={t("Rechercher un fournisseur")} className={`${CLASSE_CHAMP} !w-auto min-w-[220px]`} />

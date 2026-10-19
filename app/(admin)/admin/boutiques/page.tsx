@@ -40,8 +40,8 @@ export default async function AdminBoutiquesPage({ searchParams }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t("Boutiques")}</h1>
-          <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{boutiques.length} boutique{boutiques.length !== 1 ? "s" : ""} {q ? t("pour \"{0}\"", q) : t("enregistrées sur la plateforme")}</p>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{t("Boutiques")}</h1>
+          <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{t(boutiques.length > 1 ? "{0} boutiques" : "{0} boutique", boutiques.length)} {q ? t("pour \"{0}\"", q) : t("enregistrées sur la plateforme")}</p>
         </div>
         <form className="flex gap-2">
           <input

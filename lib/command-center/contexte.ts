@@ -70,12 +70,15 @@ export function qs(f: Partial<Filtres>, surcharges: Partial<Record<keyof Filtres
   return s ? `?${s}` : "";
 }
 
-export const lien = (chemin: string, f: Partial<Filtres>, surcharges: Partial<Record<keyof Filtres, string | undefined | null>> = {}) => {
+/** Ajoute une chaîne « ?a=b » à un chemin, avant l'ancre (#…) et après un « ? » déjà présent. */
+export const avecQs = (chemin: string, q: string) => {
   const [base, ancre] = chemin.split("#");
-  const q = qs(f, surcharges);
-  if (!base.includes("?")) return base + q + (ancre ? `#${ancre}` : "");
-  return base + (q ? "&" + q.slice(1) : "") + (ancre ? `#${ancre}` : "");
+  const suite = ancre ? `#${ancre}` : "";
+  if (!q) return base + suite;
+  return base + (base.includes("?") ? "&" + q.slice(1) : q) + suite;
 };
+
+export const lien = (chemin: string, f: Partial<Filtres>, surcharges: Partial<Record<keyof Filtres, string | undefined | null>> = {}) => avecQs(chemin, qs(f, surcharges));
 
 export const JOUR = 86_400_000;
 

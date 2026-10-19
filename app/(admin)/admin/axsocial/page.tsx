@@ -11,7 +11,7 @@ export default async function AdminAxsocialPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t("Axsocial — Publications Axso")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{t("Axsocial — Publications Axso")}</h1>
         <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{t("Diffuse une annonce officielle à tous les marchands, visible dans leur fil Axsocial")}</p>
       </div>
       <AdminAxsocialPanel peutPublier={estAdminComplet(session)} />

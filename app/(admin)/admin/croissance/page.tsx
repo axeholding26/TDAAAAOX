@@ -135,7 +135,9 @@ export default async function Croissance({ searchParams }: { searchParams: Promi
                   const estConf = e.id === etapeConf;
                   return (
                     <li key={e.id}>
-                      <Link href={L("/admin/marchands")} className="block rounded-md hover:opacity-85" aria-label={t("{0} : {1} marchands, voir les marchands", e.nom, e.nombre)}>
+                      {/* Étape > 0 : ouvre les inscrits qui ne l'ont pas atteinte (filtre « etape » de la page Marchands). */}
+                      <Link href={i ? L(`/admin/marchands?etape=${e.id}`) : L("/admin/marchands")} className="block rounded-md hover:opacity-85"
+                        aria-label={i ? t("{0} : {1} inscrits ne l'ont pas atteinte, voir ces marchands", e.nom, fa.etapes[0].nombre - e.nombre) : t("{0} : {1} marchands, voir les marchands", e.nom, e.nombre)}>
                         <div className="flex items-baseline justify-between gap-3 text-[13px]">
                           <span className="truncate">{e.nom}{estConf && <span className="cc-badge cc-badge-accent ml-2">{t("Activation")}</span>}</span>
                           <span className="cc-num shrink-0 flex items-baseline gap-3">

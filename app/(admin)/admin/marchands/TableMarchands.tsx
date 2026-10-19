@@ -50,7 +50,7 @@ export function TableMarchands({ lignes, revenu, source, peutAgir, lienPage }: {
             <button className="cc-btn cc-btn-sm" onClick={() => exporterCSV("marchands-selection", colonnes, lignes.filter((l) => ids.includes(l._id)))}><Download size={12} />{t("Exporter la sélection")}</button>
             {peutAgir && (
               <>
-                <select className="cc-select" value="" aria-label={t("Assigner la sélection à une équipe")} onChange={async (e) => { const eq = e.target.value; if (eq && (await envoyerAction({ type: "assigner", titre: titre(ids.length), assigneA: eq, lien: lienPage }))) { vider(); router.refresh(); } }}>
+                <select className="cc-select" value="" aria-label={t("Assigner la sélection à une équipe")} onChange={async (e) => { const eq = e.target.value; if (eq && (await envoyerAction({ type: "assigner", titre: titre(ids.length), assigneA: eq, lien: lienPage }, t))) { vider(); router.refresh(); } }}>
                   <option value="">{t("Assigner à…")}</option>
                   {EQUIPES.map((x) => <option key={x} value={x}>{t(x)}</option>)}
                 </select>
@@ -61,7 +61,7 @@ export function TableMarchands({ lignes, revenu, source, peutAgir, lienPage }: {
         )}
       />
       <dialog ref={dlg} className="cc-card p-0 backdrop:bg-black/60 w-[min(480px,92vw)]" style={{ color: "var(--cc-text)" }}>
-        <form className="p-4 space-y-3" onSubmit={async (e) => { e.preventDefault(); setCharge(true); const ok = await envoyerAction({ type: "notifier", ids: cibles, titre: "Message de l'équipe Axso", message }); setCharge(false); if (ok) dlg.current?.close(); }}>
+        <form className="p-4 space-y-3" onSubmit={async (e) => { e.preventDefault(); setCharge(true); const ok = await envoyerAction({ type: "notifier", ids: cibles, titre: "Message de l'équipe Axso", message }, t); setCharge(false); if (ok) dlg.current?.close(); }}>
           <div className="flex items-center justify-between"><h3 className="cc-h2">{t(cibles.length > 1 ? "Notifier {0} marchands" : "Notifier {0} marchand", cibles.length)}</h3><button type="button" onClick={() => dlg.current?.close()} className="cc-btn cc-btn-ghost cc-btn-sm" aria-label={t("Fermer")}><X size={14} /></button></div>
           <p className="cc-faint text-[12px]">{t("Le message apparaîtra dans les notifications de leur tableau de bord Axso. L'envoi est journalisé.")}</p>
           <textarea className="cc-input w-full h-28 py-2" required minLength={10} maxLength={500} value={message} onChange={(e) => setMessage(e.target.value)} aria-label={t("Message")} />

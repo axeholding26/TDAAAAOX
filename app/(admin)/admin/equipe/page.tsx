@@ -11,7 +11,7 @@ export default async function AdminEquipePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#ffffff" }}>{t("Équipe")}</h1>
+        <h1 className="text-2xl font-bold tracking-tight" style={{ color: "var(--cc-text)" }}>{t("Équipe")}</h1>
         <p className="text-sm mt-1" style={{ color: "#AAAAAA" }}>{t("Membres ayant accès au panneau d'administration Axso")}</p>
       </div>
       <AdminEquipePanel peutInviter={estAdminComplet(session)} monId={session.userId} />

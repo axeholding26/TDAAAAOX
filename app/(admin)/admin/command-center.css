@@ -4,6 +4,9 @@
    Accent de marque = ambre Axso, réservé aux actions et à la sélection.
    Vert / rouge / orange = états (bon, critique, alerte), jamais décoratifs.
    ───────────────────────────────────────────────────────────────────────── */
+/* Couche « components » : les utilitaires Tailwind (lg:hidden, md:hidden…) passent devant
+   les classes cc-* ; sans elle, .cc-btn { display } affichait sur PC les boutons réservés au mobile. */
+@layer components {
 .cc {
   color-scheme: dark;
   --cc-bg: #0b0b0c;
@@ -177,4 +180,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .cc *, .cc *::before, .cc *::after { animation: none !important; transition: none !important; }
+}
 }
