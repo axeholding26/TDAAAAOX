@@ -356,7 +356,7 @@ export default function EditProduitPage() {
     setDeleting(true);
     const res = await fetch(`/api/produits/${id}`, { method: "DELETE" });
     if (res.ok) { toast.success(tr("Produit supprimé")); router.push("/dashboard/produits"); }
-    else { toast.error(tr("Erreur lors de la suppression")); setDeleting(false); }
+    else { toast.error(tr((await res.json().catch(() => ({}))).error || "Erreur lors de la suppression")); setDeleting(false); }
   }
 
   const inputClass = "w-full bg-white border border-[#E8E8E8] rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none focus:border-[#F5A623]/50 focus:ring-2 focus:ring-[#F5A623]/8 placeholder:text-[#CCCCCC] transition-all";

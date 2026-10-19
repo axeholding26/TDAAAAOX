@@ -32,6 +32,14 @@ import { findNode } from "@/lib/block-tree";
 import { FONTS } from "@/lib/theme-fonts";
 import { AXIA_POS_TOOLS, executerOutilPos } from "./pos-tools";
 import { AXIA_ACADEMIE_TOOLS, executerOutilAcademie } from "./academie-tools";
+import { PAGES_DASHBOARD, resultatOuverture } from "./pages";
+import { modifierProduit, supprimerProduit } from "@/lib/produits";
+import { mouvementStock } from "@/lib/pos/stock";
+import { evaluerPublication } from "@/lib/boutique-completion";
+import { commandesCeMois } from "@/lib/abonnement";
+import { LIMITES, NOMS_PALIERS } from "@/lib/plans";
+import { z } from "zod";
+import type { Prisma } from "@prisma/client";
 
 // tier absent = disponible dès le Palier 0. "palier1"/"palier2" = outil
 // réservé, filtré par lib/plans.ts::filtrerOutilsParPalier avant chaque appel
@@ -155,6 +163,89 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
       },
       required: ["produitId", "prix"],
     },
+  },
+  {
+    name: "modifier_produit",
+    tier: "palier1",
+    description: "Modifie un produit comme le formulaire produit du dashboard. Ne passe QUE les champs à changer. Appelé avec seulement produitId, renvoie la fiche actuelle (images numérotées, variantes avec leur id) : fais-le avant de retirer une image ou de toucher aux variantes. Stock : uniquement la quantité donnée par le marchand, jamais estimée ni inventée. Mettre en brouillon / retirer de la vente = actif false.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        produitId: { type: "string" },
+        nom: { type: "string" },
+        description: { type: "string" },
+        prix: { type: "number", description: "Prix de vente" },
+        prixCompare: { type: "number", description: "Prix barré (doit être au-dessus du prix) ; 0 pour le retirer" },
+        cout: { type: "number", description: "Coût d'achat unitaire (marge)" },
+        categorie: { type: "string" },
+        tags: { type: "array", items: { type: "string" }, description: "Remplace la liste des tags" },
+        actif: { type: "boolean", description: "true = en vente sur la boutique, false = brouillon (invisible)" },
+        featured: { type: "boolean", description: "Mis en avant" },
+        visibleListage: { type: "boolean", description: "false = absent du catalogue, accessible par son lien" },
+        masquerVentes: { type: "boolean", description: "Masquer le compteur de ventes" },
+        texteBoutonAchat: { type: "string", description: "Texte du bouton d'achat" },
+        type: { type: "string", enum: ["physique", "digital", "dropshipping"] },
+        stock: { type: "number", description: "Nouvelle quantité en stock (produit physique sans variantes)" },
+        poids: { type: "number", description: "Poids en kg" },
+        sku: { type: "string" },
+        codeBarres: { type: "string" },
+        images: { type: "array", items: { type: "string" }, description: "Remplace TOUTES les images (URLs)" },
+        ajouter_images: { type: "array", items: { type: "string" }, description: "URLs d'images à ajouter à la fin" },
+        retirer_images: { type: "array", items: { type: "number" }, description: "Numéros (1, 2…) des images à retirer, d'après la fiche actuelle" },
+        videos: { type: "array", items: { type: "string" }, description: "Remplace les vidéos (URLs)" },
+        metaTitle: { type: "string", description: "Titre SEO (60 caractères max)" },
+        metaDesc: { type: "string", description: "Description SEO (155 caractères max)" },
+        ogImage: { type: "string", description: "Image de partage sur les réseaux" },
+        fichierUrl: { type: "string", description: "Digital : fichier livré après achat" },
+        fichierNom: { type: "string", description: "Digital : nom du fichier affiché" },
+        instructionsTelechargement: { type: "string", description: "Digital : instructions après achat" },
+        prixFournisseur: { type: "number", description: "Dropshipping : prix d'achat fournisseur" },
+        urlFournisseur: { type: "string", description: "Dropshipping : page du produit chez le fournisseur" },
+        nomFournisseur: { type: "string", description: "Dropshipping : nom du fournisseur" },
+        affiliationActive: { type: "boolean", description: "Produit ouvert aux affiliés" },
+        tauxCommissionAff: { type: "number", description: "Commission des affiliés en % (ex. 20)" },
+        faq: { type: "array", items: { type: "object", properties: { question: { type: "string" }, reponse: { type: "string" } }, required: ["question", "reponse"] }, description: "Remplace la FAQ du produit" },
+        variantes: {
+          type: "array",
+          description: "Variantes à ajouter (sans varianteId) ou à modifier (avec varianteId). Stock : quantité donnée par le marchand.",
+          items: {
+            type: "object",
+            properties: {
+              varianteId: { type: "string" }, nom: { type: "string", description: "Option, ex. Taille" }, valeur: { type: "string", description: "Valeur, ex. XL" },
+              prix: { type: "number", description: "Prix propre à la variante" }, sku: { type: "string" }, image: { type: "string" },
+              stock: { type: "number" }, actif: { type: "boolean" },
+            },
+          },
+        },
+        retirer_variantes: { type: "array", items: { type: "string" }, description: "Ids des variantes à supprimer" },
+      },
+      required: ["produitId"],
+    },
+  },
+  {
+    name: "supprimer_produit",
+    tier: "palier1",
+    description: "Supprime DÉFINITIVEMENT un produit (demande l'accord du marchand). Refusé si le produit a déjà été commandé ou mouvementé en stock : propose alors de le désactiver (modifier_produit actif false). Pour un produit qu'on veut juste retirer de la vente, préfère la désactivation.",
+    parameters: { type: "object" as const, properties: { produitId: { type: "string" } }, required: ["produitId"] },
+  },
+  // ─── NAVIGATION & VUE D'ENSEMBLE ──────────────────────────────────────────
+  {
+    name: "ouvrir_page",
+    description: "Ouvre une page du dashboard Axso à l'écran du marchand (« ouvre mes commandes », « montre-moi ce produit »), ou sa boutique publique dans un nouvel onglet. Avec produitId : la fiche d'édition du produit ; avec commandeId : le détail de la commande.",
+    parameters: {
+      type: "object" as const,
+      properties: {
+        page: { type: "string", enum: [...Object.keys(PAGES_DASHBOARD), "boutique_publique"] },
+        produitId: { type: "string" },
+        commandeId: { type: "string", description: "Id ou numéro de la commande" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "etat_general",
+    description: "Vue d'ensemble de TOUTE l'activité en un appel : boutique publiée ou non et ce qui manque, plan et quota de commandes, commandes à traiter, livraisons en cours ou en échec, ruptures et stock bas, retours, messages et avis en attente, revenus récents. À appeler pour « comment va ma boutique ? », « quoi de neuf ? », « qu'est-ce que je dois faire ? », ou avant de prendre la main sur la boutique.",
+    parameters: { type: "object" as const, properties: {}, required: [] },
   },
   // ─── BOUTIQUE ─────────────────────────────────────────────────────────────
   {
@@ -994,6 +1085,81 @@ export const AXIA_TOOLS: AxiaToolDef[] = [
   ...AXIA_ACADEMIE_TOOLS,
 ];
 
+// ─── AIDES PRODUIT & VUE D'ENSEMBLE ───────────────────────────────────────────
+// Champs du formulaire produit recopiés tels quels par modifier_produit (les autres sont traités à part).
+const CHAMPS_PRODUIT = [
+  "nom", "description", "prix", "cout", "categorie", "tags", "actif", "featured", "visibleListage", "masquerVentes",
+  "texteBoutonAchat", "type", "poids", "sku", "codeBarres", "videos", "ogImage", "fichierUrl", "fichierNom",
+  "instructionsTelechargement", "prixFournisseur", "urlFournisseur", "nomFournisseur", "affiliationActive", "faq",
+];
+
+function ficheProduit(p: Prisma.ProduitGetPayload<{ include: { variantes: true } }>): string {
+  return [
+    `Produit « ${p.nom} » (${p.type}) — ${p.actif ? "en vente" : "brouillon (invisible)"} | prix ${p.prix}${p.prixCompare ? ` (barré ${p.prixCompare})` : ""} | stock ${p.type === "physique" ? p.stock : "non suivi"} | catégorie : ${p.categorie || "aucune"}`,
+    `Description : ${p.description?.slice(0, 400) || "aucune"}`,
+    `Tags : ${p.tags.join(", ") || "aucun"} | SEO : ${p.metaTitle || "—"} / ${p.metaDesc || "—"}`,
+    `Images : ${p.images.length ? p.images.map((u, i) => `${i + 1}. ${u}`).join(" ; ") : "aucune"}`,
+    `Variantes : ${p.variantes.length ? p.variantes.map((v) => `[${v.id}] ${v.nom} ${v.valeur} — stock ${v.stock}${v.prix ? `, prix ${v.prix}` : ""}${v.actif ? "" : ", inactive"}`).join(" ; ") : "aucune"}`,
+    p.type === "digital" && `Fichier livré : ${p.fichierNom || p.fichierUrl || "aucun (à ajouter)"}`,
+    p.type === "dropshipping" && `Fournisseur : ${p.nomFournisseur || "?"}${p.prixFournisseur ? `, achat ${p.prixFournisseur}` : ""}${p.urlFournisseur ? `, ${p.urlFournisseur}` : ""}`,
+  ].filter(Boolean).join("\n");
+}
+
+/** Fixe le stock à la quantité donnée, par un ajustement journalisé (lib/pos/stock.ts) comme le reste de la plateforme. */
+async function fixerStock(tenantId: string, produitId: string, varianteId: string | null, cible: number) {
+  await prisma.$transaction(async (tx) => {
+    const actuel = varianteId
+      ? (await tx.variante.findFirstOrThrow({ where: { id: varianteId, produitId }, select: { stock: true } })).stock
+      : (await tx.produit.findFirstOrThrow({ where: { id: produitId, tenantId }, select: { stock: true } })).stock;
+    if (actuel !== cible) await mouvementStock(tx, { tenantId, produitId, varianteId, type: "ajustement", quantite: cible - actuel, motif: "Ajusté par AXIA à la demande du marchand" });
+  });
+}
+
+/** Œil général d'AXIA : tout ce qui demande l'attention du marchand, en une lecture. */
+async function etatGeneral(tenantId: string): Promise<string> {
+  const ilYA = (jours: number) => new Date(Date.now() - jours * 86_400_000);
+  const ca = (jours: number) => prisma.commande.aggregate({ where: { tenantId, paiementStatut: PAIEMENT.PAYE, createdAt: { gte: ilYA(jours) } }, _sum: { montantTotal: true }, _count: true });
+  const [tenant, publication, { plan }, commandesMois, enAttente, aAssigner, bloquees, enRoute, echecs, especes, produitsBas, paiementsEnAttente, retours, messages, avisAttente, avisNegatifs, ca7, ca30] = await Promise.all([
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { nomBoutique: true, statut: true, devise: true, planType: true, planExpiresAt: true } }),
+    evaluerPublication(tenantId),
+    planActif(tenantId),
+    commandesCeMois(tenantId),
+    prisma.commande.count({ where: { tenantId, statut: "en_attente" } }),
+    prisma.commande.count({ where: { tenantId, statut: { in: ["confirmee", "en_preparation"] }, livreurId: null } }),
+    prisma.commande.count({ where: { tenantId, statut: { in: ["en_attente", "confirmee", "en_preparation"] }, updatedAt: { lt: ilYA(2) }, createdAt: { gte: ilYA(30) } } }),
+    prisma.commande.count({ where: { tenantId, statut: "expediee" } }),
+    prisma.commande.count({ where: { tenantId, statut: "tentative_echouee" } }),
+    prisma.commande.aggregate({ where: { tenantId, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false }, _sum: { montantTotal: true }, _count: true }),
+    prisma.produit.findMany({ where: { tenantId, actif: true, type: "physique", stock: { lte: 10 } }, select: { nom: true, stock: true, stockMin: true }, orderBy: { stock: "asc" }, take: 100 }),
+    prisma.commande.count({ where: { tenantId, paiementStatut: PAIEMENT.ATTENTE, statut: { not: "annulee" }, methodePaiement: { not: { contains: "cod" } }, createdAt: { gte: ilYA(3) } } }),
+    prisma.retourRMA.count({ where: { tenantId, statut: { in: ["ouvert", "en_cours"] } } }),
+    prisma.messageRecu.count({ where: { tenantId, direction: "entrant", repondu: false, createdAt: { gte: ilYA(7) } } }),
+    prisma.avis.count({ where: { tenantId, approuve: false } }),
+    prisma.avis.count({ where: { tenantId, note: { lte: 2 }, createdAt: { gte: ilYA(7) } } }),
+    ca(7),
+    ca(30),
+  ]);
+  const dev = tenant?.devise ?? "XAF";
+  const manque = publication.criteres.filter((c) => !c.ok).map((c) => c.label);
+  const statut = tenant?.statut === "active" ? "publiée" : tenant?.statut === "brouillon" ? "brouillon (pas encore publiée)" : tenant?.statut ?? "?";
+  const limite = LIMITES[plan]?.commandesParMois ?? null;
+  const echeance = tenant?.planType === plan && tenant.planExpiresAt ? ` jusqu'au ${tenant.planExpiresAt.toLocaleDateString("fr-FR")}` : "";
+  const ruptures = produitsBas.filter((p) => p.stock <= 0).map((p) => p.nom);
+  const bas = produitsBas.filter((p) => p.stock > 0 && p.stock <= (p.stockMin ?? 3)).map((p) => `${p.nom} (${p.stock})`);
+  const liste = (l: string[]) => (l.length ? `${l.slice(0, 8).join(", ")}${l.length > 8 ? ` et ${l.length - 8} autre(s)` : ""}` : "aucun");
+  return [
+    `Boutique « ${tenant?.nomBoutique ?? "?"} » : ${statut}${manque.length ? ` — manque pour publier : ${manque.join(", ")}` : ""}`,
+    `Plan : ${NOMS_PALIERS[plan]}${echeance} — commandes ce mois : ${commandesMois}${limite !== null ? `/${limite}${commandesMois >= limite ? " (QUOTA ATTEINT : le marchand ne peut plus traiter ses commandes sans passer au Pro)" : ""}` : " (illimité)"}`,
+    `Commandes : ${enAttente} en attente de confirmation, ${aAssigner} à assigner à un livreur, ${bloquees} sans mouvement depuis plus de 2 jours`,
+    `Livraisons : ${enRoute} en route, ${echecs} en échec à replanifier${especes._count ? `, espèces non remises par les livreurs : ${Math.round(especes._sum.montantTotal ?? 0)} ${dev} (${especes._count} commande(s))` : ""}`,
+    `Stock : ruptures — ${liste(ruptures)} ; stock bas — ${liste(bas)}`,
+    `Paiements en ligne non finalisés (3 derniers jours) : ${paiementsEnAttente}`,
+    `Retours à traiter : ${retours}`,
+    `Messages clients sans réponse (7 j) : ${messages} | Avis en attente de validation : ${avisAttente} | Avis négatifs cette semaine : ${avisNegatifs}`,
+    `Revenus encaissés : 7 j ${Math.round(ca7._sum.montantTotal ?? 0)} ${dev} (${ca7._count} commande(s)) | 30 j ${Math.round(ca30._sum.montantTotal ?? 0)} ${dev} (${ca30._count} commande(s))`,
+  ].join("\n");
+}
+
 // ─── EXÉCUTEUR ────────────────────────────────────────────────────────────────
 /** Exécute l'outil sans contrôle de confirmation — à n'appeler qu'après accord du marchand (app/api/axia/propositions). */
 export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => {
@@ -1097,6 +1263,102 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         await prisma.produit.update({ where: { id: args.produitId }, data: { prix: args.prix, prixCompare: args.prixCompare ?? null } });
         return { succes: true, resultat: `✅ Prix "${p.nom}" : ${p.prix} → ${args.prix}` };
       }
+
+      case "modifier_produit": {
+        const id = String(args.produitId ?? "");
+        const p = await prisma.produit.findFirst({ where: { id, tenantId }, include: { variantes: { orderBy: { nom: "asc" } } } });
+        if (!p) return { succes: false, resultat: "Produit introuvable" };
+
+        // Mêmes champs que le formulaire produit ; seuls ceux fournis sont envoyés.
+        const body: Record<string, any> = {};
+        for (const c of CHAMPS_PRODUIT) if (args[c] !== undefined) body[c] = args[c];
+        // Comme le formulaire : un prix barré qui n'est pas au-dessus du prix est retiré.
+        if (args.prixCompare !== undefined) body.prixCompare = Number(args.prixCompare) > Number(args.prix ?? p.prix) ? Number(args.prixCompare) : null;
+        if (args.tauxCommissionAff !== undefined) body.tauxCommissionAff = args.tauxCommissionAff ? Number(args.tauxCommissionAff) / 100 : null;
+        if (args.metaTitle) body.metaTitle = String(args.metaTitle).slice(0, 60);
+        if (args.metaDesc) body.metaDesc = String(args.metaDesc).slice(0, 155);
+        if (args.images || args.ajouter_images || args.retirer_images) {
+          const retirer = new Set<number>((args.retirer_images ?? []).map(Number));
+          body.images = [...(args.images ?? p.images).filter((_: string, i: number) => !retirer.has(i + 1)), ...(args.ajouter_images ?? [])];
+        }
+
+        // Stock strict : uniquement une quantité entière donnée par le marchand, vérifiée avant toute écriture.
+        const variantes: any[] = Array.isArray(args.variantes) ? args.variantes : [];
+        const retirerVariantes: string[] = Array.isArray(args.retirer_variantes) ? args.retirer_variantes : [];
+        const stockInvalide = [args.stock, ...variantes.map((v) => v.stock)].some((s) => s !== undefined && !(Number.isInteger(s) && s >= 0));
+        if (stockInvalide) return { succes: false, resultat: "Le stock doit être un nombre entier positif, donné par le marchand. Rien n'a été modifié." };
+        if (args.stock !== undefined && (body.type ?? p.type) !== "physique") return { succes: false, resultat: "Seul un produit physique a un stock suivi. Rien n'a été modifié." };
+        if (args.stock !== undefined && p.variantes.length) return { succes: false, resultat: "Ce produit a des variantes : donne le stock de chaque variante (variantes avec varianteId). Rien n'a été modifié." };
+        const inconnue = [...variantes.map((v) => v.varianteId).filter(Boolean), ...retirerVariantes].find((vid) => !p.variantes.some((v) => v.id === vid));
+        if (inconnue) return { succes: false, resultat: "Variante introuvable sur ce produit — appelle modifier_produit avec seulement produitId pour voir ses variantes. Rien n'a été modifié." };
+        if (variantes.some((v) => !v.varianteId && !v.valeur)) return { succes: false, resultat: "Une nouvelle variante doit avoir une valeur (ex. XL). Rien n'a été modifié." };
+
+        if (!Object.keys(body).length && args.stock === undefined && !variantes.length && !retirerVariantes.length) {
+          return { succes: true, resultat: ficheProduit(p) };
+        }
+
+        const faits: string[] = [];
+        if (Object.keys(body).length) {
+          try {
+            await modifierProduit(tenantId, id, body);
+          } catch (e: any) {
+            if (e instanceof z.ZodError) return { succes: false, resultat: `Données refusées : ${e.issues.map((i) => `${i.path.join(".")} — ${i.message}`).join(" ; ")}. Rien n'a été modifié.` };
+            if (e?.code === "P2002") return { succes: false, resultat: "Ce code-barres est déjà utilisé par un autre produit de la boutique. Rien n'a été modifié." };
+            throw e;
+          }
+          faits.push(...Object.keys(body));
+        }
+        if (args.stock !== undefined) {
+          await fixerStock(tenantId, id, null, args.stock);
+          faits.push("stock");
+        }
+        for (const v of variantes) {
+          const champs = Object.fromEntries(Object.entries({ nom: v.nom, valeur: v.valeur, prix: v.prix, sku: v.sku, image: v.image, actif: v.actif }).filter(([, x]) => x !== undefined));
+          const varianteId = v.varianteId
+            ? (await prisma.variante.update({ where: { id: v.varianteId }, data: champs, select: { id: true } })).id
+            : (await prisma.variante.create({ data: { ...champs, produitId: id, nom: v.nom || "Variante", valeur: String(v.valeur) }, select: { id: true } })).id;
+          if (v.stock !== undefined && (v.varianteId || v.stock > 0)) await fixerStock(tenantId, id, varianteId, v.stock);
+          faits.push(v.varianteId ? `variante ${v.valeur ?? ""} modifiée` : `variante ${v.valeur} ajoutée`);
+        }
+        for (const vid of retirerVariantes) {
+          // Comme la suppression d'une variante dans le formulaire, avec sa ventilation par entrepôt.
+          await prisma.$transaction([prisma.stockEntrepot.deleteMany({ where: { varianteId: vid } }), prisma.variante.delete({ where: { id: vid } })]);
+          faits.push("variante supprimée");
+        }
+
+        const apres = await prisma.produit.findFirst({ where: { id, tenantId }, include: { variantes: { orderBy: { nom: "asc" } } } });
+        return { succes: true, resultat: `✅ « ${p.nom} » mis à jour (${faits.join(", ")}).\n\n${apres ? ficheProduit(apres) : ""}` };
+      }
+
+      case "supprimer_produit": {
+        const r = await supprimerProduit(tenantId, String(args.produitId ?? ""));
+        return r.ok ? { succes: true, resultat: `✅ « ${r.nom} » supprimé définitivement.` } : { succes: false, resultat: r.error };
+      }
+
+      case "ouvrir_page": {
+        if (args.produitId) {
+          const p = await prisma.produit.findFirst({ where: { id: String(args.produitId), tenantId }, select: { id: true, nom: true } });
+          if (!p) return { succes: false, resultat: "Produit introuvable" };
+          return { succes: true, resultat: resultatOuverture(`/dashboard/produits/${p.id}`, p.nom) };
+        }
+        if (args.commandeId) {
+          const c = await prisma.commande.findFirst({ where: { tenantId, OR: [{ id: String(args.commandeId) }, { numero: String(args.commandeId).replace(/^#/, "") }] }, select: { id: true, numero: true } });
+          if (!c) return { succes: false, resultat: "Commande introuvable" };
+          return { succes: true, resultat: resultatOuverture(`/dashboard/commandes/${c.id}`, `Commande #${c.numero}`) };
+        }
+        if (args.page === "boutique_publique") {
+          const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, statut: true } });
+          if (!t) return { succes: false, resultat: "Boutique introuvable" };
+          const lien = await lienBoutique(t.slug);
+          return { succes: true, resultat: `${resultatOuverture(lien, "Boutique publique")}${t.statut === "brouillon" ? " Elle est encore en brouillon : seul le marchand la voit." : ""} Adresse : ${lien}` };
+        }
+        const page = PAGES_DASHBOARD[args.page];
+        if (!page) return { succes: false, resultat: `Page inconnue. Pages possibles : ${Object.keys(PAGES_DASHBOARD).join(", ")}, boutique_publique.` };
+        return { succes: true, resultat: resultatOuverture(...page) };
+      }
+
+      case "etat_general":
+        return { succes: true, resultat: await etatGeneral(tenantId) };
 
       case "lire_boutique": {
         const [tenant, produits, nbCommandes, nbClients] = await Promise.all([
@@ -1948,4 +2210,4 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
 
 /** Point d'entrée des outils AXIA : les actions sensibles attendent l'accord du marchand. */
 export const executeAxiaTool: ToolExecutor = async (nom, args, tenantId) =>
-  estSensible(nom) ? demanderConfirmation(tenantId, nom, args) : executerOutilDirect(nom, args, tenantId);
+  estSensible(nom, args) ? demanderConfirmation(tenantId, nom, args) : executerOutilDirect(nom, args, tenantId);

@@ -163,7 +163,9 @@ export function debitDepasse(ctx: ContexteIA, ip: string): boolean {
 interface Fiche extends Omit<OutilIA, "module" | "risque"> { module: ModuleKey | null; risque: Risque; source: "coeur" | "axia" | ModuleIA }
 
 // Jamais exposés : la délégation AXIA lance des sous-agents qui n'appliquent pas les droits (voir axso_delegate, module objectifs).
-const EXCLUS = new Set(["deleguer_vers_agent"]);
+// modifier_produit / supprimer_produit : les IA externes ont update_product, manage_variants, adjust_inventory et
+// delete_catalog_item, soumis à leurs propres limites (variation de prix, risque élevé).
+const EXCLUS = new Set(["deleguer_vers_agent", "modifier_produit", "supprimer_produit"]);
 const CAPACITES_AXIA: Record<ModuleKey, string> = {
   produits: "catalogue", commandes: "commandes", clients: "clients", boutique: "boutique", marketing: "marketing",
   finance: "finances", pos: "caisse", equipe: "equipe", parametres: "parametres",

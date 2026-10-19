@@ -7,6 +7,7 @@ import { IconAxia } from "@/components/dashboard/AppIcons";
 import { useT } from "@/components/I18nProvider";
 import { useAbonnementOverlay } from "@/components/dashboard/AbonnementOverlayProvider";
 import { palierAuMoins } from "@/lib/plans";
+import { pageAOuvrir, ouvrirPage } from "@/lib/axia/pages";
 
 // Bulle AXIA en bas à droite du dashboard : AXIA y prend la parole d'elle-même
 // (constats sur la boutique, rappels) et y demande l'accord du marchand avant
@@ -153,6 +154,9 @@ export function AxiaBulle() {
       // AXIA a pu agir (produit, promo…) : la page et les propositions se mettent à jour.
       router.refresh();
       charger();
+      // ouvrir_page : AXIA amène le marchand sur la page demandée, la fenêtre reste ouverte.
+      const lien = pageAOuvrir(data.actions);
+      if (lien) ouvrirPage(lien, router.push);
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: t("AXIA a rencontré une erreur momentanée — réessaie dans un instant.") }]);
     } finally {

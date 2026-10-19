@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 const SENSIBLES: Record<string, string> = {
   // Outils AXIA (lib/axia/tools.ts)
   mettre_a_jour_prix: "Changer un prix",
+  supprimer_produit: "Supprimer définitivement un produit",
   payer_commission_affilie: "Payer une commission",
   creer_code_promo: "Créer un code promo",
   router_commande_fournisseur: "Préparer une commande fournisseur",
@@ -56,13 +57,17 @@ const LECTURE = /(^|_)(lister|lire|stats|statut)(_|$)/;
 
 /** Consigne à ajouter au prompt de tout assistant qui passe par demanderConfirmation. */
 export const CONSIGNE_ACCORD = `─── ACTIONS SENSIBLES : ACCORD DU MARCHAND ───
-Prix, codes promo, synchronisation fournisseurs, popups, générations Higgsfield (crédits payants), envois aux clients (email, WhatsApp, SMS, réseaux sociaux), paiements, publication, retours, livraisons (assigner un livreur, changer le statut d'une commande, confirmer une remise d'espèces) : quand tu appelles un de ces outils, l'action n'est PAS exécutée tout de suite. Le marchand reçoit une demande d'autorisation dans la bulle AXIA en bas à droite. Dis-lui en une phrase ce que tu t'apprêtes à faire et que tu attends son feu vert — ne dis jamais que c'est fait.
+Prix (y compris via modifier_produit), suppression d'un produit, codes promo, synchronisation fournisseurs, popups, générations Higgsfield (crédits payants), envois aux clients (email, WhatsApp, SMS, réseaux sociaux), paiements, publication, retours, livraisons (assigner un livreur, changer le statut d'une commande, confirmer une remise d'espèces) : quand tu appelles un de ces outils, l'action n'est PAS exécutée tout de suite. Le marchand reçoit une demande d'autorisation dans la bulle AXIA en bas à droite. Dis-lui en une phrase ce que tu t'apprêtes à faire et que tu attends son feu vert — ne dis jamais que c'est fait.
 - Quand le marchand te demande explicitement une de ces actions (« assigne… », « passe la commande en… », « envoie… »), appelle l'outil tout de suite : la bulle EST la demande d'accord. Ne lui redemande pas « tu valides ? » dans le texte, sinon il doit dire oui deux fois.
 - Si c'est toi qui as l'idée (il ne l'a pas demandée), propose-la d'abord en une phrase et attends sa réponse avant d'appeler l'outil.
 - Ne parle JAMAIS de la bulle ni d'une validation en attente si tu n'as pas appelé l'outil dans cette réponse et reçu « EN ATTENTE DE CONFIRMATION ».`;
 
-export function estSensible(nom: string): boolean {
-  return nom in SENSIBLES || (PREFIXES_ENVOI.test(nom) && !LECTURE.test(nom));
+// modifier_produit n'attend l'accord que s'il touche un prix (produit ou variante), comme mettre_a_jour_prix.
+const touchePrix = (args?: Record<string, any>) =>
+  !!args && (args.prix !== undefined || args.prixCompare !== undefined || (Array.isArray(args.variantes) && args.variantes.some((v: any) => v?.prix !== undefined)));
+
+export function estSensible(nom: string, args?: Record<string, any>): boolean {
+  return nom in SENSIBLES || (PREFIXES_ENVOI.test(nom) && !LECTURE.test(nom)) || (nom === "modifier_produit" && touchePrix(args));
 }
 
 // Les ids techniques ne disent rien au marchand qui doit décider : on les remplace par des noms.
@@ -103,7 +108,7 @@ function semaine() {
 
 /** Enregistre l'action en attente et renvoie au modèle la consigne à suivre. */
 export async function demanderConfirmation(tenantId: string, outil: string, args: Record<string, any>, agent?: string, interactif = false, origine?: string, ia?: { connexionId: string; actionId: string }) {
-  const libelle = SENSIBLES[outil] ?? outil.replace(/_/g, " ");
+  const libelle = SENSIBLES[outil] ?? (outil === "modifier_produit" ? "Modifier un produit (prix compris)" : outil.replace(/_/g, " "));
   const details = resumerArgs(await lisibles(tenantId, args));
   // Agent autonome (cron horaire) : la même action n'est proposée qu'une fois par semaine.
   // En conversation (interactif), chaque demande compte : le marchand peut redemander après un refus.

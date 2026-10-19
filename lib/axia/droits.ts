@@ -2,7 +2,8 @@
 // d'équipe restreint (caissier, lecture seule…) pouvait faire par AXIA ce que
 // le menu et les API lui refusent (lire les revenus, modifier des produits…).
 // Chaque outil est rattaché à un module de lib/permissions.ts et au niveau
-// minimum requis ; les outils absents de la table ne demandent aucun droit.
+// minimum requis ; les outils absents de la table ne demandent aucun droit
+// (ex. ouvrir_page : la page ouverte applique elle-même les droits du membre).
 import type { GrillePermissions, ModuleKey } from "@/lib/permissions";
 
 type Regle = [ModuleKey, "lecture" | "ecriture"];
@@ -12,6 +13,7 @@ const REGLES: Record<string, Regle> = {
   // Catalogue
   lister_produits: L("produits"), rechercher_produits: L("produits"), produits_performance: L("produits"), lister_fournisseurs: L("produits"), lister_entrepots: L("produits"),
   ajouter_produit: E("produits"), enrichir_produit: E("produits"), mettre_a_jour_prix: E("produits"), modifier_fiche_produit: E("produits"), generer_image: E("produits"),
+  modifier_produit: E("produits"), supprimer_produit: E("produits"),
   ajouter_fournisseur: E("produits"), creer_entrepot: E("produits"), sync_fournisseurs: E("produits"), router_commande_fournisseur: E("produits"),
   // Boutique
   lire_boutique: L("boutique"), lister_regles_livraison: L("boutique"), calculer_frais_livraison: L("boutique"), verifier_badges: L("boutique"),
@@ -29,7 +31,8 @@ const REGLES: Record<string, Regle> = {
   meta_planifier_post: E("marketing"), meta_creer_campagne_ads: E("marketing"), generer_video: E("marketing"), generer_voiceover: E("marketing"),
   higgsfield_generer_video: E("marketing"), higgsfield_generer_image: E("marketing"), higgsfield_video_produit: E("marketing"), higgsfield_lister_outils: L("marketing"), higgsfield_appeler_outil: E("marketing"),
   // Finance
-  stats_globales: L("finance"), rapport_complet: L("finance"), lister_factures: L("finance"), calculer_tva: L("finance"),
+  // etat_general montre aussi les revenus : réservé à qui voit les finances.
+  stats_globales: L("finance"), rapport_complet: L("finance"), etat_general: L("finance"), lister_factures: L("finance"), calculer_tva: L("finance"),
   generer_facture: E("finance"), payer_commission_affilie: E("finance"),
   // Caisse & magasin (lib/axia/pos-tools.ts) : chiffres et marge = finance ; stock = produits ;
   // préparer un achat, un inventaire, un transfert ou comparer des prix d'achat = produits en écriture.
@@ -51,6 +54,8 @@ export const moduleRequis = (nom: string): ModuleKey | null => REGLES[nom]?.[0] 
 
 export function outilAutorise(nom: string, g: GrillePermissions): boolean {
   if (nom === "deleguer_vers_agent") return tousLesDroits(g); // les sous-agents n'appliquent pas ce filtre
+  // Comme l'API (DELETE /api/produits/[id]) : supprimer un produit est réservé au propriétaire (accès complet).
+  if (nom === "supprimer_produit") return tousLesDroits(g);
   const r = REGLES[nom];
   if (!r) return true;
   const niveau = g[r[0]];

@@ -2,12 +2,15 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Send, Loader2, User, Mic, MicOff, History } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useT } from "@/components/I18nProvider";
+import { pageAOuvrir, ouvrirPage } from "@/lib/axia/pages";
 
 interface Msg { role: "user" | "assistant"; content: string; streaming?: boolean }
 
 export default function AxiaPage() {
   const t = useT();
+  const router = useRouter();
   const [messages, setMessages] = useState<Msg[]>([{
     role: "assistant",
     content: "Bonjour ! Je suis Axia, ton assistante IA.\n\nPose-moi n'importe quelle question sur ta boutique : ventes, stocks, clients, marketing…",
@@ -78,6 +81,9 @@ export default function AxiaPage() {
                 return prev;
               });
             } else if (data.type === "done") {
+              // ouvrir_page : AXIA amène le marchand sur la page demandée.
+              const lien = pageAOuvrir(data.actions);
+              if (lien) ouvrirPage(lien, router.push);
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last?.streaming) return [...prev.slice(0, -1), { ...last, streaming: false }];

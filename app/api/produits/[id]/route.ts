@@ -2,48 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { slugify } from "@/lib/utils";
+import { modifierProduit, supprimerProduit } from "@/lib/produits";
 import { z } from "zod";
-
-const schemaUpdate = z.object({
-  nom: z.string().min(2).optional(),
-  slug: z.string().optional(),
-  description: z.string().optional().nullable(),
-  prix: z.number().positive().optional(),
-  prixCompare: z.number().positive().optional().nullable(),
-  cout: z.number().min(0).optional().nullable(),
-  stock: z.number().int().min(0).optional(),
-  sku: z.string().optional().nullable(),
-  codeBarres: z.string().optional().nullable(),
-  images: z.array(z.string()).optional(),
-  videos: z.array(z.string()).optional(),
-  categorie: z.string().optional().nullable(),
-  tags: z.array(z.string()).optional(),
-  actif: z.boolean().optional(),
-  featured: z.boolean().optional(),
-  poids: z.number().optional().nullable(),
-  metaTitle: z.string().optional().nullable(),
-  metaDesc: z.string().optional().nullable(),
-  type: z.enum(["physique", "digital", "dropshipping", "fichier", "licence", "bundle", "formation"]).optional(),
-  fichierUrl: z.string().optional().nullable(),
-  fichierNom: z.string().optional().nullable(),
-  fichierTaille: z.number().optional().nullable(),
-  instructionsTelechargement: z.string().optional().nullable(),
-  prixFournisseur: z.number().optional().nullable(),
-  urlFournisseur: z.string().optional().nullable(),
-  nomFournisseur: z.string().optional().nullable(),
-  affiliationActive: z.boolean().optional(),
-  tauxCommissionAff: z.number().min(0).max(1).optional().nullable(),
-  ogImage: z.string().optional().nullable(),
-  masquerVentes: z.boolean().optional(),
-  visibleListage: z.boolean().optional(),
-  texteBoutonAchat: z.string().optional().nullable(),
-  faq: z.array(z.object({ question: z.string(), reponse: z.string(), image: z.string().optional() })).optional().nullable(),
-  champsCommande: z.array(z.object({
-    label: z.string(), type: z.string(), requis: z.boolean(),
-    options: z.array(z.string()).optional(),
-  })).optional().nullable(),
-});
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -77,33 +37,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const body = await req.json();
 
   try {
-    const data = schemaUpdate.parse(body);
-
-    const produit = await prisma.produit.findFirst({ where: { id, tenantId } });
-    if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-
-    const updateData: any = { ...data };
-
-    // Champs non couverts par le spread Zod — appliqués directement depuis le body
-    const CHAMPS_DIRECTS = [
-      "type", "slug", "videos", "fichierUrl", "fichierNom", "fichierTaille",
-      "instructionsTelechargement", "prixFournisseur", "urlFournisseur", "nomFournisseur",
-      "ogImage", "masquerVentes", "visibleListage", "texteBoutonAchat", "faq", "champsCommande",
-    ] as const;
-    for (const champ of CHAMPS_DIRECTS) {
-      if (champ in body) updateData[champ] = body[champ];
-    }
-
-    // Régénérer slug si le nom change (sans écraser le slug envoyé explicitement)
-    if (data.nom && data.nom !== produit.nom && !("slug" in body)) {
-      const newSlug = slugify(data.nom);
-      const slugExiste = await prisma.produit.findFirst({
-        where: { tenantId, slug: newSlug, id: { not: id } },
-      });
-      if (!slugExiste) updateData.slug = newSlug;
-    }
-
-    const updated = await prisma.produit.update({ where: { id }, data: updateData });
+    const updated = await modifierProduit(tenantId, id, body);
+    if (!updated) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
     return NextResponse.json({ produit: updated });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -165,9 +100,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const { id } = await params;
 
-  const produit = await prisma.produit.findFirst({ where: { id, tenantId } });
-  if (!produit) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });
-
-  await prisma.produit.delete({ where: { id } });
+  const r = await supprimerProduit(tenantId, id);
+  if (!r.ok) return NextResponse.json({ error: r.error }, { status: r.status });
   return NextResponse.json({ success: true });
 }

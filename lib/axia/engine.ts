@@ -78,7 +78,7 @@ function fallbackReponse(toolResults: string[], phase1Text: string): string {
   // Modèle indisponible (503…) : les résultats bruts partent au marchand — sans la consigne
   // interne des actions à autoriser (« Dis-lui… ne dis jamais que c'est fait »).
   if (toolResults.length > 0) return toolResults
-    .map(r => r.replace(/^EN ATTENTE DE CONFIRMATION : « (.+?) »[\s\S]*$/, "« $1 » attend ton autorisation dans la bulle AXIA, en bas à droite."))
+    .map(r => r.replace(/OUVRIR_PAGE:[^\n]*\n?/, "").replace(/^EN ATTENTE DE CONFIRMATION : « (.+?) »[\s\S]*$/, "« $1 » attend ton autorisation dans la bulle AXIA, en bas à droite."))
     .join("\n\n");
   return "Je n'ai pas pu traiter ta demande à l'instant — réessaie dans un instant.";
 }

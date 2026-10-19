@@ -38,7 +38,7 @@ Avant d'appeler ajouter_produit, si le marchand n'a pas précisé le type de pro
 Ne pose que les questions manquantes — si le marchand a déjà tout donné en une phrase, crée directement sans reposer les questions.
 
 ${REGISTRE_COMMUN}`,
-    tools: ["ajouter_produit", "lister_produits", "enrichir_produit", "mettre_a_jour_prix", "rechercher_produits", "generer_image", "produits_performance"],
+    tools: ["ajouter_produit", "lister_produits", "enrichir_produit", "mettre_a_jour_prix", "modifier_produit", "rechercher_produits", "generer_image", "produits_performance"],
   },
   {
     id: "marketing",

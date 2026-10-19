@@ -9,6 +9,8 @@ import { AxiaConversationSidebar } from "@/components/dashboard/AxiaConversation
 import { AxiaNotifBell } from "@/components/dashboard/AxiaNotifBell";
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
+import { useRouter } from "next/navigation";
+import { pageAOuvrir, ouvrirPage, sansMarque } from "@/lib/axia/pages";
 
 const AXIA_TUTORIAL_STEPS = [
   { Icon: MessageSquare, titre: "Discute avec AXIA", description: "Pose n'importe quelle question sur ta boutique — ventes, stock, clients — ou demande-lui d'agir directement : créer un produit, lancer une promo, relancer un client." },
@@ -72,6 +74,7 @@ const PHASE_CONFIG: Record<VoicePhase, { orbGrad: string; orbShadow: string; rin
 // jamais monté pour un compte palier0.
 export function AxiaHomeClient() {
   const tr = useT();
+  const router = useRouter();
   const [nomBoutique, setNomBoutique] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -290,6 +293,9 @@ export function AxiaHomeClient() {
         return next;
       });
       if (voiceModeRef.current) speakThenListen(txt);
+      // ouvrir_page : AXIA amène le marchand sur la page demandée.
+      const lien = pageAOuvrir(finalActions);
+      if (lien) ouvrirPage(lien, router.push);
     } catch (err: any) {
       if (err?.name === "AbortError") {
         if (streamingContent) {
@@ -753,7 +759,7 @@ export function AxiaHomeClient() {
                         <div className="flex flex-wrap gap-1.5">
                           {m.actions.map((a, j) => (
                             <span key={j} className="inline-flex items-center gap-1 text-[10.5px] px-2 py-0.5 rounded-lg font-medium" style={{ background: "rgba(16,185,129,0.12)", color: "#34d399", border: "1px solid rgba(16,185,129,0.25)" }}>
-                              <Sparkles size={9} /> {tr(a)}
+                              <Sparkles size={9} /> {tr(sansMarque(a))}
                             </span>
                           ))}
                         </div>
