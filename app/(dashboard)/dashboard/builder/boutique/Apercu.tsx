@@ -298,6 +298,20 @@ function EmbedEditable({ node, actif, onChangeConfig, onSelectElement }: {
         className={actif ? "outline-none cursor-text" : ""}
         dangerouslySetInnerHTML={contenu}
         onClick={selectionner}
+        onKeyDown={(e) => {
+          // Ctrl+A : le texte en cours seulement. Par défaut le navigateur prend toute la
+          // section éditable, et la frappe suivante effaçait titre, paragraphe et bouton d'un coup.
+          if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "a") return;
+          const sel = window.getSelection();
+          const noeud = sel?.anchorNode;
+          const el = noeud && ref.current && cibleSelectionnable(noeud instanceof Element ? noeud : noeud.parentElement, ref.current);
+          if (!sel || !el) return;
+          e.preventDefault();
+          const plage = document.createRange();
+          plage.selectNodeContents(el);
+          sel.removeAllRanges();
+          sel.addRange(plage);
+        }}
         onBlur={() => { const nouveau = ref.current?.innerHTML; if (nouveau != null && nouveau !== html) onChangeConfig(node.id, { html: nouveau }); }}
       />
     </div>

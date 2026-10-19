@@ -17,6 +17,19 @@ export default async function HomePage() {
   const avis = await avisPublies(8);
   return (
     <main className="overflow-x-clip bg-white text-gray-900">
+      {/* Logo de la marque pour Google (panneau de connaissances, résultats) : https://developers.google.com/search/docs/appearance/structured-data/logo */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Axso",
+            url: "https://axsoafrica.com",
+            logo: "https://axsoafrica.com/icon.png",
+          }),
+        }}
+      />
       {/* overflow-x-clip, pas -hidden : « hidden » fait de <main> une seconde zone de défilement
           (overflow-y passe à auto) ; sur mobile, le doigt hésitait entre la page et <main> en bas de page. */}
       <Preloader/>

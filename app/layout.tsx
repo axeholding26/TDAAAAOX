@@ -26,7 +26,9 @@ export const metadata: Metadata = {
     title: "Axso — Ta boutique en ligne en 3 minutes",
     description: "Crée ta boutique en ligne, vends partout, encaisse facilement.",
     type: "website",
+    siteName: "Axso",
   },
+  twitter: { card: "summary_large_image" },
 };
 
 export default async function RootLayout({

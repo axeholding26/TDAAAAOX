@@ -26,6 +26,8 @@ function getResendClient(): Resend | null {
 // Resend ne lève pas d'exception quand il refuse un envoi (domaine non vérifié, quota…) :
 // il renvoie { error }. Ici le refus est journalisé et signalé par false.
 async function envoyer(resend: Resend, message: Parameters<Resend["emails"]["send"]>[0]): Promise<boolean> {
+  // Logo Axso en tête de chaque email HTML (les emails texte brut restent tels quels).
+  if (message.html) message = { ...message, html: `<div style="text-align:center;padding:16px 0"><img src="https://axsoafrica.com/logo.png" alt="Axso" width="120" style="height:auto"></div>${message.html}` };
   const { error } = await resend.emails.send(message);
   if (error) console.error("[email] envoi refusé par Resend :", error.message); // pas le sujet : il peut contenir un code
   return !error;
