@@ -587,7 +587,7 @@ function OngletPaiements() {
       const res = await fetch("/api/affiliation/paiements", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ affilieId }) });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error);
-      toast.success(tr("Paiement de {0} envoyé", fmt(d.montant)));
+      toast.success(tr("Paiement de {0} demandé : Axso l'envoie à l'affilié sous 24–48h ouvrées et vous prévient.", fmt(d.montant)));
     } catch (e: any) {
       toast.error(tr(e.message) || tr("Erreur lors du paiement"));
     } finally {

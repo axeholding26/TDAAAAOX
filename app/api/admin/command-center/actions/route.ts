@@ -1,5 +1,6 @@
 // Moteur d'actions : assigner un insight à une équipe, l'ignorer, notifier des
 // marchands (données réelles uniquement), cocher une tâche. Tout est journalisé.
+import { pousserMarchands } from "@/lib/push";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
       const boutiques = await prisma.tenant.findMany({ where: { id: { in: a.ids } }, select: { id: true } });
       if (!boutiques.length) return NextResponse.json({ erreur: "Aucune boutique réelle dans la sélection" }, { status: 400 });
       await prisma.notificationMarchand.createMany({ data: boutiques.map((b) => ({ tenantId: b.id, type: "message_axso", titre: a.titre.slice(0, 120), message: a.message, lien: "/dashboard/abonnement" })) });
+      await pousserMarchands(boutiques.map((b) => b.id), { type: "message_axso", titre: a.titre, message: a.message, lien: "/dashboard/abonnement" });
       await journaliser(session, "marchands.notifier", "NotificationMarchand", null, null, { ids: boutiques.map((b) => b.id), titre: a.titre, message: a.message });
       return NextResponse.json({ message: `${boutiques.length} marchand${boutiques.length > 1 ? "s" : ""} notifié${boutiques.length > 1 ? "s" : ""}` });
     }

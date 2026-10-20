@@ -22,9 +22,13 @@ export default function DepotClient({ jeton, dossier, expireLe, fichierRequis }:
   const [resultat, setResultat] = useState<{ status: string; last_error: string | null } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
 
+  // Refusés aussi à l'import (lib/import-creations/regles.ts) : on le dit avant l'envoi.
   const ajouter = (liste: FileList | null) => {
     if (!liste) return;
-    setChoisis((c) => [...c, ...Array.from(liste).map((file) => ({ file, role: file.type.startsWith("image/") ? "visuel" as const : "fichier" as const }))].slice(0, 13));
+    const tous = Array.from(liste);
+    const refuses = tous.filter((f) => /\.(x?html?|svg|js|mjs|exe|msi|bat|cmd|sh|ps1|apk|jar|dll|scr|vbs|php)$/i.test(f.name));
+    setErreur(refuses.length ? `${refuses.map((f) => f.name).join(", ")} : ${t(/\.x?html?$/i.test(refuses[0].name) ? "les pages web HTML ne sont pas acceptées. Compresse le jeu ou la page (avec ses images) dans une archive .zip, puis dépose le .zip." : "fichier exécutable ou script refusé.")}` : null);
+    setChoisis((c) => [...c, ...tous.filter((f) => !refuses.includes(f)).map((file) => ({ file, role: file.type.startsWith("image/") ? "visuel" as const : "fichier" as const }))].slice(0, 13));
   };
 
   async function envoyer() {

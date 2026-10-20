@@ -279,6 +279,110 @@ export async function envoyerEmailTexte(params: { a: string; repondreA: string; 
   });
 }
 
+// Le marchand a remplacé le fichier d'un produit numérique : l'acheteur retélécharge avec son lien habituel.
+export async function envoyerMiseAJourProduit(params: { email: string; nom: string; produit: string; boutique: string; lienAcces: string }): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) return false;
+  const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  return envoyer(resend, {
+    from: `${params.boutique.replace(/[<>"\r\n]/g, "")} via Axso <noreply@axsoafrica.com>`,
+    to: params.email,
+    subject: `Nouvelle version disponible : ${params.produit}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+        <h2>Votre achat a été mis à jour</h2>
+        <p>Bonjour ${e(params.nom)},</p>
+        <p>${e(params.boutique)} vient de publier une nouvelle version de <strong>${e(params.produit)}</strong>. Elle est incluse dans votre achat.</p>
+        <p style="text-align: center; margin: 28px 0;">
+          <a href="${e(params.lienAcces)}" style="display: inline-block; padding: 14px 28px; background: #111; color: #fff; border-radius: 10px; text-decoration: none; font-weight: bold;">Télécharger la nouvelle version</a>
+        </p>
+        <p>L'équipe ${e(params.boutique)} via Axso</p>
+      </div>
+    `,
+  });
+}
+
+// Nouvelle version payante : offre réservée aux acheteurs de la version précédente.
+export async function envoyerOffreNouvelleVersion(params: { email: string; nom: string; ancien: string; nouveau: string; boutique: string; code: string; pourcentage: number; dateExpiration: Date; lienProduit: string }): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) return false;
+  const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  const fin = params.dateExpiration.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  return envoyer(resend, {
+    from: `${params.boutique.replace(/[<>"\r\n]/g, "")} via Axso <noreply@axsoafrica.com>`,
+    to: params.email,
+    subject: `${params.nouveau} : -${params.pourcentage} % pour vous`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
+        <h2>Une nouvelle version est sortie</h2>
+        <p>Bonjour ${e(params.nom)},</p>
+        <p>Vous avez acheté <strong>${e(params.ancien)}</strong>. ${e(params.boutique)} vient de sortir <strong>${e(params.nouveau)}</strong>, et vous réserve <strong>-${params.pourcentage} %</strong> jusqu'au ${fin}.</p>
+        <p style="text-align: center; font-size: 22px; letter-spacing: 2px; margin: 20px 0;"><strong>${e(params.code)}</strong></p>
+        <p style="text-align: center; margin: 28px 0;">
+          <a href="${e(params.lienProduit)}" style="display: inline-block; padding: 14px 28px; background: #111; color: #fff; border-radius: 10px; text-decoration: none; font-weight: bold;">Voir la nouvelle version</a>
+        </p>
+        <p style="color: #666; font-size: 13px;">Votre achat précédent reste le vôtre : vous gardez votre accès.</p>
+        <p>L'équipe ${e(params.boutique)} via Axso</p>
+      </div>
+    `,
+  });
+}
+
+// Retrait de marchand (lib/wallet.ts) ou commission d'affilié (lib/affiliation.ts, `affilie` présent)
+// à faire dans NotchPay : tout ce qu'il faut pour saisir le transfert à l'identique.
+export async function envoyerAlerteRetrait(p: {
+  a: string; lienAdmin?: string; affilie?: { nom: string; email: string }; retraitId: string; reference: string; creeLe: Date;
+  montant: number; devise: string; methode: string; operateur: string | null; destinataire: string;
+  canal: string | null; notes: string | null;
+  boutique: string; slug: string; proprietaire: { name: string | null; email: string | null } | null;
+  emailBoutique: string | null; whatsappBoutique: string | null; soldeApres: number | null; premierRetraitVersCeNumero: boolean;
+}): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) return false;
+  const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  const montant = `${p.montant.toLocaleString("fr-FR")} ${p.devise}`;
+  const ligne = (k: string, v: string | null | undefined, fort = false) =>
+    `<tr><td style="padding:6px 10px;color:#666;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 10px">${fort ? "<strong>" : ""}${e(v || "—")}${fort ? "</strong>" : ""}</td></tr>`;
+  const moyen = p.methode === "virement_bancaire" ? "Virement bancaire" : `Mobile Money ${p.operateur ?? ""}`.trim();
+  const admin = p.lienAdmin ?? "https://axsoafrica.com/admin/finances";
+  const quoi = p.affilie ? "Commission d'affilié" : "Retrait";
+  return envoyer(resend, {
+    from: "Axso <noreply@axsoafrica.com>",
+    to: p.a,
+    subject: `💸 ${quoi} à valider : ${montant} — ${p.boutique}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${quoi} à faire dans NotchPay</h2>
+        <p>${p.affilie
+          ? `${e(p.boutique)} paie ses commissions à son affilié <strong>${e(p.affilie.nom)}</strong>${p.affilie.email ? ` (${e(p.affilie.email)})` : ""}. Le wallet du marchand est déjà débité : l'affilié attend le transfert.`
+          : `${e(p.boutique)} demande un retrait. Son wallet est déjà débité : le marchand attend le transfert.`}</p>
+        ${p.premierRetraitVersCeNumero ? `<p style="background:#FFFBEB;border:1px solid #FDE68A;padding:10px;border-radius:8px">⚠️ <strong>Premier retrait payé vers ce numéro/compte</strong> pour cette boutique : vérifie qu'il appartient bien au marchand avant d'envoyer.</p>` : ""}
+        <h3>À saisir dans NotchPay (Transferts)</h3>
+        <table style="border-collapse:collapse;font-size:14px">
+          ${ligne("Montant", montant, true)}
+          ${ligne("Canal", p.canal ?? `${moyen} — hors canaux NotchPay (cm.mtn / cm.orange) : à payer par un autre moyen`, true)}
+          ${ligne("Numéro / compte", p.destinataire, true)}
+          ${ligne("Nom du bénéficiaire", p.affilie?.nom || p.proprietaire?.name || p.boutique)}
+          ${ligne("Description / référence", p.reference)}
+        </table>
+        <h3>Le marchand</h3>
+        <table style="border-collapse:collapse;font-size:14px">
+          ${ligne("Boutique", `${p.boutique} (${p.slug})`)}
+          ${ligne("Propriétaire", [p.proprietaire?.name, p.proprietaire?.email].filter(Boolean).join(" · "))}
+          ${ligne("E-mail boutique", p.emailBoutique)}
+          ${ligne("WhatsApp boutique", p.whatsappBoutique)}
+          ${ligne("Solde restant", p.soldeApres == null ? null : `${p.soldeApres.toLocaleString("fr-FR")} ${p.devise}`)}
+          ${ligne("Note du marchand", p.notes)}
+          ${ligne("Demandé le", p.creeLe.toLocaleString("fr-FR", { timeZone: "Africa/Douala" }))}
+          ${ligne(p.affilie ? "Identifiant du paiement" : "Identifiant du retrait", p.retraitId)}
+        </table>
+        <p style="margin-top:20px">Une fois le transfert fait (ou impossible), clôture-le : <strong>Payé</strong> le confirme ${p.affilie ? "au marchand et à l'affilié" : "au marchand"}, <strong>Refusé</strong> rend l'argent au marchand.</p>
+        <p style="text-align:center;margin:24px 0"><a href="${admin}" style="display:inline-block;padding:12px 24px;background:#111;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Ouvrir ${p.affilie ? "Admin › Affiliés" : "Admin › Finances"}</a></p>
+      </div>
+    `,
+  });
+}
+
 // Campagne e-mail d'une boutique : envoi par lots de 100 (API batch de Resend), lien de
 // désinscription en en-tête (bouton « Se désabonner » de Gmail). Renvoie le nombre réellement accepté.
 export async function envoyerCampagneEmail(params: {

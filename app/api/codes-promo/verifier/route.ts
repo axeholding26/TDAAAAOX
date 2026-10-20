@@ -38,5 +38,6 @@ export async function GET(req: NextRequest) {
     type: codePromo.type,
     valeur: codePromo.valeur,
     minCommande: codePromo.minCommande,
+    produitIds: codePromo.produitIds,
   });
 }

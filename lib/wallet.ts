@@ -6,8 +6,12 @@ import { prisma } from "./prisma";
 import { versXAF } from "./devise-convert";
 import { tauxDuJour } from "./taux-change";
 import { expirationApresPaiement } from "./abonnement";
-import { initierTransfertNotchPay, verifierTransfertNotchPay, hasNotchPay } from "./notchpay";
+import { verifierTransfertNotchPay, hasNotchPay } from "./notchpay";
+import { pousserAdmins } from "./push";
+import { envoyerAlerteRetrait } from "./email";
+import { notifierMarchand } from "./notifications-marchand";
 import { partVendeur } from "./pricing";
+import { normaliserTelephone } from "./devise-convert";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -319,11 +323,12 @@ export async function reprendreVenteRemboursee(p: { tenantId: string; commandeId
 // (updateMany conditionnel) pour éliminer toute race condition entre deux retraits
 // concurrents qui passeraient tous les deux un contrôle de solde fait séparément.
 //
-// Deux circuits :
-// - automatique : Mobile Money MTN/Orange Cameroun en XAF → NotchPay Transfers
-//   (seuls canaux de transfert que NotchPay propose) ;
-// - manuel : tout le reste (autre opérateur, autre pays, virement bancaire) reste
-//   « en_attente » sans référence et se traite depuis Admin › Finances.
+// Circuit unique depuis le 20/10/2026 : MANUEL. NotchPay n'accepte les transferts par API que
+// depuis des IP déclarées, et Vercel n'a pas d'IP fixe (refus « IP address not allowed »). Chaque
+// retrait reste « en_attente » sans référence : Axso est prévenu (cloche + push du Command Center,
+// e-mail à EMAIL_RETRAITS), fait le transfert dans le tableau de bord NotchPay, puis le marque payé
+// ou refusé dans Admin › Finances. Les retraits plus anciens suivis par NotchPay (référence) restent
+// mis à jour par le webhook et synchroniserRetraits.
 
 // Lie la ligne RETRAIT du wallet à son retrait (et sert de référence marchande NotchPay).
 const refRetrait = (retraitId: string) => `AXSO-${retraitId}`;
@@ -345,7 +350,14 @@ export function operateurCameroun(tel: string | null): "mtn" | "orange" | null {
 
 export async function initierRetrait(params: RetraitParams) {
   const { tenantId, methode, operateur, notes } = params;
-  const destinataire = params.destinataire.trim();
+  // Mobile Money : numéro au format international, indicatif du pays de la boutique (6XX… au Cameroun → +2376XX…).
+  let destinataire = params.destinataire.trim();
+  if (methode === "mobile_money") {
+    const { pays } = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { pays: true } })) ?? {};
+    const tel = normaliserTelephone(destinataire, pays);
+    if (!tel) throw new Error("Numéro Mobile Money invalide : vérifie-le, avec l'indicatif de ton pays s'il est à l'étranger.");
+    destinataire = tel;
+  }
   const montant = Math.round(Number(params.montant) * 100) / 100;
 
   const MINIMUM = 1000;
@@ -383,41 +395,48 @@ export async function initierRetrait(params: RetraitParams) {
     return { retrait: r, nomBoutique: wallet.tenant.nomBoutique };
   });
 
-  const op = (operateur ?? "").toLowerCase();
-  const phone = methode === "mobile_money" && retrait.devise === "XAF" && (op === "mtn" || op === "orange") ? telCameroun(destinataire) : null;
-  if (!phone || !hasNotchPay()) return retrait; // circuit manuel
+  // Jamais bloquant : le retrait est enregistré même si l'alerte échoue (il reste visible dans Finances).
+  await signalerRetraitAValider(retrait.id).catch((e) => console.error("[wallet/retrait] alerte admin", retrait.id, e?.message));
+  return retrait;
+}
 
-  try {
-    const { transfer } = await initierTransfertNotchPay({
-      amount: montant,
-      currency: retrait.devise,
-      channel: `cm.${op}`,
-      beneficiaryData: { name: nomBoutique, phone, country: "CM" },
-      reference: refRetrait(retrait.id),
-      description: "Retrait Axso Wallet",
-      metadata: { retraitId: retrait.id },
-    });
-    const reference = typeof transfer === "string" ? transfer : (transfer?.reference ?? transfer?.id)?.toString();
-    await appliquerStatutTransfert(retrait.id, typeof transfer === "string" ? "pending" : transfer?.status, reference);
-  } catch (err: any) {
-    // Refus explicite de la demande (numéro invalide…) : rien n'est parti, on recrédite.
-    if (err?.status === 400 || err?.status === 422) {
-      await rembourserRetraitEchoue(retrait.id);
-      throw new Error(`Transfert refusé : ${err.message}. Le montant a été recrédité sur votre solde.`);
-    }
-    // Panne réseau, 5xx, accès refusé côté Axso : on ne sait pas si l'argent est
-    // parti. Ne JAMAIS recréditer à l'aveugle (double paiement) — le retrait
-    // reste en attente et passe dans le circuit manuel, à vérifier chez NotchPay.
-    console.error("[wallet/retrait] transfert NotchPay incertain", retrait.id, err?.status, err?.message);
-    await prisma.retrait.update({
-      where: { id: retrait.id },
-      data: { notes: [notes, `NotchPay : ${err?.message ?? "sans réponse"} — vérifier chez NotchPay avant de payer`].filter(Boolean).join(" · ") },
-    });
-  }
+/** Destinataire des alertes « retrait à valider ». */
+export const EMAIL_RETRAITS = "axedigital00@gmail.com";
 
-  const final = await prisma.retrait.findUniqueOrThrow({ where: { id: retrait.id } });
-  if (final.statut === "echoue") throw new Error("Le transfert a échoué. Le montant a été recrédité sur votre solde.");
-  return final;
+/** Canal NotchPay à choisir pour ce retrait, ou null s'il se paie hors NotchPay (Wave, banque, autre pays). */
+export function canalNotchPay(r: { methode: string; operateur: string | null; devise: string; destinataire: string }): string | null {
+  const op = (r.operateur ?? "").toLowerCase();
+  return r.methode === "mobile_money" && r.devise === "XAF" && (op === "mtn" || op === "orange") && telCameroun(r.destinataire) ? `cm.${op}` : null;
+}
+
+/**
+ * Prévient Axso qu'un retrait attend son transfert : push du Command Center + e-mail détaillé
+ * (tout ce qu'il faut pour faire le transfert à l'identique dans NotchPay et vérifier le marchand).
+ */
+export async function signalerRetraitAValider(retraitId: string) {
+  const r = await prisma.retrait.findUniqueOrThrow({ where: { id: retraitId } });
+  const [tenant, wallet, dejaPayes] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: r.tenantId },
+      select: { nomBoutique: true, slug: true, email: true, whatsapp: true, proprietaires: { where: { role: "owner" }, take: 1, select: { user: { select: { name: true, email: true } } } } },
+    }),
+    prisma.wallet.findUnique({ where: { id: r.walletId }, select: { solde: true } }),
+    prisma.retrait.count({ where: { tenantId: r.tenantId, destinataire: r.destinataire, statut: "complete" } }),
+  ]);
+  const montant = `${r.montant.toLocaleString("fr-FR")} ${r.devise}`;
+  const boutique = tenant?.nomBoutique ?? r.tenantId;
+  await Promise.allSettled([
+    pousserAdmins({ titre: "💸 Retrait à valider", message: `${boutique} · ${montant} → ${r.operateur ?? r.methode}`, lien: "/admin/finances", type: "retrait_a_valider" }),
+    envoyerAlerteRetrait({
+      a: EMAIL_RETRAITS,
+      retraitId: r.id, reference: refRetrait(r.id), creeLe: r.createdAt,
+      montant: r.montant, devise: r.devise, methode: r.methode, operateur: r.operateur, destinataire: r.destinataire,
+      canal: canalNotchPay(r), notes: r.notes,
+      boutique, slug: tenant?.slug ?? "", proprietaire: tenant?.proprietaires[0]?.user ?? null,
+      emailBoutique: tenant?.email ?? null, whatsappBoutique: tenant?.whatsapp ?? null,
+      soldeApres: wallet?.solde ?? null, premierRetraitVersCeNumero: dejaPayes === 0,
+    }).then((ok) => { if (!ok) throw new Error("e-mail non envoyé"); }),
+  ]).then((res) => res.forEach((x) => x.status === "rejected" && console.error("[wallet/retrait] alerte", retraitId, x.reason?.message)));
 }
 
 // ─── Appliquer l'état d'un transfert à son retrait ────────────────────────────
@@ -449,6 +468,12 @@ export async function cloturerRetraitManuel(retraitId: string, paye: boolean) {
   if (retrait.reference) throw new Error("Ce retrait est suivi automatiquement par NotchPay");
   if (retrait.statut !== "en_attente") throw new Error("Ce retrait est déjà traité");
   await appliquerStatutTransfert(retraitId, paye ? "complete" : "failed");
+  const montant = `${retrait.montant.toLocaleString("fr-FR")} ${retrait.devise}`;
+  await notifierMarchand({
+    tenantId: retrait.tenantId, type: paye ? "retrait_paye" : "retrait_refuse", lien: "/dashboard/wallet",
+    titre: paye ? `Retrait de ${montant} envoyé` : `Retrait de ${montant} refusé`,
+    message: paye ? `Axso a envoyé ${montant} à ${retrait.destinataire}.` : `Le retrait vers ${retrait.destinataire} n'a pas pu être fait : ${montant} ont été remis sur votre solde.`,
+  });
 }
 
 // ─── Rembourser un retrait qui a échoué ───────────────────────────────────────

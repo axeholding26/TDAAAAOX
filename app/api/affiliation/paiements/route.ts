@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { payerCommissionsAffilie, rembourserPaiementCommissionEchoue } from "@/lib/affiliation";
+import { payerCommissionsAffilie } from "@/lib/affiliation";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -47,8 +47,8 @@ export async function GET(req: Request) {
   return NextResponse.json({ paiements, commissionsDues: commissionsDuesDetail, stats: { totalPaye, totalDu, soldeRestant: totalDu } });
 }
 
-// POST — déclenche le paiement réel des commissions approuvées d'un affilié
-// (débit wallet marchand + transfert NotchPay si configuré, voir lib/affiliation.ts)
+// POST — demande le paiement des commissions approuvées d'un affilié : débit du wallet marchand,
+// puis Axso fait le transfert et le clôture (voir lib/affiliation.ts).
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -68,35 +68,5 @@ export async function POST(req: Request) {
   }
 }
 
-// PATCH — ajuste le statut d'un paiement déjà créé (confirmation manuelle
-// d'un virement hors NotchPay, ou signalement d'échec avec remboursement
-// automatique du wallet marchand)
-export async function PATCH(req: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  const tenantId = (session.user as any).tenantId;
-  if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
-  const body = await req.json().catch(() => ({}));
-  if (!body.id) return NextResponse.json({ error: "id requis" }, { status: 400 });
-
-  const existing = await prisma.paiementCommission.findFirst({ where: { id: body.id, tenantId } });
-  if (!existing) return NextResponse.json({ error: "Paiement introuvable" }, { status: 404 });
-
-  if (body.statut === "echec") {
-    await rembourserPaiementCommissionEchoue(body.id);
-    const paiement = await prisma.paiementCommission.findUnique({ where: { id: body.id } });
-    return NextResponse.json({ paiement });
-  }
-
-  // Seule transition manuelle : en_attente → traite (virement confirmé). Un statut libre
-  // permettait de repasser un paiement « echec » en attente puis de le rembourser une 2e fois.
-  if (body.statut !== undefined && (body.statut !== "traite" || existing.statut !== "en_attente")) {
-    return NextResponse.json({ error: "Transition de statut impossible" }, { status: 400 });
-  }
-  const paiement = await prisma.paiementCommission.update({
-    where: { id: body.id },
-    data: { statut: body.statut ?? undefined, reference: body.reference ?? undefined, notes: body.notes ?? undefined },
-  });
-
-  return NextResponse.json({ paiement });
-}
+// Plus de PATCH : depuis le 20/10/2026 c'est Axso qui fait le transfert et clôture le paiement
+// (Admin › Affiliés). Le marchand qui le marquait payé ou échoué risquait un double versement.

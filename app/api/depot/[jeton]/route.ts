@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: Ctx) {
           if (!d) throw new Error("Lien expiré ou déjà utilisé");
           if (!chemin.startsWith(`${dossierBoutique(d.tenantId)}depot/`) || chemin.includes("..")) throw new Error("Dossier non autorisé");
           // Types vérifiés à nouveau par leur signature à l'import (lib/import-creations/regles.ts).
-          return { allowedContentTypes: [...TYPES_FICHIERS.image, ...TYPES_FICHIERS.digital, "video/mp4", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/epub+zip"], maximumSizeInBytes: MAX.fichier, addRandomSuffix: true };
+          return { allowedContentTypes: [...TYPES_FICHIERS.image, ...TYPES_FICHIERS.digital.filter((t) => t !== "text/html"), "video/mp4", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/epub+zip"], maximumSizeInBytes: MAX.fichier, addRandomSuffix: true };
         },
         onUploadCompleted: async () => {},
       }));

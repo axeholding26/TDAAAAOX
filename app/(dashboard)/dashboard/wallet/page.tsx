@@ -9,6 +9,7 @@ import {
 import { ModuleTutorial, BoutonRevoirTutoriel } from "@/components/dashboard/ModuleTutorial";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
 import { useT } from "@/components/I18nProvider";
+import { exempleTelephone, normaliserTelephone } from "@/lib/devise-convert";
 
 const WALLET_TUTORIAL_STEPS = [
   { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque paiement client est placé en séquestre 48h (protection acheteur) avant d'être crédité sur ton solde disponible." },
@@ -93,6 +94,7 @@ function TxIcon({ type }: { type: string }) {
 export default function WalletPage() {
   const tr = useT();
   const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [pays, setPays] = useState<string | null>(null);
   const [boutiques, setBoutiques] = useState<SoldeBoutique[]>([]);
   const [loading, setLoading] = useState(true);
   const [showRetrait, setShowRetrait] = useState(false);
@@ -114,6 +116,7 @@ export default function WalletPage() {
       const data = await res.json();
       setWallet(data.wallet);
       setBoutiques(data.boutiques ?? []);
+      setPays(data.pays ?? null);
     } catch { toast.error(tr("Erreur chargement wallet")); }
     finally { setLoading(false); }
   }
@@ -132,9 +135,7 @@ export default function WalletPage() {
       });
       const data = await res.json();
       if (!res.ok) { toast.error(tr(data.error) ?? tr("Erreur retrait")); return; }
-      toast.success(data.retrait?.statut === "traitement"
-        ? tr("Retrait envoyé à votre opérateur. Vous recevrez les fonds dans quelques minutes.")
-        : tr("Retrait initié ! Traitement sous 24–48h."));
+      toast.success(tr("Retrait demandé ! Axso l'envoie sous 24–48h ouvrées et vous prévient dès que c'est fait."));
       setShowRetrait(false);
       setForm({ montant: "", methode: "mobile_money", destinataire: "", operateur: "MTN", notes: "" });
       charger();
@@ -149,12 +150,12 @@ export default function WalletPage() {
     : !(montant >= MINIMUM_RETRAIT) ? tr("Le minimum de retrait est de {0}.", fmt(MINIMUM_RETRAIT, devise))
     : montant > solde ? tr("Ce montant dépasse votre solde disponible ({0}).", fmt(solde, devise))
     : null;
-  const chiffres = form.destinataire.replace(/\D/g, "");
+  // Même normalisation que le serveur : indicatif du pays de la boutique.
+  const telInternational = form.methode === "mobile_money" ? normaliserTelephone(form.destinataire, pays) : null;
   const erreurDestinataire = !form.destinataire.trim() ? null
-    : form.methode === "mobile_money" && chiffres.length < 8 ? tr("Ce numéro est trop court.")
+    : form.methode === "mobile_money" && !telInternational ? tr("Numéro invalide : vérifie-le, avec l'indicatif de ton pays s'il est à l'étranger.")
     : form.methode === "virement_bancaire" && form.destinataire.trim().length < 10 ? tr("Ce numéro de compte est trop court.")
     : null;
-  const instantane = (operateur: string) => devise === "XAF" && ["MTN", "Orange"].includes(operateur);
 
   /** Ouvre le formulaire en reprenant le destinataire du dernier retrait : il change rarement. */
   function ouvrirRetrait() {
@@ -164,9 +165,6 @@ export default function WalletPage() {
     }
     setShowRetrait(true);
   }
-  // Seuls MTN et Orange Cameroun (XAF) partent automatiquement ; le reste est traité à la main par Axso.
-  const retraitAuto = form.methode === "mobile_money" && devise === "XAF" && ["MTN", "Orange"].includes(form.operateur)
-    && /^(\+|00)?(237)?6\d{8}$/.test(form.destinataire.replace(/[\s.-]/g, ""));
 
   return (
     <div className="space-y-5 max-w-5xl"
@@ -477,9 +475,6 @@ export default function WalletPage() {
                           ? { borderColor: "#F5A623", background: "#FFFBEB", color: "#D97706" }
                           : { borderColor: "#EBEBEB", background: "#FAFAFA", color: "#888888" }}>
                         {tr(op.label)}
-                        <span className="text-[10px] font-semibold" style={{ color: instantane(op.id) ? "#15803D" : "#AAAAAA" }}>
-                          {instantane(op.id) ? tr("Quelques minutes") : tr("24 à 48 h")}
-                        </span>
                       </button>
                     ))}
                   </div>
@@ -497,14 +492,13 @@ export default function WalletPage() {
                   autoComplete={form.methode === "mobile_money" ? "tel" : "off"}
                   value={form.destinataire}
                   onChange={e => setForm(f => ({ ...f, destinataire: e.target.value }))}
-                  placeholder={form.methode === "mobile_money" ? tr("+237 6XX XXX XXX") : tr("FR76 XXXX XXXX XXXX")}
+                  placeholder={form.methode === "mobile_money" ? exempleTelephone(pays) : tr("FR76 XXXX XXXX XXXX")}
                   aria-invalid={!!erreurDestinataire}
                   className={`w-full border rounded-2xl px-4 py-3 text-[#111111] text-[13px] outline-none transition-colors ${erreurDestinataire ? "border-[#DC2626]" : "border-[#E8E8E8] focus:border-[#F5A623]/50"}`}
                 />
                 {erreurDestinataire
                   ? <p role="alert" className="text-[11.5px] mt-1.5 text-[#DC2626] font-semibold">{erreurDestinataire}</p>
-                  : form.methode === "mobile_money" && instantane(form.operateur) && form.destinataire.trim() && !retraitAuto
-                    && <p className="text-[11.5px] mt-1.5 text-[#B45309]">{tr("Ce numéro n'a pas le format camerounais (6XX XXX XXX) : le retrait sera traité à la main, sous 24 à 48 h.")}</p>}
+                  : telInternational && <p className="text-[11.5px] mt-1.5 text-[#15803D]">{tr("Envoi vers le {0}", telInternational)}</p>}
               </div>
 
               {/* Notes */}
@@ -546,9 +540,7 @@ export default function WalletPage() {
               <div className="flex items-start gap-2 bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-3">
                 <AlertCircle size={13} className="text-[#D97706] mt-0.5 flex-shrink-0" />
                 <p className="text-[11.5px] text-[#92400E]">
-                  {retraitAuto
-                    ? tr("Envoi automatique vers votre compte Mobile Money. Les fonds sont débités immédiatement de votre wallet.")
-                    : tr("Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.")}
+                  {tr("Traitement sous 24–48h ouvrées. Les fonds sont débités immédiatement de votre wallet.")}
                 </p>
               </div>
 

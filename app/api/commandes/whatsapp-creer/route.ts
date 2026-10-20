@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     // Code promo revérifié ici (le panier ne fait qu'afficher une estimation).
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
-    const reduction = reductionPromo(promo, sousTotal);
+    const reduction = reductionPromo(promo, sousTotal, items);
     const promoValide = promo && reduction > 0;
     const total = sousTotal - reduction;
     const codePromo = promoValide ? promo.code : null;

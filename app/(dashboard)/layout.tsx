@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ActivationPush } from "@/components/ActivationPush";
 import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -13,6 +14,9 @@ import { I18nProvider } from "@/components/I18nProvider";
 import { getLangue, dico } from "@/lib/i18n/serveur";
 import { DeviseProvider } from "@/components/dashboard/DeviseProvider";
 
+
+// Manifeste : installable (écran d'accueil), exigé par iPhone pour les notifications push.
+export const metadata = { manifest: "/manifest-dashboard.webmanifest" };
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session) redirect("/connexion");
@@ -46,6 +50,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <NotificationSound />
       {/* Nouvelle commande : alerte distincte (son de caisse + carte). */}
       <AlerteCommande />
+      {/* Notifications push : alertes sur l'appareil, même appli fermée. */}
+      <ActivationPush espace="dashboard" />
       {/* AXIA prend la parole : constats, rappels, demandes d'accord. */}
       <AxiaBulle />
       {/* Liste ouverte des menus déroulants, la même dans tous les navigateurs. */}

@@ -37,7 +37,10 @@ export async function GET(req: NextRequest, { params }: Ctx) {
         ])
       : [null, null];
 
-    const limite = metaDigital(produit?.instructionsTelechargement).limiteTelechargement as number | null | undefined;
+    // La limite du marchand compte des téléchargements du PRODUIT : à plusieurs fichiers, chaque fichier
+    // en consomme un, donc on la multiplie (limite 5, 3 fichiers → 15 : l'ensemble se télécharge 5 fois).
+    const parProduit = metaDigital(produit?.instructionsTelechargement).limiteTelechargement as number | null | undefined;
+    const limite = parProduit ? parProduit * Math.max(1, produit?.produitFichier?.fichiers.length ?? 0) : parProduit;
     const refus = controlerJeton({ dl, commande, limite });
     if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
     if (!produit || !commande) return NextResponse.json({ error: "Produit introuvable" }, { status: 404 });

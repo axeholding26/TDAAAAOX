@@ -87,23 +87,15 @@ export async function importer(e: EntreeImport): Promise<ImportCreation & { fich
   if (raison) throw new RefusImport(raison);
   const deja = e.cle ? await prisma.importCreation.findUnique({ where: { tenantId_cleIdempotence: { tenantId: e.tenantId, cleIdempotence: e.cle } }, include: { fichiers: true } }) : null;
   if (deja) {
-    if (["failed", "retrying"].includes(deja.statut)) {
-      // Reprise : une nouvelle adresse remplace celle qui a échoué (lien expiré…).
-      for (const role of ["fichier", "visuel"] as const) {
-        const cibles = deja.fichiers.filter((l) => l.role === role);
-        for (const [i, s] of (role === "fichier" ? e.fichiers : e.visuels).entries()) {
-          if (s.url && cibles[i] && cibles[i].statut !== "stocke" && cibles[i].sourceUrl !== s.url) {
-            await prisma.fichierImport.update({ where: { id: cibles[i].id }, data: { sourceUrl: s.url, statut: "en_attente", erreur: null } });
-          }
-        }
-      }
-      return traiter(deja.id, contenusPour(deja.fichiers, e));
-    }
-    return deja;
+    // Même clé : jamais un second import ni un second produit. Un produit en vente n'est pas
+    // retouché par un rejeu ; sinon les fichiers envoyés complètent ou remplacent ce qui manque.
+    const arrivees = [...e.fichiers.map((s) => ({ ...s, role: "fichier" as const })), ...e.visuels.map((s) => ({ ...s, role: "visuel" as const }))];
+    if (deja.statut === "published" || e.attendDepot) return deja;
+    if (arrivees.length) return traiter(deja.id, await fusionner(deja, arrivees));
+    return ["failed", "retrying"].includes(deja.statut) ? traiter(deja.id) : deja;
   }
   const lignes = (role: "fichier" | "visuel", s: SourceFichier) => ({
-    tenantId: e.tenantId, role, nom: nomPropre(s.nom || (s.url ? decodeURIComponent(new URL(s.url).pathname.split("/").pop() || "") : "") || role),
-    sourceUrl: s.url, ...(s.mediaId && { statut: "media", cle: s.mediaId }),
+    tenantId: e.tenantId, role, nom: nomDe(s, role), sourceUrl: s.url, ...(s.mediaId && { statut: "media", cle: s.mediaId }),
   });
   let imp: ImportCreation & { fichiers: FichierImport[] };
   try {
@@ -135,6 +127,44 @@ function contenusPour(lignes: FichierImport[], e: EntreeImport): Map<string, Buf
   return m;
 }
 
+const nomDe = (s: SourceFichier, role: string) =>
+  nomPropre(s.nom || (s.url ? decodeURIComponent(new URL(s.url).pathname.split("/").pop() || "") : "") || role);
+const dejaStocke = (l: FichierImport) => l.statut === "stocke" || l.statut === "media";
+
+/**
+ * Reprise d'un import existant (même import_key, ou nouveau dépôt) : chaque fichier arrivé est
+ * rapproché PAR SON NOM. Déjà stocké → ignoré (aucun doublon) ; pas encore stocké → sa source est
+ * remplacée ; inconnu → ajouté. Pour un rôle où des fichiers arrivent, une ligne non stockée que
+ * rien ne remplace est retirée : c'est ainsi qu'un jeu .html refusé est remplacé par son .zip.
+ */
+async function fusionner(imp: ImportCreation & { fichiers: FichierImport[] }, arrivees: (SourceFichier & { role: "fichier" | "visuel" })[]) {
+  const contenus = new Map<string, Buffer>();
+  for (const role of ["fichier", "visuel"] as const) {
+    const nouvelles = arrivees.filter((a) => a.role === role);
+    if (!nouvelles.length) continue;
+    const lignes = imp.fichiers.filter((l) => l.role === role);
+    const gardees = new Set<string>();
+    for (const s of nouvelles) {
+      const nom = nomDe(s, role);
+      const l = s.mediaId ? lignes.find((x) => x.cle === s.mediaId) : lignes.find((x) => x.nom === nom && x.statut !== "media");
+      if (l && dejaStocke(l)) {
+        gardees.add(l.id);
+        if (urlDepot(imp.tenantId, s.url)) await del(s.url!).catch(() => {}); // re-déposé pour rien
+        continue;
+      }
+      const source = { sourceUrl: s.url ?? null, statut: s.mediaId ? "media" : "en_attente", cle: s.mediaId ?? null, erreur: null };
+      const id = l
+        ? (await prisma.fichierImport.update({ where: { id: l.id }, data: source })).id
+        : (await prisma.fichierImport.create({ data: { importId: imp.id, tenantId: imp.tenantId, role, nom, ...source } })).id;
+      gardees.add(id);
+      if (s.base64) contenus.set(id, dec64(s.base64));
+    }
+    const retirees = lignes.filter((l) => !gardees.has(l.id) && !dejaStocke(l)).map((l) => l.id);
+    if (retirees.length) await prisma.fichierImport.deleteMany({ where: { id: { in: retirees } } });
+  }
+  return contenus;
+}
+
 // ─── Stockage ────────────────────────────────────────────────────────────────
 const sha256 = (b: Buffer) => createHash("sha256").update(b).digest("hex");
 
@@ -153,25 +183,33 @@ async function relisible(url: string, empreinteAttendue: string): Promise<boolea
  * ponytail: @vercel/blob 0.27 n'a que l'accès public ; passer les fichiers vendus en accès
  * privé quand le paquet sera mis à jour (la livraison les lit déjà côté serveur).
  */
+/** Panne du stockage (Vercel Blob, médiathèque) : erreur passagère, l'import sera repris. */
+const auStockage = <T>(p: Promise<T>) => p.catch((err) => {
+  if (err instanceof ErreurImport) throw err;
+  console.error(JSON.stringify({ evt: "import_creation_stockage", message: String(err?.message).slice(0, 200) }));
+  throw new ErreurImport("Stockage d'Axso momentanément indisponible : nouvelle tentative automatique.", true);
+});
+
 async function stocker(imp: ImportCreation, f: FichierImport, donnees: Buffer, mime: string): Promise<Partial<FichierImport>> {
   const h = sha256(donnees);
   const meme = await prisma.fichierImport.findFirst({ where: { tenantId: imp.tenantId, sha256: h, role: f.role, statut: "stocke", url: { not: null } }, orderBy: { createdAt: "desc" } });
   if (meme?.url && await relisible(meme.url, h)) return { url: meme.url, cle: meme.cle, sha256: h, taille: donnees.length, mime, statut: "stocke", erreur: null };
   let url: string, cle: string | null;
   if (f.role === "visuel") {
-    const media = await enregistrerMedia({ tenantId: imp.tenantId, type: "image", fournisseur: imp.fournisseur, rendu: { donnees, mime }, creePar: imp.creePar, metadonnees: { origine: "import", importId: imp.id, nom: f.nom } });
+    const media = await auStockage(enregistrerMedia({ tenantId: imp.tenantId, type: "image", fournisseur: imp.fournisseur, rendu: { donnees, mime }, creePar: imp.creePar, metadonnees: { origine: "import", importId: imp.id, nom: f.nom } }));
     url = media.url; cle = media.id; // cle d'un visuel = id MediaIA
   } else {
     if (!process.env.BLOB_READ_WRITE_TOKEN) throw new ErreurImport("Le stockage de fichiers d'Axso n'est pas configuré.");
-    const depot = await put(`${dossierBoutique(imp.tenantId)}${SOUS_DOSSIER_DIGITAL}import-${f.nom}`, donnees, { access: "public", contentType: mime, addRandomSuffix: true });
+    const depot = await auStockage(put(`${dossierBoutique(imp.tenantId)}${SOUS_DOSSIER_DIGITAL}import-${f.nom}`, donnees, { access: "public", contentType: mime, addRandomSuffix: true }));
     url = depot.url; cle = depot.pathname;
   }
   if (!(await relisible(url, h))) throw new ErreurImport("Le fichier stocké n'a pas pu être relu.", true);
   return { url, cle, sha256: h, taille: donnees.length, mime, statut: "stocke", erreur: null };
 }
 
-const estTemporaireDepot = (imp: ImportCreation, url: string | null) =>
-  !!url && imp.source === "depot" && !!process.env.BLOB_READ_WRITE_TOKEN && url.includes(`/${dossierBoutique(imp.tenantId)}depot/`);
+/** Fichier du dossier temporaire de dépôt de la boutique : supprimé une fois recopié ou refusé. */
+const urlDepot = (tenantId: string, url: string | null | undefined): url is string =>
+  !!url && !!process.env.BLOB_READ_WRITE_TOKEN && url.includes(`/${dossierBoutique(tenantId)}depot/`);
 
 // ─── Traitement ──────────────────────────────────────────────────────────────
 const maj = (id: string, data: Prisma.ImportCreationUpdateInput) => prisma.importCreation.update({ where: { id }, data });
@@ -204,16 +242,22 @@ export async function traiter(importId: string, contenus = new Map<string, Buffe
           if (reste < 3000) throw new ErreurImport("Temps de traitement épuisé : la suite reprend à la prochaine tentative.", true);
           donnees = (await telechargerSur(f.sourceUrl, MAX[role], Math.min(DELAI_TELECHARGEMENT, reste))).donnees;
         }
-        if (!donnees) throw new ErreurImport(`Contenu de « ${f.nom} » à renvoyer (même import_key) ou à déposer par un lien de dépôt.`);
+        // Plus de source : la raison du dernier refus reste la meilleure explication.
+        if (!donnees) throw new ErreurImport(f.statut === "echec" && f.erreur ? f.erreur : `Contenu de « ${f.nom} » à renvoyer (même import_key) ou à déposer par un lien de dépôt.`);
         if (donnees.length > MAX[role]) throw new ErreurImport(`« ${f.nom} » est trop volumineux.`);
         const v = verifierFichier(donnees, f.nom, role);
         if (!v.ok) {
-          if (estTemporaireDepot(imp, f.sourceUrl)) await del(f.sourceUrl!).catch(() => {});
+          // Fichier temporaire refusé : supprimé, et son adresse oubliée (une reprise ne la
+          // retéléchargera pas pour annoncer un faux « lien expiré », HTTP 404).
+          if (urlDepot(imp.tenantId, f.sourceUrl)) {
+            await del(f.sourceUrl).catch(() => {});
+            await prisma.fichierImport.update({ where: { id: f.id }, data: { sourceUrl: null } });
+          }
           throw new ErreurImport(`« ${f.nom} » refusé : ${v.raison}`);
         }
         await prisma.fichierImport.update({ where: { id: f.id }, data: await stocker(imp, f, donnees, v.mime) });
         // Fichier temporaire d'un dépôt : supprimé une fois recopié.
-        if (estTemporaireDepot(imp, f.sourceUrl)) await del(f.sourceUrl!).catch(() => {});
+        if (urlDepot(imp.tenantId, f.sourceUrl)) await del(f.sourceUrl).catch(() => {});
       } catch (err) {
         if (!(err instanceof ErreurImport)) throw err;
         await prisma.fichierImport.update({ where: { id: f.id }, data: { statut: "echec", erreur: err.message.slice(0, 300) } });
@@ -230,6 +274,8 @@ export async function traiter(importId: string, contenus = new Map<string, Buffe
     const meta = imp.metadonnees as MetaProduit;
     const fichiers = imp.fichiers.filter((f) => f.role === "fichier" && f.url);
     if (!imp.produitId) {
+      // Import d'ajout (visuel, fichier) dont le produit a été supprimé : rien à recréer.
+      if (!meta.nom?.trim() || !(Number(meta.prix) > 0)) throw new ErreurImport("Le produit visé n'existe plus : lance un nouvel import.");
       const produit = await prisma.produit.create({
         data: {
           tenantId: imp.tenantId, nom: meta.nom!.trim().slice(0, 150), slug: await slugLibre(imp.tenantId, meta.nom!), type: "fichier", actif: false,
@@ -351,11 +397,13 @@ export async function finaliserDepot(jeton: string, depots: { url: string; nom: 
   const prefixe = `/${dossierBoutique(d.tenantId)}depot/`;
   if (!depots.length || depots.some((x) => !urlAcceptee(x.url) || !new URL(x.url).hostname.endsWith(".blob.vercel-storage.com") || !new URL(x.url).pathname.startsWith(prefixe))) throw new RefusImport("Fichiers déposés invalides.");
   if (depots.filter((x) => x.role === "fichier").length > NB_MAX.fichier || depots.filter((x) => x.role === "visuel").length > NB_MAX.visuel) throw new RefusImport("Trop de fichiers.");
-  const imp = await prisma.importCreation.findFirst({ where: { id: d.importId, tenantId: d.tenantId }, select: { produitId: true } });
+  const imp = await prisma.importCreation.findFirst({ where: { id: d.importId, tenantId: d.tenantId }, include: { fichiers: true } });
   if (!imp) return null;
-  if (!imp.produitId && !depots.some((x) => x.role === "fichier")) throw new RefusImport("Dépose au moins un fichier à vendre.");
+  if (imp.statut === "published") throw new RefusImport("Ce produit est déjà en vente : demande à ton assistant un nouveau lien de dépôt pour ce produit.");
+  if (!imp.produitId && !depots.some((x) => x.role === "fichier") && !imp.fichiers.some((l) => l.role === "fichier" && dejaStocke(l))) throw new RefusImport("Dépose au moins un fichier à vendre.");
   if ((await prisma.jetonIA.deleteMany({ where: { hash: empreinte(jeton), type: "depot", expireLe: { gt: new Date() } } })).count !== 1) return null;
-  await prisma.fichierImport.createMany({ data: depots.map((x) => ({ importId: d.importId, tenantId: d.tenantId, role: x.role, nom: nomPropre(x.nom), sourceUrl: x.url })) });
+  // Un nouveau dépôt sur un import en échec le reprend (mêmes règles que importer_creation).
+  await fusionner(imp, depots.map((x) => ({ nom: x.nom, url: x.url, role: x.role })));
   await maj(d.importId, { statut: "received", source: "depot" });
   return traiter(d.importId);
 }

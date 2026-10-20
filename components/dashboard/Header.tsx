@@ -1,4 +1,5 @@
 "use client";
+import { ouvrirReglagePush } from "@/components/ActivationPush";
 import { useState, useEffect, useRef } from "react";
 import { ecouterNotifications } from "@/components/dashboard/AlerteCommande";
 import Link from "next/link";
@@ -248,13 +249,16 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                     if (n.autreBoutique) return <div key={n.id} style={{ cursor:"pointer" }} onClick={() => basculerBoutique(n.tenantId, n.lien)}>{t(content)}</div>;
                     return n.lien ? <Link key={n.id} href={n.lien} onClick={() => setNotifOpen(false)}>{t(content)}</Link> : content;
                   })}
-                  {notifications.length > 0 && (
-                    <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2" }}>
+                  <div style={{ padding:"10px 18px 14px", borderTop:"1px solid #f2f2f2", display:"flex", justifyContent:"space-between", gap:"12px" }}>
+                    {notifications.length > 0 && (
                       <button onClick={marquerToutLu} style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#F5A623", cursor:"pointer", fontFamily:"inherit" }}>
                         {t("Tout marquer comme lu")}
                       </button>
-                    </div>
-                  )}
+                    )}
+                    <button onClick={() => { setNotifOpen(false); ouvrirReglagePush(); }} style={{ background:"none", border:"none", fontSize:"12px", fontWeight:600, color:"#777", cursor:"pointer", fontFamily:"inherit", marginLeft:"auto" }}>
+                      {t("Notifications sur cet appareil")}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

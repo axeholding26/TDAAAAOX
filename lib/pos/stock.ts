@@ -34,6 +34,7 @@ import { ErreurPos } from "./erreurs";
 import { entrepotPrincipal } from "./magasins";
 import { cleArticle } from "./types";
 import { publier } from "../controle-ia/evenements";
+import { alerterStockApres } from "../notifications-marchand";
 
 type Tx = Prisma.TransactionClient;
 type Db = Tx | PrismaClient;
@@ -129,6 +130,9 @@ export async function mouvementStock(tx: Tx, p: DemandeMouvement): Promise<Resul
   const stockAvant = stockApres - delta;
   // Franchissement du seuil d'alerte (il n'existe que sur le produit, pas sur ses variantes) : événement du bus AXSO CONTROL, sans effet sur le mouvement.
   if (!varianteId && produit.stockMin && stockApres <= produit.stockMin && stockAvant > produit.stockMin) publier(p.tenantId, "inventory.low", { produitId: p.produitId, nom: produit.nom, stock: stockApres, seuil: produit.stockMin });
+  // Rupture ou seuil franchi : le marchand est prévenu tout de suite (cloche + push).
+  const franchi = (seuil: number) => stockAvant > seuil && stockApres <= seuil;
+  if (franchi(0) || (!varianteId && produit.stockMin && franchi(produit.stockMin))) alerterStockApres(p.tenantId, p.produitId, varianteId);
 
   // 2. Ventilation par entrepôt.
   const lieu = p.lieu !== undefined ? p.lieu : await resoudreLieu(tx, p.tenantId, p.entrepotId);

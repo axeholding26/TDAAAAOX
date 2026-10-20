@@ -31,6 +31,7 @@
 // conflit « session » donne le montant en espèces à rapprocher de l'écart de
 // fermeture. Si la boutique exige une session et que la caisse est fermée, la
 // vente attend (409 caisse_fermee) : elle partira dès l'ouverture de la caisse.
+import { pousserApresTransaction } from "@/lib/push";
 import { z } from "zod";
 import { prisma } from "../../prisma";
 import { formatMontant } from "../../utils";
@@ -88,7 +89,8 @@ export const schemaFinSync = z.object({
 
 /** Notification du marchand + événement temps réel, même forme que lib/pos/alertes.ts. */
 async function alerter(tx: Parameters<typeof journaliserAudit>[0], ctx: ContextePos, a: { cle: string; categorie: "stock" | "finance" | "operationnel"; titre: string; message: string }) {
-  await tx.notificationMarchand.create({ data: { tenantId: ctx.tenantId, type: "pos_alerte", titre: a.titre, message: a.message.slice(0, 1000), lien: "/dashboard/pos/audit" } });
+  const n = await tx.notificationMarchand.create({ data: { tenantId: ctx.tenantId, type: "pos_alerte", titre: a.titre, message: a.message.slice(0, 1000), lien: "/dashboard/pos/audit" } });
+  pousserApresTransaction(n.id, ctx.tenantId, { type: "pos_alerte", titre: a.titre, message: a.message, lien: "/dashboard/pos/audit" });
   await publierEvenement(tx, {
     tenantId: ctx.tenantId, magasinId: ctx.magasinId, caisseId: ctx.caisseId, type: "alert.created",
     payload: { cle: a.cle, categorie: a.categorie, gravite: "attention", titre: a.titre, message: a.message, lien: "/dashboard/pos/audit", origine: "hors_ligne" },

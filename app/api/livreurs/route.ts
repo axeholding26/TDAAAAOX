@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { annoncerInscription } from "@/lib/push";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { requireNiveau } from "@/lib/permissions-server";
@@ -79,6 +80,7 @@ export async function POST(req: NextRequest) {
       return { livreur };
     });
 
+    await annoncerInscription({ name: data.nom, email: data.email, role: "livreur" });
     return NextResponse.json({ success: true, livreur }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

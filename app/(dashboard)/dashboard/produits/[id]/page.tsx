@@ -11,6 +11,7 @@ import {
 import { VariantesPrixManager } from "@/components/dashboard/VariantesPrixManager";
 import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
 import FormationManager from "@/components/dashboard/FormationManager";
+import { FichiersLivres, NouvelleVersion, PrevenirAcheteurs } from "@/components/dashboard/FichiersLivresManager";
 import FaqManager, { type FaqItem } from "@/components/dashboard/FaqManager";
 import ChampsCommandeManager, { type ChampCommande } from "@/components/dashboard/ChampsCommandeManager";
 import PublicationAssistant from "@/components/dashboard/PublicationAssistant";
@@ -673,15 +674,37 @@ export default function EditProduitPage() {
                     <p className="text-sm font-semibold text-gray-800 truncate">{tr(form.fichierNom) || tr("Fichier uploadé")}</p>
                     <p className="text-xs text-gray-400">{form.fichierTaille ? formatTaille(form.fichierTaille) : tr("Taille inconnue")}{" "}{tr("· Prêt à l'envoi")}</p>
                   </div>
+                  {uploadingFichier ? <Loader2 size={16} className="animate-spin text-purple-400" /> : (
+                    <button onClick={() => digitalFileRef.current?.click()}
+                      className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800"><RefreshCw size={13} />{tr("Remplacer")}</button>
+                  )}
                   <button onClick={() => { set("fichierUrl", ""); set("fichierNom", ""); set("fichierTaille", 0); }}
                     className="text-red-400 hover:text-red-600 transition-colors"><X size={16} /></button>
+                  <input ref={digitalFileRef} type="file" className="hidden"
+                    accept=".pdf,.zip,.mp3,.mp4,.docx,.xlsx,.wav,.ogg"
+                    onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) uploadFichierDigital(f); }} />
                 </div>
               )}
+              <PrevenirAcheteurs produitId={id} aEnregistrer />
+              <NouvelleVersion produitId={id} actif={form.actif} />
               <div>
                 <label className="ax-label block mb-1.5">{tr("Instructions de téléchargement (optionnel)")}</label>
                 <textarea value={form.instructionsTelechargement} onChange={e => set("instructionsTelechargement", e.target.value)}
                   rows={3} placeholder={tr("Ex: Ouvrez le PDF avec Adobe Reader.")} className={`${inputClass} resize-none`} />
               </div>
+            </div>
+          )}
+
+          {/* Section FICHIERS (produit à plusieurs fichiers) */}
+          {form.type === "fichier" && (
+            <div className="bg-white border border-purple-200 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-1">
+                <FileText size={15} className="text-purple-500" />
+                <h2 className="text-[13px] font-semibold text-[#111111]">{tr("Fichiers livrés")}</h2>
+              </div>
+              <FichiersLivres produitId={id} />
+              <PrevenirAcheteurs produitId={id} />
+              <NouvelleVersion produitId={id} actif={form.actif} />
             </div>
           )}
 

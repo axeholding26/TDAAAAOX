@@ -1,5 +1,5 @@
-// Circuit manuel des retraits : tout ce que NotchPay ne sait pas envoyer seul
-// (autre opérateur que MTN/Orange Cameroun, autre devise, virement bancaire).
+// Circuit manuel des retraits (tous depuis le 20/10/2026, voir lib/wallet.ts) : Axso fait le
+// transfert dans NotchPay puis clôture ici.
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession, getAdminSessionPour, estAdminComplet } from "@/lib/admin-auth";
 import { journaliser } from "@/lib/command-center/serveur";

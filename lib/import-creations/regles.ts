@@ -69,7 +69,9 @@ function texteSur(b: Buffer): boolean {
   try { new TextDecoder("utf-8", { fatal: true }).decode(extrait.subarray(0, Math.max(0, extrait.length - 4))); return true; } catch { return false; }
 }
 
-export type Verdict = { ok: true; type: string; mime: string; genre: Genre } | { ok: false; raison: string };
+export const HTML_REFUSE = "Page web (HTML) refusée : compresse-la dans une archive .zip (avec ses images et scripts) ; l'acheteur extrait l'archive puis ouvre le fichier .html dans son navigateur.";
+
+export type Verdict ={ ok: true; type: string; mime: string; genre: Genre } | { ok: false; raison: string };
 
 /**
  * Verdict sur un fichier : signature reconnue, extension cohérente, rôle respecté
@@ -79,10 +81,12 @@ export type Verdict = { ok: true; type: string; mime: string; genre: Genre } | {
  */
 export function verifierFichier(b: Buffer, nom: string, role: "fichier" | "visuel"): Verdict {
   if (!b.length) return { ok: false, raison: "Fichier vide." };
-  if (estExecutable(b)) return { ok: false, raison: "Fichier exécutable, script ou page web refusé." };
+  const ext = extension(nom);
+  // Une page web servie depuis le stockage exécuterait son script : elle se vend dans un .zip.
+  if (["html", "htm", "xhtml"].includes(ext) || /^\s*<(!doctype html|html)/i.test(ascii(b, 0, 200))) return { ok: false, raison: HTML_REFUSE };
+  if (estExecutable(b) || /^(svg|js|mjs|exe|msi|bat|cmd|sh|ps1|apk|jar|dll|scr|vbs|php)$/.test(ext)) return { ok: false, raison: "Fichier exécutable, script ou image SVG refusé." };
   const reel = signature(b);
   if (!reel) return { ok: false, raison: "Type de fichier non reconnu ou non accepté." };
-  const ext = extension(nom);
   let type = reel;
   if (reel === "zip") type = ZIP_OFFICE.has(ext) ? ext : "zip";
   else if (reel === "txt") type = ["csv", "md", "txt"].includes(ext) ? ext : "txt";

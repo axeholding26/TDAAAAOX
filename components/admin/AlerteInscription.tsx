@@ -1,5 +1,6 @@
 "use client";
 
+import { abonnePush, ouvrirReglagePush } from "@/components/ActivationPush";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { UserPlus, X, Volume2, VolumeX } from "lucide-react";
@@ -91,7 +92,7 @@ export function AlerteInscription() {
         if (premier || !nouveaux.length) return;
         if (!lireMuet()) sonInscription();
         setAlertes((a) => [...nouveaux.reverse(), ...a].slice(0, 4));
-        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        if (document.hidden && "Notification" in window && Notification.permission === "granted" && !(await abonnePush())) {
           for (const u of nouveaux) new Notification(`🎉 ${t(u.role === "livreur" ? "Nouveau livreur" : "Nouveau marchand")}`, { body: [u.nom, u.boutique, u.email].filter(Boolean).join(" · "), tag: u.id });
         }
       } catch { /* réseau : prochain tour */ }
@@ -133,8 +134,8 @@ export function AlerteInscription() {
             {t("Voir la fiche")}
           </Link>
           {"Notification" in globalThis && Notification.permission === "default" && (
-            <button onClick={() => Notification.requestPermission().then(() => setAlertes((a) => [...a])) /* re-rendu : masque le bouton une fois choisi */} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
-              {t("Activer les alertes système (quand l’onglet est en arrière-plan)")}
+            <button onClick={ouvrirReglagePush} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
+              {t("Activer les notifications sur cet appareil (même appli fermée)")}
             </button>
           )}
         </div>

@@ -5,6 +5,7 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { supprimerProduit } from "@/lib/produits";
 import { categoriesDeLaBoutique, nettoyerOptions } from "@/lib/categories-produits";
 import { disponibilite, mouvementStock, resoudreLieu, stocksDuLieu, type TypeMouvement } from "@/lib/pos/stock";
 import { cleArticle, type ContextePos } from "@/lib/pos/types";
@@ -212,7 +213,7 @@ export const OUTILS_CATALOGUE: Outil[] = [
       const actif = booleen(a, "archived") === false;
       const maj = await prisma.produit.update({ where: { id: p.id }, data: { actif }, select: { updatedAt: true } });
       return ok(
-        p.actif === actif ? `« ${p.nom} » était déjà ${actif ? "en vente" : "archivé"}.` : actif ? `« ${p.nom} » est en vente sur la boutique.` : `« ${p.nom} » est archivé : il n'apparaît plus sur la boutique (fiche, stock et historique gardés).`,
+        p.actif === actif ? `« ${p.nom} » était déjà ${actif ? "en vente" : "hors vente (brouillon ou archivé)"}.` : actif ? `« ${p.nom} » est en vente sur la boutique.` : `« ${p.nom} » est archivé : il n'apparaît plus sur la boutique (fiche, stock et historique gardés).`,
         { product_id: p.id, active: actif, version: maj.updatedAt.toISOString() },
       );
     },
@@ -382,16 +383,13 @@ export const OUTILS_CATALOGUE: Outil[] = [
       const fait = (type: string, name: string) => ok(`${type} « ${name} » supprimé(e) définitivement.`, { deleted: { type, id, name } });
 
       if (cibles[0] === "product_id") {
-        const p = await prisma.produit.findFirst({ where: { id, tenantId }, select: { nom: true, _count: { select: { lignesCommande: true, stockMouvements: true } } } });
-        if (!p) return refuser("NOT_FOUND", "Produit introuvable dans cette boutique.");
-        // Un produit qui a une histoire (ventes, stock) ne se supprime pas : factures et journal de stock y renvoient.
-        if (p._count.lignesCommande || p._count.stockMouvements) return refuser("CONFLICT", `« ${p.nom} » a déjà été vendu ou mouvementé en stock : il ne peut pas être supprimé. Utilise archive_product pour le retirer de la vente.`);
-        await prisma.$transaction([
-          prisma.stockEntrepot.deleteMany({ where: { produitId: id } }),
-          prisma.variante.deleteMany({ where: { produitId: id } }),
-          prisma.produit.delete({ where: { id } }),
-        ]);
-        return fait("Produit", p.nom);
+        // Même règle que le tableau de bord et AXIA : un produit vendu, mouvementé en stock ou encore
+        // lié (avis, accès clients, affiliation…) ne se supprime pas — il s'archive.
+        const r = await supprimerProduit(tenantId, id);
+        if (!r.ok) return refuser(r.status === 404 ? "NOT_FOUND" : "CONFLICT", `${r.status === 404 ? "Produit introuvable dans cette boutique (déjà supprimé ?)." : r.error} ${r.status === 409 ? "Utilise archive_product pour le retirer de la vente." : ""}`.trim());
+        // Relu : le succès n'est annoncé que si le produit a vraiment disparu.
+        if (await prisma.produit.count({ where: { id } })) return refuser("INTERNAL", "La suppression n'a pas abouti : le produit est toujours présent.");
+        return fait("Produit", r.nom);
       }
       if (cibles[0] === "variant_id") {
         const v = await prisma.variante.findFirst({ where: { id, produit: { tenantId } }, select: { nom: true, valeur: true, stock: true, produitId: true } });

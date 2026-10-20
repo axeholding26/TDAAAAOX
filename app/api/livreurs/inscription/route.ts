@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { annoncerInscription } from "@/lib/push";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
       return { livreur };
     });
 
+    await annoncerInscription({ name: data.nom, email: data.email, role: "livreur" });
     return NextResponse.json({ success: true, livreurId: livreur.id }, { status: 201 });
   } catch (err) {
     if (err instanceof z.ZodError) {

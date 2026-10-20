@@ -36,7 +36,9 @@ export async function GET() {
       solde: t.wallet?.solde ?? 0, devise: t.wallet?.devise ?? t.devise,
     }));
 
-    return NextResponse.json({ wallet: wallet ?? WALLET_VIDE, boutiques });
+    // Pays de la boutique : le numéro Mobile Money d'un retrait prend son indicatif (lib/wallet.ts).
+    const { pays } = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { pays: true } })) ?? {};
+    return NextResponse.json({ wallet: wallet ?? WALLET_VIDE, boutiques, pays });
   } catch (err: any) {
     // Tables Wallet pas encore migrées → retourner wallet vide
     // Lancer : npx prisma migrate dev --name add_wallet_system

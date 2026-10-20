@@ -3,6 +3,7 @@
 // les agents IA et les actions autorisées depuis la bulle AXIA — mêmes contrôles
 // (transitions, code de remise, périmètre des livreurs, quota) et mêmes effets
 // (WhatsApp, notifications, commission, analytics) quel que soit l'acteur.
+import { pousserLivreur } from "@/lib/push";
 import { randomBytes, randomInt } from "crypto";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -66,7 +67,7 @@ async function retirerCourseAuLivreur(livreurId: string, c: { id: string; numero
       titre: motif === "annulee" ? `Commande #${c.numero} annulée` : `Course #${c.numero} retirée`,
       message: motif === "annulee" ? "La boutique a annulé cette commande : ne la livre pas." : "La boutique a confié cette course à un autre livreur : ne la livre pas.",
     },
-  }).catch(() => {});
+  }).then((n) => pousserLivreur(livreurId, { ...n, lien: "/livreur", type: "course_retiree" })).catch(() => {});
   if (livreur?.telephone) await notifierLivreurCourseRetiree({ telephone: livreur.telephone, numero: c.numero, boutique: c.boutique, motif, tenantId: c.tenantId }).catch(() => {});
 }
 
@@ -272,7 +273,7 @@ export async function assignerLivreurCommande(p: {
         message: `Commande #${commande.numero} — ${commande.adresseLivraison}, ${commande.ville}`,
         commandeId: commande.id,
       },
-    }).catch(() => {});
+    }).then((n) => pousserLivreur(livreur.id, { ...n, lien: "/livreur", type: "nouvelle_livraison" })).catch(() => {});
 
     const versLivreur = await notifierLivreurNouvelleCourse({
       telephone: livreur.telephone, numero: commande.numero, boutique: commande.tenant.nomBoutique,

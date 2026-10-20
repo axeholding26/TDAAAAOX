@@ -1087,7 +1087,7 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
         )}
       </div>}
 
-      {!commandee && <CodePromo theme={theme} slug={slug} devise={devise} sousTotal={sousTotal} promo={promo} onChange={setPromo} />}
+      {!commandee && <CodePromo theme={theme} slug={slug} devise={devise} sousTotal={sousTotal} items={items} promo={promo} onChange={setPromo} />}
 
       {typePanier === "physique" && <CheckoutPhysique {...commonProps} onCommandee={() => setCommandee(true)} />}
       {typePanier === "digital"  && <CheckoutDigital {...commonProps} />}
@@ -1096,8 +1096,8 @@ export function CheckoutForm({ theme, slug, devise, tenantId, nomBoutique, logoU
 }
 
 // Code promo (vérifié ici pour l'affichage ; le serveur le revérifie à la commande).
-function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
-  theme: Props["theme"]; slug: string; devise: string; sousTotal: number;
+function CodePromo({ theme, slug, devise, sousTotal, items, promo, onChange }: {
+  theme: Props["theme"]; slug: string; devise: string; sousTotal: number; items: ArticleCommande[];
   promo: { code: string; reduction: number } | null; onChange: (p: { code: string; reduction: number } | null) => void;
 }) {
   const t = useT();
@@ -1111,8 +1111,9 @@ function CodePromo({ theme, slug, devise, sousTotal, promo, onChange }: {
       const res = await fetch(`/api/codes-promo/verifier?code=${encodeURIComponent(code.trim())}&slug=${slug}`);
       const p = await res.json();
       if (!res.ok) throw new Error(p.error || "Code promo invalide ou expiré");
+      if (p.produitIds?.length && !items.some((i) => p.produitIds.includes(i.produitId))) throw new Error("Ce code ne s'applique pas à ce produit");
       if (p.minCommande && sousTotal < p.minCommande) throw new Error(t("Ce code s'applique dès {0} d'achat", fmt(p.minCommande, devise)));
-      const reduction = reductionPromo(p, sousTotal);
+      const reduction = reductionPromo(p, sousTotal, items);
       if (reduction <= 0) throw new Error("Code promo invalide ou expiré");
       onChange({ code: code.trim().toUpperCase(), reduction });
       toast.success(t("Code appliqué : -{0}", fmt(reduction, devise)));

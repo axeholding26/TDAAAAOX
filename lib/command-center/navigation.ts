@@ -25,6 +25,7 @@ export const NAV: EntreeNav[] = [
   { section: "boutiques", href: "/admin/boutiques", nom: "Boutiques", icone: "Store", gestion: true, mots: "gérer suspendre certifier" },
   { section: "abonnements", href: "/admin/abonnements", nom: "Abonnements", icone: "BadgeCheck", gestion: true },
   { section: "finances", href: "/admin/finances", nom: "Finances & Wallet", icone: "Landmark", gestion: true, mots: "wallet retraits commissions" },
+  { section: "affilies", href: "/admin/affilies", nom: "Affiliés", icone: "Handshake", gestion: true, mots: "affiliation commissions versements parrainage" },
   { section: "avis", href: "/admin/avis", nom: "Avis plateforme", icone: "Star", gestion: true, mots: "avis témoignages reviews modération landing" },
   { section: "axsocial", href: "/admin/axsocial", nom: "Axsocial", icone: "MessagesSquare", gestion: true },
   { section: "livreurs", href: "/admin/livreurs", nom: "Livreurs", icone: "Bike", gestion: true },

@@ -16,7 +16,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { PAIEMENT, finAcces, metaDigital } from "./commandes";
 import { notifierMarchand } from "./notifications-marchand";
-import { envoyerConfirmationCommande, emailReel } from "./email";
+import { envoyerConfirmationCommande, envoyerMiseAJourProduit, envoyerOffreNouvelleVersion, emailReel } from "./email";
 import { lienBoutique } from "./origine-site";
 import { accorderPlaceCommande, revoquerInscriptionsCommande } from "./live/service";
 import { cleApprenant } from "./formation/regles";
@@ -137,7 +137,7 @@ const SELECT_LIVRABLE = {
 } as const;
 
 /** Droit d'un produit pour une commande, créé une seule fois. "manque" : rien à livrer (fichier absent, clés épuisées). */
-async function livrerProduit(commande: { id: string; clientEmail: string | null; clientNom?: string | null }, p: ProduitLivrable): Promise<"ok" | "manque" | "ignore"> {
+async function livrerProduit(commande: { id: string; tenantId: string; clientEmail: string | null; clientNom?: string | null }, p: ProduitLivrable): Promise<"ok" | "manque" | "ignore"> {
   const dejaJeton = () => prisma.telechargement.findFirst({ where: { commandeId: commande.id, produitId: p.id }, select: { id: true } });
 
   if (p.type === "digital" || p.type === "fichier") {
@@ -168,7 +168,10 @@ async function livrerProduit(commande: { id: string; clientEmail: string | null;
         where: { id: cle.id, statut: "disponible" },
         data: { statut: "vendue", commandeId: commande.id, acheteurEmail: commande.clientEmail, expireAt },
       });
-      if (count) return "ok";
+      if (count) {
+        await alerterClesRestantes(commande.tenantId, p).catch(() => {});
+        return "ok";
+      }
     }
     return (await deja()) ? "ok" : "manque";
   }
@@ -177,6 +180,21 @@ async function livrerProduit(commande: { id: string; clientEmail: string | null;
   if (p.type === "evenement" || p.type === "bootcamp") return accorderPlaceCommande(commande, p.id);
 
   return "ignore";
+}
+
+const SEUIL_CLES = 5;
+
+/** Réserve de clés qui s'épuise : prévenu à 5 clés restantes, puis à 0 (chaque vente en prend une). */
+async function alerterClesRestantes(tenantId: string, p: ProduitLivrable) {
+  const reste = await prisma.cleLicence.count({ where: { licenceProduitId: p.licenceProduit!.id, statut: "disponible" } });
+  if (reste !== SEUIL_CLES && reste !== 0) return;
+  await notifierMarchand({
+    tenantId, type: "stock_faible", lien: `/dashboard/produits/${p.id}`,
+    titre: reste ? `Plus que ${reste} clés de licence : ${p.nom}` : `Plus aucune clé de licence : ${p.nom}`,
+    message: reste
+      ? `Il ne reste que ${reste} clés disponibles pour « ${p.nom} ». Ajoute des clés avant la rupture.`
+      : `« ${p.nom} » n'a plus de clé disponible : le prochain acheteur ne recevra rien. Ajoute des clés maintenant.`,
+  });
 }
 
 async function produitsALivrer(produitIds: string[]): Promise<ProduitLivrable[]> {
@@ -311,4 +329,80 @@ export async function reprendreLivraisons(limite = 50): Promise<number> {
   });
   for (const l of aReprendre) await livrerCommandeDigitale(l.commandeId).catch((e) => console.error("[livraison-numerique] reprise", l.commandeId, court(e)));
   return aReprendre.length;
+}
+
+// ─── Mise à jour d'un fichier ────────────────────────────────────────────────
+
+/**
+ * Acheteurs dont l'accès au produit est en cours (payé, non révoqué, non expiré), une entrée
+ * par adresse e-mail : la commande la plus récente donne le lien. Les packs comptent (le jeton
+ * porte le produit inclus).
+ */
+export async function acheteursDuProduit(tenantId: string, produitId: string) {
+  const maintenant = new Date();
+  const jetons = await prisma.telechargement.findMany({
+    where: { produitId, produit: { tenantId }, revoqueAt: null, OR: [{ expireAt: null }, { expireAt: { gt: maintenant } }] },
+    select: { commandeId: true },
+  });
+  const commandes = await prisma.commande.findMany({
+    where: { id: { in: [...new Set(jetons.map((j) => j.commandeId))] }, tenantId, paiementStatut: PAIEMENT.PAYE, statut: { not: "annulee" } },
+    select: { id: true, clientNom: true, clientEmail: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const parEmail = new Map<string, (typeof commandes)[number] & { clientEmail: string }>();
+  for (const c of commandes) {
+    if (!emailReel(c.clientEmail)) continue;
+    const cle = c.clientEmail.trim().toLowerCase();
+    if (!parEmail.has(cle)) parEmail.set(cle, { ...c, clientEmail: c.clientEmail });
+  }
+  return [...parEmail.values()];
+}
+
+/** Prévient chaque acheteur que le fichier a changé, avec son lien d'accès. Rend le nombre d'e-mails acceptés. */
+export async function prevenirAcheteursMiseAJour(tenantId: string, produitId: string): Promise<number> {
+  const [acheteurs, produit] = await Promise.all([
+    acheteursDuProduit(tenantId, produitId),
+    prisma.produit.findFirst({ where: { id: produitId, tenantId }, select: { nom: true, tenant: { select: { slug: true, nomBoutique: true } } } }),
+  ]);
+  if (!produit) return 0;
+  let envoyes = 0;
+  // ponytail: envoi un par un dans la même fonction ; passer par l'API batch de Resend au-delà de quelques centaines d'acheteurs.
+  for (const a of acheteurs) {
+    const ok = await envoyerMiseAJourProduit({
+      email: a.clientEmail, nom: a.clientNom, produit: produit.nom, boutique: produit.tenant.nomBoutique,
+      lienAcces: await lienAccesCommande(produit.tenant.slug, a.id),
+    }).catch(() => false);
+    if (ok) envoyes++;
+  }
+  return envoyes;
+}
+
+// ─── Nouvelle version payante ────────────────────────────────────────────────
+
+/**
+ * Offre aux acheteurs de la version précédente : UN code promo réservé à la nouvelle version
+ * (produitIds), utilisable autant de fois qu'il y a d'acheteurs, valable `jours` jours ; puis un
+ * e-mail à chacun avec le code et le lien du produit. Rend le code et le nombre d'acheteurs ;
+ * l'envoi lui-même (`envoyer`) se fait après la réponse.
+ */
+export async function preparerOffreNouvelleVersion(tenantId: string, produitId: string, pourcentage: number, jours: number) {
+  const v2 = await prisma.produit.findFirst({ where: { id: produitId, tenantId }, select: { id: true, nom: true, actif: true, versionPrecedenteId: true, tenant: { select: { slug: true, nomBoutique: true } } } });
+  if (!v2?.versionPrecedenteId) return { ok: false as const, error: "Ce produit n'est pas une nouvelle version d'un autre produit." };
+  if (!v2.actif) return { ok: false as const, error: "Publie d'abord la nouvelle version : les acheteurs doivent pouvoir l'acheter." };
+  const v1 = await prisma.produit.findFirst({ where: { id: v2.versionPrecedenteId, tenantId }, select: { nom: true } });
+  const acheteurs = await acheteursDuProduit(tenantId, v2.versionPrecedenteId);
+  if (!v1 || !acheteurs.length) return { ok: false as const, error: "La version précédente n'a aucun acheteur joignable par e-mail." };
+  const code = `MAJ${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  const dateExpiration = new Date(Date.now() + jours * 86_400_000);
+  await prisma.codePromo.create({ data: { tenantId, code, type: "pourcentage", valeur: pourcentage, produitIds: [v2.id], maxUtilisations: acheteurs.length, dateExpiration } });
+  const lienProduit = await lienBoutique(v2.tenant.slug, `/produits/${v2.id}`);
+  const envoyer = async () => {
+    for (const a of acheteurs) {
+      await envoyerOffreNouvelleVersion({
+        email: a.clientEmail, nom: a.clientNom, ancien: v1.nom, nouveau: v2.nom, boutique: v2.tenant.nomBoutique,
+        code, pourcentage, dateExpiration, lienProduit,
+      }).catch(() => false);
+    }
+  };
+  return { ok: true as const, code, acheteurs: acheteurs.length, dateExpiration, envoyer };
 }

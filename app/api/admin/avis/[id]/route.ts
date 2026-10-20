@@ -1,4 +1,5 @@
 // Modération d'un avis plateforme : approuver, refuser (motif communiqué au marchand), retirer.
+import { notifierMarchand } from "@/lib/notifications-marchand";
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -23,12 +24,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const motif = p.data.statut === "refuse" ? p.data.motif : null;
   await prisma.avisPlateforme.update({ where: { id }, data: { statut: p.data.statut, motifRefus: motif, moderePar: session.email, modereLe: new Date() } });
   if (p.data.statut !== "en_attente") {
-    await prisma.notificationMarchand.create({ data: {
+    await notifierMarchand({
       tenantId: avant.tenantId, type: "avis_axso",
       titre: p.data.statut === "approuve" ? "Votre avis sur Axso est publié" : "Votre avis sur Axso n'a pas été publié",
       message: p.data.statut === "approuve" ? "Merci ! Votre avis apparaît désormais sur axsoafrica.com." : `Motif : ${motif}. Vous pouvez le modifier depuis votre tableau de bord.`,
       lien: "/dashboard/accueil",
-    } }).catch(() => {});
+    });
   }
   await journaliser(session, `avis.${p.data.statut}`, "AvisPlateforme", id, { statut: avant.statut, motif: avant.motifRefus }, { statut: p.data.statut, motif });
   return NextResponse.json({ message: p.data.statut === "approuve" ? "Avis publié" : p.data.statut === "refuse" ? "Avis refusé" : "Avis remis en attente" });

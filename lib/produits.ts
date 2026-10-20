@@ -94,6 +94,9 @@ export async function supprimerProduit(tenantId: string, id: string): Promise<{ 
       prisma.stockEntrepot.deleteMany({ where: { produitId: id } }),
       prisma.variante.deleteMany({ where: { produitId: id } }),
       prisma.produit.delete({ where: { id } }),
+      // Import IA qui avait créé ce produit : il ne se dit plus « prêt » ni « publié » (ses fichiers
+      // stockés restent ; le rappeler avec le même import_key recrée le produit).
+      prisma.importCreation.updateMany({ where: { tenantId, produitId: id }, data: { produitId: null, statut: "failed", prochaineTentative: null, derniereErreur: "Produit supprimé par le marchand." } }),
     ]);
   } catch (err) {
     // Encore lié à autre chose (avis, accès clients, liens d'affiliation…) : on garde tout.
@@ -101,4 +104,30 @@ export async function supprimerProduit(tenantId: string, id: string): Promise<{ 
     throw err;
   }
   return { ok: true, nom: p.nom };
+}
+
+/**
+ * Nouvelle version PAYANTE d'un produit à télécharger : copie en brouillon (textes, prix, images,
+ * réglages), SANS les fichiers — le marchand y dépose la nouvelle version. L'ancien produit et
+ * l'accès de ses acheteurs ne changent pas. Les fichiers ne sont jamais partagés entre les deux :
+ * remplacer l'un effacerait le fichier de l'autre.
+ */
+export async function creerNouvelleVersion(tenantId: string, id: string): Promise<{ ok: true; id: string } | { ok: false; status: number; error: string }> {
+  const p = await prisma.produit.findFirst({ where: { id, tenantId, type: { in: ["digital", "fichier"] } }, include: { produitFichier: true } });
+  if (!p) return { ok: false, status: 404, error: "Produit à télécharger introuvable" };
+  let slug = `${p.slug}-nouvelle-version`;
+  for (let n = 2; await prisma.produit.findFirst({ where: { tenantId, slug }, select: { id: true } }); n++) slug = `${p.slug}-nouvelle-version-${n}`;
+  const v2 = await prisma.produit.create({
+    data: {
+      tenantId, slug, versionPrecedenteId: p.id, actif: false, type: p.type,
+      nom: `${p.nom} (nouvelle version)`.slice(0, 200), description: p.description, descriptionIA: p.descriptionIA,
+      prix: p.prix, prixCompare: p.prixCompare, images: p.images, videos: p.videos, categorie: p.categorie, tags: p.tags,
+      metaTitle: p.metaTitle, metaDesc: p.metaDesc, ogImage: p.ogImage, masquerVentes: p.masquerVentes, visibleListage: p.visibleListage,
+      texteBoutonAchat: p.texteBoutonAchat, faq: p.faq ?? undefined, champsCommande: p.champsCommande ?? undefined,
+      instructionsTelechargement: p.instructionsTelechargement, affiliationActive: p.affiliationActive, tauxCommissionAff: p.tauxCommissionAff,
+      ...(p.produitFichier ? { produitFichier: { create: { limitAchats: p.produitFichier.limitAchats, motDePasse: p.produitFichier.motDePasse, filigrane: p.produitFichier.filigrane, instructionsAchat: p.produitFichier.instructionsAchat } } } : {}),
+    },
+    select: { id: true },
+  });
+  return { ok: true, id: v2.id };
 }

@@ -199,6 +199,7 @@ export default async function MarketingPage() {
                     {code.type === "pourcentage"
                       ? t("{0}% de remise", code.valeur)
                       : t("{0} de remise", formatMontant(code.valeur, tenant.devise))}
+                    {code.produitIds.length > 0 && ` · ${t("réservé à certains produits")}`}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">

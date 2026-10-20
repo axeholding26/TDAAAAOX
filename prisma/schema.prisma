@@ -95,6 +95,7 @@ model Produit {
   tenantId        String
   nom             String
   slug            String
+  versionPrecedenteId String? // nouvelle version payante : produit dont elle prend la suite (offre aux anciens acheteurs)
   description     String?
   descriptionIA   String?
   prix            Float
@@ -516,6 +517,7 @@ model CodePromo {
   utilisations    Int       @default(0)
   dateExpiration  DateTime?
   actif           Boolean   @default(true)
+  produitIds      String[]  @default([]) // vide = toute la boutique ; sinon le code ne réduit que ces produits
   createdAt       DateTime  @default(now())
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
@@ -674,6 +676,27 @@ model User {
   livreur  Livreur?
   boutiques ProprietaireBoutique[]
   membresEquipe MembreEquipe[]
+  abonnementsPush AbonnementPush[]
+}
+
+// Appareil abonné aux notifications push (Web Push) : la notification s'affiche comme une
+// notification du téléphone ou de l'ordinateur, même onglet ou appli fermés. `espace` dit
+// quelles notifications il reçoit : dashboard (boutiques du compte), admin (Command Center), livreur.
+model AbonnementPush {
+  id         String    @id @default(cuid())
+  userId     String
+  espace     String
+  endpoint   String
+  p256dh     String
+  auth       String
+  appareil   String?
+  createdAt  DateTime  @default(now())
+  dernierEnvoi DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([endpoint, espace])
+  @@index([userId, espace])
 }
 
 // Boutiques possédées par un compte utilisateur — permet le multi-boutique

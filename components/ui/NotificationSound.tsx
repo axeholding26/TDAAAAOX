@@ -19,7 +19,7 @@ function playChime() {
       osc.frequency.value = freq;
       const t = now + i * 0.13;
       gain.gain.setValueAtTime(0, t);
-      gain.gain.linearRampToValueAtTime(0.22, t + 0.02);
+      gain.gain.linearRampToValueAtTime(0.9, t + 0.02); // volume maximal sans saturation
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
       osc.start(t);
       osc.stop(t + 0.5);

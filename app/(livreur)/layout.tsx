@@ -1,4 +1,5 @@
 import { auth } from "@/lib/auth";
+import { ActivationPush } from "@/components/ActivationPush";
 import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -11,6 +12,9 @@ import { getLangue, dico } from "@/lib/i18n/serveur";
 import { GeoTracker } from "@/components/livreur/GeoTracker";
 import { getT } from "@/lib/i18n/serveur";
 
+
+// Manifeste : installable (écran d'accueil), exigé par iPhone pour les notifications push.
+export const metadata = { manifest: "/manifest-livreur.webmanifest" };
 export default async function LivreurLayout({ children }: { children: React.ReactNode }) {
   const t = await getT();
   const session = await auth();
@@ -31,6 +35,7 @@ export default async function LivreurLayout({ children }: { children: React.Reac
   return (
     <I18nProvider langue={await getLangue()} dico={await dico("livreur")}>
     <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <ActivationPush espace="livreur" />
       <MenusDeroulants />
       {/* Fond étoilé subtil */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">

@@ -1,4 +1,5 @@
 import { aiLimiter, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
+import { annoncerInscription } from "@/lib/push";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hash } from "bcryptjs";
@@ -200,6 +201,8 @@ export async function POST(request: Request) {
 
         return { tenant, produitsCreees };
       });
+
+      await annoncerInscription({ name: compte.name, email: compte.email, role: "owner", tenantId: tenant.id });
 
       // Boutique créée en "brouillon" — notifie le marchand qu'il lui reste
       // à compléter/vérifier ses infos avant de publier (voir lib/boutique-completion.ts).

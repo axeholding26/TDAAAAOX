@@ -15,6 +15,7 @@
 //   planifiée /api/cron/pos/alertes. Le calcul ne dépend d'aucun planificateur.
 //
 // Seuils : constantes ci-dessous (aucune clé de ReglagesPos ne les porte).
+import { pousserApresTransaction } from "@/lib/push";
 import { Prisma } from "@prisma/client";
 import { prisma } from "../prisma";
 import { avecIdempotence } from "./idempotence";
@@ -274,7 +275,8 @@ export async function notifierAlertes(tenantId: string, alertes: Alerte[]): Prom
     if (connues.has(cle)) continue;
     try {
       const { rejoue } = await avecIdempotence(tenantId, cle, "alerte", async (tx) => {
-        await tx.notificationMarchand.create({ data: { tenantId, type: "pos_alerte", titre: a.titre, message: a.message, lien: a.lien } });
+        const n = await tx.notificationMarchand.create({ data: { tenantId, type: "pos_alerte", titre: a.titre, message: a.message, lien: a.lien } });
+        pousserApresTransaction(n.id, tenantId, { type: "pos_alerte", titre: a.titre, message: a.message, lien: a.lien });
         await publierEvenement(tx, { tenantId, type: "alert.created", payload: { cle: a.cle, categorie: a.categorie, gravite: a.gravite, titre: a.titre, message: a.message, lien: a.lien } });
         return { cle: a.cle };
       });

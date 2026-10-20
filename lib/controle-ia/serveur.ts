@@ -262,19 +262,23 @@ async function capacites(ctx: ContexteIA): Promise<ResultatIA> {
     const cle = `${f.source.id}:${f.capacite}`;
     if (!indispo.has(cle)) indispo.set(cle, (await f.source.indisponible(ctx.tenantId, f.capacite).catch(() => "module momentanément indisponible")) ?? null);
   }
-  const groupes = new Map<string, { id: string; available: boolean; tools: string[]; reason?: string }>();
+  // Un outil fermé par un droit particulier (ex. suppression définitive) est absent de tools/list :
+  // on le nomme ici, avec le droit qui manque, pour que l'IA ne conclue pas « impossible ».
+  const groupes = new Map<string, { id: string; available: boolean; tools: string[]; reason?: string; locked?: { tool: string; required_scope: string; reason: string }[] }>();
   for (const f of CATALOGUE) {
     const g = groupes.get(f.capacite) ?? { id: f.capacite, available: false, tools: [] };
     const r = refus(f, ctx.plan, ctx.grille, ctx.scopes);
     const service = typeof f.source === "object" ? indispo.get(`${f.source.id}:${f.capacite}`) : null;
     if (!r && !service) { g.available = true; g.tools.push(f.name); delete g.reason; }
     else if (!g.available) g.reason = service ?? r?.resultat;
+    if (r && f.scope && r.donnees?.required_scope === f.scope) (g.locked ??= []).push({ tool: f.name, required_scope: f.scope, reason: `droit « ${SCOPES_FINS[f.scope] ?? f.scope} » non accordé (le marchand doit refaire la connexion en le cochant)` });
     groupes.set(f.capacite, g);
   }
   const liste = [...groupes.values()];
+  const fermes = (g: { locked?: { tool: string; reason: string }[] }) => (g.locked?.length ? ` — fermés : ${g.locked.map((l) => `${l.tool} (${l.reason})`).join(" ; ")}` : "");
   return {
     succes: true, donnees: { capabilities: liste },
-    resultat: liste.map((g) => g.available ? `✓ ${g.id} : ${g.tools.length} outils` : `✕ ${g.id} : ${g.reason}`).join("\n"),
+    resultat: liste.map((g) => g.available ? `✓ ${g.id} : ${g.tools.length} outils${fermes(g)}` : `✕ ${g.id} : ${g.reason}`).join("\n"),
   };
 }
 
@@ -368,7 +372,7 @@ async function executerAvecRecu(f: Fiche, args: Record<string, any>, ctx: Contex
   const recu = instantane && r.succes ? await conclureInstantane(ctx.tenantId, instantane).catch(trace("apres")) : null;
   await prisma.actionIA.update({
     where: { id: actionId },
-    data: { ...(r.donnees && { donnees: r.donnees as any }), ...(recu && { ressources: recu.ressources as any, avant: recu.avant, apres: recu.apres }) },
+    data: { ...(r.donnees && { donnees: masquerDonnees(r.donnees) }), ...(recu && { ressources: recu.ressources as any, avant: recu.avant, apres: recu.apres }) },
   }).catch(trace("journal"));
   return {
     ...r, actionId,
@@ -377,6 +381,9 @@ async function executerAvecRecu(f: Fiche, args: Record<string, any>, ctx: Contex
 }
 
 const resumer = (args: Record<string, any>) => JSON.stringify(args ?? {}).slice(0, 600);
+/** Journal : jamais le jeton d'un lien de dépôt (il donne accès au dépôt pendant 30 minutes). */
+export const masquer = (t: string) => t.replace(/\/depot\/[A-Za-z0-9_-]{16,}/g, "/depot/•••");
+const masquerDonnees = (d: Record<string, unknown>) => JSON.parse(masquer(JSON.stringify(d)));
 const statutDe = (r: ResultatIA) => (r.succes ? "execute" : "echec");
 
 /** Exécute un appel d'outil venu d'une IA externe (ou d'une orchestration qui agit pour elle). */
@@ -453,7 +460,7 @@ export async function appelerOutil(ctx: ContexteIA, nom: string, brut: Record<st
   }
 
   await Promise.all([
-    prisma.actionIA.update({ where: { id: action.id }, data: { statut, risque: risqueFinal, sortie: r.resultat.slice(0, 1000), dureeMs: Date.now() - debut, ...(statut === "accord_demande" && { args }) } }),
+    prisma.actionIA.update({ where: { id: action.id }, data: { statut, risque: risqueFinal, sortie: masquer(r.resultat).slice(0, 1000), dureeMs: Date.now() - debut, ...(statut === "accord_demande" && { args }) } }),
     prisma.connexionIA.update({ where: { id: ctx.connexionId }, data: { utiliseLe: new Date() } }),
   ]).catch(() => {});
   return avecCodeBuilder(f, r);
@@ -491,7 +498,7 @@ export async function executerAccordIA(tenantId: string, action: ActionAccord, d
   const interdit = refus(f, ctx.plan, ctx.grille, ctx.scopes) ?? (accordVisible(action.outil, droitsValideur) ? null : erreur("INSUFFICIENT_PERMISSION", "ton rôle ne permet pas d'autoriser cette action."));
   const debut = Date.now();
   const r = interdit ?? await executerAvecRecu(f, action.args ?? {}, ctx, action.ia.actionId);
-  await prisma.actionIA.updateMany({ where: { id: action.ia.actionId, tenantId }, data: { statut: interdit ? "refuse" : statutDe(r), sortie: `Autorisé par le marchand. ${r.resultat}`.slice(0, 1000), dureeMs: Date.now() - debut } });
+  await prisma.actionIA.updateMany({ where: { id: action.ia.actionId, tenantId }, data: { statut: interdit ? "refuse" : statutDe(r), sortie: masquer(`Autorisé par le marchand. ${r.resultat}`).slice(0, 1000), dureeMs: Date.now() - debut } });
   return { succes: r.succes, resultat: r.resultat };
 }
 

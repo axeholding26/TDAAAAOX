@@ -37,7 +37,7 @@ const IMPORT_ID = { import_id: { type: "string", description: "Identifiant renvo
 const OUTILS: OutilIA[] = [
   {
     name: "importer_creation", ...COMMUN, niveau: "ecriture", risque: "faible",
-    description: "Transforme une création (PDF, DOCX, XLSX, PPTX, CSV, ZIP, MP3, MP4…) en PRODUIT NUMÉRIQUE vendable de la boutique : fichier stocké chez Axso et livré automatiquement après paiement, visuels, description, prix, SEO. Fichier en content_base64 (3 Mo max) ou url https publique ; si tu ne peux fournir ni l'un ni l'autre (fichier produit dans ta conversation), utilise creer_lien_depot. Le produit reste en BROUILLON tant qu'il n'est pas complet (fichier + prix + au moins un visuel) ; publish: true le met en ligne seul en mode autopilote, sinon appelle publier_import. Avec product_id : ajoute les fichiers et visuels à un produit numérique existant. Passe toujours un import_key : le même appel rejoué renvoie le même import (et reprend un import en échec avec les contenus renvoyés).",
+    description: "Transforme une création (PDF, DOCX, XLSX, PPTX, CSV, ZIP, MP3, MP4…) en PRODUIT NUMÉRIQUE vendable de la boutique : fichier stocké chez Axso et livré automatiquement après paiement, visuels, description, prix, SEO. Fichier en content_base64 (3 Mo max) ou url https publique ; si tu ne peux fournir ni l'un ni l'autre (fichier produit dans ta conversation), utilise creer_lien_depot. Le produit reste en BROUILLON tant qu'il n'est pas complet (fichier + prix + au moins un visuel) ; publish: true le met en ligne seul en mode autopilote, sinon appelle publier_import. Avec product_id : ajoute les fichiers et visuels à un produit numérique existant. Passe toujours un import_key : le même appel rejoué renvoie le même import (jamais un second produit). Reprise d'un import en échec : rappelle avec le même import_key et la liste des fichiers voulus — un fichier déjà stocké (même nom) est gardé tel quel, un fichier en échec est remplacé par celui de même nom, et un fichier en échec que tu ne renvoies pas est retiré. Pages web HTML, SVG et exécutables refusés : un jeu ou une page HTML se vend dans une archive .zip (l'acheteur l'extrait puis ouvre le .html) — précise-le dans instructions, et si le jeu a besoin d'Internet.",
     parameters: {
       type: "object",
       properties: {
@@ -62,7 +62,7 @@ const OUTILS: OutilIA[] = [
   },
   {
     name: "creer_lien_depot", ...COMMUN, niveau: "ecriture", risque: "faible",
-    description: "Quand tu ne peux pas envoyer le fichier toi-même (fichier généré dans la conversation, trop gros pour le base64) : crée un lien de dépôt sécurisé, à usage unique, valable 30 minutes. Donne ce lien à l'utilisateur : il y glisse le fichier et les visuels, et Axso crée le produit avec les informations que tu fournis ici. Suis ensuite l'import avec etat_import.",
+    description: "Quand tu ne peux pas envoyer le fichier toi-même (fichier généré dans la conversation, trop gros pour le base64) : crée un lien de dépôt sécurisé, à usage unique, valable 30 minutes. Donne ce lien à l'utilisateur : il y glisse le fichier et les visuels, et Axso crée le produit avec les informations que tu fournis ici. Suis ensuite l'import avec etat_import. Lien expiré, déjà utilisé, ou import en échec à compléter : rappelle creer_lien_depot avec import_id (le même import, ses fichiers déjà stockés sont gardés). Pas de HTML : un jeu HTML se dépose en .zip.",
     parameters: { type: "object", properties: { ...META, product_id: { type: "string", description: "Facultatif : produit numérique existant à compléter" }, ...IMPORT_ID, publish: { type: "boolean" }, ...CLE } },
     sortie: "{ upload_url, expires_at, import_id }",
     exemple: { name: "Pack de modèles Excel", price: 3000, import_key: "pack-excel-depot" },
@@ -83,7 +83,7 @@ const OUTILS: OutilIA[] = [
   },
 ];
 
-const refus = (code: "INVALID_INPUT" | "NOT_FOUND" | "VALIDATION_FAILED", message: string): ResultatIA => ({ succes: false, code, resultat: `${code} : ${message}` });
+const refus = (code: "INVALID_INPUT" | "NOT_FOUND" | "VALIDATION_FAILED" | "CONFLICT", message: string): ResultatIA => ({ succes: false, code, resultat: `${code} : ${message}` });
 
 const txt = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
 const sources = (v: unknown, max: number): SourceFichier[] => (Array.isArray(v) ? v.slice(0, max + 1) : []).map((s: any) => ({
@@ -100,16 +100,33 @@ function meta(a: Record<string, any>): MetaProduit {
   };
 }
 
-/** Réponse lisible par le modèle : ce qui est fait, ce qui reste, l'étape suivante. */
+/**
+ * Réponse lisible par le modèle : ce qui a marché, ce qui a échoué et pourquoi, ce qui est
+ * conservé, l'état réel du produit (brouillon ≠ en vente) et l'action suivante.
+ */
 function rendre(imp: Awaited<ReturnType<typeof traiter>>, mode: string): ResultatIA {
   const r = resume(imp);
   const s = imp.statut as Statut;
-  const suite = s === "published" ? "Le produit est EN VENTE ; la livraison du fichier après paiement est automatique."
-    : s === "ready_for_review" ? (mode === "autopilot" ? "Produit complet, en brouillon : publier_import le met en vente." : "Produit complet, en BROUILLON : publier_import le met en vente après l'accord du marchand.")
-    : s === "retrying" ? `Nouvelle tentative prévue (${r.next_retry_at}) ; consulte etat_import.`
-    : s === "failed" ? "Corrige la cause (adresse expirée → nouvelle url, contenu à renvoyer avec le même import_key, ou lien de dépôt) puis rappelle importer_creation."
-    : s === "received" ? "En attente des fichiers." : `Produit en brouillon. ${imp.derniereErreur ?? ""}`;
-  return { succes: s !== "failed", ...(s === "failed" && { code: "VALIDATION_FAILED" as const }), resultat: `Import ${imp.id} : ${LIBELLES[s]}.${imp.derniereErreur && s !== "assets_attached" ? ` Dernière erreur : ${imp.derniereErreur}` : ""} ${suite}`, donnees: r };
+  const noms = (role: string, ok: boolean) => imp.fichiers.filter((f) => f.role === role && (f.statut === "stocke" || f.statut === "media") === ok).map((f) => f.nom);
+  const gardes = [...noms("fichier", true), ...noms("visuel", true)];
+  const manquants = imp.fichiers.filter((f) => f.statut === "echec");
+  const produit = s === "published" ? "Le produit est EN VENTE ; la livraison du fichier après paiement est automatique."
+    : imp.produitId ? `Produit ${imp.produitId} en BROUILLON (pas en vente).` : "Aucun produit créé pour l'instant.";
+  const suite = s === "published" ? ""
+    : s === "ready_for_review" ? (mode === "autopilot" ? "Produit complet : publier_import le met en vente." : "Produit complet : publier_import le met en vente après l'accord du marchand.")
+    : s === "retrying" ? `Nouvelle tentative automatique prévue (${r.next_retry_at}) ; consulte etat_import.`
+    : s === "failed" ? `Action suivante : ${manquants.some((f) => !f.sourceUrl)
+      ? `renvoie le(s) fichier(s) en échec (${manquants.map((f) => f.nom).join(", ")}) avec le même import_key — en base64 ou url https — ou fais-les déposer (creer_lien_depot avec import_id ${imp.id}) ; un fichier refusé se remplace par un autre nom (ex. .zip), l'ancien est alors retiré.`
+      : `donne une nouvelle url https valide avec le même import_key, ou fais déposer le fichier (creer_lien_depot avec import_id ${imp.id}).`}`
+    : s === "received" ? `En attente du dépôt des fichiers. Le lien de dépôt ne sert qu'une fois et expire après 30 minutes : s'il a expiré ou servi, rappelle creer_lien_depot avec import_id ${imp.id} (même import, rien n'est perdu).`
+    : imp.derniereErreur ?? "";
+  const texte = [
+    `Import ${imp.id} : ${LIBELLES[s]}.`,
+    s === "failed" || s === "retrying" ? `Cause : ${imp.derniereErreur ?? "inconnue"}` : "",
+    gardes.length && s !== "published" ? `Conservés : ${gardes.join(", ")}.` : "",
+    produit, suite,
+  ].filter(Boolean).join(" ");
+  return { succes: s !== "failed", ...(s === "failed" && { code: "VALIDATION_FAILED" as const }), resultat: texte, donnees: r };
 }
 
 async function executer(nom: string, a: Record<string, any>, ctx: CtxOutil): Promise<ResultatIA> {
@@ -129,13 +146,16 @@ async function executer(nom: string, a: Record<string, any>, ctx: CtxOutil): Pro
       if (importId) {
         if (!(await prisma.importCreation.findFirst({ where: { id: importId, tenantId: ctx.tenantId }, select: { id: true } }))) return refus("NOT_FOUND", "Import introuvable dans cette boutique.");
       } else {
+        // Même import_key qu'un import existant : on lui redonne un lien (jamais un second import).
         const m = meta(a), produitId = txt(a.product_id, 64);
         if (!produitId && (!m.nom || !(Number(m.prix) > 0))) return refus("INVALID_INPUT", "Donne au moins name et price (> 0), ou product_id d'un produit numérique existant.");
         importId = (await importer({ ...base, publierAuto: a.publish === true && ctx.mode === "autopilot", produit: m, produitId, fichiers: [], visuels: [], attendDepot: true })).id;
       }
+      const cible = await prisma.importCreation.findUniqueOrThrow({ where: { id: importId }, select: { statut: true, produitId: true } });
+      if (cible.statut === "published") return refus("CONFLICT", `Cet import est déjà publié. Pour ajouter des fichiers à son produit, appelle creer_lien_depot avec product_id ${cible.produitId}.`);
       const lien = await creerLienDepot(ctx.tenantId, importId, await origineAxso());
       return {
-        succes: true, resultat: `Lien de dépôt (usage unique, valable 30 minutes) : ${lien.url}\nDonne-le à l'utilisateur : il y dépose le fichier à vendre et les visuels ; Axso crée alors le produit. Suis l'avancement avec etat_import (import_id ${importId}).`,
+        succes: true, resultat: `Lien de dépôt : ${lien.url}\nDonne-le à l'utilisateur : il y dépose le fichier à vendre et les visuels ; Axso crée alors le produit. Suis l'avancement avec etat_import (import_id ${importId}).\nCe lien sert UNIQUEMENT au dépôt : une seule utilisation, expire dans 30 minutes (${lien.expireLe.toISOString()}, UTC). Ce n'est ni l'adresse du produit, ni celle du téléchargement de l'acheteur (créée après son paiement). Expiré ou déjà utilisé : rappelle creer_lien_depot avec import_id ${importId}, l'import et ses fichiers stockés sont conservés. Pages HTML refusées : un jeu HTML se dépose en .zip.`,
         donnees: { upload_url: lien.url, expires_at: lien.expireLe.toISOString(), import_id: importId },
       };
     }

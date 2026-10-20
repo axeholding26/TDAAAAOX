@@ -1,5 +1,6 @@
 "use client";
 
+import { abonnePush, ouvrirReglagePush } from "@/components/ActivationPush";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, MessageCircle, X } from "lucide-react";
@@ -26,7 +27,9 @@ export function ecouterNotifications(cb: (d: Donnees) => void) {
 }
 
 function sonCaisse() {
-  new Audio("/son-commande.mp3").play().catch(() => { /* lecture bloquée ou audio indisponible */ });
+  const son = new Audio("/son-commande.mp3");
+  son.volume = 1; // maximum autorisé à une page (le volume de l'appareil reste celui de l'utilisateur)
+  son.play().catch(() => { /* lecture bloquée ou audio indisponible */ });
 }
 
 export function AlerteCommande() {
@@ -51,7 +54,8 @@ export function AlerteCommande() {
         if (!nouvelles.length) return;
         sonCaisse();
         setAlertes((a) => [...nouvelles, ...a].slice(0, 3));
-        if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        // Appareil abonné au push : la notification arrive déjà par public/sw.js (pas de doublon).
+        if (document.hidden && "Notification" in window && Notification.permission === "granted" && !(await abonnePush())) {
           for (const n of nouvelles) new Notification(`🛒 ${n.titre}`, { body: n.message, tag: n.id });
         }
       } catch { /* réseau : on réessaie au prochain tour */ }
@@ -85,8 +89,8 @@ export function AlerteCommande() {
               {tr("Voir la commande")}
             </Link>
             {"Notification" in globalThis && Notification.permission === "default" && (
-              <button onClick={() => Notification.requestPermission()} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
-                {tr("Activer les alertes système (quand l’onglet est en arrière-plan)")}
+              <button onClick={ouvrirReglagePush} className="mt-2 w-full text-[12px] text-white/60 hover:text-white underline">
+                {tr("Activer les notifications sur cet appareil (même appli fermée)")}
               </button>
             )}
           </div>

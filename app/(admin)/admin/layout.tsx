@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { ActivationPush } from "@/components/ActivationPush";
 import { cookies } from "next/headers";
 import { MenusDeroulants } from "@/components/ui/MenusDeroulants";
 import { getAdminSession } from "@/lib/admin-auth";
@@ -11,7 +12,8 @@ import { SECTIONS, peutVoir } from "@/lib/command-center/rbac";
 import { demoAutorisee } from "@/lib/command-center/serveur";
 import "./command-center.css";
 
-export const metadata = { title: "Axso Command Center" };
+// Manifeste : installable (écran d'accueil), exigé par iPhone pour les notifications push.
+export const metadata = { title: "Axso Command Center", manifest: "/manifest-admin.webmanifest" };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getAdminSession();
@@ -27,6 +29,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </Coquille>
       <MenusDeroulants />
       {peutVoir(session.role, "finances") && <AxiaAdmin />}
+      {peutVoir(session.role, "marchands") && <ActivationPush espace="admin" />}
       {/* Nouvel inscrit : son fort + carte */}
       {peutVoir(session.role, "marchands") && <AlerteInscription />}
     </I18nProvider>

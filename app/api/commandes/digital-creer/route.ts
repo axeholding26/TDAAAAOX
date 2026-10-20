@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
     const sousTotal = lignes.reduce((s: number, l: { prix: number; quantite: number }) => s + l.prix * l.quantite, 0);
     const promo = codeSaisi ? await prisma.codePromo.findFirst({ where: { tenantId, code: String(codeSaisi).toUpperCase(), actif: true } }) : null;
-    const reduction = reductionPromo(promo, sousTotal);
+    const reduction = reductionPromo(promo, sousTotal, lignes);
     const erreurZone = aExpedier ? await verifierZone(tenantId, codePays(client?.pays), zone) : null;
     if (erreurZone) return NextResponse.json({ error: erreurZone }, { status: 400 });
     const montantLivraison = aExpedier ? await fraisLivraisonServeur({ tenantId, pays: codePays(client?.pays), zone, poids: await poidsPanier(tenantId, lignes), montantCommande: sousTotal - reduction }) : 0;

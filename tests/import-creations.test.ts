@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  delaiReprise, descriptionAvecBenefices, estExecutable, ipInterdite, manquePourPublier, nomPropre, signature, urlAcceptee, verifierFichier,
+  HTML_REFUSE, delaiReprise, descriptionAvecBenefices, estExecutable, ipInterdite, manquePourPublier, nomPropre, signature, urlAcceptee, verifierFichier,
 } from "@/lib/import-creations/regles";
 
 const PDF = Buffer.from("%PDF-1.4\n%âãÏÓ\n1 0 obj<<>>endobj\n%%EOF");
@@ -32,6 +32,27 @@ test("exécutables, scripts et pages web refusés même renommés", () => {
   }
   const r = verifierFichier(EXE, "photo.png", "visuel");
   assert.equal(r.ok, false);
+});
+
+test("page web HTML refusée avec la consigne .zip, même sans balise <html> en tête ; le jeu en .zip est accepté", () => {
+  const jeu = Buffer.from("<!-- Business Quest -->\n<head><meta charset=utf-8></head><body><script>jouer()</script></body>");
+  for (const [b, nom] of [[jeu, "Business-Quest.html"], [jeu, "jeu.HTM"], [Buffer.from("<!DOCTYPE html><title>x</title>"), "jeu.txt"]] as const) {
+    const r = verifierFichier(b, nom, "fichier");
+    assert.ok(!r.ok && r.raison === HTML_REFUSE, nom);
+  }
+  assert.ok(HTML_REFUSE.includes(".zip"));
+  const zip = verifierFichier(ZIP, "Business-Quest.zip", "fichier");
+  assert.ok(zip.ok && zip.mime === "application/zip");
+  // Script ou SVG reconnus à l'extension, même si le contenu ressemble à du texte.
+  for (const nom of ["jeu.js", "logo.svg", "installer.exe", "run.sh"]) assert.equal(verifierFichier(Buffer.from("console.log(1)"), nom, "fichier").ok, false, nom);
+  // MIME annoncé trompeur : seul le contenu compte (un PDF nommé .png reste refusé comme visuel).
+  assert.equal(verifierFichier(PDF, "couverture.png", "visuel").ok, false);
+  // Fichier tronqué : signature absente → refusé.
+  assert.equal(verifierFichier(Buffer.from([0x25, 0x50]), "guide.pdf", "fichier").ok, false);
+  // Nom avec accents, espaces et chemin : nettoyé, jamais un chemin.
+  const propre = nomPropre("../../Guide d'été : 2Y?.pdf");
+  assert.ok(!/[\\/:?]/.test(propre) && propre.endsWith(".pdf") && propre.includes("Guide d'été"), propre);
+  assert.ok(!nomPropre("../../etc/passwd").includes("/"));
 });
 
 test("extension incohérente refusée, formats Office reconnus par l'extension", () => {

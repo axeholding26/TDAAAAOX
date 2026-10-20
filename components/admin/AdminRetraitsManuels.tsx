@@ -9,15 +9,18 @@ interface RetraitManuel {
   destinataire: string; operateur?: string; notes?: string; createdAt: string;
 }
 
-// Retraits que NotchPay ne peut pas envoyer seul : l'admin fait le virement à
-// la main puis le marque payé, ou le refuse (le marchand est alors recrédité).
-export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) {
+// Retraits des marchands (tous, depuis le 20/10/2026) : l'admin fait le transfert dans
+// NotchPay (détails dans l'e-mail « Retrait à valider ») puis le marque payé, ou le refuse
+// (le marchand est alors recrédité). Le marchand est prévenu dans les deux cas.
+// `commissions` : même écran pour les commissions d'affiliés (Admin › Affiliés, /api/admin/affilies).
+export function AdminRetraitsManuels({ peutTraiter, commissions = false }: { peutTraiter: boolean; commissions?: boolean }) {
+  const source = commissions ? "/api/admin/affilies" : "/api/admin/wallet/retraits";
   const t = useT();
   const [retraits, setRetraits] = useState<RetraitManuel[]>([]);
   const [enCours, setEnCours] = useState<string | null>(null);
 
   async function charger() {
-    const res = await fetch("/api/admin/wallet/retraits");
+    const res = await fetch(source);
     if (res.ok) setRetraits((await res.json().catch(() => ({}))).retraits ?? []);
   }
   useEffect(() => { charger(); }, []);
@@ -30,14 +33,14 @@ export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) 
     if (!window.confirm(question)) return;
     setEnCours(r.id);
     try {
-      const res = await fetch("/api/admin/wallet/retraits", {
+      const res = await fetch(source, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: r.id, action }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(t(data.error ?? "Erreur")); return; }
-      toast.success(action === "payer" ? t("Retrait marqué payé") : t("Retrait refusé — marchand recrédité"));
+      toast.success(action === "payer" ? t("Marqué payé — le marchand est prévenu") : t("Refusé — marchand recrédité"));
       charger();
     } catch { toast.error(t("Erreur réseau")); } finally { setEnCours(null); }
   }
@@ -47,10 +50,10 @@ export function AdminRetraitsManuels({ peutTraiter }: { peutTraiter: boolean }) 
   return (
     <div className="rounded-2xl p-6 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
       <h2 className="font-semibold mb-1 flex items-center gap-2" style={{ color: "#ffffff" }}>
-        <Clock size={16} style={{ color: "#F5A623" }} />{" "}{t("Retraits à traiter à la main")} ({retraits.length})
+        <Clock size={16} style={{ color: "#F5A623" }} />{" "}{commissions ? t("Commissions d'affiliés à verser") : t("Retraits à traiter à la main")} ({retraits.length})
       </h2>
       <p className="text-xs mb-4" style={{ color: "#AAAAAA" }}>
-        {t("Le solde du marchand est déjà débité. Envoyez l'argent, puis marquez le retrait payé — ou refusez-le pour le recréditer.")}
+        {t("Le solde du marchand est déjà débité. Faites le transfert dans NotchPay (détails dans l'e-mail reçu), puis marquez-le payé — ou refusez-le pour recréditer le marchand.")}
       </p>
       <div className="space-y-2">
         {retraits.map(r => (
