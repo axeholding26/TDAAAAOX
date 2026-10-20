@@ -9,6 +9,7 @@ import { slugify } from "@/lib/utils";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Fichier = { id?: string; nom: string; url: string; taille: number; mimeType: string; ordre: number };
@@ -127,6 +128,7 @@ function EtapeInfos({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWizard>) =
             placeholder="5000"
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
+          <div className="mt-2"><PolitiquePrix prix={e.prix} type="fichier" /></div>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">{tr("Prix barré (optionnel)")}</label>

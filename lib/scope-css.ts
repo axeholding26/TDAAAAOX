@@ -91,7 +91,10 @@ function adapterAuConteneur(css: string): string {
 }
 
 // Garde-fous anti-débordement communs à tous les designs (petits écrans).
-const SECURITE_RESPONSIVE = `img,video,iframe,svg{max-width:100%}h1,h2,h3,h4,p,a,li,span,button{overflow-wrap:break-word}`;
+// `anywhere` (et non `break-word`) : un mot long ne force plus une colonne de
+// grille à s'élargir. En-tête : le logo rétrécit au lieu de pousser les
+// boutons hors de l'écran ; sur téléphone, « Rechercher » devient une loupe.
+const SECURITE_RESPONSIVE = `img,video,iframe,svg{max-width:100%}h1,h2,h3,h4,h5,h6,p,a,li,span,button{overflow-wrap:anywhere}header>*{min-width:0}header .logo{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@container (max-width:480px){[data-axs-recherche]{font-size:0!important;gap:0!important}[data-axs-recherche]::before{width:18px;height:18px}}`;
 
 function stylesElementsArbre(tree?: BlockNode[]): ElementStyles {
   const tous: ElementStyles = {};

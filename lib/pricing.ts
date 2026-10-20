@@ -1,12 +1,33 @@
 import { AVEC_CENTIMES } from "./changement-devise";
 
-// Prix affiché au client = prix vendeur majoré de la commission Axso, prélevée
-// sur les paiements en ligne. Le vendeur ne perd jamais d'argent : c'est le client
-// qui paie la commission en plus. Un produit physique se paie à la livraison, en
-// espèces au marchand : Axso n'y touche pas, donc aucune commission (modèle Shopify).
+// POLITIQUE DE PRIX (depuis le 20/10/2026) — le client paie la majoration en plus, le vendeur
+// garde toujours son prix :
+// - physique ou dropshipping payé EN LIGNE : +10 % (7 % Axso + 3 % NotchPay) ;
+// - produit numérique : +13 % (10 % Axso + 3 % NotchPay) ;
+// - physique payé À LA LIVRAISON, en espèces au marchand : rien n'est ajouté ni prélevé.
+// `taux` = Tenant.commissionRate (0,10 par défaut) ; le numérique y ajoute SUPPLEMENT_NUMERIQUE.
+// Texte public : page /legal/politique-prix.
+export const SUPPLEMENT_NUMERIQUE = 0.03;
+export const TYPES_NUMERIQUES = new Set(["digital", "fichier", "formation", "licence", "bundle", "evenement", "bootcamp"]);
+
+/** Majoration d'un produit payé en ligne, selon son type. */
+export const tauxProduit = (taux: number, typeProduit: string) => (TYPES_NUMERIQUES.has(typeProduit) ? taux + SUPPLEMENT_NUMERIQUE : taux);
+
+/** Prix payé par le client. "physique" = prix affiché, payé à la livraison ; "en_ligne" = physique payé en ligne. */
 export function prixClient(prixVendeur: number, tauxCommission: number, typeProduit: string): number {
   if (typeProduit === "physique") return prixVendeur;
-  return Math.round(prixVendeur * (1 + tauxCommission));
+  return Math.round(prixVendeur * (1 + tauxProduit(tauxCommission, typeProduit)));
+}
+
+/**
+ * Majoration moyenne d'une commande payée en ligne (prix des lignes = prix client) : celle qui,
+ * appliquée au total par partVendeur, rend au vendeur exactement la somme de ses prix, même si la
+ * commande mêle numérique (+13 %) et physique (+10 %). Ligne sans type connu : taux de base.
+ */
+export function tauxCommande(lignes: { prix: number; quantite: number; type?: string | null }[], taux: number): number {
+  const client = lignes.reduce((s, l) => s + l.prix * l.quantite, 0);
+  const vendeur = lignes.reduce((s, l) => s + (l.prix * l.quantite) / (1 + tauxProduit(taux, l.type ?? "")), 0);
+  return client > 0 && vendeur > 0 ? client / vendeur - 1 : taux;
 }
 
 type Promo = { type: string; valeur: number; minCommande?: number | null; maxUtilisations?: number | null; utilisations?: number; dateExpiration?: Date | null; produitIds?: string[] };

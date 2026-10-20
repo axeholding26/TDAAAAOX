@@ -50,7 +50,9 @@ async function envoyer(where: Prisma.AbonnementPushWhereInput, m: MessagePush, f
         await prisma.abonnementPush.update({ where: { id: a.id }, data: { dernierEnvoi: new Date() } }).catch(() => {});
       } catch (e: any) {
         bilan.echecs++;
-        if (e?.statusCode === 404 || e?.statusCode === 410) await prisma.abonnementPush.delete({ where: { id: a.id } }).catch(() => {});
+        // 404/410 : appareil désabonné ; 403 : abonnement fait avec une autre clé VAPID, inutilisable. Oublié :
+        // le navigateur se réabonne avec la bonne clé (components/ActivationPush.tsx).
+        if (e?.statusCode === 404 || e?.statusCode === 410 || e?.statusCode === 403) await prisma.abonnementPush.delete({ where: { id: a.id } }).catch(() => {});
         else console.warn(JSON.stringify({ evt: "push_echec", statut: e?.statusCode ?? null, message: String(e?.message ?? e).slice(0, 150) }));
       }
     }));

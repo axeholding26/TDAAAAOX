@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
     if (!tenantId || !Array.isArray(itemsClient) || !itemsClient.length || itemsClient.length > 50 || !client?.nom || !client?.telephone) {
       return NextResponse.json({ error: "Données manquantes" }, { status: 400 });
     }
+    // Ville (ou zone choisie dans la liste) obligatoire : elle dit où livrer et fixe les frais.
+    if (!String(zone ?? "").trim() && !String(client.ville ?? "").trim()) {
+      return NextResponse.json({ error: "Indiquez votre ville de livraison" }, { status: 400 });
+    }
 
     const tenant = await prisma.tenant.findUnique({ where: { id: tenantId } });
     if (!tenant || tenant.statut !== "active") {
@@ -117,6 +121,7 @@ export async function POST(req: NextRequest) {
         clientTelephone: client.telephone,
         adresseLivraison: localisation?.adresseExacte || client.adresse || "À préciser",
         ville: villeCommande(zone, client.ville) || "—",
+        tauxCommission: enLigne ? taux : null, // physique payé en ligne : +10 % ; à la livraison : rien
         pays: client.pays || "—",
         montantSousTotal: sousTotal,
         montantReduction: reduction,
@@ -196,7 +201,7 @@ export async function POST(req: NextRequest) {
       `🛒 *Articles :*`,
       lignesTexte,
       ``,
-      montantLivraison > 0 ? `🚚 *Livraison (${zone}) :* ${formatMontant(montantLivraison, devise)}` : null,
+      montantLivraison > 0 ? `🚚 *Livraison${zone ? ` (${zone})` : ""} :* ${formatMontant(montantLivraison, devise)}` : null,
       `💰 *Total à percevoir :* ${formatMontant(montantTotalAvecLivraison, devise)}`,
       codePromo ? `🏷️ Code promo : ${codePromo} (−${formatMontant(reduction, devise)})` : null,
       ``,

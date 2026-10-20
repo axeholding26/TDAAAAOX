@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowLeft, Upload, FileCode, Loader2, Wand2 } from "lucide-react";
+import { ArrowLeft, Upload, FileCode, Loader2, Wand2, Copy, Sparkles } from "lucide-react";
 import { ApercuDesign, parametresApercu, CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
 import { useT } from "@/components/I18nProvider";
+import { PROMPT_IMPORT_THEME, validerThemeImporte, type RapportTheme } from "@/lib/prompt-import-theme";
 
 type Mode = "librairie" | "import";
 
@@ -50,6 +51,17 @@ export default function CreerThemePage() {
   // ─── Import de template — extraction de style par l'IA ────────────────────
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
+  const [rapport, setRapport] = useState<RapportTheme | null>(null);
+
+  async function choisirFichier(f: File | null) {
+    setImportFile(f);
+    setRapport(f ? validerThemeImporte(await f.text()) : null);
+  }
+
+  async function copierPrompt() {
+    try { await navigator.clipboard.writeText(PROMPT_IMPORT_THEME); toast.success(tr("Prompt copié !")); }
+    catch { toast.error(tr("Copie impossible : sélectionnez le texte à la main.")); }
+  }
 
   async function importerDepuisFichier() {
     if (!importFile) { toast.error(tr("Choisissez un fichier .html à analyser")); return; }
@@ -125,19 +137,19 @@ export default function CreerThemePage() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 flex items-center justify-center bg-gray-50 p-6">
+        <div className="flex-1 overflow-y-auto bg-gray-50 p-6 flex flex-col items-center gap-4">
           <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-1.5">
               <Wand2 size={16} className="text-[#F5A623]" />
               <p className="text-sm font-semibold text-gray-900">{tr("Importer votre propre design")}</p>
             </div>
             <p className="text-xs text-gray-500 leading-relaxed mb-5">
-              {tr("Envoyez un fichier HTML de référence (une maquette, un site qui vous plaît). Notre IA analyse uniquement son style — couleurs, polices, ambiance — pour créer un thème AXSO personnalisé. Le fichier n'est jamais exécuté ni publié tel quel.")}
+              {tr("Envoyez un fichier HTML : son design et ses textes sont repris tels quels, vos vrais produits branchés dans sa grille, puis vous le modifiez dans le Constructeur. Les scripts sont retirés, jamais exécutés.")}
             </p>
 
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-[#F5A623]/50 transition-all">
               <input type="file" accept=".html,text/html" className="hidden"
-                onChange={(e) => setImportFile(e.target.files?.[0] || null)} />
+                onChange={(e) => choisirFichier(e.target.files?.[0] || null)} />
               {importFile ? (
                 <>
                   <FileCode size={22} className="text-[#F5A623]" />
@@ -154,6 +166,33 @@ export default function CreerThemePage() {
             <button onClick={importerDepuisFichier} disabled={importing || !importFile}
               className="w-full mt-5 flex items-center justify-center gap-2 bg-[#F5A623] text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#d4820a] disabled:opacity-50 transition-all">
               {importing ? <><Loader2 size={14} className="animate-spin" />{" "}{tr("Analyse en cours…")}</> : tr("Analyser & créer mon thème")}
+            </button>
+          </div>
+
+          {/* Fichier choisi : ce qui ne sera pas modifiable dans le Constructeur (lib/prompt-import-theme.ts). */}
+          {rapport && (rapport.erreurs.length > 0 || rapport.avertissements.length > 0) && (
+            <div className="w-full max-w-md bg-white rounded-2xl border border-amber-200 p-4 text-xs leading-relaxed">
+              <p className="font-semibold text-gray-900 mb-2">{tr("Ce fichier ne respecte pas tout le standard Axso")}</p>
+              <ul className="list-disc pl-4 space-y-1">
+                {rapport.erreurs.map((m) => <li key={m} className="text-red-600">{m}</li>)}
+                {rapport.avertissements.map((m) => <li key={m} className="text-gray-600">{m}</li>)}
+              </ul>
+            </div>
+          )}
+
+          {/* Prompt standard à donner à une IA externe pour obtenir un fichier 100 % modifiable. */}
+          <div className="w-full max-w-md bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Sparkles size={16} className="text-[#F5A623]" />
+              <p className="text-sm font-semibold text-gray-900">{tr("Faire créer ton thème par une IA")}</p>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed mb-3">
+              {tr("Copie ce prompt dans ChatGPT, Claude ou une autre IA, décris ta boutique à la fin, puis importe ici le fichier .html obtenu. Il fixe seulement la structure technique : style, couleurs et textes restent libres.")}
+            </p>
+            <pre className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 border border-gray-100 p-3 text-[11px] text-gray-700 font-mono select-all">{PROMPT_IMPORT_THEME}</pre>
+            <button onClick={copierPrompt}
+              className="w-full mt-3 flex items-center justify-center gap-2 border border-[#F5A623] text-[#F5A623] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#F5A623]/10 transition-all">
+              <Copy size={14} />{" "}{tr("Copier le prompt")}
             </button>
           </div>
         </div>

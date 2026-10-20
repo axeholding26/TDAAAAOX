@@ -19,7 +19,7 @@ export function ImageBlock({ config, slug }: BlockRenderProps) {
 
   return (
     <div className="py-2">
-      {lien ? <a href={lien}>{img}</a> : img}
+      {lien ? <a href={lien} className="block">{img}</a> : img}
     </div>
   );
 }

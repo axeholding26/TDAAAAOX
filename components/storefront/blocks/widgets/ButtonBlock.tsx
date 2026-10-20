@@ -23,7 +23,7 @@ export function ButtonBlock({ config, colors, slug, container, editable, onEditT
   const contenu = (
     <span
       data-axs-cible=""
-      className={`inline-flex items-center justify-center rounded-full font-semibold transition-transform hover:scale-105 ${taille}`}
+      className={`inline-flex items-center justify-center @max-[640px]:min-h-11 rounded-full font-semibold transition-transform hover:scale-105 ${taille}`}
       style={styleProps}
     >
       <InlineEditable as="span" value={texte} editable={editable} onCommit={(t) => onEditText?.({ texte: t })} />

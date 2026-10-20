@@ -17,6 +17,7 @@ import { GardeProduitPhysique } from "@/components/dashboard/GardeProduitPhysiqu
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 
 const TYPES_PRODUIT = [
   {
@@ -406,6 +407,7 @@ function FormulaireProduit() {
               <div>
                 <label className="ax-label block mb-1.5">{tr("Prix de vente *")}</label>
                 <input type="number" value={form.prix} onChange={e => set("prix", e.target.value)} placeholder="0" min="0" className={inputClass} />
+                <div className="mt-2"><PolitiquePrix prix={form.prix} type={form.type} /></div>
               </div>
               <div>
                 <label className="ax-label block mb-1.5">{tr("Prix barré (promo)")}</label>

@@ -10,7 +10,7 @@ export function StatsBlock({ id, config, colors: c, container: CONTAINER }: Bloc
         <div className="grid grid-cols-2 @min-[640px]:grid-cols-4 gap-8 text-center">
           {items.map((stat: any, i: number) => (
             <div key={i}>
-              <p className="text-4xl font-bold font-playfair" style={{ color: c.accent }}>{stat.valeur}</p>
+              <p className="text-3xl @min-[640px]:text-4xl font-bold font-playfair break-words" style={{ color: c.accent }}>{stat.valeur}</p>
               <p className="text-sm mt-1" style={{ opacity: 0.6 }}>{stat.label}</p>
             </div>
           ))}

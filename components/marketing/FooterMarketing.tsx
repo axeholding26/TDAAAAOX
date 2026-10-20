@@ -29,6 +29,7 @@ const liens = {
     { label: "Politique de confidentialité", href: "/legal/privacy" },
     { label: "Cookies", href: "/legal/cookies" },
     { label: "Abonnements", href: "/legal/abonnements" },
+    { label: "Politique de prix", href: "/legal/politique-prix" },
   ],
 };
 

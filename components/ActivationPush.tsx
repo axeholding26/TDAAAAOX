@@ -18,6 +18,20 @@ function cleEnOctets(b64: string) {
 const lire = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const ecrire = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch { /* stockage indisponible */ } };
 
+/** Abonnement de ce navigateur avec LA clé VAPID actuelle : un ancien abonnement fait avec une autre
+ *  clé (clés régénérées, autre environnement) est refusé par le service de push à chaque envoi. */
+async function abonner(reg: ServiceWorkerRegistration): Promise<PushSubscription> {
+  const r = await fetch("/api/push");
+  const { cle: vapid, erreur } = await r.json().catch(() => ({}));
+  if (!vapid) throw new Error(erreur ?? "Notifications indisponibles");
+  const attendue = cleEnOctets(vapid);
+  const sub = await reg.pushManager.getSubscription();
+  const actuelle = sub?.options.applicationServerKey ? new Uint8Array(sub.options.applicationServerKey) : null;
+  if (sub && actuelle && actuelle.length === attendue.length && actuelle.every((o, i) => o === attendue[i])) return sub;
+  await sub?.unsubscribe().catch(() => {});
+  return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: attendue });
+}
+
 async function enregistrer(espace: Espace, sub: PushSubscription) {
   const r = await fetch("/api/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ espace, abonnement: sub.toJSON() }) });
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).erreur ?? "Abonnement refusé");
@@ -47,9 +61,9 @@ export function ActivationPush({ espace }: { espace: Espace }) {
       if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return setEtat(ios && !installee ? "ios" : "absent");
       if (Notification.permission === "denied") return setEtat("refuse");
       const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" });
-      const sub = await reg.pushManager.getSubscription();
-      if (sub && Notification.permission === "granted") {
-        await enregistrer(espace, sub).catch(() => {}); // garde le serveur à jour (clés renouvelées, autre compte)
+      if ((await reg.pushManager.getSubscription()) && Notification.permission === "granted") {
+        // Garde le serveur à jour (clé VAPID changée, abonnement renouvelé, autre compte).
+        await abonner(reg).then((sub) => enregistrer(espace, sub)).catch(() => {});
         return setEtat("actif");
       }
       setEtat("inactif");
@@ -67,12 +81,7 @@ export function ActivationPush({ espace }: { espace: Espace }) {
     setOccupe(true); setInfo(null);
     try {
       if ((await Notification.requestPermission()) !== "granted") { setEtat("refuse"); return; }
-      const r = await fetch("/api/push");
-      const { cle: vapid, erreur } = await r.json();
-      if (!vapid) throw new Error(erreur ?? "Notifications indisponibles");
-      const reg = await navigator.serviceWorker.ready;
-      const sub = (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: cleEnOctets(vapid) });
-      await enregistrer(espace, sub);
+      await enregistrer(espace, await abonner(await navigator.serviceWorker.ready));
       setEtat("actif");
       await tester();
     } catch (e) {
@@ -81,8 +90,23 @@ export function ActivationPush({ espace }: { espace: Espace }) {
   }
 
   async function tester() {
-    const r = await fetch("/api/push?test=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ espace }) });
-    setInfo(r.ok ? t("Notification d'essai envoyée : elle doit apparaître sur cet appareil.") : t("L'essai n'a pas pu être envoyé."));
+    setOccupe(true); setInfo(null);
+    const essai = () => fetch("/api/push?test=1", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ espace }) });
+    try {
+      let r = await essai();
+      // Appareil inconnu du serveur ou abonnement refusé : on réabonne cet appareil, puis un seul nouvel essai.
+      if (r.status === 404 || r.status === 502) {
+        await enregistrer(espace, await abonner(await navigator.serviceWorker.ready));
+        r = await essai();
+      }
+      const d = await r.json().catch(() => ({}));
+      // Essai réussi : la carte se ferme seule quelques secondes après, et ne se réaffiche plus d'elle-même.
+      if (r.ok) { ecrire(cle, "1"); setTimeout(() => { setInfo(null); setFerme(true); }, 4000); }
+      setInfo(r.ok ? t("Notification d'essai envoyée à {0} : elle doit apparaître sur cet appareil.", new Date().toLocaleTimeString())
+        : `${t("L'essai n'a pas pu être envoyé")} : ${t(d.erreur ?? "erreur inconnue")}.`);
+    } catch (e) {
+      setInfo(`${t("L'essai n'a pas pu être envoyé")} : ${e instanceof Error ? t(e.message) : t("erreur inconnue")}.`);
+    } finally { setOccupe(false); }
   }
 
   const fermer = () => { ecrire(cle, "1"); setFerme(true); };
@@ -107,7 +131,11 @@ export function ActivationPush({ espace }: { espace: Espace }) {
           {occupe ? t("Activation…") : t("Activer les notifications")}
         </button>
       )}
-      {etat === "actif" && <button onClick={tester} className="mt-2 text-[12px] text-white/60 hover:text-white underline">{t("Renvoyer un essai")}</button>}
+      {etat === "actif" && (
+        <button onClick={tester} disabled={occupe} className="mt-2 text-[12px] text-white/60 hover:text-white underline disabled:opacity-50">
+          {occupe ? t("Envoi…") : t("Renvoyer un essai")}
+        </button>
+      )}
     </div>
   );
 }

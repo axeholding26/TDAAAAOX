@@ -14,11 +14,6 @@ const INFOS: Partial<Record<PageEditee, { titre: string; texte: string; liens: {
     texte: "La liste de tes produits, dans le style de ton design. Son en-tête et son pied de page sont ceux de ta page d'accueil ; couleurs, polices et boutons suivent les Paramètres du thème.",
     liens: [{ label: "Modifier l'en-tête / le pied de page", page: "accueil" }, { label: "Gérer mes produits", href: "/dashboard/produits" }],
   },
-  panier: {
-    titre: "Panier",
-    texte: "Le panier réel de tes clients (quantités, code promo, total dans ta devise), habillé de l'en-tête et du pied de page de ta boutique.",
-    liens: [{ label: "Modifier l'en-tête / le pied de page", page: "accueil" }, { label: "Codes promo", href: "/dashboard/marketing/codes-promo" }],
-  },
   commande: {
     titre: "Commande",
     texte: "Le formulaire de commande (paiement à la livraison, mobile money, WhatsApp). Les informations demandées à l'acheteur se règlent dans Paramètres › Formulaire de commande.",
@@ -39,7 +34,7 @@ export function PanneauPage({ page, onPage }: { page: PageEditee; onPage: (p: Pa
           ? <Link key={l.label} href={l.href} className="flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#E5E5E5] text-[14px] hover:bg-[#F5F5F5]">{t(l.label)}<ArrowRight size={15} className="text-[#999999]" /></Link>
           : <button key={l.label} onClick={() => onPage(l.page!)} className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-[#E5E5E5] text-[14px] hover:bg-[#F5F5F5]">{t(l.label)}<ArrowRight size={15} className="text-[#999999]" /></button>)}
       </div>
-      <p className="text-[12.5px] text-[#999999] leading-relaxed">{t("L'aperçu est la vraie page : tu peux y cliquer (produit, panier…) pour naviguer entre les pages.")}</p>
+      <p className="text-[12.5px] text-[#999999] leading-relaxed">{t("L'aperçu est la vraie page : tu peux y cliquer (produit, commande…) pour naviguer entre les pages.")}</p>
     </div>
   );
 }

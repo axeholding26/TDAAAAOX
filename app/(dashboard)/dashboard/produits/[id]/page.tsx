@@ -25,6 +25,7 @@ import { envoyerImagesCarrees, dimensions, estCarre, MESSAGE_REFUS } from "@/lib
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 
 const TYPES_PRODUIT = [
   { id: "physique",     icon: Package,  label: "Physique",      desc: "Stock, livraison, poids",                 color: "#F5A623" },
@@ -502,6 +503,7 @@ export default function EditProduitPage() {
                     <input type="number" inputMode="decimal" step="any" min="0" value={form.prix} onChange={e => set("prix", e.target.value)} placeholder="0" className={`${inputClass} pr-16`} />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#AAAAAA]">{tr(devise)}</span>
                   </div>
+                  <div className="mt-2"><PolitiquePrix prix={form.prix} type={form.type} /></div>
                 </div>
                 <div>
                   <label className="ax-label block mb-1.5">{tr("Prix barré (avant promo)")}</label>

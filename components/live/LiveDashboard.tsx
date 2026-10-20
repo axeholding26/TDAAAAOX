@@ -120,7 +120,7 @@ export function LiveAccueil() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{t("Live & bootcamps")}</h1>
-          <p className="text-sm text-gray-500">{t("Webinaires, masterclass, ateliers, classes et cohortes vendus depuis votre boutique (paiement en ligne, +10 % de commission AXSO payés par le client).")}</p>
+          <p className="text-sm text-gray-500">{t("Webinaires, masterclass, ateliers, classes et cohortes vendus depuis votre boutique (paiement en ligne, +13 % payés par le client : 10 % AXSO, 3 % NotchPay).")}</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setMode("evenement")} className={bouton}><Plus size={12} className="inline" /> {t("Événement live")}</button>

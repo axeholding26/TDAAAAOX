@@ -84,8 +84,9 @@ test("annulation fournisseur : seul un motif imputable au fournisseur compte con
   assert.ok(!MOTIFS_IMPUTABLES_FOURNISSEUR.includes("client") && !MOTIFS_IMPUTABLES_FOURNISSEUR.includes("marchand"));
 });
 
-test("commission Axso : 10 % ajoutés au prix payé en ligne, rien sur un produit payé à la livraison", () => {
-  assert.equal(prixClient(10000, 0.1, "digital"), 11000);
+test("commission Axso : +13 % numérique, +10 % physique payé en ligne, rien à la livraison", () => {
+  assert.equal(prixClient(10000, 0.1, "digital"), 11300);
+  assert.equal(prixClient(10000, 0.1, "en_ligne"), 11000);
   assert.equal(prixClient(10000, 0.1, "physique"), 10000);
-  assert.equal(prixClient(999, 0.1, "digital"), 1099);
+  assert.equal(prixClient(999, 0.1, "digital"), 1129);
 });

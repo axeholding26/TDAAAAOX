@@ -6,7 +6,7 @@
 import type { BlockNode, BlockNodeType, BlockStyleOverrides } from "./theme-config";
 import {
   insertNode, moveNode, removeNode, duplicateNode, peutDeposer,
-  updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif,
+  updateNodeStyle, updateNodeResponsiveStyle, updateNodeConfig, toggleNodeActif, zoneDe, findNode,
 } from "./block-tree";
 import { createDefaultNode, getCatalogEntry } from "./block-catalog";
 
@@ -89,6 +89,20 @@ function construireNoeud(spec: AgentNodeSpec): BlockNode {
       .map(construireNoeud);
   }
   return node;
+}
+
+/** Section d'en-tête : zone « header », ou design non découpé qui contient le <header>/<nav>. */
+export const estEntete = (n: BlockNode) => zoneDe(n) === "header" || /<(header|nav)\b/i.test(JSON.stringify(n.children ?? []));
+
+/** Écarte ce qui ferait disparaître l'en-tête (navbar) : suppression, masquage ou sortie de la zone en-tête. */
+export function protegerEntete(tree: BlockNode[], actions: AgentAction[]): AgentAction[] {
+  const entete = tree.filter(estEntete);
+  const dansEntete = (id: string) => entete.some((s) => s.id === id || !!findNode(s.children ?? [], id));
+  return actions.filter((a) => {
+    if ((a.op === "remove" || a.op === "toggleActif") && dansEntete(a.nodeId)) return false;
+    if (a.op === "updateConfig" && tree.some((s) => s.id === a.nodeId && zoneDe(s) === "header") && "zone" in a.config && a.config.zone !== "header") return false;
+    return true;
+  });
 }
 
 export function applyAgentActions(tree: BlockNode[], actions: AgentAction[]): BlockNode[] {

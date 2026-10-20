@@ -142,7 +142,7 @@ function AvisForm({ tenantId, produitId, accent, surface, radius }: {
           <button key={i} type="button"
             onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(0)}
             onClick={() => setNote(i)}
-            style={{ background: "none", border: "none", padding: 2, cursor: "pointer" }}>
+            style={{ background: "none", border: "none", padding: 9, cursor: "pointer" }}>
             <Star size={26} strokeWidth={1.5} style={{ color: accent }}
               fill={(hover || note) >= i ? accent : "none"}
               opacity={(hover || note) >= i ? 1 : 0.2} />
@@ -152,19 +152,19 @@ function AvisForm({ tenantId, produitId, accent, surface, radius }: {
       </div>
 
       {/* Fields */}
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid @min-[640px]:grid-cols-2 gap-3">
         <input value={nom} onChange={e => setNom(e.target.value)} placeholder={tx("Votre nom *")}
-          className="w-full px-3 py-2.5 text-base sm:text-sm outline-none transition-all"
+          className="w-full px-3 py-2.5 text-base @min-[640px]:text-sm outline-none transition-all"
           style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
         <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={tx("Votre email *")}
-          className="w-full px-3 py-2.5 text-base sm:text-sm outline-none transition-all"
+          className="w-full px-3 py-2.5 text-base @min-[640px]:text-sm outline-none transition-all"
           style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
       </div>
       <input value={titre} onChange={e => setTitre(e.target.value)} placeholder={tx("Titre (optionnel)")}
-        className="w-full px-3 py-2.5 text-base sm:text-sm outline-none"
+        className="w-full px-3 py-2.5 text-base @min-[640px]:text-sm outline-none"
         style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
       <textarea value={commentaire} onChange={e => setComment(e.target.value)} placeholder={tx("Votre commentaire…")} rows={3}
-        className="w-full px-3 py-2.5 text-base sm:text-sm outline-none resize-none"
+        className="w-full px-3 py-2.5 text-base @min-[640px]:text-sm outline-none resize-none"
         style={{ borderRadius: rad, border: `1px solid ${accent}20`, background: "transparent" }} />
 
       {err && <p className="text-xs text-red-500">{tx(err)}</p>}
@@ -237,7 +237,7 @@ function FlechesDiaporama({ n, selected, aller, toujoursVisibles = false }: { n:
     <>
       {[-1, 1].map((sens) => (
         <button key={sens} type="button" onClick={(e) => { e.stopPropagation(); aller(selected + sens); }} aria-label={sens < 0 ? tx("Image précédente") : tx("Image suivante")}
-          className={`absolute top-1/2 -translate-y-1/2 ${sens < 0 ? "left-2" : "right-2"} z-10 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/90 text-[#111111] shadow-md transition-opacity ${toujoursVisibles ? "" : "sm:opacity-0 sm:group-hover:opacity-100"} focus-visible:opacity-100`}>
+          className={`absolute top-1/2 -translate-y-1/2 ${sens < 0 ? "left-2" : "right-2"} z-10 w-11 h-11 rounded-full flex items-center justify-center bg-white/90 text-[#111111] shadow-md transition-opacity ${toujoursVisibles ? "" : "@min-[640px]:opacity-0 @min-[640px]:group-hover:opacity-100"} focus-visible:opacity-100`}>
           {sens < 0 ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
       ))}
@@ -298,7 +298,7 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
 
   return (
     <>
-      <div className={`flex gap-3 ${sticky ? "lg:sticky lg:top-6" : ""}`}>
+      <div className={`flex gap-3 ${sticky ? "@min-[1024px]:sticky @min-[1024px]:top-6" : ""}`}>
         <div className="flex-1 group">
           <div className="relative aspect-square overflow-hidden select-none outline-none focus-visible:ring-2"
             {...diaporama} aria-label={n > 1 ? tx("Images de {0}", nom) : undefined}
@@ -318,18 +318,20 @@ function ImageGallery({ images, nom, accent, radius, zoomEnabled = true, sticky 
           </div>
           {/* Points de pagination : présentation épurée, sans miniatures */}
           {showDots && (
-            <div className="flex items-center justify-center gap-1.5 mt-3">
+            <div className="flex items-center justify-center gap-0.5 mt-1">
               {images.map((_, i) => (
-                <button key={i} onClick={() => setSelected(i)} aria-label={tx("Image {0}", i + 1)}
-                  className="rounded-full transition-all duration-200"
-                  style={{ width: i === selected ? 18 : 6, height: 6, background: i === selected ? accent : `${accent}30` }} />
+                // Zone de toucher de 44 px autour du point de 6 px.
+                <button key={i} onClick={() => setSelected(i)} aria-label={tx("Image {0}", i + 1)} className="h-11 px-1 flex items-center">
+                  <span className="block rounded-full transition-all duration-200"
+                    style={{ width: i === selected ? 18 : 6, height: 6, background: i === selected ? accent : `${accent}30` }} />
+                </button>
               ))}
             </div>
           )}
         </div>
       </div>
       {zoomData && current && (
-        <div className="fixed z-[200] pointer-events-none hidden lg:block"
+        <div className="fixed z-[200] pointer-events-none hidden @min-[1024px]:block"
           style={{ left: zoomData.panelLeft, top: zoomData.panelTop, width: 400, height: 400, borderRadius: radius,
             backgroundImage: `url(${current})`, backgroundSize: "300%",
             backgroundPosition: `${zoomData.x}% ${zoomData.y}%`,
@@ -366,7 +368,7 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect, cfg }:
             )}
             {cfg.style === "liste" ? (
               <select value={current?.id ?? ""} onChange={e => onSelect(variants.find(v => v.id === e.target.value) ?? null)}
-                className={`w-full ${TAILLE[cfg.taille] ?? TAILLE.md} max-sm:text-base bg-transparent outline-none`}
+                className={`w-full ${TAILLE[cfg.taille] ?? TAILLE.md} @max-[640px]:text-base bg-transparent outline-none`}
                 style={{ borderRadius: radius, border: `2px solid ${current ? accent : "rgba(0,0,0,0.12)"}` }}>
                 <option value="">{tx("Choisir")}{" "}{nom.toLowerCase()}…</option>
                 {variants.map(v => <option key={v.id} value={v.id} disabled={v.stock === 0}>{tx(v.valeur)}{v.stock === 0 ? tx(" (épuisé)") : ""}</option>)}
@@ -378,7 +380,7 @@ function VariantSelector({ variantes, accent, radius, selected, onSelect, cfg }:
                 const isOut = v.stock === 0;
                 return (
                   <button key={v.id} onClick={() => onSelect(isSelected ? null : v)} disabled={isOut}
-                    className={`relative ${TAILLE[cfg.taille] ?? TAILLE.md} font-medium transition-all duration-150`}
+                    className={`relative ${TAILLE[cfg.taille] ?? TAILLE.md} @max-[640px]:min-h-11 font-medium transition-all duration-150`}
                     style={{ borderRadius: rayon, border: `2px solid ${isSelected ? accent : "rgba(0,0,0,0.12)"}`, background: isSelected ? `${accent}12` : "transparent", color: isSelected ? accent : "inherit", opacity: isOut ? 0.3 : 1 }}>
                     {tx(v.valeur)}
                     {isOut && <span className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="w-[130%] h-px bg-current opacity-50 rotate-[-15deg] absolute" /></span>}
@@ -549,10 +551,10 @@ function SocialSection({ accent, nom }: { accent: string; nom: string }) {
       <span className="text-sm font-semibold flex items-center gap-2"><Share2 size={14} />{" "}{tx("Partager")}</span>
       {shares.map(s => (
         <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
-          className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
+          className="inline-flex items-center min-h-11 px-4 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
           style={{ background: s.bg }}>{tx(s.label)}</a>
       ))}
-      <button onClick={copyLink} className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
+      <button onClick={copyLink} className="min-h-11 px-4 rounded-xl text-xs font-bold text-white transition-opacity hover:opacity-90"
         style={{ background: accent }}>{copied ? tx("Copié !") : tx("Copier le lien")}</button>
     </div>
   );
@@ -600,7 +602,7 @@ function FeaturesSection({ config, accent, surface }: { config: Record<string, a
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{tx(config.titre)}</h3>}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3 gap-4">
         {items.map((item, i) => (
           <div key={i} className="flex gap-4 p-5 rounded-2xl" style={{ background: surface }}>
             <div className="text-2xl flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl" style={{ background: `${accent}15` }}>{tx(item.icone)}</div>
@@ -636,10 +638,10 @@ function HowtoSection({ config, accent, surface }: { config: Record<string, any>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{tx(config.titre)}</h3>}
       {config.style === "carrousel" ? (
         <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-1 px-1">
-          {steps.map((step, i) => carte(step, i, "snap-start flex-shrink-0 w-[78%] sm:w-72"))}
+          {steps.map((step, i) => carte(step, i, "snap-start flex-shrink-0 w-[78%] @min-[640px]:w-72"))}
         </div>
       ) : config.style === "colonnes" ? (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 @min-[640px]:grid-cols-2 @min-[1024px]:grid-cols-3">
           {steps.map((step, i) => carte(step, i))}
         </div>
       ) : config.style === "accordeon" ? (
@@ -691,7 +693,7 @@ function ReviewsBlock({ cfg, avis, moyenne, accent, surface, radius, tenantId, p
         <>
           {cfg.afficherResume !== false && <RatingBreakdown avis={avis} accent={etoiles} moyenne={moyenne} />}
           {cfg.afficherResume !== false && <div className="h-px" style={{ background: `${accent}12` }} />}
-          <div className={cfg.disposition === "liste" ? "space-y-3" : "grid gap-4 sm:grid-cols-2"}>
+          <div className={cfg.disposition === "liste" ? "space-y-3" : "grid gap-4 @min-[640px]:grid-cols-2"}>
             {liste.map(a => (
               <div key={a.id} className="p-5 rounded-2xl" style={{ background: surface, border: `1px solid ${accent}10` }}>
                 <div className="flex items-center justify-between mb-2">
@@ -719,11 +721,12 @@ function ReviewsBlock({ cfg, avis, moyenne, accent, surface, radius, tenantId, p
 // ─── Testimonials Section ─────────────────────────────────────────────────────
 function TestimonialsSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
   const tx = useT();
-  const items: { nom: string; note: number; texte: string; avatar?: string }[] = config.items || [];
+  const items: { nom: string; note: number; texte: string; avatar?: string }[] = (config.items || []).filter((it: any) => it?.texte);
+  if (!items.length) return null;
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{tx(config.titre)}</h3>}
-      <div className="grid sm:grid-cols-2 gap-4 max-w-3xl">
+      <div className="grid @min-[640px]:grid-cols-2 gap-4 max-w-3xl">
         {items.map((item, i) => (
           <div key={i} className="p-6 rounded-2xl" style={{ background: surface }}>
             <div className="flex mb-3">
@@ -736,7 +739,7 @@ function TestimonialsSection({ config, accent, surface }: { config: Record<strin
               {item.avatar ? (
                 <img src={item.avatar} alt={item.nom} className="w-8 h-8 rounded-full object-cover" />
               ) : (
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${accent}25`, color: accent }}>{tx(item.nom[0])}</div>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: `${accent}25`, color: accent }}>{tx((item.nom || "?")[0])}</div>
               )}
               <p className="text-sm font-semibold">{tx(item.nom)}</p>
             </div>
@@ -756,7 +759,7 @@ function IngredientsSection({ config, accent, surface }: { config: Record<string
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-4">{tx(config.titre)}</h3>}
       {config.texte && <p className="text-sm opacity-60 mb-8 max-w-2xl leading-relaxed">{tx(config.texte)}</p>}
-      <div className="grid sm:grid-cols-2 gap-3 max-w-3xl">
+      <div className="grid @min-[640px]:grid-cols-2 gap-3 max-w-3xl">
         {items.map((item, i) => (
           <div key={i} className="rounded-xl overflow-hidden" style={{ background: surface }}>
             {item.image && <img src={item.image} alt={item.nom || ""} loading="lazy" className="w-full aspect-[4/3] object-cover" />}
@@ -781,6 +784,7 @@ function SizeGuideSection({ config, accent, surface }: { config: Record<string, 
   const tx = useT();
   const headers: string[] = config.headers || [];
   const rows: { cells: string[] }[] = config.rows || [];
+  if (!rows.length) return null;
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{tx(config.titre)}</h3>}
@@ -811,11 +815,12 @@ function SizeGuideSection({ config, accent, surface }: { config: Record<string, 
 // ─── Guarantee Section ────────────────────────────────────────────────────────
 function GuaranteeSection({ config, accent, surface }: { config: Record<string, any>; accent: string; surface: string }) {
   const tx = useT();
-  const items: { icone: string; titre: string; texte: string }[] = config.items || [];
+  const items: { icone: string; titre: string; texte: string }[] = (config.items || []).filter((it: any) => it?.titre || it?.texte);
+  if (!items.length) return null;
   return (
     <div className="py-12 border-t" style={{ borderColor: `${accent}10` }}>
       {config.titre && <h3 className="text-2xl font-bold mb-8">{tx(config.titre)}</h3>}
-      <div className="grid sm:grid-cols-3 gap-4 max-w-3xl">
+      <div className="grid @min-[640px]:grid-cols-3 gap-4 max-w-3xl">
         {items.map((item, i) => (
           <div key={i} className="text-center p-6 rounded-2xl" style={{ background: surface }}>
             <div className="text-3xl mb-3">{tx(item.icone)}</div>
@@ -963,7 +968,7 @@ function AchatDirectDigital({ produitId, tenantId, prix, devise, texte, fond, co
         <label key={c.type} className="block">
           <span className="block text-[13px] font-semibold mb-1.5">{tx(c.label)}</span>
           <input type={c.type} required autoFocus={i === 0} value={c.valeur} onChange={(e) => c.maj(e.target.value)} placeholder={c.ph} autoComplete={c.auto}
-            className="w-full h-12 px-4 rounded-xl border bg-white text-base sm:text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
+            className="w-full h-12 px-4 rounded-xl border bg-white text-base @min-[640px]:text-[15px] text-[#111111] outline-none focus:ring-2" style={{ borderColor: `${fond}50` }} />
         </label>
       ))}
       <button type="submit" disabled={!valide || envoi}
@@ -1215,9 +1220,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   const showAiDesc      = descCfg.ai !== false;
   const similarTitre    = simCfg.titre || "Vous aimerez aussi";
 
-  const rightSections = sections.filter(s => RIGHT_COL.has(s.type) && s.actif);
+  // Tailles strictement optionnelles : sans variante « Taille / Pointure / Size », ni sélecteur ni guide des tailles.
+  const aDesTailles   = produit.variantes.some(v => /taille|pointure|size/i.test(v.nom));
+  const rightSections = sections.filter(s => RIGHT_COL.has(s.type) && s.actif && (s.type !== "variants" || produit.variantes.length > 0));
   const countdownSec  = sections.find(s => s.type === "countdown" && s.actif);
-  const belowSections = sections.filter(s => BELOW_TYPES.has(s.type) && s.actif);
+  const belowSections = sections.filter(s => BELOW_TYPES.has(s.type) && s.actif && (s.type !== "sizeguide" || aDesTailles));
 
   // State
   const [selectedVariante, setSelectedVariante] = useState<Variante | null>(null);
@@ -1281,7 +1288,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             </p>
           )}
           <div className="flex items-start justify-between gap-3">
-            <h1 className="min-w-0 break-words text-3xl sm:text-4xl font-bold leading-tight">{tx(produit.nom)}</h1>
+            <h1 className="min-w-0 break-words text-2xl @min-[640px]:text-4xl font-bold leading-tight">{tx(produit.nom)}</h1>
             <WishlistHeartButton produitId={produit.id} accent={accent} fond={surface} size={17} className="flex-shrink-0 w-10 h-10 rounded-full mt-0.5" />
           </div>
           {produit.avis.length > 0 && (
@@ -1300,7 +1307,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             </div>
           )}
           <div className="flex items-baseline gap-3 flex-wrap">
-            <span className="text-4xl font-black" style={{ color: accent }}>{fmt(prixEffectif, devise)}</span>
+            <span className="text-3xl @min-[640px]:text-4xl font-black" style={{ color: accent }}>{fmt(prixEffectif, devise)}</span>
             {produit.prixCompareAffiche && produit.prixCompareAffiche > prixEffectif && (
               <span className="text-lg opacity-35 line-through">
                 {fmt(produit.prixCompareAffiche, devise)}
@@ -1361,7 +1368,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   texte={cfg.texteBouton || produit.texteBoutonAchat || tx("Acheter")} fond={btnFond} couleurTexte={btnTexte} radius={btnRadiusPx} desactive={enRupture} />
               ) : (
               <div className="space-y-2.5">
-                <button onClick={() => commander()} disabled={enRupture}
+                <button data-navigue onClick={() => commander()} disabled={enRupture}
                   className={`w-full font-bold disabled:opacity-35 flex items-center justify-center gap-3 ${btnHoverClass}`}
                   style={{
                     ...btnAchatSizing,
@@ -1375,20 +1382,22 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
                   <ShoppingBag size={18} />
                   {enRupture ? tx("Indisponible") : (tx(cfg.texteBouton) || tx(produit.texteBoutonAchat) || tx("Commander"))}
                 </button>
-                {/* Commande WhatsApp acceptée (Paramètres → Moyens de paiement) : vraie commande, suivie et facturée. */}
-                {tenant.commandeWhatsApp && waNum && produit.type === "physique" ? (
-                  <button onClick={() => commander("whatsapp")} disabled={enRupture}
+                {/* Bouton WhatsApp (réglage « afficherWhatsApp » de la section) : « Commander via WhatsApp » si la boutique
+                    accepte la commande WhatsApp (Paramètres → Moyens de paiement : vraie commande, suivie et facturée),
+                    sinon simple « Contacter via WhatsApp » (conversation, aucune commande créée). */}
+                {cfg.afficherWhatsApp !== false && waNum && (tenant.commandeWhatsApp && produit.type === "physique" ? (
+                  <button data-navigue onClick={() => commander("whatsapp")} disabled={enRupture}
                     className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] transition-all hover:opacity-90 disabled:opacity-35"
                     style={{ background: "#25D366", color: "#fff" }}>
                     <MessageCircle size={16} />{" "}{tx("Commander via WhatsApp")}
                   </button>
-                ) : cfg.afficherWhatsApp !== false && waNum && (
+                ) : (
                   <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl font-semibold text-[15px] border-2 transition-all hover:opacity-80"
                     style={{ borderColor: "rgba(37,211,102,0.35)", color: "#25D366", background: "rgba(37,211,102,0.05)" }}>
                     <MessageCircle size={16} />{" "}{tx("Contacter via WhatsApp")}
                   </a>
-                )}
+                ))}
               </div>
               )}
             </div>
@@ -1396,7 +1405,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
           {sec.type === "trust" && (
             <div className="space-y-3">
               {showBadges && (cfg.items ?? []).length > 0 && (
-                <div className={cfg.disposition === "liste" ? "space-y-2" : "grid gap-2 grid-cols-[repeat(var(--cols-m),minmax(0,1fr))] sm:grid-cols-[repeat(var(--cols),minmax(0,1fr))]"}
+                <div className={cfg.disposition === "liste" ? "space-y-2" : "grid gap-2 grid-cols-[repeat(var(--cols-m),minmax(0,1fr))] @min-[640px]:grid-cols-[repeat(var(--cols),minmax(0,1fr))]"}
                   style={cfg.disposition === "liste" ? undefined : { "--cols": Number(cfg.colonnes) || 3, "--cols-m": Math.min(Number(cfg.colonnes) || 3, 2) } as React.CSSProperties}>
                   {(cfg.items as { icone: string; texte: string }[]).map((b, i) => (
                     <div key={i} className={cfg.disposition === "liste" ? "flex items-center gap-3 px-4 py-3 rounded-xl" : "flex flex-col items-center gap-1.5 py-3.5 px-2 rounded-xl text-center"} style={{ background: surface }}>
@@ -1429,7 +1438,8 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
   );
 
   return (
-    <div style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
+    // @container : la fiche s'adapte à SA largeur (et pas à l'écran) — juste aussi dans l'aperçu mobile du Constructeur.
+    <div className="@container break-words" style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
 
       {/* Pleine largeur : image en fond plein écran, infos en overlay */}
       {layoutMode === "fullwidth" && isOn("gallery") && produit.images[0] && (
@@ -1438,7 +1448,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
       {/* Breadcrumb */}
       {showBreadcrumbs && layoutMode !== "fullwidth" && (
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-3" style={{ maxWidth: largeurMax }}>
+        <div className="mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 py-3" style={{ maxWidth: largeurMax }}>
           <div className="flex items-center gap-1 text-xs flex-wrap" style={{ opacity: 0.45 }}>
             <Link href={`/${slug}`} className="hover:opacity-100 transition-opacity">{tx("Accueil")}</Link>
             <ChevronRight size={10} />
@@ -1450,11 +1460,11 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
         </div>
       )}
 
-      <main className="mx-auto px-4 sm:px-6 lg:px-8 pb-20" style={{ maxWidth: largeurMax }}>
+      <main className="mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8 pb-20" style={{ maxWidth: largeurMax }}>
 
         {/* Amazon : galerie gauche + colonne infos droite, sticky */}
         {layoutMode === "amazon" && (
-          <div className="grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 lg:gap-16 items-start">
+          <div className="grid @min-[1024px]:grid-cols-[minmax(0,2fr)_minmax(0,1.8fr)] gap-10 @min-[1024px]:gap-16 items-start">
             {renderGallery()}
             <div className="space-y-5 py-1">
               {renderInfoHeader()}
@@ -1489,7 +1499,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
         {/* Pleine largeur : carte d'infos qui chevauche le bas de l'image en overlay */}
         {layoutMode === "fullwidth" && (
-          <div className={`max-w-2xl mx-auto space-y-5 rounded-3xl p-6 sm:p-8 ${isOn("gallery") && produit.images[0] ? "-mt-24 relative z-10 shadow-xl" : "mt-8"}`} style={{ background: surface }}>
+          <div className={`max-w-2xl mx-auto space-y-5 rounded-3xl p-6 @min-[640px]:p-8 ${isOn("gallery") && produit.images[0] ? "-mt-24 relative z-10 shadow-xl" : "mt-8"}`} style={{ background: surface }}>
             {renderInfoHeader()}
             {renderRightSections()}
           </div>
@@ -1497,7 +1507,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
         {/* Vidéos produit (ajoutées dans Dashboard → Produit → Images & Vidéos) */}
         {(produit.videos ?? []).length > 0 && (
-          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+          <div className="mt-12 grid gap-4 @min-[640px]:grid-cols-2">
             {produit.videos!.map(v => (
               <video key={v} src={v} controls playsInline preload="metadata" className="w-full aspect-video bg-black" style={{ borderRadius: radius }} />
             ))}
@@ -1567,7 +1577,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
             {sec.type === "similar" && produitsSimilaires.length > 0 && (
               <div className="mt-8 border-t pt-12" style={{ borderColor: `${accent}10` }}>
                 <h2 className="text-2xl font-bold mb-6">{tx(similarTitre)}</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 @min-[640px]:grid-cols-4 gap-4">
                   {produitsSimilaires.map(p => (
                     <Link key={p.id} href={`/${slug}/produits/${p.id}`} className="group">
                       <div className="rounded-2xl overflow-hidden border transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-0.5" style={{ background: surface, borderColor: `${accent}12` }}>

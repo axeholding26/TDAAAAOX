@@ -37,7 +37,7 @@ export default async function CommissionsPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900 font-poppins">{t("Commissions")}</h1>
         <p className="text-gray-400 text-sm mt-1">
-          {t("Taux Axso :")}{" "}{(tenant.commissionRate * 100).toFixed(0)}{t("% · ajouté au prix payé par le client, jamais retiré de votre prix")}
+          {t("Payé en ligne : +10 % (produit physique) ou +13 % (produit numérique), ajoutés au prix payé par le client, jamais retirés de votre prix. Paiement à la livraison : rien.")}
         </p>
       </div>
 
@@ -65,9 +65,9 @@ export default async function CommissionsPage() {
         <p className="text-[#B45309] text-sm font-semibold">{t("Comment ça marche ?")}</p>
         <div className="grid sm:grid-cols-3 gap-3 text-xs">
           {[
-            { step: "1. Prix affiché", desc: `Le client voit votre prix + ${(tenant.commissionRate * 100).toFixed(0)}% de commission Axso.` },
+            { step: "1. Prix payé en ligne", desc: "Le client paie votre prix + 10 % (7 % Axso, 3 % NotchPay), ou + 13 % pour un produit numérique (10 % Axso, 3 % NotchPay)." },
             { step: "2. Paiement en ligne", desc: "Dès que le paiement est confirmé, votre wallet est crédité de votre prix, en entier." },
-            { step: "3. Paiement à la livraison", desc: "Le livreur encaisse ; la commission est comptée quand la commande est marquée livrée." },
+            { step: "3. Paiement à la livraison", desc: "Le client paie votre prix, en espèces : aucune commission, rien n'est prélevé sur votre wallet." },
           ].map((s) => (
             <div key={s.step} className="bg-white rounded-xl p-3 border border-[#F5A623]/20">
               <p className="text-[#B45309] font-medium mb-1">{t(s.step)}</p>
@@ -86,7 +86,7 @@ export default async function CommissionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                {["Commande", "Vente brute", `Commission (${(tenant.commissionRate * 100).toFixed(0)}%)`, "Votre part", "Statut", "Date"].map((h) => (
+                {["Commande", "Vente brute", "Commission", "Votre part", "Statut", "Date"].map((h) => (
                   <th key={h} className="text-left text-gray-400 font-medium px-5 py-3">{t(h)}</th>
                 ))}
               </tr>

@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { reductionPromo } from "@/lib/pricing";
 import { formatMontant } from "@/lib/utils";
-import { usePrix } from "@/components/storefront/DeviseVitrine";
+import { usePrix, useVisiteur } from "@/components/storefront/DeviseVitrine";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -16,7 +16,7 @@ import { trackPixelEvent } from "./MetaPixel";
 import { trackTikTokEvent } from "./TikTokPixel";
 import { trackSnapchatEvent } from "./SnapchatPixel";
 import { useT } from "@/components/I18nProvider";
-import { PAYS_OPTIONS, exempleTelephone, codePays } from "@/lib/devise-convert";
+import { PAYS_OPTIONS, exempleTelephone, exempleVille, codePays } from "@/lib/devise-convert";
 import { moyensEnLigne, moyensPhysique, type ReglagesPaiement } from "@/lib/paiement-pays";
 
 export interface ParametresCommande {
@@ -34,8 +34,10 @@ interface Props {
   enLigneDispo: boolean;      // NotchPay configuré et devise de la boutique encaissable en ligne
 }
 
-/** Nom du pays de la boutique (présélectionné), sinon Sénégal. */
-const paysParDefaut = (code?: string) => PAYS_OPTIONS.find((p) => p.code === code)?.nom ?? "Sénégal";
+/** Pays présélectionné : celui où se trouve le client (détecté, ou choisi dans la pastille pays),
+ *  sinon celui de la boutique, sinon Cameroun. Le client peut toujours le changer. */
+const paysParDefaut = (...codes: (string | null | undefined)[]) =>
+  codes.map((c) => PAYS_OPTIONS.find((p) => p.code === c)?.nom).find(Boolean) ?? PAYS_OPTIONS.find((p) => p.code === "CM")!.nom;
 
 // ─── Guide GPS par navigateur ─────────────────────────────────────────────────
 function GpsStep({ label, steps }: { label: string; steps: string[] }) {
@@ -137,7 +139,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   const [popup, setPopup] = useState<"whatsapp" | "direct" | null>(() => (searchParams?.get("canal") === "whatsapp" && paiement.whatsapp ? "whatsapp" : null));
   const loading = loadingCanal !== null;
   const [done, setDone] = useState<{ commandeId: string; numero: string; viaWhatsapp: boolean; whatsappUrl: string | null; trackingToken?: string } | null>(null);
-  const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique), email: "" });
+  const paysClient = useVisiteur()?.pays;
+  const [form, setForm] = useState({ nom: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysClient, paysBoutique), email: "" });
   const [champPersoValeur, setChampPersoValeur] = useState("");
   const [gps, setGps] = useState<{ lat: number; lng: number } | null>(null);
   const [gpsLoading, setGpsLoading] = useState(false);
@@ -280,6 +283,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
   async function commander(canal: "whatsapp" | "direct" | "en_ligne") {
     if (!form.nom.trim() || !form.telephone.trim()) { toast.error(t("Nom et téléphone obligatoires")); return; }
     if (attendQuartier) { toast.error(t("Sélectionnez votre zone de livraison")); return; }
+    // Sans liste de zones, la ville dit où livrer et fixe les frais (revérifié par le serveur).
+    if (!zonesActives.length && !form.ville.trim()) { toast.error(t("Indiquez votre ville de livraison")); return; }
     // WhatsApp : onglet ouvert PENDANT le clic — ouvert après la requête, il
     // était bloqué par le navigateur (surtout sur mobile) et le client
     // n'arrivait jamais sur le WhatsApp du marchand.
@@ -706,8 +711,8 @@ function CheckoutPhysique({ theme, slug, devise, tenantId, items, total, codePro
                 </Field>
               </div>
             )}
-            <Field label={t("Ville")}>
-              <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={t("Dakar")} className={inp} style={inpStyle} />
+            <Field label={t("Ville")} required={!zonesActives.length}>
+              <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={exempleVille(form.pays)} className={inp} style={inpStyle} />
             </Field>
             <Field label={t("Pays")}>
               <select value={form.pays} onChange={e => set("pays", e.target.value)} className={inp} style={inpStyle}>
@@ -790,7 +795,8 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
   const [phase, setPhase] = useState<"form" | "paiement">("form");
   const [loading, setLoading] = useState(false);
   const [commandeId, setCommandeId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nom: "", email: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysBoutique) });
+  const paysClient = useVisiteur()?.pays;
+  const [form, setForm] = useState({ nom: "", email: "", telephone: "", adresse: "", ville: "", pays: paysParDefaut(paysClient, paysBoutique) });
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
   // Dropshipping : payé en ligne mais expédié (adresse requise, suivi au lieu d'un téléchargement).
   const expedier = items[0]?.type === "dropshipping";
@@ -977,7 +983,7 @@ function CheckoutDigital({ theme, slug, devise, tenantId, items, total, codeProm
                   </Field>
                 )}
                 <Field label={t("Ville")} required>
-                  <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={t("Dakar")} className={inp} style={inpStyle} />
+                  <input value={form.ville} onChange={e => set("ville", e.target.value)} placeholder={exempleVille(form.pays)} className={inp} style={inpStyle} />
                 </Field>
               </>
             )}

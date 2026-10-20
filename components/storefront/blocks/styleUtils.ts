@@ -132,6 +132,8 @@ export function blockResponsiveCss(nodeId: string, style?: BlockStyleOverrides, 
   regle(tabletProps, (css) => `@container (max-width:${BREAKPOINT_TABLET_MAX}){${css}}`);
 
   const mobileProps = flattenStyleKebab(style.responsive?.mobile);
+  // Colonnes empilées sur mobile (flex-col) : une largeur fixe y deviendrait une hauteur — on la neutralise.
+  if ((style.width || style.responsive?.tablet?.width) && !style.responsive?.mobile?.width) mobileProps["flex-basis"] = "auto";
   if (style.responsive?.mobile?.width) { mobileProps["flex-basis"] = style.responsive.mobile.width; mobileProps["flex-grow"] = "0"; mobileProps["flex-shrink"] = "1"; }
   regle(mobileProps, (css) => `@container (max-width:${BREAKPOINT_MOBILE_MAX}){${css}}`);
 

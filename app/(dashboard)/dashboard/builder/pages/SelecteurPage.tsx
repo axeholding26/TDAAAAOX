@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Home, LayoutGrid, ShoppingBag, ShoppingCart, CreditCard, Info, Phone, ChevronDown, Check, type LucideIcon } from "lucide-react";
+import { Home, LayoutGrid, ShoppingBag, CreditCard, Info, Phone, ChevronDown, Check, type LucideIcon } from "lucide-react";
 import { PAGES, type PageEditee } from "./pages";
 import { useT } from "@/components/I18nProvider";
 
@@ -9,7 +9,6 @@ const DETAILS: Record<PageEditee, { Icon: LucideIcon; desc: string }> = {
   accueil:   { Icon: Home,         desc: "Sections, en-tête et pied de page" },
   catalogue: { Icon: LayoutGrid,   desc: "Liste de tous les produits" },
   produit:   { Icon: ShoppingBag,  desc: "Modèle commun à toutes les fiches" },
-  panier:    { Icon: ShoppingCart, desc: "Articles, code promo, total" },
   commande:  { Icon: CreditCard,   desc: "Formulaire et paiement" },
   apropos:   { Icon: Info,         desc: "Histoire et valeurs de la boutique" },
   contact:   { Icon: Phone,        desc: "Coordonnées et formulaire" },

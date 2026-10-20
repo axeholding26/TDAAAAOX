@@ -117,6 +117,23 @@ export function exempleTelephone(pays?: string | null): string {
   return EXEMPLES_TELEPHONE[codePays(pays) ?? "CM"];
 }
 
+// Grande ville de chaque pays : exemple du champ « Ville » des formulaires de commande.
+const EXEMPLES_VILLE: Record<string, string> = {
+  DZ: "Alger", AO: "Luanda", BJ: "Cotonou", BW: "Gaborone", BF: "Ouagadougou", BI: "Bujumbura", CV: "Praia",
+  CM: "Douala", CF: "Bangui", KM: "Moroni", CG: "Brazzaville", CD: "Kinshasa", CI: "Abidjan", DJ: "Djibouti",
+  EG: "Le Caire", GQ: "Malabo", ER: "Asmara", SZ: "Mbabane", ET: "Addis-Abeba", GA: "Libreville", GM: "Banjul",
+  GH: "Accra", GN: "Conakry", GW: "Bissau", KE: "Nairobi", LS: "Maseru", LR: "Monrovia", LY: "Tripoli",
+  MG: "Antananarivo", MW: "Lilongwe", ML: "Bamako", MA: "Casablanca", MR: "Nouakchott", MU: "Port-Louis",
+  MZ: "Maputo", NA: "Windhoek", NE: "Niamey", NG: "Lagos", UG: "Kampala", RW: "Kigali", ST: "São Tomé",
+  SN: "Dakar", SC: "Victoria", SL: "Freetown", SO: "Mogadiscio", SD: "Khartoum", SS: "Djouba", TZ: "Dar es Salaam",
+  TD: "N'Djaména", TG: "Lomé", TN: "Tunis", ZM: "Lusaka", ZW: "Harare", ZA: "Johannesburg",
+};
+
+/** Placeholder du champ ville selon le pays (code ISO2 ou nom français) ; Douala par défaut. */
+export function exempleVille(pays?: string | null): string {
+  return EXEMPLES_VILLE[codePays(pays) ?? "CM"] ?? "Douala";
+}
+
 // Indicatif et longueur du numéro national (sans 0 initial) de chaque pays, tirés des exemples ci-dessus.
 const FORMATS_TELEPHONE: { code: string; ind: string; long: number }[] = Object.entries(EXEMPLES_TELEPHONE).map(([code, ex]) => {
   const [ind, ...reste] = ex.slice(1).split(" ");

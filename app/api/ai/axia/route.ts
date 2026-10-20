@@ -13,6 +13,15 @@ import { restreindreAxia, consigneDroits } from "@/lib/axia/droits";
 import { lireStyle, consigneStyle, consigneLangue } from "@/lib/axia/style";
 import { CONSIGNE_ACCORD } from "@/lib/axia/confirmation";
 import { getLangue } from "@/lib/i18n/serveur";
+import { intentionRapide, lienConstructeur } from "@/lib/axia/intention-rapide";
+import { resultatOuverture } from "@/lib/axia/pages";
+import { lienBoutique } from "@/lib/origine-site";
+
+// Logo reçu (joint ou celui de la boutique) → palette extraite puis appliquée avec les outils existants.
+const CONSIGNE_CHARTE = "Charte graphique depuis un logo : quand le marchand t'envoie son logo ou te demande une charte à partir de son logo, repère ses 2-3 couleurs dominantes (codes hex), propose la charte (accent = couleur principale du logo, accent secondaire, fond et texte bien contrastés, surfaces et bordures assorties, une paire de polices adaptée), puis applique-la avec modifier_couleurs et modifier_theme. Si aucune image n'est jointe et que la boutique n'a pas de logo, demande-lui d'envoyer son logo.";
+
+// Partenaire officiel : recommandé dès que la conversation touche à la pub, aux vidéos ou aux ventes.
+const CONSIGNE_KREADS = "Partenaire vidéo : quand le marchand parle de publicité, de vidéos, de créatives, de Facebook/TikTok/Instagram Ads ou veut vendre plus, recommande de toi-même KREADS, partenaire officiel d'Axso pour créer des vidéos publicitaires qui vendent : https://kreads-two.vercel.app/ (une phrase, sans insister s'il refuse).";
 
 const schema = z.object({
   messages: z.array(z.object({
@@ -170,15 +179,45 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "Aucun message reçu" }, { status: 400 });
     }
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { nomBoutique: true, pays: true, devise: true, categorie: true },
-    }).catch(() => null);
+    // Chemin rapide : navigation simple reconnue sans modèle (même résultat que l'outil
+    // ouvrir_page, qui ne demande ni plan ni droit : la page ouverte applique les siens).
+    const derniere = messages[messages.length - 1];
+    const intention = !imageUrl && derniere.role === "user" ? intentionRapide(derniere.content) : null;
+    if (intention && (await getLangue()) === "fr") {
+      let action: string, reponse: string;
+      if (intention.type === "boutique_publique") {
+        const t = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { slug: true, statut: true } });
+        if (!t) return NextResponse.json({ message: "Boutique introuvable" }, { status: 404 });
+        const lien = await lienBoutique(t.slug);
+        action = resultatOuverture(lien, "Boutique publique");
+        reponse = `J'ouvre ta boutique dans un nouvel onglet.${t.statut === "brouillon" ? " Elle est encore en brouillon : toi seul la vois." : ""}`;
+      } else if (intention.type === "constructeur") {
+        action = resultatOuverture(lienConstructeur(intention.page), intention.nom);
+        reponse = `Voilà la page « ${intention.nom} » du Constructeur.`;
+      } else {
+        action = resultatOuverture(intention.chemin, intention.nom);
+        reponse = `J'ouvre « ${intention.nom} ».`;
+      }
+      if (!stream) return NextResponse.json({ reponse, actions: [action] });
+      const sse = (d: object) => `data: ${JSON.stringify(d)}\n\n`;
+      return new Response(sse({ type: "token", text: reponse }) + sse({ type: "done", actions: [action] }), {
+        headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" },
+      });
+    }
 
-    const { plan } = await planActif(tenantId);
-    const droits = await permissionsSession(session);
-    // Supprimer un produit : propriétaire seulement, comme l'API (un membre avec tous les droits ne suffit pas).
-    const proprio = await prisma.proprietaireBoutique.findUnique({ where: { userId_tenantId: { userId: (session.user as any).id, tenantId } }, select: { id: true } });
+    // Lectures indépendantes : en parallèle plutôt qu'à la suite.
+    const [tenant, { plan }, droits, proprio, style, langue] = await Promise.all([
+      prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { nomBoutique: true, pays: true, devise: true, categorie: true, logoUrl: true },
+      }).catch(() => null),
+      planActif(tenantId),
+      permissionsSession(session),
+      // Supprimer un produit : propriétaire seulement, comme l'API (un membre avec tous les droits ne suffit pas).
+      prisma.proprietaireBoutique.findUnique({ where: { userId_tenantId: { userId: (session.user as any).id, tenantId } }, select: { id: true } }),
+      lireStyle(tenantId).then(consigneStyle).catch(() => ""),
+      getLangue(),
+    ]);
     const outilsPlan = filtrerOutilsParPalier(AXIA_TOOLS, plan).filter((o) => proprio || o.name !== "supprimer_produit");
     const { outils, executer } = restreindreAxia(outilsPlan, ((nom: string, args: any, t: string) =>
       !proprio && nom === "supprimer_produit" ? Promise.resolve({ succes: false, resultat: "Seul le propriétaire de la boutique peut supprimer un produit." }) : executeAxiaTool(nom, args, t)) as typeof executeAxiaTool, droits);
@@ -189,13 +228,17 @@ export async function POST(request: Request) {
       categorie: tenant?.categorie ?? undefined,
       planNom: NOMS_PALIERS[plan],
     }) + (consigneDroits(droits) ? `\n\n${consigneDroits(droits)}` : "")
-      + (await lireStyle(tenantId).then(consigneStyle).then((c) => (c ? `\n\n${c}` : "")).catch(() => ""))
-      + `\n\n${consigneLangue(await getLangue())}`;
+      + (style ? `\n\n${style}` : "")
+      + `\n\n${CONSIGNE_KREADS}\n\n${CONSIGNE_CHARTE}`
+      + `\n\n${consigneLangue(langue)}`;
 
-    const enrichedMessages: any[] = imageUrl
+    // Charte graphique « depuis mon logo » sans image jointe : AXIA reçoit le logo enregistré de la boutique.
+    const image = imageUrl
+      ?? (derniere.role === "user" && /logo/i.test(derniere.content) && /charte|couleur|palette|identit/i.test(derniere.content) ? tenant?.logoUrl ?? undefined : undefined);
+    const enrichedMessages: any[] = image
       ? messages.map((m, i) =>
           i === messages.length - 1 && m.role === "user"
-            ? { role: "user", content: [{ type: "text", text: m.content || "Analyse cette image." }, { type: "image_url", image_url: { url: imageUrl } }] }
+            ? { role: "user", content: [{ type: "text", text: m.content || "Analyse cette image." }, { type: "image_url", image_url: { url: image } }] }
             : m
         )
       : messages;

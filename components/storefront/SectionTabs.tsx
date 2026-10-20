@@ -66,13 +66,13 @@ export function SectionTabs({ titre, onglets, accent, texte }: { titre?: string;
   const current = onglets[actif] ?? onglets[0];
 
   return (
-    <section className="py-16 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-16 @min-[640px]:py-20 max-w-5xl mx-auto px-4 @min-[640px]:px-6 @min-[1024px]:px-8">
       {titre && <h2 className="text-3xl font-bold font-playfair text-center mb-10" style={{ color: texte }}>{t(titre)}</h2>}
 
       <div className="flex justify-center gap-2 mb-10 flex-wrap">
         {onglets.map((o, i) => (
           <button key={o.id} onClick={() => setActif(i)}
-            className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            className="min-h-11 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
             style={{
               background: i === actif ? accent : "transparent",
               color: i === actif ? "white" : texte,

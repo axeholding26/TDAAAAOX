@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 type Etape = 1 | 2 | 3;
 
 interface Infos {
@@ -175,6 +176,7 @@ export default function CreerFormationPage() {
                 placeholder="15000"
                 className={inputCls}
               />
+              <div className="mt-2"><PolitiquePrix prix={infos.prix} type="formation" /></div>
             </div>
           </div>
 

@@ -308,6 +308,7 @@ model Commande {
   montantLivraison Float    @default(0)
   montantReduction Float    @default(0)
   montantTotal     Float
+  tauxCommission   Float?   // majoration payée en ligne figée à la création (lib/pricing.ts tauxCommande) ; null = ancienne commande : taux de la boutique
   devise           String   @default("XAF")
   statut           String   @default("en_attente")
   paiementStatut   String   @default("pending")

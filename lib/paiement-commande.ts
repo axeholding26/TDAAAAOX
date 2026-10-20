@@ -211,7 +211,9 @@ export async function finaliserPaiementCommande(commandeId: string, fraisPassere
   });
   if (!commande || commande.paiementStatut !== PAIEMENT.PAYE || commande.methodePaiement !== "notchpay" || commande.statut === "annulee") return;
   const reference = commande.paiementReference ?? `ORD-${commandeId}`;
-  const tauxCommission = commande.tenant.commissionRate ?? 0.1;
+  // Taux figé à la création de la commande (numérique +13 %, physique en ligne +10 %, lib/pricing.ts) :
+  // une commande créée avant un changement de politique garde le sien. Anciennes commandes : taux de la boutique.
+  const tauxCommission = commande.tauxCommission ?? commande.tenant.commissionRate ?? 0.1;
   const frais = fraisPasserelle ?? await verifierPaiementNotchPay(reference).then((r) => fraisNotchPay(r.transaction)).catch(() => 0);
 
   if (commande.lignes.some((l) => l.produit?.type && TYPES_LIVRAISON_DIGITALE.has(l.produit.type))) {

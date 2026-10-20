@@ -92,7 +92,7 @@ function SectionLibrary({ onAdd, onClose, avecFaq }: { onAdd: (t: CustomSection[
               <p className="text-sm font-semibold text-gray-800 group-hover:text-[#F5A623] transition-colors">{tr(t.label)}</p>
               <p className="text-[12px] text-gray-600 mt-0.5 leading-relaxed">{tr(t.desc)}</p>
             </div>
-            <Plus size={12} className="flex-shrink-0 text-gray-700 group-hover:text-[#F5A623] mt-0.5 transition-colors" />
+            <Plus size={16} className="flex-shrink-0 text-gray-700 group-hover:text-[#F5A623] mt-0.5 transition-colors" />
           </button>
         ))}
       </div>
@@ -164,7 +164,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
         {(c.logos||[]).map((url: string, i: number) => (
           <div key={i} className="flex gap-1 mb-1.5">
             <FInp label="" value={url} onChange={v=>{ const l=[...c.logos]; l[i]=v; up({logos:l}); }} />
-            <button onClick={()=>up({logos:c.logos.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
+            <button onClick={()=>up({logos:c.logos.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={15}/></button>
           </div>
         ))}
         <button onClick={()=>up({logos:[...(c.logos||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter un logo")}</button>
@@ -190,7 +190,7 @@ function CustomSectionControls({ section, update }: { section: CustomSection; up
         {(c.images||[]).map((url: string, i: number) => (
           <div key={i} className="flex gap-1 mb-1.5">
             <FInp label="" value={url} onChange={v=>{ const imgs=[...c.images]; imgs[i]=v; up({images:imgs}); }} media="image" />
-            <button onClick={()=>up({images:c.images.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={11}/></button>
+            <button onClick={()=>up({images:c.images.filter((_:any,j:number)=>j!==i)})} className="text-red-500/40 hover:text-red-400 flex-shrink-0 mt-3.5"><Trash2 size={15}/></button>
           </div>
         ))}
         <button onClick={()=>up({images:[...(c.images||[]),""]})} className="w-full text-[12px] text-gray-500 border border-dashed border-gray-200 rounded-lg py-1.5 hover:border-gray-300">{tr("+ Ajouter une photo")}</button>
@@ -296,9 +296,9 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
           <div key={b.id} className="bg-gray-200/50 rounded-lg p-2 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1">
-                {meta && <meta.Icon size={10} />} {tr(meta?.label)}
+                {meta && <meta.Icon size={14} />} {tr(meta?.label)}
               </span>
-              <button onClick={() => removeBloc(i)} className="text-red-500/40 hover:text-red-400"><Trash2 size={10} /></button>
+              <button onClick={() => removeBloc(i)} className="text-red-500/40 hover:text-red-400"><Trash2 size={14} /></button>
             </div>
             {b.type === "photos" && (
               <div>
@@ -387,7 +387,7 @@ function SousBlocsEditor({ blocs, onChange }: { blocs: any[]; onChange: (b: any[
         {SOUS_BLOC_TYPES.map(t => (
           <button key={t.type} onClick={() => addBloc(t.type)}
             className="text-[13px] px-2 py-1 rounded-lg border border-dashed border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-300 flex items-center gap-1">
-            <Plus size={9} /> {tr(t.label)}
+            <Plus size={13} /> {tr(t.label)}
           </button>
         ))}
       </div>
@@ -475,7 +475,7 @@ export function PanelTypo({ config, setFonts }: any) {
             {FONTS.filter(f=>f.cat===cat).map(f=>(
               <button key={f.v} onClick={()=>setFonts({titre:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${config.fonts.titre===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100 hover:text-gray-300"}`}>
                 <span>{tr(f.label)}</span>
-                {config.fonts.titre===f.v && <Check size={10}/>}
+                {config.fonts.titre===f.v && <Check size={14}/>}
               </button>
             ))}
           </div>
@@ -485,7 +485,7 @@ export function PanelTypo({ config, setFonts }: any) {
         <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Police du corps")}</p>
         {FONTS.filter(f=>f.cat==="Sans-serif").map(f=>(
           <button key={f.v} onClick={()=>setFonts({corps:f.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all flex items-center justify-between ${config.fonts.corps===f.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
-            <span>{tr(f.label)}</span>{config.fonts.corps===f.v && <Check size={10}/>}
+            <span>{tr(f.label)}</span>{config.fonts.corps===f.v && <Check size={14}/>}
           </button>
         ))}
       </div>
@@ -538,7 +538,7 @@ export function PanelLayout({ config, setLayout, set }: any) {
         <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-2">{tr("Ombres")}</p>
         {[{v:"none",l:"Aucune"},{v:"sm",l:"Légère"},{v:"md",l:"Moyenne"},{v:"lg",l:"Forte"},{v:"xl",l:"Très forte"}].map(o=>(
           <button key={o.v} onClick={()=>setLayout({ombre:o.v})} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex justify-between ${(lay.ombre||"md")===o.v?"bg-[#F5A623]/15 text-[#F5A623] border border-[#F5A623]/30":"text-gray-400 hover:bg-gray-100"}`}>
-            <span>{tr(o.l)}</span>{(lay.ombre||"md")===o.v&&<Check size={10}/>}
+            <span>{tr(o.l)}</span>{(lay.ombre||"md")===o.v&&<Check size={14}/>}
           </button>
         ))}
       </div>
@@ -640,7 +640,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
         <div className="space-y-4">
           {/* Hero */}
           <div className="bg-gray-50 rounded-xl p-3 space-y-2.5">
-            <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ImageIcon size={12} />{" "}{tr("Hero — Image de fond")}</p>
+            <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><ImageIcon size={16} />{" "}{tr("Hero — Image de fond")}</p>
             <p className="text-[13px] text-gray-600">{tr("L'image de fond principale (bannière boutique) se configure dans")}{" "}<Link href="/dashboard/boutique" className="text-[#F5A623] underline">{tr("Ma boutique → Médias")}</Link></p>
             {sec.hero?.style === "slideshow" && (
               <div>
@@ -659,7 +659,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
           {/* À propos */}
           {sec.about?.actif && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={12} />{" "}{tr("Notre histoire — Image")}</p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><BookOpen size={16} />{" "}{tr("Notre histoire — Image")}</p>
               <FInp label="URL" value={sec.about?.imageUrl||""} onChange={v=>setSection("about",{imageUrl:v})} media="image" />
             </div>
           )}
@@ -667,7 +667,7 @@ export function PanelMedias({ config, set, setSection, updateCustomSection }: an
           {/* Bannière promo */}
           {sec.promo?.actif && sec.promo?.style === "image" && (
             <div className="bg-gray-50 rounded-xl p-3 space-y-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Target size={12} />{" "}{tr("Bannière promo — Image")}</p>
+              <p className="text-sm font-semibold text-gray-700 flex items-center gap-1.5"><Target size={16} />{" "}{tr("Bannière promo — Image")}</p>
               <FInp label="URL" value={sec.promo?.imageUrl||""} onChange={v=>setSection("promo",{imageUrl:v})} media="image" />
             </div>
           )}
@@ -729,7 +729,7 @@ export function PanelAnimations({ config, setAnim }: any) {
               className={`w-full text-left p-3 rounded-xl border transition-all ${(anim.preset||"elegant")===p.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-700">{tr(p.l)}</span>
-                {(anim.preset||"elegant")===p.v && <Check size={11} className="text-[#F5A623]" />}
+                {(anim.preset||"elegant")===p.v && <Check size={15} className="text-[#F5A623]" />}
               </div>
               <p className="text-[12px] text-gray-500 mt-0.5">{tr(p.desc)}</p>
             </button>
@@ -808,7 +808,7 @@ export function PanelBoutons({ config, setBoutons, setNavStyle }: any) {
             <button key={t.v} onClick={()=>setNavStyle({type:t.v})} className={`w-full text-left p-3 rounded-xl border transition-all ${(nav.type||"classic")===t.v?"border-[#F5A623]/50 bg-[#F5A623]/10":"border-gray-200 hover:border-gray-300"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-700">{tr(t.l)}</span>
-                {(nav.type||"classic")===t.v && <Check size={10} className="text-[#F5A623]"/>}
+                {(nav.type||"classic")===t.v && <Check size={14} className="text-[#F5A623]"/>}
               </div>
               <p className="text-[12px] text-gray-500 mt-0.5">{tr(t.desc)}</p>
             </button>
@@ -904,7 +904,7 @@ export function PanelModeles({ tenant, onApplied }: { tenant: any; onApplied: ()
               </div>
               {actif && (
                 <span className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#F5A623] flex items-center justify-center">
-                  <Check size={10} className="text-black" />
+                  <Check size={14} className="text-black" />
                 </span>
               )}
               {busy && (
@@ -935,13 +935,13 @@ export function PanelAvance({ config, set, onReset }: any) {
       <div className="border-t border-gray-200 pt-4 space-y-2">
         <p className="text-[12px] text-gray-500 font-semibold uppercase tracking-widest mb-3">{tr("Actions")}</p>
         <Link href="/dashboard/themes" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>{tr("Changer de thème de base")}</span><ChevronRight size={12}/>
+          <span>{tr("Changer de thème de base")}</span><ChevronRight size={16}/>
         </Link>
         <Link href="/dashboard/boutique" className="flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>{tr("Logo, bannière & SEO")}</span><ChevronRight size={12}/>
+          <span>{tr("Logo, bannière & SEO")}</span><ChevronRight size={16}/>
         </Link>
         <button onClick={() => { if (typeof navigator !== "undefined") navigator.clipboard.writeText(JSON.stringify(config, null, 2)); }} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-gray-200 hover:border-gray-300 text-sm text-gray-400 hover:text-gray-300 transition-all">
-          <span>{tr("Exporter la config JSON")}</span><Copy size={11}/>
+          <span>{tr("Exporter la config JSON")}</span><Copy size={15}/>
         </button>
         <button onClick={onReset} className="w-full px-3 py-2.5 rounded-xl border border-red-500/20 hover:border-red-400/40 text-sm text-red-500/60 hover:text-red-400 transition-all">
           {tr("Réinitialiser toutes les personnalisations")}
@@ -1074,7 +1074,7 @@ function ListeItems({ titre, items, champs, onChange, nouvel }: { titre: string;
           <div className="flex items-center justify-end gap-1 -mb-1">
             <button onClick={() => bouger(i, -1)} disabled={i === 0} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-[12px] px-1">↑</button>
             <button onClick={() => bouger(i, 1)} disabled={i === items.length - 1} className="text-gray-400 hover:text-gray-700 disabled:opacity-20 text-[12px] px-1">↓</button>
-            <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-red-500/50 hover:text-red-500 px-1"><Trash2 size={11} /></button>
+            <button onClick={() => onChange(items.filter((_, j) => j !== i))} className="text-red-500/50 hover:text-red-500 px-1"><Trash2 size={15} /></button>
           </div>
           {champs.map(c => c.type === "icone"
             ? <FIcone key={c.cle} label={c.label} value={item[c.cle] || ""} onChange={v => maj(i, { [c.cle]: v })} />
@@ -1109,7 +1109,7 @@ function TableEdit({ headers, rows, images, onChange }: { headers: string[]; row
               <input key={j} value={r.cells[j] ?? ""} onChange={e => onChange({ rows: rows.map((x, k) => (k === i ? { cells: Array.from({ length: nbCol }, (_, m) => (m === j ? e.target.value : x.cells[m] ?? "")) } : x)) })} className="bg-gray-100 border border-gray-200 rounded-lg px-2 py-1.5 text-[12px] min-w-0" />
             ))}
           </div>
-          <button onClick={() => onChange({ rows: rows.filter((_, k) => k !== i) })} className="text-red-500/50 hover:text-red-500"><Trash2 size={11} /></button>
+          <button onClick={() => onChange({ rows: rows.filter((_, k) => k !== i) })} className="text-red-500/50 hover:text-red-500"><Trash2 size={15} /></button>
         </div>
       ))}
       <div className="flex gap-1.5">
@@ -1187,8 +1187,8 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
         <FCol label={tr("Couleur du bouton")} value={c.couleurBouton || "#F5A623"} onChange={v => up({ couleurBouton: v })} />
         <FCol label={tr("Couleur du texte du bouton")} value={c.couleurTexteBouton || "#FFFFFF"} onChange={v => up({ couleurTexteBouton: v })} />
         {(c.couleurBouton || c.couleurTexteBouton) && <button onClick={() => up({ couleurBouton: "", couleurTexteBouton: "" })} className="text-[12px] text-gray-500 hover:underline">{tr("Revenir aux couleurs du thème")}</button>}
-        <Bascule label={tr("Bouton « Contacter via WhatsApp »")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
-        <p className="text-[11.5px] text-gray-400">{tr("Si vous acceptez la commande WhatsApp (Paramètres → Moyens de paiement), le bouton « Commander via WhatsApp » s'ajoute tout seul à vos fiches et remplace celui-ci.")}</p>
+        <Bascule label={tr("Bouton WhatsApp")} value={c.afficherWhatsApp !== false} onChange={v => up({ afficherWhatsApp: v })} />
+        <p className="text-[11.5px] text-gray-400">{tr("« Commander via WhatsApp » (vraie commande) si vous acceptez la commande WhatsApp dans Paramètres → Moyens de paiement, sinon « Contacter via WhatsApp » (simple conversation). Masqué ici, le client peut toujours choisir WhatsApp dans le formulaire de commande.")}</p>
       </Bloc>
     );
     case "trust": return (
@@ -1287,7 +1287,9 @@ function SectionTypeSettings({ section, update }: { section: ProductPageSection;
       </Bloc>
     );
     case "sizeguide": return (
-      <Bloc>{tr(titre)}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} /></Bloc>
+      <Bloc>{tr(titre)}<TableEdit headers={c.headers || []} rows={c.rows || []} onChange={up} />
+        <p className="text-[11.5px] text-gray-400">{tr("Facultatif : affiché seulement sur les produits qui ont une variante Taille (ou Pointure). Masquez ou supprimez la section si vous n'en voulez pas.")}</p>
+      </Bloc>
     );
     case "comparison": return (
       <Bloc>{tr(titre)}<TableEdit headers={c.headers || []} rows={c.rows || []} images={c.images || []} onChange={up} /></Bloc>
@@ -1384,7 +1386,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200">
         <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">{tr("Blocs de contenu")}</p>
         <button onClick={() => setShowLibrary(true)} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-semibold transition-all" style={{ backgroundColor: "#F5A623", color: "#050508" }}>
-          <Plus size={9} />{" "}{tr("Ajouter")}
+          <Plus size={13} />{" "}{tr("Ajouter")}
         </button>
       </div>
       {erreur && <p className="mx-4 mt-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{tr(erreur)}</p>}
@@ -1406,7 +1408,7 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
               className={`${isOpen ? "bg-gray-50/80" : ""} transition-all ${dragIdx === idx ? "opacity-40" : ""} ${overIdx === idx && dragIdx !== null && dragIdx !== idx ? "ring-2 ring-inset ring-[#F5A623]/50" : ""}`}>
               <div className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-gray-50 select-none" onClick={() => setActiveSection(isOpen ? null : sec.id)}>
                 <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title={tr("Glisser pour réordonner")} onClick={e => e.stopPropagation()}>
-                  <GripVertical size={12} />
+                  <GripVertical size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold text-gray-700 truncate">{tr(sec.label)}</p>
@@ -1415,9 +1417,9 @@ export function PanelPageSections({ config, set, pageKey, titre }: { config: The
                   <button onClick={() => toggleSection(sec.id)}>
                     {sec.actif ? <ToggleRight size={15} style={{ color: "#F5A623" }} /> : <ToggleLeft size={15} className="text-gray-400" />}
                   </button>
-                  <button onClick={() => duplicateSection(sec.id)} title={tr("Dupliquer")} className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={12} /></button>
-                  <button onClick={() => removeSection(sec.id)} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
-                  {isOpen ? <ChevronDown size={10} className="text-gray-500" /> : <ChevronRight size={10} className="text-gray-400" />}
+                  <button onClick={() => duplicateSection(sec.id)} title={tr("Dupliquer")} className="text-gray-600 hover:text-gray-400 transition-colors"><Copy size={16} /></button>
+                  <button onClick={() => removeSection(sec.id)} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                  {isOpen ? <ChevronDown size={14} className="text-gray-500" /> : <ChevronRight size={14} className="text-gray-400" />}
                 </div>
               </div>
               {isOpen && (
@@ -1460,6 +1462,13 @@ export function PanelProduit({ config, setProductPage, set }: any) {
   const layout: string = pp.layout || "amazon";
   const sections = sectionsFiche(pp);
   const indisponibles = typesIndisponibles(sections);
+  const { aOuvrir, ouvrir } = useFicheCible();
+  useEffect(() => {
+    if (!aOuvrir) return;
+    const sec = sections.find(s => s.type === aOuvrir);
+    if (sec) { setActiveSection(sec.id); setTimeout(() => document.getElementById(`fiche-${sec.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" })); }
+    ouvrir(null);
+  }, [aOuvrir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Toutes les modifications passent par lib/fiche-produit.ts — le même code
   // qu'exécute AXIA (outil modifier_fiche_produit) : mêmes règles, mêmes ids.
@@ -1510,7 +1519,7 @@ export function PanelProduit({ config, setProductPage, set }: any) {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
         <p className="text-[12px] font-black text-gray-500 uppercase tracking-[0.18em]">{tr("Ajouter une section")}</p>
-        <button onClick={() => setInsertion(null)} className="text-gray-600 hover:text-gray-400"><X size={13} /></button>
+        <button onClick={() => setInsertion(null)} className="text-gray-600 hover:text-gray-400"><X size={18} /></button>
       </div>
       <div className="px-3 pt-3"><ChampRecherche value={rechercheSection} onChange={setRechercheSection} /></div>
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
@@ -1521,14 +1530,14 @@ export function PanelProduit({ config, setProductPage, set }: any) {
           return (
             <button key={type} onClick={() => !pris && ajouter(type)} disabled={pris}
               className="w-full text-left flex items-start gap-3 p-3 rounded-xl border border-gray-200 enabled:hover:border-[#F5A623]/40 enabled:hover:bg-[#F5A623]/5 transition-all group disabled:opacity-45 disabled:cursor-not-allowed">
-              <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
-                <Li size={14} className="text-gray-500 group-hover:text-[#F5A623]" />
+              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10">
+                <Li size={17} className="text-gray-500 group-hover:text-[#F5A623]" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-gray-700">{tr(SECTIONS_FICHE[type].label)}</p>
                 <p className="text-[12px] text-gray-500 mt-0.5 leading-relaxed">{pris ? tr("Déjà sur la fiche (une seule autorisée)") : tr(meta?.desc)}</p>
               </div>
-              {!pris && <Plus size={12} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />}
+              {!pris && <Plus size={16} className="flex-shrink-0 mt-0.5 text-gray-600 group-hover:text-[#F5A623]" />}
             </button>
           );
         })}
@@ -1542,8 +1551,8 @@ export function PanelProduit({ config, setProductPage, set }: any) {
         ? <div className="w-full h-0.5 rounded-full bg-[#F5A623]" />
         : dragId === null && (
           <button onClick={() => setInsertion(idx)} title={tr("Insérer une section ici")}
-            className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-[#F5A623] text-[#050508] flex items-center justify-center opacity-0 group-hover/ins:opacity-100 transition-opacity z-10">
-            <Plus size={11} />
+            className="absolute left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-[#F5A623] text-[#050508] flex items-center justify-center opacity-0 group-hover/ins:opacity-100 transition-opacity z-10">
+            <Plus size={15} />
           </button>
         )}
     </div>
@@ -1586,7 +1595,7 @@ export function PanelProduit({ config, setProductPage, set }: any) {
               <button key={lay.v} onClick={() => agir({ action: "mise_en_page", layout: lay.v })}
                 className={`text-left p-2.5 rounded-xl border transition-all ${layout === lay.v ? "border-[#F5A623]/50 bg-[#F5A623]/10" : "border-gray-200 hover:border-gray-300"}`}>
                 <p className="text-[13px] font-semibold text-gray-800 flex items-center gap-1">
-                  {layout === lay.v && <Check size={9} style={{ color: "#F5A623" }} />} {tr(lay.l)}
+                  {layout === lay.v && <Check size={13} style={{ color: "#F5A623" }} />} {tr(lay.l)}
                 </p>
                 <p className="text-[13px] text-gray-600 mt-0.5 leading-relaxed">{tr(lay.desc)}</p>
               </button>
@@ -1599,9 +1608,9 @@ export function PanelProduit({ config, setProductPage, set }: any) {
           <div className="flex items-center justify-between mb-2.5">
             <p className="text-[12px] text-gray-500 font-black uppercase tracking-[0.18em]">{tr("Sections de la fiche")}</p>
             <button onClick={() => setInsertion(sections.length)}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[12px] font-semibold transition-all"
+              className="flex items-center gap-1 px-3 h-8 rounded-lg text-[12.5px] font-semibold transition-all"
               style={{ backgroundColor: "#F5A623", color: "#050508" }}>
-              <Plus size={9} />{" "}{tr("Ajouter")}
+              <Plus size={14} />{" "}{tr("Ajouter")}
             </button>
           </div>
           {erreur && <p className="mb-2 text-[12px] text-red-600 bg-red-50 rounded-lg px-2.5 py-1.5">{tr(erreur)}</p>}
@@ -1613,31 +1622,31 @@ export function PanelProduit({ config, setProductPage, set }: any) {
               const isActive = activeSection === sec.id;
               const isBuiltIn = !!SECTIONS_FICHE[sec.type]?.base;
               return (
-                <div key={sec.id}>
+                <div key={sec.id} id={`fiche-${sec.id}`}>
                   <div
                     draggable
                     onDragStart={e => { e.dataTransfer.effectAllowed = "move"; setDragId(sec.id); }}
                     onDragOver={e => survol(e, idx)}
                     onDragEnd={() => { setDragId(null); setDropIdx(null); }}
                     className={`rounded-xl border transition-all ${isActive ? "border-[#F5A623]/30 bg-[#F5A623]/5" : "border-gray-100 bg-gray-50"} ${dragId === sec.id ? "opacity-40" : ""}`}>
-                    <div className="flex items-center gap-1.5 px-2 py-2">
+                    <div className="flex items-center gap-2 px-2 py-2.5">
                       <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 flex-shrink-0" title={tr("Glisser pour réordonner")}>
-                        <GripVertical size={13} />
+                        <GripVertical size={17} />
                       </div>
-                      <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <SIcon size={11} className="text-gray-500" />
+                      <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <SIcon size={16} className="text-gray-500" />
                       </div>
                       <button onClick={() => setActiveSection(isActive ? null : sec.id)} className={`flex-1 text-left text-[13px] font-medium truncate ${sec.actif ? "text-gray-800" : "text-gray-400"}`}>
                         {tr(SECTIONS_FICHE[sec.type]?.label) ?? tr(sec.type)}
                       </button>
                       <button onClick={() => agir({ action: sec.actif ? "masquer" : "afficher", section: sec.id })} className="flex-shrink-0" title={sec.actif ? tr("Masquer") : tr("Afficher")}>
-                        {sec.actif ? <ToggleRight size={16} style={{ color: "#F5A623" }} /> : <ToggleLeft size={16} className="text-gray-700" />}
+                        {sec.actif ? <ToggleRight size={22} style={{ color: "#F5A623" }} /> : <ToggleLeft size={22} className="text-gray-700" />}
                       </button>
                       {!isBuiltIn && (
-                        <button onClick={() => { agir({ action: "supprimer", section: sec.id }); if (isActive) setActiveSection(null); }} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={11} /></button>
+                        <button onClick={() => { agir({ action: "supprimer", section: sec.id }); if (isActive) setActiveSection(null); }} title={tr("Supprimer")} className="text-red-500/40 hover:text-red-400 flex-shrink-0 transition-colors"><Trash2 size={16} /></button>
                       )}
                       <button onClick={() => setActiveSection(isActive ? null : sec.id)} className="flex-shrink-0 text-gray-600 hover:text-gray-400 transition-colors">
-                        <ChevronDown size={12} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
+                        <ChevronDown size={17} className="transition-transform" style={{ transform: isActive ? "rotate(180deg)" : "" }} />
                       </button>
                     </div>
                     {isActive && <ProduitSectionSettings section={sec} update={updateSection} updateStyle={updateSectionStyle} />}

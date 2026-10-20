@@ -71,7 +71,7 @@ export default async function AdminFinancesPage() {
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
             <p className="text-lg font-bold" style={{ color: "#ffffff" }}>{formatMontant(revenuCapture, "XAF")}</p>
-            <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx("Commission brute (10%)")}</p>
+            <p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx("Commission brute (7 % physique, 10 % numérique)")}</p>
           </div>
           <div>
             <p className="text-lg font-bold" style={{ color: "#DC2626" }}>−{formatMontant(fraisTotal, "XAF")}</p>

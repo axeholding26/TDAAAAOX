@@ -4,8 +4,8 @@ import type { BlockRenderProps } from "../types";
 import { InlineEditable } from "./InlineEditable";
 
 const TAILLE_MAP: Record<string, string> = {
-  h1: "text-4xl @min-[640px]:text-5xl font-bold",
-  h2: "text-3xl @min-[640px]:text-4xl font-bold",
+  h1: "text-3xl @min-[640px]:text-5xl font-bold",
+  h2: "text-2xl @min-[640px]:text-4xl font-bold",
   h3: "text-2xl @min-[640px]:text-3xl font-semibold",
   h4: "text-xl @min-[640px]:text-2xl font-semibold",
 };
@@ -23,7 +23,7 @@ export function HeadingBlock({ config, colors, container, editable, onEditText }
         editable={editable}
         cible
         onCommit={(t) => onEditText?.({ texte: t })}
-        className={`${TAILLE_MAP[niveau] || TAILLE_MAP.h2} font-playfair`}
+        className={`${TAILLE_MAP[niveau] || TAILLE_MAP.h2} font-playfair break-words`}
         style={{ color: colors.texte }}
       />
     </div>

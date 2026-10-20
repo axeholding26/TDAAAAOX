@@ -9,6 +9,7 @@ import { slugify } from "@/lib/utils";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type ProduitOption = {
@@ -273,6 +274,7 @@ function EtapeTarification({ e, set }: { e: EtatWizard; set: (p: Partial<EtatWiz
             className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623]/20 focus:border-[#F5A623]"
           />
         </div>
+        <div className="mt-2"><PolitiquePrix prix={e.prix} type="bundle" /></div>
       </div>
 
       {/* Résumé remise */}

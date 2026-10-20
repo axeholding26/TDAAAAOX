@@ -15,7 +15,7 @@ const PLANS = [
     bg: "#f9fafb",
     borderColor: "rgba(107,114,128,0.25)",
     shadowColor: "rgba(107,114,128,0.15)",
-    desc: "Lance-toi sans risquer un franc. Tu n'as pas besoin de budget pour commencer : crée ta boutique, mets tes produits en ligne, accepte les paiements mobile money dès aujourd'hui. Aucune commission sur tes ventes : tu touches ton prix en entier. Quand ton client paie en ligne, 10 % s'ajoutent à son prix ; rien sur le paiement à la livraison.",
+    desc: "Lance-toi sans risquer un franc. Tu n'as pas besoin de budget pour commencer : crée ta boutique, mets tes produits en ligne, accepte les paiements mobile money dès aujourd'hui. Aucune commission sur tes ventes : tu touches ton prix en entier. Quand ton client paie en ligne, 10 % s'ajoutent à son prix (13 % pour un produit numérique) ; rien sur le paiement à la livraison.",
     features: [
       "60 commandes / mois",
       "1 boutique en ligne",

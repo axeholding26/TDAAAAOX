@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { canalNotchPay, crediterWallet, EMAIL_RETRAITS, operateurCameroun } from "./wallet";
 import { pousserAdmins } from "./push";
 import { normaliserTelephone } from "./devise-convert";
+import { TYPES_NUMERIQUES } from "./pricing";
 import { livrerCommandeDigitale } from "./livraison-numerique";
 import { notifierMarchand } from "./notifications-marchand";
 import { envoyerAlerteRetrait, envoyerEmailTexte } from "./email";
@@ -66,7 +67,7 @@ export const TYPES_PRODUIT_DIGITAL = new Set(["digital", "fichier", "formation",
 // paiement — contrairement à TYPES_PRODUIT_DIGITAL ci-dessus, inclut "bundle"
 // (qui doit toujours être résolu/livré via livrerBundle, même s'il ne compte
 // pas comme "digital" pour le calcul de commission).
-export const TYPES_LIVRAISON_DIGITALE = new Set(["digital", "fichier", "formation", "licence", "bundle", "evenement", "bootcamp"]); // evenement/bootcamp : place live (lib/live/service.ts)
+export const TYPES_LIVRAISON_DIGITALE = TYPES_NUMERIQUES; // evenement/bootcamp : place live (lib/live/service.ts)
 
 // Commission par défaut d'un produit digital sans taux personnalisé —
 // nettement supérieure au taux physique par défaut car sans coût de

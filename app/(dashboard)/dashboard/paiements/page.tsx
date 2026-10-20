@@ -171,7 +171,7 @@ export default async function PaiementsPage() {
         {/* Commissions */}
         <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden">
           <div className="p-5 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">{t("Commissions Axso (10%)")}</h2>
+            <h2 className="font-bold text-gray-900">{t("Commissions Axso")}</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {commissions.length === 0 ? (

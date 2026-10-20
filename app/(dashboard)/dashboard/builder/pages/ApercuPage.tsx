@@ -37,11 +37,36 @@ export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
         style={{ width: LARGEUR[device], maxWidth: "100%" }}
         onLoad={() => {
           try {
-            const page = pageDepuisChemin(slug, cadre.current?.contentWindow?.location.pathname ?? "");
+            const win = cadre.current?.contentWindow;
+            if (!win) return;
+            const page = pageDepuisChemin(slug, win.location.pathname);
             if (page && page !== actuelle) onNaviguer(page);
+            neutraliser(win, slug, onNaviguer);
           } catch { /* autre origine : ignoré */ }
         }}
       />
     </div>
   );
+}
+
+// Rien dans l'aperçu ne quitte le Constructeur : liens et formulaires bloqués
+// (en capture, avant les <Link> de Next qui respectent defaultPrevented) ; un
+// lien vers une page connue bascule l'éditeur dessus. Accordéons, onglets,
+// variantes… (simples clics sans navigation) restent actifs.
+function neutraliser(win: Window, slug: string, onNaviguer: (page: PageEditee) => void) {
+  const doc = win.document;
+  win.open = () => null;
+  const surLien = (e: MouseEvent) => {
+    const lien = (e.target as Element | null)?.closest?.("a[href]");
+    const href = lien?.getAttribute("href");
+    if (!href || href.startsWith("#")) return; // ancre interne : reste sur la page
+    e.preventDefault();
+    if (e.type !== "click") return;
+    const url = new URL(href, win.location.href);
+    const page = url.origin === win.location.origin ? pageDepuisChemin(slug, url.pathname) : null;
+    if (page) onNaviguer(page);
+  };
+  doc.addEventListener("click", surLien, true);
+  doc.addEventListener("auxclick", surLien, true); // clic molette : nouvel onglet
+  doc.addEventListener("submit", (e) => e.preventDefault(), true);
 }

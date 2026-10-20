@@ -37,6 +37,8 @@ interface Props {
   selectedEl: string | null; // élément d'une section de design (data-axs-el)
   onSelectElement: (noeudId: string, elId: string) => void;
   onNaviguer?: (page: PageEditee) => void; // lien cliqué → page correspondante dans l'éditeur
+  survolId?: string | null; // section survolée dans le panneau de gauche → encadrée ici
+  onSurvol?: (id: string | null) => void; // section survolée ici → ligne surlignée à gauche
 }
 
 // Aperçu en direct façon Shopify : la page telle qu'elle s'affichera, avec la
@@ -44,7 +46,7 @@ interface Props {
 // sur ses bords pour insérer une section juste avant/après. Pas de
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
-export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer }: Props) {
+export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer, survolId, onSurvol }: Props) {
   const tr = useT();
   const racine = useRef<HTMLDivElement>(null);
   const defileur = useRef<HTMLDivElement>(null);
@@ -64,11 +66,23 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
   const cssPerso = useMemo(() => (config.customCss ? scoperCss(config.customCss, "[data-apercu-page]") : ""), [config.customCss]);
   const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices, config.boutons, config.navigationStyle, config.animations, (config as any).reglagesDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sélection depuis le panneau de gauche : amène l'élément à l'écran.
+  // Sélection venue d'ailleurs (panneau de gauche, panneau de droite) : l'élément
+  // est centré à l'écran avec un bref halo. Pas pour un clic dans l'aperçu : il y est déjà.
+  // (horodaté : un clic peut changer selectedId et selectedEl dans le même rendu)
+  const clicIci = useRef(0);
+  const selectionner = (id: string) => { clicIci.current = Date.now(); onSelect(id); };
+  const selectionnerElement = (noeudId: string, elId: string) => { clicIci.current = Date.now(); onSelectElement(noeudId, elId); };
+  const vientDuClic = () => Date.now() - clicIci.current < 500;
   useEffect(() => {
-    if (!selectedId) return;
-    racine.current?.querySelector(`[data-apercu-id="${selectedId}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [selectedId]);
+    if (vientDuClic() || !selectedId) return;
+    const el = racine.current?.querySelector(`[data-apercu-id="${selectedId}"]`);
+    if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); halo(el, "outline"); }
+  }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (vientDuClic() || !selectedEl) return;
+    const el = racine.current?.querySelector(`[${ATTR_EL}="${selectedEl.replace(/"/g, "")}"]`);
+    if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); halo(el, "boxShadow"); } // outline déjà pris (!important) par cssSelection
+  }, [selectedEl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibles = tree.filter((n) => n.actif !== false);
 
@@ -96,6 +110,9 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
         style={{ width: LARGEUR[device], maxWidth: "100%", backgroundColor: config.colors.fond, color: config.colors.texte }}
         // Liens du design : jamais suivis tels quels dans l'éditeur — un lien vers
         // une autre page de la boutique (produit, panier…) ouvre cette page ici.
+        // Formulaires du design (newsletter, contact…) : jamais envoyés depuis l'éditeur.
+        onSubmitCapture={(e) => e.preventDefault()}
+        onAuxClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }} // clic molette : pas de nouvel onglet
         onClickCapture={(e) => {
           const lien = (e.target as HTMLElement).closest("a");
           if (!lien) return;
@@ -111,6 +128,8 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
       >
         {cssDesign && <StyleCss css={cssDesign} />}
         {selectedEl && <StyleCss css={cssSelection(selectedEl)} />}
+        {/* Vidéo, carte… intégrées : l'iframe avalait le clic, rien n'était sélectionnable dessus. */}
+        <StyleCss css="[data-embed-noeud] iframe{pointer-events:none}" />
         {tr(survol)}
         {/* Mêmes polices que la vitrine (StorefrontTypography, portée .axs-store). */}
         <StorefrontTypography fonts={config.fonts} />
@@ -135,9 +154,11 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
                 section={section}
                 ctx={ctx}
                 selectedId={selectedId}
-                onSelect={onSelect}
+                survolee={survolId === section.id}
+                onSurvol={onSurvol}
+                onSelect={selectionner}
                 onChangeConfig={onChangeConfig}
-                onSelectElement={onSelectElement}
+                onSelectElement={selectionnerElement}
                 onAjouterAvant={() => onAjouterSection(zone, indexDansZone)}
                 onAjouterApres={() => onAjouterSection(zone, indexDansZone + 1)}
               />
@@ -151,8 +172,8 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
 
 type Ctx = { slug: string; colors: ThemeConfig["colors"]; container: string; sectionPy: string };
 
-function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onSelectElement, onAjouterAvant, onAjouterApres }: {
-  section: BlockNode; ctx: Ctx; selectedId: string | null;
+function SectionApercu({ section, ctx, selectedId, survolee, onSurvol, onSelect, onChangeConfig, onSelectElement, onAjouterAvant, onAjouterApres }: {
+  section: BlockNode; ctx: Ctx; selectedId: string | null; survolee: boolean; onSurvol?: (id: string | null) => void;
   onSelect: (id: string) => void; onChangeConfig: (id: string, patch: Record<string, any>) => void;
   onSelectElement: (noeudId: string, elId: string) => void;
   onAjouterAvant: () => void; onAjouterApres: () => void;
@@ -160,24 +181,28 @@ function SectionApercu({ section, ctx, selectedId, onSelect, onChangeConfig, onS
   const selectionnee = selectedId === section.id;
   const blocSelectionne = !selectionnee && !!selectedId && contient(section, selectedId);
   const actif = selectionnee || blocSelectionne;
+  const visible = actif || survolee; // survolée ici ou depuis le panneau de gauche
 
   return (
     <div
       data-apercu-id={section.id}
       onClick={(e) => { e.stopPropagation(); onSelect(section.id); }}
+      onMouseEnter={() => onSurvol?.(section.id)}
+      onMouseLeave={() => onSurvol?.(null)}
       className={`group/section relative cursor-pointer ${actif ? "z-10" : "hover:z-10"}`}
     >
       <Noeud node={section} ctx={ctx} selectedId={selectedId} sectionActive={actif} onSelect={onSelect} onChangeConfig={onChangeConfig} onSelectElement={onSelectElement} />
 
       {/* Cadre + étiquette + insertion : au-dessus du contenu, sans le décaler. */}
-      <div className={`pointer-events-none absolute inset-0 transition-opacity ${actif ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
+      <div className={`pointer-events-none absolute inset-0 transition-opacity ${visible ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
         style={{ boxShadow: `inset 0 0 0 2px ${actif ? "#F5A623" : "rgba(245,166,35,0.55)"}` }}>
-        <span className="absolute left-0 top-0 flex items-center gap-1.5 h-7 px-2.5 rounded-br-md text-[13px] font-semibold bg-[#F5A623] text-[#111111]">
+        <span className="absolute left-0 top-0 flex items-center gap-1.5 h-8 px-3 rounded-br-md text-[14px] font-semibold bg-[#F5A623] text-[#111111] shadow-sm"
+          style={{ fontFamily: "'Poppins',system-ui,sans-serif" }}>
           {nomNoeud(section)}
         </span>
       </div>
-      <BoutonInsertion position="top" visible={actif} onClick={onAjouterAvant} />
-      <BoutonInsertion position="bottom" visible={actif} onClick={onAjouterApres} />
+      <BoutonInsertion position="top" visible={visible} onClick={onAjouterAvant} />
+      <BoutonInsertion position="bottom" visible={visible} onClick={onAjouterApres} />
     </div>
   );
 }
@@ -190,13 +215,21 @@ function BoutonInsertion({ position, visible, onClick }: { position: "top" | "bo
       title={tr("Ajouter une section ici")}
       aria-label={tr("Ajouter une section ici")}
       onClick={(e) => { e.stopPropagation(); onClick(); }}
-      className={`absolute left-1/2 -translate-x-1/2 z-20 w-7 h-7 rounded-full flex items-center justify-center bg-[#F5A623] text-[#111111] shadow-md ring-2 ring-white transition-all hover:scale-110 ${
-        position === "top" ? "-top-3.5" : "-bottom-3.5"
+      className={`absolute left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center bg-[#F5A623] text-[#111111] shadow-md ring-2 ring-white transition-all hover:scale-110 ${
+        position === "top" ? "-top-[18px]" : "-bottom-[18px]"
       } ${visible ? "opacity-100" : "opacity-0 group-hover/section:opacity-100"}`}
     >
-      <Plus size={15} strokeWidth={2.5} />
+      <Plus size={18} strokeWidth={2.5} />
     </button>
   );
+}
+
+// Halo orange pulsé (~1,2 s) pour repérer l'élément ciblé depuis un panneau.
+function halo(el: Element, prop: "outline" | "boxShadow") {
+  const k = (a: number) => prop === "outline"
+    ? { outline: `4px solid rgba(245,166,35,${a})`, outlineOffset: "-4px" }
+    : { boxShadow: `0 0 0 6px rgba(245,166,35,${a})` };
+  el.animate([k(0), k(0.9), k(0.25), k(0.9), k(0)], { duration: 1200, easing: "ease-in-out" });
 }
 
 function contient(node: BlockNode, id: string): boolean {

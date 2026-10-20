@@ -17,7 +17,7 @@ import { PanneauSections } from "./PanneauSections";
 import { MenuAjout, type ChoixAjout } from "./MenuAjout";
 import { ReglagesSection } from "./ReglagesSection";
 import { Apercu } from "./Apercu";
-import { ApercuFiche } from "./ApercuFiche";
+import { ApercuFiche, useFicheCible } from "./ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";
 import { SelecteurPage } from "../pages/SelecteurPage";
@@ -26,6 +26,8 @@ import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "@/lib/decoupage-design";
 import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement } from "./elements-dom";
 import { PanneauElement } from "../PanneauElement";
+import { RechercheConstructeur, type ResultatRecherche } from "../RechercheConstructeur";
+import { poserIdElement } from "../elements-arbre";
 import { StyleCss } from "@/components/storefront/StyleCss";
 import { CSS_MENUS_DEROULANTS } from "../menusDeroulants";
 import { majStyleElement, type ElementStyles } from "@/lib/element-styles";
@@ -90,6 +92,11 @@ export function BoutiqueBuilder(p: Props) {
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
   const setSelectedId = useCallback((id: string | null | ((s: string | null) => string | null)) => { setSelectedEl(null); setSelectedIdBrut(id); }, []);
   const [ajout, setAjout] = useState<{ mode: "section"; zone: Zone; index: number } | { mode: "bloc"; sectionId: string } | null>(null);
+  // Section/bloc survolé, partagé entre le panneau de gauche et l'aperçu (surbrillance seulement).
+  const [survolId, setSurvolId] = useState<string | null>(null);
+  // Choix survolé dans le menu d'ajout : montré en place dans l'aperçu, rien n'est écrit avant le clic.
+  const [choixSurvole, setChoixSurvole] = useState<ChoixAjout | null>(null);
+  useEffect(() => setChoixSurvole(null), [ajout]);
 
   const tree = ordonnerParZone(config.builderTree ?? []);
   const setTree = useCallback(
@@ -114,6 +121,24 @@ export function BoutiqueBuilder(p: Props) {
       return moveNode(t, id, conteneur, versIndex);
     });
   };
+
+  // Nœud d'aperçu du choix survolé : construit une fois par choix (ids stables).
+  const cleChoix = choixSurvole && ajout ? `${ajout.mode}:${choixSurvole.kind === "modele" ? choixSurvole.id : choixSurvole.type}` : null;
+  const noeudApercu = useMemo(() => {
+    if (!choixSurvole || !ajout) return null;
+    if (ajout.mode === "bloc") return choixSurvole.kind === "bloc" ? { ...createDefaultNode(choixSurvole.type), id: ID_APERCU_AJOUT } : null;
+    const n = choixSurvole.kind === "modele"
+      ? STARTER_TEMPLATES.find((m) => m.id === choixSurvole.id)?.build()
+      : envelopperEnSection(createDefaultNode(choixSurvole.type));
+    return n ? { ...n, id: ID_APERCU_AJOUT, config: ajout.zone !== "template" ? { ...n.config, zone: ajout.zone } : n.config } : null;
+  }, [cleChoix]); // eslint-disable-line react-hooks/exhaustive-deps
+  const treeApercu = useMemo(() => {
+    if (!noeudApercu || !ajout) return tree;
+    if (ajout.mode === "section") return insertNode(tree, null, indexGlobal(tree, ajout.zone, ajout.index), noeudApercu);
+    const section = findNode(tree, ajout.sectionId);
+    const colonne = section && premiereColonne(section);
+    return colonne ? insertNode(tree, colonne.id, (colonne.children ?? []).length, noeudApercu) : tree;
+  }, [noeudApercu, ajout, config.builderTree]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const supprimer = (id: string) => { setTree((t) => removeNode(t, id)); setSelectedId((s) => (s === id ? null : s)); };
 
@@ -179,6 +204,26 @@ export function BoutiqueBuilder(p: Props) {
   const estRacine = !!embed && !!selectedEl && racineElement(embed.config?.html || "")?.id === selectedEl;
   const sectionDe = (id: string) => tree.find((n) => n.id === id || !!findNode(n.children ?? [], id)) ?? null;
 
+  // Élément d'un design désigné par son rang (arborescence, recherche) : identifiant posé puis sélection.
+  const selectionnerElement = (embedId: string, index: number) => {
+    const n = findNode(tree, embedId);
+    const res = n && poserIdElement(n.config?.html || "", index);
+    if (!res) return;
+    if (res.html !== n.config?.html) setTree((t) => updateNodeConfig(t, embedId, { html: res.html }));
+    setSelectedIdBrut(embedId);
+    setSelectedEl(res.id);
+  };
+
+  const ouvrirResultat = (r: ResultatRecherche) => {
+    if (r.kind === "page") return setPage(r.page);
+    if (r.kind === "fiche") { setPage("produit"); useFicheCible.getState().ouvrir(r.type); return; }
+    if (r.kind === "reglage") { setAjout(null); setOnglet("parametres"); setReglageOuvert(r.id); return; }
+    if (page !== "accueil") setPage("accueil");
+    else { setOnglet("sections"); setAjout(null); }
+    if (r.kind === "noeud") setSelectedId(r.id);
+    else selectionnerElement(r.embedId, r.index);
+  };
+
   const design = MANIFESTE_LIBRAIRIE.find((e) => typeof tenant.themeSlug === "string" && tenant.themeSlug.startsWith(`axso-design-${e.fichier.replace(".html", "")}-`));
   const reglage = p.reglages.find((r) => r.id === reglageOuvert);
 
@@ -192,20 +237,22 @@ export function BoutiqueBuilder(p: Props) {
         <div className="flex items-center gap-1.5 min-w-0">
           <Link href="/dashboard" title={tr("Quitter le constructeur")} aria-label={tr("Quitter le constructeur")}
             className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
-            <LogOut size={18} className="rotate-180" />
+            <LogOut size={20} className="rotate-180" />
           </Link>
           <span className="w-px h-6 bg-[#E5E5E5] mx-1" />
           {([["sections", LayoutList, "Sections"], ["parametres", Settings2, "Paramètres du thème"], ["modeles", LayoutTemplate, "Modèles"]] as [Onglet, LucideIcon, string][]).map(([id, Icon, label]) => (
             <button key={id} onClick={() => { setOnglet(id); setReglageOuvert(null); setAjout(null); }} title={label} aria-label={label} aria-pressed={onglet === id}
               className={`w-10 h-10 flex items-center justify-center rounded-lg transition-colors ${onglet === id ? "bg-[#FFF1D6] text-[#C77C0A]" : "text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5]"}`}>
-              <Icon size={18} />
+              <Icon size={20} />
             </button>
           ))}
+          <span className="w-px h-6 bg-[#E5E5E5] mx-1" />
+          <RechercheConstructeur tree={tree} reglages={p.reglages} onChoisir={ouvrirResultat} />
         </div>
 
         <div className="flex items-center gap-3 text-[14px] min-w-0">
           <span className="flex items-center gap-2 font-medium text-[#111111] truncate">
-            <LayoutTemplate size={16} className="text-[#777777] flex-shrink-0" />
+            <LayoutTemplate size={18} className="text-[#777777] flex-shrink-0" />
             {tr(design?.nom) ?? tr("Mon thème")}
           </span>
           {tenant.statut === "active"
@@ -224,17 +271,17 @@ export function BoutiqueBuilder(p: Props) {
           <div className="flex items-center rounded-lg bg-[#F3F3F3] p-0.5">
             {([["desktop", Monitor, "Ordinateur"], ["tablet", Tablet, "Tablette"], ["mobile", Smartphone, "Mobile"]] as [Device, LucideIcon, string][]).map(([d, Icon, label]) => (
               <button key={d} onClick={() => p.setDevice(d)} title={label} aria-label={label} aria-pressed={device === d}
-                className={`w-9 h-9 flex items-center justify-center rounded-md transition-all ${device === d ? "bg-white text-[#111111] shadow-sm" : "text-[#777777] hover:text-[#111111]"}`}>
-                <Icon size={16} />
+                className={`w-10 h-10 flex items-center justify-center rounded-md transition-all ${device === d ? "bg-white text-[#111111] shadow-sm" : "text-[#777777] hover:text-[#111111]"}`}>
+                <Icon size={18} />
               </button>
             ))}
           </div>
-          <BoutonBarre titre={tr("Annuler (Ctrl+Z)")} onClick={p.undo} disabled={!p.peutAnnuler}><Undo2 size={17} /></BoutonBarre>
-          <BoutonBarre titre={tr("Rétablir (Ctrl+Y)")} onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={17} /></BoutonBarre>
+          <BoutonBarre titre={tr("Annuler (Ctrl+Z)")} onClick={p.undo} disabled={!p.peutAnnuler}><Undo2 size={19} /></BoutonBarre>
+          <BoutonBarre titre={tr("Rétablir (Ctrl+Y)")} onClick={p.redo} disabled={!p.peutRetablir}><Redo2 size={19} /></BoutonBarre>
           {tenant.statut === "active" && (
             <a href={`/${tenant.slug}`} target="_blank" rel="noopener noreferrer" title={tr("Voir la boutique")} aria-label={tr("Voir la boutique")}
               className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
-              <ExternalLink size={17} />
+              <ExternalLink size={19} />
             </a>
           )}
           <button onClick={p.handleSave} disabled={p.saving || (!p.hasChanges && !p.saved)}
@@ -279,6 +326,10 @@ export function BoutiqueBuilder(p: Props) {
               tree={tree}
               selectedId={selectedId}
               onSelect={setSelectedId}
+              selectedEl={selectedEl}
+              onSelectElement={selectionnerElement}
+              survolId={survolId}
+              onSurvol={setSurvolId}
               onDeplacer={deplacer}
               onToggleActif={(id) => setTree((t) => toggleNodeActif(t, id))}
               onDupliquer={(id) => setTree((t) => duplicateNode(t, id))}
@@ -295,12 +346,12 @@ export function BoutiqueBuilder(p: Props) {
                 {p.reglages.map((r) => (
                   <li key={r.id}>
                     <button onClick={() => setReglageOuvert(r.id)} className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left hover:bg-[#F5F5F5] transition-colors">
-                      <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-[#F5F5F5] flex items-center justify-center text-[#666666]"><r.Icon size={17} /></span>
+                      <span className="w-10 h-10 flex-shrink-0 rounded-lg bg-[#F5F5F5] flex items-center justify-center text-[#666666]"><r.Icon size={19} /></span>
                       <span className="flex-1 min-w-0">
                         <span className="block text-[14px] font-medium">{tr(r.label)}</span>
                         <span className="block text-[12.5px] text-[#888888] truncate">{tr(r.desc)}</span>
                       </span>
-                      <ChevronRight size={16} className="text-[#AAAAAA]" />
+                      <ChevronRight size={18} className="text-[#AAAAAA]" />
                     </button>
                   </li>
                 ))}
@@ -311,7 +362,7 @@ export function BoutiqueBuilder(p: Props) {
           {onglet === "parametres" && reglage && (
             <div className="flex-1 flex flex-col min-h-0">
               <div className="flex items-center gap-2 px-3 h-14 border-b border-[#EEEEEE] flex-shrink-0">
-                <button onClick={() => setReglageOuvert(null)} aria-label={tr("Retour")} className="w-8 h-8 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5]"><ArrowLeft size={17} /></button>
+                <button onClick={() => setReglageOuvert(null)} aria-label={tr("Retour")} className="w-10 h-10 flex items-center justify-center rounded-lg text-[#666666] hover:text-[#111111] hover:bg-[#F5F5F5]"><ArrowLeft size={19} /></button>
                 <p className="text-[15px] font-semibold">{tr(reglage.label)}</p>
               </div>
               <div className="flex-1 overflow-y-auto scrollbar-thin text-[14px]">{tr(reglage.contenu)}</div>
@@ -325,7 +376,7 @@ export function BoutiqueBuilder(p: Props) {
             </div>
           )}
 
-          {ajout && <MenuAjout mode={ajout.mode} onChoisir={choisirAjout} onFermer={() => setAjout(null)} />}
+          {ajout && <MenuAjout mode={ajout.mode} onChoisir={choisirAjout} onSurvol={setChoixSurvole} onFermer={() => setAjout(null)} />}
         </aside>
 
         {/* ── Aperçu ── (fiche produit quand son panneau est ouvert) */}
@@ -334,12 +385,14 @@ export function BoutiqueBuilder(p: Props) {
           : <Apercu
           onNaviguer={setPage}
           config={config}
-          tree={tree}
+          tree={treeApercu}
           slug={tenant.slug}
           collections={tenant.collections ?? []}
           device={device}
-          selectedId={selectedId}
+          selectedId={noeudApercu ? ID_APERCU_AJOUT : selectedId}
           onSelect={setSelectedId}
+          survolId={noeudApercu ? ID_APERCU_AJOUT : survolId}
+          onSurvol={setSurvolId}
           onChangeConfig={(id, patch) => setTree((t) => updateNodeConfig(t, id, patch))}
           onAjouterSection={(zone, index) => { setOnglet("sections"); setAjout({ mode: "section", zone, index }); }}
           selectedEl={selectedEl}
@@ -399,6 +452,8 @@ export function BoutiqueBuilder(p: Props) {
     </div>
   );
 }
+
+const ID_APERCU_AJOUT = "apercu-ajout";
 
 function BoutonBarre({ titre, onClick, disabled, children }: { titre: string; onClick: () => void; disabled?: boolean; children: ReactNode }) {
   return (

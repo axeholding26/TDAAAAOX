@@ -46,8 +46,11 @@ export async function POST(req: NextRequest) {
     if (!espace.success) return NextResponse.json({ erreur: "Espace invalide" }, { status: 400 });
     const userId = await compte(espace.data);
     if (!userId) return NextResponse.json({ erreur: "Non autorisé" }, { status: 401 });
+    // Raison précise affichée à l'utilisateur : clés absentes, appareil inconnu ou envoi refusé.
+    if (!clePubliqueVapid()) return NextResponse.json({ erreur: "Notifications push non configurées sur le serveur (clés VAPID absentes)" }, { status: 503 });
     const bilan = await pousserTest(userId, espace.data);
-    return NextResponse.json(bilan, { status: bilan.envoyes ? 200 : 404 });
+    if (bilan.envoyes) return NextResponse.json(bilan);
+    return NextResponse.json({ ...bilan, erreur: bilan.echecs ? "Le service de notifications de l'appareil a refusé l'envoi" : "Cet appareil n'est pas encore enregistré" }, { status: bilan.echecs ? 502 : 404 });
   }
   const p = Abonnement.safeParse(corps);
   if (!p.success) return NextResponse.json({ erreur: "Abonnement invalide" }, { status: 400 });

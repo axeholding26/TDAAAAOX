@@ -7,6 +7,7 @@ import ClesLicenceManager from "@/components/dashboard/ClesLicenceManager";
 
 import { useDevise } from "@/components/dashboard/DeviseProvider";
 import { useT } from "@/components/I18nProvider";
+import { PolitiquePrix } from "@/components/dashboard/PolitiquePrix";
 type Etape = 1 | 2 | 3 | 4;
 
 interface Infos {
@@ -192,6 +193,7 @@ export default function CreerLicencePage() {
               placeholder="5000"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] text-gray-900"
             />
+            <div className="mt-2"><PolitiquePrix prix={infos.prix} type="licence" /></div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">{t("Slug URL")}</label>

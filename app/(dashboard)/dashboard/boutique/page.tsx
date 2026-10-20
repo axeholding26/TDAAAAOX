@@ -21,6 +21,7 @@ import { SelectPays } from "@/components/ui/SelectPays";
 import { aAcces, NOMS_PALIERS, type Palier } from "@/lib/plans";
 import { useT } from "@/components/I18nProvider";
 import { lireReglagesLivraison, normaliserZone, type ZoneLivraison } from "@/lib/livraison-reglages";
+import { BannierePub } from "@/components/dashboard/BannierePub";
 
 const BOUTIQUE_TUTORIAL_STEPS = [
   { Icon: Store,   titre: "Complétez votre profil",        description: "Nom, description, contacts, pays... Chaque champ rempli fait grimper votre score de complétion vers 100%." },
@@ -340,6 +341,8 @@ export default function BoutiquePage() {
           )}
         </div>
       </div>
+
+      <BannierePub />
 
       {/* ── Corps : nav + contenu + preview ── */}
       <div className="grid lg:grid-cols-[220px_1fr] xl:grid-cols-[220px_1fr_340px] gap-5 items-start">

@@ -9,6 +9,7 @@ import { parse, type HTMLElement } from "node-html-parser";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import { convertirDesignEnSections, type Analyseur, type ElementDesign } from "@/lib/decoupage-design";
 import { moveNode, removeNode, duplicateNode, toggleNodeActif, zoneDe, findNode } from "@/lib/block-tree";
+import { estEntete } from "@/lib/agent-actions";
 import { majStyleElement, type ElementStyle, type EtatStyle, type ElementStyles } from "@/lib/element-styles";
 
 const ATTR_EL = "data-axs-el";
@@ -112,6 +113,8 @@ export function appliquerActionDesign(tree: BlockNode[], a: ActionDesign): Block
   if ("section" in a) {
     const s = findNode(tree, a.section);
     if (!s || !tree.includes(s)) throw new Error(`Section introuvable : ${a.section}`);
+    if (estEntete(s) && (a.action === "supprimer_section" || a.action === "masquer_section"))
+      throw new Error("L'en-tête (menu de navigation) ne peut pas être supprimé ni masqué : modifie plutôt ses éléments.");
     switch (a.action) {
       case "masquer_section": return s.actif === false ? tree : toggleNodeActif(tree, s.id);
       case "afficher_section": return s.actif === false ? toggleNodeActif(tree, s.id) : tree;

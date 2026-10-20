@@ -22,7 +22,7 @@ import { appliquerNouveauTheme } from "@/lib/theme-config";
 import { resolveThemeConfigAsync } from "@/lib/theme-config-server";
 import { selectionnerGabaritLibrairie, provisionerThemeInitial } from "@/lib/axso-design-library";
 import { agentConstructeurLibre } from "@/lib/gemini";
-import { validerActions, applyAgentActions } from "@/lib/agent-actions";
+import { validerActions, applyAgentActions, protegerEntete } from "@/lib/agent-actions";
 import { SECTIONS_FICHE, TYPES_FICHE, LAYOUTS_FICHE, appliquerActionFiche, resumerFiche, type ActionFiche } from "@/lib/fiche-produit";
 import { BLOCS_PAGE, appliquerActionPage, resumerPage, type ActionPage, type CleePage } from "@/lib/pages-annexes";
 import { estSensible, demanderConfirmation } from "./confirmation";
@@ -1511,7 +1511,8 @@ export const executerOutilDirect: ToolExecutor = async (nom, args, tenantId) => 
         });
         // Le HTML d'une section de design ne se réécrit jamais en bloc (l'agent n'en voit qu'un extrait) :
         // ses textes, liens, images et styles passent par modifier_design_accueil.
-        const actionsValidees = validerActions(actions).filter((a) =>
+        // L'en-tête (navbar) n'est jamais supprimé ni masqué par AXIA (lib/agent-actions.ts::protegerEntete).
+        const actionsValidees = protegerEntete(arbreActuel, validerActions(actions)).filter((a) =>
           !(a.op === "updateConfig" && findNode(arbreActuel, a.nodeId)?.type === "embed-html" && ("html" in a.config || "css" in a.config)));
         if (!actionsValidees.length) {
           return { succes: false, resultat: resume || "Je n'ai pas identifié de changement concret à appliquer sur la page — peux-tu préciser ta demande ?" };

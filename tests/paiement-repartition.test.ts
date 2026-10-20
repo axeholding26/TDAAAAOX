@@ -9,9 +9,9 @@ test("dropshipping : la commission ne porte pas sur la livraison", () => {
 });
 
 test("FCFA : jamais de centimes dans le portefeuille", () => {
-  const r = partVendeur(prixClient(999, 0.1, "digital"), 0, 0.1, "XAF");
+  const r = partVendeur(prixClient(999, 0.1, "digital"), 0, 0.13, "XAF");
   assert.equal(Number.isInteger(r.montantNet) && Number.isInteger(r.montantCommission), true);
-  assert.equal(r.montantNet + r.montantCommission, 1_099);
+  assert.equal(r.montantNet + r.montantCommission, 1_129);
 });
 
 test("monnaie à centimes : arrondi au centime, total conservé", () => {

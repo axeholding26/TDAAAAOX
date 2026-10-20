@@ -11,9 +11,12 @@ import { lireReglagesPaiement } from "@/lib/paiement-pays";
 
 // Fiche en cours d'édition (null = template global) — partagée entre le
 // panneau « Fiche produit » et cet aperçu.
-export const useFicheCible = create<{ produitId: string | null; choisir: (id: string | null) => void }>((set) => ({
+// `aOuvrir` : type de section à déplier dans le panneau (résultat de recherche).
+export const useFicheCible = create<{ produitId: string | null; choisir: (id: string | null) => void; aOuvrir: string | null; ouvrir: (type: string | null) => void }>((set) => ({
   produitId: null,
   choisir: (produitId) => set({ produitId }),
+  aOuvrir: null,
+  ouvrir: (aOuvrir) => set({ aOuvrir }),
 }));
 
 type Device = "desktop" | "tablet" | "mobile";
@@ -66,8 +69,9 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
     <div className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5">
       <div className="relative mx-auto rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden transition-[width] duration-300"
         style={{ width: LARGEUR[device], maxWidth: "100%" }}
-        // Aperçu : liens non suivis, formulaires (avis) jamais envoyés.
-        onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a")) e.preventDefault(); }}
+        // Aperçu : on ne quitte jamais le Constructeur — liens (fil d'Ariane, WhatsApp…) et boutons
+        // qui naviguent (« Commander », marqués data-navigue) bloqués ; formulaires (avis, achat) jamais envoyés.
+        onClickCapture={(e) => { if ((e.target as HTMLElement).closest("a, [data-navigue]")) { e.preventDefault(); e.stopPropagation(); } }}
         onSubmitCapture={(e) => { e.preventDefault(); e.stopPropagation(); }}>
         <p className="px-4 py-2 text-[12px] text-[#8A6D1F] bg-[#FFF8E6] border-b border-[#F5E6BF]">
           {t("Aperçu avec")}{" "}{produit.id === "exemple" ? t("un produit d'exemple") : `« ${produit.nom} »`}{" "}{t("— les avis")}{produit.id === "exemple" ? t(" et variantes") : ""}{" "}{t("affichés sont des exemples pour visualiser le style.")}

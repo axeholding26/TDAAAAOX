@@ -6,7 +6,7 @@ const BASE = process.env.NEXT_PUBLIC_APP_URL || "https://axsoafrica.com";
 const PAGES = [
   "", "/fonctionnalites", "/themes", "/temoignages", "/affiliation", "/about", "/contact",
   "/blog", "/docs", "/tutorials", "/community", "/press", "/jobs",
-  "/legal/cgu", "/legal/privacy", "/legal/cookies", "/legal/abonnements",
+  "/legal/cgu", "/legal/privacy", "/legal/cookies", "/legal/abonnements", "/legal/politique-prix",
 ];
 
 export const revalidate = 3600;

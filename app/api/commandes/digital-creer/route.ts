@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { genererNumeroCommande } from "@/lib/utils";
-import { prixClient, reductionPromo } from "@/lib/pricing";
+import { prixClient, reductionPromo, tauxCommande } from "@/lib/pricing";
 import { fraisLivraisonServeur, poidsPanier, verifierZone } from "@/lib/livraison";
 import { villeCommande } from "@/lib/livraison-reglages";
 import { hasNotchPay } from "@/lib/notchpay";
@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
         clientEmail: client.email,
         clientTelephone: client.telephone || "",
         adresseLivraison: aExpedier ? client.adresse.trim() : "Digital",
+        tauxCommission: tauxCommande(lignes.map((l) => ({ ...l, type: produits.find((p) => p.id === l.produitId)?.type })), taux),
         ville: aExpedier ? villeCommande(zone, client.ville) || "—" : "Digital",
         montantLivraison,
         // Suivi de l'expédition (page /tracking) et facture, comme une commande physique.
