@@ -13,6 +13,9 @@ import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { I18nProvider } from "@/components/I18nProvider";
 import { getLangue, dico } from "@/lib/i18n/serveur";
 import { DeviseProvider } from "@/components/dashboard/DeviseProvider";
+import { EssaiIllimite } from "@/components/dashboard/EssaiIllimite";
+import { etatEssai } from "@/lib/essai";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 
 // Manifeste : installable (écran d'accueil), exigé par iPhone pour les notifications push.
@@ -32,6 +35,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const quotaAtteint = tenantId ? await quotaCommandesAtteint(tenantId) : false;
   const { plan: palier } = tenantId ? await planActif(tenantId) : { plan: "palier0" as const };
+  // Essai Illimité (lib/essai.ts) : proposé, décompté et clos pour le propriétaire seulement.
+  const essai = tenantId && (await boutiquesDuCompte((session.user as any).id)).proprietaire.includes(tenantId)
+    ? await etatEssai(tenantId) : null;
   const permissions = await permissionsSession(session);
   const modeCaisse = await estCaissierPur(session);
   // Mode de la caisse (simple | pro) : allège ou déploie le menu « Caisse & magasin ».
@@ -52,6 +58,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <AlerteCommande />
       {/* Notifications push : alertes sur l'appareil, même appli fermée. */}
       <ActivationPush espace="dashboard" />
+      {essai && <EssaiIllimite phase={essai.phase} finLe={essai.finLe?.toISOString() ?? null} proposer={essai.proposer} montrerFin={essai.montrerFin} />}
       {/* AXIA prend la parole : constats, rappels, demandes d'accord. */}
       <AxiaBulle />
       {/* Liste ouverte des menus déroulants, la même dans tous les navigateurs. */}

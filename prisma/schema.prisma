@@ -34,6 +34,10 @@ model Tenant {
   planType            String   @default("gratuit")
   planExpiresAt       DateTime?
   planPendingRef      String?
+  // Essai de 7 jours du plan Illimité (lib/essai.ts) : un seul par compte.
+  essaiStatut         String? // null (pas encore répondu) | refuse | accepte | fin_vue
+  essaiFinLe          DateTime?
+  essaiRappel         String? // dernier rappel envoyé : j2 | fin
   metaTitle           String?
   metaDescription     String?
   socialLinks         Json     @default("{}")

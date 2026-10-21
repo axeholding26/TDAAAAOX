@@ -6,15 +6,20 @@ import AbonnementActions from "@/app/(dashboard)/dashboard/abonnement/Abonnement
 import { PLANS_CATALOGUE, ABONNEMENT_FAQ } from "@/lib/plans-catalogue";
 import { convertirDepuisXAF } from "@/lib/devise-convert";
 import { useT } from "@/components/I18nProvider";
+import { BoutonEssai, useTempsRestant } from "@/components/dashboard/EssaiIllimite";
+
+// Essai Illimité du compte (lib/essai.ts) : `planActuel` reste le plan PAYÉ, pour pouvoir s'abonner pendant l'essai.
+export interface EssaiGrille { phase: "disponible" | "en_cours" | "termine"; finLe: string | null }
 
 interface PlansGridProps {
   planActuel: string;
   nomPlan: string;
   devise: string;
   compact?: boolean;
+  essai?: EssaiGrille;
 }
 
-export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridProps) {
+export function PlansGrid({ planActuel, nomPlan, devise, compact, essai }: PlansGridProps) {
   const t = useT();
   const afficherXAF = devise === "XAF" || devise === "XOF";
 
@@ -41,6 +46,8 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
         </div>
         <PlanBadge plan={planActuel} />
       </div>
+
+      {essai && essai.phase !== "termine" && planActuel === "palier0" && <CarteEssai essai={essai} />}
 
       {/* ── Cards plans ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
@@ -158,6 +165,26 @@ export function PlansGrid({ planActuel, nomPlan, devise, compact }: PlansGridPro
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CarteEssai({ essai }: { essai: EssaiGrille }) {
+  const t = useT();
+  const reste = useTempsRestant(essai.phase === "en_cours" ? essai.finLe : null);
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[#F5A623]/40 bg-[#FFF8EB] px-5 py-4">
+      {reste ? (
+        <p className="text-[14px] text-[#111111]">
+          <strong>{t("Essai Illimité en cours")}</strong>{" "}— {t("{0} restants", reste.texte)}.{" "}
+          {t("Abonne-toi avant la fin pour garder tes avantages, sinon ta boutique repassera en Essentiel.")}
+        </p>
+      ) : (
+        <>
+          <p className="text-[14px] text-[#111111]"><strong>{t("7 jours d'Illimité offerts")}</strong>{" "}— {t("sans carte, une seule fois par compte. À la fin, tu choisis un plan ou tu restes en Essentiel.")}</p>
+          <BoutonEssai />
+        </>
+      )}
     </div>
   );
 }

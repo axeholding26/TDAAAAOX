@@ -21,11 +21,12 @@ import { ApercuFiche, useFicheCible } from "./ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";
 import { SelecteurPage } from "../pages/SelecteurPage";
-import { PAGES, cleLibre, type PageEditee } from "../pages/pages";
+import { PAGES, cleLibre, pageDepuisChemin, type PageEditee } from "../pages/pages";
+import { selecteurDe, lireContenu, type ElementsPage, type ContenuPage } from "@/lib/elements-pages";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "@/lib/decoupage-design";
-import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement } from "./elements-dom";
-import { PanneauElement } from "../PanneauElement";
+import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement, nomElement } from "./elements-dom";
+import { PanneauElement, type ContenuElement } from "../PanneauElement";
 import { RechercheConstructeur, type ResultatRecherche } from "../RechercheConstructeur";
 import { poserIdElement } from "../elements-arbre";
 import { StyleCss } from "@/components/storefront/StyleCss";
@@ -75,7 +76,7 @@ export function BoutiqueBuilder(p: Props) {
   const [onglet, setOnglet] = useState<Onglet>("sections");
   // Page de la boutique en cours d'édition (sélecteur de la barre du haut).
   const [page, setPageBrute] = useState<PageEditee>(p.pageInitiale ?? "accueil");
-  const setPage = (pg: PageEditee) => { setPageBrute(pg); setOnglet("sections"); setReglageOuvert(null); setAjout(null); };
+  const setPage = (pg: PageEditee) => { setPageBrute(pg); setOnglet("sections"); setReglageOuvert(null); setAjout(null); setSelectedId(null); setElPage(null); };
   // Aperçus en cadre (catalogue, panier…) : rechargés à chaque enregistrement.
   const [versionApercu, setVersionApercu] = useState(0);
   useEffect(() => { if (p.saved) setVersionApercu((v) => v + 1); }, [p.saved]);
@@ -98,6 +99,28 @@ export function BoutiqueBuilder(p: Props) {
   // l'aperçu ; selectedId est alors le bloc embed-html qui le contient.
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
   const setSelectedId = useCallback((id: string | null | ((s: string | null) => string | null)) => { setSelectedEl(null); setSelectedIdBrut(id); }, []);
+  // Élément d'une page sans sections (catalogue, commande, À propos, contact, fiche produit),
+  // repéré par son chemin CSS (lib/elements-pages.ts) ; `tous` : réglage appliqué à ses semblables.
+  const [elPage, setElPage] = useState<{
+    el: Element; exact: string; groupe: string | null; nbGroupe: number; tous: boolean;
+    nom: string; contenu: ContenuElement; lienPage: PageEditee | null;
+  } | null>(null);
+  const choisirElPage = (el: Element) => {
+    const sel = selecteurDe(el);
+    if (!sel) return;
+    const href = el.closest("a")?.getAttribute("href");
+    let lienPage: PageEditee | null = null;
+    try { if (href && !href.startsWith("#")) lienPage = pageDepuisChemin(tenant.slug, new URL(href, el.ownerDocument.location.href).pathname); } catch { /* lien invalide */ }
+    setSelectedId(null);
+    setElPage({
+      el, ...sel, nbGroupe: sel.groupe ? el.ownerDocument.querySelectorAll(sel.groupe).length : 1, tous: false,
+      nom: nomElement(el.tagName, String(el.getAttribute("class") || "")), contenu: lireContenu(el), lienPage: lienPage !== page ? lienPage : null,
+    });
+  };
+  const cleEl = elPage ? (elPage.tous && elPage.groupe ? elPage.groupe : elPage.exact) : "";
+  const reglagesPage = config.elementsPages?.[page];
+  const majPage = (fn: (r: ElementsPage) => ElementsPage) =>
+    set((c) => ({ ...c, elementsPages: { ...c.elementsPages, [page]: fn(c.elementsPages?.[page] ?? {}) } }));
   const [ajout, setAjout] = useState<{ mode: "section"; zone: Zone; index: number } | { mode: "bloc"; sectionId: string } | null>(null);
   // Section/bloc survolé, partagé entre le panneau de gauche et l'aperçu (surbrillance seulement).
   const [survolId, setSurvolId] = useState<string | null>(null);
@@ -398,8 +421,9 @@ export function BoutiqueBuilder(p: Props) {
         </aside>
 
         {/* ── Aperçu ── (fiche produit quand son panneau est ouvert) */}
-        {page === "produit" ? <ApercuFiche config={config} tenant={tenant} device={device} />
-          : pageEnCadre ? <ApercuPage slug={tenant.slug} chemin={PAGES.find((pg) => pg.id === page)!.chemin} device={device} version={versionApercu} onNaviguer={setPage} />
+        {page === "produit" ? <ApercuFiche config={config} tenant={tenant} device={device} selection={elPage ? cleEl : null} onChoisir={choisirElPage} />
+          : pageEnCadre ? <ApercuPage slug={tenant.slug} chemin={PAGES.find((pg) => pg.id === page)!.chemin} device={device} version={versionApercu} onNaviguer={setPage}
+              reglages={reglagesPage} selection={elPage ? cleEl : null} onChoisir={choisirElPage} />
           : <Apercu
           onNaviguer={setPage}
           config={config}
@@ -420,6 +444,41 @@ export function BoutiqueBuilder(p: Props) {
         />}
 
         {/* ── Réglages de l'élément sélectionné ── */}
+        {elPage && !avecSections && (
+          <PanneauElement
+            key={cleEl}
+            titre={elPage.nom}
+            sousTitre={tr("Page « {0} »", libellePage)}
+            contenu={elPage.tous ? undefined : elPage.contenu}
+            onContenu={(patch) => {
+              majPage((r) => ({ ...r, contenus: { ...r.contenus, [elPage.exact]: { ...r.contenus?.[elPage.exact], ...(patch as ContenuPage) } } }));
+              setElPage((e) => e && { ...e, contenu: { ...e.contenu, ...patch } });
+            }}
+            styles={reglagesPage?.styles?.[cleEl] ?? {}}
+            device={device}
+            onStyle={(etat, patch) => majPage((r) => ({ ...r, styles: majStyleElement(r.styles, cleEl, etat, patch) }))}
+            onReinitialiser={() => majPage((r) => { const { [cleEl]: _retire, ...reste } = r.styles ?? {}; return { ...r, styles: reste }; })}
+            onParent={elPage.el.parentElement && selecteurDe(elPage.el.parentElement) ? () => choisirElPage(elPage.el.parentElement!) : undefined}
+            onClose={() => setElPage(null)}
+            extra={(elPage.lienPage || elPage.nbGroupe > 1) && (
+              <div className="space-y-2">
+                {elPage.lienPage && (
+                  <button onClick={() => setPage(elPage.lienPage!)}
+                    className="w-full h-10 flex items-center justify-between px-3 rounded-lg border border-[#E5E5E5] text-[14px] hover:bg-[#F5F5F5]">
+                    {tr("Ouvrir la page liée : {0}", tr(PAGES.find((pg) => pg.id === elPage.lienPage)?.label ?? elPage.lienPage))}
+                    <ChevronRight size={17} className="text-[#999999]" />
+                  </button>
+                )}
+                {elPage.nbGroupe > 1 && (
+                  <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-[#F7F7F8] text-[13.5px] cursor-pointer">
+                    <input type="checkbox" checked={elPage.tous} onChange={(e) => setElPage((x) => x && { ...x, tous: e.target.checked })} className="mt-0.5 w-4 h-4 accent-[#F5A623]" />
+                    <span>{tr("Appliquer le style aux {0} éléments semblables (ex. toutes les cartes produit)", String(elPage.nbGroupe))}</span>
+                  </label>
+                )}
+              </div>
+            )}
+          />
+        )}
         {embed && selectedEl && infoEl && (
           <PanneauElement
             key={selectedEl}
@@ -464,9 +523,10 @@ export function BoutiqueBuilder(p: Props) {
         )}
       </div>
 
-      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection ? 340 : 0} contexte={[
+      <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection || elPage ? 340 : 0} contexte={[
         libre ? `page libre « ${libellePage} » (p/${cle})` : `page « ${libellePage} »`,
         selection && `section sélectionnée « ${nomNoeud(selection)} » (id ${selection.id})`,
+        elPage && `élément sélectionné sur cette page : ${elPage.nom}${elPage.contenu.texte ? ` « ${elPage.contenu.texte.slice(0, 60)} »` : ""}`,
         selectedEl && `élément sélectionné ${selectedEl}${infoEl ? ` (${infoEl.nom}${infoEl.texte ? ` « ${infoEl.texte.slice(0, 60)} »` : ""})` : ""}`,
       ].filter(Boolean).join(", ")} />
     </div>

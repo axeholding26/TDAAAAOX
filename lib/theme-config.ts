@@ -379,6 +379,8 @@ export interface ThemeConfig {
   navigation?: { principal?: { libelle: string; lien: string }[]; pied?: { titre: string; liens: { libelle: string; lien: string }[] }[] };
   marque?: Record<string, any>;
   seo?: Record<string, any>;
+  // Réglages par élément des pages sans sections (catalogue, commande…) : lib/elements-pages.ts.
+  elementsPages?: import("./elements-pages").ElementsPages;
 }
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -553,6 +555,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     navigation: overrides.navigation ?? base.navigation,
     marque: overrides.marque ?? base.marque,
     seo: overrides.seo ?? base.seo,
+    elementsPages: overrides.elementsPages ?? base.elementsPages,
   };
 }
 

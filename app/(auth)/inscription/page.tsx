@@ -1251,6 +1251,12 @@ export default function InscriptionPage() {
                     <strong style={{color:YELLOW_D}}>{tr(plan?.nomBoutique)}</strong>. 🚀
                   </span>
                 </AxiaMsg>
+                {/* Essai Illimité (lib/essai.ts) : annoncé ici, proposé à l'arrivée sur la plateforme. */}
+                <AxiaMsg delay={300}>
+                  🎁{" "}{tr("Ton compte démarre en")}{" "}<strong>{tr("Essentiel (gratuit)")}</strong>.{" "}
+                  {tr("En bonus, tu peux essayer le plan")}{" "}<strong style={{color:YELLOW_D}}>{tr("Illimité")}</strong>{" "}
+                  {tr("pendant 7 jours, sans payer et sans carte. Je te le proposerai dès ton arrivée — tu pourras accepter ou refuser.")}
+                </AxiaMsg>
                 {phase==="q-compte" && (
                   <CompteForm onSubmit={launchCreation} loading={loading} erreur={erreur||undefined} pays={paysCode}/>
                 )}

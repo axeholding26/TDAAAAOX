@@ -1439,7 +1439,7 @@ export function ProductPageClient({ produit, tenant, produitsSimilaires, sansPie
 
   return (
     // @container : la fiche s'adapte à SA largeur (et pas à l'écran) — juste aussi dans l'aperçu mobile du Constructeur.
-    <div className="@container break-words" style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
+    <div data-axs-page="produit" className="@container break-words" style={{ backgroundColor: fond, color: texte, minHeight: "100vh" }}>
 
       {/* Pleine largeur : image en fond plein écran, infos en overlay */}
       {layoutMode === "fullwidth" && isOn("gallery") && produit.images[0] && (

@@ -56,6 +56,17 @@ export default async function AdminAbonnementsPage() {
   const refsAbonnement = platformWallet ? await prisma.walletTransaction.findMany({ where: { walletId: platformWallet.id, reference: { startsWith: "SUB-" } }, select: { reference: true } }) : [];
   const ontPaye = new Set(refsAbonnement.map((r) => (r.reference ? lireRefAbonnement(r.reference)?.tenantId : undefined)).filter(Boolean));
 
+  // Essai Illimité de 7 jours (lib/essai.ts) : en cours, terminés, transformés en abonnement payé, refusés.
+  const essais = await prisma.tenant.findMany({
+    where: { ...filtreBoutiques, OR: [{ essaiFinLe: { not: null } }, { essaiStatut: "refuse" }] },
+    select: { id: true, nomBoutique: true, essaiFinLe: true, essaiStatut: true },
+    orderBy: { essaiFinLe: "asc" },
+  });
+  const essaisEnCours = essais.filter((e) => e.essaiFinLe && e.essaiFinLe > now);
+  const essaisTermines = essais.filter((e) => e.essaiFinLe && e.essaiFinLe <= now);
+  const essaisConvertis = essais.filter((e) => e.essaiFinLe && ontPaye.has(e.id)).length;
+  const essaisRefuses = essais.filter((e) => !e.essaiFinLe).length;
+
   const compteParPalier = Object.fromEntries(repartition.map(r => [r.planType, r._count]));
   const totalBoutiques = repartition.reduce((s, r) => s + r._count, 0);
 
@@ -104,6 +115,21 @@ export default async function AdminAbonnementsPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Essais Illimité */}
+      <div className="rounded-2xl p-5 border space-y-4" style={{ background: "#1A1A1A", borderColor: "rgba(245,166,35,0.2)" }}>
+        <h2 className="font-semibold" style={{ color: "#ffffff" }}>{tx("Essais Illimité (7 jours)")}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {([["En cours", essaisEnCours.length, "#F5A623"], ["Terminés", essaisTermines.length, "#AAAAAA"], ["Devenus payants", essaisConvertis, "#16A34A"], ["Refusés (pour l'instant)", essaisRefuses, "#DC2626"]] as const).map(([l, n, c]) => (
+            <div key={l}><p className="text-2xl font-bold" style={{ color: c }}>{n}</p><p className="text-xs mt-1" style={{ color: "#AAAAAA" }}>{tx(l)}</p></div>
+          ))}
+        </div>
+        {essaisEnCours.length > 0 && (
+          <ul className="text-sm space-y-1" style={{ color: "#DDDDDD" }}>
+            {essaisEnCours.map((e) => <li key={e.id}>{tx(e.nomBoutique)} — {tx("fin le {0}", formatDate(e.essaiFinLe!))}</li>)}
+          </ul>
+        )}
       </div>
 
       {/* Abonnés payants */}

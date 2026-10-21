@@ -405,3 +405,23 @@ export async function envoyerCampagneEmail(params: {
   }
   return acceptes;
 }
+
+// Rappel de l'essai Illimité (lib/essai.ts) : 48 h avant la fin, puis à la fin.
+export async function envoyerRappelEssai(p: { email: string; boutique: string; titre: string; message: string }): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend || !emailReel(p.email)) return false;
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  return envoyer(resend, {
+    from: "Axso <noreply@axsoafrica.com>",
+    to: p.email,
+    subject: `${p.titre} — ${p.boutique}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2>${esc(p.titre)}</h2>
+        <p>${esc(p.message)}</p>
+        <p style="text-align:center;margin:24px 0"><a href="https://axsoafrica.com/dashboard/abonnement" style="background:#F5A623;color:#111;padding:12px 22px;border-radius:10px;font-weight:bold;text-decoration:none">Voir les plans</a></p>
+        <p style="color:#666;font-size:13px">Tu ne paies rien si tu ne choisis pas de plan : ta boutique continue simplement en Essentiel (gratuit).</p>
+      </div>
+    `,
+  });
+}

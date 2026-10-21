@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { pageDepuisChemin, type PageEditee } from "./pages";
+import { useElementsApercu } from "./useElementsApercu";
+import type { ElementsPage } from "@/lib/elements-pages";
 import { useT } from "@/components/I18nProvider";
 
 type Device = "desktop" | "tablet" | "mobile";
@@ -10,20 +12,28 @@ const LARGEUR: Record<Device, string> = { desktop: "100%", tablet: "768px", mobi
 // Aperçu d'une page de la vitrine (catalogue, panier, commande, À propos,
 // Contact) : la vraie page, dans un cadre à la largeur de l'appareil choisi
 // (le rendu responsive est donc exact). Rechargé à chaque enregistrement
-// (`version`). Un lien cliqué dans l'aperçu fait basculer le Constructeur
-// sur la page correspondante, comme l'éditeur Shopify.
-export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
+// (`version`), à la même hauteur de défilement. Chaque élément (lien compris)
+// se sélectionne d'un clic pour être réglé dans le panneau de droite ; la page
+// liée s'ouvre depuis ce panneau.
+export function ApercuPage({ slug, chemin, device, version, onNaviguer, reglages, selection, onChoisir }: {
   slug: string; chemin: string; device: Device; version: number;
   onNaviguer: (page: PageEditee) => void;
+  reglages?: ElementsPage; selection: string | null; onChoisir: (el: Element) => void;
 }) {
   const t = useT();
   const cadre = useRef<HTMLIFrameElement>(null);
   const actuelle = pageDepuisChemin(slug, `/${slug}${chemin}`);
 
+  const [corps, setCorps] = useState<HTMLElement | null>(null);
+  useElementsApercu(corps, reglages, selection, onChoisir);
+
   const premiere = useRef(version);
+  const defilement = useRef(0);
   useEffect(() => {
     if (version === premiere.current) return; // premier affichage : déjà chargé par src
-    cadre.current?.contentWindow?.location.reload();
+    const win = cadre.current?.contentWindow;
+    defilement.current = win?.scrollY ?? 0;
+    win?.location.reload();
   }, [version]);
 
   return (
@@ -41,7 +51,9 @@ export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
             if (!win) return;
             const page = pageDepuisChemin(slug, win.location.pathname);
             if (page && page !== actuelle) onNaviguer(page);
-            neutraliser(win, slug, onNaviguer);
+            neutraliser(win);
+            if (defilement.current) { win.scrollTo(0, defilement.current); defilement.current = 0; }
+            setCorps(win.document.body);
           } catch { /* autre origine : ignoré */ }
         }}
       />
@@ -50,10 +62,9 @@ export function ApercuPage({ slug, chemin, device, version, onNaviguer }: {
 }
 
 // Rien dans l'aperçu ne quitte le Constructeur : liens et formulaires bloqués
-// (en capture, avant les <Link> de Next qui respectent defaultPrevented) ; un
-// lien vers une page connue bascule l'éditeur dessus. Accordéons, onglets,
-// variantes… (simples clics sans navigation) restent actifs.
-function neutraliser(win: Window, slug: string, onNaviguer: (page: PageEditee) => void) {
+// (en capture, avant les <Link> de Next qui respectent defaultPrevented).
+// Accordéons, onglets, variantes… (simples clics sans navigation) restent actifs.
+function neutraliser(win: Window) {
   const doc = win.document;
   win.open = () => null;
   const surLien = (e: MouseEvent) => {
@@ -61,10 +72,6 @@ function neutraliser(win: Window, slug: string, onNaviguer: (page: PageEditee) =
     const href = lien?.getAttribute("href");
     if (!href || href.startsWith("#")) return; // ancre interne : reste sur la page
     e.preventDefault();
-    if (e.type !== "click") return;
-    const url = new URL(href, win.location.href);
-    const page = url.origin === win.location.origin ? pageDepuisChemin(slug, url.pathname) : null;
-    if (page) onNaviguer(page);
   };
   doc.addEventListener("click", surLien, true);
   doc.addEventListener("auxclick", surLien, true); // clic molette : nouvel onglet

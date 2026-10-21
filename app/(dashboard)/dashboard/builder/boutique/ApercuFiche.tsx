@@ -8,6 +8,8 @@ import { ficheDuProduit } from "@/lib/fiche-produit";
 import { create } from "zustand";
 import { useT } from "@/components/I18nProvider";
 import { lireReglagesPaiement } from "@/lib/paiement-pays";
+import { useElementsApercu } from "../pages/useElementsApercu";
+import type { ElementsPage } from "@/lib/elements-pages";
 
 // Fiche en cours d'édition (null = template global) — partagée entre le
 // panneau « Fiche produit » et cet aperçu.
@@ -41,7 +43,10 @@ const EXEMPLE: Produit = {
 
 // Aperçu en direct de la fiche produit dans le Constructeur — même composant
 // que la boutique en ligne, alimenté par la config en cours d'édition.
-export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; tenant: any; device: Device }) {
+export function ApercuFiche({ config, tenant, device, selection, onChoisir }: { config: ThemeConfig; tenant: any; device: Device; selection: string | null; onChoisir: (el: Element) => void }) {
+  // Chaque élément de la fiche se sélectionne d'un clic (réglages de config.elementsPages.produit).
+  const [zone, setZone] = useState<HTMLDivElement | null>(null);
+  useElementsApercu(zone, config.elementsPages?.produit as ElementsPage | undefined, selection, onChoisir);
   const t = useT();
   const [produit, setProduit] = useState<Produit>(EXEMPLE);
   const produitId = useFicheCible(s => s.produitId);
@@ -67,7 +72,7 @@ export function ApercuFiche({ config, tenant, device }: { config: ThemeConfig; t
   const c = config.colors;
   return (
     <div className="isolate flex-1 min-w-0 overflow-y-auto bg-[#F1F2F4] p-4 lg:p-5">
-      <div className="relative mx-auto rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden transition-[width] duration-300"
+      <div ref={setZone} className="relative mx-auto rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden transition-[width] duration-300"
         style={{ width: LARGEUR[device], maxWidth: "100%" }}
         // Aperçu : on ne quitte jamais le Constructeur — liens (fil d'Ariane, WhatsApp…) et boutons
         // qui naviguent (« Commander », marqués data-navigue) bloqués ; formulaires (avis, achat) jamais envoyés.

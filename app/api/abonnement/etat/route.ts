@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { planActif } from "@/lib/abonnement";
 import { PAYS_DEVISES } from "@/lib/ai-agent";
 import { NOMS_PALIERS } from "@/lib/plans";
+import { etatEssai } from "@/lib/essai";
 
 // État du plan du tenant courant, pour l'overlay abonnement plein écran
 // (déclenché depuis n'importe quel cadenas du dashboard côté client).
@@ -23,7 +24,8 @@ export async function GET() {
     select: { nomBoutique: true, pays: true, devise: true },
   });
 
-  const { plan: planActuel } = await planActif(tenantId);
+  // Plan payé (sans l'essai Illimité) : on peut s'abonner pendant l'essai.
+  const [{ planPaye: planActuel }, essai] = await Promise.all([planActif(tenantId), etatEssai(tenantId)]);
   const pays = tenant?.pays ?? "CM";
   const devise = tenant?.devise ?? PAYS_DEVISES[pays] ?? "XAF";
 
@@ -32,5 +34,6 @@ export async function GET() {
     nomPlan: NOMS_PALIERS[planActuel],
     nomBoutique: tenant?.nomBoutique ?? null,
     devise,
+    essai: { phase: essai.phase, finLe: essai.finLe?.toISOString() ?? null },
   });
 }

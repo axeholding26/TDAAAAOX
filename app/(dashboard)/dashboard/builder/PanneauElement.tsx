@@ -6,7 +6,7 @@
 // même façon dans l'aperçu et sur la boutique : aucune modification factice.
 // L'appareil affiché dans l'aperçu décide de ce qu'on édite : ordinateur =
 // style de base (+ survol), tablette/mobile = surcharge pour cet écran.
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { X, ArrowUpToLine, RotateCcw, Trash2, AlignLeft, AlignCenter, AlignRight, AlignJustify, Monitor, Tablet, Smartphone } from "lucide-react";
 import { FONTS } from "@/lib/theme-fonts";
 import type { ElementStyle, EtatStyle } from "@/lib/element-styles";
@@ -37,6 +37,7 @@ interface Props {
   onSupprimer?: () => void;
   onClose: () => void;
   masquable?: boolean; // false : élément obligatoire (ex. pied de page portant « Powered by AXSO »)
+  extra?: ReactNode; // en tête des réglages (ex. « Ouvrir la page liée »)
 }
 
 const APPAREIL: Record<Device, { etat: EtatStyle; label: string; Icon: typeof Monitor }> = {
@@ -45,7 +46,7 @@ const APPAREIL: Record<Device, { etat: EtatStyle; label: string; Icon: typeof Mo
   mobile: { etat: "mobile", label: "Mobile", Icon: Smartphone },
 };
 
-export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, device, onStyle, onReinitialiser, onParent, onSupprimer, onClose, masquable = true }: Props) {
+export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, device, onStyle, onReinitialiser, onParent, onSupprimer, onClose, masquable = true, extra }: Props) {
   const t = useT();
   const [survol, setSurvol] = useState(false);
   const etat: EtatStyle = device === "desktop" && survol ? "hover" : APPAREIL[device].etat;
@@ -82,6 +83,7 @@ export function PanneauElement({ titre, sousTitre, contenu, onContenu, styles, d
       </div>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin px-4 py-4 space-y-6">
+        {extra}
         {aContenu && etat === "base" && onContenu && (
           <Groupe titre={t("Contenu")}>
             {contenu!.texteEnLigne && <p className="text-[13px] leading-relaxed text-[#666666] bg-[#F7F7F8] rounded-lg px-3 py-2.5">{t("Ce texte contient une mise en forme :")}{" "}<strong className="text-[#111111]">{t("clique dessus dans l'aperçu")}</strong> pour le modifier directement.</p>}

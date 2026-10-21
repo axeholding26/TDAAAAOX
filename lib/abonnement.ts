@@ -1,32 +1,41 @@
 import { prisma } from "./prisma";
+import type { Prisma } from "@prisma/client";
 import { LIMITES, palierAuMoins, type Palier } from "./plans";
+import { finEssai } from "./essai-regles";
 
 const PALIERS_VALIDES = new Set<string>(["palier0", "palier1", "palier2"]);
 
 // L'abonnement vaut pour le COMPTE : une boutique profite du meilleur palier
 // en cours parmi toutes les boutiques de ses propriétaires. Payer le Palier 2
 // sur la boutique A couvre donc aussi la boutique B du même compte.
-export async function planActif(tenantId: string): Promise<{ plan: Palier; actif: boolean }> {
-  const tenants = await prisma.tenant.findMany({
+export function boutiquesDuMemeCompte<S extends Prisma.TenantSelect>(tenantId: string, select: S) {
+  return prisma.tenant.findMany({
     where: {
       OR: [
         { id: tenantId },
         { proprietaires: { some: { user: { boutiques: { some: { tenantId } } } } } },
       ],
     },
-    select: { planType: true, planExpiresAt: true },
+    select,
   });
+}
+
+// `plan` : ce dont la boutique profite (essai Illimité compris, voir lib/essai.ts) ;
+// `planPaye` : le palier réellement payé, sans l'essai.
+export async function planActif(tenantId: string): Promise<{ plan: Palier; planPaye: Palier; actif: boolean; essaiFinLe: Date | null }> {
+  const tenants = await boutiquesDuMemeCompte(tenantId, { planType: true, planExpiresAt: true, essaiFinLe: true });
 
   const now = new Date();
-  let plan: Palier = "palier0";
+  let planPaye: Palier = "palier0";
   for (const t of tenants) {
     // Valeurs héritées ("gratuit", "premium"...) des tenants créés avant les
     // paliers — ignorées, sinon tout code qui indexe LIMITES/FEATURES par
     // palier planterait (undefined).
     if (!PALIERS_VALIDES.has(t.planType) || !t.planExpiresAt || t.planExpiresAt < now) continue;
-    if (palierAuMoins(t.planType as Palier, plan)) plan = t.planType as Palier;
+    if (palierAuMoins(t.planType as Palier, planPaye)) planPaye = t.planType as Palier;
   }
-  return { plan, actif: true };
+  const essaiFinLe = finEssai(tenants);
+  return { plan: essaiFinLe && essaiFinLe > now ? "palier2" : planPaye, planPaye, actif: true, essaiFinLe };
 }
 
 // Nombre de commandes créées depuis le début du mois calendaire courant —

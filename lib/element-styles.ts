@@ -67,21 +67,27 @@ function declarations(s: ElementStyle): string {
   return d.filter(([, v]) => v !== undefined && v !== "").map(([k, v]) => `${k}:${v} !important;`).join("");
 }
 
-/** CSS de tous les éléments stylés. `racine` : conteneur où chercher (défaut : toute la page). */
-export function cssElements(styles?: ElementStyles, racine = "", avecImports = true): string {
+/**
+ * CSS de tous les éléments stylés. `racine` : conteneur où chercher (défaut : toute la page).
+ * `parSelecteur` : les clés sont des sélecteurs CSS (pages catalogue, commande… — lib/elements-pages.ts) ;
+ * tablette/mobile y sont aussi en @media, ces pages n'ayant pas toujours de conteneur de référence.
+ */
+export function cssElements(styles?: ElementStyles, racine = "", avecImports = true, parSelecteur = false): string {
   if (!styles) return "";
   const regles: string[] = [];
   for (const [id, etats] of Object.entries(styles)) {
-    const sel = `${racine ? racine + " " : ""}[data-axs-el="${id.replace(/"/g, "")}"]`;
+    const sel = parSelecteur ? id.replace(/[{}<]/g, "") : `${racine ? racine + " " : ""}[data-axs-el="${id.replace(/"/g, "")}"]`;
     const bloc = (etat: EtatStyle, selecteur = sel) => {
       const decl = etats[etat] && declarations(etats[etat]!);
       return decl ? `${selecteur}{${decl}}` : "";
     };
     regles.push(bloc("base"), bloc("hover", `${sel}:hover`));
-    const tablette = bloc("tablet");
-    if (tablette) regles.push(`@container (max-width:${BREAKPOINT_TABLETTE}px){${tablette}}`);
-    const mobile = bloc("mobile");
-    if (mobile) regles.push(`@container (max-width:${BREAKPOINT_MOBILE}px){${mobile}}`);
+    for (const [etat, max] of [["tablet", BREAKPOINT_TABLETTE], ["mobile", BREAKPOINT_MOBILE]] as const) {
+      const b = bloc(etat);
+      if (!b) continue;
+      regles.push(`@container (max-width:${max}px){${b}}`);
+      if (parSelecteur) regles.push(`@media (max-width:${max}px){${b}}`);
+    }
   }
   return (avecImports ? importPolices(policesDe(styles)) : "") + regles.filter(Boolean).join("");
 }

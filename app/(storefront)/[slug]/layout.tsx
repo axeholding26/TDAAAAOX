@@ -13,6 +13,7 @@ import { MenuVitrineProvider, PiedMenuVitrine } from "@/components/storefront/St
 import { zoneDe } from "@/lib/block-tree";
 import { AnimationsDesign } from "@/components/storefront/AnimationsDesign";
 import { StorefrontCustomCss } from "@/components/storefront/StorefrontCustomCss";
+import { ElementsPagesVitrine } from "@/components/storefront/ElementsPagesVitrine";
 import { StorefrontPopups } from "@/components/storefront/StorefrontPopups";
 import { MetaPixel } from "@/components/storefront/MetaPixel";
 import { TikTokPixel } from "@/components/storefront/TikTokPixel";
@@ -87,6 +88,7 @@ async function ContenuVitrine({ children, params }: Props) {
     <DeviseVitrineProvider devise={deviseAffichee} pays={await paysVisiteur()} deviseBoutique={tenant.devise} ratio={ratioConversion(tenant.devise, deviseAffichee, await tauxDuJour())}>
       <StorefrontTypography fonts={cfg.fonts} />
       <StorefrontCustomCss css={cfg.customCss} />
+      <ElementsPagesVitrine slug={slug} elementsPages={cfg.elementsPages} />
       <div className="axs-store" style={{ display: "contents" }}>
         <MenuVitrineProvider menu={navigation.principal ?? []}>{children}</MenuVitrineProvider>
         {piedMenu.length > 0 && <PiedMenuVitrine slug={slug} colonnes={piedMenu} accent={accent} fond={cfg.colors.fond} texte={cfg.colors.texte} />}
