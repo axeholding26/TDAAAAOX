@@ -1,4 +1,5 @@
 "use client";
+import { LangueSelecteur } from "@/components/ui/LangueSelecteur";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -350,6 +351,11 @@ export function MobileBottomNav({ permissions }: { permissions?: Record<ModuleKe
                   </div>
                 </div>
               ))}
+              {/* Langue : sur mobile, ni l'en-tête PC ni la pastille flottante ne sont là. */}
+              <div className="px-4 pt-6 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[#AAAAAA]">{t("Langue")}</p>
+                <LangueSelecteur aligner="droite" />
+              </div>
             </div>
           </div>
         </div>

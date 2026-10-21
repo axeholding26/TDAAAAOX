@@ -522,7 +522,7 @@ main > section, main > div > section {
   select:disabled { opacity: .6; cursor: not-allowed; }
 }
 /* Place réservée au chevron, quel que soit le padding posé ailleurs. */
-select:not([multiple]):not([size]):not(.ax-langue) { padding-inline-end: 2.4rem !important; }
+select:not([multiple]):not([size]) { padding-inline-end: 2.4rem !important; }
 
 /* Liste ouverte des menus déroulants (components/ui/MenusDeroulants.tsx) : la même dans tous les
    navigateurs sur ordinateur. Écrans tactiles : liste native du téléphone. */

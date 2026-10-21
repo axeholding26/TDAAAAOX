@@ -153,7 +153,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
           {/* ── Actions droite ─────────────────────────────────────────── */}
           <div style={{ display:"flex", alignItems:"center", gap:"6px", marginLeft:"auto" }}>
 
-            <LangueSelecteur />
+            <LangueSelecteur ouvrirVers="bas" />
 
             {/* Boutique */}
             {urlLocale && (

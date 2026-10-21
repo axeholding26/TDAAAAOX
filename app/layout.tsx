@@ -29,6 +29,18 @@ export const metadata: Metadata = {
     siteName: "Axso",
   },
   twitter: { card: "summary_large_image" },
+  // Comme AxeTask : une PNG légère déclarée en premier — c'est elle que Vercel (avatar du projet),
+  // Google (résultats de recherche) et les navigateurs prennent. favicon.ico reste servi à son
+  // adresse pour les anciens navigateurs, sans balise.
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png", sizes: "64x64" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.png",
+    apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+  },
 };
 
 export default async function RootLayout({

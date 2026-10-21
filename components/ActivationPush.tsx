@@ -45,6 +45,10 @@ export async function abonnePush(): Promise<boolean> {
 /** Rouvre la carte d'activation (bouton de la cloche). */
 export const ouvrirReglagePush = () => window.dispatchEvent(new Event("axso:push"));
 
+// Jamais par-dessus la navigation : au-dessus de la barre du bas sur mobile (tableau de bord), à droite
+// de la barre latérale sur ordinateur — sinon l'encart couvrait le menu, le profil et la langue.
+const DECALAGE: Record<Espace, string> = { dashboard: "bottom-24 md:bottom-4 md:left-[268px]", admin: "bottom-4 lg:left-[256px]", livreur: "bottom-4" };
+
 export function ActivationPush({ espace }: { espace: Espace }) {
   const t = useT();
   const [etat, setEtat] = useState<Etat>("chargement");
@@ -118,7 +122,7 @@ export function ActivationPush({ espace }: { espace: Espace }) {
     : t("Reçois tes alertes sur cet appareil, comme un SMS : même l'appli fermée.");
 
   return (
-    <div role="status" className="fixed bottom-4 left-4 z-[9999] w-[330px] max-w-[calc(100vw-2rem)] rounded-2xl p-4 shadow-2xl border-2"
+    <div role="status" className={`fixed left-4 ${DECALAGE[espace]} z-[55] w-[330px] max-w-[calc(100vw-2rem)] rounded-2xl p-4 shadow-2xl border-2`}
       style={{ background: "#111111", borderColor: "#F5A623", color: "#FFFFFF", fontFamily: "'Poppins',system-ui,sans-serif" }}>
       <div className="flex items-start gap-3">
         <span className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#F5A623", color: "#111111" }}><BellRing size={18} /></span>
