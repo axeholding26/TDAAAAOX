@@ -6,7 +6,22 @@ export const PAIEMENT = {
   PAYE: "completed",
   ECHOUE: "failed",
   REMBOURSE: "refunded",
+  // Remboursement demandé à NotchPay sans réponse claire (délai dépassé) : peut-être exécuté.
+  // Jamais relancé à l'aveugle — revérifié chez NotchPay au prochain essai (lib/remboursement.ts).
+  EN_REMBOURSEMENT: "refunding",
 } as const;
+
+// Commande à payer en ligne (NotchPay) — « en_attente » : page de paiement jamais ouverte.
+// Toute autre méthode (whatsapp_cod, direct_cod, caisse…) est encaissée hors d'Axso.
+export const METHODES_EN_LIGNE = ["notchpay", "en_attente"];
+
+/** Paiement en ligne attendu mais pas reçu : la commande ne peut ni avancer ni être marquée payée. */
+export const paiementEnLigneNonRecu = (c: { methodePaiement: string; paiementStatut: string }) =>
+  METHODES_EN_LIGNE.includes(c.methodePaiement) && (c.paiementStatut === PAIEMENT.ATTENTE || c.paiementStatut === PAIEMENT.ECHOUE);
+
+/** À la livraison, seule une commande encaissée hors ligne (COD…) devient payée. */
+export const payeeALaLivraison = (c: { methodePaiement: string; paiementStatut: string }) =>
+  c.paiementStatut !== PAIEMENT.PAYE && !METHODES_EN_LIGNE.includes(c.methodePaiement);
 
 // Valeurs de Commande.canal : d'où vient la vente. Une vente en caisse est une
 // Commande comme les autres (stock, retours, factures, analytics) sur le canal

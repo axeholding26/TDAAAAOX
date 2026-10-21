@@ -41,6 +41,8 @@ test("canal NotchPay : MTN/Orange Cameroun en XAF seulement", () => {
   assert.equal(canalNotchPay({ methode: "mobile_money", operateur: "MTN", devise: "XAF", destinataire: "677 12 34 56" }), "cm.mtn");
   assert.equal(canalNotchPay({ methode: "mobile_money", operateur: "Orange", devise: "XAF", destinataire: "+237699123456" }), "cm.orange");
   assert.equal(canalNotchPay({ methode: "mobile_money", operateur: "Wave", devise: "XAF", destinataire: "677123456" }), null);
+  // Opérateur MTN/Orange déclaré par erreur : le préfixe du numéro fait foi (69x = Orange).
+  assert.equal(canalNotchPay({ methode: "mobile_money", operateur: "MTN", devise: "XAF", destinataire: "699123456" }), "cm.orange");
   assert.equal(canalNotchPay({ methode: "virement_bancaire", operateur: null, devise: "XAF", destinataire: "CM21 1234 5678" }), null);
 });
 

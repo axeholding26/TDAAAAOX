@@ -3,8 +3,10 @@ import { ouvrirReglagePush } from "@/components/ActivationPush";
 import { useState, useEffect, useRef } from "react";
 import { ecouterNotifications } from "@/components/dashboard/AlerteCommande";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { lienSignalement } from "@/lib/signalements";
 import { basculerBoutique } from "@/components/dashboard/BoutiqueSwitcher";
-import { Bell, ChevronDown, LogOut, Settings, User, ExternalLink, Store, ShoppingBag, DollarSign, Star, Package, AlertTriangle, MessageCircle, Info } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Settings, User, ExternalLink, Store, ShoppingBag, DollarSign, Star, Package, AlertTriangle, MessageCircle, Info, LifeBuoy } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { AvatarCompte } from "@/components/dashboard/AvatarCompte";
 import type { Session } from "next-auth";
@@ -47,6 +49,7 @@ function tempsEcoule(iso: string) {
 
 export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: HeaderProps) {
   const t = useT();
+  const pathname = usePathname();
   const [profileOpen,   setProfileOpen]   = useState(false);
   const [notifOpen,     setNotifOpen]     = useState(false);
   const [notifications, setNotifications] = useState<NotifMarchand[]>([]);
@@ -312,6 +315,7 @@ export function Header({ session, boutiqueSlug, boutiqueNom, permissions }: Head
                   {([
                     { Icon: User,         label: "Mon profil",        href: "/dashboard/profil" },
                     { Icon: Settings,     label: "Paramètres",        href: "/dashboard/parametres" },
+                    { Icon: LifeBuoy,     label: "Signaler un problème", href: lienSignalement(pathname) },
                     ...(urlLocale ? [{ Icon: ExternalLink, label: "Voir la boutique", href: urlLocale, ext: true }] : []),
                   ] as any[]).map(({ Icon, label, href, ext }) => (
                     <Link

@@ -12,10 +12,11 @@ import { capturerCommissionAffiliation } from "@/lib/affiliation";
 import { quotaCommandesAtteint } from "@/lib/abonnement";
 import { notifierMarchand } from "@/lib/notifications-marchand";
 import { notifierClientWhatsApp, notifierLivreurAssigneWhatsApp, notifierLivreurCourseRetiree, notifierLivreurNouvelleCourse } from "@/lib/whatsapp";
-import { PAIEMENT } from "@/lib/commandes";
+import { PAIEMENT, paiementEnLigneNonRecu, payeeALaLivraison } from "@/lib/commandes";
 import { compterVentes } from "@/lib/stock";
 import { libererCommande, rembourserCommande } from "@/lib/remboursement";
 import { publier } from "@/lib/controle-ia/evenements";
+import { enregistrerGainCourse } from "@/lib/gains-livreur";
 
 // "interface" : le marchand a cliqué lui-même, il reçoit le lien WhatsApp de secours dans la réponse.
 // "axia" : action d'AXIA (directe ou autorisée dans la bulle), le lien de secours part dans ses notifications.
@@ -110,6 +111,11 @@ export async function changerStatutCommande(p: {
   if (!(TRANSITIONS_VALIDES[commande.statut] || []).includes(statut)) {
     return { ok: false, status: 400, error: `Transition invalide : ${commande.statut} → ${statut}` };
   }
+  // Commande à payer en ligne : rien ne part tant que NotchPay n'a pas confirmé le paiement
+  // (sinon elle serait livrée, puis marquée payée, sans argent reçu). Seule l'annulation reste possible.
+  if (statut !== "annulee" && paiementEnLigneNonRecu(commande)) {
+    return { ok: false, status: 409, code: "paiement_non_recu", error: "Paiement en ligne non reçu : la commande ne peut pas avancer tant que le client n'a pas payé. Annule-la si elle ne sera pas payée." };
+  }
 
   // Preuve de remise : le livreur doit saisir le code que seul le client a reçu.
   // Le marchand n'en a pas besoin. Les commandes parties avant l'ajout du code n'en ont pas.
@@ -126,7 +132,8 @@ export async function changerStatutCommande(p: {
   // Annuler une commande déjà payée en ligne, c'est d'abord la rembourser : si
   // NotchPay refuse, la commande n'est pas annulée. La marchandise n'est pas
   // encore livrée (annulee n'est possible qu'avant), elle revient donc en stock.
-  if (statut === "annulee" && commande.paiementStatut === PAIEMENT.PAYE) {
+  const aRembourser = statut === "annulee" && (commande.paiementStatut === PAIEMENT.PAYE || commande.paiementStatut === PAIEMENT.EN_REMBOURSEMENT);
+  if (aRembourser) {
     const r = await rembourserCommande({ commandeId: id, tenantId: commande.tenantId, motif: `Annulation #${commande.numero}`, restock: true });
     if (!r.ok) return r;
   }
@@ -138,8 +145,8 @@ export async function changerStatutCommande(p: {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  // dejaVente : paiement en ligne déjà reçu (wallet crédité dans le webhook)
-  const dejaVente = commande.paiementStatut === "completed";
+  // Encaissé à la livraison (COD…) : jamais une commande à payer en ligne.
+  const encaisseeALaLivraison = statut === "livree" && payeeALaLivraison(commande);
   // dejaCommission : livraison déjà traitée (analytics déjà enregistrée)
   const dejaCommission = commande.commission?.statut === "captured";
 
@@ -147,14 +154,15 @@ export async function changerStatutCommande(p: {
     // Conditionnel sur le statut lu : deux clics simultanés (ou livreur + marchand)
     // ne comptent pas deux fois la vente ni l'analytics.
     const { count } = await tx.commande.updateMany({
-      where: { id, statut: commande.statut },
+      // …et sur le paiement lu : un paiement confirmé entre-temps n'est jamais annulé sans remboursement.
+      where: { id, statut: commande.statut, ...(aRembourser ? {} : { paiementStatut: commande.paiementStatut }) },
       data: {
         statut,
         livraisonStatut: livraisonStatutPour(statut),
         ...(statut === "expediee" ? { expedieeAt: now, codeLivraison } : {}),
         ...(statut === "livree" ? { livreeAt: now } : {}),
         // COD : marquer le paiement complété à la livraison
-        ...(statut === "livree" && !dejaVente ? { paiementStatut: PAIEMENT.PAYE } : {}),
+        ...(encaisseeALaLivraison ? { paiementStatut: PAIEMENT.PAYE } : {}),
         ...(statut === "tentative_echouee" ? { echecRaison: p.echecRaison || null, echecCount: { increment: 1 } } : {}),
         updatedAt: now,
       },
@@ -168,7 +176,7 @@ export async function changerStatutCommande(p: {
 
     if (statut === "livree") {
       // Paiement à la livraison : la vente est acquise maintenant.
-      if (!dejaVente) await compterVentes(tx, id, 1);
+      if (encaisseeALaLivraison) await compterVentes(tx, id, 1);
       if (commande.commission && commande.commission.statut !== "captured") {
         await tx.commission.update({ where: { commandeId: id }, data: { statut: "captured", capturedAt: now } });
       }
@@ -178,6 +186,8 @@ export async function changerStatutCommande(p: {
           data: { tenantId: commande.tenantId, type: "purchase", date: today, valeur: commande.montantTotal / 10000, metadata: { commandeId: id, source: "marchand_livree" } },
         });
       }
+      // Rémunération du livreur (lib/gains-livreur.ts) : dans la transaction, une seule fois par commande.
+      await enregistrerGainCourse(tx, commande);
     }
     return true;
   });
@@ -188,7 +198,7 @@ export async function changerStatutCommande(p: {
     await retirerCourseAuLivreur(commande.livreurId, { id, numero: commande.numero, tenantId: commande.tenantId, boutique: commande.tenant.nomBoutique }, "annulee");
   }
   // Bus AXSO CONTROL (automatisations, webhooks) : livrée, et payée si le paiement se faisait à la livraison.
-  if (statut === "livree") for (const type of dejaVente ? (["order.fulfilled"] as const) : (["order.fulfilled", "order.paid"] as const)) publier(commande.tenantId, type, { commandeId: id, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: commande.methodePaiement });
+  if (statut === "livree") for (const type of encaisseeALaLivraison ? (["order.fulfilled", "order.paid"] as const) : (["order.fulfilled"] as const)) publier(commande.tenantId, type, { commandeId: id, numero: commande.numero, montant: commande.montantTotal, devise: commande.devise, methode: commande.methodePaiement });
 
   if (parLivreur && NOTIF_LIVREUR[statut]) {
     await notifierMarchand({

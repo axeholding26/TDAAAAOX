@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Truck, Plus, Phone, MapPin, Loader2, Globe } from "lucide-react";
 import { LiveFleetMap } from "@/components/dashboard/logistique/LiveFleetMap";
+import { RemunerationLivreur } from "@/components/dashboard/logistique/RemunerationLivreur";
 import { ModuleTutorial } from "@/components/dashboard/ModuleTutorial";
 import { useT } from "@/components/I18nProvider";
 import { lireReglagesLivraison, normaliserZone } from "@/lib/livraison-reglages";
@@ -275,7 +276,8 @@ export function LivreursPanel() {
       ) : (
         <div className="space-y-3">
           {listeAffichee.map((l) => (
-            <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4">
+            <div key={l.id} className="bg-white border border-gray-100 rounded-2xl p-5 space-y-3">
+            <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-xl bg-[#F5A623]/10 border border-[#F5A623]/20 flex items-center justify-center flex-shrink-0 text-lg">
                 {t(VEHICULE_EMOJI[l.vehicule]) || "🚚"}
               </div>
@@ -304,6 +306,8 @@ export function LivreursPanel() {
                 <span className="text-[#F5A623] font-bold text-sm">{t(l._count.commandes)}</span>
                 <span className="text-gray-500 text-xs">{onglet === "plateforme" ? t("en cours") : t("livraisons")}</span>
               </div>
+            </div>
+            <RemunerationLivreur livreurId={l.id} />
             </div>
           ))}
         </div>

@@ -60,6 +60,7 @@ export default async function AdminFinancesPage() {
       <AdminWalletPanel peutRetirer={estAdminComplet(session)} />
 
       <AdminRetraitsManuels peutTraiter={estAdminComplet(session)} />
+      <AdminRetraitsManuels peutTraiter={estAdminComplet(session)} livreurs />
 
       {/* Commission brute vs frais NotchPay vs net réel */}
       <div className="rounded-2xl p-6 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { verifierSignatureWebhook } from "@/lib/notchpay";
 import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 import { appliquerStatutTransfert } from "@/lib/wallet";
-import { confirmerPaiementAbonnement, lireRefAbonnement } from "@/lib/abonnement-paiement";
+import { confirmerPaiementAbonnement, lireRefAbonnement, oublierPaiementsEnAttente } from "@/lib/abonnement-paiement";
 import { rembourserPaiementCommissionEchoue } from "@/lib/affiliation";
 
 export const maxDuration = 60;
@@ -76,7 +76,7 @@ async function traiterEvenementAbonnement(type: string, merchantRef: string, not
   if (!cible) return;
 
   if (type === "payment.failed" || type === "payment.canceled" || type === "payment.expired") {
-    await prisma.tenant.updateMany({ where: { id: cible.tenantId, planPendingRef: { in: [notchpayRef, merchantRef].filter(Boolean) } }, data: { planPendingRef: null } });
+    await oublierPaiementsEnAttente(cible.tenantId, [notchpayRef, merchantRef].filter(Boolean));
     return;
   }
   if (type !== "payment.complete") return;

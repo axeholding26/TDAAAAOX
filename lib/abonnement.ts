@@ -71,9 +71,13 @@ export async function quotaCommandesAtteint(tenantId: string): Promise<boolean> 
 }
 
 // Nouvelle échéance après un paiement de `jours` jours : un renouvellement du
-// même palier encore actif s'ajoute aux jours restants (jamais perdus) ; un
-// changement de palier ou un palier expiré repart d'aujourd'hui.
-export function expirationApresPaiement(actuel: { planType: string; planExpiresAt: Date | null }, plan: string, jours: number, maintenant = new Date()): Date {
-  const depart = actuel.planType === plan && actuel.planExpiresAt && actuel.planExpiresAt > maintenant ? actuel.planExpiresAt : maintenant;
-  return new Date(depart.getTime() + jours * 24 * 3600 * 1000);
+// même palier encore actif s'ajoute aux jours restants (jamais perdus), même payé
+// depuis une autre boutique du compte (`actuel` : toutes ses boutiques) ; un
+// changement de palier ou un palier expiré repart d'aujourd'hui. Payé pendant
+// l'essai Illimité (`essaiFinLe`), les jours payés ne commencent qu'à sa fin.
+type Echeance = { planType: string; planExpiresAt: Date | null };
+export function expirationApresPaiement(actuel: Echeance | Echeance[], plan: string, jours: number, maintenant = new Date(), essaiFinLe?: Date | null): Date {
+  const memesPaliers = [actuel].flat().filter((b) => b.planType === plan && b.planExpiresAt).map((b) => b.planExpiresAt!.getTime());
+  const depart = Math.max(maintenant.getTime(), essaiFinLe?.getTime() ?? 0, ...memesPaliers);
+  return new Date(depart + jours * 24 * 3600 * 1000);
 }

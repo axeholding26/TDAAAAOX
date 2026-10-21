@@ -12,8 +12,8 @@ import { useT } from "@/components/I18nProvider";
 import { exempleTelephone, normaliserTelephone } from "@/lib/devise-convert";
 
 const WALLET_TUTORIAL_STEPS = [
-  { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque paiement client est placé en séquestre 48h (protection acheteur) avant d'être crédité sur ton solde disponible." },
-  { Icon: ArrowUpFromLine, titre: "Retirer tes fonds", description: "Clique \"Retirer les fonds\" dès que ton solde le permet (minimum 1 000 XAF) — par Mobile Money ou virement bancaire." },
+  { Icon: ShieldCheck,     titre: "Séquestre 48h",   description: "Chaque vente payée en ligne reste 48h en séquestre (protection acheteur) avant de passer sur ton solde disponible." },
+  { Icon: ArrowUpFromLine, titre: "Retirer tes fonds", description: "Clique \"Retirer les fonds\" dès que ton solde disponible le permet (minimum l'équivalent de 1 000 FCFA) — par Mobile Money ou virement bancaire." },
   { Icon: TrendingUp,      titre: "Suivi complet",     description: "Total reçu, total retiré, commissions Axso et montant en séquestre — tout est visible en un coup d'œil." },
   { Icon: Clock,           titre: "Historique détaillé", description: "Bascule entre l'onglet Transactions et Retraits pour suivre chaque mouvement et son statut (en attente, en cours, complété)." },
 ];
@@ -31,6 +31,8 @@ interface WalletData {
   solde: number; totalRecu: number; totalRetire: number;
   totalCommission: number;
   retraitsEnAttente: number; devise: string;
+  // Séquestre 48 h (lib/wallet.ts) : seul `disponible` est retirable.
+  disponible?: number; enAttente?: number; liberations?: { montant: number; le: string }[]; minimumRetrait?: number;
   transactions: Transaction[]; retraits: RetraitItem[];
 }
 interface SoldeBoutique { id: string; nomBoutique: string; active: boolean; solde: number; devise: string; }
@@ -45,12 +47,10 @@ const OPERATEURS = [
   { id: "Free",   label: "Free Money"        },
 ];
 
-const MINIMUM_RETRAIT = 1000; // même seuil que lib/wallet.ts
-
 function fmt(n: number, devise = "XAF") {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency", currency: devise,
-    minimumFractionDigits: 0, maximumFractionDigits: 0,
+    minimumFractionDigits: 0, maximumFractionDigits: devise === "XAF" || devise === "XOF" ? 0 : 2,
   }).format(n);
 }
 
@@ -80,6 +80,7 @@ function TxIcon({ type }: { type: string }) {
     COMMISSION:    { bg: "#FAF5FF", color: "#7C3AED", Icon: ShieldCheck      },
     RETRAIT:       { bg: "#EFF6FF", color: "#3B82F6", Icon: ArrowUpFromLine  },
     REMBOURSEMENT: { bg: "#FFF7ED", color: "#D97706", Icon: RefreshCw        },
+    LIVREUR:       { bg: "#FFF3DC", color: "#F5A623", Icon: ArrowUpFromLine  }, // part du livreur (lib/gains-livreur.ts)
   };
   const s = map[type] ?? map["CREDIT"];
   const Icon = s.Icon;
@@ -143,7 +144,9 @@ export default function WalletPage() {
   }
 
   const devise = wallet?.devise ?? "XAF";
-  const solde = wallet?.solde ?? 0;
+  // Retirable : le solde hors ventes encore en séquestre 48 h.
+  const solde = wallet?.disponible ?? wallet?.solde ?? 0;
+  const MINIMUM_RETRAIT = wallet?.minimumRetrait ?? 1000; // calculé par le serveur dans la devise du wallet
   const montant = Number(form.montant);
   // Mêmes règles que le serveur (lib/wallet.ts), dites avant l'envoi plutôt qu'après.
   const erreurMontant = !form.montant ? null
@@ -211,17 +214,24 @@ export default function WalletPage() {
                 </div>
                 <p className="text-[13px] opacity-60 mb-1.5">{tr("Solde disponible")}</p>
                 <p className="text-[32px] md:text-[48px] font-black tracking-tight leading-none" style={{ fontVariantNumeric: "tabular-nums" }}>
-                  {fmt(wallet?.solde ?? 0, devise)}
+                  {fmt(solde, devise)}
                 </p>
+                {(wallet?.enAttente ?? 0) > 0 && (
+                  <p className="text-[12.5px] opacity-80 mt-2 flex items-center gap-1.5">
+                    <Clock size={12} />
+                    {tr("En attente (séquestre 48h) : {0}", fmt(wallet!.enAttente!, devise))}
+                    {wallet?.liberations?.[0] && <> · {tr("libéré le {0}", new Date(wallet.liberations[0].le).toLocaleString(tr.loc, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))}{wallet.liberations.length > 1 && ` (+${wallet.liberations.length - 1})`}</>}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col sm:items-end gap-2.5">
                 <button
                   onClick={ouvrirRetrait}
-                  disabled={(wallet?.solde ?? 0) <= 0}
+                  disabled={solde <= 0}
                   className="flex items-center gap-2 px-6 py-3 bg-white text-[#D97706] font-bold rounded-2xl text-[13px] hover:bg-amber-50 transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
                   <ArrowUpFromLine size={15} />{" "}{tr("Retirer les fonds")}
                 </button>
-                <p className="text-[11px] opacity-40 sm:text-right">{tr("Minimum 1 000")}{" "}{tr(devise)}</p>
+                <p className="text-[11px] opacity-40 sm:text-right">{tr("Minimum {0}", fmt(MINIMUM_RETRAIT, devise))}</p>
               </div>
             </div>
           </div>
@@ -289,7 +299,7 @@ export default function WalletPage() {
             <Info size={15} className="text-[#F5A623] mt-0.5 flex-shrink-0" />
             <p className="text-[12.5px] text-[#92400E] leading-relaxed">
               <strong>{tr("Comment fonctionne le Wallet Axso ?")}</strong><br />
-              {tr("Chaque paiement client est placé en")}{" "}<strong>{tr("séquestre 48h")}</strong>{" "}{tr("(protection acheteur). Après confirmation de livraison ou expiration du délai, les fonds sont crédités — vous recevez l'intégralité de votre prix : la commission Axso et les frais NotchPay (10 %, ou 13 % pour un produit numérique) sont ajoutés au prix payé par le client.")}
+              {tr("Chaque vente payée en ligne reste")}{" "}<strong>{tr("48h en séquestre")}</strong>{" "}{tr("(protection acheteur) : elle apparaît tout de suite en attente, puis passe sur votre solde disponible, retirable. Un remboursement pendant ce délai reprend d'abord l'argent en attente. Vous recevez l'intégralité de votre prix : la commission Axso et les frais NotchPay (10 %, ou 13 % pour un produit numérique) sont ajoutés au prix payé par le client.")}
             </p>
           </div>
 
@@ -392,7 +402,7 @@ export default function WalletPage() {
               <div>
                 <h2 className="text-[16px] font-bold text-[#111111]">{tr("Retirer des fonds")}</h2>
                 <p className="text-[12px] text-[#AAAAAA] mt-0.5">
-                  {tr("Disponible :")}{" "}<strong className="text-[#F5A623]">{fmt(wallet?.solde ?? 0, devise)}</strong>
+                  {tr("Disponible :")}{" "}<strong className="text-[#F5A623]">{fmt(solde, devise)}</strong>
                 </p>
               </div>
               <button onClick={() => setShowRetrait(false)}
@@ -428,7 +438,7 @@ export default function WalletPage() {
                 <div className="flex gap-2 mt-2">
                   {[25, 50, 75, 100].map(pct => (
                     <button key={pct} type="button"
-                      onClick={() => setForm(f => ({ ...f, montant: String(Math.floor((wallet?.solde ?? 0) * pct / 100)) }))}
+                      onClick={() => setForm(f => ({ ...f, montant: String(Math.floor(solde * pct / 100)) }))}
                       className="flex-1 py-1.5 text-[11px] font-bold border border-[#E8E8E8] rounded-xl text-[#888] hover:border-[#F5A623]/60 hover:text-[#F5A623] transition-all">
                       {pct}%
                     </button>

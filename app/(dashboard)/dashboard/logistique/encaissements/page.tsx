@@ -6,6 +6,7 @@ import { Wallet, Bike, Package } from "lucide-react";
 import { MarquerRemisButton } from "@/components/dashboard/logistique/MarquerRemisButton";
 import { formatMontant } from "@/lib/utils";
 import { getT } from "@/lib/i18n/serveur";
+import { aRemettre } from "@/lib/gains-livreur";
 
 export default async function EncaissementsPage() {
   const t = await getT();
@@ -14,7 +15,7 @@ export default async function EncaissementsPage() {
   await exigerModule(session, "finance");
   const tenantId = (session.user as any)?.tenantId;
 
-  const commandesNonRemises = await prisma.commande.findMany({
+  const brutes = await prisma.commande.findMany({
     where: {
       tenantId,
       methodePaiement: { in: ["whatsapp_cod", "direct_cod"] },
@@ -27,6 +28,11 @@ export default async function EncaissementsPage() {
     },
     orderBy: { updatedAt: "desc" },
   });
+  // Part gardée par le livreur sur les espèces (lib/gains-livreur.ts) : à remettre = encaissé − part.
+  const gains = new Map((await prisma.gainLivreur.findMany({ where: { commandeId: { in: brutes.map(c => c.id) } }, select: { commandeId: true, montant: true } })).map(g => [g.commandeId, g.montant]));
+  const commandesNonRemises = brutes.map(c => ({ ...c, part: gains.get(c.id) ?? 0, aRemettre: aRemettre(c.montantTotal, gains.get(c.id) ?? 0) }));
+  // Jamais d'addition de devises différentes.
+  const parDevise = (cs: typeof commandesNonRemises) => Object.entries(cs.reduce<Record<string, number>>((acc, c) => ({ ...acc, [c.devise]: (acc[c.devise] ?? 0) + c.aRemettre }), {}));
 
   const parLivreur = new Map<string, { nom: string; telephone: string; commandes: typeof commandesNonRemises }>();
   for (const c of commandesNonRemises) {
@@ -38,8 +44,6 @@ export default async function EncaissementsPage() {
   }
 
   const groupes = [...parLivreur.entries()];
-  const totalGlobal = commandesNonRemises.reduce((s, c) => s + c.montantTotal, 0);
-  const devise = commandesNonRemises[0]?.devise ?? "XAF";
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -49,8 +53,10 @@ export default async function EncaissementsPage() {
       </div>
 
       <div className="bg-white border border-gray-100 rounded-2xl p-5">
-        <p className="text-xs text-gray-400">{t("Total en circulation chez vos livreurs")}</p>
-        <p className="text-3xl font-bold text-[#F5A623] mt-1">{formatMontant(totalGlobal, devise)}</p>
+        <p className="text-xs text-gray-400">{t("À vous remettre par vos livreurs (encaissé − leur part)")}</p>
+        {(parDevise(commandesNonRemises).length ? parDevise(commandesNonRemises) : [["XAF", 0] as [string, number]]).map(([d, m]) => (
+          <p key={d} className="text-3xl font-bold text-[#F5A623] mt-1">{formatMontant(m, d)}</p>
+        ))}
       </div>
 
       {groupes.length === 0 ? (
@@ -61,7 +67,6 @@ export default async function EncaissementsPage() {
       ) : (
         <div className="space-y-4">
           {groupes.map(([id, g]) => {
-            const total = g.commandes.reduce((s, c) => s + c.montantTotal, 0);
             return (
               <div key={id} className="bg-white border border-gray-100 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -75,7 +80,7 @@ export default async function EncaissementsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-[#111111]">{formatMontant(total, devise)}</p>
+                    {parDevise(g.commandes).map(([d, m]) => <p key={d} className="text-lg font-bold text-[#111111]">{formatMontant(m, d)}</p>)}
                     <p className="text-xs text-gray-400">{g.commandes.length} commande{g.commandes.length > 1 ? "s" : ""}</p>
                   </div>
                 </div>
@@ -85,7 +90,10 @@ export default async function EncaissementsPage() {
                     <div key={c.id} className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">
                       <span className="font-mono text-gray-500">{c.numero}</span>
                       <span className="text-gray-500 truncate flex-1 mx-3">{t(c.clientNom)}</span>
-                      <span className="font-semibold text-[#111111]">{formatMontant(c.montantTotal, c.devise)}</span>
+                      <span className="text-right">
+                        <span className="font-semibold text-[#111111] block">{formatMontant(c.aRemettre, c.devise)}</span>
+                        {c.part > 0 && <span className="text-[10px] text-gray-400">{formatMontant(c.montantTotal, c.devise)} − {t("part livreur")} {formatMontant(c.part, c.devise)}</span>}
+                      </span>
                     </div>
                   ))}
                 </div>

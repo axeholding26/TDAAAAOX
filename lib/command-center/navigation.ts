@@ -27,6 +27,7 @@ export const NAV: EntreeNav[] = [
   { section: "finances", href: "/admin/finances", nom: "Finances & Wallet", icone: "Landmark", gestion: true, mots: "wallet retraits commissions" },
   { section: "affilies", href: "/admin/affilies", nom: "Affiliés", icone: "Handshake", gestion: true, mots: "affiliation commissions versements parrainage" },
   { section: "avis", href: "/admin/avis", nom: "Avis plateforme", icone: "Star", gestion: true, mots: "avis témoignages reviews modération landing" },
+  { section: "support", href: "/admin/support", nom: "Support", icone: "LifeBuoy", gestion: true, mots: "signalements problèmes bugs tickets réclamations marchands" },
   { section: "annonces", href: "/admin/annonces", nom: "Annonces", icone: "GalleryHorizontal", gestion: true, mots: "annonces publicités pub bannière partenaires kreads sponsor" },
   { section: "axsocial", href: "/admin/axsocial", nom: "Axsocial", icone: "MessagesSquare", gestion: true },
   { section: "livreurs", href: "/admin/livreurs", nom: "Livreurs", icone: "Bike", gestion: true },
@@ -37,4 +38,4 @@ export const NAV: EntreeNav[] = [
 ];
 
 /** Pages historiques au thème sombre codé en dur : on y garde le thème sombre. */
-export const estPageGestion = (chemin: string) => NAV.some((n) => n.gestion && n.section !== "audit" && n.section !== "avis" && n.section !== "annonces" && chemin.startsWith(n.href));
+export const estPageGestion = (chemin: string) => NAV.some((n) => n.gestion && n.section !== "audit" && n.section !== "avis" && n.section !== "annonces" && n.section !== "support" && chemin.startsWith(n.href));

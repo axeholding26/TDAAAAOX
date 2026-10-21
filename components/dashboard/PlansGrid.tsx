@@ -177,7 +177,8 @@ function CarteEssai({ essai }: { essai: EssaiGrille }) {
       {reste ? (
         <p className="text-[14px] text-[#111111]">
           <strong>{t("Essai Illimité en cours")}</strong>{" "}— {t("{0} restants", reste.texte)}.{" "}
-          {t("Abonne-toi avant la fin pour garder tes avantages, sinon ta boutique repassera en Essentiel.")}
+          {t("Abonne-toi avant la fin pour garder tes avantages, sinon ta boutique repassera en Essentiel.")}{" "}
+          {t("Tes 30 jours payés ne commencent qu'à la fin de l'essai : tu ne perds aucun jour.")}
         </p>
       ) : (
         <>

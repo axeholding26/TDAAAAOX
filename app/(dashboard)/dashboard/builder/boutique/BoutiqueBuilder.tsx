@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { LogOut, LayoutList, Settings2, LayoutTemplate, Monitor, Tablet, Smartphone, Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, EyeOff, ChevronRight, ArrowLeft, type LucideIcon } from "lucide-react";
+import { LogOut, LayoutList, Settings2, LayoutTemplate, Monitor, Tablet, Smartphone, Undo2, Redo2, ExternalLink, Save, Check, RefreshCw, Rocket, EyeOff, ChevronRight, ArrowLeft, LifeBuoy, type LucideIcon } from "lucide-react";
+import { lienSignalement } from "@/lib/signalements";
 import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import {
   ZONES, zoneDe, ordonnerParZone, insertNode, moveNode, removeNode, duplicateNode, toggleNodeActif,
@@ -324,6 +325,11 @@ export function BoutiqueBuilder(p: Props) {
               <ExternalLink size={19} />
             </a>
           )}
+          {/* Nouvel onglet : le Constructeur reste ouvert avec ses modifications. */}
+          <a href={lienSignalement("/dashboard/builder")} target="_blank" rel="noopener noreferrer" title={tr("Signaler un problème")} aria-label={tr("Signaler un problème")}
+            className="w-10 h-10 flex items-center justify-center rounded-lg text-[#555555] hover:text-[#111111] hover:bg-[#F5F5F5] transition-colors">
+            <LifeBuoy size={19} />
+          </a>
           <button onClick={p.handleSave} disabled={p.saving || (!p.hasChanges && !p.saved)}
             className={`h-10 flex items-center gap-2 px-4 rounded-lg text-[14px] font-semibold transition-colors disabled:cursor-not-allowed ${
               p.saved ? "bg-[#DCFCE7] text-[#15803D]" : "bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] disabled:bg-[#EDEDED] disabled:text-[#AAAAAA]"}`}>

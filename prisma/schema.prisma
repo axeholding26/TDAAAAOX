@@ -38,6 +38,7 @@ model Tenant {
   essaiStatut         String? // null (pas encore répondu) | refuse | accepte | fin_vue
   essaiFinLe          DateTime?
   essaiRappel         String? // dernier rappel envoyé : j2 | fin
+  planRappel          String? // rappel d'échéance de l'abonnement payé déjà envoyé : j3 | j0 (remis à null à chaque paiement)
   metaTitle           String?
   metaDescription     String?
   socialLinks         Json     @default("{}")
@@ -89,6 +90,7 @@ model Tenant {
   lotsTracabilite        LotTracabilite[]
   chargesExploitation    ChargeExploitation[]
   avisPlateforme         AvisPlateforme?
+  signalements           Signalement[]
 }
 
 // =====================
@@ -446,6 +448,10 @@ model Livreur {
   tenant        Tenant?        @relation(fields: [tenantId], references: [id])
   commandes     Commande[]
   notifications Notification[]
+  reglagesGain  ReglageLivreur[]
+  gains         GainLivreur[]
+  soldes        SoldeLivreur[]
+  retraits      RetraitLivreur[]
 }
 
 // =====================
@@ -994,6 +1000,8 @@ model WalletTransaction {
   reference   String?
   commandeId  String?
   statut      String   @default("completed")
+  // Vente (CREDIT) en séquestre jusqu'à cette date : comptée dans le solde, pas encore retirable (lib/wallet.ts).
+  disponibleLe DateTime?
   createdAt   DateTime @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id])
@@ -3812,4 +3820,97 @@ model Annonce {
   clics      Int       @default(0)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+// =====================
+// GAINS DES LIVREURS (lib/gains-livreur.ts)
+// =====================
+// Rémunération choisie par le marchand, par couple boutique/livreur (son livreur ou un livreur plateforme).
+// Sans réglage : « frais_livraison » pour un livreur plateforme, « hors_axso » pour un livreur de la boutique.
+model ReglageLivreur {
+  id          String   @id @default(cuid())
+  tenantId    String
+  livreurId   String
+  mode        String   // frais_livraison | fixe | hors_axso
+  montantFixe Float    @default(0) // mode « fixe », dans la devise de la boutique
+  updatedAt   DateTime @updatedAt
+
+  livreur Livreur @relation(fields: [livreurId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, livreurId])
+}
+
+// Gain d'une course livrée : une ligne par commande au plus (idempotence).
+model GainLivreur {
+  id         String   @id @default(cuid())
+  livreurId  String
+  tenantId   String
+  commandeId String   @unique
+  numero     String
+  mode       String   // frais_livraison | fixe
+  montant    Float
+  devise     String
+  paiement   String   // en_ligne (crédité au solde, débité du wallet marchand) | especes (gardé sur l'argent encaissé)
+  createdAt  DateTime @default(now())
+
+  livreur Livreur @relation(fields: [livreurId], references: [id], onDelete: Cascade)
+
+  @@index([livreurId, createdAt])
+  @@index([tenantId, livreurId])
+}
+
+// Solde retirable du livreur, un par devise (jamais d'addition de devises).
+model SoldeLivreur {
+  id        String   @id @default(cuid())
+  livreurId String
+  devise    String
+  solde     Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  livreur Livreur @relation(fields: [livreurId], references: [id], onDelete: Cascade)
+
+  @@unique([livreurId, devise])
+}
+
+// Retrait Mobile Money d'un livreur, validé à la main par Axso (Admin › Finances).
+model RetraitLivreur {
+  id           String   @id @default(cuid())
+  livreurId    String
+  montant      Float
+  devise       String
+  destinataire String
+  operateur    String?
+  statut       String   @default("en_attente") // en_attente | complete | echoue
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  livreur Livreur @relation(fields: [livreurId], references: [id], onDelete: Cascade)
+
+  @@index([livreurId, createdAt])
+  @@index([statut])
+}
+
+// « Signaler un problème » d'un marchand, suivi par Axso dans le Command Center (/admin/support).
+model Signalement {
+  id          String    @id @default(cuid())
+  tenantId    String
+  userId      String?   // auteur (pas de relation : le compte peut disparaître, le signalement reste)
+  description String
+  capture     String?   // URL de la capture d'écran (Blob) ou petite image en data URL
+  page        String    // page du tableau de bord où était le marchand
+  appareil    String?   // navigateur, système, taille d'écran
+  erreur      String?   // dernière erreur affichée, si présente
+  statut      String    @default("ouvert") // ouvert | en_cours | resolu
+  reponse     String?   // réponse d'Axso, visible par le marchand
+  reponduPar  String?
+  reponduLe   DateTime?
+  resoluLe    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([userId, createdAt])
+  @@index([statut, createdAt])
 }

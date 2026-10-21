@@ -108,7 +108,7 @@ export default async function Operations({ searchParams }: { searchParams: Promi
           {aLivrer.length ? <ListeBarres format="nombre" lignes={statuts} /> : <EtatVide titre={tx("Aucune commande à livrer")} explication={tx("Les commandes en ligne payées (ou payables à la livraison) apparaissent ici.")} />}
         </Carte>
 
-        <Carte titre="Support" sousTitre={tx("Tickets des marchands du périmètre")}>
+        <Carte titre="Support" sousTitre={tx("Problèmes signalés par les marchands du périmètre")} actions={peutVoir(session.role, "support") ? <Link href="/admin/support" className="cc-btn cc-btn-ghost cc-btn-sm">{tx("Traiter")}</Link> : undefined}>
           {sansTickets ? <EtatVide titre={tx("Support non connecté")} explication={tx("Les tickets support ne sont pas encore enregistrés dans Axso. Connectez l'outil de support (ou créez un modèle Ticket) pour suivre volume et délai de résolution.")} /> : (
             <>
               <div className="grid grid-cols-3 gap-2 mb-3">

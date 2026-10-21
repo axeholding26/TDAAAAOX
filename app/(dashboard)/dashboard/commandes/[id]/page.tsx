@@ -170,7 +170,7 @@ export default async function CommandeDetailPage({ params }: { params: Promise<{
                   commande.paiementStatut === "pending" ? "bg-yellow-500/20 text-yellow-400" :
                   "bg-red-500/20 text-red-400"
                 }`}>
-                  {t(({ completed: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé" } as Record<string, string>)[commande.paiementStatut] ?? commande.paiementStatut)}
+                  {t(({ completed: "Payé", pending: "En attente", failed: "Échoué", refunded: "Remboursé", refunding: "Remboursement en cours" } as Record<string, string>)[commande.paiementStatut] ?? commande.paiementStatut)}
                 </span>
               </div>
               {commande.flutterwaveRef && (

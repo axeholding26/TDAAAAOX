@@ -1,7 +1,10 @@
 "use client";
 import { useEffect } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { AlertTriangle, RefreshCw, LifeBuoy } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import { lienSignalement, CLE_DERNIERE_ERREUR } from "@/lib/signalements";
 
 export default function DashboardError({
   error,
@@ -11,8 +14,12 @@ export default function DashboardError({
   reset: () => void;
 }) {
   const t = useT();
+  const pathname = usePathname();
   useEffect(() => {
     console.error("[Dashboard Error]", error);
+    // Gardée pour « Signaler un problème » : jointe automatiquement au signalement.
+    const texte = [error.message, error.digest && `#${error.digest}`].filter(Boolean).join(" ").slice(0, 2000);
+    try { sessionStorage.setItem(CLE_DERNIERE_ERREUR, JSON.stringify({ texte, date: Date.now() })); } catch {}
   }, [error]);
 
   return (
@@ -27,6 +34,8 @@ export default function DashboardError({
         <p className="text-gray-500 text-sm leading-relaxed">
           {t("Le tableau de bord n'a pas pu se charger. Réessaie dans un instant.")}
         </p>
+        {/* Texte exact de l'erreur : à envoyer au support (capture d'écran). */}
+        {error.message && <p className="text-xs text-gray-500 mt-3 font-mono break-words">{error.message}</p>}
         {error.digest && (
           <p className="text-xs text-gray-400 mt-2 font-mono">#{error.digest}</p>
         )}
@@ -38,6 +47,13 @@ export default function DashboardError({
         <RefreshCw size={15} />
         {t("Réessayer")}
       </button>
+      {/* Nouvelle version mise en ligne pendant que la page était ouverte : seul un vrai rechargement récupère ses fichiers. */}
+      <button onClick={() => window.location.reload()} className="text-sm text-gray-500 underline hover:text-gray-800">
+        {t("Recharger la page")}
+      </button>
+      <Link href={lienSignalement(pathname)} className="flex items-center gap-1.5 text-sm text-gray-500 underline hover:text-gray-800">
+        <LifeBuoy size={14} />{t("Signaler ce problème")}
+      </Link>
     </div>
   );
 }

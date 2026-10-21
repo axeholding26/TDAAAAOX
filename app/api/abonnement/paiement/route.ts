@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
-import { PALIER_PRIX, deviseAbonnement } from "@/lib/abonnement-paiement";
+import { PALIER_PRIX, deviseAbonnement, noterPaiementEnAttente } from "@/lib/abonnement-paiement";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
 
   const tenantId = (session.user as any)?.tenantId;
   if (!tenantId) return NextResponse.json({ error: "Aucune boutique" }, { status: 400 });
+  // Comme changer/essai : l'abonnement est une décision du propriétaire seul.
+  const { proprietaire } = await boutiquesDuCompte((session.user as any).id);
+  if (!proprietaire.includes(tenantId)) return NextResponse.json({ error: "Seul le propriétaire peut changer d'abonnement" }, { status: 403 });
 
   if (!hasNotchPay()) {
     return NextResponse.json({ error: "Paiement en ligne indisponible" }, { status: 503 });
@@ -43,7 +47,8 @@ export async function POST(req: NextRequest) {
       callback: `${origin}/dashboard/abonnement?paiement=en_cours`,
     });
 
-    await prisma.tenant.update({ where: { id: tenantId }, data: { planPendingRef: transaction?.reference ?? merchantRef } });
+    // Ajouté aux paiements en attente : un paiement précédent encore en cours n'est pas oublié.
+    await noterPaiementEnAttente(tenantId, transaction?.reference ?? merchantRef);
 
     return NextResponse.json({ authorizationUrl });
   } catch (err: any) {

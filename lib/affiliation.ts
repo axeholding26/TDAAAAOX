@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { canalNotchPay, crediterWallet, EMAIL_RETRAITS, operateurCameroun } from "./wallet";
+import { canalNotchPay, crediterWallet, debiterDisponibleTx, EMAIL_RETRAITS, operateurCameroun } from "./wallet";
 import { pousserAdmins } from "./push";
 import { normaliserTelephone } from "./devise-convert";
 import { TYPES_NUMERIQUES } from "./pricing";
@@ -140,8 +140,10 @@ export async function enregistrerConversionAffiliation(params: {
     codeAffiliation?: string | null;
   };
   lignes: Array<{ produitId: string; prix: number; quantite: number }>;
+  /** Commande payée en ligne : majoration Axso incluse dans `prix`, retirée avant de calculer la commission. */
+  tauxCommission?: number | null;
 }): Promise<void> {
-  const { commande, lignes } = params;
+  const { commande, lignes, tauxCommission } = params;
   if (!commande.codeAffiliation) return;
 
   const dejaEnregistre = await prisma.commissionAffilie.findFirst({ where: { commandeId: commande.id } });
@@ -163,7 +165,8 @@ export async function enregistrerConversionAffiliation(params: {
   let montantCommission = 0;
   for (const ligne of lignes) {
     montantCommission += calculerCommissionLigne({
-      montantLigne: ligne.prix * ligne.quantite,
+      // Sur le prix du vendeur : l'affilié n'est jamais payé sur la commission Axso.
+      montantLigne: (tauxCommission ? Math.round(ligne.prix / (1 + tauxCommission)) : ligne.prix) * ligne.quantite,
       produitId: ligne.produitId,
       produit: produitsMap.get(ligne.produitId) ?? null,
       programme: affilie.programme,
@@ -235,14 +238,8 @@ export async function payerCommissionsAffilie(params: {
   const commissionIds = commissions.map((c) => c.id);
 
   const paiement = await prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findUnique({ where: { tenantId } });
-    if (!wallet) throw new Error("Wallet marchand introuvable");
-
-    const debit = await tx.wallet.updateMany({
-      where: { tenantId, solde: { gte: montant } },
-      data: { solde: { decrement: montant }, totalRetire: { increment: montant } },
-    });
-    if (debit.count === 0) throw new Error("Solde insuffisant pour payer cette commission");
+    // Comme un retrait : seul le solde disponible (hors ventes en séquestre 48 h) peut sortir.
+    const wallet = await debiterDisponibleTx(tx, tenantId, montant, true);
 
     // Conditionnel : deux paiements simultanés ne paient pas deux fois les mêmes commissions
     // (le second échoue ici et la transaction annule son débit du wallet).
@@ -335,7 +332,13 @@ export async function cloturerCommissionManuelle(paiementId: string, paye: boole
       }).catch(() => false);
     }
   } else {
-    await rembourserPaiementCommissionEchoue(paiementId);
+    // Pris d'abord, conditionnellement : de deux clôtures simultanées, seule la gagnante rembourse et prévient.
+    const { count } = await prisma.paiementCommission.updateMany({ where: { id: paiementId, statut: "en_attente" }, data: { statut: "refus_en_cours" } });
+    if (!count) throw new Error("Ce paiement est déjà traité");
+    await rembourserPaiementCommissionEchoue(paiementId).catch(async (e) => {
+      await prisma.paiementCommission.updateMany({ where: { id: paiementId, statut: "refus_en_cours" }, data: { statut: "en_attente" } });
+      throw e;
+    });
   }
   await notifierMarchand({
     tenantId: p.tenantId, type: paye ? "commission_payee" : "commission_refusee", lien: "/dashboard/affiliation",
@@ -375,13 +378,23 @@ export async function rembourserPaiementCommissionEchoue(paiementId: string): Pr
     });
 
     if (paiement.commissionIds.length > 0) {
-      await tx.commissionAffilie.updateMany({
-        where: { id: { in: paiement.commissionIds } },
-        data: { statut: "approuvee" }, // repasse payable, pas perdue
-      });
+      // Repasse payable, pas perdue — sauf la commission d'une commande remboursée ou annulée
+      // entre-temps (libererCommande ne touche pas une commission « payee ») : rejetée.
+      const commissions = await tx.commissionAffilie.findMany({ where: { id: { in: paiement.commissionIds } }, select: { id: true, commandeId: true, montantCommission: true } });
+      const defaites = new Set((await tx.commande.findMany({
+        where: { id: { in: commissions.map((c) => c.commandeId).filter((x): x is string => !!x) }, OR: [{ statut: "annulee" }, { paiementStatut: { in: ["refunded", "refunding"] } }] },
+        select: { id: true },
+      })).map((c) => c.id));
+      const rejetees = commissions.filter((c) => c.commandeId && defaites.has(c.commandeId));
+      const montantRejete = rejetees.reduce((s, c) => s + c.montantCommission, 0);
+      await tx.commissionAffilie.updateMany({ where: { id: { in: rejetees.map((c) => c.id) } }, data: { statut: "rejetee" } });
+      await tx.commissionAffilie.updateMany({ where: { id: { in: paiement.commissionIds }, statut: "payee" }, data: { statut: "approuvee" } });
       await tx.affilie.update({
         where: { id: paiement.affilieurId },
-        data: { commissionPending: { increment: paiement.montant } },
+        data: {
+          commissionPending: { increment: Math.round((paiement.montant - montantRejete) * 100) / 100 },
+          ...(rejetees.length ? { conversions: { decrement: rejetees.length }, commissionTotal: { decrement: montantRejete } } : {}),
+        },
       });
     }
   });
@@ -403,7 +416,7 @@ export async function traiterPaiementDigital(params: {
     montantTotal: number;
     devise: string;
   };
-  lignes: Array<{ produitId: string; produit?: { fichierUrl?: string | null; type?: string } | null }>;
+  lignes: Array<{ produitId: string; produit?: { fichierUrl?: string | null; type?: string } | null; prix?: number; quantite?: number }>;
   reference: string;
   tauxCommission: number;
   fraisPasserelle?: number;
@@ -422,6 +435,7 @@ export async function traiterPaiementDigital(params: {
     tauxCommission,
     devise: commande.devise,
     description: `Vente digitale #${commande.id.slice(-6).toUpperCase()}`,
+    lignes: params.lignes.every((l) => l.prix != null && l.quantite != null) ? params.lignes.map((l) => ({ prix: l.prix!, quantite: l.quantite! })) : undefined,
     commandeId: commande.id,
     reference,
     fraisPasserelle,

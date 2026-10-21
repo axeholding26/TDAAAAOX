@@ -56,9 +56,15 @@ export function filtreUsagePromo(promo: { id: string; maxUtilisations?: number |
 // Paiement en ligne reçu → part du vendeur et commission Axso. Seuls les produits ont été
 // majorés de la commission ; la livraison (`horsCommission`) revient en entier au vendeur.
 // FCFA et autres monnaies sans centimes : arrondi à l'unité.
-export function partVendeur(brut: number, horsCommission: number, tauxCommission: number, devise: string) {
+// `lignes` (prix client unitaires) : le prix client étant arrondi par unité, diviser le total décalait
+// le vendeur de ±1 ; ligne par ligne, arrondi(prix client ÷ (1 + taux)) redonne exactement son prix
+// (l'erreur d'arrondi reste sous ½). Une remise réduit cette part au prorata.
+export function partVendeur(brut: number, horsCommission: number, tauxCommission: number, devise: string, lignes?: { prix: number; quantite: number }[]) {
   const hors = Math.min(Math.max(0, horsCommission), brut);
   const pas = AVEC_CENTIMES.has(devise) ? 100 : 1;
-  const montantNet = Math.round(((brut - hors) / (1 + tauxCommission) + hors) * pas) / pas;
+  const client = lignes?.reduce((s, l) => s + l.prix * l.quantite, 0) ?? 0;
+  const vendeur = lignes?.reduce((s, l) => s + (Math.round(l.prix / (1 + tauxCommission) * pas) / pas) * l.quantite, 0) ?? 0;
+  const produits = client > 0 ? vendeur * Math.min(1, (brut - hors) / client) : (brut - hors) / (1 + tauxCommission);
+  const montantNet = Math.round((produits + hors) * pas) / pas;
   return { montantNet, montantCommission: Math.round((brut - montantNet) * pas) / pas };
 }

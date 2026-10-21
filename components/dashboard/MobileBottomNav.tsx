@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Package, ShoppingCart, X, BarChart3, TrendingUp, Megaphone, Truck, Star, Settings, Palette, Globe2, Calendar, Search, MessageSquare, Store, Paintbrush, CreditCard, Package2, Bot, Zap, Wallet } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, X, BarChart3, TrendingUp, Megaphone, Truck, Star, Settings, Palette, Globe2, Calendar, Search, MessageSquare, Store, Paintbrush, CreditCard, Package2, Bot, Zap, Wallet, LifeBuoy } from "lucide-react";
 import {
   IconAccueil, IconProduits, IconAxia, IconCommandes,
 } from "@/components/dashboard/AppIcons";
@@ -74,6 +74,7 @@ const GROUPS: { label: string; color: string; items: ItemMobile[] }[] = [
     items: [
       { href: "/dashboard/analytics",  label: "Analytics",        icon: BarChart3, moduleKey: "produits" },
       { href: "/dashboard/parametres", label: "Paramètres",       icon: Settings, moduleKey: "parametres" },
+      { href: "/dashboard/support",    label: "Signaler un problème", icon: LifeBuoy },
     ],
   },
 ];

@@ -18,7 +18,7 @@ import { PAIEMENT, finAcces, metaDigital } from "./commandes";
 import { notifierMarchand } from "./notifications-marchand";
 import { envoyerConfirmationCommande, envoyerMiseAJourProduit, envoyerOffreNouvelleVersion, emailReel } from "./email";
 import { lienBoutique } from "./origine-site";
-import { accorderPlaceCommande, revoquerInscriptionsCommande } from "./live/service";
+import { accorderPlaceCommande, revoquerInscriptionsCommande, refusVenteLive } from "./live/service";
 import { cleApprenant } from "./formation/regles";
 
 type Tx = Prisma.TransactionClient;
@@ -405,4 +405,32 @@ export async function preparerOffreNouvelleVersion(tenantId: string, produitId: 
     }
   };
   return { ok: true as const, code, acheteurs: acheteurs.length, dateExpiration, envoyer };
+}
+
+/**
+ * Produits numériques encore vendables ? Message d'erreur sinon : limite d'exemplaires atteinte
+ * (fichier), plus de clé (licence), live complet/annulé. Vérifié à la commande ET à l'ouverture du
+ * paiement (un client peut payer bien après avoir commandé : mieux vaut bloquer que faire payer pour rien).
+ */
+export async function refusVenteNumerique(produitIds: string[]): Promise<string | null> {
+  const produits = await prisma.produit.findMany({
+    where: { id: { in: produitIds } },
+    select: {
+      id: true, nom: true, type: true, prix: true,
+      produitFichier: { select: { limitAchats: true } },
+      licenceProduit: { select: { cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 } } },
+    },
+  });
+  for (const p of produits) {
+    if (p.type === "fichier" && p.produitFichier?.limitAchats != null) {
+      const ventes = await prisma.commande.count({ where: { paiementStatut: PAIEMENT.PAYE, lignes: { some: { produitId: p.id } } } });
+      if (ventes >= p.produitFichier.limitAchats) return `"${p.nom}" a atteint sa limite d'exemplaires disponibles`;
+    }
+    if (p.type === "licence" && p.licenceProduit && p.licenceProduit.cles.length === 0) return `"${p.nom}" est en rupture de clés de licence — contactez le vendeur`;
+    if (p.type === "evenement" || p.type === "bootcamp") {
+      const refus = await refusVenteLive(p.id, p.prix);
+      if (refus) return `"${p.nom}" : ${refus}`;
+    }
+  }
+  return null;
 }

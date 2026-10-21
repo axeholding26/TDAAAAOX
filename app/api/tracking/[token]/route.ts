@@ -32,6 +32,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ token: str
     commande: {
       ...commande,
       livreurToken: isLivreurToken ? commande.livreurToken : undefined,
+      // Jamais au lien livreur : avec le lien client il lirait le code de remise et se déclarerait livré sans voir le client.
+      trackingToken: isLivreurToken ? undefined : commande.trackingToken,
       // Le livreur doit pouvoir joindre le client ; la page de suivi du client n'en a pas besoin.
       clientTelephone: isLivreurToken ? commande.clientTelephone : undefined,
       // Le code prouve la remise au client : jamais exposé au lien livreur, et inutile une fois livrée

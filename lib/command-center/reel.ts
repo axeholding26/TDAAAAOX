@@ -1,5 +1,5 @@
 // Données RÉELLES : lit la base Axso et la ramène au format commun (types.ts).
-// Ce qui n'existe pas encore en base (acquisition, dépenses marketing, tickets,
+// Ce qui n'existe pas encore en base (acquisition, dépenses marketing,
 // incidents, expériences) est déclaré dans `manques` : les pages l'affichent
 // comme « pas encore de données », jamais en inventant.
 import "server-only";
@@ -10,6 +10,7 @@ import { PLATFORM_TENANT_SLUG } from "@/lib/wallet";
 import { lireRefAbonnement } from "@/lib/abonnement-paiement";
 import type { Dataset, Marchand, Commande, PaiementAbonnement, EvtIA, EvtFonction, PlanId, TypeIA, StatutCommande } from "./types";
 import { PRIX_PLAN, PAYS } from "./types";
+import { sujetDe } from "@/lib/signalements";
 
 const ISO_PAR_NOM: Record<string, string> = Object.fromEntries(Object.entries(PAYS).map(([iso, nom]) => [nom.toLowerCase(), iso]));
 const normPays = (p: string) => (p.length === 2 ? p.toUpperCase() : ISO_PAR_NOM[p.toLowerCase()] ?? (p.toLowerCase() === "ghana" ? "GH" : p));
@@ -56,6 +57,8 @@ export async function chargerReel(): Promise<Dataset> {
       prisma.brouillonBoutique.findMany({ select: { tenantId: true, updatedAt: true } }).then((l) => l.map((b) => ({ tenantId: b.tenantId, createdAt: b.updatedAt }))),
     ]).then((l) => l.flat()),
   ]);
+  // Tickets support = signalements des marchands (« Signaler un problème »).
+  const signalements = await prisma.signalement.findMany({ select: { id: true, tenantId: true, page: true, createdAt: true, resoluLe: true } });
   const stockFaible = await prisma.produit.groupBy({ by: ["tenantId"], where: { stock: { lte: 3 }, actif: true } as any, _count: { _all: true } }).catch(() => []);
 
   const ids = new Set(tenants.map((t) => t.id));
@@ -115,7 +118,8 @@ export async function chargerReel(): Promise<Dataset> {
 
   return {
     source: "reel", genereA: Date.now(),
-    manques: ["acquisition", "marketing", "tickets", "incidents", "experiences", "tokens"],
-    marchands, commandes, abonnements, ia, fonctions, visites: [], depenses: [], experiences: [], incidents: [], tickets: [],
+    manques: ["acquisition", "marketing", "incidents", "experiences", "tokens"],
+    marchands, commandes, abonnements, ia, fonctions, visites: [], depenses: [], experiences: [], incidents: [],
+    tickets: signalements.filter((x) => ids.has(x.tenantId)).map((x) => ({ id: x.id, marchandId: x.tenantId, date: x.createdAt.getTime(), resoluLe: x.resoluLe?.getTime() ?? null, sujet: sujetDe(x.page) })),
   };
 }

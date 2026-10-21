@@ -35,9 +35,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  await prisma.tenant.update({
-    where: { id: tenantId },
-    data: { planType: "palier0", planExpiresAt: null, planPendingRef: null },
+  // L'abonnement vaut pour le compte (lib/abonnement.ts::planActif) : revenir à Essentiel
+  // s'applique à toutes les boutiques du propriétaire, sinon le palier d'une autre resterait actif.
+  await prisma.tenant.updateMany({
+    where: { id: { in: proprietaire } },
+    data: { planType: "palier0", planExpiresAt: null, planPendingRef: null, planRappel: null },
   });
 
   return NextResponse.json({ succes: true, plan: "palier0" });

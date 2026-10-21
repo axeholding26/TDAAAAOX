@@ -25,43 +25,40 @@ export default function AbonnementActions({
 }: AbonnementActionsProps) {
   const t = useT();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"" | "notchpay">("");
 
   const estActuel = planId === planActuel;
   const estSuperieur = ORDRE[planId] > ORDRE[planActuel];
 
+  async function appeler(url: string, body: object) {
+    const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+    return data;
+  }
+
   async function choisirPlan() {
-    if (estActuel) return;
-    setLoading(true);
+    if (estActuel && planId === "palier0") return;
     try {
       if (planId === "palier0") {
-        const res = await fetch("/api/abonnement/changer", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan: planId }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+        if (!window.confirm(t("Toutes tes boutiques repasseront en Essentiel et les jours payés restants seront perdus. Continuer ?"))) return;
+        setLoading("notchpay");
+        await appeler("/api/abonnement/changer", { plan: planId });
         toast.success(t("Plan Essentiel activé"));
         router.refresh();
       } else {
-        const res = await fetch("/api/abonnement/paiement", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ plan: planId }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Erreur inconnue");
+        setLoading("notchpay");
+        const data = await appeler("/api/abonnement/paiement", { plan: planId });
         window.location.href = data.authorizationUrl;
       }
     } catch (err: any) {
       toast.error(t(err.message) ?? t("Erreur lors du changement de plan"));
     } finally {
-      setLoading(false);
+      setLoading("");
     }
   }
 
-  if (estActuel) {
+  if (estActuel && planId === "palier0") {
     return (
       <button
         disabled
@@ -73,30 +70,34 @@ export default function AbonnementActions({
   }
 
   return (
-    <button
-      onClick={choisirPlan}
-      disabled={loading}
-      className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-70"
-      style={
-        estSuperieur
-          ? {
-              backgroundColor: couleur,
-              color: couleur === "#F5A623" ? "#1a1a1a" : "#ffffff",
-              boxShadow: `0 2px 8px ${couleur}30`,
-            }
-          : {
-              backgroundColor: "#f3f4f6",
-              color: "#6b7280",
-              border: "1px solid #e5e7eb",
-            }
-      }
-    >
-      {loading && <Loader2 size={14} className="animate-spin" />}
-      {loading
-        ? t("Changement...")
-        : estSuperieur
-        ? t("Choisir ce plan")
-        : t("Rétrograder")}
-    </button>
+    <div className="space-y-2">
+      <button
+        onClick={choisirPlan}
+        disabled={!!loading}
+        className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+        style={
+          estSuperieur || estActuel
+            ? {
+                backgroundColor: couleur,
+                color: couleur === "#F5A623" ? "#1a1a1a" : "#ffffff",
+                boxShadow: `0 2px 8px ${couleur}30`,
+              }
+            : {
+                backgroundColor: "#f3f4f6",
+                color: "#6b7280",
+                border: "1px solid #e5e7eb",
+              }
+        }
+      >
+        {loading === "notchpay" && <Loader2 size={14} className="animate-spin" />}
+        {loading === "notchpay"
+          ? t("Changement...")
+          : estActuel
+          ? t("Renouveler (+30 jours)")
+          : estSuperieur
+          ? t("Choisir ce plan")
+          : t("Rétrograder")}
+      </button>
+    </div>
   );
 }

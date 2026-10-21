@@ -132,8 +132,11 @@ test("accès direct : aucune route n'appelle le Builder sans passer par la passe
     }
   };
   parcourir("app");
-  // Seule la page marchand (session + droit boutique) lit le moteur pour le verrou, les versions et l'abandon.
-  assert.deepEqual(fautifs.filter((f) => !f.endsWith(join("controle-ia", "builder", "route.ts"))), []);
+  // Seules des actions du marchand lui-même (session + droit boutique, jamais une IA) touchent au moteur :
+  // la page du Builder (verrou, versions, abandon) et l'import d'une page de thème, ajoutée à la
+  // version en ligne ET au brouillon pour que publier ce brouillon ne la fasse pas disparaître.
+  const autorises = [join("controle-ia", "builder", "route.ts"), join("themes", "importer", "route.ts")];
+  assert.deepEqual(fautifs.filter((f) => !autorises.some((a) => f.endsWith(a))), []);
 });
 
 test("parcours : brouillon → aperçu → accord → publication → retour en arrière", async () => {

@@ -14,6 +14,7 @@ const STATUT_PAIEMENT: Record<string, { label: string; color: string; bg: string
   completed: { label: "Complété",   color: "#059669", bg: "#ecfdf5" },
   failed:    { label: "Échoué",     color: "#dc2626", bg: "#fef2f2" },
   refunded:  { label: "Remboursé",  color: "#6b7280", bg: "#f9fafb" },
+  refunding: { label: "Remboursement en cours", color: "#d97706", bg: "#fffbeb" },
 };
 
 const METHODE_LABEL: Record<string, string> = {

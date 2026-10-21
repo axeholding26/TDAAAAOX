@@ -17,11 +17,20 @@ export async function GET(req: NextRequest) {
     const where = { statut: "en_attente", reference: null };
     const [n, dernier] = await Promise.all([prisma.retrait.count({ where }), prisma.retrait.findFirst({ where, orderBy: { createdAt: "desc" }, select: { id: true } })]);
     if (n && dernier) liste.unshift({ id: `retraits-${dernier.id}`, categorie: "critique", titre: `💸 ${n} retrait(s) à valider dans NotchPay`, detail: "Les marchands attendent leur argent : fais le transfert puis marque-le payé.", lien: "/admin/finances" });
+    // Retraits des livreurs (lib/gains-livreur.ts), même circuit.
+    const [nl, dernierL] = await Promise.all([prisma.retraitLivreur.count({ where: { statut: "en_attente" } }), prisma.retraitLivreur.findFirst({ where: { statut: "en_attente" }, orderBy: { createdAt: "desc" }, select: { id: true } })]);
+    if (nl && dernierL) liste.unshift({ id: `retraits-livreurs-${dernierL.id}`, categorie: "critique", titre: `🛵 ${nl} retrait(s) de livreur à valider dans NotchPay`, detail: "Les livreurs attendent leur argent : fais le transfert puis marque-le payé.", lien: "/admin/finances" });
   }
   if (peutVoir(c.session.role, "affilies")) {
     const where = { statut: "en_attente", reference: null };
     const [n, dernier] = await Promise.all([prisma.paiementCommission.count({ where }), prisma.paiementCommission.findFirst({ where, orderBy: { createdAt: "desc" }, select: { id: true } })]);
     if (n && dernier) liste.unshift({ id: `commissions-${dernier.id}`, categorie: "critique", titre: `🤝 ${n} commission(s) d'affilié à verser dans NotchPay`, detail: "Les affiliés attendent leur argent : fais le transfert puis marque-le payé.", lien: "/admin/affilies" });
+  }
+  // Problèmes signalés par les marchands, pas encore pris en charge (même principe d'id que les retraits).
+  if (peutVoir(c.session.role, "support")) {
+    const where = { statut: "ouvert" };
+    const [n, dernier] = await Promise.all([prisma.signalement.count({ where }), prisma.signalement.findFirst({ where, orderBy: { createdAt: "desc" }, select: { id: true } })]);
+    if (n && dernier) liste.unshift({ id: `signalements-${dernier.id}`, categorie: "alerte", titre: `🛟 ${n} problème(s) signalé(s) par des marchands`, detail: "Réponds au marchand et passe le signalement en cours ou résolu.", lien: "/admin/support" });
   }
   return NextResponse.json({ alertes: liste });
 }

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { requireNiveau } from "@/lib/permissions-server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { payerCommissionsAffilie } from "@/lib/affiliation";
+import { boutiquesDuCompte } from "@/lib/tenant";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -54,8 +54,9 @@ export async function POST(req: Request) {
   if (!session?.user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const tenantId = (session.user as any).tenantId;
   if (!tenantId) return NextResponse.json({ error: "Boutique introuvable" }, { status: 404 });
-  const refus = await requireNiveau(session, "finance", "ecriture");
-  if (refus) return NextResponse.json({ error: refus.error }, { status: refus.status });
+  // L'argent sort du wallet : propriétaire seul, comme les retraits (jamais un membre d'équipe).
+  const { proprietaire } = await boutiquesDuCompte((session.user as any).id);
+  if (!proprietaire.includes(tenantId)) return NextResponse.json({ error: "Seul le propriétaire de la boutique peut payer les commissions" }, { status: 403 });
   const body = await req.json().catch(() => ({}));
 
   if (!body.affilieId) return NextResponse.json({ error: "affilieId requis" }, { status: 400 });

@@ -6,7 +6,7 @@ import { boutiquesDuCompte } from "@/lib/tenant";
 
 const WALLET_VIDE = {
   solde: 0, totalRecu: 0, totalRetire: 0, totalCommission: 0,
-  retraitsEnAttente: 0,
+  retraitsEnAttente: 0, disponible: 0, enAttente: 0, liberations: [], minimumRetrait: 1000,
   devise: "XAF", transactions: [], retraits: [],
 };
 

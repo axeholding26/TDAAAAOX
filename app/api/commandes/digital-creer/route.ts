@@ -10,7 +10,7 @@ import { codePays } from "@/lib/devise-convert";
 import { randomBytes } from "crypto";
 import { rateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { COOKIE_XP, noterConversion } from "@/lib/builder/experiences";
-import { refusVenteLive } from "@/lib/live/service";
+import { refusVenteNumerique } from "@/lib/livraison-numerique";
 
 // Formulaire public : limite par IP (partagée avec whatsapp-creer).
 const limiteCommande = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: "commande-vitrine" });
@@ -45,8 +45,6 @@ export async function POST(req: NextRequest) {
       select: {
         id: true, nom: true, type: true, prix: true, images: true,
         variantes: { where: { actif: true }, select: { nom: true, valeur: true, prix: true } },
-        produitFichier: { select: { limitAchats: true } },
-        licenceProduit: { select: { id: true, cles: { where: { statut: "disponible" }, select: { id: true }, take: 1 } } },
       },
     });
     if (produits.length !== new Set(items.map((i: any) => String(i.produitId))).size) {
@@ -57,7 +55,12 @@ export async function POST(req: NextRequest) {
     }
     // Dropshipping : une vraie adresse de livraison est obligatoire.
     const aExpedier = produits.some((p) => p.type === "dropshipping");
-    if (aExpedier && (!client?.adresse?.trim() || !(zone || client?.ville)?.trim())) {
+    // Un produit à expédier ne se paie pas avec un produit numérique : la finalisation suivrait le
+    // chemin numérique (pas de commande fournisseur, livraison comptée dans la commission).
+    if (aExpedier && produits.some((p) => p.type !== "dropshipping")) {
+      return NextResponse.json({ error: "Commande un produit à expédier séparément de tes produits numériques" }, { status: 400 });
+    }
+    if (aExpedier &&(!client?.adresse?.trim() || !(zone || client?.ville)?.trim())) {
       return NextResponse.json({ error: "Adresse et ville de livraison obligatoires" }, { status: 400 });
     }
     const taux = tenant.commissionRate ?? 0.1;
@@ -78,24 +81,8 @@ export async function POST(req: NextRequest) {
     const total = sousTotal - reduction + montantLivraison;
     const devise = tenant.devise;
 
-    for (const p of produits) {
-      if (p.type === "fichier" && p.produitFichier?.limitAchats != null) {
-        const ventes = await prisma.commande.count({
-          where: { paiementStatut: "completed", lignes: { some: { produitId: p.id } } },
-        });
-        if (ventes >= p.produitFichier.limitAchats) {
-          return NextResponse.json({ error: `"${p.nom}" a atteint sa limite d'exemplaires disponibles` }, { status: 409 });
-        }
-      }
-      if (p.type === "licence" && p.licenceProduit && p.licenceProduit.cles.length === 0) {
-        return NextResponse.json({ error: `"${p.nom}" est en rupture de clés de licence — contactez le vendeur` }, { status: 409 });
-      }
-      // Live / bootcamp : refusé avant paiement s'il est complet, annulé, terminé ou gratuit (inscription directe).
-      if (p.type === "evenement" || p.type === "bootcamp") {
-        const refus = await refusVenteLive(p.id, p.prix);
-        if (refus) return NextResponse.json({ error: `"${p.nom}" : ${refus}` }, { status: 409 });
-      }
-    }
+    const refusVente = await refusVenteNumerique(produits.map((p) => p.id));
+    if (refusVente) return NextResponse.json({ error: refusVente }, { status: 409 });
 
     // Upsert client par email (clé naturelle pour les achats digitaux)
     let clientRecord = await prisma.client.findFirst({

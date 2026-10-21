@@ -13,8 +13,9 @@ interface RetraitManuel {
 // NotchPay (détails dans l'e-mail « Retrait à valider ») puis le marque payé, ou le refuse
 // (le marchand est alors recrédité). Le marchand est prévenu dans les deux cas.
 // `commissions` : même écran pour les commissions d'affiliés (Admin › Affiliés, /api/admin/affilies).
-export function AdminRetraitsManuels({ peutTraiter, commissions = false }: { peutTraiter: boolean; commissions?: boolean }) {
-  const source = commissions ? "/api/admin/affilies" : "/api/admin/wallet/retraits";
+// `livreurs` : retraits des livreurs (lib/gains-livreur.ts) ; refusé → le livreur est recrédité.
+export function AdminRetraitsManuels({ peutTraiter, commissions = false, livreurs = false }: { peutTraiter: boolean; commissions?: boolean; livreurs?: boolean }) {
+  const source = commissions ? "/api/admin/affilies" : livreurs ? "/api/admin/livreurs/retraits" : "/api/admin/wallet/retraits";
   const t = useT();
   const [retraits, setRetraits] = useState<RetraitManuel[]>([]);
   const [enCours, setEnCours] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export function AdminRetraitsManuels({ peutTraiter, commissions = false }: { peu
     const montant = `${r.montant.toLocaleString("fr-FR")} ${r.devise}`;
     const question = action === "payer"
       ? t("Confirmer que {0} ont bien été envoyés à {1} ?", montant, r.destinataire)
-      : t("Refuser ce retrait et recréditer {0} au marchand ?", montant);
+      : livreurs ? t("Refuser ce retrait et recréditer {0} au livreur ?", montant) : t("Refuser ce retrait et recréditer {0} au marchand ?", montant);
     if (!window.confirm(question)) return;
     setEnCours(r.id);
     try {
@@ -40,7 +41,9 @@ export function AdminRetraitsManuels({ peutTraiter, commissions = false }: { peu
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { toast.error(t(data.error ?? "Erreur")); return; }
-      toast.success(action === "payer" ? t("Marqué payé — le marchand est prévenu") : t("Refusé — marchand recrédité"));
+      toast.success(livreurs
+        ? (action === "payer" ? t("Marqué payé — le livreur est prévenu") : t("Refusé — livreur recrédité"))
+        : (action === "payer" ? t("Marqué payé — le marchand est prévenu") : t("Refusé — marchand recrédité")));
       charger();
     } catch { toast.error(t("Erreur réseau")); } finally { setEnCours(null); }
   }
@@ -50,10 +53,12 @@ export function AdminRetraitsManuels({ peutTraiter, commissions = false }: { peu
   return (
     <div className="rounded-2xl p-6 border" style={{ background: "#1A1A1A", borderColor: "rgba(255,255,255,0.08)" }}>
       <h2 className="font-semibold mb-1 flex items-center gap-2" style={{ color: "#ffffff" }}>
-        <Clock size={16} style={{ color: "#F5A623" }} />{" "}{commissions ? t("Commissions d'affiliés à verser") : t("Retraits à traiter à la main")} ({retraits.length})
+        <Clock size={16} style={{ color: "#F5A623" }} />{" "}{commissions ? t("Commissions d'affiliés à verser") : livreurs ? t("Retraits des livreurs à payer") : t("Retraits à traiter à la main")} ({retraits.length})
       </h2>
       <p className="text-xs mb-4" style={{ color: "#AAAAAA" }}>
-        {t("Le solde du marchand est déjà débité. Faites le transfert dans NotchPay (détails dans l'e-mail reçu), puis marquez-le payé — ou refusez-le pour recréditer le marchand.")}
+        {livreurs
+          ? t("Le solde du livreur est déjà débité. Faites le transfert dans NotchPay (détails dans l'e-mail reçu), puis marquez-le payé — ou refusez-le pour recréditer le livreur.")
+          : t("Le solde du marchand est déjà débité. Faites le transfert dans NotchPay (détails dans l'e-mail reçu), puis marquez-le payé — ou refusez-le pour recréditer le marchand.")}
       </p>
       <div className="space-y-2">
         {retraits.map(r => (

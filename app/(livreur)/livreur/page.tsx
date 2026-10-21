@@ -7,6 +7,8 @@ import { formatMontant } from "@/lib/utils";
 import { MapLivraisonClient } from "@/components/livreur/MapLivraisonClient";
 import { getT } from "@/lib/i18n/serveur";
 import { STATUTS_COURSE_ACTIVE } from "@/lib/commandes";
+import { aRemettre } from "@/lib/gains-livreur";
+import { GainsLivreur } from "@/components/livreur/GainsLivreur";
 
 const STATUT: Record<string, { label: string; color: string; bg: string }> = {
   confirmee:      { label: "À récupérer",   color: "#d4d4d4", bg: "rgba(212,212,212,0.08)" },
@@ -42,15 +44,17 @@ export default async function LivreurDashboard() {
     // Même filtre que /api/livreurs/[id]/encaissements (côté marchand) : livré en COD, pas encore remis
     prisma.commande.findMany({
       where: { livreurId: livreur.id, methodePaiement: { in: ["whatsapp_cod", "direct_cod"] }, statut: "livree", codRemis: false },
-      select: { montantTotal: true, devise: true, tenant: { select: { nomBoutique: true } } },
+      select: { id: true, montantTotal: true, devise: true, tenant: { select: { nomBoutique: true } } },
     }),
   ]);
 
+  // Sa part est gardée sur les espèces (lib/gains-livreur.ts) : il ne reverse que le reste.
+  const parts: Record<string, number> = Object.fromEntries((await prisma.gainLivreur.findMany({ where: { commandeId: { in: especesNonRemises.map(c => c.id) } }, select: { commandeId: true, montant: true } })).map(g => [g.commandeId, g.montant]));
   // Un livreur plateforme peut travailler pour plusieurs boutiques : on regroupe par boutique (et devise)
   const aReverser = Object.values(especesNonRemises.reduce<Record<string, { boutique: string; devise: string; total: number; nb: number }>>((acc, c) => {
     const k = `${c.tenant.nomBoutique}|${c.devise}`;
     acc[k] ??= { boutique: c.tenant.nomBoutique, devise: c.devise, total: 0, nb: 0 };
-    acc[k].total += c.montantTotal;
+    acc[k].total += aRemettre(c.montantTotal, parts[c.id] ?? 0);
     acc[k].nb += 1;
     return acc;
   }, {}));
@@ -135,6 +139,9 @@ export default async function LivreurDashboard() {
           <p className="text-gray-500 text-xs mt-3">{t("Le montant disparaît dès que la boutique confirme avoir reçu l'argent.")}</p>
         </div>
       )}
+
+      {/* Solde, gains par course, retraits */}
+      <div className="lg:col-span-2"><GainsLivreur /></div>
 
       {/* Commande prioritaire avec carte */}
       {commandePrioritaire && (

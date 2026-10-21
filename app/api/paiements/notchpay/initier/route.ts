@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { initierPaiementNotchPay, hasNotchPay } from "@/lib/notchpay";
 import { paiementEnLigneDisponible } from "@/lib/paiement-pays";
-import { cleAccesCommande } from "@/lib/livraison-numerique";
+import { cleAccesCommande, refusVenteNumerique } from "@/lib/livraison-numerique";
+import { confirmerPaiementCommande } from "@/lib/paiement-commande";
 
 export const maxDuration = 30;
 
@@ -27,10 +28,29 @@ export async function POST(req: NextRequest) {
     const clientEmail = commande.clientEmail || body.clientEmail;
     if (!clientEmail && !commande.clientTelephone) return NextResponse.json({ error: "Email ou téléphone du client requis" }, { status: 400 });
 
+    // Produit numérique devenu indisponible depuis la commande (limite atteinte, plus de clé, live complet) :
+    // refusé avant que le client paie pour rien.
+    const lignes = await prisma.ligneCommande.findMany({ where: { commandeId }, select: { produitId: true } });
+    const refusVente = await refusVenteNumerique(lignes.map((l) => l.produitId));
+    if (refusVente) return NextResponse.json({ error: refusVente }, { status: 409 });
+
     // Référence marchande envoyée à NotchPay (dispatch webhook par préfixe ORD-).
     // NotchPay attribue sa PROPRE référence ("trx.xxx") en retour — c'est elle
     // qu'on doit stocker pour pouvoir interroger GET /payments/{reference} plus tard.
     const merchantRef = `ORD-${commandeId}`;
+
+    // Relance : la référence enregistrée va être remplacée. Si le client a payé la transaction
+    // précédente, elle est confirmée d'abord — sinon page de retour et réconciliation ne
+    // regarderaient plus que la nouvelle (non payée) et la commande serait annulée à 24 h.
+    if (commande.paiementReference) {
+      try {
+        await confirmerPaiementCommande(commandeId, commande.paiementReference);
+      } catch {
+        return NextResponse.json({ error: "Vérification du paiement précédent impossible pour le moment : réessayez dans un instant" }, { status: 503 });
+      }
+      const apres = await prisma.commande.findUnique({ where: { id: commandeId }, select: { paiementStatut: true } });
+      if (apres?.paiementStatut !== "pending" && apres?.paiementStatut !== "failed") return NextResponse.json({ error: "Commande déjà payée" }, { status: 409 });
+    }
     const origin = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin;
 
     const { transaction, authorizationUrl } = await initierPaiementNotchPay({

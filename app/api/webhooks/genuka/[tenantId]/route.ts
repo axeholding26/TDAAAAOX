@@ -11,6 +11,7 @@
 // Docs : https://docs.genuka.com/merchant-api/12-inbox-messaging.md
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { METHODES_EN_LIGNE } from "@/lib/commandes";
 import { lireConnexion } from "@/lib/connect";
 import { verifierSignatureGenukaWebhook } from "@/lib/genuka";
 import { notifierClientWhatsApp } from "@/lib/whatsapp";
@@ -110,7 +111,9 @@ async function traiterMessage(tenantId: string, body: any) {
   );
   if (!estConfirmation) return;
 
-  await prisma.commande.update({ where: { id: commandeLiee.id }, data: { statut: "confirmee" } });
+  // Une commande à payer en ligne n'est confirmée que par le paiement reçu (lib/paiement-commande.ts).
+  const { count } = await prisma.commande.updateMany({ where: { id: commandeLiee.id, statut: "en_attente", methodePaiement: { notIn: METHODES_EN_LIGNE } }, data: { statut: "confirmee" } });
+  if (!count) return;
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },

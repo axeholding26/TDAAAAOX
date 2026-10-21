@@ -425,3 +425,34 @@ export async function envoyerRappelEssai(p: { email: string; boutique: string; t
     `,
   });
 }
+
+// Nouveau signalement d'un marchand (« Signaler un problème ») : alerte au support Axso.
+export async function envoyerAlerteSignalement(p: {
+  a: string; id: string; boutique: string; slug: string; auteur: string; description: string;
+  page: string; appareil: string | null; erreur: string | null; capture: string | null;
+}): Promise<boolean> {
+  const resend = getResendClient();
+  if (!resend) return false;
+  const e = (v: string) => v.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  const ligne = (k: string, v: string | null) => `<tr><td style="padding:6px 10px;color:#666;white-space:nowrap;vertical-align:top">${k}</td><td style="padding:6px 10px">${e(v || "—")}</td></tr>`;
+  return envoyer(resend, {
+    from: "Axso <noreply@axsoafrica.com>",
+    to: p.a,
+    subject: `🛟 Problème signalé — ${p.boutique}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Problème signalé par ${e(p.boutique)}</h2>
+        <p style="background:#f5f5f5;border-radius:8px;padding:14px;white-space:pre-wrap;">${e(p.description)}</p>
+        <table style="border-collapse:collapse;font-size:14px">
+          ${ligne("Boutique", `${p.boutique} (${p.slug})`)}
+          ${ligne("Auteur", p.auteur)}
+          ${ligne("Page", p.page)}
+          ${ligne("Appareil", p.appareil)}
+          ${ligne("Erreur", p.erreur)}
+          ${ligne("Capture", p.capture?.startsWith("https://") ? p.capture : p.capture ? "jointe (voir le Command Center)" : null)}
+        </table>
+        <p style="text-align:center;margin:24px 0"><a href="https://axsoafrica.com/admin/support?id=${encodeURIComponent(p.id)}" style="display:inline-block;padding:12px 24px;background:#111;color:#fff;border-radius:10px;text-decoration:none;font-weight:bold">Répondre dans le Command Center</a></p>
+      </div>
+    `,
+  });
+}

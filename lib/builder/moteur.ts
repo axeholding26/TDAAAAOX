@@ -169,7 +169,10 @@ export async function configDe(tenantId: string, ref: string | number): Promise<
     const b = await lireBrouillon(tenantId);
     return (ref === "brouillon" ? b.config : b.enLigne) as unknown as Record<string, any>;
   }
-  const v = await prisma.versionBoutique.findUnique({ where: { tenantId_numero: { tenantId, numero: Number(ref) } }, select: { config: true } });
+  // « v2 », « dernière »… : pas un numéro de version — introuvable, sans requête invalide en base.
+  const numero = Number(ref);
+  if (!Number.isInteger(numero)) throw new ErreurBuilder("NOT_FOUND", `Version « ${ref} » introuvable : donne un numéro de version, « brouillon » ou « publie ».`);
+  const v = await prisma.versionBoutique.findUnique({ where: { tenantId_numero: { tenantId, numero } }, select: { config: true } });
   if (!v) throw new ErreurBuilder("NOT_FOUND", `Version ${ref} introuvable.`);
   return v.config as Record<string, any>;
 }

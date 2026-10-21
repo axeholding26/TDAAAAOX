@@ -1,17 +1,24 @@
 // Wallet AXSO — logique métier
-// Flux : paiement confirmé (NotchPay) → crédit wallet immédiat (montant net, commission déduite)
-//        retrait    → débit wallet → virement NotchPay (Transfers)
+// Flux : paiement confirmé (NotchPay) → crédit wallet (montant net, commission déduite), en
+//        séquestre 48 h (compté dans le solde, pas encore retirable : WalletTransaction.disponibleLe)
+//        retrait → débit du seul solde disponible → Axso fait le transfert à la main (voir initierRetrait)
 
 import { prisma } from "./prisma";
 import { versXAF } from "./devise-convert";
 import { tauxDuJour } from "./taux-change";
-import { expirationApresPaiement } from "./abonnement";
+import { Prisma } from "@prisma/client";
+import { expirationApresPaiement, boutiquesDuMemeCompte } from "./abonnement";
+import { finEssai } from "./essai-regles";
+import { retirerRefsEnAttente } from "./abonnement-regles";
+import { etatSequestre, finSequestre, minimumRetrait, arrondiDevise } from "./wallet-regles";
 import { verifierTransfertNotchPay, hasNotchPay } from "./notchpay";
 import { pousserAdmins } from "./push";
 import { envoyerAlerteRetrait } from "./email";
 import { notifierMarchand } from "./notifications-marchand";
 import { partVendeur } from "./pricing";
 import { normaliserTelephone } from "./devise-convert";
+
+type Tx = Prisma.TransactionClient;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +37,8 @@ export interface CreditWalletParams {
   fraisPasserelle?: number;
   // Part du montant payé qui n'a jamais été majorée de la commission (frais de livraison) : reversée en entier au vendeur.
   montantHorsCommission?: number;
+  // Lignes de la commande (prix client unitaires) : part du vendeur exacte au franc près (lib/pricing.ts).
+  lignes?: { prix: number; quantite: number }[];
 }
 
 export interface RetraitParams {
@@ -121,19 +130,29 @@ async function logFraisPasserelleTx(tx: any, taux: Record<string, number>, frais
 // deux fois en même temps ne prolonge ni ne crédite deux fois : la référence
 // NotchPay déjà inscrite au portefeuille plateforme vaut « déjà traité ».
 // Renvoie false si ce paiement avait déjà été appliqué.
+// Toutes les boutiques du compte sont verrouillées : l'échéance part de la meilleure du même
+// palier sur le compte (et de la fin de l'essai en cours), jamais de la seule boutique payée.
 export async function activerAbonnementPaye(p: { tenantId: string; plan: string; jours: number; montant: number; frais: number; devise: string; reference: string }): Promise<boolean> {
   const net = Math.max(0, p.montant - p.frais);
   const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
+  const ids = (await boutiquesDuMemeCompte(p.tenantId, { id: true })).map((b) => b.id);
+  if (!ids.length) return false;
   return prisma.$transaction(async (tx) => {
-    const [tenant] = await tx.$queryRaw<{ nomBoutique: string; planType: string; planExpiresAt: Date | null }[]>`SELECT "nomBoutique", "planType", "planExpiresAt" FROM "Tenant" WHERE "id" = ${p.tenantId} FOR UPDATE`;
+    const compte = await tx.$queryRaw<{ id: string; nomBoutique: string; planType: string; planExpiresAt: Date | null; essaiFinLe: Date | null; planPendingRef: string | null }[]>`SELECT "id", "nomBoutique", "planType", "planExpiresAt", "essaiFinLe", "planPendingRef" FROM "Tenant" WHERE "id" IN (${Prisma.join(ids)}) ORDER BY "id" FOR UPDATE`;
+    const tenant = compte.find((t) => t.id === p.tenantId);
     if (!tenant) return false;
     const platformTenantId = await getOrCreatePlatformTenantId(tx);
     const deja = await tx.walletTransaction.findFirst({ where: { reference: p.reference, wallet: { tenantId: platformTenantId } }, select: { id: true } });
     if (deja) return false;
 
+    const maintenant = new Date();
     await tx.tenant.update({
       where: { id: p.tenantId },
-      data: { planType: p.plan, planExpiresAt: expirationApresPaiement(tenant, p.plan, p.jours), planPendingRef: null },
+      data: {
+        planType: p.plan, planExpiresAt: expirationApresPaiement(compte, p.plan, p.jours, maintenant, finEssai(compte)),
+        // Seul CE paiement sort de l'attente : un autre paiement en cours n'est pas oublié.
+        planPendingRef: retirerRefsEnAttente(tenant.planPendingRef, [p.reference]), planRappel: null,
+      },
     });
     const description = `Abonnement ${p.plan} — ${tenant.nomBoutique}`;
     if (net > 0) await crediterPlateformeTx(tx, taux, net, p.devise, description, p.reference);
@@ -185,7 +204,7 @@ export async function crediterWallet(
   // (prix vendeur × (1 + tauxCommission)) + livraison non majorée. On extrait le net du vendeur
   // par division sur la seule part majorée : le vendeur reçoit exactement son prix et sa livraison.
   // FCFA et autres monnaies sans centimes : arrondi à l'unité.
-  const { montantNet, montantCommission } = partVendeur(montantBrut, params.montantHorsCommission ?? 0, tauxCommission, devise);
+  const { montantNet, montantCommission } = partVendeur(montantBrut, params.montantHorsCommission ?? 0, tauxCommission, devise, params.lignes);
 
   const taux = await tauxDuJour(); // hors transaction : aucun appel réseau pendant qu'elle est ouverte
   const credite = await prisma.$transaction(async (tx) => {
@@ -221,6 +240,8 @@ export async function crediterWallet(
         reference,
         commandeId,
         statut: "completed",
+        // Séquestre 48 h (protection acheteur) : dans le solde, retirable seulement ensuite.
+        disponibleLe: finSequestre(),
       },
     });
 
@@ -296,6 +317,9 @@ export async function reprendreVenteRemboursee(p: { tenantId: string; commandeId
     const credits = await tx.walletTransaction.findMany({ where: { walletId: wallet.id, commandeId: p.commandeId, type: "CREDIT" } });
     const net = Math.round(credits.reduce((s, c) => s + c.montant, 0) * 100) / 100;
     const commission = await tx.commission.findUnique({ where: { commandeId: p.commandeId } });
+    // Remboursé pendant le séquestre : l'argent repris est d'abord celui encore en attente
+    // (la vente sort du séquestre), le disponible ne bouge pas.
+    await tx.walletTransaction.updateMany({ where: { walletId: wallet.id, commandeId: p.commandeId, type: "CREDIT", disponibleLe: { gt: new Date() } }, data: { disponibleLe: new Date() } });
     if (net > 0) {
       // totalRecu avait été augmenté du montant payé par le client (brut), pas du net.
       await tx.wallet.update({ where: { id: wallet.id }, data: { solde: { decrement: net }, totalRecu: { decrement: commission?.montantCommande ?? net } } });
@@ -348,34 +372,43 @@ export function operateurCameroun(tel: string | null): "mtn" | "orange" | null {
   return null;
 }
 
+// ─── Solde disponible (hors séquestre) ────────────────────────────────────────
+
+const sommeEnSequestreTx = async (tx: Tx, walletId: string) =>
+  (await tx.walletTransaction.aggregate({ where: { walletId, type: "CREDIT", disponibleLe: { gt: new Date() } }, _sum: { montant: true } }))._sum.montant ?? 0;
+
+// Débit du seul solde DISPONIBLE (ventes en séquestre exclues), atomique : la ligne Wallet reste
+// verrouillée (FOR UPDATE) du contrôle jusqu'à la fin de la transaction ; tout crédit, remboursement
+// ou débit concurrent de ce wallet attend, puis voit le nouveau solde.
+export async function debiterDisponibleTx(tx: Tx, tenantId: string, montant: number, retrait = false) {
+  const [w] = await tx.$queryRaw<{ id: string; solde: number; devise: string }[]>`SELECT "id", "solde", "devise" FROM "Wallet" WHERE "tenantId" = ${tenantId} FOR UPDATE`;
+  if (!w) throw new Error("Wallet introuvable");
+  if (w.solde - (await sommeEnSequestreTx(tx, w.id)) < montant - 1e-6) throw new Error("Solde disponible insuffisant (les ventes des dernières 48 h sont encore en séquestre)");
+  await tx.wallet.update({ where: { id: w.id }, data: { solde: { decrement: montant }, ...(retrait ? { totalRetire: { increment: montant } } : {}) } });
+  return w;
+}
+
 export async function initierRetrait(params: RetraitParams) {
   const { tenantId, methode, operateur, notes } = params;
+  const boutique = await prisma.tenant.findUnique({ where: { id: tenantId }, select: { pays: true, statut: true, wallet: { select: { devise: true } } } });
+  if (!boutique) throw new Error("Boutique introuvable");
+  if (boutique.statut === "suspendu" || boutique.statut === "supprime") throw new Error("Boutique suspendue : les retraits sont bloqués. Contacte le support Axso.");
   // Mobile Money : numéro au format international, indicatif du pays de la boutique (6XX… au Cameroun → +2376XX…).
   let destinataire = params.destinataire.trim();
   if (methode === "mobile_money") {
-    const { pays } = (await prisma.tenant.findUnique({ where: { id: tenantId }, select: { pays: true } })) ?? {};
-    const tel = normaliserTelephone(destinataire, pays);
+    const tel = normaliserTelephone(destinataire, boutique.pays);
     if (!tel) throw new Error("Numéro Mobile Money invalide : vérifie-le, avec l'indicatif de ton pays s'il est à l'étranger.");
     destinataire = tel;
   }
-  const montant = Math.round(Number(params.montant) * 100) / 100;
+  // Le retrait se fait dans la devise du wallet, pas dans celle passée par l'appelant.
+  const devise = boutique.wallet?.devise ?? params.devise;
+  const montant = arrondiDevise(Number(params.montant), devise);
+  const minimum = minimumRetrait(devise, await tauxDuJour());
+  if (!Number.isFinite(montant) || montant < minimum) throw new Error(`Montant minimum de retrait : ${minimum.toLocaleString("fr-FR")} ${devise}`);
 
-  const MINIMUM = 1000;
-  if (!Number.isFinite(montant) || montant < MINIMUM) throw new Error(`Montant minimum de retrait : ${MINIMUM} ${params.devise}`);
+  const { retrait } = await prisma.$transaction(async (tx) => {
+    const wallet = await debiterDisponibleTx(tx, tenantId, montant, true);
 
-  const { retrait, nomBoutique } = await prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findUnique({ where: { tenantId }, include: { tenant: { select: { nomBoutique: true } } } });
-    if (!wallet) throw new Error("Wallet introuvable");
-
-    // Débit conditionnel atomique — échoue (count 0) si le solde a changé entre
-    // temps (retrait concurrent) et ne descend jamais sous 0.
-    const debit = await tx.wallet.updateMany({
-      where: { tenantId, solde: { gte: montant } },
-      data: { solde: { decrement: montant }, totalRetire: { increment: montant } },
-    });
-    if (debit.count === 0) throw new Error("Solde insuffisant");
-
-    // Le retrait se fait dans la devise du wallet, pas dans celle passée par l'appelant.
     const r = await tx.retrait.create({
       data: { walletId: wallet.id, tenantId, montant, devise: wallet.devise, methode, destinataire, operateur, notes, statut: "en_attente" },
     });
@@ -392,7 +425,7 @@ export async function initierRetrait(params: RetraitParams) {
       },
     });
 
-    return { retrait: r, nomBoutique: wallet.tenant.nomBoutique };
+    return { retrait: r };
   });
 
   // Jamais bloquant : le retrait est enregistré même si l'alerte échoue (il reste visible dans Finances).
@@ -403,10 +436,16 @@ export async function initierRetrait(params: RetraitParams) {
 /** Destinataire des alertes « retrait à valider ». */
 export const EMAIL_RETRAITS = "axedigital00@gmail.com";
 
-/** Canal NotchPay à choisir pour ce retrait, ou null s'il se paie hors NotchPay (Wave, banque, autre pays). */
+/** Canal NotchPay à choisir pour ce retrait, ou null s'il se paie hors NotchPay (Wave, banque, autre pays).
+ *  Le préfixe du numéro fait foi (un marchand peut se tromper d'opérateur) ; l'opérateur déclaré sert de repli. */
 export function canalNotchPay(r: { methode: string; operateur: string | null; devise: string; destinataire: string }): string | null {
-  const op = (r.operateur ?? "").toLowerCase();
-  return r.methode === "mobile_money" && r.devise === "XAF" && (op === "mtn" || op === "orange") && telCameroun(r.destinataire) ? `cm.${op}` : null;
+  const tel = telCameroun(r.destinataire);
+  if (r.methode !== "mobile_money" || r.devise !== "XAF" || !tel) return null;
+  const declare = (r.operateur ?? "").toLowerCase();
+  // Autre service déclaré (Wave…) : payé hors NotchPay, même si le numéro est aussi chez MTN/Orange.
+  if (declare && declare !== "mtn" && declare !== "orange") return null;
+  const op = operateurCameroun(tel) ?? declare;
+  return op === "mtn" || op === "orange" ? `cm.${op}` : null;
 }
 
 /**
@@ -445,47 +484,59 @@ export async function signalerRetraitAValider(retraitId: string) {
 // Un retrait déjà clos (complete / echoue) ne bouge plus.
 const STATUTS_ECHEC = ["failed", "canceled", "cancelled", "reversed", "rejected", "expired"];
 
-export async function appliquerStatutTransfert(retraitId: string, status?: string, reference?: string) {
-  if (status && STATUTS_ECHEC.includes(status)) return rembourserRetraitEchoue(retraitId);
+// Renvoie vrai seulement pour l'appel qui a clos le retrait (payé ou échoué) : lui seul prévient
+// le marchand, qu'il vienne de l'admin, du webhook (transfer.complete) ou de la re-vérification.
+export async function appliquerStatutTransfert(retraitId: string, status?: string, reference?: string): Promise<boolean> {
+  if (status && STATUTS_ECHEC.includes(status)) {
+    const rembourse = await rembourserRetraitEchoue(retraitId);
+    if (rembourse) await prevenirMarchandRetrait(retraitId, false);
+    return rembourse;
+  }
 
   const complet = status === "complete";
   const maj = await prisma.retrait.updateMany({
     where: { id: retraitId, statut: { in: ["en_attente", "traitement"] } },
     data: { statut: complet ? "complete" : "traitement", ...(reference ? { reference } : {}) },
   });
-  if (complet && maj.count > 0) {
-    await prisma.walletTransaction.updateMany({
-      where: { type: "RETRAIT", reference: refRetrait(retraitId), statut: "en_cours" },
-      data: { statut: "completed" },
-    });
-  }
+  if (!complet || maj.count === 0) return false;
+  await prisma.walletTransaction.updateMany({
+    where: { type: "RETRAIT", reference: refRetrait(retraitId), statut: "en_cours" },
+    data: { statut: "completed" },
+  });
+  await prevenirMarchandRetrait(retraitId, true);
+  return true;
 }
 
-// Clôture d'un retrait du circuit manuel (jamais un retrait suivi par NotchPay).
-export async function cloturerRetraitManuel(retraitId: string, paye: boolean) {
-  const retrait = await prisma.retrait.findUnique({ where: { id: retraitId } });
-  if (!retrait) throw new Error("Retrait introuvable");
-  if (retrait.reference) throw new Error("Ce retrait est suivi automatiquement par NotchPay");
-  if (retrait.statut !== "en_attente") throw new Error("Ce retrait est déjà traité");
-  await appliquerStatutTransfert(retraitId, paye ? "complete" : "failed");
+async function prevenirMarchandRetrait(retraitId: string, paye: boolean) {
+  const retrait = await prisma.retrait.findUniqueOrThrow({ where: { id: retraitId } });
   const montant = `${retrait.montant.toLocaleString("fr-FR")} ${retrait.devise}`;
   await notifierMarchand({
     tenantId: retrait.tenantId, type: paye ? "retrait_paye" : "retrait_refuse", lien: "/dashboard/wallet",
     titre: paye ? `Retrait de ${montant} envoyé` : `Retrait de ${montant} refusé`,
     message: paye ? `Axso a envoyé ${montant} à ${retrait.destinataire}.` : `Le retrait vers ${retrait.destinataire} n'a pas pu être fait : ${montant} ont été remis sur votre solde.`,
-  });
+  }).catch((e) => console.error("[wallet/retrait] notification", retraitId, e?.message));
+}
+
+// Clôture d'un retrait du circuit manuel (jamais un retrait suivi par NotchPay). Un retrait passé
+// « en cours » (transfer.sent du webhook, transfert lancé à la main) reste clôturable.
+// Deux clôtures simultanées : une seule gagne (mise à jour conditionnelle), l'autre échoue.
+export async function cloturerRetraitManuel(retraitId: string, paye: boolean) {
+  const retrait = await prisma.retrait.findUnique({ where: { id: retraitId } });
+  if (!retrait) throw new Error("Retrait introuvable");
+  if (retrait.reference) throw new Error("Ce retrait est suivi automatiquement par NotchPay");
+  if (!(await appliquerStatutTransfert(retraitId, paye ? "complete" : "failed"))) throw new Error("Ce retrait est déjà traité");
 }
 
 // ─── Rembourser un retrait qui a échoué ───────────────────────────────────────
 // Idempotent même sous concurrence (webhook + re-vérification simultanés) : le
-// passage à « echoue » est conditionnel et seul celui qui le gagne recrédite.
-export async function rembourserRetraitEchoue(retraitId: string) {
-  await prisma.$transaction(async (tx) => {
+// passage à « echoue » est conditionnel et seul celui qui le gagne recrédite (vrai).
+export async function rembourserRetraitEchoue(retraitId: string): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
     const maj = await tx.retrait.updateMany({
       where: { id: retraitId, statut: { in: ["en_attente", "traitement"] } },
       data: { statut: "echoue" },
     });
-    if (maj.count === 0) return;
+    if (maj.count === 0) return false;
     const retrait = await tx.retrait.findUniqueOrThrow({ where: { id: retraitId } });
 
     await tx.wallet.update({
@@ -509,6 +560,7 @@ export async function rembourserRetraitEchoue(retraitId: string) {
       where: { type: "RETRAIT", reference: refRetrait(retraitId), statut: "en_cours" },
       data: { statut: "echoue" },
     });
+    return true;
   });
 }
 
@@ -530,6 +582,15 @@ async function synchroniserRetraits(tenantId: string) {
 
 // ─── Résumé wallet (pour le dashboard) ───────────────────────────────────────
 
+const ventesEnSequestre = (walletId: string) =>
+  prisma.walletTransaction.findMany({ where: { walletId, type: "CREDIT", disponibleLe: { gt: new Date() } }, select: { montant: true, disponibleLe: true } });
+
+/** Solde, disponible et en séquestre d'une boutique (null sans wallet). */
+export async function soldeDisponible(tenantId: string) {
+  const w = await prisma.wallet.findUnique({ where: { tenantId }, select: { id: true, solde: true, devise: true } });
+  return w ? { devise: w.devise, solde: w.solde, ...etatSequestre(w.solde, await ventesEnSequestre(w.id)) } : null;
+}
+
 export async function getWalletResume(tenantId: string) {
   await synchroniserRetraits(tenantId);
   const wallet = await prisma.wallet.findUnique({
@@ -548,8 +609,16 @@ export async function getWalletResume(tenantId: string) {
 
   if (!wallet) return null;
 
+  const [enCours, sequestre, taux] = await Promise.all([
+    // Tous les retraits ouverts, pas seulement les 10 affichés.
+    prisma.retrait.aggregate({ where: { walletId: wallet.id, statut: { in: ["en_attente", "traitement"] } }, _sum: { montant: true } }),
+    ventesEnSequestre(wallet.id),
+    tauxDuJour(),
+  ]);
   return {
     ...wallet,
-    retraitsEnAttente: wallet.retraits.filter((r) => r.statut === "en_attente" || r.statut === "traitement").reduce((s, r) => s + r.montant, 0),
+    ...etatSequestre(wallet.solde, sequestre), // disponible, enAttente (séquestre), liberations
+    minimumRetrait: minimumRetrait(wallet.devise, taux),
+    retraitsEnAttente: enCours._sum.montant ?? 0,
   };
 }

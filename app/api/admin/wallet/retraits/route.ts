@@ -11,7 +11,8 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
 
   const retraits = await prisma.retrait.findMany({
-    where: { statut: "en_attente", reference: null },
+    // « traitement » aussi : un transfert lancé (transfer.sent) reste à clôturer ici.
+    where: { statut: { in: ["en_attente", "traitement"] }, reference: null },
     orderBy: { createdAt: "asc" },
     take: 100,
   });

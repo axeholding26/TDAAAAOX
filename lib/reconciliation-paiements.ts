@@ -39,7 +39,8 @@ export async function reconcilierPaiements() {
   // Livraisons numériques incomplètes ou e-mail du lien en échec : reprises (idempotent).
   await essayer(async () => { bilan.livraisons = await reprendreLivraisons(); });
 
-  const abonnements = await prisma.tenant.findMany({ where: { planPendingRef: { not: null } }, select: { id: true }, take: 100 });
+  // Les plus récents d'abord ; verifierAbonnementEnAttente oublie ceux qui ont échoué ou ont plus de 3 jours.
+  const abonnements = await prisma.tenant.findMany({ where: { planPendingRef: { not: null } }, select: { id: true }, orderBy: { updatedAt: "desc" }, take: 100 });
   for (const t of abonnements) await essayer(async () => { if (await verifierAbonnementEnAttente(t.id)) bilan.abonnements++; });
 
   // Le stock d'un produit physique sort à la commande : non payée, elle le bloquait pour toujours.

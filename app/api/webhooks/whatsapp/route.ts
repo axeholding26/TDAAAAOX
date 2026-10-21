@@ -2,6 +2,7 @@
 // Conforme aux exigences Meta: vérification de signature, statuts, fenêtre 24h
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { METHODES_EN_LIGNE } from "@/lib/commandes";
 import { lireReglagesLivraison } from "@/lib/livraison-reglages";
 import { lireConnexion, lireConnexionPar } from "@/lib/connect";
 import { createHmac, timingSafeEqual } from "crypto";
@@ -152,7 +153,9 @@ async function detecterEtConfirmerCommande(
   );
   if (!estConfirmation) return;
 
-  await prisma.commande.update({ where: { id: commande.id }, data: { statut: "confirmee" } });
+  // Une commande à payer en ligne n'est confirmée que par le paiement reçu (lib/paiement-commande.ts).
+  const { count } = await prisma.commande.updateMany({ where: { id: commande.id, statut: "en_attente", methodePaiement: { notIn: METHODES_EN_LIGNE } }, data: { statut: "confirmee" } });
+  if (!count) return;
 
   const { notifierClientWhatsApp } = await import("@/lib/whatsapp");
   const tenant = await prisma.tenant.findUnique({
