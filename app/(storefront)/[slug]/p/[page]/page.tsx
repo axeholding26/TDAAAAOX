@@ -12,7 +12,7 @@ import { brouillonEnApercu } from "@/lib/vitrine-design";
 import { BlockTreeRenderer } from "@/components/storefront/blocks/BlockTreeRenderer";
 import { habillageDesign } from "@/components/storefront/templates/HabillageDesign";
 import { ordonnerParZone, zoneDe } from "@/lib/block-tree";
-import { cssSectionsDesign } from "@/lib/scope-css";
+import { cssSectionsDesign, cssPageImportee } from "@/lib/scope-css";
 import type { PagePerso } from "@/lib/builder/operations/structure";
 
 interface Props {
@@ -62,7 +62,7 @@ export default async function PageLibre({ params }: Props) {
   const herite = (z: "header" | "footer") => (propre.some((n) => zoneDe(n) === z) ? [] : accueil.filter((n) => zoneDe(n) === z));
   const nodes = ordonnerParZone([...herite("header"), ...propre, ...herite("footer")]);
 
-  const cssDesign = cssSectionsDesign(cfg as any);
+  const cssDesign = cssSectionsDesign(cfg as any) + cssPageImportee(p.css);
   const contenu = (
     <div style={{ containerType: "inline-size" }}>
       {cssDesign && <style dangerouslySetInnerHTML={{ __html: cssDesign }} />}

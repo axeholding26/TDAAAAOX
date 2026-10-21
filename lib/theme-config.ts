@@ -360,6 +360,9 @@ export interface ThemeConfig {
   // (lierProduitLibrairieAuGabarit) — le sélecteur du visuel PDP est propre
   // au design d'origine (lib/axso-design-library.ts), pas au produit.
   axsoDesignSelecteurVisuelPdp?: string;
+  // Boutique complète importée par le marchand : gabarit de carte produit
+  // tokenisé, tiré du fichier (lib/theme-import-clone.ts::gabaritCarteDepuisDemo).
+  axsoDesignCarteTemplate?: string;
   // Mapping couleurs ThemeConfig → noms de variables CSS du template HTML.
   // Calculé une fois à la provision (lib/axso-design-library.ts) et stocké
   // dans Theme.config pour que ImportedLiteralHomePage puisse injecter des
@@ -540,6 +543,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
     builderHtmlCheckoutChrome: overrides.builderHtmlCheckoutChrome ?? base.builderHtmlCheckoutChrome,
     builderHtmlConfirmationChrome: overrides.builderHtmlConfirmationChrome ?? base.builderHtmlConfirmationChrome,
     axsoDesignSelecteurVisuelPdp: overrides.axsoDesignSelecteurVisuelPdp ?? base.axsoDesignSelecteurVisuelPdp,
+    axsoDesignCarteTemplate: overrides.axsoDesignCarteTemplate ?? base.axsoDesignCarteTemplate,
     axsoDesignCssVarMapping: overrides.axsoDesignCssVarMapping ?? base.axsoDesignCssVarMapping,
     designsOrigine: overrides.designsOrigine ?? base.designsOrigine,
     axsoDesignPolices: overrides.axsoDesignPolices ?? base.axsoDesignPolices,
@@ -554,7 +558,7 @@ export function mergeThemeConfig(base: ThemeConfig, overrides: Record<string, an
 
 export function resolveThemeConfig(themeId: string, savedConfig: Record<string, any> = {}): ThemeConfig {
   const base = DEFAULTS[themeId] || DEFAULTS["terre-et-or"];
-  const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp"]);
+  const CHAMPS_CLONE = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp", "axsoDesignCarteTemplate"]);
   const hasCustom = savedConfig && Object.keys(savedConfig).filter(k => !CHAMPS_CLONE.has(k)).length > 0;
   if (!hasCustom) return base;
 
@@ -614,6 +618,12 @@ export function appliquerNouveauTheme(ancienConfig: ThemeConfig, nouveauThemeBas
     aboutPage: ancienConfig.aboutPage,
     contactPage: ancienConfig.contactPage,
     designsOrigine: ancienConfig.designsOrigine,
+    // Pages libres (dont les pages importées, qui ont leur propre CSS), menus,
+    // marque et SEO du Builder IA : contenu de la boutique, pas du thème.
+    pagesPerso: ancienConfig.pagesPerso,
+    navigation: ancienConfig.navigation,
+    marque: ancienConfig.marque,
+    seo: ancienConfig.seo,
     // builderTree n'est PAS repris de l'ancien thème (contrairement aux champs
     // ci-dessus) : contrairement à customCss/productPage, un arbre de blocs
     // est souvent construit pour un design précis — notamment un bloc

@@ -53,8 +53,12 @@ export function validerConfig(cfg: Record<string, any>, avant: Record<string, an
     if (v !== undefined && (typeof v !== "string" || !COULEUR.test(v.trim()))) erreurs.push(`couleur invalide (${cle}) : ${String(v).slice(0, 40)}`);
   }
   if (cfg.customCss !== avant.customCss && typeof cfg.customCss === "string" && (nbDangers(cfg.customCss) > nbDangers(avant.customCss) || /<\/style/i.test(cfg.customCss))) erreurs.push("CSS personnalisé refusé (code non autorisé)");
-  for (const cle of ["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome"]) {
+  for (const cle of ["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignCarteTemplate"]) {
     if (cfg[cle] !== avant[cle]) erreurs.push(`le design importé (${cle}) ne se modifie pas par une IA`);
+  }
+  // CSS d'une page importée : même règle que le design importé.
+  for (const [cle, page] of Object.entries((cfg.pagesPerso ?? {}) as Record<string, any>)) {
+    if (page?.css !== undefined && page.css !== avant.pagesPerso?.[cle]?.css) erreurs.push(`le CSS de la page importée « ${cle} » ne se modifie pas par une IA`);
   }
   return erreurs;
 }

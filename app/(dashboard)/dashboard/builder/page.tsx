@@ -397,6 +397,8 @@ export default function BuilderPage() {
           criteresManquants={criteresManquants}
           bandeaux={bandeaux}
           onSyncWithServer={syncWithServer}
+          // Rendu après le chargement de la boutique, côté navigateur : l'adresse se lit directement.
+          pageInitiale={(new URLSearchParams(window.location.search).get("page") as any) || undefined}
           modeles={<PanelModeles tenant={tenant} onApplied={refetchTenant} />}
           panneauxPages={{
             produit: <PanelProduit config={config} setProductPage={setProductPage} set={set} />,

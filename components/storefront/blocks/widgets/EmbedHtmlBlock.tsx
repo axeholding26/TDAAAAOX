@@ -10,7 +10,8 @@ import { scoperCss } from "@/lib/scope-css";
 // fois pour toutes par la page (cssSectionsDesign).
 export function EmbedHtmlBlock({ id, config }: BlockRenderProps) {
   return (
-    <div data-axs-id={id} data-axs-embed-html="1">
+    // cssPage : section d'une page importée seule — son CSS est celui de la page (cssPageImportee).
+    <div data-axs-id={id} data-axs-embed-html="1" data-axs-css-page={config?.cssPage ? "" : undefined}>
       {config?.css && <style dangerouslySetInnerHTML={{ __html: scoperCss(config.css, `[data-axs-id="${id}"]`) }} />}
       {config?.html && <div dangerouslySetInnerHTML={{ __html: config.html }} />}
     </div>

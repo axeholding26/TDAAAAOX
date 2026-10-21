@@ -6,7 +6,7 @@ import type { BlockNode, ThemeConfig } from "@/lib/theme-config";
 import { BLOCK_REGISTRY } from "@/components/storefront/blocks/registry";
 import { blockStyleToCss, TYPES_A_CIBLE, couleursSection, cssSection, fondSection, POSITION_CONTENU } from "@/components/storefront/blocks/styleUtils";
 import { ResponsiveStyleTag } from "@/components/storefront/blocks/ResponsiveStyleTag";
-import { cssSectionsDesign, scoperCss } from "@/lib/scope-css";
+import { cssSectionsDesign, cssPageImportee, scoperCss } from "@/lib/scope-css";
 import { zoneDe, type Zone } from "@/lib/block-tree";
 import { ProductsCanvasPreview } from "../canvas/CanvasNode";
 import { StorefrontTypography } from "@/components/storefront/StorefrontTypography";
@@ -39,6 +39,8 @@ interface Props {
   onNaviguer?: (page: PageEditee) => void; // lien cliqué → page correspondante dans l'éditeur
   survolId?: string | null; // section survolée dans le panneau de gauche → encadrée ici
   onSurvol?: (id: string | null) => void; // section survolée ici → ligne surlignée à gauche
+  cssPage?: string; // page importée seule : son propre CSS (PagePerso.css)
+  pageVide?: string; // message quand la page n'a aucune section
 }
 
 // Aperçu en direct façon Shopify : la page telle qu'elle s'affichera, avec la
@@ -46,7 +48,7 @@ interface Props {
 // sur ses bords pour insérer une section juste avant/après. Pas de
 // glisser-déposer ici (comme Shopify) : l'ordre se change dans le panneau de
 // gauche, qui reste la seule source de vérité de la structure.
-export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer, survolId, onSurvol }: Props) {
+export function Apercu({ config, tree, slug, collections, device, selectedId, onSelect, onChangeConfig, onAjouterSection, selectedEl, onSelectElement, onNaviguer, survolId, onSurvol, cssPage, pageVide }: Props) {
   const tr = useT();
   const racine = useRef<HTMLDivElement>(null);
   const defileur = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
   // builderTree (réglages par élément du panneau de droite) et fonts en dépendances :
   // sans eux l'aperçu gardait l'ancien CSS et aucun réglage ne s'y voyait.
   const cssPerso = useMemo(() => (config.customCss ? scoperCss(config.customCss, "[data-apercu-page]") : ""), [config.customCss]);
-  const cssDesign = useMemo(() => cssSectionsDesign(config as any), [config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices, config.boutons, config.navigationStyle, config.animations, (config as any).reglagesDesign]); // eslint-disable-line react-hooks/exhaustive-deps
+  const cssDesign = useMemo(() => cssSectionsDesign(config as any) + cssPageImportee(cssPage), [cssPage, config.builderCss, config.colors, config.axsoDesignCssVarMapping, config.builderTree, config.fonts, config.axsoDesignPolices, config.boutons, config.navigationStyle, config.animations, (config as any).reglagesDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sélection venue d'ailleurs (panneau de gauche, panneau de droite) : l'élément
   // est centré à l'écran avec un bref halo. Pas pour un clic dans l'aperçu : il y est déjà.
@@ -137,7 +139,7 @@ export function Apercu({ config, tree, slug, collections, device, selectedId, on
         <div data-apercu-page className="axs-store" style={{ containerType: "inline-size" }}>
           {visibles.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-3 text-center px-6">
-              <p className="text-[15px] font-semibold text-[#111111]">{tr("Ta page d'accueil est vide")}</p>
+              <p className="text-[15px] font-semibold text-[#111111]">{tr(pageVide ?? "Ta page d'accueil est vide")}</p>
               <p className="text-[14px] text-[#777777]">{tr("Ajoute ta première section pour commencer.")}</p>
               <button onClick={(e) => { e.stopPropagation(); onAjouterSection("template", 0); }}
                 className="mt-1 h-10 px-4 rounded-lg text-[14px] font-semibold bg-[#F5A623] text-[#111111] hover:bg-[#E8990F] transition-colors">
@@ -321,7 +323,7 @@ function EmbedEditable({ node, actif, onChangeConfig, onSelectElement }: {
     onSelectElement(node.id, id);
   };
   return (
-    <div data-axs-embed-html="1">
+    <div data-axs-embed-html="1" data-axs-css-page={node.config?.cssPage ? "" : undefined}>
       <div
         ref={ref}
         data-embed-noeud={node.id}

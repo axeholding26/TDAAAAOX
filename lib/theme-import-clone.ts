@@ -120,6 +120,25 @@ function finaliser(root: ParsedElement, slug: string): string {
   return (body ? body.innerHTML : root.toString()).trim();
 }
 
+// Nom et prix d'une carte produit : le prix est le texte qui correspond au
+// format monétaire strict ; le nom est le texte non numérique le plus long.
+function reperesCarte(carte: ParsedElement) {
+  const candidats = carte.querySelectorAll("*").filter((el) => {
+    const t = (el.textContent || "").trim();
+    return t.length > 0 && el.childNodes.every((c) => (c as any).nodeType === 3 || (c as any).nodeType === undefined || !(c as ParsedElement).tagName);
+  });
+  const candidatPrix = candidats.find((el) =>
+    /^[\d][\d\s.,]*\s*(FCFA|CFA|XOF|XAF|F|€|EUR|\$|USD)?$/i.test((el.textContent || "").trim())
+  );
+  const candidatNom = candidats
+    .filter((el) => el !== candidatPrix && !REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim()))
+    .sort((a, b) =>
+      (b.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length -
+      (a.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length
+    )[0];
+  return { candidatPrix, candidatNom };
+}
+
 // Clone une grille de produits répétée (accueil ET liste boutique) — clone
 // la première carte trouvée comme gabarit, puis en génère une par produit
 // réel avec nom/prix/image/lien réécrits. Mute `root` en place ; retourne si
@@ -148,19 +167,7 @@ function clonerGrilleProduits(
     // Heuristique nom/prix : le prix est le texte qui correspond au format
     // monétaire strict ; le nom est le texte non-numérique le plus long
     // parmi les descendants directs (titres, spans, paragraphes).
-    const candidats = carte.querySelectorAll("*").filter((el) => {
-      const t = (el.textContent || "").trim();
-      return t.length > 0 && el.childNodes.every((c) => (c as any).nodeType === 3 || (c as any).nodeType === undefined || !(c as ParsedElement).tagName);
-    });
-    const candidatPrix = candidats.find((el) =>
-      /^[\d][\d\s.,]*\s*(FCFA|CFA|XOF|XAF|F|€|EUR|\$|USD)?$/i.test((el.textContent || "").trim())
-    );
-    const candidatNom = candidats
-      .filter((el) => el !== candidatPrix && !REGEX_TEXTE_BOUTON_ACTION.test((el.textContent || "").trim()))
-      .sort((a, b) =>
-        (b.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length -
-        (a.textContent || "").replace(/[^a-zA-ZÀ-ÿ]/g, "").length
-      )[0];
+    const { candidatPrix, candidatNom } = reperesCarte(carte);
 
     if (candidatPrix) candidatPrix.set_content(p.prixAffiche);
     if (candidatNom) candidatNom.set_content(p.nom);
@@ -277,8 +284,13 @@ export interface VuesLibrairie {
 // individuellement (le CSS d'origine masque .view par défaut et ne montre
 // que .view.active — chaque route AXSO ne rend qu'une seule vue à la fois).
 // Retourne null si le fichier ne suit pas la convention à 6 vues attendue.
-export function extraireVuesLibrairie(params: { htmlBrut: string; slug: string }): VuesLibrairie | null {
-  const { htmlBrut, slug } = params;
+// `completer` (import d'une boutique complète par un marchand) : seuls l'accueil
+// et le catalogue sont exigés — une vue absente devient une vue vide (fiche,
+// panier, commande et confirmation sont de toute façon les composants d'Axso
+// dans l'habillage du design) — et les liens sont aussi rattachés d'après leur
+// texte (« Boutique », « Contact »…), le fichier n'ayant pas de go('…').
+export function extraireVuesLibrairie(params: { htmlBrut: string; slug: string; completer?: boolean }): VuesLibrairie | null {
+  const { htmlBrut, slug, completer } = params;
   const { root, css } = parserEtExtraireCss(htmlBrut);
   const body = root.querySelector("body");
   if (!body) return null;
@@ -292,10 +304,12 @@ export function extraireVuesLibrairie(params: { htmlBrut: string; slug: string }
   for (const id of ids) {
     const el = root.querySelector(`#view-${id}`);
     if (el) vues[id] = el;
+    else if (completer && id !== "home" && id !== "boutique") vues[id] = parse(`<div class="view" id="view-${id}"></div>`).firstChild as ParsedElement;
   }
   if (ids.some((id) => !vues[id])) return null;
 
   reecrireLiensGo(root, slug);
+  if (completer) reecrireLiensNav(root, slug);
   nettoyerElement(root);
   for (const id of ids) vues[id]!.setAttribute("class", "view active");
 
@@ -324,6 +338,28 @@ export function extraireVuesLibrairie(params: { htmlBrut: string; slug: string }
     confirmation: vues.confirmation!.outerHTML,
     css,
   };
+}
+
+// Gabarit de carte ({{ID}}/{{NOM}}/{{PRIX}}/{{IMAGE}}/{{LIEN}}) tiré de la
+// première carte de démonstration de #plpGrid (ou #homeGrid) d'un fichier
+// importé : il remplace l'extraction par IA des designs de la bibliothèque.
+// Les deux grilles sont ensuite régénérées à chaque rendu avec les vrais
+// produits (lib/vitrine-design.ts). null si aucune carte n'est trouvée.
+export function gabaritCarteDepuisDemo(html: string): string | null {
+  const root = parse(html);
+  const carte = (root.querySelector("#plpGrid") ?? root.querySelector("#homeGrid"))?.childNodes.find((n) => (n as ParsedElement).tagName) as ParsedElement | undefined;
+  if (!carte) return null;
+  const modele = parse(carte.outerHTML).firstChild as ParsedElement;
+  const { candidatPrix, candidatNom } = reperesCarte(modele);
+  if (!candidatNom) return null;
+  candidatNom.set_content("{{NOM}}");
+  if (candidatPrix) candidatPrix.set_content("{{PRIX}}");
+  const img = modele.querySelector("img");
+  if (img) { img.setAttribute("src", "{{IMAGE}}"); img.setAttribute("alt", "{{NOM}}"); }
+  const lien = modele.tagName === "A" ? modele : modele.querySelector("a");
+  if (lien) lien.setAttribute("href", "{{LIEN}}");
+  nettoyerElement(modele);
+  return lien ? modele.outerHTML : `<a href="{{LIEN}}" style="display:contents;color:inherit;text-decoration:none">${modele.outerHTML}</a>`;
 }
 
 // Injecte une grille de produits réels dans le conteneur connu (#homeGrid ou

@@ -16,7 +16,7 @@ import type { ModuleKey } from "@/lib/permissions";
 const CHAMPS_DU_DESIGN = [
   "builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome",
   "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignSelecteurVisuelPdp",
-  "axsoDesignCssVarMapping", "axsoDesignPolices",
+  "axsoDesignCssVarMapping", "axsoDesignPolices", "axsoDesignCarteTemplate",
 ];
 
 const CHAMPS_BOUTIQUE = new Set(["themeId", "themeConfig", "statut"]);

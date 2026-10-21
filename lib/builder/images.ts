@@ -80,7 +80,7 @@ export function altPropose(nom: string, contexte?: string): string {
 // ─── Images utilisées par une configuration ──────────────────────────────────
 // Les designs importés d'origine (builderHtml…) ne se modifient pas par une IA (lib/builder/validation.ts) :
 // ils sont inventoriés, jamais réécrits.
-export const CHAMPS_DESIGN_FIGES = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome"]);
+export const CHAMPS_DESIGN_FIGES = new Set(["builderHtml", "builderCss", "builderHtmlProduits", "builderHtmlProduit", "builderHtmlPanierChrome", "builderHtmlCheckoutChrome", "builderHtmlConfirmationChrome", "axsoDesignCarteTemplate"]);
 const CLE_IMAGE = /image|img|logo|url|src|photo|banner|banniere|poster|icon|fond|background|slideshow|logos|images/i;
 const EXT_MEDIA = /\.(png|jpe?g|webp|gif|avif|svg|mp4|webm|mov)(\?|#|$)/i;
 const RE_ATTR = /\b(?:src|poster|data-src)\s*=\s*["']([^"']+)["']/gi;

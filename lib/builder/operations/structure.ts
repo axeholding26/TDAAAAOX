@@ -27,6 +27,8 @@ export interface PagePerso {
   nom: string; slug: string; gabarit?: string;
   seo?: { titre?: string; description?: string; image?: string; noindex?: boolean };
   builderTree: BlockNode[];
+  /** Page importée seule (fichier HTML) : son CSS, confiné à ses sections (lib/scope-css.ts::cssPageImportee). */
+  css?: string;
   /** lien : accessible par son adresse mais pas indexée (noindex). */
   visibilite: "publique" | "lien";
   statut: "brouillon" | "publiee";
@@ -69,7 +71,7 @@ function surArbre(cfg: ThemeConfig, page: unknown, f: (tree: BlockNode[]) => Blo
 }
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-function slugLibre(cfg: ThemeConfig, voulu: string): string {
+export function slugLibre(cfg: ThemeConfig, voulu: string): string {
   const base = slugify(voulu).slice(0, 50) || "page";
   if (!SLUG.test(base) || base === "accueil") invalide(`Adresse de page invalide : « ${voulu} ».`);
   let s = base;

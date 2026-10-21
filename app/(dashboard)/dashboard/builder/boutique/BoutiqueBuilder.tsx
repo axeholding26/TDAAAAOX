@@ -21,7 +21,7 @@ import { ApercuFiche, useFicheCible } from "./ApercuFiche";
 import { ApercuPage } from "../pages/ApercuPage";
 import { PanneauPage } from "../pages/PanneauPage";
 import { SelecteurPage } from "../pages/SelecteurPage";
-import { PAGES, type PageEditee } from "../pages/pages";
+import { PAGES, cleLibre, type PageEditee } from "../pages/pages";
 import { nomNoeud } from "./libelles";
 import { convertirDesignEnSections } from "@/lib/decoupage-design";
 import { lireElement, modifierElement, appliquerContenu, selectionnerParent, racineElement } from "./elements-dom";
@@ -61,6 +61,7 @@ interface Props {
   // Panneaux des pages à sections (fiche produit, À propos, Contact).
   panneauxPages: Partial<Record<PageEditee, ReactNode>>;
   onSyncWithServer: () => Promise<void>;
+  pageInitiale?: PageEditee; // ?page= dans l'adresse (ex. page importée à l'instant)
 }
 
 // Constructeur des boutiques physiques (catalogue), sur le modèle de l'éditeur
@@ -73,12 +74,18 @@ export function BoutiqueBuilder(p: Props) {
   const { config, set, tenant, device } = p;
   const [onglet, setOnglet] = useState<Onglet>("sections");
   // Page de la boutique en cours d'édition (sélecteur de la barre du haut).
-  const [page, setPageBrute] = useState<PageEditee>("accueil");
+  const [page, setPageBrute] = useState<PageEditee>(p.pageInitiale ?? "accueil");
   const setPage = (pg: PageEditee) => { setPageBrute(pg); setOnglet("sections"); setReglageOuvert(null); setAjout(null); };
   // Aperçus en cadre (catalogue, panier…) : rechargés à chaque enregistrement.
   const [versionApercu, setVersionApercu] = useState(0);
   useEffect(() => { if (p.saved) setVersionApercu((v) => v + 1); }, [p.saved]);
-  const pageEnCadre = !["accueil", "produit"].includes(page);
+  // Page libre (page importée…) : sections modifiables comme l'accueil, dans pagesPerso.
+  const pagesLibres = ((config as any).pagesPerso ?? {}) as Record<string, { nom?: string; builderTree?: BlockNode[]; css?: string; ordre?: number }>;
+  const cle = cleLibre(page);
+  const libre = cle ? pagesLibres[cle] : undefined;
+  const avecSections = page === "accueil" || !!libre;
+  const libellePage = libre ? libre.nom || cle! : PAGES.find((pg) => pg.id === page)?.label ?? "";
+  const pageEnCadre = !avecSections && page !== "produit";
   // Sur ces pages, enregistrement rapide pour que l'aperçu suive sans attendre.
   useEffect(() => {
     if (!pageEnCadre || !p.hasChanges || p.saving) return;
@@ -98,11 +105,19 @@ export function BoutiqueBuilder(p: Props) {
   const [choixSurvole, setChoixSurvole] = useState<ChoixAjout | null>(null);
   useEffect(() => setChoixSurvole(null), [ajout]);
 
-  const tree = ordonnerParZone(config.builderTree ?? []);
+  const tree = ordonnerParZone((libre ? libre.builderTree : config.builderTree) ?? []);
   const setTree = useCallback(
-    (u: (t: BlockNode[]) => BlockNode[]) => set((c) => ({ ...c, builderTree: ordonnerParZone(u(ordonnerParZone(c.builderTree ?? []))) })),
-    [set],
+    (u: (t: BlockNode[]) => BlockNode[]) => set((c) => {
+      if (!cle) return { ...c, builderTree: ordonnerParZone(u(ordonnerParZone(c.builderTree ?? []))) };
+      const pages = (c as any).pagesPerso ?? {};
+      if (!pages[cle]) return c;
+      return { ...c, pagesPerso: { ...pages, [cle]: { ...pages[cle], builderTree: ordonnerParZone(u(ordonnerParZone(pages[cle].builderTree ?? []))) } } } as ThemeConfig;
+    }),
+    [set, cle],
   );
+  // Page libre sans en-tête ni pied de page propres : ceux de l'accueil, affichés dans l'aperçu (comme sur la boutique).
+  const accueil = ordonnerParZone(config.builderTree ?? []);
+  const herite = (z: Zone) => (libre && !tree.some((n) => zoneDe(n) === z) ? accueil.filter((n) => zoneDe(n) === z) : []);
 
   // Design importé → sections éditables une à une (voir decoupage.ts). Une
   // vraie modification (enregistrée automatiquement), pas une conversion en
@@ -133,12 +148,13 @@ export function BoutiqueBuilder(p: Props) {
     return n ? { ...n, id: ID_APERCU_AJOUT, config: ajout.zone !== "template" ? { ...n.config, zone: ajout.zone } : n.config } : null;
   }, [cleChoix]); // eslint-disable-line react-hooks/exhaustive-deps
   const treeApercu = useMemo(() => {
-    if (!noeudApercu || !ajout) return tree;
-    if (ajout.mode === "section") return insertNode(tree, null, indexGlobal(tree, ajout.zone, ajout.index), noeudApercu);
-    const section = findNode(tree, ajout.sectionId);
+    const complet = libre ? ordonnerParZone([...herite("header"), ...tree, ...herite("footer")]) : tree;
+    if (!noeudApercu || !ajout) return complet;
+    if (ajout.mode === "section") return insertNode(complet, null, indexGlobal(complet, ajout.zone, ajout.index), noeudApercu);
+    const section = findNode(complet, ajout.sectionId);
     const colonne = section && premiereColonne(section);
-    return colonne ? insertNode(tree, colonne.id, (colonne.children ?? []).length, noeudApercu) : tree;
-  }, [noeudApercu, ajout, config.builderTree]); // eslint-disable-line react-hooks/exhaustive-deps
+    return colonne ? insertNode(complet, colonne.id, (colonne.children ?? []).length, noeudApercu) : complet;
+  }, [noeudApercu, ajout, config.builderTree, libre]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const supprimer = (id: string) => { setTree((t) => removeNode(t, id)); setSelectedId((s) => (s === id ? null : s)); };
 
@@ -218,7 +234,7 @@ export function BoutiqueBuilder(p: Props) {
     if (r.kind === "page") return setPage(r.page);
     if (r.kind === "fiche") { setPage("produit"); useFicheCible.getState().ouvrir(r.type); return; }
     if (r.kind === "reglage") { setAjout(null); setOnglet("parametres"); setReglageOuvert(r.id); return; }
-    if (page !== "accueil") setPage("accueil");
+    if (!avecSections) setPage("accueil");
     else { setOnglet("sections"); setAjout(null); }
     if (r.kind === "noeud") setSelectedId(r.id);
     else selectionnerElement(r.embedId, r.index);
@@ -261,7 +277,8 @@ export function BoutiqueBuilder(p: Props) {
               ? <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#FFF1D6] text-[#B45309]">{tr("Brouillon")}</span>
               : <span className="px-2 py-0.5 rounded-md text-[12.5px] font-semibold bg-[#F3F4F6] text-[#4B5563]">{tr("Hors ligne")}</span>}
           <span className="w-px h-5 bg-[#E5E5E5]" />
-          <SelecteurPage page={page} onChange={setPage} />
+          <SelecteurPage page={page} onChange={setPage}
+            pagesLibres={Object.entries(pagesLibres).sort(([, a], [, b]) => (a.ordre ?? 0) - (b.ordre ?? 0)).map(([c, pg]) => ({ cle: c, nom: pg.nom || c }))} />
         </div>
 
         <div className="flex items-center justify-end gap-1.5 min-w-0">
@@ -312,7 +329,7 @@ export function BoutiqueBuilder(p: Props) {
       <div className="flex-1 flex min-h-0">
         {/* ── Panneau de gauche ── */}
         <aside className="relative w-[320px] flex-shrink-0 flex flex-col bg-white border-r border-[#E5E5E5]">
-          {onglet === "sections" && page !== "accueil" && (
+          {onglet === "sections" && !avecSections && (
             p.panneauxPages[page]
               ? <div className="flex-1 flex flex-col min-h-0">
                   <div className="px-5 h-14 flex items-center border-b border-[#EEEEEE] flex-shrink-0"><p className="text-[15px] font-semibold">{tr(PAGES.find((pg) => pg.id === page)?.label)}</p></div>
@@ -321,8 +338,9 @@ export function BoutiqueBuilder(p: Props) {
               : <PanneauPage page={page} onPage={setPage} />
           )}
 
-          {onglet === "sections" && page === "accueil" && (
+          {onglet === "sections" && avecSections && (
             <PanneauSections
+              titre={libre ? libellePage : undefined}
               tree={tree}
               selectedId={selectedId}
               onSelect={setSelectedId}
@@ -395,6 +413,8 @@ export function BoutiqueBuilder(p: Props) {
           onSurvol={setSurvolId}
           onChangeConfig={(id, patch) => setTree((t) => updateNodeConfig(t, id, patch))}
           onAjouterSection={(zone, index) => { setOnglet("sections"); setAjout({ mode: "section", zone, index }); }}
+          cssPage={libre?.css}
+          pageVide={libre ? tr("La page « {0} » est vide", libellePage) : undefined}
           selectedEl={selectedEl}
           onSelectElement={(noeudId, elId) => { setSelectedIdBrut(noeudId); setSelectedEl(elId); }}
         />}
@@ -445,7 +465,7 @@ export function BoutiqueBuilder(p: Props) {
       </div>
 
       <AxiaBuilderPanel onSyncWithServer={p.onSyncWithServer} decalageDroite={selection ? 340 : 0} contexte={[
-        `page « ${PAGES.find((pg) => pg.id === page)!.label} »`,
+        libre ? `page libre « ${libellePage} » (p/${cle})` : `page « ${libellePage} »`,
         selection && `section sélectionnée « ${nomNoeud(selection)} » (id ${selection.id})`,
         selectedEl && `élément sélectionné ${selectedEl}${infoEl ? ` (${infoEl.nom}${infoEl.texte ? ` « ${infoEl.texte.slice(0, 60)} »` : ""})` : ""}`,
       ].filter(Boolean).join(", ")} />

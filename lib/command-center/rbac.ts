@@ -16,7 +16,7 @@ export const SECTIONS = [
   "cc", "croissance", "revenus", "marchands", "commerce", "ia", "marketing", "operations", "paiements", "geographie",
   "produit", "succes", "alertes", "experiences", "rapports", "explorer", "reglages", "audit",
   // Gestion (pages historiques)
-  "boutiques", "abonnements", "finances", "affilies", "axsocial", "livreurs", "fournisseurs", "equipe", "integrations", "avis",
+  "boutiques", "abonnements", "finances", "affilies", "axsocial", "livreurs", "fournisseurs", "equipe", "integrations", "avis", "annonces",
 ] as const;
 export type Section = (typeof SECTIONS)[number];
 
@@ -24,11 +24,11 @@ const ANALYTIQUE: Section[] = ["cc", "croissance", "revenus", "marchands", "comm
 
 const ACCES: Record<RoleAdmin, Section[]> = {
   admin: [...SECTIONS],
-  admin_lecteur: [...ANALYTIQUE, "reglages", "audit", "boutiques", "abonnements", "finances", "affilies", "axsocial", "livreurs", "fournisseurs", "equipe", "avis"],
-  admin_ceo: [...ANALYTIQUE, "reglages", "audit", "boutiques", "abonnements", "finances", "affilies", "avis"],
+  admin_lecteur: [...ANALYTIQUE, "reglages", "audit", "boutiques", "abonnements", "finances", "affilies", "axsocial", "livreurs", "fournisseurs", "equipe", "avis", "annonces"],
+  admin_ceo: [...ANALYTIQUE, "reglages", "audit", "boutiques", "abonnements", "finances", "affilies", "avis", "annonces"],
   admin_analyste: [...ANALYTIQUE, "reglages"],
   admin_finance: ["cc", "revenus", "paiements", "commerce", "geographie", "marchands", "alertes", "rapports", "explorer", "finances", "affilies", "abonnements", "boutiques"],
-  admin_growth: ["cc", "croissance", "revenus", "marchands", "marketing", "geographie", "experiences", "succes", "ia", "produit", "alertes", "rapports", "explorer", "boutiques", "axsocial", "avis", "affilies"],
+  admin_growth: ["cc", "croissance", "revenus", "marchands", "marketing", "geographie", "experiences", "succes", "ia", "produit", "alertes", "rapports", "explorer", "boutiques", "axsocial", "avis", "affilies", "annonces"],
   admin_produit: ["cc", "produit", "ia", "croissance", "experiences", "marchands", "alertes", "rapports", "explorer"],
   admin_support: ["cc", "marchands", "succes", "operations", "commerce", "alertes", "boutiques", "livreurs", "avis"],
   admin_operations: ["cc", "operations", "commerce", "paiements", "geographie", "marchands", "alertes", "rapports", "livreurs", "fournisseurs", "boutiques"],

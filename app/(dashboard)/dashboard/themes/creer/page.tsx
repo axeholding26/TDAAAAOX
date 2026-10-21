@@ -5,9 +5,16 @@ import { toast } from "sonner";
 import { ArrowLeft, Upload, FileCode, Loader2, Wand2, Copy, Sparkles } from "lucide-react";
 import { ApercuDesign, parametresApercu, CONFIRMER_CHANGEMENT } from "@/components/dashboard/ApercuDesign";
 import { useT } from "@/components/I18nProvider";
-import { PROMPT_IMPORT_THEME, validerThemeImporte, type RapportTheme } from "@/lib/prompt-import-theme";
+import { PROMPTS_IMPORT, validerThemeImporte, type RapportTheme, type TypeImport } from "@/lib/prompt-import-theme";
 
 type Mode = "librairie" | "import";
+
+// Ce que le fichier importé remplace (standard de chacun : lib/prompt-import-theme.ts).
+const TYPES_IMPORT: { id: TypeImport; label: string; desc: string }[] = [
+  { id: "accueil", label: "Page d'accueil", desc: "Remplace votre accueil ; catalogue, fiche produit et commande restent ceux d'Axso, à vos couleurs." },
+  { id: "boutique", label: "Boutique complète", desc: "Accueil et catalogue de votre fichier ; fiche produit, panier, commande, À propos et Contact d'Axso dans son en-tête et son pied de page." },
+  { id: "page", label: "Une page en plus", desc: "Ajoute une page (campagne, présentation…) entre votre en-tête et votre pied de page. Votre thème ne change pas." },
+];
 
 export default function CreerThemePage() {
   const tr = useT();
@@ -52,31 +59,47 @@ export default function CreerThemePage() {
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
   const [rapport, setRapport] = useState<RapportTheme | null>(null);
+  const [typeImport, setTypeImport] = useState<TypeImport>("accueil");
+  const [nomPage, setNomPage] = useState("");
+  const prompt = PROMPTS_IMPORT[typeImport];
 
+  async function verifier(f: File | null, type: TypeImport) {
+    setRapport(f ? validerThemeImporte(await f.text(), type) : null);
+  }
   async function choisirFichier(f: File | null) {
     setImportFile(f);
-    setRapport(f ? validerThemeImporte(await f.text()) : null);
+    await verifier(f, typeImport);
+  }
+  function choisirType(type: TypeImport) {
+    setTypeImport(type);
+    verifier(importFile, type);
   }
 
   async function copierPrompt() {
-    try { await navigator.clipboard.writeText(PROMPT_IMPORT_THEME); toast.success(tr("Prompt copié !")); }
+    try { await navigator.clipboard.writeText(prompt); toast.success(tr("Prompt copié !")); }
     catch { toast.error(tr("Copie impossible : sélectionnez le texte à la main.")); }
   }
 
   async function importerDepuisFichier() {
     if (!importFile) { toast.error(tr("Choisissez un fichier .html à analyser")); return; }
     if (importFile.size > 300_000) { toast.error(tr("Fichier trop volumineux (300 Ko maximum).")); return; }
-    if (!confirm(CONFIRMER_CHANGEMENT(importFile.name))) return;
+    if (rapport?.erreurs.length && !confirm(tr("Ce fichier ne respecte pas le standard (voir la liste). L'importer quand même ?"))) return;
+    if (typeImport !== "page" && !confirm(CONFIRMER_CHANGEMENT(importFile.name))) return;
     setImporting(true);
     try {
       // Le HTML est lu ici et envoyé tel quel : pas de passage par le stockage de fichiers.
       const res = await fetch("/api/themes/importer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: await importFile.text() }),
+        body: JSON.stringify({ html: await importFile.text(), type: typeImport, ...(nomPage.trim() ? { nomPage: nomPage.trim() } : {}) }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Échec de l'analyse du fichier");
+      if (typeImport === "page") {
+        toast.success(tr("Page « {0} » ajoutée à votre boutique : {1}", data.page.nom, data.page.url));
+        router.push(`/dashboard/builder?page=p:${encodeURIComponent(data.page.slug)}`);
+        return;
+      }
 
       const activation = await fetch("/api/tenants", {
         method: "PATCH",
@@ -147,6 +170,21 @@ export default function CreerThemePage() {
               {tr("Envoyez un fichier HTML : son design et ses textes sont repris tels quels, vos vrais produits branchés dans sa grille, puis vous le modifiez dans le Constructeur. Les scripts sont retirés, jamais exécutés.")}
             </p>
 
+            <p className="text-xs font-semibold text-gray-700 mb-2">{tr("Que contient votre fichier ?")}</p>
+            <div role="radiogroup" className="space-y-2 mb-4">
+              {TYPES_IMPORT.map((ti) => (
+                <button key={ti.id} type="button" role="radio" aria-checked={typeImport === ti.id} onClick={() => choisirType(ti.id)}
+                  className={`w-full text-left rounded-xl border-2 px-3 py-2.5 transition-all ${typeImport === ti.id ? "border-[#F5A623] bg-[#F5A623]/5" : "border-gray-200 hover:border-gray-300"}`}>
+                  <span className="block text-xs font-semibold text-gray-900">{tr(ti.label)}</span>
+                  <span className="block text-[11px] text-gray-500 leading-snug mt-0.5">{tr(ti.desc)}</span>
+                </button>
+              ))}
+            </div>
+            {typeImport === "page" && (
+              <input value={nomPage} onChange={(e) => setNomPage(e.target.value)} maxLength={80} placeholder={tr("Nom de la page (sinon le titre du fichier)")}
+                className="w-full mb-4 rounded-lg border border-gray-200 px-3 py-2 text-base sm:text-sm outline-none focus:border-[#F5A623]" />
+            )}
+
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-200 rounded-xl py-8 cursor-pointer hover:border-[#F5A623]/50 transition-all">
               <input type="file" accept=".html,text/html" className="hidden"
                 onChange={(e) => choisirFichier(e.target.files?.[0] || null)} />
@@ -165,7 +203,7 @@ export default function CreerThemePage() {
 
             <button onClick={importerDepuisFichier} disabled={importing || !importFile}
               className="w-full mt-5 flex items-center justify-center gap-2 bg-[#F5A623] text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#d4820a] disabled:opacity-50 transition-all">
-              {importing ? <><Loader2 size={14} className="animate-spin" />{" "}{tr("Analyse en cours…")}</> : tr("Analyser & créer mon thème")}
+              {importing ? <><Loader2 size={14} className="animate-spin" />{" "}{tr("Analyse en cours…")}</> : tr(typeImport === "page" ? "Ajouter la page" : "Analyser & créer mon thème")}
             </button>
           </div>
 
@@ -187,9 +225,10 @@ export default function CreerThemePage() {
               <p className="text-sm font-semibold text-gray-900">{tr("Faire créer ton thème par une IA")}</p>
             </div>
             <p className="text-xs text-gray-500 leading-relaxed mb-3">
-              {tr("Copie ce prompt dans ChatGPT, Claude ou une autre IA, décris ta boutique à la fin, puis importe ici le fichier .html obtenu. Il fixe seulement la structure technique : style, couleurs et textes restent libres.")}
+              {tr("Copie ce prompt dans ChatGPT, Claude ou une autre IA, décris ta boutique à la fin, puis importe ici le fichier .html obtenu. Il fixe seulement la structure technique : style, couleurs et textes restent libres.")}{" "}
+              <strong className="text-gray-700">{tr("Prompt pour : {0}", tr(TYPES_IMPORT.find((ti) => ti.id === typeImport)!.label))}</strong>
             </p>
-            <pre className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 border border-gray-100 p-3 text-[11px] text-gray-700 font-mono select-all">{PROMPT_IMPORT_THEME}</pre>
+            <pre className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 border border-gray-100 p-3 text-[11px] text-gray-700 font-mono select-all">{prompt}</pre>
             <button onClick={copierPrompt}
               className="w-full mt-3 flex items-center justify-center gap-2 border border-[#F5A623] text-[#F5A623] px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[#F5A623]/10 transition-all">
               <Copy size={14} />{" "}{tr("Copier le prompt")}

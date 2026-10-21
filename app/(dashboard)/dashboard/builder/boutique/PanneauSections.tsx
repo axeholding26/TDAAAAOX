@@ -40,6 +40,7 @@ function colonnesDe(node: BlockNode): BlockNode[] {
 }
 
 interface Props {
+  titre?: string; // nom de la page (page libre) ; défaut : « Page d'accueil »
   tree: BlockNode[]; // ordonné par zone
   selectedId: string | null;
   onSelect: (id: string) => void;
@@ -60,7 +61,7 @@ interface Props {
 // éléments principaux). Survol synchronisé avec l'aperçu. Glisser-déposer (dnd-kit sortable) pour
 // réordonner les sections dans leur zone et les blocs dans leur colonne ;
 // clavier supporté (Espace pour saisir, flèches, Espace pour poser).
-export function PanneauSections({ tree, selectedId, onSelect, selectedEl, onSelectElement, survolId, onSurvol, onDeplacer, onToggleActif, onDupliquer, onSupprimer, onAjouterSection, onAjouterBloc }: Props) {
+export function PanneauSections({ titre, tree, selectedId, onSelect, selectedEl, onSelectElement, survolId, onSurvol, onDeplacer, onToggleActif, onDupliquer, onSupprimer, onAjouterSection, onAjouterBloc }: Props) {
   const tr = useT();
   const [ouvertes, setOuvertes] = useState<Record<string, boolean>>({});
   const [enCours, setEnCours] = useState<BlockNode | null>(null);
@@ -100,7 +101,7 @@ export function PanneauSections({ tree, selectedId, onSelect, selectedEl, onSele
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setEnCours(null)}>
       <div className="flex-1 overflow-y-auto scrollbar-thin">
         <div className="px-5 py-4 border-b border-[#EEEEEE]">
-          <p className="text-[16px] font-semibold text-[#111111]">{tr("Page d'accueil")}</p>
+          <p className="text-[16px] font-semibold text-[#111111]">{titre ?? tr("Page d'accueil")}</p>
         </div>
 
         <div onMouseLeave={() => onSurvol?.(null)}>

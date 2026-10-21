@@ -1,34 +1,19 @@
 "use client";
 
 // Bannière publicitaire de « Ma boutique » : fait défiler les annonces (partenaires
-// et services d'Axso). Ajouter une annonce = une ligne dans ANNONCES.
+// et services d'Axso), gérées dans le Command Center (/admin/annonces, table Annonce).
 // Affichée une seule fois par semaine, à un moment tiré au hasard dans la semaine
-// (mémorisé sur l'appareil ; stockage indisponible → jamais affichée).
-import { useEffect, useState } from "react";
+// (mémorisé sur l'appareil ; stockage indisponible → jamais affichée). Les annonces
+// ne sont chargées (GET /api/annonces) que ce jour-là ; aucune active → rien.
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useT } from "@/components/I18nProvider";
+import type { AnnonceAffichee } from "@/lib/annonces";
 
-interface Annonce { id: string; marque: string; titre: string; texte: string; cta: string; lien: string; logo?: string; fond: string; accent: string }
-
-export const ANNONCES: Annonce[] = [
-  {
-    id: "kreads", marque: "KREADS · Partenaire officiel", titre: "Des vidéos publicitaires qui vendent",
-    texte: "Studio de créatives publicitaires : vidéos et visuels pensés pour faire vendre tes produits sur Facebook, TikTok et Instagram.",
-    cta: "Découvrir KREADS", lien: "https://kreads-two.vercel.app/", logo: "https://kreads-two.vercel.app/assets/kreads-logo-Bmz9VEmd.png",
-    fond: "linear-gradient(120deg,#111111 0%,#2A1E0A 100%)", accent: "#F5A623",
-  },
-  {
-    id: "axia", marque: "AXIA", titre: "Ton assistant IA travaille pour toi",
-    texte: "Demande à AXIA de créer tes produits, modifier ta boutique ou analyser tes ventes, en une phrase.",
-    cta: "Parler à AXIA", lien: "/dashboard/axia", fond: "linear-gradient(120deg,#1E1B4B 0%,#312E81 100%)", accent: "#A5B4FC",
-  },
-  {
-    id: "affiliation", marque: "Affiliation Axso", titre: "Gagne de l'argent en parrainant",
-    texte: "Invite d'autres commerçants sur Axso et touche une commission sur leurs abonnements.",
-    cta: "Voir mon lien", lien: "/dashboard/affiliation", fond: "linear-gradient(120deg,#052E16 0%,#14532D 100%)", accent: "#4ADE80",
-  },
-];
+// Compteurs affichages/clics : envoyés sans attendre, une erreur ne gêne jamais l'interface.
+const compter = (id: string, type: "affichage" | "clic") =>
+  fetch(`/api/annonces/${encodeURIComponent(id)}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type }), keepalive: true }).catch(() => {});
 
 const CLE = "axso_pub_prochaine";
 const SEMAINE = 7 * 24 * 3600 * 1000;
@@ -43,52 +28,75 @@ export function tourDePub(maintenant: number, prochaine: number | null, hasard =
   return { afficher: true, prochaine: debut + Math.floor(hasard() * SEMAINE) };
 }
 
+/** Contenu d'une annonce (logo, textes, bouton) : bannière marchand et aperçu du Command Center. */
+export function ContenuAnnonce({ a, onClic }: { a: AnnonceAffichee; onClic?: () => void }) {
+  const t = useT();
+  const externe = a.lien.startsWith("http");
+  const Cta = externe ? "a" : Link;
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+      {a.logo && (
+        <span className="w-14 h-14 flex-shrink-0 rounded-2xl bg-white flex items-center justify-center overflow-hidden">
+          <img src={a.logo} alt={a.marque} className="w-11 h-11 object-contain" onError={(e) => (e.currentTarget.parentElement!.style.display = "none")} />
+        </span>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: a.accent }}>{t(a.marque)}</p>
+        <p className="mt-1 text-[17px] sm:text-[19px] font-bold leading-tight">{t(a.titre)}</p>
+        <p className="mt-1 text-[13px] text-white/70 leading-snug">{t(a.texte)}</p>
+      </div>
+      <Cta href={a.lien} onClick={onClic} {...(externe ? { target: "_blank", rel: "noopener noreferrer sponsored" } : {})}
+        className="self-start sm:self-center flex-shrink-0 inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[13.5px] font-bold text-[#111111] hover:opacity-90 transition-opacity"
+        style={{ background: a.accent }}>
+        {t(a.cta)} <ArrowRight size={16} />
+      </Cta>
+    </div>
+  );
+}
+
 export function BannierePub() {
   const t = useT();
-  const [visible, setVisible] = useState(false);
+  const [annonces, setAnnonces] = useState<AnnonceAffichee[]>([]);
   const [i, setI] = useState(0);
   const [pause, setPause] = useState(false);
+  const vues = useRef(new Set<string>());
   useEffect(() => {
+    let afficher = false;
     try {
       const brut = localStorage.getItem(CLE);
       const tour = tourDePub(Date.now(), brut ? Number(brut) : null);
       localStorage.setItem(CLE, String(tour.prochaine));
-      if (tour.afficher) { setI(Math.floor(Math.random() * ANNONCES.length)); setVisible(true); }
+      afficher = tour.afficher;
     } catch { /* stockage indisponible : pas de pub */ }
+    if (!afficher) return;
+    // Pas d'annulation au démontage : le tour de la semaine est déjà consommé ci-dessus
+    // (le double appel des effets en développement ne relancerait plus la bannière).
+    fetch("/api/annonces").then((r) => (r.ok ? r.json() : null)).then((d) => {
+      const liste: AnnonceAffichee[] = d?.annonces ?? [];
+      if (!liste.length) return;
+      setI(Math.floor(Math.random() * liste.length));
+      setAnnonces(liste);
+    }).catch(() => {});
   }, []);
   useEffect(() => {
-    if (pause || ANNONCES.length < 2) return;
-    const id = setInterval(() => setI((x) => (x + 1) % ANNONCES.length), 7000);
+    if (pause || annonces.length < 2) return;
+    const id = setInterval(() => setI((x) => (x + 1) % annonces.length), 7000);
     return () => clearInterval(id);
-  }, [pause]);
-  if (!visible) return null;
-  const a = ANNONCES[i];
-  const externe = a.lien.startsWith("http");
-  const Cta = externe ? "a" : Link;
+  }, [pause, annonces.length]);
+  const a = annonces[i];
+  // Un affichage compté par annonce vue (une fois par passage de la bannière).
+  useEffect(() => {
+    if (a && !vues.current.has(a.id)) { vues.current.add(a.id); compter(a.id, "affichage"); }
+  }, [a]);
+  if (!a) return null;
 
   return (
     <section aria-label={t("Publicités")} aria-roledescription="carousel" onMouseEnter={() => setPause(true)} onMouseLeave={() => setPause(false)}
       className="relative overflow-hidden rounded-3xl p-5 sm:p-6 text-white transition-[background] duration-500" style={{ background: a.fond }}>
-      <div key={a.id} className="flex flex-col sm:flex-row sm:items-center gap-4">
-        {a.logo && (
-          <span className="w-14 h-14 flex-shrink-0 rounded-2xl bg-white flex items-center justify-center overflow-hidden">
-            <img src={a.logo} alt={a.marque} className="w-11 h-11 object-contain" onError={(e) => (e.currentTarget.parentElement!.style.display = "none")} />
-          </span>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em]" style={{ color: a.accent }}>{t(a.marque)}</p>
-          <p className="mt-1 text-[17px] sm:text-[19px] font-bold leading-tight">{t(a.titre)}</p>
-          <p className="mt-1 text-[13px] text-white/70 leading-snug">{t(a.texte)}</p>
-        </div>
-        <Cta href={a.lien} {...(externe ? { target: "_blank", rel: "noopener noreferrer sponsored" } : {})}
-          className="self-start sm:self-center flex-shrink-0 inline-flex items-center gap-2 h-11 px-5 rounded-xl text-[13.5px] font-bold text-[#111111] hover:opacity-90 transition-opacity"
-          style={{ background: a.accent }}>
-          {t(a.cta)} <ArrowRight size={16} />
-        </Cta>
-      </div>
-      {ANNONCES.length > 1 && (
+      <ContenuAnnonce key={a.id} a={a} onClic={() => compter(a.id, "clic")} />
+      {annonces.length > 1 && (
         <div className="mt-4 flex gap-1.5">
-          {ANNONCES.map((x, k) => (
+          {annonces.map((x, k) => (
             <button key={x.id} onClick={() => setI(k)} aria-label={t("Annonce {0}", k + 1)} aria-current={k === i}
               className={`h-1.5 rounded-full transition-all ${k === i ? "w-6 bg-white" : "w-3 bg-white/35 hover:bg-white/60"}`} />
           ))}

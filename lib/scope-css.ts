@@ -94,7 +94,7 @@ function adapterAuConteneur(css: string): string {
 // `anywhere` (et non `break-word`) : un mot long ne force plus une colonne de
 // grille à s'élargir. En-tête : le logo rétrécit au lieu de pousser les
 // boutons hors de l'écran ; sur téléphone, « Rechercher » devient une loupe.
-const SECURITE_RESPONSIVE = `img,video,iframe,svg{max-width:100%}h1,h2,h3,h4,h5,h6,p,a,li,span,button{overflow-wrap:anywhere}header>*{min-width:0}header .logo{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@container (max-width:480px){[data-axs-recherche]{font-size:0!important;gap:0!important}[data-axs-recherche]::before{width:18px;height:18px}}`;
+const SECURITE_RESPONSIVE = `img,video,iframe,svg{max-width:100%}h1,h2,h3,h4,h5,h6,p,a,li,span,button{overflow-wrap:anywhere}header>*{min-width:0}header .logo{flex-shrink:0;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}@container (max-width:480px){[data-axs-recherche]{font-size:0!important;gap:0!important}[data-axs-recherche]::before{width:18px;height:18px}}`;
 
 function stylesElementsArbre(tree?: BlockNode[]): ElementStyles {
   const tous: ElementStyles = {};
@@ -156,7 +156,13 @@ export function cssDesignPersonnalise(cfg: CfgDesign): string {
 /** CSS du design, commun à toutes les sections découpées (blocs embed-html sans CSS propre). */
 export function cssSectionsDesign(cfg: CfgDesign): string {
   const css = cssDesignPersonnalise(cfg);
-  return css ? scoperCss(css, "[data-axs-embed-html]") + cssReglagesDesignPage(cfg as any) : "";
+  // Sections d'une page importée (data-axs-css-page) : elles ont leur propre CSS (cssPageImportee).
+  return css ? scoperCss(css, "[data-axs-embed-html]:not([data-axs-css-page])") + cssReglagesDesignPage(cfg as any) : "";
+}
+
+/** CSS d'une page importée seule (PagePerso.css), confiné à ses sections. */
+export function cssPageImportee(css: string | undefined): string {
+  return css ? scoperCss(`${adapterAuConteneur(css)}\n${SECURITE_RESPONSIVE}`, "[data-axs-css-page]") : "";
 }
 
 // Auto-vérification : `SCOPE_CSS_CHECK=1 npx tsx lib/scope-css.ts`

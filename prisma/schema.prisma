@@ -3783,3 +3783,29 @@ model StudioVersion {
 
   @@unique([elementId, version])
 }
+
+// =====================
+// ANNONCES — bannière publicitaire de « Ma boutique » (components/dashboard/BannierePub.tsx),
+// gérées depuis le Command Center (/admin/annonces). Ciblage vide = tout le monde.
+// =====================
+model Annonce {
+  id         String    @id @default(cuid())
+  marque     String    // sur-titre (ex. « KREADS · Partenaire officiel »)
+  titre      String
+  texte      String
+  cta        String    // libellé du bouton
+  lien       String    // https://… (nouvel onglet) ou /chemin interne
+  logo       String?
+  fond       String    // #hex ou linear-gradient(…)
+  accent     String    // #hex
+  ordre      Int       @default(0)
+  active     Boolean   @default(true)
+  debut      DateTime?
+  fin        DateTime?
+  pays       String[]  @default([]) // codes ISO2 de la boutique ; vide = tous
+  plans      String[]  @default([]) // palier0 | palier1 | palier2 ; vide = tous
+  affichages Int       @default(0)
+  clics      Int       @default(0)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}

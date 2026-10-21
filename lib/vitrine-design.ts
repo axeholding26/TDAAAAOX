@@ -142,7 +142,8 @@ async function rafraichirGrillesProduits(cfg: ThemeConfig, themeId: string, tena
     prisma.categorieProduit.findMany({ where: { tenantId }, orderBy: [{ ordre: "asc" }, { createdAt: "asc" }], select: { nom: true } }),
   ]);
   const fichier = theme ? fichierDepuisSlugTheme(theme.slug) : null;
-  const carte = MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
+  // Design de la bibliothèque : carte du manifeste ; boutique complète importée : carte tirée du fichier.
+  const carte = cfg.axsoDesignCarteTemplate ?? MANIFESTE_LIBRAIRIE.find((e) => e.fichier === fichier)?.carteTemplate;
   // Sans produit, on garde les cartes de démonstration du design.
   if (!tenant || !carte || produits.length === 0) return cfg;
   const taux = tenant.commissionRate ?? 0.1;
