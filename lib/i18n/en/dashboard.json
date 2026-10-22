@@ -3198,5 +3198,7 @@
  "Résolu": "Resolved",
  "Décrivez le problème (10 caractères minimum)": "Describe the problem (at least 10 characters)",
  "Description trop longue (4 000 caractères maximum)": "Description too long (4,000 characters max)",
- "Capture d'écran invalide": "Invalid screenshot"
+ "Capture d'écran invalide": "Invalid screenshot",
+ "Ce montant dépasse votre solde disponible ({0}).": "This amount exceeds your available balance ({0}).",
+ "{0} sont encore en séquestre 48 h, libérés à partir du {1}.": "{0} is still in 48h escrow, released from {1}."
 }

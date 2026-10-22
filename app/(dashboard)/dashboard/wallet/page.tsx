@@ -152,6 +152,10 @@ export default function WalletPage() {
   const erreurMontant = !form.montant ? null
     : !(montant >= MINIMUM_RETRAIT) ? tr("Le minimum de retrait est de {0}.", fmt(MINIMUM_RETRAIT, devise))
     : montant > solde ? tr("Ce montant dépasse votre solde disponible ({0}).", fmt(solde, devise))
+      + ((wallet?.enAttente ?? 0) > 0 && wallet?.liberations?.[0]
+        ? " " + tr("{0} sont encore en séquestre 48 h, libérés à partir du {1}.", fmt(wallet.enAttente!, devise),
+            new Date(wallet.liberations[0].le).toLocaleString(tr.loc, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }))
+        : "")
     : null;
   // Même normalisation que le serveur : indicatif du pays de la boutique.
   const telInternational = form.methode === "mobile_money" ? normaliserTelephone(form.destinataire, pays) : null;
